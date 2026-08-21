@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -30,12 +30,30 @@ const { useFindManyIssueMock } = vi.hoisted(() => ({
   ),
 }));
 
+// HIER-02's create/rename hooks. Both default to a resolved mutateAsync so
+// tests that don't care about the create/rename path (the drag-and-drop
+// suite above) never have to stub them individually.
+const { useCreateIssueMock, useUpdateIssueMock } = vi.hoisted(() => ({
+  useCreateIssueMock: vi.fn(() => ({
+    mutateAsync: vi.fn().mockResolvedValue({ id: 1 }),
+  })),
+  useUpdateIssueMock: vi.fn(() => ({
+    mutateAsync: vi.fn().mockResolvedValue({}),
+  })),
+}));
+
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     issue: {
       useFindMany: useFindManyIssueMock,
+      useCreate: useCreateIssueMock,
+      useUpdate: useUpdateIssueMock,
     },
   }),
+}));
+
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: { user: { id: "test-user-1" } } }),
 }));
 
 vi.mock("next-intl", () => ({
@@ -195,6 +213,14 @@ function findNodeById(nodes: any[], id: string): any {
   return null;
 }
 
+/** Opens a Radix DropdownMenu trigger -- fireEvent.click alone doesn't
+ *  dispatch the pointerdown/pointerup sequence Radix listens for in jsdom.
+ *  Mirrors RequirementProvenanceBadge.test.tsx's identical helper. */
+function openMenu(trigger: HTMLElement) {
+  fireEvent.pointerDown(trigger, { button: 0, pointerId: 1 });
+  fireEvent.pointerUp(trigger, { button: 0, pointerId: 1 });
+}
+
 describe("RequirementsTreeView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -207,6 +233,12 @@ describe("RequirementsTreeView", () => {
       isLoading: false,
       error: null,
       refetch: vi.fn(),
+    });
+    useCreateIssueMock.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ id: 1 }),
+    });
+    useUpdateIssueMock.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({}),
     });
   });
 
@@ -474,9 +506,125 @@ describe("RequirementsTreeView", () => {
     expect(lastCall[0].disableDrop).toBe(true);
   });
 
-  it.todo(
-    "creates a native requirement with isRequirement true and the selected parentId"
-  );
-  it.todo("renames a requirement in place through the ZenStack update hook");
-  it.todo("does not offer rename on a synced, non-detached requirement");
+  it("creates a native requirement with isRequirement true and the selected parentId", async () => {
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    const mutateAsync = vi.fn().mockResolvedValue({ id: 99 });
+    useCreateIssueMock.mockReturnValue({ mutateAsync });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    // Root create, via the toolbar's "Add Requirement" button.
+    fireEvent.click(screen.getByTestId("requirements-tree-add-root"));
+    fireEvent.change(screen.getByTestId("create-requirement-name-input"), {
+      target: { value: "New Root Requirement" },
+    });
+    fireEvent.click(screen.getByTestId("create-requirement-submit"));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledTimes(1);
+    });
+    const rootPayload = mutateAsync.mock.calls[0][0].data;
+    expect(rootPayload.isRequirement).toBe(true);
+    expect(rootPayload.name).toBe("New Root Requirement");
+    expect(rootPayload.title).toBe("New Root Requirement");
+    expect(rootPayload.parent).toBeUndefined();
+
+    // Child create, via node id 1's (Root A) row menu -- the selected
+    // parentId is that node's own id, never written as a bare `null`.
+    openMenu(screen.getByTestId("requirement-actions-trigger-1"));
+    fireEvent.click(screen.getByTestId("requirement-action-add-child-1"));
+    fireEvent.change(screen.getByTestId("create-requirement-name-input"), {
+      target: { value: "New Child Requirement" },
+    });
+    fireEvent.click(screen.getByTestId("create-requirement-submit"));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledTimes(2);
+    });
+    const childPayload = mutateAsync.mock.calls[1][0].data;
+    expect(childPayload.isRequirement).toBe(true);
+    expect(childPayload.parent).toEqual({ connect: { id: 1 } });
+  });
+
+  it("renames a requirement in place through the ZenStack update hook", async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({});
+    useUpdateIssueMock.mockReturnValue({ mutateAsync });
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    // react-arborist's own commit path is `node.submit(value)` ->
+    // `onRename({id, name, node})` -- invoke the captured `onRename` prop
+    // directly, matching this file's established precedent for `onMove`
+    // above (25-09) rather than trying to simulate `node.edit()`'s internal
+    // isEditing state through the thin `Tree` mock.
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const onRename = lastCall[0].onRename;
+    expect(onRename).toBeDefined();
+
+    await onRename!({ id: "2", name: "Renamed Child", node: {} as any });
+
+    expect(mutateAsync).toHaveBeenCalledWith({
+      where: { id: 2 },
+      data: { name: "Renamed Child", title: "Renamed Child" },
+    });
+  });
+
+  it("does not offer rename on a synced, non-detached requirement", () => {
+    const lockedFixture = [
+      ...deepChainAndSecondRoot,
+      makeRequirement({
+        id: 20,
+        name: "Locked Requirement",
+        parentId: null,
+        integrationId: 9,
+        requirementDetachedAt: null,
+      }),
+    ];
+    useFindManyIssueMock.mockReturnValue({
+      data: lockedFixture,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    openMenu(screen.getByTestId("requirement-actions-trigger-20"));
+    const renameItem = screen.getByTestId("requirement-action-rename-20");
+    expect(renameItem).toHaveAttribute("data-disabled");
+
+    // A native (unlocked) row's rename item, by contrast, stays enabled.
+    openMenu(screen.getByTestId("requirement-actions-trigger-1"));
+    const nativeRenameItem = screen.getByTestId("requirement-action-rename-1");
+    expect(nativeRenameItem).not.toHaveAttribute("data-disabled");
+  });
 });

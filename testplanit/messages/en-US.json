@@ -6641,6 +6641,7 @@
       "loadFailed": "Failed to load requirements.",
       "addRoot": "Add Requirement",
       "addChild": "Add Child Requirement",
+      "rename": "Rename",
       "expandAll": "Expand All",
       "collapseAll": "Collapse All",
       "dropToRootHint": "Drop here to move to the top level",

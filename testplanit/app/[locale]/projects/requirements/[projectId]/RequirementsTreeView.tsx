@@ -13,8 +13,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Issue } from "~/zenstack/models";
-import { ChevronRight, MoreVertical, Plus, Search, X } from "lucide-react";
+import {
+  ChevronRight,
+  MoreVertical,
+  Plus,
+  Search,
+  SquarePenIcon,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, {
   useCallback,
@@ -27,6 +39,7 @@ import { NodeApi, Tree, TreeApi } from "react-arborist";
 import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
@@ -58,6 +71,52 @@ interface RequirementArboristNode {
  *  summed height of every row. */
 const MIN_TREE_VIEWPORT = 320;
 const TREE_VIEWPORT_GUTTER = 96;
+
+/**
+ * The in-place rename input, rendered in place of the node's label when
+ * `node.isEditing` (entered via a row menu's "Rename" item calling
+ * `node.edit()`). Mirrors react-arborist's own `DefaultNode`'s `Edit`
+ * sub-component (`components/default-node.js`) verbatim in behavior:
+ * Escape or blur cancels via `node.reset()` with no write, Enter commits via
+ * `node.submit(value)` (which invokes `onRename` below) -- but only for a
+ * non-blank value, so a blank name never commits.
+ */
+function RequirementRenameInput({
+  node,
+}: {
+  node: NodeApi<RequirementArboristNode>;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+
+  return (
+    <Input
+      ref={inputRef}
+      defaultValue={node.data.name}
+      className="ms-1 h-6 flex-1 text-sm"
+      onClick={(e) => e.stopPropagation()}
+      onBlur={() => node.reset()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === "Escape") {
+          node.reset();
+        } else if (e.key === "Enter") {
+          const value = e.currentTarget.value.trim();
+          if (value) {
+            node.submit(value);
+          } else {
+            node.reset();
+          }
+        }
+      }}
+      data-testid={`requirement-rename-input-${node.data.data?.issueId}`}
+    />
+  );
+}
 
 interface RequirementsTreeViewProps extends RequirementSelection {
   projectId: string;
@@ -145,6 +204,12 @@ export default function RequirementsTreeView({
     },
     { optimisticUpdate: true }
   );
+
+  // In-place rename (HIER-02's "edit" half). `{ name, title }` together --
+  // the schema's own field-level @deny on `title` is the real enforcement
+  // for a synced, locked row; `isRequirementLocked` below is the courtesy
+  // layer that keeps the affordance from even being offered.
+  const updateRequirement = useClientQueries(schema).issue.useUpdate();
 
   const [requirements, setRequirements] = useState<Issue[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -458,6 +523,35 @@ export default function RequirementsTreeView({
     ]
   );
 
+  // In-place rename, wired to react-arborist's own `onRename` handler --
+  // `node.edit()` (called from the row menu below) turns the label into an
+  // editable input, and Enter calls `node.submit(value)`, which is what
+  // invokes this. Re-checks `isRequirementLocked` here too (defense in
+  // depth alongside the menu-level gate and the schema's own field-level
+  // `@deny`) and no-ops on a blank or unchanged name rather than writing.
+  const handleRename = useCallback(
+    async ({ id, name }: { id: string; name: string }) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      const issueId = parseInt(id, 10);
+      const requirement = requirementMap.get(issueId);
+      if (!requirement || isRequirementLocked(requirement)) return;
+      if (trimmed === requirement.name) return;
+      try {
+        await updateRequirement.mutateAsync({
+          where: { id: issueId },
+          data: { name: trimmed, title: trimmed },
+        });
+        toast.success(t("requirements.edit.success"));
+        void refetchRequirements();
+      } catch (error) {
+        console.error("Failed to rename requirement:", error);
+        toast.error(t("requirements.edit.failed"));
+      }
+    },
+    [requirementMap, updateRequirement, t, refetchRequirements]
+  );
+
   // Bottom-of-tree drop zone for moving a requirement out to the root level.
   // `accept: "NODE"` is react-arborist's own internal drag-item type string
   // for a tree node -- a library constant, not project-specific -- reused
@@ -536,16 +630,20 @@ export default function RequirementsTreeView({
           ) : (
             <span className="h-5 w-5 shrink-0" aria-hidden="true" />
           )}
-          <span
-            className="ms-1 min-w-0 flex-1 truncate text-sm"
-            title={node.data.name}
-          >
-            <HighlightedMatch
-              text={node.data.name}
-              query={normalizedFilter}
-              testId="requirement-filter-match"
-            />
-          </span>
+          {node.isEditing ? (
+            <RequirementRenameInput node={node} />
+          ) : (
+            <span
+              className="ms-1 min-w-0 flex-1 truncate text-sm"
+              title={node.data.name}
+            >
+              <HighlightedMatch
+                text={node.data.name}
+                query={normalizedFilter}
+                testId="requirement-filter-match"
+              />
+            </span>
+          )}
           {data?.originalData && (
             <RequirementProvenanceBadge
               requirement={data.originalData}
@@ -588,6 +686,37 @@ export default function RequirementsTreeView({
                       {t("requirements.tree.addChild")}
                     </div>
                   </DropdownMenuItem>
+                  {data?.originalData &&
+                  isRequirementLocked(data.originalData) ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem
+                            disabled
+                            data-testid={`requirement-action-rename-${data?.issueId}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <SquarePenIcon className="h-4 w-4" />
+                              {t("requirements.tree.rename")}
+                            </div>
+                          </DropdownMenuItem>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("requirements.edit.lockedTooltip")}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => void node.edit()}
+                      data-testid={`requirement-action-rename-${data?.issueId}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <SquarePenIcon className="h-4 w-4" />
+                        {t("requirements.tree.rename")}
+                      </div>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -726,6 +855,12 @@ export default function RequirementsTreeView({
             selection={selectedRequirementId?.toString()}
             onSelect={handleSelect}
             onMove={canAddEdit && !isFiltering ? handleMove : undefined}
+            onRename={handleRename}
+            disableEdit={(node: RequirementArboristNode) =>
+              !canAddEdit ||
+              isFiltering ||
+              isRequirementLocked(node.data?.originalData ?? null)
+            }
             disableDrag={!canAddEdit || isFiltering}
             disableDrop={!canAddEdit || isFiltering}
           >
