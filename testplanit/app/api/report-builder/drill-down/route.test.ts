@@ -719,7 +719,12 @@ describe("POST /api/report-builder/drill-down", () => {
         { id: 11, repositoryCaseId: 501, testRunId: 90, status: null },
       ]);
       (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([
-        { id: 7, repositoryCaseId: 501, testSuite: { testRunId: 90 }, status: passed },
+        {
+          id: 7,
+          repositoryCaseId: 501,
+          testSuite: { testRunId: 90 },
+          status: passed,
+        },
       ]);
 
       const data = await (await POST(request())).json();
@@ -749,7 +754,12 @@ describe("POST /api/report-builder/drill-down", () => {
         { id: 13, repositoryCaseId: 503, testRunId: 91, status: failed },
       ]);
       (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([
-        { id: 9, repositoryCaseId: 503, testSuite: { testRunId: 91 }, status: passed },
+        {
+          id: 9,
+          repositoryCaseId: 503,
+          testSuite: { testRunId: 91 },
+          status: passed,
+        },
       ]);
 
       const data = await (await POST(request())).json();

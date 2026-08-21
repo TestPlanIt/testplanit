@@ -270,13 +270,16 @@ async function handleMilestoneReadinessDrillDown(
  */
 async function resolveAutomatedRunCaseStatuses(rows: any[]) {
   const pending = (rows ?? []).filter(
-    (r) => r?.status == null && r?.repositoryCaseId != null && r?.testRunId != null
+    (r) =>
+      r?.status == null && r?.repositoryCaseId != null && r?.testRunId != null
   );
   if (pending.length === 0) return;
 
   const results = await baseDb.jUnitTestResult.findMany({
     where: {
-      repositoryCaseId: { in: [...new Set(pending.map((r) => r.repositoryCaseId))] },
+      repositoryCaseId: {
+        in: [...new Set(pending.map((r) => r.repositoryCaseId))],
+      },
       testSuite: {
         testRunId: { in: [...new Set(pending.map((r) => r.testRunId))] },
       },
@@ -300,7 +303,9 @@ async function resolveAutomatedRunCaseStatuses(rows: any[]) {
   }
 
   for (const row of pending) {
-    const resolved = latestByCaseRun.get(`${row.repositoryCaseId}:${row.testRunId}`);
+    const resolved = latestByCaseRun.get(
+      `${row.repositoryCaseId}:${row.testRunId}`
+    );
     if (resolved) row.status = resolved;
   }
 }
