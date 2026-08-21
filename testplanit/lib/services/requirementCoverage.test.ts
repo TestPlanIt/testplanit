@@ -6,31 +6,104 @@
 // proven against a live database — see
 // requirement-coverage-rollup.integration.test.ts for that half.
 //
-// Deliberately no top-level import of "./requirementCoverage" — that
-// module does not exist until it is implemented, and a top-level import of
-// a missing module fails this file at transform time, taking the whole
-// unit lane red for everyone working in parallel. The converting plan adds
-// the import when it fills these titles in.
-//
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/requirementCoverage.test.ts
 
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
+
+import { classifyRequirementCoverage } from "./requirementCoverage";
 
 describe("requirementCoverage classification (COV-01, pure)", () => {
-  it.todo(
-    "returns UNCOVERED when a requirement has no covering cases"
-  );
+  it("returns UNCOVERED when a requirement has no covering cases", () => {
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 0,
+        crossProjectCaseCount: 0,
+        passed: 0,
+        failed: 0,
+        inProgress: 0,
+        notRun: 0,
+      })
+    ).toBe("UNCOVERED");
+  });
 
-  it.todo(
-    "returns FAILED when any covering case's latest result failed, even when others passed"
-  );
+  it("returns FAILED when any covering case's latest result failed, even when others passed", () => {
+    // Two covering cases, one failed and one passed — a fifty-percent pass
+    // rate must still classify as FAILED, proving failure precedence is
+    // not a majority vote.
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 2,
+        crossProjectCaseCount: 0,
+        passed: 1,
+        failed: 1,
+        inProgress: 0,
+        notRun: 0,
+      })
+    ).toBe("FAILED");
+  });
 
-  it.todo(
-    "returns PASSED only when every covering case's latest result passed"
-  );
+  it("returns PASSED only when every covering case's latest result passed", () => {
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 3,
+        crossProjectCaseCount: 0,
+        passed: 3,
+        failed: 0,
+        inProgress: 0,
+        notRun: 0,
+      })
+    ).toBe("PASSED");
 
-  it.todo(
-    "returns NOT_RUN when cases are linked but none failed and not all passed"
-  );
+    // Passed-plus-anything-else does not reach PASSED.
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 3,
+        crossProjectCaseCount: 0,
+        passed: 2,
+        failed: 0,
+        inProgress: 1,
+        notRun: 0,
+      })
+    ).not.toBe("PASSED");
+  });
+
+  it("returns NOT_RUN when cases are linked but none failed and not all passed", () => {
+    // In-progress-only.
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 1,
+        crossProjectCaseCount: 0,
+        passed: 0,
+        failed: 0,
+        inProgress: 1,
+        notRun: 0,
+      })
+    ).toBe("NOT_RUN");
+
+    // Not-run-only.
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 1,
+        crossProjectCaseCount: 0,
+        passed: 0,
+        failed: 0,
+        inProgress: 0,
+        notRun: 1,
+      })
+    ).toBe("NOT_RUN");
+
+    // Mixed pass-and-neutral: passed-plus-in-progress must NOT read as
+    // PASSED.
+    expect(
+      classifyRequirementCoverage({
+        linkedCaseCount: 2,
+        crossProjectCaseCount: 0,
+        passed: 1,
+        failed: 0,
+        inProgress: 1,
+        notRun: 0,
+      })
+    ).toBe("NOT_RUN");
+  });
 });
