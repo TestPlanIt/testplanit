@@ -11,6 +11,20 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+// LinkedRequirementCasesPanel's useRequirementCaseLinks hook calls
+// useQueryClient() unconditionally on every render (not just on
+// link/unlink), so this file needs a QueryClient stand-in even though none
+// of its own tests exercise the link/unlink flow directly (that is
+// LinkedRequirementCasesPanel.test.tsx's job).
+const mockInvalidateQueries = vi.fn();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+  };
+});
+
 vi.mock("next-auth/react", () => ({
   useSession: () => ({ data: { user: { id: "user-1" } } }),
 }));
@@ -125,12 +139,14 @@ const {
   mockAttachmentsFindMany,
   mockCreateAttachmentMutateAsync,
   mockUpdateAttachmentMutateAsync,
+  mockRepositoryCasesFindMany,
 } = vi.hoisted(() => ({
   mockUseFindFirst: vi.fn(),
   mockUpdateMutateAsync: vi.fn(),
   mockAttachmentsFindMany: vi.fn(),
   mockCreateAttachmentMutateAsync: vi.fn(),
   mockUpdateAttachmentMutateAsync: vi.fn(),
+  mockRepositoryCasesFindMany: vi.fn(),
 }));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
@@ -143,6 +159,13 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useFindMany: mockAttachmentsFindMany,
       useCreate: () => ({ mutateAsync: mockCreateAttachmentMutateAsync }),
       useUpdate: () => ({ mutateAsync: mockUpdateAttachmentMutateAsync }),
+    },
+    // LinkedRequirementCasesPanel's own read -- its full behavior is
+    // covered by LinkedRequirementCasesPanel.test.tsx; this file only needs
+    // it to render without crashing (empty list, matching every fixture
+    // below).
+    repositoryCases: {
+      useFindMany: mockRepositoryCasesFindMany,
     },
   }),
 }));
@@ -212,6 +235,11 @@ describe("RequirementDetailPanel", () => {
     mockFetchSignedUrl.mockResolvedValue(
       "https://storage.example.com/spec.pdf"
     );
+    mockRepositoryCasesFindMany.mockReturnValue({
+      data: [],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
     global.fetch = vi.fn();
   });
 
