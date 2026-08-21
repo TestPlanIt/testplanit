@@ -56,9 +56,13 @@ describeIntegration(
   () => {
     let adminUserId: string;
     let projectOneId: number;
+    let projectTwoId: number;
+    let projectTwoName: string;
 
     let repositoryOneId: number;
     let folderOneId: number;
+    let repositoryTwoId: number;
+    let folderTwoId: number;
 
     let templateId: number;
     let caseStateId: number;
@@ -87,6 +91,14 @@ describeIntegration(
     let caseArchivedId: number;
     let caseTwoRunsId: number;
 
+    // The second project: a requirement of its own (the isolation control)
+    // plus a case that lives here but is linked back into reqRoot in the
+    // first project — nothing in the link table forbids that pairing, so
+    // enforcing the boundary is entirely on the query.
+    let reqOtherProjectId: number;
+    let caseOtherProjectId: number;
+    let caseOwnProjectTwoId: number;
+
     const allIssueIds: number[] = [];
     const allCaseIds: number[] = [];
     const allRunIds: number[] = [];
@@ -94,9 +106,12 @@ describeIntegration(
     let unrestrictedCoverage: Awaited<
       ReturnType<typeof getRequirementCoverage>
     >;
+    let scopedCoverage: Awaited<ReturnType<typeof getRequirementCoverage>>;
+    let projectTwoCoverage: Awaited<ReturnType<typeof getRequirementCoverage>>;
     let unrestrictedCovering: Awaited<
       ReturnType<typeof getRequirementCoveringCases>
     >;
+    let scopedCovering: Awaited<ReturnType<typeof getRequirementCoveringCases>>;
 
     beforeAll(async () => {
       // Refuse to run against anything but a scratch database — the
@@ -153,6 +168,30 @@ describeIntegration(
         select: { id: true },
       });
       folderOneId = folderOne.id;
+
+      const projectTwo = await db.projects.create({
+        data: { name: `${STAMP}-project-two`, createdBy: adminUserId },
+        select: { id: true, name: true },
+      });
+      projectTwoId = projectTwo.id;
+      projectTwoName = projectTwo.name;
+
+      const repositoryTwo = await db.repositories.create({
+        data: { projectId: projectTwoId },
+        select: { id: true },
+      });
+      repositoryTwoId = repositoryTwo.id;
+
+      const folderTwo = await db.repositoryFolders.create({
+        data: {
+          name: `${STAMP}-folder-two`,
+          repositoryId: repositoryTwoId,
+          projectId: projectTwoId,
+          creatorId: adminUserId,
+        },
+        select: { id: true },
+      });
+      folderTwoId = folderTwo.id;
 
       // Global catalogs — reused rather than created, matching this
       // repository's other fixture chains.
@@ -284,12 +323,7 @@ describeIntegration(
         true
       );
       reqGapId = await createNode("req-gap", projectOneId, null, true);
-      reqDeletedId = await createNode(
-        "req-deleted",
-        projectOneId,
-        null,
-        true
-      );
+      reqDeletedId = await createNode("req-deleted", projectOneId, null, true);
       reqArchivedId = await createNode(
         "req-archived",
         projectOneId,
@@ -373,12 +407,7 @@ describeIntegration(
 
       const now = new Date();
       await recordExecution(runMain.id, caseSharedId, passingStatusId, now);
-      await recordExecution(
-        runMain.id,
-        caseUnderStoryId,
-        passingStatusId,
-        now
-      );
+      await recordExecution(runMain.id, caseUnderStoryId, passingStatusId, now);
       await recordExecution(runMain.id, casePassingId, passingStatusId, now);
       await recordExecution(runMain.id, caseFailingId, failingStatusId, now);
 
@@ -421,8 +450,75 @@ describeIntegration(
         executedAtNew
       );
 
+      // The second project. reqOtherProject is its own independent
+      // requirement (the isolation control); caseOtherProject lives here
+      // too but its ONE link is back into reqRoot in the first project.
+      reqOtherProjectId = await createNode(
+        "req-other-project",
+        projectTwoId,
+        null,
+        true
+      );
+      caseOtherProjectId = await createCase(
+        "case-other-project",
+        projectTwoId,
+        repositoryTwoId,
+        folderTwoId
+      );
+      caseOwnProjectTwoId = await createCase(
+        "case-own-project-two",
+        projectTwoId,
+        repositoryTwoId,
+        folderTwoId
+      );
+
+      await db.repositoryCaseIssue.createMany({
+        data: [
+          { caseId: caseOtherProjectId, issueId: reqRootId },
+          { caseId: caseOwnProjectTwoId, issueId: reqOtherProjectId },
+        ],
+      });
+
+      const runProjectTwo = await db.testRuns.create({
+        data: {
+          projectId: projectTwoId,
+          name: `${STAMP}-run-project-two`,
+          stateId: runStateId,
+          createdById: adminUserId,
+        },
+        select: { id: true },
+      });
+      allRunIds.push(runProjectTwo.id);
+
+      // caseOtherProject's own execution fails — the viewer's visibility
+      // scope has a consequence on the failed count, not only on the total.
+      await recordExecution(
+        runProjectTwo.id,
+        caseOtherProjectId,
+        failingStatusId,
+        now
+      );
+      await recordExecution(
+        runProjectTwo.id,
+        caseOwnProjectTwoId,
+        passingStatusId,
+        now
+      );
+
       unrestrictedCoverage = await getRequirementCoverage(
         projectOneId,
+        { accessibleProjectIds: null },
+        undefined,
+        db
+      );
+      scopedCoverage = await getRequirementCoverage(
+        projectOneId,
+        { accessibleProjectIds: [projectOneId] },
+        undefined,
+        db
+      );
+      projectTwoCoverage = await getRequirementCoverage(
+        projectTwoId,
         { accessibleProjectIds: null },
         undefined,
         db
@@ -431,6 +527,12 @@ describeIntegration(
         projectOneId,
         [reqRootId],
         { accessibleProjectIds: null },
+        db
+      );
+      scopedCovering = await getRequirementCoveringCases(
+        projectOneId,
+        [reqRootId],
+        { accessibleProjectIds: [projectOneId] },
         db
       );
     });
@@ -451,8 +553,11 @@ describeIntegration(
       });
       await db.issue.deleteMany({ where: { id: { in: allIssueIds } } });
       await db.repositoryFolders.delete({ where: { id: folderOneId } });
+      await db.repositoryFolders.delete({ where: { id: folderTwoId } });
       await db.repositories.delete({ where: { id: repositoryOneId } });
+      await db.repositories.delete({ where: { id: repositoryTwoId } });
       await db.projects.delete({ where: { id: projectOneId } });
+      await db.projects.delete({ where: { id: projectTwoId } });
       await db.user.delete({ where: { id: adminUserId } });
 
       const remainingIssues = await db.issue.count({
@@ -475,8 +580,7 @@ describeIntegration(
         select: { caseId: true },
       });
       const rawLinkRowCount = links.length;
-      const distinctCaseCount = new Set(links.map((link) => link.caseId))
-        .size;
+      const distinctCaseCount = new Set(links.map((link) => link.caseId)).size;
       const rollupLinkedCount =
         unrestrictedCoverage.get(reqRootId)?.linkedCaseCount;
 
@@ -537,20 +641,89 @@ describeIntegration(
       expect(latest.status).toBe("PASSED");
     });
 
-    it.todo(
-      "cases in another project count and are reported separately as cross-project"
-    );
+    it("cases in another project count and are reported separately as cross-project", async () => {
+      const root = unrestrictedCoverage.get(reqRootId)!;
+      expect(root.crossProjectCaseCount).toBe(1);
+      expect(root.linkedCaseCount).toBeGreaterThan(root.crossProjectCaseCount);
 
-    it.todo(
-      "a viewer's accessible project scope excludes cases from projects they cannot read"
-    );
+      // A requirement whose covering cases are all local proves the counter
+      // discriminates rather than being a constant.
+      const child = unrestrictedCoverage.get(reqChildId)!;
+      expect(child.linkedCaseCount).toBeGreaterThan(0);
+      expect(child.crossProjectCaseCount).toBe(0);
+    });
 
-    it.todo(
-      "a requirement in another project never appears in a project-scoped rollup"
-    );
+    it("a viewer's accessible project scope excludes cases from projects they cannot read", async () => {
+      const rootUnrestricted = unrestrictedCoverage.get(reqRootId)!;
+      const rootScoped = scopedCoverage.get(reqRootId)!;
 
-    it.todo(
-      "covering-case drill-down returns each case's project so a cross-project case can be badged"
-    );
+      expect(
+        rootUnrestricted.linkedCaseCount - rootScoped.linkedCaseCount,
+        `unrestricted total (${rootUnrestricted.linkedCaseCount}) minus scoped total (${rootScoped.linkedCaseCount}) must be exactly 1 — the one case living outside the viewer's accessible projects`
+      ).toBe(1);
+      expect(rootScoped.crossProjectCaseCount).toBe(0);
+      expect(
+        rootUnrestricted.failed - rootScoped.failed,
+        `unrestricted failed (${rootUnrestricted.failed}) minus scoped failed (${rootScoped.failed}) must be exactly 1 — the excluded case's own execution failed`
+      ).toBe(1);
+      // The excluded case's failure was never the requirement's ONLY
+      // failure — an independent, same-project failing case (proven by
+      // "one failed covering case makes the whole requirement FAILED"
+      // above) already holds this requirement at FAILED before and after
+      // the scope narrows. Asserting the status stays FAILED here, with
+      // the failed counter dropping by exactly one and not two, is a
+      // stronger correctness proof than a bare status flip would be: an
+      // implementation that over-filters and also drops the in-project
+      // failing case would move failed from 2 to 0 and incorrectly report
+      // PASSED, which this assertion would catch.
+      expect(rootUnrestricted.status).toBe("FAILED");
+      expect(rootScoped.status).toBe("FAILED");
+
+      // Every OTHER requirement's breakdown must be byte-identical between
+      // the two calls — a scope that changes anything beyond the
+      // cross-project contribution is over-filtering.
+      for (const id of [
+        reqChildId,
+        reqGapId,
+        reqDeletedId,
+        reqArchivedId,
+        reqLatestId,
+      ]) {
+        expect(scopedCoverage.get(id)).toEqual(unrestrictedCoverage.get(id));
+      }
+    });
+
+    it("a requirement in another project never appears in a project-scoped rollup", async () => {
+      expect(unrestrictedCoverage.has(reqOtherProjectId)).toBe(false);
+      expect(scopedCoverage.has(reqOtherProjectId)).toBe(false);
+
+      const other = projectTwoCoverage.get(reqOtherProjectId)!;
+      expect(other.linkedCaseCount).toBe(1);
+      expect(other.crossProjectCaseCount).toBe(0);
+      expect(other.passed).toBe(1);
+      expect(other.failed).toBe(0);
+      expect(other.status).toBe("PASSED");
+    });
+
+    it("covering-case drill-down returns each case's project so a cross-project case can be badged", async () => {
+      const rootUnrestricted = unrestrictedCovering.get(reqRootId) ?? [];
+      const crossEntry = rootUnrestricted.find(
+        (entry) => entry.caseId === caseOtherProjectId
+      );
+      expect(crossEntry).toBeDefined();
+      expect(crossEntry?.projectId).toBe(projectTwoId);
+      expect(crossEntry?.projectName).toBe(projectTwoName);
+      expect(rootUnrestricted.length).toBe(
+        unrestrictedCoverage.get(reqRootId)!.linkedCaseCount
+      );
+
+      const rootScoped = scopedCovering.get(reqRootId) ?? [];
+      expect(
+        rootScoped.some((entry) => entry.caseId === caseOtherProjectId)
+      ).toBe(false);
+      expect(rootScoped.length).toBe(
+        scopedCoverage.get(reqRootId)!.linkedCaseCount
+      );
+    });
   }
 );
