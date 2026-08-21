@@ -152,6 +152,7 @@ export async function runCellCountPreflight(
     INNER JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
+      AND trc."isDeleted" = false
       AND rc."isDeleted" = false
       AND rc."hasParameters" = true
       ${filterSql}
@@ -171,6 +172,7 @@ export async function runCellCountPreflight(
     INNER JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
+      AND trc."isDeleted" = false
       AND rc."isDeleted" = false
       AND rc."hasParameters" = true
       ${filterSql}
