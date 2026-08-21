@@ -31,6 +31,7 @@ import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
+import { RequirementAttachments } from "./RequirementAttachments";
 import {
   RequirementProvenanceBadge,
   type RequirementProvenanceBadgeRow,
@@ -98,9 +99,9 @@ function buildResetValues(row: RequirementRow): RequirementDetailFormData {
  * HIER-05's authoring surface plus the UI half of PROV-01/02/03: a
  * provenance badge, lock-aware scalar fields, and a Tiptap body bound to
  * `Issue.note` -- which stays editable even on a synced, locked requirement
- * (see the comment beside the editor's `readOnly` below). Attachments
- * (25-12) and linked test cases (25-13) mount into the two placeholder
- * regions at the bottom of this panel.
+ * (see the comment beside the editor's `readOnly` below). HIER-06's
+ * discrete attachment list (RequirementAttachments) is mounted below; linked
+ * test cases (25-13) mount into the remaining placeholder region.
  */
 export default function RequirementDetailPanel({
   projectId,
@@ -361,8 +362,10 @@ export default function RequirementDetailPanel({
         </form>
       </Form>
 
-      {/* 25-12 mounts the attachments list here. */}
-      <div data-testid="requirement-attachments-slot" />
+      <RequirementAttachments
+        projectId={projectId}
+        requirementId={requirement.id}
+      />
       {/* 25-13 mounts the linked test cases panel here. */}
       <div data-testid="requirement-linked-cases-slot" />
     </div>
