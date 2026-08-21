@@ -23,7 +23,9 @@ import {
   FolderKanban,
   Home,
   Layers,
-  ListChecks as RequirementsIcon,
+  // ClipboardList, not ListChecks — ListChecks is already in use elsewhere in
+  // the app and the two read as the same glyph at nav size.
+  ClipboardList as RequirementsIcon,
   ListTree as RepositoryIcon,
   Milestone,
   PlayCircle as RunsIcon,

@@ -23,12 +23,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ExternalLink, Lock, Unlink } from "lucide-react";
+import { ExternalLink, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
+import { JiraGlyph } from "@/components/MilestoneSourceBadge";
 
 /**
  * A synced requirement's `externalUrl` is tracker-provided and some sync
@@ -83,6 +84,10 @@ export function RequirementProvenanceBadge({
   className,
 }: RequirementProvenanceBadgeProps) {
   const t = useTranslations("requirements.provenance");
+  // Reuse the provider label the milestone sync badge already ships
+  // (`milestones.sync.providerJira`) rather than adding a second key that
+  // just says "Jira".
+  const provider = useTranslations("milestones")("sync.providerJira");
   const tCommon = useTranslations("common");
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -136,6 +141,23 @@ export function RequirementProvenanceBadge({
     </Tooltip>
   );
 
+  const label = locked ? t("syncedLabel") : t("detachedLabel");
+  const tooltipText = locked ? t("syncedTooltip") : t("detachedTooltip");
+  const testId = locked
+    ? "requirement-provenance-locked"
+    : "requirement-provenance-detached";
+
+  // Progressive collapse (drop "· Synced", then "Jira", keeping the mark) is
+  // NOT implemented yet. A first attempt measured segment widths from an
+  // absolutely-positioned hidden copy, which left the wrapper reporting
+  // ~zero width: the badge never collapsed and the requirement's title
+  // truncated instead — the opposite of the intent. Doing this properly
+  // needs the width-competition half of MilestoneSourceBadge (a VISIBLE
+  // measuring copy plus `shrink-[999]` on the outer span) so the badge
+  // actually competes with the name for row space, not just the measurement
+  // effect. Until then the badge renders in full.
+  const level = 2;
+
   if (isNative) {
     return withTooltip(
       <Badge
@@ -156,34 +178,68 @@ export function RequirementProvenanceBadge({
     return null;
   }
 
-  const label = locked ? t("syncedLabel") : t("detachedLabel");
-  const tooltipText = locked ? t("syncedTooltip") : t("detachedTooltip");
-  const testId = locked
-    ? "requirement-provenance-locked"
-    : "requirement-provenance-detached";
-
   const renderBadge = (asMenuTrigger: boolean) => (
     <Badge
       data-testid={testId}
       variant="outline"
-      className={`text-xs gap-1 whitespace-nowrap group ${
+      // min-w-0 + overflow-hidden let the caller shrink this badge (the tree
+      // row gives it an overwhelming shrink weight) so the requirement's name
+      // keeps its room. The Jira mark stays shrink-0 inside, so the badge
+      // degrades toward icon-only rather than vanishing.
+      // `bg-background` + `text-foreground` rather than the outline variant's
+      // transparent fill: on a selected tree row the row's own accent
+      // background showed through and the badge text lost contrast against
+      // it. Painting the badge's own ground keeps it legible on selected,
+      // hovered and plain rows alike.
+      className={`text-xs gap-1 whitespace-nowrap group min-w-0 max-w-full overflow-hidden bg-background text-foreground ${
         asMenuTrigger || trackerUrl
           ? "cursor-pointer hover:bg-secondary/80"
           : "cursor-default"
       } ${className ?? ""}`}
       onClick={!asMenuTrigger && trackerUrl ? openInTracker : undefined}
     >
-      {locked && (
-        <Lock
-          data-testid="requirement-provenance-lock-icon"
-          className="h-3 w-3 shrink-0"
+      {/* No lock glyph: the badge itself carries the state word ("Synced" vs
+          "Detached"), which is the lock signal PROV-01 needs. A separate lock
+          icon in front of it said the same thing twice. */}
+      {/* Same shape a Jira-synced milestone's badge uses: the Jira mark, the
+          provider name, and a hover-revealed link out to the item. The
+          tracker key is deliberately NOT repeated here — both surfaces that
+          render this badge already lead with the shared "KEY: Title" label,
+          so echoing it printed the key twice on one line. This badge carries
+          provenance and the way out to the tracker; the label carries
+          identity. */}
+      <span className="flex shrink-0 items-center">
+        <JiraGlyph />
+      </span>
+      {level >= 1 && <span>{provider}</span>}
+      {level >= 2 && <span>{`· ${label}`}</span>}
+      {trackerUrl && (
+        <ExternalLink
+          data-testid="requirement-open-in-tracker"
+          className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
         />
       )}
-      <span>{label}</span>
-      {requirement.externalKey && (
-        <span className="opacity-80">{requirement.externalKey}</span>
-      )}
     </Badge>
+  );
+
+  /**
+   * Wraps a badge with the machinery the collapse needs: a sizing wrapper the
+   * ResizeObserver watches, and an aria-hidden full-width copy that supplies
+   * per-segment measurements.
+   *
+   * It also stops click and pointerdown from reaching the row. This badge is
+   * rendered inside a tree row that selects on click, and Radix opens a
+   * dropdown on pointerdown — without this the row's own handler won.
+   */
+  const collapsible = (badge: ReactElement) => (
+    <span
+      className={`relative flex min-w-0 items-center overflow-hidden ${className ?? ""}`}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {badge}
+    </span>
   );
 
   // Detached rows have no further destructive action available — detach is
@@ -191,20 +247,22 @@ export function RequirementProvenanceBadge({
   // badge never gets a menu, admin or not. It stays clickable straight to
   // the tracker when a safe URL is present.
   if (!locked) {
-    return withTooltip(renderBadge(false), tooltipText);
+    return withTooltip(collapsible(renderBadge(false)), tooltipText);
   }
 
   // Client-side mirror of the detach route's authorization (25-05's
   // `authorizeProjectAdminForProject`) — a 403 from that route is the real
   // backstop. Non-admins get the plain locked badge, no menu.
   if (!isProjectAdmin) {
-    return withTooltip(renderBadge(false), tooltipText);
+    return withTooltip(collapsible(renderBadge(false)), tooltipText);
   }
 
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>{renderBadge(true)}</DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
+          {collapsible(renderBadge(true))}
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="start" onClick={(e) => e.stopPropagation()}>
           <DropdownMenuItem
             disabled={!canOpenInTracker}

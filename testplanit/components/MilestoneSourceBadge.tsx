@@ -134,7 +134,11 @@ export function resolveMilestoneProjectSpace(
   return { name, short };
 }
 
-function JiraGlyph() {
+/**
+ * Exported so the requirements provenance badge renders the same Jira mark
+ * rather than keeping a second copy of the path data.
+ */
+export function JiraGlyph() {
   return (
     <svg
       viewBox="0 0 24 24"

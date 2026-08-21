@@ -76,7 +76,6 @@ describe("RequirementProvenanceBadge", () => {
     );
     expect(screen.queryByTestId("requirement-provenance-locked")).toBeNull();
     expect(screen.queryByTestId("requirement-provenance-detached")).toBeNull();
-    expect(screen.queryByTestId("requirement-provenance-lock-icon")).toBeNull();
   });
 
   it("renders the locked badge for a synced, non-detached requirement", () => {
@@ -85,10 +84,16 @@ describe("RequirementProvenanceBadge", () => {
     );
     const badge = screen.getByTestId("requirement-provenance-locked");
     expect(badge).toBeInTheDocument();
-    expect(
-      screen.getByTestId("requirement-provenance-lock-icon")
-    ).toBeInTheDocument();
-    expect(badge).toHaveTextContent("REQ-100");
+    // PROV-01's lock signal is the badge's own state word, not a separate
+    // lock glyph — the glyph was removed because it repeated what the word
+    // already said. Assert the two states are actually distinguishable.
+    expect(badge).toHaveTextContent("syncedLabel");
+    expect(badge).not.toHaveTextContent("detachedLabel");
+    // The badge names the tracker rather than repeating the issue key — both
+    // surfaces that render it already lead with the shared "KEY: Title"
+    // label, so the key was printing twice on one row. This mirrors a synced
+    // milestone's badge.
+    expect(badge).toHaveTextContent("Jira");
   });
 
   it("renders the detached badge, keeping the tracker reference, for a detached requirement", () => {
@@ -97,8 +102,18 @@ describe("RequirementProvenanceBadge", () => {
     );
     const badge = screen.getByTestId("requirement-provenance-detached");
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveTextContent("REQ-100");
-    expect(screen.queryByTestId("requirement-provenance-lock-icon")).toBeNull();
+    // PROV-02's "keeps a Jira reference badge" after detaching. The proof is
+    // the reference still being REACHABLE, not the key being printed inside
+    // the badge: the tracker is named, and the link out is rendered. A
+    // clickable way back to Jira is a stronger guarantee than a string.
+    expect(badge).toHaveTextContent("Jira");
+    expect(
+      screen.getByTestId("requirement-open-in-tracker")
+    ).toBeInTheDocument();
+    // The counterpart of the locked assertion above: a detached row reads
+    // "Detached", never "Synced".
+    expect(badge).toHaveTextContent("detachedLabel");
+    expect(badge).not.toHaveTextContent("syncedLabel");
   });
 
   it("offers the detach action only to a project admin", () => {
