@@ -166,6 +166,12 @@ const SCOPED_FILES = [
   // assertion further down is the only thing that would catch someone
   // quietly deleting the spread from inside an otherwise-intact call.
   "app/api/report-builder/project-health/route.ts",
+  // 25-08's load-all requirement tree spreads REQUIREMENT_SCOPE_WHERE (the
+  // other half of this module's mirror pair, not DEFECT_SCOPE_WHERE) into
+  // its single findMany call — verified by direct read, and by this file's
+  // own RequirementsTreeView.test.tsx asserting on the hook's actual `where`
+  // argument rather than by source grep alone.
+  "app/[locale]/projects/requirements/[projectId]/RequirementsTreeView.tsx",
 ];
 
 // ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,

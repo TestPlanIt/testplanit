@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/resizable";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import RequirementsTreeView from "./RequirementsTreeView";
 
 /**
  * The selection contract this workspace owns: which requirement (Issue.id)
@@ -29,14 +30,13 @@ interface RequirementsWorkspaceProps {
  * The master-detail shell for the Requirements surface (IA decision,
  * 25-CONTEXT.md): a new top-level route, not a tab on `/projects/issues`.
  *
- * This plan lands the shell only — the left pane is a placeholder for plan
- * 25-08's `<RequirementsTreeView />` and the right pane (once a requirement
- * is selected) is a placeholder for plan 25-10's `<RequirementDetailPanel />`.
- * No `DataTable`, no filter/sort bar — a tree has different interaction
- * needs than the flat sortable issues list.
+ * The left pane mounts plan 25-08's `<RequirementsTreeView />`; the right
+ * pane (once a requirement is selected) is still a placeholder for plan
+ * 25-10's `<RequirementDetailPanel />`. No `DataTable`, no filter/sort bar —
+ * a tree has different interaction needs than the flat sortable issues list.
  */
 export default function RequirementsWorkspace({
-  projectId: _projectId,
+  projectId,
 }: RequirementsWorkspaceProps) {
   const t = useTranslations();
   const [selectedRequirementId, setSelectedRequirementId] = useState<
@@ -64,15 +64,16 @@ export default function RequirementsWorkspace({
               maxSize={60}
               className="p-0 m-0"
             >
-              {/*
-                Plan 25-08 replaces this with <RequirementsTreeView />, wired
-                to `selectedRequirementId`/`setSelectedRequirementId` above
-                via the `RequirementSelection` contract.
-              */}
               <div
                 data-testid="requirements-tree-pane"
                 className="h-full overflow-y-auto"
-              />
+              >
+                <RequirementsTreeView
+                  projectId={projectId}
+                  selectedRequirementId={selectedRequirementId}
+                  onSelectRequirement={setSelectedRequirementId}
+                />
+              </div>
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel
