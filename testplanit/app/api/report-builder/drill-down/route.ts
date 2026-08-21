@@ -261,6 +261,50 @@ async function handleMilestoneReadinessDrillDown(
   return Response.json(response);
 }
 
+/**
+ * Fill in `status` on run-case rows that carry none, from the case's latest
+ * JUnitTestResult within the same run. Mutates the rows in place so the
+ * response shape stays identical to a manually-executed case — the drill-down
+ * columns read `row.status` and shouldn't have to know which table it came
+ * from. Rows that genuinely never executed keep a null status.
+ */
+async function resolveAutomatedRunCaseStatuses(rows: any[]) {
+  const pending = (rows ?? []).filter(
+    (r) => r?.status == null && r?.repositoryCaseId != null && r?.testRunId != null
+  );
+  if (pending.length === 0) return;
+
+  const results = await baseDb.jUnitTestResult.findMany({
+    where: {
+      repositoryCaseId: { in: [...new Set(pending.map((r) => r.repositoryCaseId))] },
+      testSuite: {
+        testRunId: { in: [...new Set(pending.map((r) => r.testRunId))] },
+      },
+    },
+    select: {
+      id: true,
+      repositoryCaseId: true,
+      testSuite: { select: { testRunId: true } },
+      status: { include: { color: true } },
+    },
+    // Latest first, so the first row seen for a (case, run) pair wins.
+    orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+  });
+
+  const latestByCaseRun = new Map<string, unknown>();
+  for (const result of results) {
+    const key = `${result.repositoryCaseId}:${result.testSuite?.testRunId}`;
+    if (!latestByCaseRun.has(key)) {
+      latestByCaseRun.set(key, result.status);
+    }
+  }
+
+  for (const row of pending) {
+    const resolved = latestByCaseRun.get(`${row.repositoryCaseId}:${row.testRunId}`);
+    if (resolved) row.status = resolved;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
@@ -402,6 +446,15 @@ export async function POST(req: NextRequest) {
       model.findMany(query),
       model.count({ where: query.where }),
     ]);
+
+    // Automated runs (JUnit, TestNG, Mocha, etc.) never denormalise a status
+    // onto TestRunCases.statusId — the outcome lives in JUnitTestResult — so a
+    // run-case with no status here may well have executed. Resolve those before
+    // shaping the response, otherwise the drill-down reports "Completed: No"
+    // for every automated case and contradicts the metric it drills into.
+    if (context.metricId === "milestoneCompletion") {
+      await resolveAutomatedRunCaseStatuses(rawData);
+    }
 
     // Transform data to ensure 'name' field is populated correctly
     const data = rawData.map((record: any) => {

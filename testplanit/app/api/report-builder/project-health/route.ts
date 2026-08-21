@@ -3,6 +3,7 @@ import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
+import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate
@@ -194,11 +195,14 @@ const METRIC_REGISTRY: Record<
     id: "milestoneCompletion",
     label: "Milestone Completion (%)",
     aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
-      // Completion = distinct run-cases whose rolled-up status is completed,
-      // over all run-cases in the milestone's live runs. The run-case status
-      // rollup is written by manual execution and the automated-result import
-      // alike, so both sources count — and a case executed N times counts
-      // once.
+      // Completion is counted from whichever table actually holds the outcome:
+      // manual runs roll their status up onto TestRunCases.statusId, while
+      // automated runs (JUnit, TestNG, Mocha, etc.) record theirs in
+      // JUnitTestResult and leave the run-case row empty. Reading only the
+      // run-case status — as this metric used to — counts every automated case
+      // as permanently incomplete. Mirrors `calculateMilestoneCompletion` in
+      // lib/services/milestoneSummary.ts so the report and the milestone page
+      // agree.
       const milestones = await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
@@ -217,37 +221,59 @@ const METRIC_REGISTRY: Record<
         return groupBy.length === 0 ? [{ milestoneCompletion: null }] : [];
       }
 
-      const runCases = await baseDb.testRunCases.findMany({
-        where: {
-          isDeleted: false,
-          testRun: {
-            isDeleted: false,
-            milestoneId: { in: milestones.map((m: any) => m.id) },
-          },
-        },
-        select: {
-          testRun: { select: { milestoneId: true } },
-          status: { select: { isCompleted: true } },
-        },
-      });
+      const milestoneIds = milestones.map((m: any) => m.id);
+      const automatedTypes = [...AUTOMATED_TEST_RUN_TYPES];
+
+      // Aggregated in Postgres rather than by loading every run-case row into
+      // memory, which on a large project meant pulling ~1M rows to count them.
+      const completionRows = await baseDb.$queryRaw<
+        Array<{ milestoneId: number; total: bigint; completed: bigint }>
+      >`
+        WITH manual AS (
+          SELECT tr."milestoneId" AS milestone_id,
+                 COUNT(*) AS total,
+                 COUNT(*) FILTER (WHERE s."isCompleted" = true) AS completed
+          FROM "TestRunCases" trc
+          JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+          LEFT JOIN "Status" s ON s.id = trc."statusId"
+          WHERE trc."isDeleted" = false
+            AND tr."milestoneId" = ANY(${milestoneIds}::int[])
+            AND NOT (tr."testRunType"::text = ANY(${automatedTypes}::text[]))
+          GROUP BY 1
+        ),
+        automated AS (
+          SELECT tr."milestoneId" AS milestone_id,
+                 COUNT(*) AS total,
+                 COUNT(*) FILTER (WHERE s."isCompleted" = true) AS completed
+          FROM "JUnitTestResult" jr
+          JOIN "JUnitTestSuite" js ON js.id = jr."testSuiteId"
+          JOIN "TestRuns" tr ON tr.id = js."testRunId" AND tr."isDeleted" = false
+          LEFT JOIN "Status" s ON s.id = jr."statusId"
+          WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
+            AND tr."testRunType"::text = ANY(${automatedTypes}::text[])
+          GROUP BY 1
+        )
+        SELECT
+          COALESCE(m.milestone_id, a.milestone_id) AS "milestoneId",
+          COALESCE(m.total, 0) + COALESCE(a.total, 0) AS total,
+          COALESCE(m.completed, 0) + COALESCE(a.completed, 0) AS completed
+        FROM manual m
+        FULL OUTER JOIN automated a ON a.milestone_id = m.milestone_id
+      `;
 
       const countsByMilestone = new Map<
         number,
         { total: number; completed: number }
       >();
-      runCases.forEach((rc: any) => {
-        const milestoneId = rc.testRun?.milestoneId;
-        if (milestoneId == null) return;
-        const entry = countsByMilestone.get(milestoneId) ?? {
-          total: 0,
-          completed: 0,
-        };
-        entry.total++;
-        if (rc.status?.isCompleted === true) {
-          entry.completed++;
+      completionRows.forEach(
+        (row: { milestoneId: number; total: bigint; completed: bigint }) => {
+          if (row.milestoneId == null) return;
+          countsByMilestone.set(row.milestoneId, {
+            total: Number(row.total),
+            completed: Number(row.completed),
+          });
         }
-        countsByMilestone.set(milestoneId, entry);
-      });
+      );
 
       const grouped = new Map<string, any>();
       milestones.forEach((milestone: any) => {

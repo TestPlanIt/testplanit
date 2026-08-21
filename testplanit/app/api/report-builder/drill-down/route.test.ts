@@ -678,4 +678,85 @@ describe("POST /api/report-builder/drill-down", () => {
       );
     });
   });
+
+  // Automated runs leave TestRunCases.statusId empty and record the outcome in
+  // JUnitTestResult, so the milestone-completion drill-down has to resolve the
+  // status from there — otherwise it renders "Completed: No" for every
+  // automated case and contradicts the metric it drills into.
+  describe("milestoneCompletion automated status resolution", () => {
+    const passed = {
+      id: 2,
+      name: "Passed",
+      isCompleted: true,
+      color: { value: "#0f0" },
+    };
+
+    const setUpRunCases = (rows: any[]) => {
+      (getModelForMetric as any).mockReturnValue("testRunCases");
+      (getQueryBuilderForMetric as any).mockReturnValue(() => ({
+        where: { isDeleted: false },
+        include: { status: { include: { color: true } } },
+      }));
+      (baseDb as any).testRunCases = {
+        findMany: vi.fn().mockResolvedValue(rows),
+        count: vi.fn().mockResolvedValue(rows.length),
+        groupBy: vi.fn().mockResolvedValue([]),
+      };
+    };
+
+    const request = () =>
+      createRequest({
+        context: {
+          metricId: "milestoneCompletion",
+          reportType: "project-health",
+          projectId: 1,
+          dimensions: {},
+        },
+      });
+
+    it("fills a status-less run-case from its latest JUnit result", async () => {
+      setUpRunCases([
+        { id: 11, repositoryCaseId: 501, testRunId: 90, status: null },
+      ]);
+      (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([
+        { id: 7, repositoryCaseId: 501, testSuite: { testRunId: 90 }, status: passed },
+      ]);
+
+      const data = await (await POST(request())).json();
+
+      expect(data.data[0].status).toEqual(passed);
+    });
+
+    it("leaves a genuinely unexecuted run-case without a status", async () => {
+      setUpRunCases([
+        { id: 12, repositoryCaseId: 502, testRunId: 90, status: null },
+      ]);
+      (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([]);
+
+      const data = await (await POST(request())).json();
+
+      expect(data.data[0].status).toBeNull();
+    });
+
+    it("does not overwrite a manual run-case's own status", async () => {
+      const failed = {
+        id: 3,
+        name: "Failed",
+        isCompleted: true,
+        color: { value: "#f00" },
+      };
+      setUpRunCases([
+        { id: 13, repositoryCaseId: 503, testRunId: 91, status: failed },
+      ]);
+      (baseDb as any).jUnitTestResult.findMany.mockResolvedValue([
+        { id: 9, repositoryCaseId: 503, testSuite: { testRunId: 91 }, status: passed },
+      ]);
+
+      const data = await (await POST(request())).json();
+
+      expect(data.data[0].status).toEqual(failed);
+      // A row that already has a status is never looked up.
+      expect((baseDb as any).jUnitTestResult.findMany).not.toHaveBeenCalled();
+    });
+  });
 });
