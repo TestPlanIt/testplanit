@@ -43,10 +43,7 @@ import { latestCaseResultsCte } from "./latestCaseResults";
  */
 
 export type RequirementCoverageStatus =
-  | "UNCOVERED"
-  | "FAILED"
-  | "NOT_RUN"
-  | "PASSED";
+  "UNCOVERED" | "FAILED" | "NOT_RUN" | "PASSED";
 
 export interface RequirementCoverageBreakdown {
   linkedCaseCount: number;
