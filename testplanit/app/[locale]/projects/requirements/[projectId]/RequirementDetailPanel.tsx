@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,11 +22,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { emptyEditorContent } from "~/app/constants";
 import {
   isRequirementLocked,
   LOCKED_ISSUE_FIELDS,
 } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
 import {
@@ -42,6 +45,8 @@ interface RequirementDetailFormData {
   title: string;
   status: string;
   priority: string;
+  /** JSON-stringified Tiptap doc, mirroring Milestones.docs' own form shape. */
+  note: string;
 }
 
 /**
@@ -64,7 +69,7 @@ const SCALAR_FIELDS: ReadonlyArray<{
 
 type RequirementRow = Pick<
   Issue,
-  "id" | "name" | "title" | "status" | "priority"
+  "id" | "name" | "title" | "status" | "priority" | "note"
 > &
   RequirementProvenanceBadgeRow;
 
@@ -73,14 +78,29 @@ function buildResetValues(row: RequirementRow): RequirementDetailFormData {
     title: row.title ?? "",
     status: row.status ?? "",
     priority: row.priority ?? "",
+    // Legacy-string-vs-JSON parse guard, forked verbatim from
+    // Milestones.docs (app/[locale]/projects/milestones/[projectId]/[milestoneId]/page.tsx,
+    // its own initial-load reset): a `note` already stored as a JSON string
+    // is kept as-is, an object is re-stringified, and a null note becomes
+    // the canonical empty doc. Both original shapes round-trip through the
+    // same `JSON.parse` on render below, so a legacy string note and a
+    // structured JSON note render identically.
+    note:
+      typeof row.note === "string"
+        ? row.note
+        : row.note
+          ? JSON.stringify(row.note)
+          : JSON.stringify(emptyEditorContent),
   };
 }
 
 /**
- * The UI half of PROV-01/02/03: a provenance badge plus lock-aware scalar
- * fields. Task 2 (this same file) adds the HIER-05 Tiptap body bound to
- * `Issue.note`. Attachments (25-12) and linked test cases (25-13) mount
- * into the two placeholder regions at the bottom of this panel.
+ * HIER-05's authoring surface plus the UI half of PROV-01/02/03: a
+ * provenance badge, lock-aware scalar fields, and a Tiptap body bound to
+ * `Issue.note` -- which stays editable even on a synced, locked requirement
+ * (see the comment beside the editor's `readOnly` below). Attachments
+ * (25-12) and linked test cases (25-13) mount into the two placeholder
+ * regions at the bottom of this panel.
  */
 export default function RequirementDetailPanel({
   projectId,
@@ -114,6 +134,7 @@ export default function RequirementDetailPanel({
       title: "",
       status: "",
       priority: "",
+      note: JSON.stringify(emptyEditorContent),
     },
   });
   const { isDirty } = form.formState;
@@ -121,7 +142,8 @@ export default function RequirementDetailPanel({
   // PROV-03's single editability predicate: every disabled state below --
   // the three scalar fields -- traces back to this one boolean, derived
   // from the same shared service both RequirementProvenanceBadge.tsx and
-  // RequirementsTreeView.tsx already use.
+  // RequirementsTreeView.tsx already use. The rich-text section
+  // deliberately never reads it (see the comment beside its own `readOnly`).
   const locked = isRequirementLocked(requirement ?? null);
 
   useEffect(() => {
@@ -151,20 +173,21 @@ export default function RequirementDetailPanel({
     if (!requirement) return;
     setIsSubmitting(true);
     try {
-      // The three scalar fields are all in LOCKED_ISSUE_FIELDS, so on a
+      // `note` is never in LOCKED_ISSUE_FIELDS, so it is always sent -- that
+      // is the entire point of HIER-05/PROV-01 (see the comment beside the
+      // editor below). The three scalar fields ARE in that list, so on a
       // locked row they are stripped from the payload client-side too --
       // defense-in-depth alongside the schema's own field-level `@deny`,
       // never a substitute for it (a stale/re-enabled control could still
       // submit a locked field's unchanged value otherwise).
-      if (locked) {
-        setIsSubmitting(false);
-        return;
-      }
       const updateData: Record<string, unknown> = {
-        title: data.title,
-        status: data.status || null,
-        priority: data.priority || null,
+        note: JSON.parse(data.note),
       };
+      if (!locked) {
+        updateData.title = data.title;
+        updateData.status = data.status || null;
+        updateData.priority = data.priority || null;
+      }
 
       await updateRequirement({
         where: { id: requirement.id },
@@ -290,6 +313,50 @@ export default function RequirementDetailPanel({
               />
             );
           })}
+
+          <FormField
+            control={form.control}
+            name="note"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("documentation")}</FormLabel>
+                {isEditMode || !isTiptapEmpty(requirement.note) ? (
+                  <FormControl>
+                    <TipTapEditor
+                      key={`editing-note-${isEditMode}`}
+                      content={
+                        field.value
+                          ? JSON.parse(field.value)
+                          : emptyEditorContent
+                      }
+                      onUpdate={(newContent) => {
+                        if (isEditMode) {
+                          field.onChange(JSON.stringify(newContent));
+                        }
+                      }}
+                      // Deliberately NOT `locked` -- `Issue.note` is `Json?`,
+                      // is excluded from LOCKED_ISSUE_FIELDS, and plays the
+                      // `Milestones.docs` role (Phase 20-02 decision P1c:
+                      // "note stays unlocked ... plays Milestones.docs role
+                      // not Milestones.note role"). A synced, locked
+                      // requirement's rich text stays editable by design --
+                      // gating this on `locked` would reintroduce the exact
+                      // lock this field was deliberately carved out of.
+                      readOnly={!isEditMode}
+                      className="h-auto"
+                      placeholder={t("documentationPlaceholder")}
+                      projectId={projectId}
+                    />
+                  </FormControl>
+                ) : (
+                  <div className="text-muted-foreground text-sm">
+                    {t("documentationEmpty")}
+                  </div>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </form>
       </Form>
 
