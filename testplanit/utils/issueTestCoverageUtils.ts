@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { sql } from "kysely";
 import { NextRequest } from "next/server";
+import { latestCaseResultsCte } from "~/lib/services/latestCaseResults";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 // Flat row structure for grouping-based approach
@@ -146,83 +147,13 @@ export async function handleIssueTestCoveragePOST(
       : sql``;
 
     // Query to get issues with their linked test cases and latest status
-    // We need to find the most recent execution for each test case
+    // We need to find the most recent execution for each test case. The
+    // "latest result per case" CTEs live in lib/services/latestCaseResults.ts
+    // and are shared with the requirement coverage rollup, so both reports
+    // agree on what "latest" means for a case.
     const rawResults = (
       await sql<RawIssueTestCaseResult>`
-      WITH latest_manual_results AS (
-        -- Get the latest manual test result for each repository case
-        SELECT DISTINCT ON (rc.id)
-          rc.id as test_case_id,
-          trr."executedAt" as executed_at,
-          s.id as status_id,
-          s.name as status_name,
-          c.value as status_color,
-          s."isSuccess" as is_success,
-          s."isFailure" as is_failure
-        FROM "RepositoryCases" rc
-        INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-        INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
-        INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id
-        INNER JOIN "Status" s ON s.id = trr."statusId"
-        LEFT JOIN "Color" c ON c.id = s."colorId"
-        WHERE rc."isDeleted" = false
-          AND rc."isArchived" = false
-          AND trr."executedAt" IS NOT NULL
-        ORDER BY rc.id, trr."executedAt" DESC
-      ),
-      latest_junit_results AS (
-        -- Get the latest JUnit result for each repository case
-        SELECT DISTINCT ON (rc.id)
-          rc.id as test_case_id,
-          jr."executedAt" as executed_at,
-          COALESCE(s.id,
-            CASE jr.type
-              WHEN 'PASSED' THEN -1
-              WHEN 'FAILURE' THEN -2
-              WHEN 'ERROR' THEN -3
-              ELSE NULL
-            END
-          ) as status_id,
-          COALESCE(s.name, jr.type::text) as status_name,
-          COALESCE(c.value,
-            CASE jr.type
-              WHEN 'PASSED' THEN '#22c55e'
-              WHEN 'FAILURE' THEN '#ef4444'
-              WHEN 'ERROR' THEN '#ef4444'
-              ELSE '#6b7280'
-            END
-          ) as status_color,
-          COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
-          COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure
-        FROM "RepositoryCases" rc
-        INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
-        INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
-        INNER JOIN "TestRuns" tr ON tr.id = jts."testRunId" AND tr."isDeleted" = false
-        LEFT JOIN "Status" s ON s.id = jr."statusId"
-        LEFT JOIN "Color" c ON c.id = s."colorId"
-        WHERE rc."isDeleted" = false
-          AND rc."isArchived" = false
-          AND jr."executedAt" IS NOT NULL
-          AND jr.type != 'SKIPPED'
-        ORDER BY rc.id, jr."executedAt" DESC
-      ),
-      latest_results AS (
-        -- Combine and get the most recent result for each test case
-        SELECT DISTINCT ON (test_case_id)
-          test_case_id,
-          executed_at,
-          status_id,
-          status_name,
-          status_color,
-          is_success,
-          is_failure
-        FROM (
-          SELECT * FROM latest_manual_results
-          UNION ALL
-          SELECT * FROM latest_junit_results
-        ) all_results
-        ORDER BY test_case_id, executed_at DESC
-      )
+      WITH ${latestCaseResultsCte()}
       SELECT
         i.id as issue_id,
         i.name as issue_name,
