@@ -566,8 +566,11 @@ describeIntegration(
       const remainingCases = await db.repositoryCases.count({
         where: { name: { startsWith: STAMP } },
       });
+      const remainingProjects = await db.projects.count({
+        where: { name: { startsWith: STAMP } },
+      });
       console.log(
-        `post-teardown stamp check (${STAMP}): issues=${remainingIssues}, cases=${remainingCases}`
+        `post-teardown stamp check (${STAMP}): issues=${remainingIssues}, cases=${remainingCases}, projects=${remainingProjects}`
       );
 
       await db.$disconnect();
