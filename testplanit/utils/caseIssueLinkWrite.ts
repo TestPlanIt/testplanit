@@ -21,10 +21,44 @@
  * page-load snapshot, and the case's Linked Requirements panel commits its
  * unlinks straight to the database without touching it, so an id that rides
  * along in the snapshot is recreated here after the user has removed it.
+ *
+ * `pickerOwnedIssueIds` is how that stays true. It seeds the form value, and
+ * it is the exact complement of `preservedIssueIds` over the same links —
+ * every link is either carried by the value and replaced, or held back and
+ * left alone, and none is both or neither. That is why the two live in one
+ * module behind one predicate: split them across the seed and the save and a
+ * link can fall between the two rules, dropped from the submitted value by
+ * one and deleted by the other. Row kind is the tempting predicate for the
+ * seed and the wrong one for exactly that reason — a requirement synced from
+ * a tracker IS owned by an integration, so filtering the seed by "is a
+ * requirement" would strip an id the save still expects to see and delete a
+ * link nobody touched.
  */
 
 export interface CaseIssueLinkRow {
   issue?: { id: number; integrationId?: number | null } | null;
+}
+
+type CaseIssueLinkIssue = NonNullable<CaseIssueLinkRow["issue"]>;
+
+function isPickerOwned(issue: CaseIssueLinkIssue): boolean {
+  return issue.integrationId != null;
+}
+
+/**
+ * The ids of the links the picker owns, for seeding the Issues form value.
+ */
+export function pickerOwnedIssueIds(
+  existingLinks: readonly CaseIssueLinkRow[] | null | undefined
+): number[] {
+  const ownedIssueIds: number[] = [];
+  for (const link of existingLinks ?? []) {
+    const issue = link?.issue;
+    if (issue && isPickerOwned(issue)) {
+      ownedIssueIds.push(issue.id);
+    }
+  }
+  return ownedIssueIds;
 }
 
 export interface CaseIssueLinkWrite {
@@ -44,7 +78,7 @@ export function planCaseIssueLinkWrite(
   const preservedIssueIds: number[] = [];
   for (const link of existingLinks ?? []) {
     const issue = link?.issue;
-    if (issue && issue.integrationId == null) {
+    if (issue && !isPickerOwned(issue)) {
       preservedIssueIds.push(issue.id);
     }
   }

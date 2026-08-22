@@ -113,7 +113,10 @@ import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesW
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
-import { planCaseIssueLinkWrite } from "~/utils/caseIssueLinkWrite";
+import {
+  pickerOwnedIssueIds,
+  planCaseIssueLinkWrite,
+} from "~/utils/caseIssueLinkWrite";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { ExtendedCases } from "../columns";
@@ -1025,10 +1028,15 @@ export function TestCaseDetailsView({
         testcase.caseTags?.map((ct: any) => ct.tag.id) ||
         [],
       // Preserve existing issues value if it's already set (from external issues)
-      issues:
-        currentValues.issues ||
-        testcase.caseIssues?.map((ci: any) => ci.issue.id) ||
-        [],
+      //
+      // Seeded from the links the Issues field owns rather than from every
+      // link on the case: the field below is whichever picker the project's
+      // integration selects, and two of the three never publish a full set
+      // over this seed — the simple-url picker only writes its own additions
+      // and removals, and a project with no active integration renders an
+      // alert and writes nothing at all. An id no picker owns therefore rides
+      // this value all the way to the save, which recreates the link from it.
+      issues: currentValues.issues || pickerOwnedIssueIds(testcase.caseIssues),
       steps:
         testcase.steps?.map((stepP: any) => ({
           step: parseJsonToTipTap(stepP.step),
