@@ -63,8 +63,10 @@ Two rules matter:
 - Put it in `nginx-local/`, never `nginx-local/http/`. `client_max_body_size`
   hard-fails with `"client_max_body_size" directive is duplicate` if it appears
   twice in the same context, and nginx then refuses to start.
-- Raise the app's own per-upload limits too if you need files above 10 MB —
-  nginx only sets the outer ceiling. See
+- Raise the app's own per-upload limit to match — nginx only sets the outer
+  ceiling, so a larger `client_max_body_size` on its own just moves the
+  rejection from nginx to the app. Set `UPLOAD_MAX_MB` in the `.env` Compose
+  reads and rebuild the `prod` image (it is baked at build time). See
   [File Storage](../../docs/docs/file-storage.md#file-size-limits).
 
 Apply and verify the same way as above.

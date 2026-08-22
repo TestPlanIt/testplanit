@@ -208,19 +208,38 @@ This tells the app to generate presigned URLs using your public domain instead o
 
 Each upload type has its own ceiling:
 
-| Upload type            | Maximum size |
-| ---------------------- | ------------ |
-| Attachments            | 10 MB        |
-| Inline document images | 10 MB        |
-| Project icons          | 4 MB         |
-| Avatars                | 2 MB         |
+| Upload type            | Maximum size         |
+| ---------------------- | -------------------- |
+| Attachments            | 10 MB (configurable) |
+| Inline document images | 10 MB (configurable) |
+| Project icons          | 4 MB                 |
+| Avatars                | 2 MB                 |
 
 A file over the limit is rejected before it is stored, with a message naming the
 maximum for that type.
 
+Attachments and inline document images share one knob, `UPLOAD_MAX_MB` (default
+`10`). Set it in the `.env` that Docker Compose reads, then rebuild:
+
+```bash
+# testplanit/.env
+UPLOAD_MAX_MB=100
+```
+
+```bash
+docker compose -f docker-compose.prod.yml build prod
+docker compose -f docker-compose.prod.yml up -d prod
+```
+
+A **rebuild** is required, not just a restart. Next.js freezes the matching
+server-action body limit into the standalone build, so a runtime-only change
+silently has no effect and uploads keep failing with an opaque error. Project
+icons and avatars are deliberately fixed — they are UI thumbnails, not
+operator-sized user payloads.
+
 The bundled nginx separately caps any request body sent to the app at 10 MB. In
 proxy mode the file travels through the app server, so that ceiling applies to
-the upload as well — raising the app limits alone is not enough. See
+the upload as well — raising `UPLOAD_MAX_MB` alone is not enough. See
 `nginx-local/README.md` for how to raise it per deployment.
 
 - **Total attachments**: No limit per entity
