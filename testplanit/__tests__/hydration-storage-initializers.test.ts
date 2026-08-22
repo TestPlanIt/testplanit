@@ -60,7 +60,7 @@ function sourceFiles(dir: string, acc: string[] = []): string[] {
  * contains its own parens and quotes, and a naive quote-delimited match
  * silently truncates on them.
  */
-function useStateInitializers(source: string): string[] {
+function collectUseStateInitializers(source: string): string[] {
   const out: string[] = [];
   const marker = /\buseState\s*(?:<[^(]*>)?\s*\(/g;
   let match: RegExpExecArray | null;
@@ -88,7 +88,7 @@ describe("hydration safety: storage reads in useState initializers", () => {
     for (const file of sourceFiles(ROOT)) {
       const source = fs.readFileSync(file, "utf8");
       if (!STORAGE_READ.test(source)) continue;
-      for (const initializer of useStateInitializers(source)) {
+      for (const initializer of collectUseStateInitializers(source)) {
         if (STORAGE_READ.test(initializer)) {
           offenders.push(path.relative(ROOT, file));
           break;
@@ -117,7 +117,7 @@ describe("hydration safety: storage reads in useState initializers", () => {
         return JSON.parse(window.localStorage.getItem("k") ?? "{}");
       });
     `;
-    const flagged = useStateInitializers(bad).filter((i) =>
+    const flagged = collectUseStateInitializers(bad).filter((i) =>
       STORAGE_READ.test(i)
     );
     expect(flagged).toHaveLength(3);
@@ -132,7 +132,7 @@ describe("hydration safety: storage reads in useState initializers", () => {
       }, []);
     `;
     expect(
-      useStateInitializers(good).filter((i) => STORAGE_READ.test(i))
+      collectUseStateInitializers(good).filter((i) => STORAGE_READ.test(i))
     ).toHaveLength(0);
   });
 });
