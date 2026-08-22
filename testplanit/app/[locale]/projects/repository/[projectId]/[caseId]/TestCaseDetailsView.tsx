@@ -113,6 +113,7 @@ import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesW
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
+import { planCaseIssueLinkWrite } from "~/utils/caseIssueLinkWrite";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { ExtendedCases } from "../columns";
@@ -1376,16 +1377,26 @@ export function TestCaseDetailsView({
         });
       }
 
-      // Replace the case's issue links on the explicit join model.
+      // Replace the case's issue links on the explicit join model, covering
+      // only the links the Issues picker owns — see planCaseIssueLinkWrite for
+      // why the rest are held out of the replace rather than resubmitted.
+      const { preservedIssueIds, linkedIssueIds } = planCaseIssueLinkWrite(
+        testcase.caseIssues,
+        issuesArray
+      );
+
       await deleteManyRepositoryCaseIssue({
-        where: { caseId: Number(caseId) },
-      });
-      const issueLinks = issuesArray
-        .filter((id: any) => id != null)
-        .map((issueId: number) => ({
+        where: {
           caseId: Number(caseId),
-          issueId,
-        }));
+          ...(preservedIssueIds.length > 0
+            ? { issueId: { notIn: preservedIssueIds } }
+            : {}),
+        },
+      });
+      const issueLinks = linkedIssueIds.map((issueId: number) => ({
+        caseId: Number(caseId),
+        issueId,
+      }));
       if (issueLinks.length > 0) {
         await createManyRepositoryCaseIssue({
           data: issueLinks,

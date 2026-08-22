@@ -185,6 +185,14 @@ const SCOPED_FILES = [
   // surfaces. Verified by direct read; LinkedRequirementsPanel.test.tsx
   // asserts on the mocked hook's own `where` argument for this query.
   "components/requirements/LinkedRequirementsPanel.tsx",
+  // The CSV importer's `issues` column resolves issue NAMES, which makes it
+  // a listing read wearing an identity lookup's clothes: `Issue.name` is
+  // unique across neither projects nor row kinds, so an unscoped match
+  // linked a case to a requirement — or to another project's issue — on a
+  // name collision alone. Scoped to defects and to the importing project.
+  // This is the only issue read the importer performs, which is why
+  // app/api/repository/import/route.ts no longer carries a read exemption.
+  "lib/services/importCaseIssueLinks.ts",
 ];
 
 // ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,
@@ -268,7 +276,6 @@ const EXEMPT_INGESTION_IMPORT_FILES = [
   // just narrow a picker.
   "lib/integrations/adapters/SimpleUrlAdapter.ts",
   "lib/services/testCaseImport.ts",
-  "app/api/repository/import/route.ts",
   "workers/testmoImport/issueImports.ts",
 ];
 

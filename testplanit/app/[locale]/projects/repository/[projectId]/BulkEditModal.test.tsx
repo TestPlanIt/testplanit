@@ -1897,6 +1897,144 @@ describe("BulkEditModal", () => {
       );
     });
 
+    it("clears defect links without touching requirement links", async () => {
+      // The selected cases disagree about issues, so the Issues field seeds
+      // empty — the shape in which "edit the Issues field at all" used to mean
+      // "disconnect every link on every selected case", requirement linkage
+      // included, with no way to put it back from this modal.
+      const requirement = {
+        id: 3,
+        name: "REQ-9",
+        externalId: null,
+        isRequirement: true,
+      };
+      const casesWithMixedIssues = [
+        {
+          ...mockCasesWithTextFields[0],
+          issues: [mockIssuesData[0], requirement],
+        },
+        { ...mockCasesWithTextFields[1], issues: [mockIssuesData[1]] },
+      ];
+
+      // Stands in for the RepositoryCaseIssue rows the bulk-edit route writes.
+      const linkRows = new Map<number, Set<number>>([
+        [1, new Set([mockIssuesData[0].id, requirement.id])],
+        [2, new Set([mockIssuesData[1].id])],
+      ]);
+
+      global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+        const url =
+          typeof input === "string"
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
+
+        if (
+          url.includes("/api/projects/") &&
+          (url.includes("/cases/fetch-many") ||
+            url.includes("/cases/bulk-edit-fetch"))
+        ) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ cases: casesWithMixedIssues }),
+            status: 200,
+            statusText: "OK",
+            headers: new Headers(),
+          } as Response);
+        }
+
+        if (
+          url.includes("/api/projects/") &&
+          url.includes("/cases/bulk-edit") &&
+          !url.includes("bulk-edit-fetch") &&
+          init?.method === "POST"
+        ) {
+          const payload = init.body ? JSON.parse(init.body as string) : {};
+          bulkEditCalls.push({ url, payload });
+          // Apply the issue links exactly as the bulk-edit route does:
+          // deleteMany over `disconnect`, then createMany over `connect`.
+          const issueUpdates = payload.updates?.issues;
+          if (issueUpdates) {
+            for (const caseId of payload.caseIds ?? []) {
+              const rows = linkRows.get(caseId);
+              if (!rows) continue;
+              for (const { id } of issueUpdates.disconnect ?? [])
+                rows.delete(id);
+              for (const { id } of issueUpdates.connect ?? []) rows.add(id);
+            }
+          }
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              success: true,
+              updatedCount: payload.caseIds?.length || 0,
+            }),
+            status: 200,
+            statusText: "OK",
+            headers: new Headers(),
+          } as Response);
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+          status: 200,
+          statusText: "OK",
+          headers: new Headers(),
+        } as Response);
+      }) as any;
+
+      render(
+        <BulkEditModal
+          isOpen={true}
+          onClose={vi.fn()}
+          onSaveSuccess={vi.fn()}
+          selectedCaseIds={[1, 2]}
+          projectId={1}
+        />
+      );
+
+      await waitFor(() => {
+        const spinner = document.querySelector(".animate-spin");
+        expect(spinner).not.toBeInTheDocument();
+      });
+
+      const issuesCheckbox = document.getElementById(
+        "edit-issues"
+      ) as HTMLInputElement;
+      await act(async () => {
+        fireEvent.click(issuesCheckbox);
+      });
+      await waitFor(() => {
+        expect(issuesCheckbox).toBeChecked();
+      });
+
+      const saveButton = screen.getByRole("button", {
+        name: "[t]common.actions.save",
+      });
+      await waitFor(() => {
+        expect(saveButton).not.toBeDisabled();
+      });
+      await act(async () => {
+        fireEvent.click(saveButton);
+      });
+
+      await waitFor(
+        () => {
+          expect(bulkEditCalls.length).toBe(1);
+        },
+        { timeout: 10000 }
+      );
+
+      // The requirement link survives; the defect links the field does own
+      // are cleared.
+      expect([...linkRows.get(1)!].sort((a, b) => a - b)).toEqual([
+        requirement.id,
+      ]);
+      expect([...linkRows.get(2)!]).toEqual([]);
+    });
+
     it("should handle bulk delete", async () => {
       const user = userEvent.setup();
       const onSaveSuccess = vi.fn();

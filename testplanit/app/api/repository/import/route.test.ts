@@ -1293,10 +1293,13 @@ describe("CSV Import API Route", () => {
       expect(mockEnhancedDb.repositoryCaseTag.deleteMany).toHaveBeenCalledWith({
         where: { caseId: 1001 },
       });
+      // Scoped to defects: an `Issues` CSV column replaces only the links that
+      // column can author. Requirement linkage is owned by the requirements
+      // surfaces, and a CSV has no way to name or restore a link it destroyed.
       expect(
         mockEnhancedDb.repositoryCaseIssue.deleteMany
       ).toHaveBeenCalledWith({
-        where: { caseId: 1001 },
+        where: { caseId: 1001, issue: { isRequirement: false } },
       });
       expect(mockEnhancedDb.attachments.deleteMany).toHaveBeenCalledWith({
         where: { testCaseId: 1001 },

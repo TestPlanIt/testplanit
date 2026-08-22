@@ -373,6 +373,46 @@ export function ManageExternalIssues({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
 
+  // This component owns the whole `issues` form value but only ever sees the
+  // links a tracker claims: every response below is scoped server-side to
+  // issues belonging to an ACTIVE issue-tracking integration, so
+  // integration-less links (requirements) and links stranded by a
+  // since-deactivated integration are absent from all of them.
+  //
+  // Ownership, not issue kind, is the durable predicate — but it decides what
+  // this component may SPEAK FOR, not what it copies forward. It publishes
+  // exactly the set the server has handed it and says nothing about the rest.
+  // Merging the form value's foreign ids back in looks safer and is not: that
+  // value is a page-load snapshot of somebody else's state, and the case's
+  // Linked Requirements panel commits its unlinks straight to the database
+  // without touching this form, so republishing a requirement id the snapshot
+  // still carries makes the save recreate a link the user just removed. A
+  // snapshot cannot hold a foreign link alive and let the user let go of it;
+  // only the save, reading the links as they actually are, can do both — so
+  // it holds integration-less links out of the replace entirely
+  // (utils/caseIssueLinkWrite.ts) and this value never speaks for them.
+  const linkedIssueIdsRef = useRef<number[]>(linkedIssueIds ?? []);
+
+  useEffect(() => {
+    linkedIssueIdsRef.current = linkedIssueIds ?? [];
+  }, [linkedIssueIds]);
+
+  const publishLinkedIssueIds = (ownedIssues: ExternalIssue[]) => {
+    if (!setLinkedIssueIds) return;
+    const next = ownedIssues.map((issue) => issue.id);
+    const current = linkedIssueIdsRef.current;
+    // Handing the parent a fresh array for an unchanged set would re-fire the
+    // prop-sync fetch below and spin.
+    if (
+      next.length === current.length &&
+      next.every((id) => current.includes(id))
+    ) {
+      return;
+    }
+    linkedIssueIdsRef.current = next;
+    setLinkedIssueIds(next);
+  };
+
   // Fetch linked issues on mount
   useEffect(() => {
     // Only fetch if entity exists (testCaseId > 0)
@@ -420,10 +460,7 @@ export function ManageExternalIssues({
         const issues = data.linkedIssues || [];
         setLinkedIssues(issues);
         // Update form field with fetched issue IDs
-        if (setLinkedIssueIds) {
-          const issueIds = issues.map((i: ExternalIssue) => i.id);
-          setLinkedIssueIds(issueIds);
-        }
+        publishLinkedIssueIds(issues);
       }
     } catch (error) {
       console.error("Error fetching linked issues:", error);
@@ -447,9 +484,7 @@ export function ManageExternalIssues({
         };
         const updatedIssues = [...linkedIssues, newIssue];
         setLinkedIssues(updatedIssues);
-        if (setLinkedIssueIds) {
-          setLinkedIssueIds(updatedIssues.map((i: ExternalIssue) => i.id));
-        }
+        publishLinkedIssueIds(updatedIssues);
         setIsSearchOpen(false);
         setIsLinking(false);
         return;
@@ -490,9 +525,7 @@ export function ManageExternalIssues({
         const updatedIssues = data.linkedIssues || [];
         setLinkedIssues(updatedIssues);
         // Update form field with issue IDs
-        if (setLinkedIssueIds) {
-          setLinkedIssueIds(updatedIssues.map((i: ExternalIssue) => i.id));
-        }
+        publishLinkedIssueIds(updatedIssues);
         setIsSearchOpen(false);
       } else {
         toast.error(t("issues.linkError"));
@@ -515,9 +548,7 @@ export function ManageExternalIssues({
         (issue) => issue.id !== issueId
       );
       setLinkedIssues(updatedIssues);
-      if (setLinkedIssueIds) {
-        setLinkedIssueIds(updatedIssues.map((i) => i.id));
-      }
+      publishLinkedIssueIds(updatedIssues);
       return;
     }
 
@@ -554,9 +585,7 @@ export function ManageExternalIssues({
         );
         setLinkedIssues(updatedIssues);
         // Update form field with issue IDs
-        if (setLinkedIssueIds) {
-          setLinkedIssueIds(updatedIssues.map((i) => i.id));
-        }
+        publishLinkedIssueIds(updatedIssues);
       } else {
         toast.error(t("issues.unlinkError"));
       }

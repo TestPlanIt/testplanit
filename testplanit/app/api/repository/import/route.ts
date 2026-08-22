@@ -9,6 +9,7 @@ import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
+import { replaceImportedCaseIssueLinks } from "~/lib/services/importCaseIssueLinks";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -912,25 +913,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             // Handle issues if present
             if (caseData.issues) {
-              const issueNames = parseIssues(caseData.issues);
-
-              if (isUpdate) {
-                await enhancedDb.repositoryCaseIssue.deleteMany({
-                  where: { caseId: newCase.id },
-                });
-              }
-
-              for (const issueName of issueNames) {
-                const issue = await enhancedDb.issue.findFirst({
-                  where: { name: issueName, isDeleted: false },
-                });
-
-                if (issue) {
-                  await enhancedDb.repositoryCaseIssue.create({
-                    data: { caseId: newCase.id, issueId: issue.id },
-                  });
-                }
-              }
+              await replaceImportedCaseIssueLinks(enhancedDb, {
+                caseId: newCase.id,
+                projectId: body.projectId,
+                issueNames: parseIssues(caseData.issues),
+                replaceExisting: isUpdate,
+              });
             }
 
             // Handle attachments if present

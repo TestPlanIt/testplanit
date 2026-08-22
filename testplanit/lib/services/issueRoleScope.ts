@@ -45,6 +45,20 @@ export const DEFECT_SCOPE_WHERE: Readonly<{ isRequirement: false }> =
 export const REQUIREMENT_SCOPE_WHERE: Readonly<{ isRequirement: true }> =
   Object.freeze({ isRequirement: true });
 
+/**
+ * Row form of the same predicate, for call sites that must apply it to rows
+ * ALREADY IN HAND rather than at a query boundary — a client surface
+ * filtering a list the server already sent it cannot spread a where-object
+ * into an array filter. Same contract as the two fragments above and part of
+ * the same mirror: the discriminator column is named once, here, so a rename
+ * still moves every form in one commit.
+ */
+export function isRequirementRow(
+  row: { isRequirement?: boolean | null } | null | undefined
+): boolean {
+  return row?.[ISSUE_ROLE_SCOPE_COLUMN] === true;
+}
+
 // Raw-SQL mirror (kysely / $queryRaw templates cannot interpolate a
 // TypeScript where-object) — written against alias `i`, the alias already
 // established for the Issue table in utils/issueTestCoverageUtils.ts, the
