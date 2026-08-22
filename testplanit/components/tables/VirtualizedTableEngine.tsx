@@ -433,15 +433,24 @@ export function VirtualizedTableEngine({
   // The header menu only appears when a handler is wired to act on it.
   const enableColumnMenu =
     enableColumnMenuProp ?? Boolean(onSortColumn || onHideColumn);
-  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
-    if (!columnSizingStorage || typeof window === "undefined") return {};
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+
+  // Stored widths are applied AFTER mount, never from the initializer: the
+  // server has no localStorage, so seeding there makes the first client render
+  // disagree with the server markup — React keeps the server's default widths
+  // and the table is stranded on them for the life of the page. Keyed on the
+  // storage key rather than mount-once because a surface can swap keys while
+  // mounted (the report renderer scopes the key per report type); with nothing
+  // stored under the key the current widths stand.
+  useEffect(() => {
+    if (!columnSizingStorage) return;
     try {
       const raw = window.localStorage.getItem(columnSizingStorage);
-      return raw ? (JSON.parse(raw) as ColumnSizingState) : {};
+      if (raw) setColumnSizing(JSON.parse(raw) as ColumnSizingState);
     } catch {
-      return {};
+      // storage unavailable / malformed entry — keep the default widths
     }
-  });
+  }, [columnSizingStorage]);
 
   // Column pinning: seed the left/right pin sets once (explicit `meta.isPinned`
   // first, first/last fallback otherwise), then let TanStack own the state.

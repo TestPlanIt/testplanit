@@ -136,15 +136,19 @@ const UserProfile: React.FC<UserProfileProps> = ({
     "history",
     "mentions",
   ];
-  const [openSections, setOpenSections] = useState<string[]>(() => {
-    if (typeof window === "undefined") return DEFAULT_OPEN;
+  const [openSections, setOpenSections] = useState<string[]>(DEFAULT_OPEN);
+  // The saved sections can only be read after mount: the server always renders
+  // DEFAULT_OPEN, and the accordion's open items decide which children exist,
+  // so reading storage during the first render makes the client tree structurally
+  // disagree with the server markup and React discards the hydrated tree.
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(ACCORDION_STORAGE_KEY);
-      return saved ? (JSON.parse(saved) as string[]) : DEFAULT_OPEN;
+      if (saved) setOpenSections(JSON.parse(saved) as string[]);
     } catch {
-      return DEFAULT_OPEN;
+      // storage unavailable or malformed; keep the defaults
     }
-  });
+  }, [ACCORDION_STORAGE_KEY]);
   const handleAccordionChange = useCallback(
     (values: string[]) => {
       setOpenSections(values);

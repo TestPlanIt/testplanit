@@ -37,15 +37,25 @@ export function FindDuplicatesButton({
   const t = useTranslations("repository.duplicates");
   const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
 
-  const [scanJobId, setScanJobId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return sessionStorage.getItem(storageKey);
-  });
-  const [scanState, setScanState] = useState<ScanState>(() =>
-    typeof window !== "undefined" && sessionStorage.getItem(storageKey)
-      ? "active"
-      : "idle"
-  );
+  const [scanJobId, setScanJobId] = useState<string | null>(null);
+  const [scanState, setScanState] = useState<ScanState>("idle");
+
+  // Both pieces of state must start at what the server rendered — reading
+  // sessionStorage during initialization makes the client's first render
+  // disagree with the server markup, and since an in-flight scan renders a
+  // different subtree entirely React throws the whole tree away. Restore after
+  // mount instead, once storage is actually reachable.
+  useEffect(() => {
+    try {
+      const storedJobId = sessionStorage.getItem(storageKey);
+      if (storedJobId) {
+        setScanJobId(storedJobId);
+        setScanState("active");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [storageKey]);
 
   const { data: pendingCount } = useQuery<number>({
     queryKey: ["duplicate-scan-pending-count", projectId],

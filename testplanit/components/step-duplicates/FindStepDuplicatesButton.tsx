@@ -34,15 +34,23 @@ export function FindStepDuplicatesButton({
   const t = useTranslations("sharedSteps.stepDuplicates");
   const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
 
-  const [scanJobId, setScanJobId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return sessionStorage.getItem(storageKey);
-  });
-  const [scanState, setScanState] = useState<ScanState>(() =>
-    typeof window !== "undefined" && sessionStorage.getItem(storageKey)
-      ? "active"
-      : "idle"
-  );
+  const [scanJobId, setScanJobId] = useState<string | null>(null);
+  const [scanState, setScanState] = useState<ScanState>("idle");
+
+  // The server has no sessionStorage, so it always renders the idle button.
+  // Reading the in-flight job during render would make the client's first
+  // render disagree with that markup; pick it back up after mount instead.
+  useEffect(() => {
+    try {
+      const storedJobId = sessionStorage.getItem(storageKey);
+      if (storedJobId) {
+        setScanJobId(storedJobId);
+        setScanState("active");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [storageKey]);
 
   const { data: statusData } = useQuery<StatusData>({
     queryKey: ["step-scan-status", scanJobId],

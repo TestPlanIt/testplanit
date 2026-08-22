@@ -43,7 +43,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -330,19 +330,28 @@ export default function AdminMenu() {
 
   const groups = getGroupedItems();
 
-  const [openSections, setOpenSections] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("adminMenu:openSections");
-        return stored ? (JSON.parse(stored) as string[]) : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [openSections, setOpenSections] = useState<string[]>(() => []);
+  const ssrDefaultSections = useRef(openSections);
 
   useEffect(() => {
+    // The server has no localStorage, so it always renders every section
+    // collapsed. Seeding this state from storage in the initializer would give
+    // the Accordion a different set of open items on the client and make React
+    // discard the whole server tree on hydration; adopt the stored value here,
+    // after the markup has matched.
+    try {
+      const stored = localStorage.getItem("adminMenu:openSections");
+      if (stored) setOpenSections(JSON.parse(stored) as string[]);
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    // Until the effect above swaps in the stored value, this still holds the
+    // collapsed default the server rendered; writing it would overwrite the
+    // very preference that effect is reading back.
+    if (openSections === ssrDefaultSections.current) return;
     try {
       localStorage.setItem(
         "adminMenu:openSections",
@@ -365,8 +374,14 @@ export default function AdminMenu() {
     const activeSection = groups.find((group) =>
       group.items.some((item) => item.path === page)
     );
-    if (activeSection && !openSections.includes(activeSection.key)) {
-      setOpenSections((prev) => [...prev, activeSection.key]);
+    // Test membership inside the updater rather than against the rendered
+    // `openSections`: on mount the restore effect has already queued the stored
+    // value, and only the updater sees it. Returning `prev` unchanged keeps
+    // React from re-rendering when the section is already open.
+    if (activeSection) {
+      setOpenSections((prev) =>
+        prev.includes(activeSection.key) ? prev : [...prev, activeSection.key]
+      );
     }
   }, [page, router]); // eslint-disable-line react-hooks/exhaustive-deps
 
