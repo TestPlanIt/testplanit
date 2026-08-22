@@ -1,7 +1,23 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Since uploadFile is a server action that creates S3Client internally,
-// we focus on testing the validation logic which doesn't require S3
+// uploadFile constructs its own S3Client and PUTs to it. Without this mock the
+// under-limit cases issue a real request to whatever AWS_ENDPOINT_URL resolves
+// to -- against live s3.amazonaws.com that came back InvalidAccessKeyId, which
+// happened to satisfy a "no size error" assertion while making the suite
+// network-dependent. Mocking the transport lets those cases assert the upload
+// actually succeeded instead.
+const { mockSend } = vi.hoisted(() => ({ mockSend: vi.fn() }));
+
+// Both are invoked with `new`, so the implementations must be constructable --
+// vitest 4 rejects an arrow function here ("is not a constructor").
+vi.mock("@aws-sdk/client-s3", () => ({
+  S3Client: vi.fn(function () {
+    return { send: mockSend };
+  }),
+  PutObjectCommand: vi.fn(function (input: unknown) {
+    return { input };
+  }),
+}));
 
 describe("uploadFile validation", () => {
   const originalEnv = process.env;
@@ -21,6 +37,8 @@ describe("uploadFile validation", () => {
     };
     // Exercise the shipped default unless a test opts into an override.
     delete process.env.UPLOAD_MAX_MB;
+    mockSend.mockReset();
+    mockSend.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -148,8 +166,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "avatar");
 
-      // Should not return size error
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/avatars/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it("project-icon should have 4MB limit", async () => {
@@ -161,7 +180,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "project-icon");
 
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/project-icons/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it("docimage should have 10MB limit", async () => {
@@ -173,7 +194,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "docimage");
 
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/document-images/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it("attachment should have 10MB limit", async () => {
@@ -187,7 +210,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "attachment");
 
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/attachments/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -234,7 +259,8 @@ describe("uploadFile validation", () => {
       const uploadFile = await getUploadFileWith("25");
 
       const under = await upload(uploadFile, "attachment", 11 * 1024 * 1024);
-      expect(under.error).not.toContain("File is too large");
+      expect(under.error).toBeUndefined();
+      expect(under.success?.key).toContain("uploads/attachments/");
 
       const overAttachment = await upload(
         uploadFile,
