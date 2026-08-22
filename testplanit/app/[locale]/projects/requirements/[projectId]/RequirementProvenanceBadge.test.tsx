@@ -162,4 +162,32 @@ describe("RequirementProvenanceBadge", () => {
     expect(confirmSpy).not.toHaveBeenCalled();
     confirmSpy.mockRestore();
   });
+
+  // jsdom has no layout, so the progressive collapse itself can't be
+  // exercised here — every getBoundingClientRect is 0 and the effect bails.
+  // What CAN be pinned is the structure the collapse depends on, which is
+  // exactly where the first attempt went wrong: the measuring copy was
+  // absolutely positioned, so the wrapper requested no width, the row never
+  // squeezed the badge, and the requirement's TITLE truncated instead.
+  it("keeps the measuring copy in flow so the badge competes for row space", () => {
+    const { container } = render(
+      <RequirementProvenanceBadge requirement={lockedRow} projectId={7} />
+    );
+
+    const measure = container.querySelector('[aria-hidden="true"]');
+    expect(measure).not.toBeNull();
+    // Taken out of flow, the copy measures segments but stops holding the
+    // wrapper's width open — half the mechanism, and the half that fails
+    // silently.
+    expect(measure!.className).not.toMatch(/\b(absolute|fixed)\b/);
+    // Every segment the collapse steps through must be measurable.
+    for (const seg of ["icon", "provider", "label"]) {
+      expect(measure!.querySelector(`[data-seg="${seg}"]`)).not.toBeNull();
+    }
+
+    // The wrapper absorbs the row's entire width deficit, so the title never
+    // pays for the badge.
+    const wrapper = measure!.parentElement!;
+    expect(wrapper.className).toMatch(/shrink-\[999\]/);
+  });
 });

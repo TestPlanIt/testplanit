@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactElement } from "react";
+import { useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -93,6 +93,12 @@ export function RequirementProvenanceBadge({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDetaching, setIsDetaching] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId);
+  const wrapRef = useRef<HTMLSpanElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
+  // Highest visible segment: 0 = the Jira mark alone, 1 = + provider name,
+  // 2 = + the state word. Starts fully expanded; the layout effect below
+  // collapses it to fit before paint.
+  const [level, setLevel] = useState(2);
 
   const isNative = requirement.integrationId == null;
   const locked = isRequirementLocked(requirement);
@@ -147,16 +153,55 @@ export function RequirementProvenanceBadge({
     ? "requirement-provenance-locked"
     : "requirement-provenance-detached";
 
-  // Progressive collapse (drop "· Synced", then "Jira", keeping the mark) is
-  // NOT implemented yet. A first attempt measured segment widths from an
-  // absolutely-positioned hidden copy, which left the wrapper reporting
-  // ~zero width: the badge never collapsed and the requirement's title
-  // truncated instead — the opposite of the intent. Doing this properly
-  // needs the width-competition half of MilestoneSourceBadge (a VISIBLE
-  // measuring copy plus `shrink-[999]` on the outer span) so the badge
-  // actually competes with the name for row space, not just the measurement
-  // effect. Until then the badge renders in full.
-  const level = 2;
+  // Progressive collapse: as the row squeezes this badge it drops the state
+  // word first, then the provider name, bottoming out at the bare Jira mark.
+  //
+  // The measuring copy rendered by `collapsible` below is what makes this
+  // work, and it has to stay IN FLOW (`h-0`, not `position: absolute`) for
+  // two reasons: it supplies the per-segment widths read here, AND it keeps
+  // the wrapper requesting the full expanded width so the badge competes
+  // with the requirement's name for row space. An absolutely-positioned copy
+  // satisfies only the first — the wrapper then asks for nothing, so the row
+  // never squeezes the badge and truncates the name instead.
+  useLayoutEffect(() => {
+    if (isNative) return;
+    const wrap = wrapRef.current;
+    const measure = measureRef.current;
+    if (!wrap || !measure || typeof ResizeObserver === "undefined") return;
+
+    const compute = () => {
+      const width = (name: string) =>
+        measure
+          .querySelector<HTMLElement>(`[data-seg="${name}"]`)
+          ?.getBoundingClientRect().width ?? 0;
+      const full = measure.getBoundingClientRect().width;
+      if (full === 0) return; // hidden, or a non-visual environment
+
+      const iconW = width("icon");
+      const providerW = width("provider");
+      const labelW = width("label");
+      // Everything the badge spends that isn't a measured segment: padding,
+      // the inter-segment gaps, and the hover link-icon slot.
+      const chrome = full - (iconW + providerW + labelW);
+      const available = wrap.getBoundingClientRect().width;
+
+      // Incremental width unlocked at each level; index i => level i+1.
+      const steps = [providerW, labelW];
+      let cum = chrome + iconW;
+      let next = 0;
+      for (let i = 0; i < steps.length; i++) {
+        cum += steps[i];
+        if (cum <= available + 0.5) next = i + 1;
+        else break;
+      }
+      setLevel(next);
+    };
+
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, [isNative, provider, label, trackerUrl]);
 
   if (isNative) {
     return withTooltip(
@@ -182,8 +227,11 @@ export function RequirementProvenanceBadge({
     <Badge
       data-testid={testId}
       variant="outline"
-      // min-w-0 + overflow-hidden let the caller shrink this badge (the tree
-      // row gives it an overwhelming shrink weight) so the requirement's name
+      // The full label stays available to assistive tech no matter how far
+      // the visible badge has collapsed.
+      aria-label={`${provider} · ${label}`}
+      // min-w-0 + overflow-hidden let the wrapper shrink this badge (it
+      // carries an overwhelming shrink weight) so the requirement's name
       // keeps its room. The Jira mark stays shrink-0 inside, so the badge
       // degrades toward icon-only rather than vanishing.
       // `bg-background` + `text-foreground` rather than the outline variant's
@@ -199,7 +247,7 @@ export function RequirementProvenanceBadge({
             // dark themes.
             "cursor-pointer hover:bg-secondary/80 hover:text-secondary-foreground"
           : "cursor-default"
-      } ${className ?? ""}`}
+      }`}
       onClick={!asMenuTrigger && trackerUrl ? openInTracker : undefined}
     >
       {/* No lock glyph: the badge itself carries the state word ("Synced" vs
@@ -228,8 +276,14 @@ export function RequirementProvenanceBadge({
 
   /**
    * Wraps a badge with the machinery the collapse needs: a sizing wrapper the
-   * ResizeObserver watches, and an aria-hidden full-width copy that supplies
-   * per-segment measurements.
+   * ResizeObserver watches, and an aria-hidden full-width copy that both
+   * supplies per-segment measurements and holds the wrapper's requested width
+   * open (see the layout effect above for why that second job matters).
+   *
+   * `flex-col` + `items-start` is what lets the measuring copy keep its
+   * natural width while the wrapper shrinks around it: in a column flex
+   * container the copy is never stretched, and `overflow-hidden` clips it
+   * rather than letting it push the row wider.
    *
    * It also stops click and pointerdown from reaching the row. This badge is
    * rendered inside a tree row that selects on click, and Radix opens a
@@ -237,11 +291,26 @@ export function RequirementProvenanceBadge({
    */
   const collapsible = (badge: ReactElement) => (
     <span
-      className={`relative flex min-w-0 items-center overflow-hidden ${className ?? ""}`}
+      ref={wrapRef}
+      className={`flex min-w-8 shrink-[999] flex-col items-start overflow-hidden ${className ?? ""}`}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
     >
+      <span
+        ref={measureRef}
+        aria-hidden="true"
+        className="invisible h-0 overflow-hidden"
+      >
+        <Badge variant="outline" className="text-xs gap-1 whitespace-nowrap">
+          <span data-seg="icon" className="flex items-center">
+            <JiraGlyph />
+          </span>
+          <span data-seg="provider">{provider}</span>
+          <span data-seg="label">{`· ${label}`}</span>
+          {trackerUrl && <ExternalLink className="h-3 w-3" />}
+        </Badge>
+      </span>
       {badge}
     </span>
   );

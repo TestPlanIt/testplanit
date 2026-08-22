@@ -677,8 +677,14 @@ export default function RequirementsTreeView({
                 iconUrl={data?.originalData?.issueTypeIconUrl}
                 className="ms-1 h-4 w-4 shrink-0"
               />
+              {/* `flex-auto`, not `flex-1`: `flex-1`'s zero basis means the
+                  name contributes nothing to the row's base size, so the row
+                  never counts as overflowing and NOTHING shrinks — the badge
+                  stayed full-width while the name silently truncated. With an
+                  auto basis the two compete, and the badge's overwhelming
+                  shrink weight makes it absorb the deficit first. */}
               <span
-                className="ms-1 min-w-0 flex-1 truncate text-sm"
+                className="ms-1 min-w-0 flex-auto truncate text-sm"
                 title={node.data.name}
               >
                 <HighlightedMatch
@@ -689,17 +695,14 @@ export default function RequirementsTreeView({
               </span>
             </>
           )}
+          {/* No sizing classes are passed from here: the badge owns its own
+              shrink weight and minimum width so it collapses segment by
+              segment before the requirement's title loses a character. A
+              `min-w-0` from this row fought the badge's `min-w-8` floor. */}
           {data?.originalData && (
             <RequirementProvenanceBadge
               requirement={data.originalData}
               projectId={Number(projectId)}
-              // The badge yields row space before the name does. `shrink-0`
-              // here pinned the badge at full width and squeezed the
-              // requirement title instead — the wrong thing to lose first,
-              // since the title is the identity and the badge is metadata.
-              // Overwhelming shrink weight mirrors MilestoneSourceBadge's
-              // own `shrink-[999]` wrapper.
-              className="min-w-0 shrink-[999] overflow-hidden"
             />
           )}
           {canAddEdit && (
