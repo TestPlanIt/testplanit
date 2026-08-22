@@ -588,6 +588,7 @@ model Projects {
     editResultsDurationSeconds      Int?
     requireIssueOnFailure           Boolean                               @default(false)
     excludeNotStartedFromRuns       Boolean                               @default(false)
+    requirementsEnabled             Boolean                               @default(false)
     autoLockCompositionOnInProgress Boolean                               @default(false)
     abandonedRunIdleMinutes         Int?
     abandonedRunStateId             Int?
@@ -3412,6 +3413,17 @@ model Issue {
     // whole RepositoryCases/TestRuns tables and full-sorting every page
     // (~510ms -> ~70ms; verified via EXPLAIN on production data).
     @@index([isDeleted, name, id])
+    // Issue is never hard-deleted through the policy client. `parentId` carries
+    // `onDelete: Cascade`, so a single row delete takes the entire requirement
+    // subtree with it, and the ADMIN `@@allow('all', ...)` above would otherwise
+    // permit exactly that from the generic model route. Deletion of a
+    // requirement subtree goes through `deleteRequirementSubtree`, which soft
+    // deletes; defect shells are retired by the same soft-delete path in
+    // `jira-link-service`. A deny outranks every allow, so this closes the
+    // operation for every consumer of the policy client at once rather than
+    // per route — request-shape guards on individual routes have already proven
+    // bypassable (percent-encoded paths, SuperJSON-annotated payloads).
+    @@deny('delete', true)
     @@deny('all', auth() == null)
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')

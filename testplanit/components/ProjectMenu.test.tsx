@@ -8,6 +8,7 @@ const mockUseTranslations = vi.hoisted(() => vi.fn());
 const mockUseParams = vi.hoisted(() => vi.fn());
 const mockUsePathname = vi.hoisted(() => vi.fn());
 const mockUseProjectPermissions = vi.hoisted(() => vi.fn());
+const projectFlags = vi.hoisted(() => ({ requirementsEnabled: true }));
 
 // Stable return object for useProjectPermissions — prevents infinite re-renders
 const stablePermissions = vi.hoisted(() => ({
@@ -42,6 +43,19 @@ vi.mock("~/lib/navigation", () => ({
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: mockUseProjectPermissions,
+}));
+
+// The Requirements entry is gated on the project's own opt-in, so the menu
+// reads one field off the project. Held in a mutable box rather than a fixed
+// return so a single test can flip it and assert the entry disappears.
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: {
+      useFindUnique: () => ({
+        data: { requirementsEnabled: projectFlags.requirementsEnabled },
+      }),
+    },
+  }),
 }));
 
 // Mock ProjectDropdownMenu as a simple div
@@ -345,8 +359,23 @@ describe("ProjectsMenu", () => {
     it("renders a Requirements entry linking to /projects/requirements/[projectId]", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const link = document.getElementById("project-requirements-link");
-      expect(link).toBeDefined();
+      expect(link).not.toBeNull();
       expect(link?.getAttribute("href")).toContain("/projects/requirements/42");
+    });
+
+    it("omits the Requirements entry when the project has not opted in", () => {
+      // Requirements is opt-in: a team whose requirements live in their tracker
+      // should not carry a permanently empty section in the project menu.
+      projectFlags.requirementsEnabled = false;
+      try {
+        render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+        expect(document.getElementById("project-requirements-link")).toBeNull();
+        // The neighbouring entry still renders, so this proves the gate rather
+        // than a menu that failed to build at all.
+        expect(document.getElementById("project-issues-link")).not.toBeNull();
+      } finally {
+        projectFlags.requirementsEnabled = true;
+      }
     });
   });
 

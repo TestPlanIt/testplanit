@@ -44,6 +44,8 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, usePathname } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -147,6 +149,20 @@ export default function ProjectsMenu({
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
+
+  // Requirements is opt-in per project. Teams whose source of truth is their
+  // tracker never turn it on and should not carry a permanently empty section
+  // in the menu; the flag lives on the project rather than on an integration's
+  // config because a project with no tracker at all is exactly the case the
+  // feature was asked for (requirements authored natively in TestPlanIt).
+  const { data: project } = useClientQueries(schema).projects.useFindUnique(
+    {
+      where: { id: Number(projectId) },
+      select: { requirementsEnabled: true },
+    },
+    { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
+  );
+  const requirementsEnabled = project?.requirementsEnabled === true;
 
   // Permission check for Shared Steps
   const safeProjectId = projectId ? String(projectId) : "";
@@ -262,15 +278,19 @@ export default function ProjectsMenu({
     },
     // Requirements is a new top-level surface, distinct from Issues (defects)
     // — a different icon keeps them visually distinguishable in the menu.
-    // No permission gate, matching the Issues entry above: nothing server-side
-    // gates on an ApplicationArea.Issues (or .Requirements) area today.
-    {
-      icon: RequirementsIcon,
-      label: t("common.fields.requirements"),
-      path: "requirements",
-      id: "project-requirements-link",
-      section: "management",
-    },
+    // Gated on the project's own opt-in rather than a permission: nothing
+    // server-side gates on an ApplicationArea.Requirements today.
+    ...(requirementsEnabled
+      ? [
+          {
+            icon: RequirementsIcon,
+            label: t("common.fields.requirements"),
+            path: "requirements",
+            id: "project-requirements-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
     ...(canSeeReports
       ? [
           {

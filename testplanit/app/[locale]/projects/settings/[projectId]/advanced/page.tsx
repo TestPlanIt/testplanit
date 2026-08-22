@@ -73,6 +73,7 @@ export default function AdvancedPage() {
         editResultsDurationSeconds: true,
         requireIssueOnFailure: true,
         excludeNotStartedFromRuns: true,
+        requirementsEnabled: true,
         autoLockCompositionOnInProgress: true,
         abandonedRunIdleMinutes: true,
         abandonedRunStateId: true,
@@ -204,6 +205,22 @@ export default function AdvancedPage() {
   // Requiring a linked issue is only meaningful when the project has an active
   // issue integration to link from; without one the toggle is forced off.
   const hasIssueIntegration = (project?.projectIntegrations?.length ?? 0) > 0;
+
+  const handleToggleRequirements = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { requirementsEnabled: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("requirements.enabledToast")
+          : t("requirements.disabledToast")
+      );
+    } catch {
+      toast.error(t("requirements.saveError"));
+    }
+  };
 
   const handleToggleReviewWorkflow = async (enabled: boolean) => {
     try {
@@ -649,6 +666,28 @@ export default function AdvancedPage() {
                     </AlertDescription>
                   </WarningAlert>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="requirements-toggle"
+                    data-testid="requirements-toggle"
+                    checked={project?.requirementsEnabled ?? false}
+                    onCheckedChange={handleToggleRequirements}
+                    disabled={projectLoading || updateProject.isPending}
+                  />
+                  <span className="text-base font-medium">
+                    {t("requirements.label")}
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("requirements.description")}
+                </p>
               </div>
             </CardContent>
           </Card>

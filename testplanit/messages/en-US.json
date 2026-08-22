@@ -2126,6 +2126,13 @@
           "systemDisabledTitle": "Review workflow is off system-wide",
           "systemDisabledDescription": "Your project's preference is saved, but nothing will be gated until a system administrator turns the feature on under Administration → Workflows."
         },
+        "requirements": {
+          "label": "Enable requirements",
+          "description": "Adds a Requirements area to this project for building hierarchies of what the system should do, and linking test cases to them for coverage. Turn this on if you maintain a current-state requirements model here; leave it off if your requirements live entirely in your issue tracker.",
+          "enabledToast": "Requirements enabled for this project",
+          "disabledToast": "Requirements disabled for this project",
+          "saveError": "Could not update the requirements setting"
+        },
         "flipJustification": {
           "label": "Require justification on result flip",
           "description": "When enabled, recording a result that flips a completed outcome (e.g. Passed to Failed) requires Result Details explaining the change.",
