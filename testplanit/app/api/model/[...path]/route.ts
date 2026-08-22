@@ -58,6 +58,7 @@ import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
 } from "~/lib/services/editWindow";
+import { requestHardDeletesIssue } from "~/lib/services/issueHardDeleteGuard";
 import { hasMissingRequiredResultField } from "~/lib/services/resultGuards";
 import { softDeleteUnexecutedRunCasesForDraftRevert } from "~/lib/services/runCaseEligibility";
 import {
@@ -622,6 +623,32 @@ async function handleRequest(
       } catch {
         // Ignore missing URL / malformed q param
       }
+    }
+
+    // Issue hard-delete guard. `Issue` is `@@allow('all', ADMIN)`, so this
+    // route's RPCApiHandler will happily dispatch `issue.delete` — a real SQL
+    // DELETE, and with `Issue.parent`'s `onDelete: Cascade` it takes the whole
+    // requirement subtree beneath the row with it. Issues are always
+    // soft-deleted (`isDeleted: true`); nothing in the product hard-deletes
+    // one. Refused before the review/config gates because a delete that can
+    // never proceed should not pay for their lookups, and refused for every
+    // shape that reaches the same ORM call — the per-model path, the
+    // `$transaction` route, and nested relation deletes under another model's
+    // write. See lib/services/issueHardDeleteGuard.ts; the schema `@@deny` is
+    // the authoritative layer, this is the chokepoint half of it.
+    if (
+      isMutation &&
+      parsedPath &&
+      requestHardDeletesIssue({
+        model: parsedPath.model,
+        operation: parsedPath.operation,
+        requestBody,
+      })
+    ) {
+      return NextResponse.json(
+        { error: { code: "ISSUE_HARD_DELETE_FORBIDDEN" } },
+        { status: 403 }
+      );
     }
 
     // Normalize the IdP signing certificate on SamlConfiguration writes.

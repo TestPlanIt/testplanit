@@ -126,11 +126,19 @@ describe("Issue raw-write containment (PROV-06, structural)", () => {
     const updateManyHits = gitGrep(String.raw`\.issue\.updateMany\(`).filter(
       (hit) => !isTestPath(hit.file)
     );
-    const updateManyFiles = updateManyHits.map((hit) => hit.file);
-    // lib/services/jira-link-service.ts (syncJiraIssueData) is exempt: it
-    // writes only the `data` JSON blob, which is not one of
-    // LOCKED_ISSUE_FIELDS, so it never touches a locked field.
-    expect(updateManyFiles).toEqual(["lib/services/jira-link-service.ts"]);
+    const updateManyFiles = new Set(updateManyHits.map((hit) => hit.file));
+    // lib/services/jira-link-service.ts is exempt on both of its call sites,
+    // for the same reason: neither writes a locked column. syncJiraIssueData
+    // writes only the `data` JSON blob, and the orphaned-shell cleanup the
+    // unlink paths share writes only `isDeleted` — that cleanup is a bulk
+    // write rather than a single-row one precisely so its defect-role scope
+    // predicate is re-evaluated by the database inside the write itself.
+    expect(updateManyFiles).toEqual(
+      new Set(["lib/services/jira-link-service.ts"])
+    );
+    // Hit count, not just file set: a new bulk write inside an
+    // already-exempt file must still land in front of a reviewer.
+    expect(updateManyHits.length).toBe(2);
   });
 
   it("jira-link-service routes every issue upsert through the shared shell", () => {

@@ -2565,3 +2565,242 @@ describe("ZenStack chokepoint configuration-group guard", () => {
     expect(rows[1].configurationGroupId).toBe(GROUP_A);
   });
 });
+
+describe("ZenStack chokepoint Issue hard-delete guard", () => {
+  // A stand-in Issue table with the parent edges that make this dangerous.
+  // `Issue.parent` is `onDelete: Cascade`, so a hard delete of the root takes
+  // the whole subtree with it — which is what the simulated handler below
+  // reproduces. Every assertion in this block reads the SURVIVING rows: a
+  // guard that refuses with the right status while still letting the write
+  // through would leave this table empty and fail.
+  interface IssueRow {
+    id: number;
+    projectId: number;
+    parentId: number | null;
+  }
+
+  let issueRows: IssueRow[] = [];
+
+  const ROOT_ID = 100;
+  const CHILD_ID = 101;
+  const GRANDCHILD_ID = 102;
+  const ALL_IDS = [ROOT_ID, CHILD_ID, GRANDCHILD_ID];
+
+  const surviving = () => issueRows.map((row) => row.id).sort((a, b) => a - b);
+
+  /** The FK cascade: removing a row removes everything beneath it. */
+  function cascadeDelete(ids: number[]): void {
+    const doomed = new Set<number>();
+    const queue = [...ids];
+    while (queue.length > 0) {
+      const id = queue.shift()!;
+      if (doomed.has(id)) continue;
+      doomed.add(id);
+      for (const row of issueRows) {
+        if (row.parentId === id) queue.push(row.id);
+      }
+    }
+    issueRows = issueRows.filter((row) => !doomed.has(row.id));
+  }
+
+  /** Resolves the ids an `issue.delete` / `issue.deleteMany` `where` addresses. */
+  function idsFromWhere(where: any): number[] {
+    if (!where) return issueRows.map((row) => row.id);
+    if (typeof where.id === "number") return [where.id];
+    if (Array.isArray(where.id?.in)) return where.id.in;
+    if (typeof where.projectId === "number") {
+      return issueRows
+        .filter((row) => row.projectId === where.projectId)
+        .map((row) => row.id);
+    }
+    return issueRows.map((row) => row.id);
+  }
+
+  /**
+   * Stands in for the ZenStack RPC handler + ORM for exactly the shapes under
+   * test, so "the delete reached the database" is observable as missing rows
+   * rather than as a spy call count.
+   */
+  async function simulateOrm(req: any, ctx: any): Promise<Response> {
+    const { path } = await ctx.params;
+    const [model, operation] = path as string[];
+    const q = new URL(req.url).searchParams.get("q");
+    const parsedQ = q ? JSON.parse(q) : null;
+    let body: any = null;
+    try {
+      const text = await req.text();
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      body = null;
+    }
+
+    const applyOperation = (
+      opModel: string,
+      opName: string,
+      args: any
+    ): void => {
+      const normalized = opModel.charAt(0).toLowerCase() + opModel.slice(1);
+      if (normalized === "issue" && ["delete", "deleteMany"].includes(opName)) {
+        cascadeDelete(idsFromWhere(args?.where));
+        return;
+      }
+      // The nested shape: `projects.update` with `data.issues.deleteMany`.
+      if (normalized === "projects" && args?.data?.issues?.deleteMany) {
+        cascadeDelete(
+          issueRows
+            .filter((row) => row.projectId === args?.where?.id)
+            .map((row) => row.id)
+        );
+      }
+    };
+
+    if (model === "$transaction") {
+      for (const item of Array.isArray(body) ? body : []) {
+        applyOperation(item.model, item.op, item.args);
+      }
+    } else {
+      applyOperation(model, operation, parsedQ ?? body);
+    }
+
+    return new Response(JSON.stringify({ data: { id: 1 } }), { status: 200 });
+  }
+
+  function makeRequest(
+    method: string,
+    path: string[],
+    options: { body?: unknown; q?: unknown } = {}
+  ): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = options.body === undefined ? "" : JSON.stringify(options.body);
+    const search =
+      options.q === undefined
+        ? ""
+        : `?q=${encodeURIComponent(JSON.stringify(options.q))}`;
+    return {
+      method,
+      headers,
+      url: `http://localhost:3000/api/model/${path.join("/")}${search}`,
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    issueRows = [
+      { id: ROOT_ID, projectId: 7, parentId: null },
+      { id: CHILD_ID, projectId: 7, parentId: ROOT_ID },
+      { id: GRANDCHILD_ID, projectId: 7, parentId: CHILD_ID },
+    ];
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "admin-1", email: "a@e.com", name: "A", access: "ADMIN" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue(null);
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "admin-1",
+      email: "a@e.com",
+      name: "A",
+      access: "ADMIN",
+    });
+    // The webhook/audit pre-snapshot reads take a best-effort look at the row
+    // on the allowed paths; stub them so the test output stays clean.
+    (baseDb as any).issue = { findUnique: vi.fn().mockResolvedValue(null) };
+    baseHandlerMock.mockClear();
+    baseHandlerMock.mockImplementation(simulateOrm as any);
+  });
+
+  it("leaves the whole requirement subtree standing when an admin calls issue/delete", async () => {
+    const { DELETE } = await import("./route");
+    const req = makeRequest("DELETE", ["issue", "delete"], {
+      q: { where: { id: ROOT_ID } },
+    });
+
+    const res = await DELETE(req, {
+      params: Promise.resolve({ path: ["issue", "delete"] }),
+    });
+
+    expect(surviving()).toEqual(ALL_IDS);
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("ISSUE_HARD_DELETE_FORBIDDEN");
+  });
+
+  it("leaves the subtree standing when an admin calls issue/deleteMany", async () => {
+    const { DELETE } = await import("./route");
+    const req = makeRequest("DELETE", ["issue", "deleteMany"], {
+      q: { where: { projectId: 7 } },
+    });
+
+    const res = await DELETE(req, {
+      params: Promise.resolve({ path: ["issue", "deleteMany"] }),
+    });
+
+    expect(surviving()).toEqual(ALL_IDS);
+    expect(res.status).toBe(403);
+  });
+
+  it("leaves the subtree standing when the delete is smuggled through $transaction", async () => {
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", ["$transaction", "sequential"], {
+      body: [
+        { model: "Issue", op: "delete", args: { where: { id: ROOT_ID } } },
+      ],
+    });
+
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["$transaction", "sequential"] }),
+    });
+
+    expect(surviving()).toEqual(ALL_IDS);
+    expect(res.status).toBe(403);
+  });
+
+  it("leaves the subtree standing when the delete is nested under another model's update", async () => {
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["projects", "update"], {
+      body: { where: { id: 7 }, data: { issues: { deleteMany: {} } } },
+    });
+
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["projects", "update"] }),
+    });
+
+    expect(surviving()).toEqual(ALL_IDS);
+    expect(res.status).toBe(403);
+  });
+
+  it("still lets the soft delete the product actually performs through", async () => {
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", ["issue", "update"], {
+      body: { where: { id: ROOT_ID }, data: { isDeleted: true } },
+    });
+
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["issue", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(surviving()).toEqual(ALL_IDS);
+  });
+
+  it("still lets other models be hard-deleted", async () => {
+    const { DELETE } = await import("./route");
+    const req = makeRequest("DELETE", ["repositoryCaseIssue", "deleteMany"], {
+      q: { where: { issueId: ROOT_ID } },
+    });
+
+    const res = await DELETE(req, {
+      params: Promise.resolve({ path: ["repositoryCaseIssue", "deleteMany"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(surviving()).toEqual(ALL_IDS);
+  });
+});

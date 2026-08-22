@@ -343,9 +343,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from test case", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
-      mockDb.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [{ caseId: 2, issueId: 100 }], // Still has other links
         testRuns: [],
@@ -353,7 +351,9 @@ describe("JiraLinkService", () => {
         testRunResults: [],
         sessionResults: [],
         testRunStepResults: [],
+        children: [],
       });
+      mockDb.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.unlinkTestCaseFromJiraIssue(1, "jira-id-123");
 
@@ -361,12 +361,11 @@ describe("JiraLinkService", () => {
         where: { caseId: 1, issueId: 100 },
       });
       expect(mockDb.issue.delete).not.toHaveBeenCalled();
+      expect(mockDb.issue.updateMany).not.toHaveBeenCalled();
     });
 
-    it("should delete issue when no remaining links", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
-      mockDb.issue.findUnique.mockResolvedValue({
+    it("should soft-delete the issue when no remaining links", async () => {
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -374,14 +373,18 @@ describe("JiraLinkService", () => {
         testRunResults: [],
         sessionResults: [],
         testRunStepResults: [],
+        children: [],
       });
-      mockDb.issue.delete.mockResolvedValue({});
+      mockDb.repositoryCaseIssue.deleteMany.mockResolvedValue({ count: 1 });
+      mockDb.issue.updateMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.unlinkTestCaseFromJiraIssue(1, "jira-id-123");
 
-      expect(mockDb.issue.delete).toHaveBeenCalledWith({
-        where: { id: 100 },
+      expect(mockDb.issue.updateMany).toHaveBeenCalledWith({
+        where: { id: 100, isRequirement: false },
+        data: { isDeleted: true },
       });
+      expect(mockDb.issue.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -395,9 +398,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from test run", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.testRuns.update.mockResolvedValue({});
-      mockDb.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [{ id: 2 }], // Still has other links
@@ -405,7 +406,9 @@ describe("JiraLinkService", () => {
         testRunResults: [],
         sessionResults: [],
         testRunStepResults: [],
+        children: [],
       });
+      mockDb.testRuns.update.mockResolvedValue({});
 
       await JiraLinkService.unlinkTestRunFromJiraIssue(1, "jira-id-123");
 
@@ -426,9 +429,7 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from session", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.sessions.update.mockResolvedValue({});
-      mockDb.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -436,7 +437,9 @@ describe("JiraLinkService", () => {
         testRunResults: [],
         sessionResults: [],
         testRunStepResults: [],
+        children: [],
       });
+      mockDb.sessions.update.mockResolvedValue({});
 
       await JiraLinkService.unlinkSessionFromJiraIssue(1, "jira-id-123");
 
@@ -560,16 +563,17 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from test run result", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.testRunResults.update.mockResolvedValue({});
-      mockDb.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
         sessions: [],
         testRunResults: [{ id: 2 }],
         sessionResults: [],
+        testRunStepResults: [],
+        children: [],
       });
+      mockDb.testRunResults.update.mockResolvedValue({});
 
       await JiraLinkService.unlinkTestRunResultFromJiraIssue(1, "jira-id-123");
 
@@ -590,16 +594,17 @@ describe("JiraLinkService", () => {
     });
 
     it("should disconnect issue from session result", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.sessionResults.update.mockResolvedValue({});
-      mockDb.issue.findUnique.mockResolvedValue({
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
         sessions: [],
         testRunResults: [],
         sessionResults: [{ id: 2 }],
+        testRunStepResults: [],
+        children: [],
       });
+      mockDb.sessionResults.update.mockResolvedValue({});
 
       await JiraLinkService.unlinkSessionResultFromJiraIssue(1, "jira-id-123");
 
@@ -669,10 +674,8 @@ describe("JiraLinkService", () => {
       ).rejects.toThrow("Issue not found");
     });
 
-    it("should delete orphaned issue", async () => {
-      mockDb.issue.findFirst.mockResolvedValue({ id: 100 });
-      mockDb.testRunStepResults.update.mockResolvedValue({});
-      mockDb.issue.findUnique.mockResolvedValue({
+    it("should soft-delete the orphaned issue", async () => {
+      mockDb.issue.findFirst.mockResolvedValue({
         id: 100,
         caseIssues: [],
         testRuns: [],
@@ -680,17 +683,21 @@ describe("JiraLinkService", () => {
         testRunResults: [],
         sessionResults: [],
         testRunStepResults: [],
+        children: [],
       });
-      mockDb.issue.delete.mockResolvedValue({});
+      mockDb.testRunStepResults.update.mockResolvedValue({});
+      mockDb.issue.updateMany.mockResolvedValue({ count: 1 });
 
       await JiraLinkService.unlinkTestRunStepResultFromJiraIssue(
         1,
         "jira-id-123"
       );
 
-      expect(mockDb.issue.delete).toHaveBeenCalledWith({
-        where: { id: 100 },
+      expect(mockDb.issue.updateMany).toHaveBeenCalledWith({
+        where: { id: 100, isRequirement: false },
+        data: { isDeleted: true },
       });
+      expect(mockDb.issue.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -802,6 +809,317 @@ describe("JiraLinkService", () => {
       ).rejects.toThrow("DB error");
 
       consoleSpy.mockRestore();
+    });
+  });
+
+  // Unlinking one test artifact runs a cleanup pass over the tracker shell
+  // row it just released. These tests drive that pass against a small
+  // in-memory Issue table that MODELS THE DATABASE'S OWN BEHAVIOUR rather
+  // than recording calls: `Issue.parent` is declared `onDelete: Cascade`, so
+  // the fake table's row delete removes the row's whole descendant subtree,
+  // exactly as Postgres would. That is what makes these assertions about
+  // surviving rows instead of about which client method was invoked — an
+  // assertion phrased against the method name would keep passing the moment
+  // the destructive write were spelled differently.
+  describe("orphaned shell cleanup after an unlink", () => {
+    interface FakeIssueRow {
+      id: number;
+      externalId: string;
+      isRequirement: boolean;
+      isDeleted: boolean;
+      parentId: number | null;
+      caseIssues: Array<{ caseId: number; issueId: number }>;
+    }
+
+    const TRACKER_EXTERNAL_ID = "jira-id-req-1";
+
+    function installFakeIssueTable(rows: FakeIssueRow[]) {
+      const table = new Map<number, FakeIssueRow>(
+        rows.map((row) => [row.id, { ...row }])
+      );
+
+      const childrenOf = (id: number) =>
+        [...table.values()].filter((row) => row.parentId === id);
+
+      const matches = (row: FakeIssueRow, where: any) => {
+        if (where.id !== undefined && row.id !== where.id) return false;
+        if (
+          where.externalId !== undefined &&
+          row.externalId !== where.externalId
+        )
+          return false;
+        if (
+          where.isRequirement !== undefined &&
+          row.isRequirement !== where.isRequirement
+        )
+          return false;
+        return true;
+      };
+
+      for (const fn of [
+        mockDb.issue.findFirst,
+        mockDb.issue.delete,
+        mockDb.issue.updateMany,
+        mockDb.repositoryCaseIssue.deleteMany,
+        mockDb.testRuns.update,
+        mockDb.sessions.update,
+        mockDb.testRunResults.update,
+        mockDb.sessionResults.update,
+        mockDb.testRunStepResults.update,
+      ]) {
+        fn.mockReset();
+      }
+
+      mockDb.issue.findFirst.mockImplementation(async (args: any) => {
+        const row = [...table.values()].find((candidate) =>
+          matches(candidate, args?.where ?? {})
+        );
+        if (!row) return null;
+        if (!args?.include) return { ...row };
+        return {
+          ...row,
+          caseIssues: row.caseIssues,
+          testRuns: [],
+          sessions: [],
+          testRunResults: [],
+          sessionResults: [],
+          testRunStepResults: [],
+          children: childrenOf(row.id),
+        };
+      });
+
+      // A row DELETE against Issue takes the descendant subtree with it.
+      mockDb.issue.delete.mockImplementation(async (args: any) => {
+        const cascade = (id: number) => {
+          for (const child of childrenOf(id)) cascade(child.id);
+          table.delete(id);
+        };
+        cascade(args.where.id);
+        return {};
+      });
+
+      mockDb.issue.updateMany.mockImplementation(async (args: any) => {
+        let count = 0;
+        for (const row of table.values()) {
+          if (!matches(row, args?.where ?? {})) continue;
+          Object.assign(row, args.data);
+          count += 1;
+        }
+        return { count };
+      });
+
+      mockDb.repositoryCaseIssue.deleteMany.mockImplementation(
+        async (args: any) => {
+          const row = table.get(args.where.issueId);
+          if (!row) return { count: 0 };
+          const before = row.caseIssues.length;
+          row.caseIssues = row.caseIssues.filter(
+            (link) => link.caseId !== args.where.caseId
+          );
+          return { count: before - row.caseIssues.length };
+        }
+      );
+
+      for (const fn of [
+        mockDb.testRuns.update,
+        mockDb.sessions.update,
+        mockDb.testRunResults.update,
+        mockDb.sessionResults.update,
+        mockDb.testRunStepResults.update,
+      ]) {
+        fn.mockResolvedValue({});
+      }
+
+      return table;
+    }
+
+    /**
+     * A requirement with a two-level subtree. `caseLinks` is per-entry-point
+     * on purpose: the cleanup only runs on a shell nothing points at any
+     * more, so the root must end the unlink with zero surviving references
+     * outside its own subtree. Only the test-case entry point removes a
+     * `RepositoryCaseIssue` row, so only that one is seeded with one.
+     */
+    function seedRequirementSubtree(
+      caseLinks: Array<{ caseId: number; issueId: number }>
+    ): FakeIssueRow[] {
+      return [
+        {
+          id: 100,
+          externalId: TRACKER_EXTERNAL_ID,
+          isRequirement: true,
+          isDeleted: false,
+          parentId: null,
+          caseIssues: caseLinks,
+        },
+        {
+          id: 101,
+          externalId: "jira-id-req-child",
+          isRequirement: true,
+          isDeleted: false,
+          parentId: 100,
+          caseIssues: [],
+        },
+        {
+          id: 102,
+          externalId: "jira-id-req-grandchild",
+          isRequirement: true,
+          isDeleted: false,
+          parentId: 101,
+          caseIssues: [],
+        },
+      ];
+    }
+
+    const unlinkEntryPoints: Array<
+      [string, () => Promise<void>, Array<{ caseId: number; issueId: number }>]
+    > = [
+      [
+        "unlinkTestCaseFromJiraIssue",
+        () =>
+          JiraLinkService.unlinkTestCaseFromJiraIssue(1, TRACKER_EXTERNAL_ID),
+        [{ caseId: 1, issueId: 100 }],
+      ],
+      [
+        "unlinkTestRunFromJiraIssue",
+        () =>
+          JiraLinkService.unlinkTestRunFromJiraIssue(1, TRACKER_EXTERNAL_ID),
+        [],
+      ],
+      [
+        "unlinkSessionFromJiraIssue",
+        () =>
+          JiraLinkService.unlinkSessionFromJiraIssue(1, TRACKER_EXTERNAL_ID),
+        [],
+      ],
+      [
+        "unlinkTestRunResultFromJiraIssue",
+        () =>
+          JiraLinkService.unlinkTestRunResultFromJiraIssue(
+            1,
+            TRACKER_EXTERNAL_ID
+          ),
+        [],
+      ],
+      [
+        "unlinkSessionResultFromJiraIssue",
+        () =>
+          JiraLinkService.unlinkSessionResultFromJiraIssue(
+            1,
+            TRACKER_EXTERNAL_ID
+          ),
+        [],
+      ],
+      [
+        "unlinkTestRunStepResultFromJiraIssue",
+        () =>
+          JiraLinkService.unlinkTestRunStepResultFromJiraIssue(
+            1,
+            TRACKER_EXTERNAL_ID
+          ),
+        [],
+      ],
+    ];
+
+    it.each(unlinkEntryPoints)(
+      "%s leaves a requirement and its whole subtree intact",
+      async (_name, unlink, caseLinks) => {
+        const table = installFakeIssueTable(seedRequirementSubtree(caseLinks));
+
+        await unlink();
+
+        expect([...table.keys()].sort()).toEqual([100, 101, 102]);
+        for (const id of [100, 101, 102]) {
+          expect(table.get(id)?.isDeleted).toBe(false);
+        }
+      }
+    );
+
+    // Deliberately childless: the subtree cases above are also blocked by the
+    // "a parent is not an orphan" rule, so on their own they would still pass
+    // if the row-kind scope were dropped. A leaf requirement is referenced by
+    // nothing at all once its one case link goes away, so only the row-kind
+    // scope can save it.
+    it("leaves a childless requirement intact", async () => {
+      const table = installFakeIssueTable([
+        {
+          id: 500,
+          externalId: TRACKER_EXTERNAL_ID,
+          isRequirement: true,
+          isDeleted: false,
+          parentId: null,
+          caseIssues: [{ caseId: 1, issueId: 500 }],
+        },
+      ]);
+
+      await JiraLinkService.unlinkTestCaseFromJiraIssue(1, TRACKER_EXTERNAL_ID);
+
+      expect(table.get(500)).toBeDefined();
+      expect(table.get(500)?.isDeleted).toBe(false);
+    });
+
+    it("leaves a defect that still parents other rows intact", async () => {
+      const table = installFakeIssueTable([
+        {
+          id: 200,
+          externalId: TRACKER_EXTERNAL_ID,
+          isRequirement: false,
+          isDeleted: false,
+          parentId: null,
+          caseIssues: [{ caseId: 1, issueId: 200 }],
+        },
+        {
+          id: 201,
+          externalId: "jira-id-defect-child",
+          isRequirement: false,
+          isDeleted: false,
+          parentId: 200,
+          caseIssues: [],
+        },
+      ]);
+
+      await JiraLinkService.unlinkTestCaseFromJiraIssue(1, TRACKER_EXTERNAL_ID);
+
+      expect([...table.keys()].sort()).toEqual([200, 201]);
+      expect(table.get(200)?.isDeleted).toBe(false);
+    });
+
+    it("retires a genuinely orphaned defect shell without destroying the row", async () => {
+      const table = installFakeIssueTable([
+        {
+          id: 300,
+          externalId: TRACKER_EXTERNAL_ID,
+          isRequirement: false,
+          isDeleted: false,
+          parentId: null,
+          caseIssues: [{ caseId: 1, issueId: 300 }],
+        },
+      ]);
+
+      await JiraLinkService.unlinkTestCaseFromJiraIssue(1, TRACKER_EXTERNAL_ID);
+
+      expect(table.get(300)).toBeDefined();
+      expect(table.get(300)?.isDeleted).toBe(true);
+    });
+
+    it("keeps a defect shell live while any other artifact still points at it", async () => {
+      const table = installFakeIssueTable([
+        {
+          id: 400,
+          externalId: TRACKER_EXTERNAL_ID,
+          isRequirement: false,
+          isDeleted: false,
+          parentId: null,
+          caseIssues: [
+            { caseId: 1, issueId: 400 },
+            { caseId: 2, issueId: 400 },
+          ],
+        },
+      ]);
+
+      await JiraLinkService.unlinkTestCaseFromJiraIssue(1, TRACKER_EXTERNAL_ID);
+
+      expect(table.get(400)?.isDeleted).toBe(false);
     });
   });
 });

@@ -2,6 +2,8 @@ import { baseDb } from "~/lib/db";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import type { TxClient } from "~/lib/zenstack";
 
+import { REQUIREMENT_SCOPE_WHERE } from "./issueRoleScope";
+
 /**
  * Builds an issueId -> [self, ...ancestors] map for a project, used to walk
  * a requirement root-ward (e.g. to roll a descendant up into its ancestor
@@ -51,6 +53,12 @@ export async function buildIssueAncestorMap(
  * than erroring, and this phase introduces the first authoritative cycle
  * guard on any self-referential model in this schema — pre-trigger or
  * rolled-back-trigger data must fail fast.
+ *
+ * ROLE-AGNOSTIC by contract: it walks `Issue.parentId` edges of every kind,
+ * because that column is written for every synced issue regardless of
+ * classification. Anything that resolves a requirement WRITE set must use
+ * `getRequirementSubtreeIds` below instead — this walk reaches unclassified
+ * Story/Bug rows that no requirement surface ever showed the user.
  */
 export async function getIssueSubtreeIds(
   rootId: number,
@@ -65,6 +73,52 @@ export async function getIssueSubtreeIds(
       SELECT i.id, d.depth + 1 FROM "Issue" i
       INNER JOIN descendants d ON i."parentId" = d.id
       WHERE i."projectId" = ${projectId} AND i."isDeleted" = false AND d.depth < 100
+    )
+    SELECT id FROM descendants
+  `;
+  return rows.map((row) => row.id);
+}
+
+/**
+ * Requirement-scoped twin of `getIssueSubtreeIds`: every live descendant of
+ * `rootId` reachable through requirement rows ONLY. This is the walk that
+ * resolves the cascade delete's write set.
+ *
+ * The role predicate is repeated in the RECURSIVE ARM, not just the anchor,
+ * and that is the deliberate OPPOSITE of the anchor-only asymmetry in
+ * `requirementCoverage.ts`'s closure walk. The two walks answer different
+ * questions. Coverage rolls a descendant's case links UP into a requirement
+ * ancestor, so a non-requirement node in between must be walked THROUGH or
+ * a whole class of rollups stops at the first such node. This walk resolves
+ * rows to WRITE, so a non-requirement node is exactly where it must stop:
+ * Jira sync writes `parentId` for every synced issue regardless of
+ * classification, so a requirement-classified Epic routinely carries
+ * unclassified Story/Bug children, and sweeping those into a requirement's
+ * delete destroys defects nobody asked to delete.
+ *
+ * Stopping at such a node — rather than walking through it and filtering
+ * the write set afterward — is also what keeps this set identical to the
+ * count the delete confirmation shows. That count is walked from the
+ * requirements tree's own `childrenMap`, which is built from requirement
+ * rows only and therefore has no edge across a non-requirement node
+ * either; a requirement sitting under an unclassified parent is not a
+ * descendant of anything that tree can render, before or after a delete.
+ */
+async function getRequirementSubtreeIds(
+  rootId: number,
+  projectId: number,
+  db: Pick<typeof baseDb, "$queryRaw"> = baseDb
+): Promise<number[]> {
+  const rows: Array<{ id: number }> = await db.$queryRaw`
+    WITH RECURSIVE descendants AS (
+      SELECT id, 1 AS depth FROM "Issue"
+      WHERE "parentId" = ${rootId} AND "projectId" = ${projectId} AND "isDeleted" = false
+        AND "isRequirement" = true
+      UNION ALL
+      SELECT i.id, d.depth + 1 FROM "Issue" i
+      INNER JOIN descendants d ON i."parentId" = d.id
+      WHERE i."projectId" = ${projectId} AND i."isDeleted" = false AND d.depth < 100
+        AND i."isRequirement" = true
     )
     SELECT id FROM descendants
   `;
@@ -149,16 +203,21 @@ export async function assertValidReparent(
 }
 
 /**
- * Returns every soft-deleted descendant of `rootId` — the mirror image of
- * `getIssueSubtreeIds` (`isDeleted = true` instead of `false`, walked at
- * every recursion level so a live row can never re-enter the deleted-side
- * walk). Not exported: it exists only to resolve the cohort
+ * Returns every soft-deleted requirement descendant of `rootId` — the mirror
+ * image of `getRequirementSubtreeIds` (`isDeleted = true` instead of
+ * `false`, walked at every recursion level so a live row can never re-enter
+ * the deleted-side walk). Not exported: it exists only to resolve the cohort
  * `restoreRequirementSubtree` needs. A second query rather than a boolean
- * parameter on `getIssueSubtreeIds` — the two filters are opposite at every
- * level of the recursion, and folding them behind a flag would make both
- * harder to read for no real code reuse.
+ * parameter on `getRequirementSubtreeIds` — the two filters are opposite at
+ * every level of the recursion, and folding them behind a flag would make
+ * both harder to read for no real code reuse.
+ *
+ * Carries the same both-arms role predicate as the live-side walk, for the
+ * same reason plus one more: restore must resolve exactly the cohort the
+ * matching delete produced, and a walk that reached further than the delete
+ * did could only ever un-delete a row this cascade never touched.
  */
-async function getDeletedIssueSubtreeIds(
+async function getDeletedRequirementSubtreeIds(
   rootId: number,
   projectId: number,
   db: Pick<typeof baseDb, "$queryRaw"> = baseDb
@@ -167,10 +226,12 @@ async function getDeletedIssueSubtreeIds(
     WITH RECURSIVE descendants AS (
       SELECT id, 1 AS depth FROM "Issue"
       WHERE "parentId" = ${rootId} AND "projectId" = ${projectId} AND "isDeleted" = true
+        AND "isRequirement" = true
       UNION ALL
       SELECT i.id, d.depth + 1 FROM "Issue" i
       INNER JOIN descendants d ON i."parentId" = d.id
       WHERE i."projectId" = ${projectId} AND i."isDeleted" = true AND d.depth < 100
+        AND i."isRequirement" = true
     )
     SELECT id FROM descendants
   `;
@@ -202,6 +263,26 @@ async function getDeletedIssueSubtreeIds(
  * detach-not-delete question owned by a later phase and must not be
  * conflated with this function.
  *
+ * Requirement rows ONLY, at every layer: the walk that resolves the write
+ * set, the root lookup, and the bulk statement each carry the role
+ * predicate. A requirement's non-requirement children — which Jira sync
+ * creates routinely, since it writes `parentId` for every synced issue
+ * regardless of classification — are deliberately LEFT ALONE, neither
+ * deleted nor re-parented:
+ *
+ *  - Their `parentId` still resolves to a real row. A soft-delete removes
+ *    nothing; the FK stays satisfied and the ON DELETE CASCADE above never
+ *    fires. Nothing dangles at the SQL level.
+ *  - No requirement surface can render a phantom because of them. Every
+ *    live requirement child of the root is deleted with it, so no live
+ *    requirement is ever left pointing at a soft-deleted parent; and a
+ *    requirement under an unclassified parent was already unreachable from
+ *    the tree's roots, both before and after this delete.
+ *  - Nulling their `parentId` instead would be unrecoverable and futile:
+ *    `restoreRequirementSubtree` restores `isDeleted`, not edges, so an undo
+ *    would return the row with its hierarchy silently flattened — and the
+ *    next sync pass re-resolves `parentId` for those very rows anyway.
+ *
  * No authorization check here by design: this is a service function, not a
  * directly client-callable route (unlike the folders precedent). The
  * caller — Phase 25's delete UI action — is responsible for authorizing the
@@ -212,48 +293,69 @@ export async function deleteRequirementSubtree(
   projectId: number,
   opts?: { tx?: TxClient }
 ): Promise<{ deletedIds: number[]; deletedAt: Date | null }> {
-  // Explicit existence/ownership/liveness lookup — never inferred from an
-  // empty descendant list, since a missing/foreign/already-deleted root and
-  // "a leaf with no children" both resolve to zero descendants.
-  const root = await baseDb.issue.findUnique({
-    where: { id: rootId },
-    select: { id: true, projectId: true, isDeleted: true },
+  // Explicit existence/ownership/liveness/role lookup — never inferred from
+  // an empty descendant list, since a missing/foreign/already-deleted/
+  // unclassified root and "a leaf with no children" all resolve to zero
+  // descendants.
+  const root = await baseDb.issue.findFirst({
+    where: {
+      id: rootId,
+      projectId,
+      isDeleted: false,
+      ...REQUIREMENT_SCOPE_WHERE,
+    },
+    select: { id: true },
   });
-  if (!root || root.projectId !== projectId || root.isDeleted) {
+  if (!root) {
     return { deletedIds: [], deletedAt: null };
   }
 
-  // Resolved BEFORE the transaction opens: the read is cheap and read-only,
-  // and keeping it outside the transaction keeps the write window short.
-  const descendantIds = await getIssueSubtreeIds(rootId, projectId);
+  // `ids` is the CANDIDATE set only, resolved BEFORE the transaction opens:
+  // the read is cheap and read-only, and keeping it outside the transaction
+  // keeps the write window short. That gap is exactly why the bulk statement
+  // re-applies the scope below — the walk's snapshot can be stale by the time
+  // the write lands (a concurrent `recomputeRequirementClassification` can
+  // reclassify a row out of the requirement set in between).
+  const descendantIds = await getRequirementSubtreeIds(rootId, projectId);
   const ids = [rootId, ...descendantIds];
 
-  const run = async (tx: TxClient): Promise<Date | null> => {
-    // Single parameterized bulk UPDATE. projectId is repeated here even
-    // though the CTE above already scoped it — a bulk soft-delete is the
-    // single highest-blast-radius statement in this phase, and a redundant
-    // scope predicate costs nothing.
-    await tx.$executeRaw`
+  const run = async (
+    tx: TxClient
+  ): Promise<Array<{ id: number; deletedAt: Date | null }>> =>
+    // Single parameterized bulk UPDATE. projectId and the role predicate are
+    // repeated here even though the CTE above already scoped both — a bulk
+    // soft-delete is the single highest-blast-radius statement in this
+    // phase, and a redundant scope predicate costs nothing. The role
+    // predicate in particular is the last thing standing between a
+    // mis-resolved id list and a destroyed defect.
+    //
+    // `RETURNING id, "deletedAt"` rather than reporting the candidate array
+    // back: the response must name the rows this statement actually flipped,
+    // not the rows it was asked to consider, or a caller acting on
+    // `deletedIds` (the tree view drops its selection by membership in it)
+    // acts on a row that is still live. Reading `deletedAt` off the same
+    // RETURNING clause keeps the two halves of the response consistent —
+    // a separate SELECT afterward could report a timestamp some other
+    // operation stamped on a root this call never touched.
+    tx.$queryRaw<Array<{ id: number; deletedAt: Date | null }>>`
       UPDATE "Issue"
       SET "isDeleted" = true
       WHERE id = ANY(${ids}::int[])
         AND "projectId" = ${projectId}
         AND "isDeleted" = false
+        AND "isRequirement" = true
+      RETURNING id, "deletedAt"
     `;
-    const [stamped] = await tx.$queryRaw<Array<{ deletedAt: Date | null }>>`
-      SELECT "deletedAt" FROM "Issue" WHERE id = ${rootId}
-    `;
-    return stamped?.deletedAt ?? null;
-  };
 
   // Use the caller's transaction when supplied (a caller already inside an
   // audited transaction must not nest one, and the integration test drives
   // the function directly this way); otherwise open one here.
-  const deletedAt = opts?.tx
-    ? await run(opts.tx)
-    : await auditedTransaction(run);
+  const deleted = opts?.tx ? await run(opts.tx) : await auditedTransaction(run);
 
-  return { deletedIds: ids, deletedAt };
+  return {
+    deletedIds: deleted.map((row) => row.id),
+    deletedAt: deleted.find((row) => row.id === rootId)?.deletedAt ?? null,
+  };
 }
 
 /**
@@ -275,9 +377,14 @@ export async function deleteRequirementSubtree(
  * snapshot, not any row this same statement has since modified.
  *
  * The deleted-side subtree walk returns descendants only (mirroring
- * `getIssueSubtreeIds`) — `rootId` is prepended to the id list exactly like
- * delete's own step 1. Without that prepend the root itself would stay
+ * `getRequirementSubtreeIds`) — `rootId` is prepended to the id list exactly
+ * like delete's own step 1. Without that prepend the root itself would stay
  * permanently soft-deleted after a "restore".
+ *
+ * Role-scoped at every layer for the same reason delete is, read in the
+ * other direction: this must never un-delete a defect row that some other
+ * operation soft-deleted, and it can only restore what a matching cascade
+ * deleted.
  *
  * Same authorization posture as `deleteRequirementSubtree`: none here by
  * design, the caller is responsible.
@@ -287,22 +394,25 @@ export async function restoreRequirementSubtree(
   projectId: number,
   opts?: { tx?: TxClient }
 ): Promise<{ restoredIds: number[] }> {
-  const root = await baseDb.issue.findUnique({
-    where: { id: rootId },
-    select: { id: true, projectId: true, deletedAt: true },
+  const root = await baseDb.issue.findFirst({
+    where: { id: rootId, projectId, ...REQUIREMENT_SCOPE_WHERE },
+    select: { deletedAt: true },
   });
-  if (!root || root.projectId !== projectId || root.deletedAt === null) {
+  if (!root || root.deletedAt === null) {
     return { restoredIds: [] };
   }
 
-  // `ids` is the CANDIDATE set only — getDeletedIssueSubtreeIds walks every
-  // currently-deleted descendant regardless of when it was deleted, so it
-  // also contains a descendant that was already soft-deleted before this
-  // cascade ran (the exact row the deletedAt-equality WHERE clause below
-  // must exclude from the actual UPDATE). `RETURNING id` reports precisely
-  // which rows the deletedAt match actually flipped, so `restoredIds` in
-  // the response can never claim a row that stayed deleted.
-  const descendantIds = await getDeletedIssueSubtreeIds(rootId, projectId);
+  // `ids` is the CANDIDATE set only — getDeletedRequirementSubtreeIds walks
+  // every currently-deleted requirement descendant regardless of when it was
+  // deleted, so it also contains a descendant that was already soft-deleted
+  // before this cascade ran (the exact row the deletedAt-equality WHERE
+  // clause below must exclude from the actual UPDATE). `RETURNING id`
+  // reports precisely which rows the deletedAt match actually flipped, so
+  // `restoredIds` in the response can never claim a row that stayed deleted.
+  const descendantIds = await getDeletedRequirementSubtreeIds(
+    rootId,
+    projectId
+  );
   const ids = [rootId, ...descendantIds];
 
   const run = async (tx: TxClient): Promise<number[]> => {
@@ -311,6 +421,7 @@ export async function restoreRequirementSubtree(
       SET "isDeleted" = false
       WHERE id = ANY(${ids}::int[])
         AND "projectId" = ${projectId}
+        AND "isRequirement" = true
         AND "deletedAt" = (SELECT "deletedAt" FROM "Issue" WHERE id = ${rootId})
       RETURNING id
     `;

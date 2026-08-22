@@ -27,7 +27,8 @@ const requestSchema = z.object({
  * Gate order, fixed (mirrors 22-03's recorded decision so a malformed
  * payload or a missing row never discloses project-admin status to an
  * unauthorized caller): 401 -> 400 (bad ids) -> 400 (bad body) -> 403
- * (authorizeProjectAdminForProject) -> 404 (not a live requirement in this
+ * (authorizeProjectAdminForProject) -> 404 (child is not a live requirement
+ * in this project) -> 400 (new parent is not a live requirement in this
  * project) -> assertValidReparent (400 on throw) -> write -> 200.
  *
  * `Issue`'s ZenStack policy carries no project-membership condition at all
@@ -109,12 +110,49 @@ export const POST = withAuditContext(
       // backstop underneath, but it raises a transaction-aborting Postgres
       // error, not a message a user can act on — this is what produces the
       // friendly 400.
+      //
+      // Ordered ahead of the parent-role check below so each refusal keeps the
+      // most specific message it can: a cross-project parent is named as such,
+      // rather than being absorbed into the broader "not a live requirement".
       try {
         await assertValidReparent(baseDb, issueId, parentId);
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Invalid reparent";
         return NextResponse.json({ error: message }, { status: 400 });
+      }
+
+      // The new parent is scoped exactly as strictly as the child. Without
+      // this, `assertValidReparent` above is the only thing the parent id
+      // passes through, and it checks project membership and cycles only —
+      // so a crafted `parentId` naming a defect (or a soft-deleted
+      // requirement) is structurally valid and gets written. The result is a
+      // requirement that vanishes from the tree: it is not a root, and
+      // `buildTree` only descends through requirement rows, so nothing ever
+      // draws it. The project predicate is kept here as well: this check must
+      // stand on its own if the service's own project assertion ever moves.
+      // Refused as a 400 rather than a 404 because the offending value came
+      // from the request body, matching how the route treats every other
+      // unusable body value.
+      if (parentId !== null) {
+        const parent = await baseDb.issue.findFirst({
+          where: {
+            id: parentId,
+            projectId,
+            isDeleted: false,
+            ...REQUIREMENT_SCOPE_WHERE,
+          },
+          select: { id: true },
+        });
+        if (!parent) {
+          return NextResponse.json(
+            {
+              error:
+                "New parent must be a live requirement in the same project",
+            },
+            { status: 400 }
+          );
+        }
       }
 
       // Write through the enhanced client so the schema's field-level
