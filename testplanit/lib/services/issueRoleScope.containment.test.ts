@@ -193,6 +193,15 @@ const SCOPED_FILES = [
   // This is the only issue read the importer performs, which is why
   // app/api/repository/import/route.ts no longer carries a read exemption.
   "lib/services/importCaseIssueLinks.ts",
+  // 26-08's traceability matrix loader spreads REQUIREMENT_SCOPE_WHERE (the
+  // other half of this module's mirror pair, not DEFECT_SCOPE_WHERE) into
+  // its single findMany call reading requirement names and parents for
+  // path-building — same predicate, same reasoning as the requirements
+  // tree/detail-panel entries above it. Verified by direct read; this
+  // file's own route.test.ts asserts on the loader's actual output
+  // (requirement rows plus the null-case gap row), not by source grep
+  // alone.
+  "lib/services/requirementTraceability.ts",
 ];
 
 // ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,
@@ -632,5 +641,44 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
       }
       expect(preservedOccurrences).toBeGreaterThan(0);
     }
+  });
+
+  // 26-08: RequirementsTreeView.tsx / RequirementDetailPanel.tsx /
+  // LinkedRequirementsPanel.tsx's own SCOPED_FILES entries above rely
+  // entirely on their component tests asserting the mocked hook's `where`
+  // argument for proof that REQUIREMENT_SCOPE_WHERE actually reaches the
+  // query boundary — a plain grep-shape allowlist registration alone
+  // cannot tell "spreads the predicate" apart from "merely imports it and
+  // mentions it in a comment." lib/services/requirementTraceability.ts has
+  // no dedicated unit test file of its own (its GET route test mocks the
+  // whole loader module, so it never touches the loader's internal `where`
+  // object), which leaves this floor check as the only guard against the
+  // spread being silently dropped from the where object while the import
+  // and doc-comment mentions stay behind, keeping every earlier check
+  // green. Minimum, not exact, for the same reason as the DEFECT_SCOPE_WHERE
+  // thresholds above: an exact count breaks on a legitimate second use.
+  it("the traceability loader's requirement read carries the shared requirement-scope predicate", () => {
+    const file = "lib/services/requirementTraceability.ts";
+    const content = readFileSync(file, "utf8");
+    // Real occurrence count as of this gate's construction: 1 import + 1
+    // doc-comment mention + 1 spread into the loader's single findMany
+    // where object. The comment mention is why the floor is 3, not 2 — a
+    // mutation that drops only the spread (leaving the import and comment
+    // behind, the realistic shape of this regression) must still read
+    // below this floor.
+    const minimum = 3;
+    const actual = countOccurrences(content, "REQUIREMENT_SCOPE_WHERE");
+    if (actual < minimum) {
+      throw new Error(
+        `${file} contains ${actual} occurrence(s) of REQUIREMENT_SCOPE_WHERE; ` +
+          `expected at least ${minimum} (1 import + 1 doc-comment mention + 1 ` +
+          "spread into the loader's single findMany where object). A count " +
+          "below the floor means the requirement read lost its scope " +
+          "predicate — restore it, or update this threshold only after " +
+          "confirming by reading the file that a site was legitimately " +
+          "removed."
+      );
+    }
+    expect(actual).toBeGreaterThanOrEqual(minimum);
   });
 });
