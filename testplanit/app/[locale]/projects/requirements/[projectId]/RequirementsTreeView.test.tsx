@@ -750,13 +750,143 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it.todo(
-    "filters to only uncovered requirements when the toggle is on, keeping their ancestors visible"
-  );
-  it.todo(
-    "intersects the uncovered toggle with the text filter rather than unioning them"
-  );
-  it.todo("disables the uncovered toggle when coverage is unavailable");
+  it("filters to only uncovered requirements when the toggle is on, keeping their ancestors visible", () => {
+    // Root A is itself covered at the rollup level (its subtree has SOME
+    // linked cases, via the covered child) even though one of its own
+    // children has zero -- the realistic shape that makes "ancestor kept
+    // for context" distinguishable from "parent is uncovered too".
+    const fixture = [
+      makeRequirement({ id: 1, name: "Root A", parentId: null }),
+      makeRequirement({ id: 2, name: "Covered Child", parentId: 1 }),
+      makeRequirement({ id: 3, name: "Uncovered Child", parentId: 1 }),
+      makeRequirement({ id: 4, name: "Root B Covered", parentId: null }),
+    ];
+    useFindManyIssueMock.mockReturnValue({
+      data: fixture,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: makeCoverageResponse({
+        1: { linkedCaseCount: 3, passed: 3, status: "PASSED" },
+        2: { linkedCaseCount: 3, passed: 3, status: "PASSED" },
+        3: { uncovered: true, status: "UNCOVERED" },
+        4: { linkedCaseCount: 1, passed: 1, status: "PASSED" },
+      }),
+      isError: false,
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-uncovered-toggle"));
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const treeData = lastCall[0].data as any[];
+
+    // Ancestor kept for context, even though it is not itself uncovered.
+    expect(findNodeById(treeData, "1")).not.toBeNull();
+    // The uncovered leaf stays visible.
+    expect(findNodeById(treeData, "3")).not.toBeNull();
+    // A covered sibling under the SAME kept ancestor disappears -- proves
+    // the toggle actually filters rather than just keeping everything
+    // once any gap exists anywhere.
+    expect(findNodeById(treeData, "2")).toBeNull();
+    // A fully covered, unrelated root disappears entirely.
+    expect(findNodeById(treeData, "4")).toBeNull();
+  });
+
+  it("intersects the uncovered toggle with the text filter rather than unioning them", () => {
+    const fixture = [
+      makeRequirement({ id: 1, name: "Root", parentId: null }),
+      // Uncovered AND matches "login" -- must remain under both semantics.
+      makeRequirement({ id: 2, name: "Login uncovered feature", parentId: 1 }),
+      // Covered but matches "login" -- a union would keep this; the
+      // intersection must not.
+      makeRequirement({ id: 3, name: "Login covered feature", parentId: 1 }),
+      // Uncovered but does NOT match "login" -- a union would keep this
+      // too (uncovered alone qualifies); the intersection must not.
+      makeRequirement({ id: 4, name: "Payments gap", parentId: 1 }),
+    ];
+    useFindManyIssueMock.mockReturnValue({
+      data: fixture,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: makeCoverageResponse({
+        1: { linkedCaseCount: 3, passed: 3, status: "PASSED" },
+        2: { uncovered: true, status: "UNCOVERED" },
+        3: { linkedCaseCount: 2, passed: 2, status: "PASSED" },
+        4: { uncovered: true, status: "UNCOVERED" },
+      }),
+      isError: false,
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    fireEvent.change(screen.getByTestId("requirements-filter-input"), {
+      target: { value: "login" },
+    });
+    fireEvent.click(screen.getByTestId("requirements-uncovered-toggle"));
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const treeData = lastCall[0].data as any[];
+
+    expect(findNodeById(treeData, "1")).not.toBeNull(); // ancestor context
+    expect(findNodeById(treeData, "2")).not.toBeNull(); // uncovered AND matches
+    expect(findNodeById(treeData, "3")).toBeNull(); // covered, matches -> hidden
+    expect(findNodeById(treeData, "4")).toBeNull(); // uncovered, no match -> hidden
+  });
+
+  it("disables the uncovered toggle when coverage is unavailable", () => {
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: undefined,
+      isError: true,
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const toggle = screen.getByTestId("requirements-uncovered-toggle");
+    expect(toggle).toBeDisabled();
+    expect(toggle).toHaveAttribute(
+      "title",
+      "requirements.coverage.showOnlyUncoveredUnavailable"
+    );
+
+    // A disabled control cannot hide anything: every node from the fixture
+    // stays reachable.
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const treeData = lastCall[0].data as any[];
+    ["1", "2", "3", "4", "5", "10"].forEach((id) => {
+      expect(findNodeById(treeData, id)).not.toBeNull();
+    });
+  });
 
   it("keeps the requirement title yielding last: provenance shrinks hardest, then coverage, then the name", () => {
     const lockedWithCoverage = [

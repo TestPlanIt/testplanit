@@ -27,6 +27,7 @@ import {
   Search,
   SquarePenIcon,
   Trash2Icon,
+  TriangleAlert,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -166,6 +167,10 @@ export default function RequirementsTreeView({
     Record<string, boolean> | undefined
   >(undefined);
   const [filterQuery, setFilterQuery] = useState("");
+  // D-2's tree-side gap surface: "show only uncovered". Disabled by the
+  // toolbar toggle's own `disabled` prop whenever coverage hasn't loaded,
+  // so this can only ever be true while real coverage data is in hand.
+  const [showOnlyUncovered, setShowOnlyUncovered] = useState(false);
 
   // HIER-02's create surface — a single dialog reused by both the toolbar's
   // "Add root" affordance (parentId: null) and every row's "Add child" menu
@@ -242,6 +247,10 @@ export default function RequirementsTreeView({
   const { data: coverage, isError: coverageError } = useRequirementCoverage(
     Number(projectId)
   );
+  // The uncovered toggle's own disabled predicate -- coverage still
+  // pending counts as "unavailable" too, matching the badge's own render-
+  // nothing treatment for the same states.
+  const uncoveredToggleUnavailable = !coverage || coverageError;
 
   // In-place rename (HIER-02's "edit" half). `{ name, title }` together --
   // the schema's own field-level @deny on `title` is the real enforcement
@@ -354,14 +363,48 @@ export default function RequirementsTreeView({
     return matches;
   }, [requirements, normalizedFilter]);
 
+  // Requirements whose rolled-up breakdown says `uncovered` -- the
+  // dedicated boolean, never inferred from `status` or from a missing map
+  // entry. `null` (not an empty set) whenever the toggle is off OR coverage
+  // hasn't loaded/errored, so a coverage outage that arrives after the
+  // toggle was switched on degrades to "no filtering from this axis"
+  // rather than silently hiding the whole tree.
+  const uncoveredMatchIds = useMemo(() => {
+    if (!showOnlyUncovered || !coverage || coverageError) return null;
+    const matches = new Set<number>();
+    requirements.forEach((requirement) => {
+      if (coverageFor(coverage, requirement.id)?.uncovered === true) {
+        matches.add(requirement.id);
+      }
+    });
+    return matches;
+  }, [showOnlyUncovered, coverage, coverageError, requirements]);
+
+  // The combined match set is the INTERSECTION of whichever predicates are
+  // active, never a union: union would surface covered requirements the
+  // instant someone typed in the search box, which is the opposite of
+  // "show me the gaps." When only one of the two filters is active, that
+  // filter alone determines matches; when neither is active, there is no
+  // filtering at all.
+  const activeMatchIds = useMemo(() => {
+    if (filterMatchIds && uncoveredMatchIds) {
+      const intersection = new Set<number>();
+      filterMatchIds.forEach((issueId) => {
+        if (uncoveredMatchIds.has(issueId)) intersection.add(issueId);
+      });
+      return intersection;
+    }
+    return filterMatchIds ?? uncoveredMatchIds;
+  }, [filterMatchIds, uncoveredMatchIds]);
+
   // A match is only reachable with its ancestors present, and only
   // browsable with its descendants present, so both join it in the visible
   // set -- mirrors TreeView.tsx's `filterVisibleFolderIds`.
   const visibleRequirementIds = useMemo(() => {
-    if (!filterMatchIds) return null;
-    const visible = new Set<number>(filterMatchIds);
+    if (!activeMatchIds) return null;
+    const visible = new Set<number>(activeMatchIds);
 
-    filterMatchIds.forEach((issueId) => {
+    activeMatchIds.forEach((issueId) => {
       let current = requirementMap.get(issueId)?.parentId ?? null;
       while (current !== null && !visible.has(current)) {
         visible.add(current);
@@ -369,19 +412,31 @@ export default function RequirementsTreeView({
       }
     });
 
-    const queue = [...filterMatchIds];
-    while (queue.length > 0) {
-      const parentId = queue.shift()!;
-      for (const child of childrenMap.get(parentId) ?? []) {
-        if (!visible.has(child.id)) {
-          visible.add(child.id);
-          queue.push(child.id);
+    // Descendant BFS runs ONLY while the uncovered toggle is off. With the
+    // toggle off this is exactly the pre-26-06 text-filter behavior
+    // (activeMatchIds === filterMatchIds in that case) -- byte-for-byte,
+    // including this expansion. With the toggle on, expanding to every
+    // descendant of a match would re-introduce covered descendants under
+    // an uncovered ancestor, contradicting the toggle's own promise. And
+    // nothing is lost by skipping it: an uncovered requirement's
+    // descendants are uncovered too by construction of the rollup (zero
+    // cases in the subtree means zero cases anywhere beneath it), so they
+    // already match on their own and need no BFS to be reached.
+    if (!showOnlyUncovered) {
+      const queue = [...activeMatchIds];
+      while (queue.length > 0) {
+        const parentId = queue.shift()!;
+        for (const child of childrenMap.get(parentId) ?? []) {
+          if (!visible.has(child.id)) {
+            visible.add(child.id);
+            queue.push(child.id);
+          }
         }
       }
     }
 
     return visible;
-  }, [filterMatchIds, requirementMap, childrenMap]);
+  }, [activeMatchIds, requirementMap, childrenMap, showOnlyUncovered]);
 
   const buildTree = useCallback(
     (parentId: number | null): RequirementArboristNode[] => {
@@ -911,6 +966,28 @@ export default function RequirementsTreeView({
               </Button>
             )}
           </div>
+          <Button
+            type="button"
+            variant={showOnlyUncovered ? "secondary" : "ghost"}
+            size="icon"
+            aria-pressed={showOnlyUncovered}
+            disabled={uncoveredToggleUnavailable}
+            aria-label={
+              uncoveredToggleUnavailable
+                ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                : t("requirements.coverage.showOnlyUncovered")
+            }
+            title={
+              uncoveredToggleUnavailable
+                ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                : t("requirements.coverage.showOnlyUncovered")
+            }
+            className="mt-0.5 h-7 w-7 shrink-0"
+            data-testid="requirements-uncovered-toggle"
+            onClick={() => setShowOnlyUncovered((prev) => !prev)}
+          >
+            <TriangleAlert className="h-3.5 w-3.5" />
+          </Button>
           {canAddEdit && (
             <Button
               type="button"
