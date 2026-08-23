@@ -6744,6 +6744,40 @@
       "unlinkConfirm": "Are you sure you want to unlink this requirement?",
       "unlinkSuccess": "Requirement unlinked.",
       "unlinkFailed": "Failed to unlink requirement."
+    },
+    "coverage": {
+      "title": "Coverage",
+      "uncovered": "Uncovered",
+      "uncoveredTooltip": "No test cases are linked to this requirement or any of its descendants.",
+      "statusPassed": "Passed",
+      "statusFailed": "Failed",
+      "statusNotRun": "Not run",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "Passed: {passed} · Failed: {failed} · In progress: {inProgress} · Not run: {notRun}",
+      "showOnlyUncovered": "Show only uncovered",
+      "showOnlyUncoveredUnavailable": "Coverage data isn't available right now.",
+      "loadFailed": "Failed to load coverage.",
+      "panelTitle": "Covering Test Cases",
+      "panelDescription": "Test cases linked to this requirement and its descendants.",
+      "panelEmpty": "No test cases cover this requirement yet.",
+      "columnCase": "Test Case",
+      "columnResult": "Result",
+      "columnExecutedAt": "Executed At",
+      "columnProject": "Project",
+      "inherited": "Inherited",
+      "inheritedTooltip": "Linked to a descendant of this requirement, not directly to it.",
+      "notRunCell": "Not run",
+      "crossProjectCount": "{count, plural, one {Also covered by a case in # other project} other {Also covered by cases in # other projects}}"
+    },
+    "export": {
+      "menuLabel": "Export Traceability",
+      "exportFailed": "Failed to export traceability.",
+      "pdfEnglishOnlyHint": "PDF exports are generated in English only.",
+      "csvOnReportsHint": "For a CSV export, run the Requirement Traceability report."
+    },
+    "disabled": {
+      "title": "Requirements Aren't Enabled",
+      "description": "This project hasn't turned on the requirements feature. Ask a project administrator to enable it in project settings to start building requirement trees."
     }
   },
   "Pages": {
@@ -7701,6 +7735,14 @@
         "automationCandidates": {
           "label": "Automation Candidates",
           "description": "Ranked list of which manual test cases to automate next, based on case content, custom fields, and linked-issue context"
+        },
+        "requirementCoverageGaps": {
+          "label": "Requirement Coverage Gaps",
+          "description": "List every requirement with zero linked test cases, so gaps are visible without opening the tree"
+        },
+        "requirementTraceability": {
+          "label": "Requirement Traceability",
+          "description": "Every requirement paired with its linked test cases and their latest execution result"
         }
       },
       "flakyTests": {
@@ -7932,6 +7974,19 @@
           "untestedTestCases": "Number of Untested Test Cases",
           "testCoverageVsExecution": "Test Coverage vs Execution Status"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "Requirement",
+        "path": "Path",
+        "testCase": "Test Case",
+        "result": "Result",
+        "executedAt": "Executed At",
+        "project": "Project",
+        "linkedCases": "Linked Cases",
+        "uncovered": "Uncovered",
+        "notRun": "Not run",
+        "noData": "No requirement data available for this report.",
+        "noGaps": "No coverage gaps found — every requirement has at least one linked test case."
       },
       "crossProjectReportTypes": {
         "testExecution": {
