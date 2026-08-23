@@ -162,7 +162,7 @@ export function RequirementCoverageBadge({
         {t("countLabel", { passed, total: linkedCaseCount })}
       </span>
       <span aria-hidden="true" className="shrink-0">
-        &middot;
+        {"·"}
       </span>
       {/* `min-w-0` is what lets this span actually shrink below its own
           content width inside the badge's flex layout once the row's
