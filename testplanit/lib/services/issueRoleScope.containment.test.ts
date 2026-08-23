@@ -244,6 +244,16 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   "app/api/projects/[projectId]/requirements/[issueId]/delete-subtree/route.ts",
   "app/api/projects/[projectId]/requirements/[issueId]/restore/route.ts",
   "app/api/projects/[projectId]/requirements/[issueId]/detach/route.ts",
+  // 26-07's covering-case drill-down resolves the addressed requirement by
+  // id via baseDb.issue.findFirst before authorizing the drill-down — an
+  // identity lookup, same reasoning as every other entry in this bucket.
+  // Like its four siblings immediately above, it ALSO spreads
+  // REQUIREMENT_SCOPE_WHERE and binds projectId, so the lookup is strictly
+  // more scoped than a bare identity lookup, not less. This entry records
+  // the reason; the route's own tests (both 404 pre-check halves
+  // mutation-proven RED and reverted) are what prove the predicate is
+  // still there.
+  "app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route.ts",
 ];
 
 // EXEMPT — milestone membership legitimately spans both row kinds (an Epic
