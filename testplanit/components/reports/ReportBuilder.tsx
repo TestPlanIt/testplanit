@@ -74,6 +74,10 @@ import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
+import {
+  useRequirementCoverageGapColumns,
+  useRequirementTraceabilityColumns,
+} from "~/hooks/useRequirementCoverageReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
   getCrossProjectReportTypes,
@@ -149,6 +153,8 @@ function isPreBuiltReport(reportType: string): boolean {
     "test-case-health",
     "issue-test-coverage",
     "execution-log",
+    "requirement-coverage-gaps",
+    "requirement-traceability",
   ].includes(baseType);
 }
 
@@ -720,6 +726,14 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  // Requirement report types (D-2, COV-04) are pre-built and flat — no
+  // grouping, no project-dimension branch. `projectId` decides the
+  // traceability report's cross-project project cell, matching 26-09's
+  // RequirementCoveragePanel convention.
+  const requirementCoverageGapColumns = useRequirementCoverageGapColumns();
+  const requirementTraceabilityColumns =
+    useRequirementTraceabilityColumns(projectId);
+
   // Choose which columns to use based on report type
   const columns = matchesReportType(reportType, "automation-trends")
     ? automationTrendsColumns
@@ -731,7 +745,11 @@ function ReportBuilderContent({
           ? issueTestCoverageSummaryColumns
           : matchesReportType(reportType, "execution-log")
             ? executionLogColumns
-            : standardColumns;
+            : matchesReportType(reportType, "requirement-coverage-gaps")
+              ? requirementCoverageGapColumns
+              : matchesReportType(reportType, "requirement-traceability")
+                ? requirementTraceabilityColumns
+                : standardColumns;
 
   // Single source of truth for row grouping. issue-test-coverage is ALWAYS
   // grouped by issue (issues with expandable test cases) — its last two columns

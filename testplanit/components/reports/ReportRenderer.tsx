@@ -33,6 +33,10 @@ import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
+import {
+  useRequirementCoverageGapColumns,
+  useRequirementTraceabilityColumns,
+} from "~/hooks/useRequirementCoverageReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 
 // Helper functions for report type matching
@@ -246,6 +250,14 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
+  // Requirement report types (D-2, COV-04) are pre-built, flat, project-scoped
+  // tables — no dimension/metric picker, no grouping. `projectId` decides the
+  // traceability project cell's cross-project badge (see 26-09's identical
+  // "same project as the row it's rendered under never shows a badge" rule).
+  const requirementCoverageGapColumns = useRequirementCoverageGapColumns();
+  const requirementTraceabilityColumns =
+    useRequirementTraceabilityColumns(projectId);
+
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
   const generatedColumns = matchesReportType(reportType, "automation-trends")
@@ -258,7 +270,11 @@ export function ReportRenderer({
           ? issueTestCoverageColumns
           : matchesReportType(reportType, "execution-log")
             ? executionLogColumns
-            : standardColumns;
+            : matchesReportType(reportType, "requirement-coverage-gaps")
+              ? requirementCoverageGapColumns
+              : matchesReportType(reportType, "requirement-traceability")
+                ? requirementTraceabilityColumns
+                : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -276,6 +292,14 @@ export function ReportRenderer({
     reportType,
     "automation-candidates"
   );
+  const isRequirementCoverageGaps = matchesReportType(
+    reportType,
+    "requirement-coverage-gaps"
+  );
+  const isRequirementTraceability = matchesReportType(
+    reportType,
+    "requirement-traceability"
+  );
 
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
@@ -284,7 +308,17 @@ export function ReportRenderer({
   const memoizedChart = useMemo(() => {
     const dataForChart = chartData || results;
 
-    // Check if we should show a chart
+    // Check if we should show a chart. Deliberately NOT joined by
+    // isRequirementCoverageGaps/isRequirementTraceability -- unlike the five
+    // report types listed here, the requirement reports have no chart-shaped
+    // aggregation at all (no grouping, unlike issue-test-coverage's
+    // getGroupedRowModel-driven summary) and always carry empty
+    // dimensionIds/metricIds since they are isPreBuilt with no dimension
+    // picker. Leaving them out of this list means this condition's existing
+    // `(dimensionIds.length === 0 || metricIds.length === 0)` clause already
+    // resolves to "no chart" for both, which is the correct outcome for a
+    // flat, table-only report — adding them here would need a
+    // requirement-specific chart that does not exist.
     if (
       !dataForChart ||
       dataForChart.length === 0 ||
@@ -425,13 +459,26 @@ export function ReportRenderer({
             <CardDescription>
               {dimensionIds.length > 0 && metricIds.length > 0
                 ? tReports("noDataMatchingCriteria")
-                : isAutomationTrends ||
-                    isFlakyTests ||
-                    isTestCaseHealth ||
-                    isIssueTestCoverage ||
-                    isExecutionLog
-                  ? tReports("noDataAvailable")
-                  : tReports("selectAtLeastOneDimensionAndMetric")}
+                : // The requirement reports are always dimension/metric-free
+                  // (isPreBuilt, no picker), so without these two branches
+                  // an empty result would fall through to
+                  // "selectAtLeastOneDimensionAndMetric" -- nonsensical for
+                  // a report type with no dimension/metric selection at
+                  // all. The gaps report gets its own POSITIVE empty-state
+                  // message (26-01's requirementCoverage.noGaps): zero rows
+                  // there means every requirement is covered, which is good
+                  // news, not "no data available."
+                  isRequirementCoverageGaps
+                  ? tReports("requirementCoverage.noGaps")
+                  : isRequirementTraceability
+                    ? tReports("requirementCoverage.noData")
+                    : isAutomationTrends ||
+                        isFlakyTests ||
+                        isTestCaseHealth ||
+                        isIssueTestCoverage ||
+                        isExecutionLog
+                      ? tReports("noDataAvailable")
+                      : tReports("selectAtLeastOneDimensionAndMetric")}
             </CardDescription>
           </CardHeader>
         </Card>
