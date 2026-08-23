@@ -17,6 +17,8 @@ const PRE_BUILT_REPORT_TYPES = [
   "cross-project-execution-log",
   "iteration-matrix",
   "automation-candidates",
+  "requirement-coverage-gaps",
+  "requirement-traceability",
 ] as const;
 
 /**
