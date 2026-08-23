@@ -168,6 +168,62 @@ function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
   });
 }
 
+function requirementCellText(r: {
+  requirementKey?: string;
+  requirementTitle?: string | null;
+}): string {
+  return r.requirementTitle
+    ? `${r.requirementKey}: ${r.requirementTitle}`
+    : (r.requirementKey ?? "");
+}
+
+function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t } = p;
+  const h = {
+    requirement: t("reports.ui.requirementCoverage.requirement"),
+    path: t("reports.ui.requirementCoverage.path"),
+    linkedCases: t("reports.ui.requirementCoverage.linkedCases"),
+  };
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    row[h.requirement] = requirementCellText(r);
+    row[h.path] = r.requirementPath ?? "";
+    row[h.linkedCases] = r.linkedCases ?? 0;
+    return row;
+  });
+}
+
+function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t } = p;
+  const h = {
+    requirement: t("reports.ui.requirementCoverage.requirement"),
+    path: t("reports.ui.requirementCoverage.path"),
+    testCase: t("reports.ui.requirementCoverage.testCase"),
+    result: t("reports.ui.requirementCoverage.result"),
+    executedAt: t("reports.ui.requirementCoverage.executedAt"),
+    project: t("reports.ui.requirementCoverage.project"),
+  };
+  const uncovered = t("reports.ui.requirementCoverage.uncovered");
+  const notRun = t("reports.ui.requirementCoverage.notRun");
+  // Mirrors the report table cell's and the PDF exporter's three-way split
+  // (`useExportRequirementTraceabilityPdf.ts`): a null `testCaseId` is the
+  // coverage gap and writes the localized "Uncovered" label; a linked case
+  // with no `lastStatusName` has simply never run and writes "Not run" --
+  // the two must never collapse to the same blank cell, or a real gap
+  // becomes indistinguishable from a case that merely hasn't executed yet.
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    row[h.requirement] = requirementCellText(r);
+    row[h.path] = r.requirementPath ?? "";
+    row[h.testCase] = r.testCaseName ?? "";
+    row[h.result] =
+      r.testCaseId == null ? uncovered : (r.lastStatusName ?? notRun);
+    row[h.executedAt] = fmtDateTime(r.lastExecutedAt);
+    row[h.project] = r.caseProjectName ?? "";
+    return row;
+  });
+}
+
 function buildExecutionLog(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t, isCrossProject, locale } = p;
   const h = {
@@ -336,6 +392,10 @@ export function buildReportCsvRows(p: BuildReportCsvParams): CsvRow[] {
       return buildTestCaseHealth(p);
     case "issue-test-coverage":
       return buildIssueTestCoverage(p);
+    case "requirement-coverage-gaps":
+      return buildRequirementCoverageGaps(p);
+    case "requirement-traceability":
+      return buildRequirementTraceability(p);
     case "execution-log":
       return buildExecutionLog(p);
     case "automation-trends":

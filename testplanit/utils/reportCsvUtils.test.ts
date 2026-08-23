@@ -238,10 +238,124 @@ describe("buildReportCsvRows", () => {
   });
 });
 
-// Test inventory scaffold for the two Phase 26 requirement report CSV
-// builders (COV-04, D-2). Titles only — converted by 26-12.
+// Converted from the Wave 0 title scaffold (COV-04, D-2).
 describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
-  it.todo("builds requirement-coverage-gaps rows with localized headers");
-  it.todo("builds requirement-traceability rows with localized headers");
-  it.todo("writes Uncovered rather than an empty cell for a null-case traceability row");
+  it("builds requirement-coverage-gaps rows with localized headers", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-coverage-gaps",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementPath: "Enrolments > Enrol domestic students",
+          linkedCases: 0,
+        },
+      ],
+    });
+
+    // Header keys are the localized reports.ui.requirementCoverage.* keys,
+    // never a dimension-derived label like "reports.dimensions.testCase" --
+    // this is a pre-built report with no dimension/metric picker.
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "REQ-1: Enrol domestic students"
+    );
+    expect(row["reports.ui.requirementCoverage.path"]).toBe(
+      "Enrolments > Enrol domestic students"
+    );
+    expect(row["reports.ui.requirementCoverage.linkedCases"]).toBe(0);
+  });
+
+  it("builds requirement-traceability rows with localized headers", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-traceability",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementPath: "Enrolments > Enrol domestic students",
+          testCaseId: 55,
+          testCaseName: "Enrol via portal",
+          caseProjectId: 10,
+          caseProjectName: "Enrolments",
+          lastStatusName: "Passed",
+          lastStatusColor: "#10b981",
+          lastExecutedAt: "2026-08-20T12:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "REQ-1: Enrol domestic students"
+    );
+    expect(row["reports.ui.requirementCoverage.path"]).toBe(
+      "Enrolments > Enrol domestic students"
+    );
+    expect(row["reports.ui.requirementCoverage.testCase"]).toBe(
+      "Enrol via portal"
+    );
+    expect(row["reports.ui.requirementCoverage.result"]).toBe("Passed");
+    // fmtDateTime formats in the test runner's local timezone (same as
+    // execution-log's equivalent field, above) -- assert non-empty and
+    // date-prefixed rather than hardcoding a timezone-dependent string.
+    expect(row["reports.ui.requirementCoverage.executedAt"]).toMatch(
+      /^2026-08-20 \d{2}:\d{2}:\d{2}$/
+    );
+    expect(row["reports.ui.requirementCoverage.project"]).toBe("Enrolments");
+  });
+
+  it("writes Uncovered rather than an empty cell for a null-case traceability row", () => {
+    const [gapRow, notRunRow] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-traceability",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementPath: "Enrolments > Enrol domestic students",
+          testCaseId: null,
+          testCaseName: null,
+          caseProjectId: null,
+          caseProjectName: null,
+          lastStatusName: null,
+          lastStatusColor: null,
+          lastExecutedAt: null,
+        },
+        {
+          requirementId: 2,
+          requirementKey: "REQ-2",
+          requirementTitle: "Enrol international students",
+          requirementPath: "Enrolments > Enrol international students",
+          testCaseId: 56,
+          testCaseName: "Enrol via agent",
+          caseProjectId: 10,
+          caseProjectName: "Enrolments",
+          lastStatusName: null,
+          lastStatusColor: null,
+          lastExecutedAt: null,
+        },
+      ],
+    });
+
+    // The gap row (null testCaseId) writes the localized "Uncovered" label,
+    // never an empty string -- a blank cell here would silently hide a
+    // coverage gap in the exported spreadsheet (T-26-12-05).
+    expect(gapRow["reports.ui.requirementCoverage.result"]).toBe(
+      "reports.ui.requirementCoverage.uncovered"
+    );
+    expect(gapRow["reports.ui.requirementCoverage.result"]).not.toBe("");
+
+    // Distinct from the gap row: a linked case with no status writes
+    // "Not run", not "Uncovered" and not an empty string either.
+    expect(notRunRow["reports.ui.requirementCoverage.result"]).toBe(
+      "reports.ui.requirementCoverage.notRun"
+    );
+    expect(notRunRow["reports.ui.requirementCoverage.result"]).not.toBe(
+      gapRow["reports.ui.requirementCoverage.result"]
+    );
+  });
 });

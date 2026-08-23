@@ -139,9 +139,69 @@ describe("ReportBuilder Empty State", () => {
   });
 });
 
-// Test inventory scaffold for the requirementsEnabled report-type gate
-// (S6, COV-04, D-2). Titles only — converted by 26-12.
+// Converted from the Wave 0 title scaffold (S6, COV-04, D-2).
+//
+// `filterReportTypesForRequirementsFlag` is imported directly from the real
+// `ReportBuilder.tsx` module rather than reimplemented here -- unlike the
+// EmptyStateComponent above (which predates this plan), nothing about the
+// picker gate under test is mocked or duplicated: this exercises the exact
+// function `ReportBuilder.tsx`'s `reportTypes` useMemo calls. Importing the
+// module pulls in its full dependency graph at evaluation time, but nothing
+// in that graph throws at import time in this test environment, so no
+// additional mocking was needed to make the import itself work.
+import { filterReportTypesForRequirementsFlag } from "./ReportBuilder";
+import type { ReportType } from "~/lib/config/reportTypes";
+
 describe("ReportBuilder (Phase 26 requirement report type gating)", () => {
-  it.todo("omits both requirement report types when the project has requirements disabled");
-  it.todo("offers both requirement report types when the project has requirements enabled");
+  const reportTypesFixture: ReportType[] = [
+    {
+      id: "test-execution",
+      label: "Test Execution",
+      description: "Test execution report",
+      icon: () => null,
+      endpoint: "/api/report-builder/test-execution",
+    },
+    {
+      id: "requirement-coverage-gaps",
+      label: "Requirement Coverage Gaps",
+      description: "Requirement coverage gaps report",
+      icon: () => null,
+      endpoint: "/api/report-builder/requirement-coverage-gaps",
+      isPreBuilt: true,
+    },
+    {
+      id: "requirement-traceability",
+      label: "Requirement Traceability",
+      description: "Requirement traceability report",
+      icon: () => null,
+      endpoint: "/api/report-builder/requirement-traceability",
+      isPreBuilt: true,
+    },
+  ];
+
+  it("omits both requirement report types when the project has requirements disabled", () => {
+    const filtered = filterReportTypesForRequirementsFlag(
+      reportTypesFixture,
+      false
+    );
+    const ids = filtered.map((rt) => rt.id);
+
+    expect(ids).not.toContain("requirement-coverage-gaps");
+    expect(ids).not.toContain("requirement-traceability");
+    // A gate that accidentally empties the WHOLE list (rather than just the
+    // two requirement ids) must fail this assertion too.
+    expect(ids).toContain("test-execution");
+  });
+
+  it("offers both requirement report types when the project has requirements enabled", () => {
+    const filtered = filterReportTypesForRequirementsFlag(
+      reportTypesFixture,
+      true
+    );
+    const ids = filtered.map((rt) => rt.id);
+
+    expect(ids).toContain("requirement-coverage-gaps");
+    expect(ids).toContain("requirement-traceability");
+    expect(ids).toContain("test-execution");
+  });
 });

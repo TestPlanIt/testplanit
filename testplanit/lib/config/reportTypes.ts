@@ -121,6 +121,22 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
+    id: "requirement-coverage-gaps",
+    label: tReports("reportTypes.requirementCoverageGaps.label"),
+    description: tReports("reportTypes.requirementCoverageGaps.description"),
+    icon: Flag,
+    endpoint: "/api/report-builder/requirement-coverage-gaps",
+    isPreBuilt: true,
+  },
+  {
+    id: "requirement-traceability",
+    label: tReports("reportTypes.requirementTraceability.label"),
+    description: tReports("reportTypes.requirementTraceability.description"),
+    icon: Grid3x3,
+    endpoint: "/api/report-builder/requirement-traceability",
+    isPreBuilt: true,
+  },
+  {
     id: "iteration-matrix",
     label: tReports("reportTypes.iterationMatrix.label"),
     description: tReports("reportTypes.iterationMatrix.description"),

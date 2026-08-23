@@ -10,6 +10,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import {
   ColumnDef,
   ExpandedState,
@@ -82,6 +83,7 @@ import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
+  type ReportType,
 } from "~/lib/config/reportTypes";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
@@ -90,6 +92,7 @@ import type {
   DrillDownContext,
 } from "~/lib/types/reportDrillDown";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { schema } from "~/zenstack/schema";
 import {
   dimensionToDraggableField,
   draggableFieldToDimension,
@@ -141,6 +144,14 @@ function isCrossProjectReport(reportType: string): boolean {
   return reportType.startsWith("cross-project-");
 }
 
+// The two Phase 26 requirement report ids (D-2, COV-04). Never a
+// "cross-project-" variant (carve-out 3) -- getRequirementCoverage anchors
+// its recursive closure on a single project id.
+const REQUIREMENT_REPORT_TYPE_IDS = [
+  "requirement-coverage-gaps",
+  "requirement-traceability",
+] as const;
+
 /**
  * Checks if a report type is a pre-built report (automation-trends, flaky-tests, test-case-health, issue-test-coverage)
  * Pre-built reports have fixed configurations and don't require dimension/metric selection
@@ -153,9 +164,43 @@ function isPreBuiltReport(reportType: string): boolean {
     "test-case-health",
     "issue-test-coverage",
     "execution-log",
-    "requirement-coverage-gaps",
-    "requirement-traceability",
-  ].includes(baseType);
+    ...REQUIREMENT_REPORT_TYPE_IDS,
+  ].includes(baseType as (typeof REQUIREMENT_REPORT_TYPE_IDS)[number]);
+}
+
+/**
+ * Filters the two requirement report ids out of a project-scoped report
+ * type list when the project has not opted into the requirements feature
+ * (`Projects.requirementsEnabled`).
+ *
+ * This filters HERE, at the `ReportBuilder.tsx` call site, rather than
+ * inside `getProjectReportTypes` in `lib/config/reportTypes.ts`. The
+ * alternative -- threading a `requirementsEnabled` flag through that
+ * function's signature -- was rejected: `getProjectReportTypes` is also
+ * called by `app/api/share/[shareKey]/report/route.ts:138` with an
+ * identity translator and no project flag in scope (a share link has no
+ * per-viewer project row to read the flag from), and that route's own test
+ * mocks the function wholesale. Changing the signature would ripple into a
+ * route that cannot satisfy the new parameter. See 26-VALIDATION.md
+ * resolution O2.
+ *
+ * The flag is a PRESENTATION gate, not the security boundary (carve-out 4)
+ * -- the report-builder routes for both ids keep their own project
+ * authorization regardless of this filter, so a request crafted directly
+ * against the endpoint is still correctly scoped even if the picker never
+ * offered the report.
+ */
+export function filterReportTypesForRequirementsFlag(
+  reportTypes: ReportType[],
+  requirementsEnabled: boolean
+): ReportType[] {
+  if (requirementsEnabled) return reportTypes;
+  return reportTypes.filter(
+    (reportType) =>
+      !(REQUIREMENT_REPORT_TYPE_IDS as readonly string[]).includes(
+        reportType.id
+      )
+  );
 }
 
 // Form schema for date range
@@ -194,12 +239,35 @@ function ReportBuilderContent({
   const router = useRouter();
   const pathname = usePathname();
 
+  // Requirements is opt-in per project (Projects.requirementsEnabled).
+  // Narrow `select`, `enabled` guard against a NaN/absent id, and an
+  // explicit `=== true` read because the generated type is nullable --
+  // the identical read `ProjectMenu.tsx:153-165` uses for the same flag.
+  const { data: reportBuilderProject } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    {
+      where: { id: Number(projectId) },
+      select: { requirementsEnabled: true },
+    },
+    {
+      enabled:
+        mode === "project" && Boolean(projectId) && !isNaN(Number(projectId)),
+    }
+  );
+  const requirementsEnabled =
+    reportBuilderProject?.requirementsEnabled === true;
+
   // Get report types based on mode - done inside client component to avoid passing functions across server/client boundary
   const reportTypes = useMemo(() => {
-    return mode === "cross-project"
-      ? getCrossProjectReportTypes(tReports)
-      : getProjectReportTypes(tReports);
-  }, [mode, tReports]);
+    if (mode === "cross-project") return getCrossProjectReportTypes(tReports);
+    // Requirement reports are project-scoped and never appear in
+    // cross-project mode, so the flag only ever filters the project list.
+    return filterReportTypesForRequirementsFlag(
+      getProjectReportTypes(tReports),
+      requirementsEnabled
+    );
+  }, [mode, tReports, requirementsEnabled]);
 
   // Results count for the "Showing X of Y" summary. The table is virtualized
   // and infinite-scrolling now, so there is no page/pageSize state — full-set
