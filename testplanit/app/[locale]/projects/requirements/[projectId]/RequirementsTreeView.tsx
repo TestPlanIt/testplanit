@@ -43,8 +43,13 @@ import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import {
+  coverageFor,
+  useRequirementCoverage,
+} from "~/hooks/useRequirementCoverage";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { DeleteRequirementModal } from "./DeleteRequirementModal";
+import { RequirementCoverageBadge } from "./RequirementCoverageBadge";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
 import type { RequirementSelection } from "./RequirementsWorkspace";
 
@@ -137,8 +142,11 @@ interface RequirementsTreeViewProps extends RequirementSelection {
  * -- this component never decides validity and never writes `parentId`
  * through a ZenStack mutation; delete goes through that same plan's
  * `delete-subtree` route (`DeleteRequirementModal.tsx`), never a client-side
- * loop. Coverage display is entirely Phase 26 (no badge/pip/drill-down
- * beyond the provenance/lock badge this tree already owns).
+ * loop. Coverage (26-06): every row carries a rolled-up covered/total badge
+ * from one whole-project `useRequirementCoverage` fetch shared with the
+ * "show only uncovered" toolbar toggle -- no per-node fetching, no lazy
+ * loading. The per-requirement covering-case drill-down panel is a
+ * separate, later surface (26-07/26-09), out of this file entirely.
  */
 export default function RequirementsTreeView({
   projectId,
@@ -221,6 +229,18 @@ export default function RequirementsTreeView({
       orderBy: { name: "asc" },
     },
     { optimisticUpdate: true }
+  );
+
+  // One whole-project coverage fetch, shared with the uncovered toolbar
+  // toggle below via `useRequirementCoverage`'s own stable query key and
+  // `staleTime` -- never one request per node. A rejected or still-pending
+  // request yields `undefined` from `coverageFor`, and the badge renders
+  // `null` for `undefined`, so the degraded path needs no branch here.
+  // Deliberately no toast on `coverageError`: a tree that still works minus
+  // one decoration is not an error the user needs to dismiss, and a toast
+  // here would fire on every mount for the duration of an outage.
+  const { data: coverage, isError: coverageError } = useRequirementCoverage(
+    Number(projectId)
   );
 
   // In-place rename (HIER-02's "edit" half). `{ name, title }` together --
@@ -693,6 +713,11 @@ export default function RequirementsTreeView({
                   testId="requirement-filter-match"
                 />
               </span>
+              {data && (
+                <RequirementCoverageBadge
+                  breakdown={coverageFor(coverage, data.issueId)}
+                />
+              )}
             </>
           )}
           {/* No sizing classes are passed from here: the badge owns its own
@@ -795,7 +820,7 @@ export default function RequirementsTreeView({
         </div>
       );
     },
-    [canAddEdit, countDescendants, normalizedFilter, projectId, t]
+    [canAddEdit, countDescendants, coverage, normalizedFilter, projectId, t]
   );
 
   if (showSpinner || allRequirements === undefined) {

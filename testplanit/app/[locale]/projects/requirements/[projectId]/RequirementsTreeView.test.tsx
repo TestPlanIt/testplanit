@@ -81,6 +81,28 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
+// Mocked at the module boundary per 26-VALIDATION.md's testing standard --
+// this is the seam a rejecting coverage request needs to be expressible
+// through. `coverageFor` is NOT reimplemented here: `importOriginal` keeps
+// the real `String(id)`-indexing helper so these tests exercise the same
+// logic production does, and `RequirementCoverageBadge` itself is never
+// mocked -- the indicator's presence and absence is the thing under test.
+const { useRequirementCoverageMock } = vi.hoisted(() => ({
+  useRequirementCoverageMock: vi.fn(() => ({
+    data: undefined as unknown,
+    isError: false,
+  })),
+}));
+vi.mock("~/hooks/useRequirementCoverage", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("~/hooks/useRequirementCoverage")
+  >();
+  return {
+    ...actual,
+    useRequirementCoverage: useRequirementCoverageMock,
+  };
+});
+
 // react-dnd's real DndProvider/useDrop needs no jsdom drag choreography for
 // these tests -- only the bottom-drop-zone spec object react-dnd's `useDrop`
 // is handed. Capture it directly rather than trying to simulate a real HTML5
@@ -218,6 +240,28 @@ function findNodeById(nodes: any[], id: string): any {
   return null;
 }
 
+/** Builds a `RequirementCoverageResponse`-shaped fixture, string-keyed the
+ *  way the real route's `Object.fromEntries` serialization requires. */
+function makeCoverageResponse(
+  entries: Record<number, Partial<Record<string, unknown>>>
+) {
+  const coverage: Record<string, unknown> = {};
+  Object.entries(entries).forEach(([id, overrides]) => {
+    coverage[id] = {
+      linkedCaseCount: 0,
+      crossProjectCaseCount: 0,
+      passed: 0,
+      failed: 0,
+      inProgress: 0,
+      notRun: 0,
+      uncovered: false,
+      status: "NOT_RUN",
+      ...overrides,
+    };
+  });
+  return { projectId: 42, coverage };
+}
+
 /** Opens a Radix DropdownMenu trigger -- fireEvent.click alone doesn't
  *  dispatch the pointerdown/pointerup sequence Radix listens for in jsdom.
  *  Mirrors RequirementProvenanceBadge.test.tsx's identical helper. */
@@ -244,6 +288,10 @@ describe("RequirementsTreeView", () => {
     });
     useUpdateIssueMock.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue({}),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: undefined,
+      isError: false,
     });
   });
 
@@ -638,8 +686,70 @@ describe("RequirementsTreeView", () => {
 // filter additions to the tree (D-1, D-2). Titles only — converted by
 // 26-06.
 describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
-  it.todo("renders a coverage indicator on every node once coverage has loaded");
-  it.todo("renders no coverage indicator and no error when the coverage request fails");
+  it("renders a coverage indicator on every node once coverage has loaded", () => {
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    // id 1 is a parent (has descendants) -- its indicator reflects the
+    // rolled-up subtree the coverage route already computed server-side,
+    // not a recomputation from the tree's own in-memory children.
+    useRequirementCoverageMock.mockReturnValue({
+      data: makeCoverageResponse({
+        1: { linkedCaseCount: 7, passed: 3, failed: 1, notRun: 3, status: "FAILED" },
+        10: { uncovered: true, status: "UNCOVERED" },
+      }),
+      isError: false,
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByTestId("requirement-coverage-failed")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirement-coverage-uncovered")
+    ).toBeInTheDocument();
+  });
+
+  it("renders no coverage indicator and no error when the coverage request fails", () => {
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: undefined,
+      isError: true,
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    // Every node still renders...
+    expect(screen.getByTestId("requirement-node-1")).toBeInTheDocument();
+    expect(screen.getByTestId("requirement-node-10")).toBeInTheDocument();
+    // ...but no indicator element and no error text anywhere: a coverage
+    // outage must never read as a coverage gap.
+    expect(screen.queryAllByTestId(/^requirement-coverage-/)).toHaveLength(0);
+    expect(screen.queryByText(/coverage/i)).toBeNull();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   it.todo(
     "filters to only uncovered requirements when the toggle is on, keeping their ancestors visible"
   );
@@ -647,7 +757,80 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
     "intersects the uncovered toggle with the text filter rather than unioning them"
   );
   it.todo("disables the uncovered toggle when coverage is unavailable");
-  it.todo(
-    "keeps the requirement title yielding last: provenance shrinks hardest, then coverage, then the name"
-  );
+
+  it("keeps the requirement title yielding last: provenance shrinks hardest, then coverage, then the name", () => {
+    const lockedWithCoverage = [
+      makeRequirement({
+        id: 1,
+        name: "Root A",
+        parentId: null,
+        integrationId: 9,
+        requirementDetachedAt: null,
+      }),
+    ];
+    useFindManyIssueMock.mockReturnValue({
+      data: lockedWithCoverage,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: makeCoverageResponse({
+        1: { linkedCaseCount: 7, passed: 3, failed: 1, notRun: 3, status: "FAILED" },
+      }),
+      isError: false,
+    });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const row = screen.getByTestId("requirement-node-1");
+    // Anchored on the unique `flex-auto` token, never a fixed-width
+    // character window -- four window-anchored verification scripts have
+    // already mis-reported this milestone (see STATE.md).
+    const nameSpan = row.querySelector(
+      '[class*="flex-auto"]'
+    ) as HTMLElement;
+    expect(nameSpan).toBeTruthy();
+    expect(nameSpan.className).toContain("min-w-0");
+    expect(nameSpan.className).toContain("flex-auto");
+    expect(nameSpan.className).toContain("truncate");
+    expect(nameSpan.className).not.toMatch(/shrink-\[/);
+
+    const coverageBadge = screen.getByTestId("requirement-coverage-failed");
+    const coverageMatch = coverageBadge.className.match(/shrink-\[(\d+)\]/);
+    expect(coverageMatch).not.toBeNull();
+    const coverageShrink = Number(coverageMatch![1]);
+
+    const provenanceBadge = screen.getByTestId("requirement-provenance-locked");
+    let ancestor: HTMLElement | null = provenanceBadge;
+    let provenanceShrink: number | null = null;
+    while (ancestor && provenanceShrink === null) {
+      const match = ancestor.className.match(/shrink-\[(\d+)\]/);
+      if (match) provenanceShrink = Number(match[1]);
+      ancestor = ancestor.parentElement;
+    }
+    expect(provenanceShrink).not.toBeNull();
+
+    // Floor-style ordering, not an exact-value pin on either sibling's own
+    // weight (neither of which this file owns).
+    expect(provenanceShrink!).toBeGreaterThan(coverageShrink);
+    expect(coverageShrink).toBeGreaterThan(1);
+
+    // Document order: name span, then the coverage indicator, then the
+    // provenance badge.
+    expect(
+      nameSpan.compareDocumentPosition(coverageBadge) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      coverageBadge.compareDocumentPosition(provenanceBadge) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
 });
