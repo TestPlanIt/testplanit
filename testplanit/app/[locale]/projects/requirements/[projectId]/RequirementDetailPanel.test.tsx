@@ -133,6 +133,18 @@ vi.mock("./RequirementProvenanceBadge", () => ({
   ),
 }));
 
+// The coverage panel's own behavior (rows, inherited marking, cross-project
+// links) is RequirementCoveragePanel.test.tsx's job (26-09) -- this file
+// only needs to prove it mounts, and where.
+vi.mock("./RequirementCoveragePanel", () => ({
+  RequirementCoveragePanel: ({ requirementId }: any) => (
+    <div
+      data-testid="requirement-coverage-panel"
+      data-requirement-id={requirementId}
+    />
+  ),
+}));
+
 const {
   mockUseFindFirst,
   mockUpdateMutateAsync,
@@ -455,8 +467,27 @@ describe("RequirementDetailPanel", () => {
   });
 });
 
-// Test inventory scaffold for Phase 26's coverage panel mount point.
-// Titles only — converted by 26-09.
 describe("RequirementDetailPanel (Phase 26 coverage additions)", () => {
-  it.todo("mounts the coverage panel above the linked-cases panel");
+  it("mounts the coverage panel above the linked-cases panel", () => {
+    setRequirement(nativeRequirement);
+    render(<RequirementDetailPanel projectId="7" requirementId={1} />);
+
+    const coveragePanel = screen.getByTestId("requirement-coverage-panel");
+    const linkedCasesPanel = screen.getByTestId("requirement-linked-cases");
+
+    expect(coveragePanel).toHaveAttribute("data-requirement-id", "1");
+    // Document ORDER, not merely presence -- "above" is the claim, and a
+    // test that only asserts both exist would pass with them swapped.
+    expect(
+      coveragePanel.compareDocumentPosition(linkedCasesPanel) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+
+    // The linked-cases panel's own behavior is untouched by this mount --
+    // it still renders its add-link affordance (its full add/unlink
+    // behavior is LinkedRequirementCasesPanel.test.tsx's job).
+    expect(
+      screen.getByTestId("requirement-linked-cases-add")
+    ).toBeInTheDocument();
+  });
 });

@@ -34,6 +34,7 @@ import type { Issue } from "~/zenstack/models";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
 import { RequirementAttachments } from "./RequirementAttachments";
+import { RequirementCoveragePanel } from "./RequirementCoveragePanel";
 import {
   RequirementProvenanceBadge,
   type RequirementProvenanceBadgeRow,
@@ -370,6 +371,14 @@ export default function RequirementDetailPanel({
       </Form>
 
       <RequirementAttachments
+        projectId={projectId}
+        requirementId={requirement.id}
+      />
+      {/* Coverage summary first, then the editable link list -- read-only
+          subtree drill-down above, direct-link editor below. See
+          RequirementCoveragePanel.tsx's own comment for why the two never
+          merge. */}
+      <RequirementCoveragePanel
         projectId={projectId}
         requirementId={requirement.id}
       />
