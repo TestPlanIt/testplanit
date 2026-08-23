@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { describe, expect, it } from "vitest";
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * Structural guard: the drag-drop provider must wrap the tree from OUTSIDE.
@@ -70,12 +72,140 @@ describe("requirements drag-drop context nesting (structural)", () => {
   });
 });
 
-// Test inventory scaffold for Phase 26's traceability export action and
-// requirements-disabled notice. Titles only — converted by 26-10.
+// --- Phase 26: traceability export action + requirements-enabled gate ---
+//
+// RequirementsTreeView and RequirementDetailPanel are stubbed here for the
+// same JS-heap-exhaustion reason the structural guard above documents
+// (react-arborist is heavy in jsdom) — NOT to hide the drag-drop nesting
+// invariant, which the structural tests above cover unmocked, on source
+// text, and stay green and untouched. `useExportRequirementTraceabilityPdf`
+// is stubbed so these tests exercise the workspace's own wiring (which
+// action renders where, disabled state, the opt-in gate) rather than
+// re-proving the hook's own PDF-rendering behavior, already covered by
+// useExportRequirementTraceabilityPdf.test.ts.
+const { mockUseExportPdf, projectFlags, mockToastError } = vi.hoisted(() => ({
+  mockUseExportPdf: vi.fn(),
+  projectFlags: { requirementsEnabled: true },
+  mockToastError: vi.fn(),
+}));
+
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => "en-US",
+}));
+
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: { user: { name: "Test User" } } }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: mockToastError, success: vi.fn() },
+}));
+
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: {
+      useFindUnique: () => ({
+        data: { requirementsEnabled: projectFlags.requirementsEnabled },
+      }),
+    },
+  }),
+}));
+
+vi.mock("~/zenstack/schema", () => ({ schema: {} }));
+
+vi.mock("~/hooks/pdf/useExportRequirementTraceabilityPdf", () => ({
+  useExportRequirementTraceabilityPdf: mockUseExportPdf,
+}));
+
+// Same seam RequirementCoveragePanel.test.tsx uses: Radix's Tooltip.Root
+// works standalone, but stubbing it keeps these assertions about the
+// export action itself, not Radix's hover/open-state timing.
+vi.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => <>{children}</>,
+  TooltipTrigger: ({ children }: any) => <>{children}</>,
+  TooltipContent: ({ children }: any) => (
+    <div data-testid="tooltip-content">{children}</div>
+  ),
+}));
+
+vi.mock("./RequirementsTreeView", () => ({
+  default: () => <div data-testid="mock-requirements-tree-view" />,
+}));
+
+vi.mock("./RequirementDetailPanel", () => ({
+  default: () => <div data-testid="mock-requirement-detail-panel" />,
+}));
+
+import RequirementsWorkspace from "./RequirementsWorkspace";
+
 describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
-  it.todo("offers a traceability PDF export action in the workspace header");
-  it.todo("disables the export action while an export is running");
-  it.todo(
-    "renders the requirements-disabled notice instead of the workspace when the project flag is off"
-  );
+  beforeEach(() => {
+    vi.clearAllMocks();
+    projectFlags.requirementsEnabled = true;
+    mockUseExportPdf.mockReturnValue({
+      isExporting: false,
+      handleExport: vi.fn(),
+    });
+  });
+
+  it("offers a traceability PDF export action in the workspace header", () => {
+    render(<RequirementsWorkspace projectId="42" />);
+
+    const action = screen.getByTestId("requirements-export-pdf");
+    expect(action).not.toBeNull();
+    expect(action.textContent).toContain("common.actions.exportPdf");
+    expect(action.hasAttribute("disabled")).toBe(false);
+  });
+
+  it("disables the export action while an export is running", () => {
+    mockUseExportPdf.mockReturnValue({
+      isExporting: true,
+      handleExport: vi.fn(),
+    });
+
+    render(<RequirementsWorkspace projectId="42" />);
+
+    const action = screen.getByTestId("requirements-export-pdf");
+    expect(action.hasAttribute("disabled")).toBe(true);
+    expect(action.textContent).toContain("common.actions.exportingPdf");
+    expect(action.className).toContain("animate-pulse");
+  });
+
+  it("renders the requirements-disabled notice instead of the workspace when the project flag is off", () => {
+    projectFlags.requirementsEnabled = false;
+
+    render(<RequirementsWorkspace projectId="42" />);
+
+    // Presence: the disabled notice.
+    expect(screen.getByTestId("requirements-disabled-notice")).not.toBeNull();
+
+    // Absence: neither the tree, the detail pane, nor the export action —
+    // a bookmarked URL on a project with the feature off must not reach
+    // any of them.
+    expect(screen.queryByTestId("requirements-tree-pane")).toBeNull();
+    expect(screen.queryByTestId("mock-requirements-tree-view")).toBeNull();
+    expect(screen.queryByTestId("requirements-detail-pane")).toBeNull();
+    expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
+  });
+
+  // Additive coverage (not one of the three scaffolded titles): the plan's
+  // <behavior> block and hard_rules both require a rejected export to
+  // surface a localized toast rather than fail silently.
+  it("shows a localized error toast when the export fails", () => {
+    let onError: ((error: unknown) => void) | undefined;
+    mockUseExportPdf.mockImplementation((props: any) => {
+      onError = props.onError;
+      return { isExporting: false, handleExport: vi.fn() };
+    });
+
+    render(<RequirementsWorkspace projectId="42" />);
+
+    expect(onError).toBeTypeOf("function");
+    onError!(new Error("network down"));
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      "requirements.export.exportFailed"
+    );
+  });
 });

@@ -32,12 +32,21 @@ interface UseExportRequirementTraceabilityPdfProps {
   locale?: string;
   /** Current user's display name, stamped into the generation header. */
   generatedByName?: string | null;
+  /**
+   * Called when the export fails, so a caller-owned toast can show a
+   * localized error message. The hook itself never rethrows (see the
+   * rejection test below) and never imports `next-intl` (carve-out 1),
+   * so localization of the failure message stays at the call site —
+   * `RequirementsWorkspace.tsx`.
+   */
+  onError?: (error: unknown) => void;
 }
 
 export function useExportRequirementTraceabilityPdf({
   projectId,
   locale = "en-US",
   generatedByName,
+  onError,
 }: UseExportRequirementTraceabilityPdfProps) {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -153,10 +162,11 @@ export function useExportRequirementTraceabilityPdf({
       });
     } catch (error) {
       console.error("Requirement traceability PDF export failed:", error);
+      onError?.(error);
     } finally {
       setIsExporting(false);
     }
-  }, [projectId, locale, generatedByName]);
+  }, [projectId, locale, generatedByName, onError]);
 
   return { isExporting, handleExport };
 }

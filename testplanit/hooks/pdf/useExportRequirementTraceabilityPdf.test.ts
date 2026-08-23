@@ -228,4 +228,24 @@ describe("useExportRequirementTraceabilityPdf", () => {
 
     expect(result.current.isExporting).toBe(false);
   });
+
+  // Additive coverage (not one of the five scaffolded titles): the
+  // optional onError callback that lets RequirementsWorkspace.tsx show a
+  // localized toast without the hook itself importing next-intl.
+  it("invokes onError with the failure when the fetch rejects", async () => {
+    const failure = new Error("network down");
+    global.fetch = vi.fn().mockRejectedValue(failure);
+    const onError = vi.fn();
+
+    const { result } = renderHook(() =>
+      useExportRequirementTraceabilityPdf({ projectId: 42, onError })
+    );
+
+    await act(async () => {
+      await result.current.handleExport();
+    });
+
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith(failure);
+  });
 });
