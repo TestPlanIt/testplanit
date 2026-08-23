@@ -228,6 +228,8 @@ export function LinkedRequirementCasesPanel({
                           projectName={row.project.name}
                           projectId={row.projectId}
                           iconUrl={row.project.iconUrl}
+                          showLink
+                          fitContainer
                           className="text-xs text-muted-foreground"
                         />
                       )}

@@ -88,10 +88,19 @@ vi.mock("@/components/TestCaseNameDisplay", () => ({
   ),
 }));
 
+// Enhanced beyond a plain text stub so criterion 5's assertion below can
+// prove the panel actually passes `showLink`/`projectId` through -- the
+// real anchor-vs-link behavior itself is ProjectNameDisplay.test.tsx's own
+// job, already covered there.
 vi.mock("@/components/search/ProjectNameDisplay", () => ({
-  ProjectNameDisplay: ({ projectName }: any) => (
-    <span data-testid="project-name">{projectName}</span>
-  ),
+  ProjectNameDisplay: ({ projectName, projectId, showLink }: any) =>
+    showLink ? (
+      <a href={`/projects/overview/${projectId}`} data-testid="project-name">
+        {projectName}
+      </a>
+    ) : (
+      <span data-testid="project-name">{projectName}</span>
+    ),
 }));
 
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
@@ -314,8 +323,25 @@ describe("LinkedRequirementCasesPanel", () => {
   });
 });
 
-// Test inventory scaffold for Phase 26's cross-project link addition.
-// Titles only — converted by 26-09.
 describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
-  it.todo("links a cross-project row's project badge to the owning project");
+  it("links a cross-project row's project badge to the owning project", () => {
+    setLinkedCases([
+      {
+        id: 20,
+        name: "Other project case",
+        source: "MANUAL",
+        isDeleted: false,
+        projectId: 9,
+        project: { name: "Other Project", iconUrl: null },
+      },
+    ]);
+
+    // Panel is mounted for project 7's requirement; the row's case lives
+    // in project 9.
+    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+
+    const badge = screen.getByTestId("project-name");
+    expect(badge.tagName).toBe("A");
+    expect(badge).toHaveAttribute("href", "/projects/overview/9");
+  });
 });
