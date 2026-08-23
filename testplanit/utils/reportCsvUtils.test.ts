@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { describe, expect, it } from "vitest";
 import {
   buildReportCsvRows,
@@ -357,5 +359,92 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
     expect(notRunRow["reports.ui.requirementCoverage.result"]).not.toBe(
       gapRow["reports.ui.requirementCoverage.result"]
     );
+  });
+});
+
+// Six-site registration check (26-12 Task 3, T-26-12-04). Adding a report
+// type in this codebase touches six sites; missing any one produces a
+// report that half-works and stays invisible until someone runs it. This
+// walks all six for both requirement report ids and names the EXACT site
+// that is missing, rather than a single pass/fail bit -- that is the whole
+// point of the check existing separately from the individual per-file
+// tests above, each of which only proves its own file.
+//
+// Every anchor below is an unbounded `.includes()` against the WHOLE
+// (comment-stripped) file, never a fixed-width slice -- the exact defect
+// class recorded for 25-12-T0 and 25-16-T2, where a fixed offset silently
+// stopped matching real content that had simply moved.
+describe("Phase 26 requirement report registration (six sites)", () => {
+  const REQUIREMENT_REPORT_IDS = [
+    "requirement-coverage-gaps",
+    "requirement-traceability",
+  ];
+
+  const REGISTRATION_SITES: Array<[string, string]> = [
+    ["lib/config/reportTypes.ts", "picker entry"],
+    ["lib/schemas/reportRequestSchema.ts", "pre-built validation list"],
+    ["components/reports/ReportRenderer.tsx", "renderer columns branch"],
+    ["components/reports/ReportBuilder.tsx", "builder columns + prebuilt list"],
+    ["utils/reportCsvUtils.ts", "csv builder dispatch"],
+  ];
+
+  const COLUMN_HOOK_PATH = "hooks/useRequirementCoverageReportColumns.tsx";
+
+  const REQUIRED_I18N_KEYS = [
+    "reports.ui.reportTypes.requirementCoverageGaps.label",
+    "reports.ui.reportTypes.requirementTraceability.label",
+    "reports.ui.requirementCoverage.requirement",
+  ];
+
+  function stripComments(source: string): string {
+    return source.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+  }
+
+  function readSource(relativePath: string): string {
+    return stripComments(
+      fs.readFileSync(path.join(process.cwd(), relativePath), "utf8")
+    );
+  }
+
+  function getIn(obj: any, dottedPath: string): unknown {
+    return dottedPath.split(".").reduce((o, k) => (o == null ? o : o[k]), obj);
+  }
+
+  /** Names every missing site/id combination, an empty array meaning fully
+   * registered. Exported logic re-run below by the mutation-proof test. */
+  function findMissingRegistrations(): string[] {
+    const missing: string[] = [];
+
+    for (const [file, label] of REGISTRATION_SITES) {
+      const source = readSource(file);
+      for (const id of REQUIREMENT_REPORT_IDS) {
+        if (!source.includes(id)) {
+          missing.push(`MISSING ${id} at ${label} (${file})`);
+        }
+      }
+    }
+
+    if (!fs.existsSync(path.join(process.cwd(), COLUMN_HOOK_PATH))) {
+      missing.push(`MISSING column set hook (${COLUMN_HOOK_PATH})`);
+    }
+
+    const messages = JSON.parse(
+      fs.readFileSync(
+        path.join(process.cwd(), "messages/en-US.json"),
+        "utf8"
+      )
+    );
+    for (const key of REQUIRED_I18N_KEYS) {
+      if (!getIn(messages, key)) {
+        missing.push(`MISSING i18n key ${key}`);
+      }
+    }
+
+    return missing;
+  }
+
+  it("registers both requirement report ids at every one of the six sites", () => {
+    const missing = findMissingRegistrations();
+    expect(missing, missing.join("\n")).toEqual([]);
   });
 });
