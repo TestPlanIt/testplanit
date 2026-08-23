@@ -313,12 +313,22 @@ export async function getRequirementCoverage(
 
 /** A single case covering a requirement, carrying the project it lives in
  * so a cross-project case can be badged and linked into its own project's
- * repository rather than the requirement's. */
+ * repository rather than the requirement's, plus that case's own latest
+ * execution — the same "latest" definition the rollup counts with, so a
+ * drill-down row can never show a status that disagrees with the counter
+ * displayed above it. `null` on the four status fields and on
+ * `lastExecutedAt` means the case has never been executed; it is still a
+ * present, returned entry, never dropped for lacking an execution. */
 export interface RequirementCoveringCase {
   caseId: number;
   caseName: string;
   projectId: number;
   projectName: string;
+  lastStatusName: string | null;
+  lastStatusColor: string | null;
+  lastStatusIsSuccess: boolean | null;
+  lastStatusIsFailure: boolean | null;
+  lastExecutedAt: string | null;
 }
 
 /** Row shape returned by the covering-case drill-down statement below,
@@ -329,6 +339,11 @@ interface RequirementCoveringCaseRow {
   case_name: string;
   case_project_id: number | bigint;
   project_name: string;
+  status_name: string | null;
+  status_color: string | null;
+  is_success: boolean | null;
+  is_failure: boolean | null;
+  executed_at: Date | string | null;
 }
 
 /**
@@ -343,6 +358,13 @@ interface RequirementCoveringCaseRow {
  * (see `RequirementCoverageBreakdown.crossProjectCaseCount`), and a later
  * phase needs both fields to badge that case and link into its own
  * project's repository rather than the requirement's.
+ *
+ * Each returned case also carries its own latest execution, composed from
+ * the SAME shared latest-result fragment the rollup above joins into its
+ * own statement — never a second, independently-written definition of
+ * "latest." A drill-down whose per-row status disagreed with the rollup's
+ * counters would be worse than no status at all: it would look authoritative
+ * while quietly contradicting the number sitting right above it.
  */
 export async function getRequirementCoveringCases(
   projectId: number,
@@ -378,13 +400,18 @@ export async function getRequirementCoveringCases(
   const closure = buildClosureFragment(projectId, requirementIds);
 
   const { rows } = await sql<RequirementCoveringCaseRow>`
-    WITH RECURSIVE ${closure}
+    WITH RECURSIVE ${closure}, ${latestCaseResultsCte()}
     SELECT DISTINCT
       cl.ancestor_id,
       rc.id AS case_id,
       rc.name AS case_name,
       rc."projectId" AS case_project_id,
-      p.name AS project_name
+      p.name AS project_name,
+      lr.status_name,
+      lr.status_color,
+      lr.is_success,
+      lr.is_failure,
+      lr.executed_at
     FROM closure cl
     JOIN "RepositoryCaseIssue" rci ON rci."issueId" = cl.node_id
     JOIN "RepositoryCases" rc
@@ -392,6 +419,9 @@ export async function getRequirementCoveringCases(
       AND rc."isDeleted" = false
       AND rc."isArchived" = false
     JOIN "Projects" p ON p.id = rc."projectId"
+    -- latest_results holds at most one row per case, so joining it in
+    -- cannot multiply rows: DISTINCT stays exact, not merely present.
+    LEFT JOIN latest_results lr ON lr.test_case_id = rc.id
     -- Same unrestricted-or-member visibility predicate as the rollup's
     -- covering_cases CTE above, applied to the same case-project column.
     WHERE (${unrestricted} OR rc."projectId" = ANY(${accessibleProjectIds}::int[]))
@@ -406,6 +436,13 @@ export async function getRequirementCoveringCases(
       caseName: row.case_name,
       projectId: Number(row.case_project_id),
       projectName: row.project_name,
+      lastStatusName: row.status_name ?? null,
+      lastStatusColor: row.status_color ?? null,
+      lastStatusIsSuccess: row.is_success ?? null,
+      lastStatusIsFailure: row.is_failure ?? null,
+      lastExecutedAt: row.executed_at
+        ? new Date(row.executed_at).toISOString()
+        : null,
     };
     const existing = covering.get(requirementId);
     if (existing) {

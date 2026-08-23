@@ -9,9 +9,15 @@
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/requirementCoverage.test.ts
 
-import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 
-import { classifyRequirementCoverage } from "./requirementCoverage";
+import { describe, expect, it, vi } from "vitest";
+
+import { ISSUE_ROLE_SCOPE_COLUMN } from "./issueRoleScope";
+import {
+  classifyRequirementCoverage,
+  getRequirementCoveringCases,
+} from "./requirementCoverage";
 
 describe("requirementCoverage classification (COV-01, pure)", () => {
   it("returns UNCOVERED when a requirement has no covering cases", () => {
@@ -108,14 +114,155 @@ describe("requirementCoverage classification (COV-01, pure)", () => {
   });
 });
 
-// Test inventory scaffold for the covering-cases latest-result extension
-// (COV-01/COV-02, criterion 5). Titles only — converted by 26-03.
+// requirementCoverage (Phase 26 drill-down extension, COV-04). Mocked-client
+// proof for getRequirementCoveringCases's latest-result columns, plus a
+// source-text guard on the closure builder it deliberately does not touch.
+// The rollup/drill-down count-AGREEMENT guarantee (that this extension does
+// not change WHICH cases are returned) can only be proven against real
+// Postgres recursion — see requirement-covering-cases-status.integration.test.ts.
 describe("requirementCoverage (Phase 26 drill-down extension)", () => {
-  it.todo(
-    "getRequirementCoveringCases returns each case's latest result status and execution time"
-  );
-  it.todo(
-    "getRequirementCoveringCases returns a null status for a case with no execution"
-  );
-  it.todo("the closure builder is untouched by the drill-down result extension");
+  // getRequirementCoveringCases runs its statement via Kysely
+  // sql`...`.execute(db.$qb), the same seam matrixCellCount.test.ts's
+  // runCellCountPreflight suite mocks: qbRows yields the one query's rows
+  // array, and the $qb executor wraps it in the { rows } shape the service
+  // reads.
+  let qbRows: ReturnType<typeof vi.fn>;
+  let mockDb: {
+    $qb: { getExecutor: () => Record<string, unknown> };
+  };
+
+  function makeMockDb() {
+    qbRows = vi.fn();
+    return {
+      $qb: {
+        getExecutor: () => ({
+          transformQuery: (n: unknown) => n,
+          compileQuery: (n: unknown) => n,
+          executeQuery: async () => ({
+            rows: await (qbRows as () => unknown)(),
+          }),
+        }),
+      },
+    };
+  }
+
+  it("getRequirementCoveringCases returns each case's latest result status and execution time", async () => {
+    mockDb = makeMockDb();
+    const executedAt = new Date("2026-08-01T12:00:00.000Z");
+    qbRows.mockResolvedValueOnce([
+      {
+        ancestor_id: 10,
+        case_id: 100,
+        case_name: "Case With Result",
+        case_project_id: 1,
+        project_name: "Project One",
+        status_name: "Passed",
+        status_color: "#22c55e",
+        is_success: true,
+        is_failure: false,
+        executed_at: executedAt,
+      },
+    ]);
+
+    const covering = await getRequirementCoveringCases(
+      1,
+      [10],
+      { accessibleProjectIds: null },
+      mockDb as never
+    );
+
+    const entries = covering.get(10) ?? [];
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toEqual({
+      caseId: 100,
+      caseName: "Case With Result",
+      projectId: 1,
+      projectName: "Project One",
+      lastStatusName: "Passed",
+      lastStatusColor: "#22c55e",
+      lastStatusIsSuccess: true,
+      lastStatusIsFailure: false,
+      lastExecutedAt: executedAt.toISOString(),
+    });
+  });
+
+  it("getRequirementCoveringCases returns a null status for a case with no execution", async () => {
+    mockDb = makeMockDb();
+    qbRows.mockResolvedValueOnce([
+      {
+        ancestor_id: 10,
+        case_id: 101,
+        case_name: "Case Never Executed",
+        case_project_id: 1,
+        project_name: "Project One",
+        status_name: null,
+        status_color: null,
+        is_success: null,
+        is_failure: null,
+        executed_at: null,
+      },
+    ]);
+
+    const covering = await getRequirementCoveringCases(
+      1,
+      [10],
+      { accessibleProjectIds: null },
+      mockDb as never
+    );
+
+    // Present, not dropped — the whole point of the null-status contract.
+    const entries = covering.get(10) ?? [];
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toEqual({
+      caseId: 101,
+      caseName: "Case Never Executed",
+      projectId: 1,
+      projectName: "Project One",
+      lastStatusName: null,
+      lastStatusColor: null,
+      lastStatusIsSuccess: null,
+      lastStatusIsFailure: null,
+      lastExecutedAt: null,
+    });
+  });
+
+  it("the closure builder is untouched by the drill-down result extension", () => {
+    // Raw source-text assertion, deliberately not stripped of comments —
+    // this is the one gate in Phase 26 that must predict what the shipped
+    // git-grep-based containment gate (issueRoleScope.containment.test.ts)
+    // will see, and that gate greps raw text.
+    const content = readFileSync("lib/services/requirementCoverage.ts", "utf8");
+
+    const unionAllCount = content.split("UNION ALL").length - 1;
+    expect(
+      unionAllCount,
+      `expected exactly one UNION ALL in requirementCoverage.ts, found ${unionAllCount}`
+    ).toBe(1);
+
+    const roleColumnCount = content.split(ISSUE_ROLE_SCOPE_COLUMN).length - 1;
+    expect(
+      roleColumnCount,
+      `expected exactly one occurrence of the role predicate constant ` +
+        `(${ISSUE_ROLE_SCOPE_COLUMN}), found ${roleColumnCount}`
+    ).toBe(1);
+
+    // Anchored on unique, floor-safe tokens rather than a fixed-width
+    // character window — 24-01/24-03/25-12/25-16 all shipped
+    // window-anchored scripts that mis-reported.
+    const closureStart = content.indexOf("function buildClosureFragment");
+    const closureEnd = content.indexOf(
+      "/** Row shape returned by the rollup statement",
+      closureStart
+    );
+    expect(closureStart, "buildClosureFragment not found").toBeGreaterThan(-1);
+    expect(
+      closureEnd,
+      "end-of-closure-builder anchor not found after buildClosureFragment"
+    ).toBeGreaterThan(closureStart);
+
+    const closureBody = content.slice(closureStart, closureEnd);
+    expect(closureBody).toContain('"projectId"');
+    expect(closureBody).toContain('"isDeleted"');
+    expect(closureBody).toContain("depth < 100");
+  });
 });
