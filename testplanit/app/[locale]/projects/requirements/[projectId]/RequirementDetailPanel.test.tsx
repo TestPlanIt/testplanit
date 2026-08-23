@@ -454,3 +454,9 @@ describe("RequirementDetailPanel", () => {
     });
   });
 });
+
+// Test inventory scaffold for Phase 26's coverage panel mount point.
+// Titles only — converted by 26-09.
+describe("RequirementDetailPanel (Phase 26 coverage additions)", () => {
+  it.todo("mounts the coverage panel above the linked-cases panel");
+});

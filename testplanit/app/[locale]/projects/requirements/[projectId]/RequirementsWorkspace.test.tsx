@@ -69,3 +69,13 @@ describe("requirements drag-drop context nesting (structural)", () => {
     expect(close).toBeGreaterThan(mount);
   });
 });
+
+// Test inventory scaffold for Phase 26's traceability export action and
+// requirements-disabled notice. Titles only — converted by 26-10.
+describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
+  it.todo("offers a traceability PDF export action in the workspace header");
+  it.todo("disables the export action while an export is running");
+  it.todo(
+    "renders the requirements-disabled notice instead of the workspace when the project flag is off"
+  );
+});

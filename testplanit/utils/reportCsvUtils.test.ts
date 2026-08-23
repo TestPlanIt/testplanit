@@ -237,3 +237,11 @@ describe("buildReportCsvRows", () => {
     expect(row["Test Results"]).toBe(0);
   });
 });
+
+// Test inventory scaffold for the two Phase 26 requirement report CSV
+// builders (COV-04, D-2). Titles only — converted by 26-12.
+describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
+  it.todo("builds requirement-coverage-gaps rows with localized headers");
+  it.todo("builds requirement-traceability rows with localized headers");
+  it.todo("writes Uncovered rather than an empty cell for a null-case traceability row");
+});

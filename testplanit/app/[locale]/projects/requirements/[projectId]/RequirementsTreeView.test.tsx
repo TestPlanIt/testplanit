@@ -633,3 +633,21 @@ describe("RequirementsTreeView", () => {
     expect(nativeRenameItem).not.toHaveAttribute("data-disabled");
   });
 });
+
+// Test inventory scaffold for Phase 26's coverage indicator + uncovered
+// filter additions to the tree (D-1, D-2). Titles only — converted by
+// 26-06.
+describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
+  it.todo("renders a coverage indicator on every node once coverage has loaded");
+  it.todo("renders no coverage indicator and no error when the coverage request fails");
+  it.todo(
+    "filters to only uncovered requirements when the toggle is on, keeping their ancestors visible"
+  );
+  it.todo(
+    "intersects the uncovered toggle with the text filter rather than unioning them"
+  );
+  it.todo("disables the uncovered toggle when coverage is unavailable");
+  it.todo(
+    "keeps the requirement title yielding last: provenance shrinks hardest, then coverage, then the name"
+  );
+});

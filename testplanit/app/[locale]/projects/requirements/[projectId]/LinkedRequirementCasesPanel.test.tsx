@@ -313,3 +313,9 @@ describe("LinkedRequirementCasesPanel", () => {
     });
   });
 });
+
+// Test inventory scaffold for Phase 26's cross-project link addition.
+// Titles only — converted by 26-09.
+describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
+  it.todo("links a cross-project row's project badge to the owning project");
+});

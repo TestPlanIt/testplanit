@@ -138,3 +138,10 @@ describe("ReportBuilder Empty State", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+// Test inventory scaffold for the requirementsEnabled report-type gate
+// (S6, COV-04, D-2). Titles only — converted by 26-12.
+describe("ReportBuilder (Phase 26 requirement report type gating)", () => {
+  it.todo("omits both requirement report types when the project has requirements disabled");
+  it.todo("offers both requirement report types when the project has requirements enabled");
+});

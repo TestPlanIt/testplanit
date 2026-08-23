@@ -107,3 +107,15 @@ describe("requirementCoverage classification (COV-01, pure)", () => {
     ).toBe("NOT_RUN");
   });
 });
+
+// Test inventory scaffold for the covering-cases latest-result extension
+// (COV-01/COV-02, criterion 5). Titles only — converted by 26-03.
+describe("requirementCoverage (Phase 26 drill-down extension)", () => {
+  it.todo(
+    "getRequirementCoveringCases returns each case's latest result status and execution time"
+  );
+  it.todo(
+    "getRequirementCoveringCases returns a null status for a case with no execution"
+  );
+  it.todo("the closure builder is untouched by the drill-down result extension");
+});
