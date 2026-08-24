@@ -14,12 +14,20 @@
 // real.
 
 import { render, renderHook } from "@testing-library/react";
+import { format } from "date-fns";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getDateFnsLocale } from "~/utils/locales";
+
+// Mutable so individual tests can exercise a non-default app locale (F8) --
+// declared via vi.hoisted so it's initialized before the hoisted vi.mock
+// factory below closes over it.
+const mockLocale = vi.hoisted(() => ({ current: "en-US" }));
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, unknown>) =>
     params ? `${key}:${Object.values(params).join("·")}` : key,
+  useLocale: () => mockLocale.current,
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -57,6 +65,10 @@ function cellFor(columns: any[], id: string, original: any) {
 }
 
 describe("useRequirementCoverageReportColumns", () => {
+  beforeEach(() => {
+    mockLocale.current = "en-US";
+  });
+
   it("renders a requirement column and a hierarchy path column", () => {
     const { result } = renderHook(() => useRequirementCoverageGapColumns());
     const columns = result.current;
@@ -155,5 +167,110 @@ describe("useRequirementCoverageReportColumns", () => {
       <>{cellFor(columns, "testCaseId", notRunRow)}</>
     );
     expect(getByText("Enrol via portal")).toBeInTheDocument();
+  });
+
+  // A native requirement (CreateRequirementDialog, or a RequirementsTreeView
+  // rename) writes the SAME trimmed string to its key (requirementKey) and
+  // title (requirementTitle) -- unlike every fixture above, which is
+  // synced-shaped with a genuinely differing title. Both column sets
+  // delegate the Requirement cell to the shared `formatRequirementCellText`
+  // helper; these are thin assertions that the column-hook surface actually
+  // uses it, not a re-test of the helper's guard logic (see
+  // utils/issueDisplayText.test.ts for that).
+  it("renders a native requirement's name ONCE, not doubled, in the gap columns", () => {
+    const { result } = renderHook(() => useRequirementCoverageGapColumns());
+    const columns = result.current;
+
+    const nativeRow = {
+      id: 0,
+      requirementId: 1,
+      requirementKey: "New Requirement",
+      requirementTitle: "New Requirement",
+      requirementPath: "New Requirement",
+      linkedCases: 0,
+    };
+
+    const { getByText, queryByText } = render(
+      <>{cellFor(columns, "requirement", nativeRow)}</>
+    );
+    expect(getByText("New Requirement")).toBeInTheDocument();
+    expect(
+      queryByText("New Requirement: New Requirement")
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders a native requirement's name ONCE, not doubled, in the traceability columns", () => {
+    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
+    const columns = result.current;
+
+    const nativeRow = {
+      id: 0,
+      requirementId: 1,
+      requirementKey: "New Requirement",
+      requirementTitle: "New Requirement",
+      requirementPath: "New Requirement",
+      testCaseId: null,
+      testCaseName: null,
+      caseProjectId: null,
+      caseProjectName: null,
+      lastStatusName: null,
+      lastStatusColor: null,
+      lastExecutedAt: null,
+      coverageStatus: "UNCOVERED",
+    };
+
+    const { getByText, queryByText } = render(
+      <>{cellFor(columns, "requirement", nativeRow)}</>
+    );
+    expect(getByText("New Requirement")).toBeInTheDocument();
+    expect(
+      queryByText("New Requirement: New Requirement")
+    ).not.toBeInTheDocument();
+  });
+
+  // F8: the Executed At cell must use the app locale (via
+  // `getDateFnsLocale`), not date-fns's built-in en-US default -- the
+  // established pattern in hooks/useDrillDownColumns.tsx. Compare against
+  // the SAME instant formatted through both paths rather than hardcoding an
+  // expected string, so this test isn't coupled to the test runner's local
+  // timezone -- only to the locale actually flowing through.
+  it("formats Executed At using the app locale, not the date-fns default", () => {
+    mockLocale.current = "de-DE";
+
+    const executedAt = "2026-08-23T14:04:00.000Z";
+    const date = new Date(executedAt);
+    const expectedWithAppLocale = format(date, "PPp", {
+      locale: getDateFnsLocale("de-DE"),
+    });
+    const defaultFormatted = format(date, "PPp");
+    // Sanity check that de-DE and the date-fns default actually render
+    // differently for this instant -- otherwise the assertion below
+    // couldn't discriminate a regression.
+    expect(expectedWithAppLocale).not.toBe(defaultFormatted);
+
+    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
+    const columns = result.current;
+
+    const row = {
+      id: 0,
+      requirementId: 1,
+      requirementKey: "REQ-1",
+      requirementTitle: "Enrol domestic students",
+      requirementPath: "Enrolments > Enrol domestic students",
+      testCaseId: 55,
+      testCaseName: "Enrol via portal",
+      caseProjectId: 10,
+      caseProjectName: "Enrolments",
+      lastStatusName: "Passed",
+      lastStatusColor: "#10b981",
+      lastExecutedAt: executedAt,
+      coverageStatus: "PASSED",
+    };
+
+    const { getByText, queryByText } = render(
+      <>{cellFor(columns, "executedAt", row)}</>
+    );
+    expect(getByText(expectedWithAppLocale)).toBeInTheDocument();
+    expect(queryByText(defaultFormatted)).not.toBeInTheDocument();
   });
 });

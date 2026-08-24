@@ -12,6 +12,7 @@
  */
 
 import { format } from "date-fns";
+import { formatRequirementCellText } from "~/utils/issueDisplayText";
 import { toHumanReadable } from "~/utils/duration";
 import { metricUnit } from "~/utils/metricUnits";
 
@@ -168,15 +169,6 @@ function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
   });
 }
 
-function requirementCellText(r: {
-  requirementKey?: string;
-  requirementTitle?: string | null;
-}): string {
-  return r.requirementTitle
-    ? `${r.requirementKey}: ${r.requirementTitle}`
-    : (r.requirementKey ?? "");
-}
-
 function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
   const { rows, t } = p;
   const h = {
@@ -186,7 +178,7 @@ function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
   };
   return rows.map((r: any) => {
     const row: CsvRow = {};
-    row[h.requirement] = requirementCellText(r);
+    row[h.requirement] = formatRequirementCellText(r);
     row[h.path] = r.requirementPath ?? "";
     row[h.linkedCases] = r.linkedCases ?? 0;
     return row;
@@ -213,7 +205,7 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
   // becomes indistinguishable from a case that merely hasn't executed yet.
   return rows.map((r: any) => {
     const row: CsvRow = {};
-    row[h.requirement] = requirementCellText(r);
+    row[h.requirement] = formatRequirementCellText(r);
     row[h.path] = r.requirementPath ?? "";
     row[h.testCase] = r.testCaseName ?? "";
     row[h.result] =

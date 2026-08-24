@@ -4,9 +4,11 @@ import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "~/utils";
+import { formatRequirementCellText } from "~/utils/issueDisplayText";
+import { getDateFnsLocale } from "~/utils/locales";
 
 import type {
   RequirementCoverageGapReportRow,
@@ -35,18 +37,6 @@ import type {
 
 const REQUIREMENT_COLUMN_SIZE = 280;
 const PATH_COLUMN_SIZE = 320;
-
-function requirementCellText(row: {
-  requirementKey: string;
-  requirementTitle: string | null;
-}): string {
-  // Mirrors `formatIssueDisplayText`'s "KEY: Title" convention, but this
-  // row shape carries no `externalUrl` to gate on -- both native and synced
-  // requirements show their title here whenever one exists.
-  return row.requirementTitle
-    ? `${row.requirementKey}: ${row.requirementTitle}`
-    : row.requirementKey;
-}
 
 /**
  * The result cell mirrors the PDF exporter's three-way logic
@@ -119,7 +109,7 @@ export function useRequirementCoverageGapColumns(): ColumnDef<
         header: () => <span>{t("requirement")}</span>,
         cell: (info) => (
           <span className="font-medium">
-            {requirementCellText(info.row.original)}
+            {formatRequirementCellText(info.row.original)}
           </span>
         ),
         enableSorting: true,
@@ -155,6 +145,8 @@ export function useRequirementTraceabilityColumns(
   projectId?: number | string
 ): ColumnDef<RequirementTraceabilityReportRow, any>[] {
   const t = useTranslations("reports.ui.requirementCoverage");
+  const locale = useLocale();
+  const dateFnsLocale = getDateFnsLocale(locale);
 
   return useMemo(() => {
     const columnHelper = createColumnHelper<RequirementTraceabilityReportRow>();
@@ -168,7 +160,7 @@ export function useRequirementTraceabilityColumns(
         header: () => <span>{t("requirement")}</span>,
         cell: (info) => (
           <span className="font-medium">
-            {requirementCellText(info.row.original)}
+            {formatRequirementCellText(info.row.original)}
           </span>
         ),
         enableSorting: true,
@@ -245,7 +237,9 @@ export function useRequirementTraceabilityColumns(
           if (!value) return null;
           const date = new Date(value);
           return isNaN(date.getTime()) ? null : (
-            <span className="text-sm">{format(date, "PPp")}</span>
+            <span className="text-sm">
+              {format(date, "PPp", { locale: dateFnsLocale })}
+            </span>
           );
         },
         enableSorting: true,
@@ -292,5 +286,5 @@ export function useRequirementTraceabilityColumns(
     );
 
     return columns;
-  }, [t, projectId]);
+  }, [t, projectId, dateFnsLocale]);
 }

@@ -269,6 +269,60 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
     expect(row["reports.ui.requirementCoverage.linkedCases"]).toBe(0);
   });
 
+  // A native requirement (created via CreateRequirementDialog, or renamed
+  // via RequirementsTreeView) writes the SAME trimmed string to its name
+  // (requirementKey) and title (requirementTitle) -- unlike the fixture
+  // above, which is synced-shaped and has a genuinely differing title. Both
+  // report types delegate the Requirement cell to the shared
+  // `formatRequirementCellText` helper; this is a thin assertion that the
+  // CSV surface actually uses it, not a re-test of the helper itself (see
+  // utils/issueDisplayText.test.ts for full coverage of the guard).
+  it("renders a native requirement's name ONCE, not doubled, in gap rows", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-coverage-gaps",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "New Requirement",
+          requirementTitle: "New Requirement",
+          requirementPath: "New Requirement",
+          linkedCases: 0,
+        },
+      ],
+    });
+
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "New Requirement"
+    );
+  });
+
+  it("renders a native requirement's name ONCE, not doubled, in traceability rows", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "requirement-traceability",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "New Requirement",
+          requirementTitle: "New Requirement",
+          requirementPath: "New Requirement",
+          testCaseId: null,
+          testCaseName: null,
+          caseProjectId: null,
+          caseProjectName: null,
+          lastStatusName: null,
+          lastStatusColor: null,
+          lastExecutedAt: null,
+        },
+      ],
+    });
+
+    expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
+      "New Requirement"
+    );
+  });
+
   it("builds requirement-traceability rows with localized headers", () => {
     const [row] = buildReportCsvRows({
       ...base,

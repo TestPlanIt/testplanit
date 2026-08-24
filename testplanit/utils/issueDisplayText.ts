@@ -20,3 +20,29 @@ export function formatIssueDisplayText(issue: {
   const { name, title, externalUrl } = issue;
   return externalUrl && title && title !== name ? `${name}: ${title}` : name;
 }
+
+/**
+ * `formatIssueDisplayText`'s convention, specialized for the requirement
+ * report row shapes (`RequirementCoverageGapReportRow` /
+ * `RequirementTraceabilityReportRow`), which carry a `requirementKey`/
+ * `requirementTitle` pair but no `externalUrl`.
+ *
+ * Both requirement creation paths write the SAME trimmed string to name and
+ * title -- `CreateRequirementDialog.tsx` (`name: trimmedName, title:
+ * trimmedName`) and `RequirementsTreeView.tsx`'s rename handler (`data: {
+ * name: trimmed, title: trimmed }`) -- so a native requirement always has
+ * `requirementTitle === requirementKey`. Without the `title !== key` guard
+ * below, every native requirement's cell doubled its own name ("New
+ * Requirement: New Requirement"); a synced requirement's key and title
+ * genuinely differ, so it still renders "KEY: Title".
+ */
+export function formatRequirementCellText(row: {
+  requirementKey?: string;
+  requirementTitle?: string | null;
+}): string {
+  const key = row.requirementKey ?? "";
+  const { requirementTitle } = row;
+  return requirementTitle && requirementTitle !== key
+    ? `${key}: ${requirementTitle}`
+    : key;
+}
