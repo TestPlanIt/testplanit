@@ -1,4 +1,8 @@
-import { useQuery, type QueryClient, type QueryKey } from "@tanstack/react-query";
+import {
+  useQuery,
+  type QueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 
@@ -43,7 +47,8 @@ export function invalidateRequirementCoverage(
   projectId: number
 ): void {
   void queryClient.invalidateQueries({
-    predicate: (query) => isRequirementCoverageQueryKey(query.queryKey, projectId),
+    predicate: (query) =>
+      isRequirementCoverageQueryKey(query.queryKey, projectId),
   });
 }
 

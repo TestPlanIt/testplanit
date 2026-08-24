@@ -18,16 +18,10 @@ describe("isRequirementCoveringCasesQueryKey", () => {
 
   it("matches any requirement under the project when requirementId is omitted", () => {
     expect(
-      isRequirementCoveringCasesQueryKey(
-        ["requirementCoveringCases", 7, 42],
-        7
-      )
+      isRequirementCoveringCasesQueryKey(["requirementCoveringCases", 7, 42], 7)
     ).toBe(true);
     expect(
-      isRequirementCoveringCasesQueryKey(
-        ["requirementCoveringCases", 7, 99],
-        7
-      )
+      isRequirementCoveringCasesQueryKey(["requirementCoveringCases", 7, 99], 7)
     ).toBe(true);
   });
 
@@ -84,13 +78,13 @@ describe("invalidateRequirementCoveringCases", () => {
     expect(typeof predicate).toBe("function");
 
     // Matches this requirement's drill-down query...
-    expect(
-      predicate({ queryKey: ["requirementCoveringCases", 7, 42] })
-    ).toBe(true);
+    expect(predicate({ queryKey: ["requirementCoveringCases", 7, 42] })).toBe(
+      true
+    );
     // ...but not a different requirement's drill-down query...
-    expect(
-      predicate({ queryKey: ["requirementCoveringCases", 7, 99] })
-    ).toBe(false);
+    expect(predicate({ queryKey: ["requirementCoveringCases", 7, 99] })).toBe(
+      false
+    );
     // ...and not the sibling rollup query.
     expect(predicate({ queryKey: ["requirementCoverage", 7] })).toBe(false);
   });
@@ -102,14 +96,14 @@ describe("invalidateRequirementCoveringCases", () => {
     invalidateRequirementCoveringCases(queryClient, 7);
 
     const { predicate } = invalidateQueries.mock.calls[0][0];
-    expect(
-      predicate({ queryKey: ["requirementCoveringCases", 7, 42] })
-    ).toBe(true);
-    expect(
-      predicate({ queryKey: ["requirementCoveringCases", 7, 99] })
-    ).toBe(true);
-    expect(
-      predicate({ queryKey: ["requirementCoveringCases", 9, 42] })
-    ).toBe(false);
+    expect(predicate({ queryKey: ["requirementCoveringCases", 7, 42] })).toBe(
+      true
+    );
+    expect(predicate({ queryKey: ["requirementCoveringCases", 7, 99] })).toBe(
+      true
+    );
+    expect(predicate({ queryKey: ["requirementCoveringCases", 9, 42] })).toBe(
+      false
+    );
   });
 });

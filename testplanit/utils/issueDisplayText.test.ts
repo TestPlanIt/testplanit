@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { formatIssueDisplayText, formatRequirementCellText } from "./issueDisplayText";
+import {
+  formatIssueDisplayText,
+  formatRequirementCellText,
+} from "./issueDisplayText";
 
 describe("formatIssueDisplayText", () => {
   it("renders 'KEY: Title' for a synced issue with a differing title", () => {

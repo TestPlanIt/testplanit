@@ -125,9 +125,7 @@ export async function handleRequirementCoverageReportPOST(
         // closed with the real status rather than crashing into a 500.
         return Response.json({ error: auth.error }, { status: auth.status });
       }
-      accessibleProjectIds = await resolveViewerProjectScope(
-        auth.user.userId
-      );
+      accessibleProjectIds = await resolveViewerProjectScope(auth.user.userId);
     }
 
     const data = await loadRequirementTraceability(projectId, {

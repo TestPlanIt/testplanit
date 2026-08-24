@@ -61,12 +61,10 @@ export function RequirementCoveragePanel({
 }: RequirementCoveragePanelProps) {
   const t = useTranslations("requirements.coverage");
 
-  const {
-    data,
-    isLoading,
-    isError,
-    refetch,
-  } = useRequirementCoveringCases(Number(projectId), requirementId);
+  const { data, isLoading, isError, refetch } = useRequirementCoveringCases(
+    Number(projectId),
+    requirementId
+  );
 
   // Free read -- the tree above this panel already fetches project-wide
   // coverage through this exact hook, whose stable
@@ -130,11 +128,7 @@ export function RequirementCoveragePanel({
             data-testid="requirement-coverage-error"
           >
             <p className="text-sm text-destructive">{t("loadFailed")}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void refetch()}
-            >
+            <Button variant="outline" size="sm" onClick={() => void refetch()}>
               {t("retry")}
             </Button>
           </div>

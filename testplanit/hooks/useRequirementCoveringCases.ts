@@ -1,4 +1,8 @@
-import { useQuery, type QueryClient, type QueryKey } from "@tanstack/react-query";
+import {
+  useQuery,
+  type QueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
 import type { RequirementCoveringCasesResponse } from "~/app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route";
 
 /** The literal first element of every query key this hook issues. Exported

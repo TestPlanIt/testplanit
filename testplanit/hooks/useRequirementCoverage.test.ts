@@ -25,10 +25,7 @@ describe("isRequirementCoverageQueryKey", () => {
   // literal prefix ("requirementCover") with this hook's own root string.
   it("does not match useRequirementCoveringCases' key despite the shared string prefix", () => {
     expect(
-      isRequirementCoverageQueryKey(
-        ["requirementCoveringCases", 7, 42],
-        7
-      )
+      isRequirementCoverageQueryKey(["requirementCoveringCases", 7, 42], 7)
     ).toBe(false);
   });
 
@@ -37,10 +34,7 @@ describe("isRequirementCoverageQueryKey", () => {
       false
     );
     expect(
-      isRequirementCoverageQueryKey(
-        ["zenstack", "Issue", "findMany", {}],
-        7
-      )
+      isRequirementCoverageQueryKey(["zenstack", "Issue", "findMany", {}], 7)
     ).toBe(false);
   });
 
@@ -70,8 +64,8 @@ describe("invalidateRequirementCoverage", () => {
     // ...but not a different project's coverage query...
     expect(predicate({ queryKey: ["requirementCoverage", 9] })).toBe(false);
     // ...and not the sibling covering-cases query.
-    expect(
-      predicate({ queryKey: ["requirementCoveringCases", 7, 42] })
-    ).toBe(false);
+    expect(predicate({ queryKey: ["requirementCoveringCases", 7, 42] })).toBe(
+      false
+    );
   });
 });
