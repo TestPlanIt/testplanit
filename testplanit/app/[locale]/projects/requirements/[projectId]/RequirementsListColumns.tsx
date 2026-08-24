@@ -19,6 +19,7 @@ import { useDrag } from "react-dnd";
 import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,6 +37,7 @@ import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]
 import { coverageFor } from "~/hooks/useRequirementCoverage";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { ItemTypes } from "~/types/dndTypes";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { cn } from "~/utils";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
@@ -47,11 +49,14 @@ import {
 } from "./requirementsListRows";
 
 /**
- * The five columns the tree-table renders through (D-03a). Deliberately NOT
- * ported from `MemberIssuesColumns.tsx`: no `select` (no bulk action on
- * requirements), no `description` (belongs to the detail panel's Tiptap
- * `Issue.note`), no separate `cases` column (the coverage badge's own
- * `passed/linkedCaseCount` already carries that number).
+ * The seven columns the tree-table renders through (D-03a, extended by UAT
+ * gaps 5/6). Deliberately NOT ported from `MemberIssuesColumns.tsx`: no
+ * `select` (no bulk action on requirements), no `description` (belongs to
+ * the detail panel's Tiptap `Issue.note`). The comparator's single `cases`
+ * column IS ported, but split into two -- `linkedCases` (this requirement
+ * only) and `coveringCases` (its whole subtree) -- because a requirement's
+ * own coverage badge already blends both scopes into one number and gap 5/6
+ * asked for the direct-vs-inherited distinction the badge can't show.
  */
 export interface RequirementsListColumnsTranslations {
   /** requirements.list.columnName */
@@ -60,6 +65,12 @@ export interface RequirementsListColumnsTranslations {
   columnStatus: string;
   /** requirements.coverage.title -- an existing key, reused, no new key */
   columnCoverage: string;
+  /** requirements.linkedCases.title ("Linked Test Cases") -- an existing
+   *  key, reused, no new key */
+  columnLinkedCases: string;
+  /** requirements.coverage.panelTitle ("Covering Test Cases") -- an
+   *  existing key, reused, no new key */
+  columnCoveringCases: string;
   /** requirements.list.columnSource */
   columnSource: string;
   /** common.actions.actionsLabel -- existing, reused */
@@ -73,6 +84,14 @@ interface UseRequirementsListColumnsArgs {
   isFiltering: boolean;
   normalizedFilter: string;
   coverage: RequirementCoverageResponse | undefined;
+  /**
+   * `buildDescendantIdMap`'s output: every requirement id mapped to itself
+   * plus its whole subtree. Powers the `coveringCases` column's filter --
+   * `map.get(id) ?? [id]` is the deliberate fallback for a row rendered
+   * before the map has rebuilt for a freshly-created id, matching this
+   * requirement's own self-inclusive contract instead of showing nothing.
+   */
+  descendantIdsByRequirementId?: Map<number, number[]>;
   expandedByIssueId: Record<number, boolean>;
   editingRequirementId: number | null;
   onToggleExpand: (issueId: number) => void;
@@ -98,6 +117,7 @@ export function useRequirementsListColumns({
   isFiltering,
   normalizedFilter,
   coverage,
+  descendantIdsByRequirementId,
   expandedByIssueId,
   editingRequirementId,
   onToggleExpand,
@@ -113,6 +133,8 @@ export function useRequirementsListColumns({
     columnName: tColumnName,
     columnStatus: tColumnStatus,
     columnCoverage: tColumnCoverage,
+    columnLinkedCases: tColumnLinkedCases,
+    columnCoveringCases: tColumnCoveringCases,
     columnSource: tColumnSource,
     actionsLabel: tActionsLabel,
   } = translations;
@@ -205,6 +227,106 @@ export function useRequirementsListColumns({
         },
       },
       {
+        id: "linkedCases",
+        // Sorts by directCaseCount, the SAME counter the cell's in-project
+        // badge renders -- cases attached to this requirement ITSELF, never
+        // inherited from a descendant.
+        accessorFn: (row) => coverageFor(coverage, row.id)?.directCaseCount ?? 0,
+        header: tColumnLinkedCases,
+        enableSorting: true,
+        // Comparator's own cases column footprint (MemberIssuesColumns.tsx),
+        // exactly.
+        size: 110,
+        minSize: 80,
+        maxSize: 160,
+        cell: ({ row }) => {
+          const breakdown = coverageFor(coverage, row.original.id);
+          const isLoadingCell = breakdown === undefined;
+          const directCaseCount = breakdown?.directCaseCount ?? 0;
+          const directCrossProjectCaseCount =
+            breakdown?.directCrossProjectCaseCount ?? 0;
+          return (
+            <RequirementCasesCell
+              rowId={row.original.id}
+              testIdPrefix="requirement-linked-cases"
+              inProjectCount={directCaseCount - directCrossProjectCaseCount}
+              otherProjectCount={directCrossProjectCaseCount}
+              // isArchived: false is a DELIBERATE divergence from the
+              // comparator: these counts come from the coverage rollup
+              // (lib/services/requirementCoverage.ts), which already
+              // excludes archived cases, while the comparator's caseCount
+              // comes from /api/issues/counts, which does not. Without this
+              // flag the badge and its expanded list could disagree.
+              inProjectFilter={{
+                caseIssues: { some: { issueId: row.original.id } },
+                projectId,
+                isArchived: false,
+              }}
+              otherProjectFilter={{
+                caseIssues: { some: { issueId: row.original.id } },
+                projectId: { not: projectId },
+                isArchived: false,
+              }}
+              isLoading={isLoadingCell}
+            />
+          );
+        },
+      },
+      {
+        id: "coveringCases",
+        // Sorts by linkedCaseCount, the whole-subtree counter -- this
+        // requirement plus everything beneath it, mirroring the coverage
+        // column's own "richer than a sum" precedent of ranking by the
+        // rollup's own field rather than re-deriving one.
+        accessorFn: (row) => coverageFor(coverage, row.id)?.linkedCaseCount ?? 0,
+        header: tColumnCoveringCases,
+        enableSorting: true,
+        size: 120,
+        minSize: 90,
+        maxSize: 200,
+        cell: ({ row }) => {
+          const breakdown = coverageFor(coverage, row.original.id);
+          const isLoadingCell = breakdown === undefined;
+          const linkedCaseCount = breakdown?.linkedCaseCount ?? 0;
+          const crossProjectCaseCount = breakdown?.crossProjectCaseCount ?? 0;
+          // Self-inclusive fallback (D-11a): a row rendered before the
+          // descendant map has rebuilt for a freshly-created id still gets
+          // its own id, matching buildDescendantIdMap's own self-inclusive
+          // contract instead of an empty (and therefore all-projects) filter.
+          const descendantIds = descendantIdsByRequirementId?.get(
+            row.original.id
+          ) ?? [row.original.id];
+          return (
+            <RequirementCasesCell
+              rowId={row.original.id}
+              testIdPrefix="requirement-covering-cases"
+              inProjectCount={linkedCaseCount - crossProjectCaseCount}
+              otherProjectCount={crossProjectCaseCount}
+              // Known, accepted edge (not fixed here): the rollup's
+              // recursive arm descends through NON-requirement children too
+              // (deliberately -- see requirementCoverage.ts's own structural
+              // asymmetry test), while `childrenMap` (and therefore
+              // `descendantIds` below) only contains requirements. A case
+              // linked to a non-requirement issue parented under a
+              // requirement counts in `linkedCaseCount` above but cannot
+              // appear in this expanded list -- not worth a per-row server
+              // call to reconcile.
+              inProjectFilter={{
+                caseIssues: { some: { issueId: { in: descendantIds } } },
+                projectId,
+                isArchived: false,
+              }}
+              otherProjectFilter={{
+                caseIssues: { some: { issueId: { in: descendantIds } } },
+                projectId: { not: projectId },
+                isArchived: false,
+              }}
+              isLoading={isLoadingCell}
+            />
+          );
+        },
+      },
+      {
         id: "source",
         accessorFn: (row) => requirementSourceSortValue(row),
         header: tColumnSource,
@@ -263,6 +385,8 @@ export function useRequirementsListColumns({
     tColumnName,
     tColumnStatus,
     tColumnCoverage,
+    tColumnLinkedCases,
+    tColumnCoveringCases,
     tColumnSource,
     tActionsLabel,
     projectId,
@@ -270,6 +394,7 @@ export function useRequirementsListColumns({
     isFiltering,
     normalizedFilter,
     coverage,
+    descendantIdsByRequirementId,
     expandedByIssueId,
     editingRequirementId,
     onToggleExpand,
@@ -281,6 +406,76 @@ export function useRequirementsListColumns({
     onRequestDelete,
     onDetached,
   ]);
+}
+
+interface RequirementCasesCellProps {
+  rowId: number;
+  /** Base test id, WITHOUT the row id -- e.g. `"requirement-linked-cases"`.
+   *  The cell itself renders `${testIdPrefix}-${rowId}`, and the
+   *  cross-project span renders `${testIdPrefix}-other-${rowId}`. */
+  testIdPrefix: string;
+  inProjectCount: number;
+  otherProjectCount: number;
+  inProjectFilter: RepositoryCasesWhereInput;
+  otherProjectFilter: RepositoryCasesWhereInput;
+  isLoading: boolean;
+}
+
+/**
+ * The comparator's count-plus-expandable-list pair
+ * (`MemberIssuesColumns.tsx` lines 100-131/387-423), transplanted into ONE
+ * shared component so `linkedCases` and `coveringCases` cannot drift apart.
+ * Both `CasesListDisplay` reads go through `/api/model/RepositoryCases`,
+ * which ZenStack policy-scopes to the viewer's accessible projects -- the
+ * filters below only ever ADD scope (`projectId`, `isArchived: false`),
+ * never widen it (T-26.2G-11-01).
+ */
+function RequirementCasesCell({
+  rowId,
+  testIdPrefix,
+  inProjectCount,
+  otherProjectCount,
+  inProjectFilter,
+  otherProjectFilter,
+  isLoading,
+}: RequirementCasesCellProps) {
+  const t = useTranslations("milestones.members");
+  return (
+    <div
+      className="flex items-center justify-center gap-1.5"
+      data-testid={`${testIdPrefix}-${rowId}`}
+    >
+      <CasesListDisplay
+        count={inProjectCount}
+        filter={inProjectFilter}
+        isLoading={isLoading}
+      />
+      {/* Absent entirely at zero (never a "+0" badge) -- ported verbatim
+          from `OtherProjectCasesTotal`'s own `count <= 0` gate. Also absent
+          while loading: the real count isn't known yet, and showing "+0"
+          during that window would be the exact false claim this column
+          exists to avoid. */}
+      {!isLoading && otherProjectCount > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span data-testid={`${testIdPrefix}-other-${rowId}`}>
+              <CasesListDisplay
+                count={otherProjectCount}
+                filter={otherProjectFilter}
+                showProject
+                openInNewTab
+                triggerPrefix="+"
+                triggerVariant="outline"
+              />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {t("casesOtherProjects", { count: otherProjectCount })}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
 }
 
 interface RequirementDragItem {
