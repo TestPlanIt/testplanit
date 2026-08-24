@@ -1,11 +1,6 @@
 import fs from "fs";
 import path from "path";
-import {
-  fireEvent,
-  render,
-  renderHook,
-  screen,
-} from "@testing-library/react";
+import { fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
@@ -745,15 +740,14 @@ describe("coveringCases cell -- drill-down expansion (gap closure 26.2-15, UAT g
     // Every pre-expand call is disabled (both args undefined) -- the fetch
     // itself never fires merely because the row is visible in the
     // virtualized table.
-    const callsThatWouldFetch = mockUseRequirementCoveringCases.mock.calls.filter(
-      ([projectIdArg, requirementIdArg]) =>
-        projectIdArg !== undefined || requirementIdArg !== undefined
-    );
+    const callsThatWouldFetch =
+      mockUseRequirementCoveringCases.mock.calls.filter(
+        ([projectIdArg, requirementIdArg]) =>
+          projectIdArg !== undefined || requirementIdArg !== undefined
+      );
     expect(callsThatWouldFetch).toHaveLength(0);
 
-    fireEvent.click(
-      screen.getByTestId("requirement-covering-cases-trigger-1")
-    );
+    fireEvent.click(screen.getByTestId("requirement-covering-cases-trigger-1"));
 
     expect(mockUseRequirementCoveringCases).toHaveBeenCalledWith(5, 1);
   });
@@ -773,9 +767,7 @@ describe("coveringCases cell -- drill-down expansion (gap closure 26.2-15, UAT g
       projectId: 5,
     });
 
-    fireEvent.click(
-      screen.getByTestId("requirement-covering-cases-trigger-1")
-    );
+    fireEvent.click(screen.getByTestId("requirement-covering-cases-trigger-1"));
 
     expect(screen.getByText("In-project case")).toBeInTheDocument();
     expect(screen.queryByText("Other-project case")).not.toBeInTheDocument();
