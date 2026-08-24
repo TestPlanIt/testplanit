@@ -5,7 +5,6 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { Profiler, type ProfilerOnRenderCallback } from "react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -35,7 +34,10 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
-import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
+import {
+  COLLAPSE_HYSTERESIS_PX,
+  RequirementProvenanceBadge,
+} from "./RequirementProvenanceBadge";
 
 const nativeRow = {
   id: 1,
@@ -149,19 +151,6 @@ function getProvenanceHarness(container: HTMLElement) {
   const label = measure.querySelector('[data-seg="label"]');
   if (!provider || !label) throw new Error("segment(s) not found");
   return { measure, wrap, icon, provider, label };
-}
-
-function renderCounting(ui: React.ReactElement) {
-  let commits = 0;
-  const onRender: ProfilerOnRenderCallback = () => {
-    commits += 1;
-  };
-  const utils = render(
-    <Profiler id="provenance-badge-harness" onRender={onRender}>
-      {ui}
-    </Profiler>
-  );
-  return { ...utils, getCommits: () => commits };
 }
 
 describe("RequirementProvenanceBadge", () => {
@@ -343,12 +332,25 @@ describe("RequirementProvenanceBadge", () => {
       expect(badge).not.toHaveTextContent("syncedLabel");
     });
 
-    // THE ATTRIBUTION — see RequirementCoverageBadge.test.tsx's identical
-    // test for the full mechanism. Same shape here: `compute()`'s
-    // level 0->1 boundary sits at available>=34.5; two widths 0.2px apart
-    // straddle it.
-    it("alternates the provider segment on every fire when the wrapper width jitters across a level boundary (reproduces the update-depth defect)", () => {
-      const { container, getCommits } = renderCounting(
+    // THE REGRESSION TEST for the update-depth defect (26.2-09 task 1's
+    // attribution) — see RequirementCoverageBadge.test.tsx's identical test
+    // for the full mechanism. Same shape here: `compute()`'s level 0->1
+    // boundary sits at available>=34.5; two widths 0.2px apart straddle it.
+    //
+    // Counts TRANSITIONS in the rendered provider segment rather than raw
+    // React commits: this badge mounts inside a Radix `DropdownMenu`, whose
+    // own internal trigger-size tracking adds an extra commit alongside the
+    // first genuine level change (observed directly: a single `setLevel`
+    // call following two raw commits under `Profiler`) -- a library
+    // implementation detail, not a second alternation of THIS component's
+    // own decision. Transition-counting on the actually-rendered output is
+    // what the defect is about and survives that noise.
+    //
+    // Pre-fix RED (captured verbatim, 26.2-09-SUMMARY.md carries the full
+    // run):
+    //   AssertionError: expected 20 to be less than or equal to 1
+    it("settles after at most one state change when the wrapper width jitters across a level boundary", () => {
+      const { container } = render(
         <RequirementProvenanceBadge requirement={lockedRow} projectId={7} />
       );
       const badge = screen.getByTestId("requirement-provenance-locked");
@@ -360,23 +362,52 @@ describe("RequirementProvenanceBadge", () => {
       const belowThreshold = 34.4;
       const aboveThreshold = 34.6;
 
-      const commitsBefore = getCommits();
-      let sawProvider = false;
-      let sawNoProvider = false;
+      let transitions = 0;
+      let last = badge.textContent?.includes("sync.providerJira") ?? false;
       for (let i = 0; i < 20; i++) {
         setRectWidth(h.wrap, i % 2 === 0 ? belowThreshold : aboveThreshold);
         ro.trigger();
-        if (badge.textContent?.includes("sync.providerJira")) {
-          sawProvider = true;
-        } else {
-          sawNoProvider = true;
+        const current = badge.textContent?.includes("sync.providerJira") ?? false;
+        if (current !== last) {
+          transitions += 1;
+          last = current;
         }
       }
-      const commitsAfter = getCommits();
 
-      expect(sawProvider).toBe(true);
-      expect(sawNoProvider).toBe(true);
-      expect(commitsAfter - commitsBefore).toBeGreaterThan(1);
+      expect(transitions).toBeLessThanOrEqual(1);
+    });
+
+    it("drops a level on the way down but withholds it until width clears the hysteresis band on the way back up", () => {
+      const { container } = render(
+        <RequirementProvenanceBadge requirement={lockedRow} projectId={7} />
+      );
+      const badge = screen.getByTestId("requirement-provenance-locked");
+      const h = getProvenanceHarness(container);
+      seedSegments(h);
+      const ro =
+        FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!;
+
+      // Start comfortably wide (level 2).
+      setRectWidth(h.wrap, FULL_WIDTH + 20);
+      ro.trigger();
+      expect(badge).toHaveTextContent("sync.providerJira");
+
+      // Sweep down past the level 0/1 boundary (35) -- drops immediately.
+      setRectWidth(h.wrap, 20);
+      ro.trigger();
+      expect(badge).not.toHaveTextContent("sync.providerJira");
+
+      // Sweep back up, but only just past the (pre-hysteresis) boundary --
+      // must NOT return yet.
+      setRectWidth(h.wrap, 36);
+      ro.trigger();
+      expect(badge).not.toHaveTextContent("sync.providerJira");
+
+      // Clear the full hysteresis band (35 + COLLAPSE_HYSTERESIS_PX) -- now
+      // it returns.
+      setRectWidth(h.wrap, 35 + COLLAPSE_HYSTERESIS_PX + 1);
+      ro.trigger();
+      expect(badge).toHaveTextContent("sync.providerJira");
     });
   });
 });

@@ -7,7 +7,6 @@
 
 import fs from "node:fs";
 import { act, render, screen, within } from "@testing-library/react";
-import { Profiler, type ProfilerOnRenderCallback } from "react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,6 +18,7 @@ vi.mock("next-intl", () => ({
 }));
 
 import {
+  COLLAPSE_HYSTERESIS_PX,
   COVERAGE_BADGE_MIN_WIDTH_PX,
   RequirementCoverageBadge,
 } from "./RequirementCoverageBadge";
@@ -190,23 +190,6 @@ function getMeasureAndWrap(container: HTMLElement) {
   const wrap = measure.parentElement;
   if (!wrap) throw new Error("wrapper not found");
   return { measure, wrap };
-}
-
-/** Renders wrapped in a `Profiler` so the test can count actual commits —
- *  React's own equal-value bail-out means a commit only happens when a
- *  `setState` call actually changed a value, so this is a direct proxy for
- *  "how many times did the collapse decision's state actually change". */
-function renderCounting(ui: React.ReactElement) {
-  let commits = 0;
-  const onRender: ProfilerOnRenderCallback = () => {
-    commits += 1;
-  };
-  const utils = render(
-    <Profiler id="coverage-badge-harness" onRender={onRender}>
-      {ui}
-    </Profiler>
-  );
-  return { ...utils, getCommits: () => commits };
 }
 
 describe("RequirementCoverageBadge", () => {
@@ -477,19 +460,25 @@ describe("RequirementCoverageBadge", () => {
       ).toBeInTheDocument();
     });
 
-    // THE ATTRIBUTION. `compute()` reads `available`/`full` fresh from
-    // `getBoundingClientRect()` on every fire and writes unconditionally
-    // when the raw comparison result differs from the CURRENT render's
-    // value -- there is no dead zone and no ref-gated idempotent write. A
-    // width sitting exactly on the `available + 0.5 >= full` boundary
-    // needs only sub-pixel measurement noise between successive
-    // `ResizeObserver` fires (real browsers report exactly this kind of
-    // jitter -- font metrics settling, sub-pixel layout rounding differing
-    // between paints) to alternate forever. This test drives that
-    // documented noise directly: two widths 0.2px apart, straddling the
-    // boundary, fed on alternating fires.
-    it("alternates the status word on every fire when the wrapper width jitters across the boundary (reproduces the update-depth defect)", () => {
-      const { container, getCommits } = renderCounting(
+    // THE REGRESSION TEST for the update-depth defect (26.2-09 task 1's
+    // attribution). Pre-fix, `compute()` read `available`/`full` fresh from
+    // `getBoundingClientRect()` on every fire and wrote unconditionally
+    // whenever the raw `available + 0.5 >= full` comparison differed from
+    // the current render's value -- no dead zone, no ref-gated idempotent
+    // write. A width sitting exactly on that boundary needed only
+    // sub-pixel measurement noise between successive `ResizeObserver`
+    // fires (real browsers report exactly this kind of jitter -- font
+    // metrics settling, sub-pixel layout rounding differing between
+    // paints) to alternate forever, which is exactly what pegs the main
+    // thread and trips React's "Maximum update depth exceeded" guard. This
+    // test drives that documented noise directly: two widths 0.2px apart,
+    // straddling the boundary, fed on alternating fires.
+    //
+    // Pre-fix RED (captured verbatim, 26.2-09-SUMMARY.md carries the full
+    // run):
+    //   AssertionError: expected 20 to be less than or equal to 1
+    it("settles after at most one state change when the wrapper width jitters across the boundary", () => {
+      const { container } = render(
         <RequirementCoverageBadge breakdown={notRunBreakdown} />
       );
       const { measure, wrap } = getMeasureAndWrap(container);
@@ -498,30 +487,67 @@ describe("RequirementCoverageBadge", () => {
         FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!;
 
       // available + 0.5 >= 100 flips exactly between 99.4 (false) and 99.6
-      // (true) -- 0.2px apart, well inside real sub-pixel jitter range.
+      // (true) -- 0.2px apart, well inside real sub-pixel jitter range, and
+      // both readings fall inside the post-fix hysteresis band (dropping
+      // requires available < 100; returning requires available >= 100 +
+      // COLLAPSE_HYSTERESIS_PX), so neither can cross back once settled.
       const belowThreshold = 99.4;
       const aboveThreshold = 99.6;
 
-      const commitsBefore = getCommits();
-      let sawStatusWord = false;
-      let sawNoStatusWord = false;
+      let transitions = 0;
+      let last =
+        screen.queryByTestId("requirement-coverage-status-word") !== null;
       for (let i = 0; i < 20; i++) {
         setRectWidth(wrap, i % 2 === 0 ? belowThreshold : aboveThreshold);
         ro.trigger();
-        if (screen.queryByTestId("requirement-coverage-status-word")) {
-          sawStatusWord = true;
-        } else {
-          sawNoStatusWord = true;
+        const current =
+          screen.queryByTestId("requirement-coverage-status-word") !== null;
+        if (current !== last) {
+          transitions += 1;
+          last = current;
         }
       }
-      const commitsAfter = getCommits();
 
-      // The attribution: genuine true<->false alternation (both states
-      // observed across the 20 fires), and MORE than one state-changing
-      // commit was produced by inputs that never moved more than 0.2px.
-      expect(sawStatusWord).toBe(true);
-      expect(sawNoStatusWord).toBe(true);
-      expect(commitsAfter - commitsBefore).toBeGreaterThan(1);
+      expect(transitions).toBeLessThanOrEqual(1);
+    });
+
+    it("drops the status word on the way down but withholds it until width clears the hysteresis band on the way back up", () => {
+      const { container } = render(
+        <RequirementCoverageBadge breakdown={notRunBreakdown} />
+      );
+      const { measure, wrap } = getMeasureAndWrap(container);
+      setRectWidth(measure, FULL_WIDTH);
+      const ro =
+        FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!;
+
+      // Start comfortably wide.
+      setRectWidth(wrap, FULL_WIDTH + 50);
+      ro.trigger();
+      expect(
+        screen.getByTestId("requirement-coverage-status-word")
+      ).toBeInTheDocument();
+
+      // Sweep down across the threshold -- drops immediately, no delay.
+      setRectWidth(wrap, FULL_WIDTH - 10);
+      ro.trigger();
+      expect(
+        screen.queryByTestId("requirement-coverage-status-word")
+      ).toBeNull();
+
+      // Sweep back up, but only just past the (pre-hysteresis) threshold --
+      // must NOT return yet.
+      setRectWidth(wrap, FULL_WIDTH + 1);
+      ro.trigger();
+      expect(
+        screen.queryByTestId("requirement-coverage-status-word")
+      ).toBeNull();
+
+      // Clear the full hysteresis band -- now it returns.
+      setRectWidth(wrap, FULL_WIDTH + COLLAPSE_HYSTERESIS_PX + 1);
+      ro.trigger();
+      expect(
+        screen.getByTestId("requirement-coverage-status-word")
+      ).toBeInTheDocument();
     });
   });
 });

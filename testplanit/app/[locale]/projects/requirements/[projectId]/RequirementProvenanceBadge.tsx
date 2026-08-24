@@ -40,6 +40,21 @@ import { JiraGlyph } from "@/components/MilestoneSourceBadge";
  */
 const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
 
+/**
+ * 26.2-09's gap-closure fix for the recurring "Maximum update depth
+ * exceeded" console error: the layout effect below used to unlock a level
+ * whenever its cumulative width comparison (`cum <= available + 0.5`)
+ * held, with no memory of the previously-rendered level, so a wrapper
+ * width sitting exactly on a level boundary needed only sub-pixel
+ * measurement noise between successive `ResizeObserver` fires (real
+ * browsers report exactly this — font metrics settling, sub-pixel layout
+ * rounding differing between paints) to alternate forever. Same fix and
+ * same value as `RequirementCoverageBadge`'s identical constant: any
+ * measure-then-setState pair whose own output can move the measured input
+ * needs a dead zone wider than that movement.
+ */
+export const COLLAPSE_HYSTERESIS_PX = 4;
+
 export interface RequirementProvenanceBadgeRow {
   id: number;
   isRequirement: boolean;
@@ -99,6 +114,12 @@ export function RequirementProvenanceBadge({
   // 2 = + the state word. Starts fully expanded; the layout effect below
   // collapses it to fit before paint.
   const [level, setLevel] = useState(2);
+  // Mirrors `level` for the layout effect below to read -- never the
+  // render closure's own `level`, which would make the effect depend on
+  // the state it writes and re-subscribe the observer on every flip. Kept
+  // in sync with the state in the exact same statement that calls
+  // `setLevel`.
+  const levelRef = useRef(2);
 
   const isNative = requirement.integrationId == null;
   const locked = isRequirementLocked(requirement);
@@ -187,14 +208,36 @@ export function RequirementProvenanceBadge({
 
       // Incremental width unlocked at each level; index i => level i+1.
       const steps = [providerW, labelW];
-      let cum = chrome + iconW;
-      let next = 0;
-      for (let i = 0; i < steps.length; i++) {
-        cum += steps[i];
-        if (cum <= available + 0.5) next = i + 1;
-        else break;
+      // Cumulative width required to SUSTAIN level `lvl` (1-indexed against
+      // `steps`): cumAt(1) = chrome+icon+provider, cumAt(2) = +label.
+      const cumAt = (lvl: number) => {
+        let cum = chrome + iconW;
+        for (let i = 0; i < lvl; i++) cum += steps[i];
+        return cum;
+      };
+
+      // Asymmetric per-step threshold, same shape as
+      // `RequirementCoverageBadge`'s hysteresis: dropping a level happens
+      // the moment the row can no longer sustain it (no delay -- a
+      // shrinking row should never feel sluggish), climbing a level needs
+      // `COLLAPSE_HYSTERESIS_PX` of headroom beyond that. Two passes (rise,
+      // then fall) handle a jump of more than one level in either
+      // direction within a single fire.
+      let next = levelRef.current;
+      while (
+        next < steps.length &&
+        available >= cumAt(next + 1) + COLLAPSE_HYSTERESIS_PX
+      ) {
+        next += 1;
       }
-      setLevel(next);
+      while (next > 0 && available < cumAt(next)) {
+        next -= 1;
+      }
+
+      if (next !== levelRef.current) {
+        levelRef.current = next;
+        setLevel(next);
+      }
     };
 
     compute();

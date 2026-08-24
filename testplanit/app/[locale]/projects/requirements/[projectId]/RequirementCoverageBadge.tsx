@@ -79,6 +79,23 @@ if (
 export const COVERAGE_BADGE_MIN_WIDTH_PX = 96;
 
 /**
+ * 26.2-09's gap-closure fix for the recurring "Maximum update depth
+ * exceeded" console error: the layout effect below used to compare
+ * `available` against `full` with a flat `+0.5` epsilon and no memory of
+ * its own last decision, so a wrapper width sitting exactly on that line
+ * needed only sub-pixel measurement noise between successive
+ * `ResizeObserver` fires (real browsers report exactly this — font
+ * metrics settling, sub-pixel layout rounding differing between paints)
+ * to alternate true/false forever. Any measure-then-setState pair whose
+ * own output can move the measured input needs a dead zone WIDER than
+ * that movement, or it can loop indefinitely; 4px comfortably clears
+ * realistic sub-pixel jitter (well under 1px) while staying small enough
+ * that the collapse step still reads as instantaneous to a human resizing
+ * the panel.
+ */
+export const COLLAPSE_HYSTERESIS_PX = 4;
+
+/**
  * Same static-scanner constraint as `COVERAGE_BADGE_SHRINK_CLASSNAME` above,
  * and the same dev-only drift guard. `min-w-24` is Tailwind's own spacing
  * scale (`calc(var(--spacing) * 24)`, 4px per step by default) rather than
@@ -153,6 +170,13 @@ export function RequirementCoverageBadge({
   // `true` in every unit test — visual confirmation is 26-13's operator UAT,
   // which is what found the previous version never took this step at all.
   const [showStatusWord, setShowStatusWord] = useState(true);
+  // Mirrors `showStatusWord` for the layout effect below to read -- never
+  // the render closure's own `showStatusWord`, which would make the effect
+  // depend on the state it writes and re-subscribe the observer on every
+  // flip. Kept in sync with the state in the exact same statement that
+  // calls `setShowStatusWord`, so it is always the freshest value even
+  // across a burst of synchronous `ResizeObserver` fires within one commit.
+  const showStatusWordRef = useRef(true);
 
   // Progressive collapse, second step: as the row squeezes this badge past
   // its own full content width, drop the "· <status word>" segment entirely
@@ -177,7 +201,19 @@ export function RequirementCoverageBadge({
       const full = measure.getBoundingClientRect().width;
       if (full === 0) return; // hidden, or a non-visual environment
       const available = wrap.getBoundingClientRect().width;
-      setShowStatusWord(available + 0.5 >= full);
+      // Asymmetric threshold: drop the status word as soon as it no longer
+      // fits (`available < full`, no delay -- a shrinking row should never
+      // feel sluggish), but only bring it back once there is
+      // `COLLAPSE_HYSTERESIS_PX` of headroom beyond that. The two bars sit
+      // far enough apart that no realistic single-fire measurement jitter
+      // can cross both, which is what stops the alternation.
+      const next = showStatusWordRef.current
+        ? available >= full
+        : available >= full + COLLAPSE_HYSTERESIS_PX;
+      if (next !== showStatusWordRef.current) {
+        showStatusWordRef.current = next;
+        setShowStatusWord(next);
+      }
     };
 
     compute();
