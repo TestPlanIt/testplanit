@@ -13,7 +13,7 @@ import {
   useState,
   type DragEvent,
 } from "react";
-import { useDrop } from "react-dnd";
+import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { DataTable } from "@/components/tables/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -496,6 +496,29 @@ export default function RequirementsListView({
     ]
   );
 
+  // Single source of truth for "can this drag land here at all": every drop
+  // affordance below (both `useDrop` gates, `getRowProps`, the candidate
+  // outline condition and the root strip) reads this one expression, so no
+  // affordance can advertise a target the gate would reject (gap 9,
+  // T-26.2G-13-02).
+  const canDropRequirement = canAddEdit && !isFiltering;
+
+  // Primitives only. react-dnd re-runs this collector on every pointer move
+  // during a drag; returning a boolean + a number lets its shallow-equality
+  // check drop the re-render, so the list does not re-render per mouse move.
+  // `getItemType()` is load-bearing: this app has one `DndProvider`, and a
+  // drag originating on another surface (e.g. a test case) must never light
+  // up requirement rows here.
+  const { isDraggingRequirement, draggedRequirementId } = useDragLayer(
+    (monitor) => ({
+      isDraggingRequirement:
+        monitor.isDragging() && monitor.getItemType() === ItemTypes.REQUIREMENT,
+      draggedRequirementId:
+        (monitor.getItem() as RequirementDragItem | null)?.requirementId ??
+        null,
+    })
+  );
+
   // The single list-level drop target (D-04b). The wrapper this attaches to
   // is taller than the row set whenever the list is short, so the hovered
   // id is the only reliable signal for "which row is actually being
@@ -509,7 +532,7 @@ export default function RequirementsListView({
   >(
     () => ({
       accept: ItemTypes.REQUIREMENT,
-      canDrop: () => canAddEdit && !isFiltering,
+      canDrop: () => canDropRequirement,
       drop: (item, monitor) => {
         if (monitor.didDrop()) return;
         const targetId = dragOverRequirementIdRef.current;
@@ -521,7 +544,7 @@ export default function RequirementsListView({
         isOverList: monitor.isOver() && monitor.canDrop(),
       }),
     }),
-    [canAddEdit, isFiltering, handleMove]
+    [canDropRequirement, handleMove]
   );
 
   // Clears the ring when the pointer leaves the table entirely -- one of
@@ -542,7 +565,7 @@ export default function RequirementsListView({
   >(
     () => ({
       accept: ItemTypes.REQUIREMENT,
-      canDrop: () => canAddEdit && !isFiltering,
+      canDrop: () => canDropRequirement,
       drop: (item) => {
         void handleMove({ draggedId: item.requirementId, parentId: null });
       },
@@ -550,7 +573,7 @@ export default function RequirementsListView({
         isOverBottom: monitor.isOver() && monitor.canDrop(),
       }),
     }),
-    [canAddEdit, isFiltering, handleMove]
+    [canDropRequirement, handleMove]
   );
 
   // Per-row extension point (plan 01's `getRowProps`): inert DOM props
@@ -560,7 +583,11 @@ export default function RequirementsListView({
   const getRowProps = useCallback(
     (row: Row<any>) => {
       const requirement = row.original as RequirementRow;
-      if (!canAddEdit || isFiltering) return {};
+      if (!canDropRequirement) return {};
+      // Candidate set is "every row but the dragged one", never "every row
+      // that would be accepted": D-04c forbids a client-side cycle
+      // pre-check, so a drop onto a descendant still shows a zone here and
+      // is still rejected by the server -- exactly as it behaves today.
       return {
         onDragEnter: () => setDragOverRow(requirement.id),
         onDragLeave: (event: DragEvent<HTMLDivElement>) => {
@@ -582,10 +609,18 @@ export default function RequirementsListView({
         className:
           dragOverRequirementId === requirement.id
             ? "outline outline-2 outline-primary -outline-offset-2"
-            : undefined,
+            : isDraggingRequirement && requirement.id !== draggedRequirementId
+              ? "inset-ring-2 inset-ring-primary/40"
+              : undefined,
       };
     },
-    [canAddEdit, isFiltering, dragOverRequirementId, setDragOverRow]
+    [
+      canDropRequirement,
+      dragOverRequirementId,
+      setDragOverRow,
+      isDraggingRequirement,
+      draggedRequirementId,
+    ]
   );
 
   const columns = useRequirementsListColumns({
@@ -903,14 +938,29 @@ export default function RequirementsListView({
               rowTestIdPrefix="requirement-row"
             />
           </div>
-          {canAddEdit && !isFiltering && (
+          {canDropRequirement && (
             <div
               ref={(el) => {
                 bottomDropRef(el);
               }}
-              className="h-16 w-full relative shrink-0"
+              className={
+                "h-16 w-full relative shrink-0" +
+                (isOverBottom
+                  ? " rounded-md outline outline-2 -outline-offset-2 outline-primary"
+                  : isDraggingRequirement
+                    ? " rounded-md outline-dashed outline-2 -outline-offset-2 outline-primary/40"
+                    : "")
+              }
               data-testid="requirement-tree-end"
             >
+              {isDraggingRequirement && (
+                <div
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-muted-foreground"
+                  data-testid="requirement-tree-end-hint"
+                >
+                  {t("requirements.tree.dropToRootHint")}
+                </div>
+              )}
               {isOverBottom && (
                 <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
                   <div

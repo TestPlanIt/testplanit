@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   act,
   fireEvent,
@@ -10,6 +12,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
+import { ItemTypes } from "~/types/dndTypes";
 
 // --- Hoisted mock scaffolding -------------------------------------------
 // Adapted from the earlier react-arborist tree component's own test file's
@@ -192,11 +195,23 @@ function decodeQueryParam(url: string, param: string): any {
 // captured spec objects directly, mirroring the earlier tree component's
 // own dropSpecRef / RequirementsListColumns.test.tsx's dragSpecRef
 // conventions.
-const { dropSpecs, dropCallCount, dragSpecRef } = vi.hoisted(() => ({
-  dropSpecs: { list: null as any, bottom: null as any },
-  dropCallCount: { current: 0 },
-  dragSpecRef: { current: null as any },
-}));
+const { dropSpecs, dropCallCount, dragSpecRef, dragLayerState } = vi.hoisted(
+  () => ({
+    dropSpecs: { list: null as any, bottom: null as any },
+    dropCallCount: { current: 0 },
+    dragSpecRef: { current: null as any },
+    // Mutable, `.current`-wrapped like `dragSpecRef` above -- mirrors the
+    // real `useDragLayer` monitor's three reads (`isDragging`, `getItem`,
+    // `getItemType`) without driving a real react-dnd drag through jsdom.
+    dragLayerState: {
+      current: {
+        isDragging: false,
+        item: null as { requirementId: number; name: string } | null,
+        itemType: null as string | null,
+      },
+    },
+  })
+);
 
 vi.mock("react-dnd", () => ({
   useDragDropManager: () => ({ __mockDndManager: true }),
@@ -214,6 +229,12 @@ vi.mock("react-dnd", () => ({
     dragSpecRef.current = specFactory();
     return [{ isDragging: false }, vi.fn()];
   },
+  useDragLayer: (collect: (monitor: any) => any) =>
+    collect({
+      isDragging: () => dragLayerState.current.isDragging,
+      getItem: () => dragLayerState.current.item,
+      getItemType: () => dragLayerState.current.itemType,
+    }),
 }));
 
 import RequirementsListView from "./RequirementsListView";
@@ -350,6 +371,7 @@ beforeEach(() => {
   dropSpecs.bottom = null;
   dropCallCount.current = 0;
   dragSpecRef.current = null;
+  dragLayerState.current = { isDragging: false, item: null, itemType: null };
   capturedFetchOptionsList.length = 0;
   global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   useFindManyIssueMock.mockReturnValue({
@@ -732,6 +754,128 @@ describe("RequirementsListView", () => {
         target: { value: "root a" },
       });
       expect(dropSpecs.list.canDrop()).toBe(false);
+    });
+  });
+
+  describe("drag affordances (gap closure 26.2-13)", () => {
+    beforeEach(() => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root A" }),
+          makeRequirement({ id: 7, name: "Root B" }),
+          makeRequirement({ id: 9, name: "Root C" }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it("idle: no rendered row carries a candidate outline", () => {
+      renderView();
+      for (const id of [1, 7, 9]) {
+        expect(
+          screen.getByTestId(`requirement-row-${id}`).className
+        ).not.toContain("inset-ring");
+      }
+    });
+
+    it("dragging requirement 1: every other row is outlined as a candidate, and row 1 (the dragged row) is not", () => {
+      dragLayerState.current = {
+        isDragging: true,
+        item: { requirementId: 1, name: "Root A" },
+        itemType: ItemTypes.REQUIREMENT,
+      };
+      renderView();
+      expect(
+        screen.getByTestId("requirement-row-1").className
+      ).not.toContain("inset-ring");
+      expect(screen.getByTestId("requirement-row-7").className).toContain(
+        "inset-ring-2"
+      );
+      expect(screen.getByTestId("requirement-row-9").className).toContain(
+        "inset-ring-2"
+      );
+    });
+
+    it("dragging an ItemTypes.TEST_CASE item lights up nothing in this list (the type narrowing)", () => {
+      dragLayerState.current = {
+        isDragging: true,
+        item: { requirementId: 1, name: "Root A" },
+        itemType: ItemTypes.TEST_CASE,
+      };
+      renderView();
+      for (const id of [1, 7, 9]) {
+        expect(
+          screen.getByTestId(`requirement-row-${id}`).className
+        ).not.toContain("inset-ring");
+      }
+    });
+
+    it("a non-admin drag advertises no candidate outlines and no root strip -- the affordance cannot outrun the gate", () => {
+      mockIsProjectAdmin = false;
+      dragLayerState.current = {
+        isDragging: true,
+        item: { requirementId: 1, name: "Root A" },
+        itemType: ItemTypes.REQUIREMENT,
+      };
+      renderView();
+      for (const id of [1, 7, 9]) {
+        expect(
+          screen.getByTestId(`requirement-row-${id}`).className
+        ).not.toContain("inset-ring");
+      }
+      expect(
+        screen.queryByTestId("requirement-tree-end")
+      ).not.toBeInTheDocument();
+    });
+
+    it("the root strip shows the drop-to-root hint while dragging, and shows nothing while idle", () => {
+      const { unmount } = renderView();
+      expect(
+        screen.queryByTestId("requirement-tree-end-hint")
+      ).not.toBeInTheDocument();
+      unmount();
+
+      dragLayerState.current = {
+        isDragging: true,
+        item: { requirementId: 1, name: "Root A" },
+        itemType: ItemTypes.REQUIREMENT,
+      };
+      renderView();
+      expect(
+        screen.getByTestId("requirement-tree-end-hint")
+      ).toHaveTextContent("requirements.tree.dropToRootHint");
+    });
+
+    it("hover wins: with a drag active, the hovered row keeps its outline ring and drops the candidate ring", () => {
+      dragLayerState.current = {
+        isDragging: true,
+        item: { requirementId: 1, name: "Root A" },
+        itemType: ItemTypes.REQUIREMENT,
+      };
+      renderView();
+      const row7 = screen.getByTestId("requirement-row-7");
+      fireEvent.dragEnter(row7);
+      expect(row7.className).toContain("outline-2 outline-primary");
+      expect(row7.className).not.toContain("inset-ring");
+    });
+  });
+
+  describe("D-5 fix-by-construction guard", () => {
+    it("never paints a row-level bg-secondary/bg-accent fill (the new drag affordances stay outline/ring only)", () => {
+      const source = fs.readFileSync(
+        path.join(
+          process.cwd(),
+          "app/[locale]/projects/requirements/[projectId]/RequirementsListView.tsx"
+        ),
+        "utf8"
+      );
+      const codeOnly = source
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^[ \t]*\/\/.*$/gm, "");
+      expect(codeOnly).not.toMatch(/bg-secondary/);
+      expect(codeOnly).not.toMatch(/bg-accent/);
     });
   });
 
