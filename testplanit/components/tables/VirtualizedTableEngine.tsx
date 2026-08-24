@@ -1033,8 +1033,20 @@ export function VirtualizedTableEngine({
                             // next (lighter) parent row is clearly the boundary.
                             tableStyles.rowSurfaceNested
                           : tableStyles.rowSurface,
+                      // Offset must equal the negated outline width: this row
+                      // div is absolutely positioned inside a clipping scroll
+                      // container, so any part of the outline that bleeds
+                      // outside the row's own border box gets clipped. At
+                      // -outline-offset-2 with a 4px outline, 2px bled past
+                      // the edge -- invisible on the start/end sides (the
+                      // container's clip edge) but rendered on top/bottom
+                      // (which overlap neighbouring rows instead), producing
+                      // a ring that looked half-thickness on one side and
+                      // fully clipped on the other. -outline-offset-4 draws
+                      // the whole ring inside the box, so there's nothing
+                      // left for the container to clip.
                       isHighlighted &&
-                        "bg-primary/10 outline outline-4 -outline-offset-2 outline-primary",
+                        "bg-primary/10 outline outline-4 -outline-offset-4 outline-primary",
                       rowExtra?.className
                     )}
                     style={{

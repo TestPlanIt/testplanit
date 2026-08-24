@@ -297,6 +297,19 @@ describe("DataTable (virtualized mode)", () => {
     expect(other.className).not.toContain("outline-primary");
   });
 
+  it("keeps the highlight ring fully inside the row so the scroll container's clip edge can't shave it (a ring edge clipped by the scroll container)", () => {
+    renderTable({ highlightRowId: 1 });
+    const highlighted = screen
+      .getByText("Alpha")
+      .closest('[role="row"]') as HTMLElement;
+    // outline-4 with -outline-offset-4 draws the ring entirely inside the
+    // row's own border box. -outline-offset-2 left 2px bleeding outside the
+    // box, which the absolutely-positioned row's clipping scroll container
+    // shaved off the start/end edges.
+    expect(highlighted.className).toContain("-outline-offset-4");
+    expect(highlighted.className).not.toContain("-outline-offset-2");
+  });
+
   it("shows drag-to-reorder grips on non-pinned columns when the table persists state", () => {
     renderTable({
       columnSizingStorageKey: "reorder-key",
