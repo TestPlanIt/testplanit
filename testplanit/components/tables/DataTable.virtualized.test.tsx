@@ -377,3 +377,91 @@ describe("DataTable (virtualized mode)", () => {
     window.localStorage.removeItem("vdt:colsize:my-key");
   });
 });
+
+describe("DataTable (virtualized mode) — getRowProps row extension point", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    hookMock.lastOnLoadMore = null;
+    hookMock.lastOpts = null;
+    hookMock.scrollToIndex.mockClear();
+  });
+
+  it("applies the className getRowProps returns for a given row, and only that row", () => {
+    renderTable({
+      getRowProps: (row) => ({
+        className: row.original.id === 2 ? "ring-test" : undefined,
+      }),
+    });
+    const row2 = screen.getByTestId("virtualized-row-2");
+    const row1 = screen.getByTestId("virtualized-row-1");
+    expect(row2.className).toContain("ring-test");
+    expect(row1.className).not.toContain("ring-test");
+  });
+
+  it("composes the consumer className with the highlightRowId treatment instead of replacing it", () => {
+    renderTable({
+      highlightRowId: 2,
+      getRowProps: (row) =>
+        row.original.id === 2 ? { className: "ring-test" } : undefined,
+    });
+    const row2 = screen.getByTestId("virtualized-row-2");
+    expect(row2.className).toContain("bg-primary/10");
+    expect(row2.className).toContain("ring-test");
+  });
+
+  it("leaves a row's class list unchanged when getRowProps returns undefined for it", () => {
+    const { container } = renderTable({
+      getRowProps: () => undefined,
+    });
+    const row1 = screen.getByTestId("virtualized-row-1");
+    expect(row1.className).not.toContain("undefined");
+    void container;
+  });
+
+  it("fires onDragEnter supplied through getRowProps with the row's own DOM node as currentTarget", () => {
+    // The native DOM event's currentTarget is only live during dispatch, so it
+    // must be read synchronously inside the handler — reading it back off
+    // `mock.calls` afterward observes it already reset to null.
+    let observedCurrentTarget: EventTarget | null = null;
+    const onDragEnter = vi.fn(
+      (event: React.DragEvent<HTMLDivElement>) => {
+        observedCurrentTarget = event.currentTarget;
+      }
+    );
+    renderTable({
+      getRowProps: (row) => (row.original.id === 2 ? { onDragEnter } : undefined),
+    });
+    const row2 = screen.getByTestId("virtualized-row-2");
+    fireEvent.dragEnter(row2);
+    expect(onDragEnter).toHaveBeenCalledTimes(1);
+    expect(observedCurrentTarget).toBe(row2);
+  });
+
+  it("fires onClick supplied through getRowProps", () => {
+    const onClick = vi.fn();
+    renderTable({
+      getRowProps: (row) => (row.original.id === 1 ? { onClick } : undefined),
+    });
+    fireEvent.click(screen.getByTestId("virtualized-row-1"));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes a TanStack Row (not the raw data object) to getRowProps", () => {
+    const getRowProps = vi.fn().mockReturnValue(undefined);
+    renderTable({ getRowProps });
+    expect(getRowProps).toHaveBeenCalled();
+    const rowArg = getRowProps.mock.calls[0][0];
+    expect(rowArg.original.id).toBeDefined();
+    expect(typeof rowArg.getIsGrouped).toBe("function");
+  });
+
+  it("renders rows identically to today when getRowProps is omitted (regression guard)", () => {
+    renderTable();
+    const row1 = screen.getByTestId("virtualized-row-1");
+    const row2 = screen.getByTestId("virtualized-row-2");
+    expect(row1.className).not.toContain("undefined");
+    expect(row2.className).not.toContain("undefined");
+    expect(row1).toBeInTheDocument();
+    expect(row2).toBeInTheDocument();
+  });
+});
