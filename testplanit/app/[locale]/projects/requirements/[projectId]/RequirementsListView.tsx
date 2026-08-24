@@ -1,10 +1,19 @@
 "use client";
 
+import type { Row } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { ClipboardPlus, Search, TriangleAlert, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type DragEvent,
+} from "react";
+import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { DataTable } from "@/components/tables/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -17,6 +26,7 @@ import {
 } from "~/hooks/useRequirementCoverage";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { ItemTypes } from "~/types/dndTypes";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
@@ -32,6 +42,14 @@ import {
   type RequirementListSortConfig,
   type RequirementRow,
 } from "./requirementsListRows";
+
+/** The exact shape plan 03's per-row `useDrag` produces (the name cell in
+ * `RequirementsListColumns.tsx`). Both drop targets below read
+ * `item.requirementId`. */
+interface RequirementDragItem {
+  requirementId: number;
+  name: string;
+}
 
 interface RequirementsListViewProps extends RequirementSelection {
   projectId: string;
@@ -81,14 +99,18 @@ export default function RequirementsListView({
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-  // The currently drag-hovered row (D-04g's lifecycle, wired in task 2). The
-  // ref mirrors the state so a drop callback can read the latest value
-  // synchronously; declared here since it's part of this component's state
-  // shape, used starting with the drag-reparent wiring below.
+  // The currently drag-hovered row (D-04g's lifecycle). The ref mirrors the
+  // state so the list-level drop callback below can read the latest value
+  // synchronously; the state drives the outline-ring render. Only event
+  // handlers ever call `setDragOverRow` -- never render.
   const [dragOverRequirementId, setDragOverRequirementId] = useState<
     number | null
   >(null);
   const dragOverRequirementIdRef = useRef<number | null>(null);
+  const setDragOverRow = useCallback((id: number | null) => {
+    dragOverRequirementIdRef.current = id;
+    setDragOverRequirementId(id);
+  }, []);
 
   const normalizedFilter = filterQuery.trim().toLowerCase();
   const isFiltering = normalizedFilter.length > 0;
@@ -197,7 +219,13 @@ export default function RequirementsListView({
         sortConfig,
         coverage,
       }),
-    [childrenMap, visibleRequirementIds, expandedByIssueId, sortConfig, coverage]
+    [
+      childrenMap,
+      visibleRequirementIds,
+      expandedByIssueId,
+      sortConfig,
+      coverage,
+    ]
   );
 
   // Auto-expand ancestors of the selected requirement so a selection made
@@ -210,8 +238,7 @@ export default function RequirementsListView({
     if (selectedRequirementId == null) return;
     setExpandedByIssueId((prev) => {
       let next: Record<number, boolean> | null = null;
-      let current =
-        requirementMap.get(selectedRequirementId)?.parentId ?? null;
+      let current = requirementMap.get(selectedRequirementId)?.parentId ?? null;
       while (current !== null) {
         if (prev[current] !== true) {
           next = next ?? { ...prev };
@@ -248,17 +275,20 @@ export default function RequirementsListView({
   // delegating to the `onSelectRequirement` prop -- lets `scrollToRowId`
   // below distinguish "the user clicked a row in this list" (no re-center
   // needed, they're already looking at it) from "the selection arrived from
-  // elsewhere" (deep link, another surface -- scroll it into view).
-  const lastSelectedFromListRef = useRef<number | null>(null);
+  // elsewhere" (deep link, another surface -- scroll it into view). State,
+  // not a ref, so this read is render-safe.
+  const [lastSelectedFromList, setLastSelectedFromList] = useState<
+    number | null
+  >(null);
   const handleSelectRequirement = useCallback(
     (issueId: number) => {
-      lastSelectedFromListRef.current = issueId;
+      setLastSelectedFromList(issueId);
       onSelectRequirement(issueId);
     },
     [onSelectRequirement]
   );
   const scrollToRequirementId =
-    selectedRequirementId === lastSelectedFromListRef.current
+    selectedRequirementId === lastSelectedFromList
       ? null
       : selectedRequirementId;
 
@@ -356,6 +386,160 @@ export default function RequirementsListView({
     void refetchRequirements();
   }, [refetchRequirements]);
 
+  // The reparent gesture's server contract (D-04c: no optimistic accept --
+  // the fetch is awaited before any UI state changes, no local array
+  // reorder is attempted, and no client-side cycle pre-check exists; the
+  // server's own guard stays the sole authority).
+  const handleMove = useCallback(
+    async ({
+      draggedId,
+      parentId,
+    }: {
+      draggedId: number;
+      parentId: number | null;
+    }) => {
+      if (!canAddEdit || isFiltering || !allRequirements) return;
+      if (draggedId === parentId) return;
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/requirements/${draggedId}/reparent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ parentId }),
+          }
+        );
+        if (!res.ok) {
+          let serverMessage = "";
+          try {
+            const errorBody = await res.json();
+            if (typeof errorBody?.error === "string") {
+              serverMessage = errorBody.error;
+            }
+          } catch {
+            // No JSON body to read -- fall back to the generic rejection
+            // message alone.
+          }
+          toast.error(
+            `${t("requirements.tree.moveRejected")} ${serverMessage}`.trim()
+          );
+          // Snap the array back to persisted truth. Coverage is
+          // deliberately NOT invalidated on this branch -- a rejected move
+          // never touched the rollup.
+          void refetchRequirements();
+          return;
+        }
+        toast.success(t("requirements.tree.moveSuccess"));
+        void refetchRequirements();
+        invalidateCoverage();
+      } catch (error) {
+        console.error("Failed to reparent requirement:", error);
+        toast.error(t("requirements.tree.moveFailed"));
+      }
+    },
+    [
+      canAddEdit,
+      isFiltering,
+      allRequirements,
+      projectId,
+      t,
+      refetchRequirements,
+      invalidateCoverage,
+    ]
+  );
+
+  // The single list-level drop target (D-04b). The wrapper this attaches to
+  // is taller than the row set whenever the list is short, so the hovered
+  // id is the only reliable signal for "which row is actually being
+  // targeted" -- a null id means the pointer is over blank space below the
+  // last row, and the drop must bail rather than reparent against a stale
+  // target (D-04g).
+  const [{ isOverList }, listDropRef] = useDrop<
+    RequirementDragItem,
+    void,
+    { isOverList: boolean }
+  >(
+    () => ({
+      accept: ItemTypes.REQUIREMENT,
+      canDrop: () => canAddEdit && !isFiltering,
+      drop: (item, monitor) => {
+        if (monitor.didDrop()) return;
+        const targetId = dragOverRequirementIdRef.current;
+        setDragOverRow(null);
+        if (targetId == null || targetId === item.requirementId) return;
+        void handleMove({ draggedId: item.requirementId, parentId: targetId });
+      },
+      collect: (monitor) => ({
+        isOverList: monitor.isOver() && monitor.canDrop(),
+      }),
+    }),
+    [canAddEdit, isFiltering, handleMove]
+  );
+
+  // Clears the ring when the pointer leaves the table entirely -- one of
+  // the three events that clear the hovered id (D-04g); the other two are
+  // the row's own leave handler in `getRowProps` and the drop itself above.
+  useEffect(() => {
+    if (!isOverList) setDragOverRow(null);
+  }, [isOverList, setDragOverRow]);
+
+  // Bottom-of-list root drop zone -- moves a requirement out to the root
+  // level. Rendered as a sibling below the scroll wrapper, never inside it,
+  // so the two drop targets never nest and the wrapper's own blank strip
+  // stays a dead zone.
+  const [{ isOverBottom }, bottomDropRef] = useDrop<
+    RequirementDragItem,
+    void,
+    { isOverBottom: boolean }
+  >(
+    () => ({
+      accept: ItemTypes.REQUIREMENT,
+      canDrop: () => canAddEdit && !isFiltering,
+      drop: (item) => {
+        void handleMove({ draggedId: item.requirementId, parentId: null });
+      },
+      collect: (monitor) => ({
+        isOverBottom: monitor.isOver() && monitor.canDrop(),
+      }),
+    }),
+    [canAddEdit, isFiltering, handleMove]
+  );
+
+  // Per-row extension point (plan 01's `getRowProps`): inert DOM props
+  // only, no hook call and no ref slot -- publishes "I am hovered" /
+  // "I am no longer hovered" through native drag events so the single
+  // `useDrop` above can read the current target synchronously.
+  const getRowProps = useCallback(
+    (row: Row<any>) => {
+      const requirement = row.original as RequirementRow;
+      if (!canAddEdit || isFiltering) return {};
+      return {
+        onDragEnter: () => setDragOverRow(requirement.id),
+        onDragLeave: (event: DragEvent<HTMLDivElement>) => {
+          // Swallows the `dragleave` the browser fires when the pointer
+          // crosses from the row into one of the row's own cells.
+          if (
+            event.currentTarget.contains(event.relatedTarget as Node | null)
+          ) {
+            return;
+          }
+          // HTML5 fires `dragenter` on the new row before `dragleave` on
+          // the old one -- compare against the ref (never the render-time
+          // state, which may be a frame stale) so a fast A->B move doesn't
+          // clear B's freshly-set id.
+          if (dragOverRequirementIdRef.current === requirement.id) {
+            setDragOverRow(null);
+          }
+        },
+        className:
+          dragOverRequirementId === requirement.id
+            ? "outline outline-2 outline-primary -outline-offset-2"
+            : undefined,
+      };
+    },
+    [canAddEdit, isFiltering, dragOverRequirementId, setDragOverRow]
+  );
+
   const columns = useRequirementsListColumns({
     translations: {
       columnName: t("requirements.list.columnName"),
@@ -409,9 +593,15 @@ export default function RequirementsListView({
     return <LoadingSpinner />;
   }
 
-  if (requirements.length === 0) {
-    return (
-      <>
+  // Empty (zero requirements) and the table are the two remaining states,
+  // rendered from the same return so the create/delete dialogs below mount
+  // exactly once regardless of which one is showing -- their own `open`
+  // state gates visibility either way.
+  const isEmpty = requirements.length === 0;
+
+  return (
+    <>
+      {isEmpty ? (
         <div
           className="flex h-full flex-col items-center justify-center gap-1 p-4 text-center"
           data-testid="requirements-tree-empty"
@@ -442,130 +632,144 @@ export default function RequirementsListView({
             </Button>
           )}
         </div>
-        <CreateRequirementDialog
-          projectId={projectId}
-          parentId={createDialogState.parentId}
-          parentName={createDialogState.parentName}
-          open={createDialogState.open}
-          onOpenChange={(nextOpen) =>
-            setCreateDialogState((prev) => ({ ...prev, open: nextOpen }))
-          }
-          onCreated={(id) => {
-            void refetchRequirements();
-            onSelectRequirement(id);
-            invalidateCoverage();
-          }}
-        />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <div className="flex h-full flex-col">
-        <div className="mb-2 ms-1 me-2 flex shrink-0 items-center gap-1">
-          <div className="relative min-w-0 flex-1">
-            <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              value={filterQuery}
-              onChange={(e) => setFilterQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setFilterQuery("");
-                }
-              }}
-              placeholder={t("requirements.tree.searchPlaceholder")}
-              aria-label={t("requirements.tree.searchPlaceholder")}
-              className="h-7 ps-7 pe-7 text-xs"
-              data-testid="requirements-filter-input"
-            />
-            {isFiltering && (
+      ) : (
+        <div className="flex h-full flex-col">
+          <div className="mb-2 ms-1 me-2 flex shrink-0 items-center gap-1">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    setFilterQuery("");
+                  }
+                }}
+                placeholder={t("requirements.tree.searchPlaceholder")}
+                aria-label={t("requirements.tree.searchPlaceholder")}
+                className="h-7 ps-7 pe-7 text-xs"
+                data-testid="requirements-filter-input"
+              />
+              {isFiltering && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
+                  aria-label={t("common.aria.clearFilter")}
+                  data-testid="requirements-filter-clear"
+                  onClick={() => setFilterQuery("")}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant={showOnlyUncovered ? "secondary" : "ghost"}
+              size="icon"
+              aria-pressed={showOnlyUncovered}
+              disabled={uncoveredToggleUnavailable}
+              aria-label={
+                uncoveredToggleUnavailable
+                  ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                  : t("requirements.coverage.showOnlyUncovered")
+              }
+              title={
+                uncoveredToggleUnavailable
+                  ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                  : t("requirements.coverage.showOnlyUncovered")
+              }
+              className="mt-0.5 h-7 w-7 shrink-0"
+              data-testid="requirements-uncovered-toggle"
+              onClick={() => setShowOnlyUncovered((prev) => !prev)}
+            >
+              <TriangleAlert className="h-3.5 w-3.5" />
+            </Button>
+            {canAddEdit && (
               <Button
-                variant="ghost"
-                size="icon"
-                className="absolute end-0.5 top-1/2 h-6 w-6 -translate-y-1/2"
-                aria-label={t("common.aria.clearFilter")}
-                data-testid="requirements-filter-clear"
-                onClick={() => setFilterQuery("")}
+                type="button"
+                variant="secondary"
+                className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 shrink-0"
+                title={t("requirements.tree.addRoot")}
+                aria-label={t("requirements.tree.addRoot")}
+                data-testid="requirements-tree-add-root"
+                onClick={() =>
+                  setCreateDialogState({
+                    open: true,
+                    parentId: null,
+                    parentName: null,
+                  })
+                }
               >
-                <X className="h-3.5 w-3.5" />
+                <ClipboardPlus className="w-4 shrink-0" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                  {t("requirements.tree.addRoot")}
+                </span>
               </Button>
             )}
           </div>
-          <Button
-            type="button"
-            variant={showOnlyUncovered ? "secondary" : "ghost"}
-            size="icon"
-            aria-pressed={showOnlyUncovered}
-            disabled={uncoveredToggleUnavailable}
-            aria-label={
-              uncoveredToggleUnavailable
-                ? t("requirements.coverage.showOnlyUncoveredUnavailable")
-                : t("requirements.coverage.showOnlyUncovered")
-            }
-            title={
-              uncoveredToggleUnavailable
-                ? t("requirements.coverage.showOnlyUncoveredUnavailable")
-                : t("requirements.coverage.showOnlyUncovered")
-            }
-            className="mt-0.5 h-7 w-7 shrink-0"
-            data-testid="requirements-uncovered-toggle"
-            onClick={() => setShowOnlyUncovered((prev) => !prev)}
+          <div
+            ref={(el) => {
+              listDropRef(el);
+            }}
+            className="min-h-0 flex-1"
           >
-            <TriangleAlert className="h-3.5 w-3.5" />
-          </Button>
-          {canAddEdit && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 shrink-0"
-              title={t("requirements.tree.addRoot")}
-              aria-label={t("requirements.tree.addRoot")}
-              data-testid="requirements-tree-add-root"
-              onClick={() =>
-                setCreateDialogState({
-                  open: true,
-                  parentId: null,
-                  parentName: null,
-                })
-              }
+            <DataTable
+              virtualized
+              columns={columns as any}
+              data={rows}
+              onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              sortConfig={sortConfig}
+              isLoading={requirementsLoading}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              hasMore={false}
+              getRowId={(row) => String(row.id)}
+              estimateSize={48}
+              columnSizingStorageKey="requirements-list-columns"
+              flexColumnId="name"
+              enableColumnReorder={false}
+              pinFirstLast={false}
+              highlightRowId={selectedRequirementId}
+              scrollToRowId={scrollToRequirementId}
+              getRowProps={getRowProps}
+              emptyMessage={t("common.ui.search.noResultsFound")}
+              resetKey={`${normalizedFilter}|${showOnlyUncovered}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="requirements-list"
+              rowTestIdPrefix="requirement-row"
+            />
+          </div>
+          {canAddEdit && !isFiltering && (
+            <div
+              ref={(el) => {
+                bottomDropRef(el);
+              }}
+              className="h-16 w-full relative shrink-0"
+              data-testid="requirement-tree-end"
             >
-              <ClipboardPlus className="w-4 shrink-0" />
-              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                {t("requirements.tree.addRoot")}
-              </span>
-            </Button>
+              {isOverBottom && (
+                <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
+                  <div
+                    className="rounded-full"
+                    style={{
+                      width: 4,
+                      height: 4,
+                      boxShadow: "0 0 0 3px #4B91E2",
+                    }}
+                  />
+                  <div
+                    className="flex-1 rounded-sm"
+                    style={{ height: 2, background: "#4B91E2" }}
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
-        <div className="min-h-0 flex-1">
-          <DataTable
-            virtualized
-            columns={columns as any}
-            data={rows}
-            onSortChange={handleSortChange}
-            onSortColumn={handleSortColumn}
-            sortConfig={sortConfig}
-            isLoading={requirementsLoading}
-            columnVisibility={columnVisibility}
-            onColumnVisibilityChange={setColumnVisibility}
-            hasMore={false}
-            getRowId={(row) => String(row.id)}
-            estimateSize={48}
-            columnSizingStorageKey="requirements-list-columns"
-            flexColumnId="name"
-            enableColumnReorder={false}
-            pinFirstLast={false}
-            highlightRowId={selectedRequirementId}
-            scrollToRowId={scrollToRequirementId}
-            emptyMessage={t("common.ui.search.noResultsFound")}
-            resetKey={`${normalizedFilter}|${showOnlyUncovered}|${sortConfig.column}|${sortConfig.direction}`}
-            testIdPrefix="requirements-list"
-            rowTestIdPrefix="requirement-row"
-          />
-        </div>
-      </div>
+      )}
       <CreateRequirementDialog
         projectId={projectId}
         parentId={createDialogState.parentId}
