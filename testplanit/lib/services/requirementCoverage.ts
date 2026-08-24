@@ -372,7 +372,7 @@ export async function getRequirementCoverage(
     ),
     status_rollup AS (
       -- Per-status counts over the SAME already-gated covering_cases set
-      -- (never a fresh read of "RepositoryCases") — mirrors
+      -- (never a fresh read of the case-visibility table) — mirrors
       -- lib/services/milestoneMemberCoverage.ts's shipped per-status
       -- rollup: only COMPLETED statuses count, and the system 'untested'
       -- status is excluded even if matched, because 'untested' rides its

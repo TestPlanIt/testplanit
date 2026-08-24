@@ -265,4 +265,46 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
     expect(closureBody).toContain('"isDeleted"');
     expect(closureBody).toContain("depth < 100");
   });
+
+  it("the status rollup inherits the already-gated covering-case set instead of re-reading RepositoryCases (T-26.2G-07-01)", () => {
+    // Disclosure invariant in structural form: status_rollup must draw its
+    // rows FROM covering_cases -- which is already visibility-gated -- and
+    // must never itself open a fresh join to "RepositoryCases", which
+    // would let a project outside the viewer's scope leak status names.
+    const content = readFileSync("lib/services/requirementCoverage.ts", "utf8");
+
+    const statusRollupStart = content.indexOf("status_rollup AS (");
+    const statusRollupEnd = content.indexOf(
+      "statuses_agg AS (",
+      statusRollupStart
+    );
+    expect(statusRollupStart, "status_rollup AS ( not found").toBeGreaterThan(
+      -1
+    );
+    expect(
+      statusRollupEnd,
+      "statuses_agg AS ( not found after status_rollup"
+    ).toBeGreaterThan(statusRollupStart);
+
+    const statusRollupBody = content.slice(statusRollupStart, statusRollupEnd);
+    expect(statusRollupBody).toContain("FROM covering_cases");
+    expect(statusRollupBody).not.toContain('"RepositoryCases"');
+  });
+
+  it("the anchor role predicate occurs exactly once across the whole file, including the new status rollup", () => {
+    // Extends the existing roleColumnCount assertion above rather than
+    // adding a second, competing copy of it: this task's new CTEs
+    // (status_rollup, statuses_agg) read from covering_cases and
+    // latest_results only, never from "Issue" directly, so they must not
+    // introduce a second occurrence of the shared role-scope column.
+    const content = readFileSync("lib/services/requirementCoverage.ts", "utf8");
+    const roleColumnCount = content.split(ISSUE_ROLE_SCOPE_COLUMN).length - 1;
+    expect(
+      roleColumnCount,
+      `expected exactly one occurrence of the role predicate constant ` +
+        `(${ISSUE_ROLE_SCOPE_COLUMN}) after extending the rollup with ` +
+        `statuses[]/untested/directCaseCount/directCrossProjectCaseCount, ` +
+        `found ${roleColumnCount}`
+    ).toBe(1);
+  });
 });

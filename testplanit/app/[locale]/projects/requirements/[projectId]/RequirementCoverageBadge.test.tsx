@@ -25,10 +25,14 @@ import {
 const uncoveredBreakdown: RequirementCoverageBreakdown = {
   linkedCaseCount: 0,
   crossProjectCaseCount: 0,
+  directCaseCount: 0,
+  directCrossProjectCaseCount: 0,
   passed: 0,
   failed: 0,
   inProgress: 0,
   notRun: 0,
+  statuses: [],
+  untested: 0,
   uncovered: true,
   status: "UNCOVERED",
 };
@@ -36,10 +40,14 @@ const uncoveredBreakdown: RequirementCoverageBreakdown = {
 const passedBreakdown: RequirementCoverageBreakdown = {
   linkedCaseCount: 7,
   crossProjectCaseCount: 0,
+  directCaseCount: 7,
+  directCrossProjectCaseCount: 0,
   passed: 7,
   failed: 0,
   inProgress: 0,
   notRun: 0,
+  statuses: [],
+  untested: 0,
   uncovered: false,
   status: "PASSED",
 };
@@ -47,10 +55,14 @@ const passedBreakdown: RequirementCoverageBreakdown = {
 const failedBreakdown: RequirementCoverageBreakdown = {
   linkedCaseCount: 7,
   crossProjectCaseCount: 0,
+  directCaseCount: 7,
+  directCrossProjectCaseCount: 0,
   passed: 3,
   failed: 1,
   inProgress: 0,
   notRun: 3,
+  statuses: [],
+  untested: 0,
   uncovered: false,
   status: "FAILED",
 };
@@ -58,10 +70,14 @@ const failedBreakdown: RequirementCoverageBreakdown = {
 const notRunBreakdown: RequirementCoverageBreakdown = {
   linkedCaseCount: 4,
   crossProjectCaseCount: 0,
+  directCaseCount: 4,
+  directCrossProjectCaseCount: 0,
   passed: 0,
   failed: 0,
   inProgress: 0,
   notRun: 4,
+  statuses: [],
+  untested: 4,
   uncovered: false,
   status: "NOT_RUN",
 };
@@ -73,10 +89,14 @@ const notRunBreakdown: RequirementCoverageBreakdown = {
 const adversarialBreakdown: RequirementCoverageBreakdown = {
   linkedCaseCount: 5,
   crossProjectCaseCount: 0,
+  directCaseCount: 5,
+  directCrossProjectCaseCount: 0,
   passed: 5,
   failed: 0,
   inProgress: 0,
   notRun: 0,
+  statuses: [],
+  untested: 0,
   uncovered: false,
   status: "FAILED",
 };
