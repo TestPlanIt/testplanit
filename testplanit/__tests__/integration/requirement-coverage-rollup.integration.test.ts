@@ -68,7 +68,24 @@ describeIntegration(
     let caseStateId: number;
     let runStateId: number;
     let passingStatusId: number;
+    let passingStatusName: string;
+    let passingStatusColor: string | null;
     let failingStatusId: number;
+    let failingStatusName: string;
+    let failingStatusColor: string | null;
+    // A neutral COMPLETED status (isSuccess = false, isFailure = false) —
+    // used ONLY by a cross-project case (caseSkippedCrossId below) so its
+    // whole status entry, not merely its count, must vanish from a
+    // project-scoped rollup (COV-07 item 6's strongest disclosure proof).
+    let skippedStatusId: number;
+    let skippedStatusName: string;
+    let skippedStatusColor: string | null;
+    // The shipped system "Untested" status. Ships with isCompleted = false,
+    // under which it is already excluded from status_rollup via the
+    // is_completed filter alone — see the beforeAll comment at the flip
+    // site below for why this suite temporarily marks it completed anyway.
+    let untestedStatusId: number;
+    let untestedStatusOriginalIsCompleted: boolean;
 
     // The primary tree: a requirement whose own child is also a
     // requirement, reached only through an intermediate node that
@@ -82,6 +99,11 @@ describeIntegration(
     let reqDeletedId: number;
     let reqArchivedId: number;
     let reqLatestId: number;
+    // COV-07 item 4: a requirement whose ONLY covering cases are a
+    // system-"untested"-status case and a never-executed case — neither
+    // may appear in statuses[], both must land in the explicit `untested`
+    // aggregate instead.
+    let reqUntestedMixId: number;
 
     let caseSharedId: number;
     let caseUnderStoryId: number;
@@ -90,6 +112,14 @@ describeIntegration(
     let caseDeletedId: number;
     let caseArchivedId: number;
     let caseTwoRunsId: number;
+    let caseSystemUntestedId: number;
+    let caseNoResultId: number;
+    // Linked directly to storyMid (an INHERITED node for reqRoot, not
+    // itself a requirement) rather than reqChild, so this case deepens
+    // reqRoot's direct/inherited and same/cross-project split without
+    // touching reqChild's own anchor closure at all — reqChild's closure
+    // never walks upward through its own ancestor storyMid.
+    let caseSkippedCrossId: number;
 
     // The second project: a requirement of its own (the isolation control)
     // plus a case that lives here but is linked back into reqRoot in the
@@ -215,10 +245,13 @@ describeIntegration(
           "Test prerequisite: no RUNS-scoped Workflows row available"
         );
       // Looked up by their boolean columns, never by name or system name —
-      // these are admin-configurable rows, not a hardcoded enum.
+      // these are admin-configurable rows, not a hardcoded enum. Name and
+      // color are selected too so the statuses[] assertions below can
+      // compare against the REAL joined values, not a name this suite
+      // invented.
       const passingStatus = await db.status.findFirst({
         where: { isSuccess: true, isDeleted: false },
-        select: { id: true },
+        select: { id: true, name: true, color: { select: { value: true } } },
       });
       if (!passingStatus)
         throw new Error(
@@ -226,18 +259,56 @@ describeIntegration(
         );
       const failingStatus = await db.status.findFirst({
         where: { isFailure: true, isDeleted: false },
-        select: { id: true },
+        select: { id: true, name: true, color: { select: { value: true } } },
       });
       if (!failingStatus)
         throw new Error(
           "Test prerequisite: no Status row with isFailure = true"
+        );
+      // A completed, neutral (neither success nor failure) status — the
+      // shipped "Skipped" status fits (isCompleted = true, isSuccess =
+      // false, isFailure = false). Looked up by its three booleans plus
+      // systemName as a last-resort discriminator only because no single
+      // boolean combination is otherwise unique among shipped statuses.
+      const skippedStatus = await db.status.findFirst({
+        where: {
+          isCompleted: true,
+          isSuccess: false,
+          isFailure: false,
+          isDeleted: false,
+        },
+        select: { id: true, name: true, color: { select: { value: true } } },
+      });
+      if (!skippedStatus)
+        throw new Error(
+          "Test prerequisite: no completed, neutral (non-success, non-failure) Status row available"
+        );
+      // The shipped system "untested" status — looked up by its unique
+      // systemName since, unlike the others above, this test specifically
+      // needs THIS row (see the beforeAll comment at the flip site below).
+      const untestedStatus = await db.status.findFirst({
+        where: { systemName: "untested", isDeleted: false },
+        select: { id: true, isCompleted: true },
+      });
+      if (!untestedStatus)
+        throw new Error(
+          'Test prerequisite: no Status row with systemName "untested"'
         );
 
       templateId = template.id;
       caseStateId = caseWorkflow.id;
       runStateId = runWorkflow.id;
       passingStatusId = passingStatus.id;
+      passingStatusName = passingStatus.name;
+      passingStatusColor = passingStatus.color?.value ?? null;
       failingStatusId = failingStatus.id;
+      failingStatusName = failingStatus.name;
+      failingStatusColor = failingStatus.color?.value ?? null;
+      skippedStatusId = skippedStatus.id;
+      skippedStatusName = skippedStatus.name;
+      skippedStatusColor = skippedStatus.color?.value ?? null;
+      untestedStatusId = untestedStatus.id;
+      untestedStatusOriginalIsCompleted = untestedStatus.isCompleted;
 
       async function createNode(
         name: string,
@@ -505,36 +576,126 @@ describeIntegration(
         now
       );
 
-      unrestrictedCoverage = await getRequirementCoverage(
-        projectOneId,
-        { accessibleProjectIds: null },
-        undefined,
-        db
-      );
-      scopedCoverage = await getRequirementCoverage(
-        projectOneId,
-        { accessibleProjectIds: [projectOneId] },
-        undefined,
-        db
-      );
-      projectTwoCoverage = await getRequirementCoverage(
+      // caseSkippedCross lives in project two and is linked directly to
+      // storyMid — an INHERITED node from reqRoot's own perspective (depth
+      // 1), never touching reqChild's anchor closure. This is what makes
+      // reqRoot's direct links "span both projects" (caseShared local,
+      // caseOtherProject cross-project) WHILE also inheriting a second,
+      // DIFFERENT cross-project case from a descendant — the fixture shape
+      // items 1 and 2 below need to tell direct from inherited and total
+      // cross-project from direct-cross-project apart. Its status
+      // ("Skipped": completed, neither success nor failure) is also the
+      // ONLY contributor to that status entry anywhere in the fixture, so
+      // excluding project two must make that whole entry vanish, not just
+      // shrink (item 6's strongest disclosure proof).
+      caseSkippedCrossId = await createCase(
+        "case-skipped-cross",
         projectTwoId,
-        { accessibleProjectIds: null },
-        undefined,
-        db
+        repositoryTwoId,
+        folderTwoId
       );
-      unrestrictedCovering = await getRequirementCoveringCases(
+
+      // reqUntestedMix: a requirement whose only two covering cases are
+      // deliberately unclassifiable — one whose latest result IS the
+      // system "untested" status, one with no result at all. Neither may
+      // ever appear in statuses[]; both must land in the explicit
+      // `untested` aggregate instead (item 4).
+      reqUntestedMixId = await createNode(
+        "req-untested-mix",
         projectOneId,
-        [reqRootId],
-        { accessibleProjectIds: null },
-        db
+        null,
+        true
       );
-      scopedCovering = await getRequirementCoveringCases(
+      caseSystemUntestedId = await createCase(
+        "case-system-untested",
         projectOneId,
-        [reqRootId],
-        { accessibleProjectIds: [projectOneId] },
-        db
+        repositoryOneId,
+        folderOneId
       );
+      caseNoResultId = await createCase(
+        "case-no-result",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+
+      await db.repositoryCaseIssue.createMany({
+        data: [
+          { caseId: caseSkippedCrossId, issueId: storyMidId },
+          { caseId: caseSystemUntestedId, issueId: reqUntestedMixId },
+          { caseId: caseNoResultId, issueId: reqUntestedMixId },
+        ],
+      });
+
+      await recordExecution(
+        runProjectTwo.id,
+        caseSkippedCrossId,
+        skippedStatusId,
+        now
+      );
+      // caseSystemUntested's own execution is recorded here, using the
+      // shipped system "untested" status — the isCompleted flip below only
+      // needs to be in effect for the QUERIES, not for this insert.
+      await recordExecution(
+        runMain.id,
+        caseSystemUntestedId,
+        untestedStatusId,
+        now
+      );
+
+      // The shipped "Untested" status ships with isCompleted = false, under
+      // which caseSystemUntested's row is ALREADY excluded from
+      // status_rollup via the `lr.is_completed = true` half of that CTE's
+      // WHERE clause alone — making the systemName='untested' exclusion
+      // clause unreachable, and therefore unprovable, with the shipped
+      // default. To make that second clause's own contribution to the
+      // disclosure boundary independently observable (a mutation to it
+      // must be able to fail a test on its own), this globally-shared
+      // status row is marked completed for the exact duration of the
+      // coverage queries below, then restored immediately after — the
+      // ONLY window in this suite where that shared row's isCompleted flag
+      // differs from its shipped default.
+      await db.status.update({
+        where: { id: untestedStatusId },
+        data: { isCompleted: true },
+      });
+      try {
+        unrestrictedCoverage = await getRequirementCoverage(
+          projectOneId,
+          { accessibleProjectIds: null },
+          undefined,
+          db
+        );
+        scopedCoverage = await getRequirementCoverage(
+          projectOneId,
+          { accessibleProjectIds: [projectOneId] },
+          undefined,
+          db
+        );
+        projectTwoCoverage = await getRequirementCoverage(
+          projectTwoId,
+          { accessibleProjectIds: null },
+          undefined,
+          db
+        );
+        unrestrictedCovering = await getRequirementCoveringCases(
+          projectOneId,
+          [reqRootId],
+          { accessibleProjectIds: null },
+          db
+        );
+        scopedCovering = await getRequirementCoveringCases(
+          projectOneId,
+          [reqRootId],
+          { accessibleProjectIds: [projectOneId] },
+          db
+        );
+      } finally {
+        await db.status.update({
+          where: { id: untestedStatusId },
+          data: { isCompleted: untestedStatusOriginalIsCompleted },
+        });
+      }
     });
 
     afterAll(async () => {
@@ -646,7 +807,10 @@ describeIntegration(
 
     it("cases in another project count and are reported separately as cross-project", async () => {
       const root = unrestrictedCoverage.get(reqRootId)!;
-      expect(root.crossProjectCaseCount).toBe(1);
+      // Two cross-project cases: caseOtherProject (direct) and
+      // caseSkippedCross (inherited via storyMid) — see the item 1/2 tests
+      // below for the direct-vs-total split this pair exists to prove.
+      expect(root.crossProjectCaseCount).toBe(2);
       expect(root.linkedCaseCount).toBeGreaterThan(root.crossProjectCaseCount);
 
       // A requirement whose covering cases are all local proves the counter
@@ -662,9 +826,10 @@ describeIntegration(
 
       expect(
         rootUnrestricted.linkedCaseCount - rootScoped.linkedCaseCount,
-        `unrestricted total (${rootUnrestricted.linkedCaseCount}) minus scoped total (${rootScoped.linkedCaseCount}) must be exactly 1 — the one case living outside the viewer's accessible projects`
-      ).toBe(1);
+        `unrestricted total (${rootUnrestricted.linkedCaseCount}) minus scoped total (${rootScoped.linkedCaseCount}) must be exactly 2 — the two cases (caseOtherProject, caseSkippedCross) living outside the viewer's accessible projects`
+      ).toBe(2);
       expect(rootScoped.crossProjectCaseCount).toBe(0);
+      expect(rootScoped.directCrossProjectCaseCount).toBe(0);
       expect(
         rootUnrestricted.failed - rootScoped.failed,
         `unrestricted failed (${rootUnrestricted.failed}) minus scoped failed (${rootScoped.failed}) must be exactly 1 — the excluded case's own execution failed`
@@ -691,6 +856,7 @@ describeIntegration(
         reqDeletedId,
         reqArchivedId,
         reqLatestId,
+        reqUntestedMixId,
       ]) {
         expect(scopedCoverage.get(id)).toEqual(unrestrictedCoverage.get(id));
       }
@@ -727,6 +893,146 @@ describeIntegration(
       expect(rootScoped.length).toBe(
         scopedCoverage.get(reqRootId)!.linkedCaseCount
       );
+    });
+
+    // COV-07 (gap-closure plan 26.2-07): statuses[], untested, directCaseCount
+    // and directCrossProjectCaseCount, all produced by the same statement
+    // the tests above already exercise.
+
+    it("[reqRootId] directCaseCount counts only cases linked directly to the anchor itself, distinct from linkedCaseCount's whole-subtree total", async () => {
+      const root = unrestrictedCoverage.get(reqRootId)!;
+      // Direct: caseShared and caseOtherProject, both linked straight to
+      // reqRoot. Inherited (NOT direct): caseUnderStory (via storyMid),
+      // casePassing/caseFailing (via reqChild), caseSkippedCross (via
+      // storyMid) — five inherited cases the confused query in the plan's
+      // own framing ("min_depth >= 0") would wrongly fold into direct too.
+      expect(root.directCaseCount).toBe(2);
+      expect(root.linkedCaseCount).toBe(6);
+      expect(root.linkedCaseCount).toBeGreaterThan(root.directCaseCount);
+    });
+
+    it("[reqRootId] directCrossProjectCaseCount counts only the DIRECT cross-project links, strictly less than the whole-subtree crossProjectCaseCount", async () => {
+      const root = unrestrictedCoverage.get(reqRootId)!;
+      // caseOtherProject is both direct AND cross-project.
+      // caseSkippedCross is cross-project but INHERITED (via storyMid) —
+      // it must count toward crossProjectCaseCount but NOT
+      // directCrossProjectCaseCount.
+      expect(root.directCrossProjectCaseCount).toBe(1);
+      expect(root.crossProjectCaseCount).toBe(2);
+      expect(root.directCrossProjectCaseCount).toBeLessThan(
+        root.crossProjectCaseCount
+      );
+    });
+
+    it("[reqRootId] statuses[] carries one entry per distinct completed status, with the real Status name/color, ordered by count descending", async () => {
+      const root = unrestrictedCoverage.get(reqRootId)!;
+      // Passed (3): caseShared, caseUnderStory, casePassing.
+      // Failed (2): caseOtherProject, caseFailing.
+      // Skipped (1): caseSkippedCross — three distinct statuses, so
+      // ordering (3 > 2 > 1) is observable, not a two-item coincidence.
+      expect(root.statuses).toEqual([
+        {
+          statusId: passingStatusId,
+          name: passingStatusName,
+          color: passingStatusColor,
+          count: 3,
+        },
+        {
+          statusId: failingStatusId,
+          name: failingStatusName,
+          color: failingStatusColor,
+          count: 2,
+        },
+        {
+          statusId: skippedStatusId,
+          name: skippedStatusName,
+          color: skippedStatusColor,
+          count: 1,
+        },
+      ]);
+    });
+
+    it("[reqUntestedMixId] a system-untested-status case and a never-executed case both land in `untested`, neither appears in statuses[]", async () => {
+      const untestedMix = unrestrictedCoverage.get(reqUntestedMixId)!;
+      expect(untestedMix.linkedCaseCount).toBe(2);
+      expect(untestedMix.statuses).toEqual([]);
+      expect(untestedMix.untested).toBe(2);
+      // Neither case's status carries a name equal to the shipped
+      // "Untested" status's own name anywhere in statuses[] — belt and
+      // suspenders alongside the empty-array check above.
+      expect(
+        untestedMix.statuses.some((entry) => entry.statusId === untestedStatusId)
+      ).toBe(false);
+    });
+
+    it("untested + sum(statuses[].count) equals linkedCaseCount for every requirement in the fixture", async () => {
+      for (const [id, breakdown] of unrestrictedCoverage) {
+        const statusesTotal = breakdown.statuses.reduce(
+          (sum, entry) => sum + entry.count,
+          0
+        );
+        expect(
+          breakdown.untested + statusesTotal,
+          `requirement ${id}: untested (${breakdown.untested}) + sum(statuses[].count) (${statusesTotal}) must equal linkedCaseCount (${breakdown.linkedCaseCount})`
+        ).toBe(breakdown.linkedCaseCount);
+      }
+      for (const [id, breakdown] of scopedCoverage) {
+        const statusesTotal = breakdown.statuses.reduce(
+          (sum, entry) => sum + entry.count,
+          0
+        );
+        expect(
+          breakdown.untested + statusesTotal,
+          `(scoped) requirement ${id}: untested (${breakdown.untested}) + sum(statuses[].count) (${statusesTotal}) must equal linkedCaseCount (${breakdown.linkedCaseCount})`
+        ).toBe(breakdown.linkedCaseCount);
+      }
+    });
+
+    it("[reqRootId] excluding project two zeroes both cross-project counters and removes every status entry sourced only from that project", async () => {
+      const rootUnrestricted = unrestrictedCoverage.get(reqRootId)!;
+      const rootScoped = scopedCoverage.get(reqRootId)!;
+
+      expect(rootUnrestricted.crossProjectCaseCount).toBe(2);
+      expect(rootUnrestricted.directCrossProjectCaseCount).toBe(1);
+      expect(rootScoped.crossProjectCaseCount).toBe(0);
+      expect(rootScoped.directCrossProjectCaseCount).toBe(0);
+
+      // Skipped is contributed ONLY by caseSkippedCross (project two) — its
+      // whole entry must disappear, not merely shrink, once project two is
+      // excluded. A status NAME surviving here from an unreadable project
+      // would itself be the disclosure (T-26.2G-07-01).
+      const scopedSkipped = rootScoped.statuses.find(
+        (entry) => entry.statusId === skippedStatusId
+      );
+      expect(
+        scopedSkipped,
+        `scoped statuses[] must not contain the Skipped entry at all, found: ${JSON.stringify(rootScoped.statuses)}`
+      ).toBeUndefined();
+
+      // Passed is contributed ONLY by project-one cases (caseShared,
+      // caseUnderStory, casePassing) — scoping must leave it byte-identical,
+      // proving the scope discriminates per contributing case rather than
+      // shrinking every status entry indiscriminately once ANY cross-project
+      // case exists on the requirement.
+      const unrestrictedPassed = rootUnrestricted.statuses.find(
+        (entry) => entry.statusId === passingStatusId
+      )!;
+      const scopedPassed = rootScoped.statuses.find(
+        (entry) => entry.statusId === passingStatusId
+      )!;
+      expect(unrestrictedPassed.count - scopedPassed.count).toBe(0);
+
+      // Failed is contributed by BOTH projects (caseFailing local,
+      // caseOtherProject cross-project) — scoping must shrink it by exactly
+      // the one project-two contributor, not zero it and not leave it
+      // unchanged.
+      const unrestrictedFailed = rootUnrestricted.statuses.find(
+        (entry) => entry.statusId === failingStatusId
+      )!;
+      const scopedFailed = rootScoped.statuses.find(
+        (entry) => entry.statusId === failingStatusId
+      )!;
+      expect(unrestrictedFailed.count - scopedFailed.count).toBe(1);
     });
   }
 );
