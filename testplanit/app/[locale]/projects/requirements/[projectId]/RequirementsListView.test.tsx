@@ -787,9 +787,9 @@ describe("RequirementsListView", () => {
         itemType: ItemTypes.REQUIREMENT,
       };
       renderView();
-      expect(
-        screen.getByTestId("requirement-row-1").className
-      ).not.toContain("inset-ring");
+      expect(screen.getByTestId("requirement-row-1").className).not.toContain(
+        "inset-ring"
+      );
       expect(screen.getByTestId("requirement-row-7").className).toContain(
         "inset-ring-2"
       );
@@ -843,9 +843,9 @@ describe("RequirementsListView", () => {
         itemType: ItemTypes.REQUIREMENT,
       };
       renderView();
-      expect(
-        screen.getByTestId("requirement-tree-end-hint")
-      ).toHaveTextContent("requirements.tree.dropToRootHint");
+      expect(screen.getByTestId("requirement-tree-end-hint")).toHaveTextContent(
+        "requirements.tree.dropToRootHint"
+      );
     });
 
     it("hover wins: with a drag active, the hovered row keeps its outline ring and drops the candidate ring", () => {

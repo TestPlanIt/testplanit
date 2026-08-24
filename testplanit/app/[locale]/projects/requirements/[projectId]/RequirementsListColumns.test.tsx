@@ -794,7 +794,9 @@ describe("RequirementNameCell", () => {
       isFiltering: false,
     });
     expect(dragSpecRef.current.canDrag()).toBe(true);
-    expect(screen.getByTestId("requirement-drag-handle-15")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirement-drag-handle-15")
+    ).toBeInTheDocument();
   });
 
   it("the grab handle is decorative: aria-hidden, not a button, and cursor-grab", () => {
