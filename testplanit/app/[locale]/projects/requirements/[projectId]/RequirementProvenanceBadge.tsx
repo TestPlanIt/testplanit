@@ -48,8 +48,7 @@ const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
  * width sitting exactly on a level boundary needed only sub-pixel
  * measurement noise between successive `ResizeObserver` fires (real
  * browsers report exactly this — font metrics settling, sub-pixel layout
- * rounding differing between paints) to alternate forever. Same fix and
- * same value as `RequirementCoverageBadge`'s identical constant: any
+ * rounding differing between paints) to alternate forever. Any
  * measure-then-setState pair whose own output can move the measured input
  * needs a dead zone wider than that movement.
  */
@@ -216,10 +215,9 @@ export function RequirementProvenanceBadge({
         return cum;
       };
 
-      // Asymmetric per-step threshold, same shape as
-      // `RequirementCoverageBadge`'s hysteresis: dropping a level happens
-      // the moment the row can no longer sustain it (no delay -- a
-      // shrinking row should never feel sluggish), climbing a level needs
+      // Asymmetric per-step threshold: dropping a level happens the moment
+      // the row can no longer sustain it (no delay -- a shrinking row
+      // should never feel sluggish), climbing a level needs
       // `COLLAPSE_HYSTERESIS_PX` of headroom beyond that. Two passes (rise,
       // then fall) handle a jump of more than one level in either
       // direction within a single fire.

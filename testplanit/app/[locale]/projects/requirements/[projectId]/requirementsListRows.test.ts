@@ -38,8 +38,8 @@ function makeRequirement(args: {
   } as Issue;
 }
 
-// Established fixture shape for RequirementCoverageBreakdown, matching
-// RequirementCoverageBadge.test.tsx rather than inventing a second one.
+// Established fixture shape for RequirementCoverageBreakdown, shared with
+// RequirementsListColumns.test.tsx's identical factory.
 function makeBreakdown(
   overrides: Partial<RequirementCoverageBreakdown> = {}
 ): RequirementCoverageBreakdown {

@@ -43,8 +43,8 @@ const PATH_COLUMN_SIZE = 320;
  * (`hooks/pdf/useExportRequirementTraceabilityPdf.ts`) so the two exports of
  * one dataset never disagree about what a blank cell means:
  *   - `testCaseId == null` -> the coverage gap: the uncovered treatment,
- *     using the same dashed warning tokens as the tree's
- *     `RequirementCoverageBadge` (never a hardcoded amber).
+ *     using the same dashed warning tokens as the tree's coverage cell
+ *     (`CoverageChip`'s Uncovered badge, never a hardcoded amber).
  *   - a case with a `lastStatusName` -> that status, coloured by
  *     `lastStatusColor`.
  *   - a case with NO `lastStatusName` -> the not-run treatment, distinct

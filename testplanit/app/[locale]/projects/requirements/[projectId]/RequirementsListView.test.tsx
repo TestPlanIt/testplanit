@@ -346,6 +346,9 @@ describe("RequirementsListView", () => {
             uncovered: false,
             passed: 3,
             linkedCaseCount: 3,
+            statuses: [
+              { statusId: 1, name: "Passed", color: "#22c55e", count: 3 },
+            ],
           }),
         }),
         isError: false,
@@ -359,26 +362,22 @@ describe("RequirementsListView", () => {
       expect(screen.queryByTestId("requirement-row-2")).not.toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
 
-      const collapsedCount = screen.getByTestId(
-        "requirement-coverage-count"
+      const collapsedContent = screen.getByTestId(
+        "requirement-coverage-cell-1"
       ).textContent;
-      expect(
-        screen.getByTestId("requirement-coverage-passed")
-      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Passed: 3")).toBeInTheDocument();
 
       fireEvent.click(screen.getByTestId("requirement-chevron-1"));
 
       expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
       expect(screen.getByTestId("requirement-row-3")).toBeInTheDocument();
 
-      // The parent's own coverage badge is server-supplied and unchanged by
+      // The parent's own coverage chip is server-supplied and unchanged by
       // expansion -- never re-derived from the now-rendered children.
+      expect(screen.getByLabelText("Passed: 3")).toBeInTheDocument();
       expect(
-        screen.getByTestId("requirement-coverage-passed")
-      ).toBeInTheDocument();
-      expect(screen.getByTestId("requirement-coverage-count").textContent).toBe(
-        collapsedCount
-      );
+        screen.getByTestId("requirement-coverage-cell-1").textContent
+      ).toBe(collapsedContent);
     });
   });
 

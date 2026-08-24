@@ -45,7 +45,7 @@ vi.mock("react-dnd", () => ({
   },
 }));
 
-// Do NOT mock RequirementCoverageBadge or RequirementProvenanceBadge --
+// Do NOT mock CoverageChip or RequirementProvenanceBadge --
 // their presence and their own test ids are part of what this file proves.
 import { useRequirementsListColumns } from "./RequirementsListColumns";
 
@@ -97,8 +97,8 @@ function makeRow(args: {
   } as unknown as RequirementRow;
 }
 
-// Established fixture shape for RequirementCoverageBreakdown, matching
-// RequirementCoverageBadge.test.tsx rather than inventing a second one.
+// Established fixture shape for RequirementCoverageBreakdown, shared with
+// requirementsListRows.test.ts's identical factory.
 function makeBreakdown(
   overrides: Partial<RequirementCoverageBreakdown> = {}
 ): RequirementCoverageBreakdown {
@@ -254,7 +254,7 @@ describe("useRequirementsListColumns -- column contract", () => {
     > = {
       name: { size: 320, minSize: 240, maxSize: 640 },
       status: { size: 120, minSize: 80, maxSize: 200 },
-      coverage: { size: 180, minSize: 130, maxSize: 420 },
+      coverage: { size: 170, minSize: 150, maxSize: 420 },
       source: { size: 170, minSize: 60, maxSize: 260 },
       actions: { size: 64, minSize: 56, maxSize: 100 },
     };
@@ -342,13 +342,14 @@ describe("useRequirementsListColumns -- column contract", () => {
     expect(detachedValue).toBeLessThan(syncedValue);
   });
 
-  it("coverage cell mounts the real RequirementCoverageBadge, not a mock", () => {
+  it("coverage cell mounts the real CoverageChip, not a mock", () => {
     const coverage = makeCoverageResponse({
       20: makeBreakdown({
         status: "PASSED",
         uncovered: false,
         passed: 3,
         linkedCaseCount: 3,
+        statuses: [{ statusId: 1, name: "Passed", color: "#22c55e", count: 3 }],
       }),
     });
     const { result } = renderHook(() =>
@@ -361,8 +362,81 @@ describe("useRequirementsListColumns -- column contract", () => {
     });
     render(cell);
     expect(
-      screen.getByTestId("requirement-coverage-passed")
+      screen.getByTestId("requirement-coverage-cell-20")
     ).toBeInTheDocument();
+    expect(screen.getByTestId("coverage-pips")).toBeInTheDocument();
+    expect(screen.getByLabelText("Passed: 3")).toBeInTheDocument();
+  });
+
+  it("a breakdown with two statuses renders two pips plus the count text", () => {
+    const coverage = makeCoverageResponse({
+      24: makeBreakdown({
+        status: "FAILED",
+        uncovered: false,
+        linkedCaseCount: 3,
+        statuses: [
+          { statusId: 1, name: "Passed", color: "#22c55e", count: 2 },
+          { statusId: 2, name: "Failed", color: "#ef4444", count: 1 },
+        ],
+      }),
+    });
+    const { result } = renderHook(() =>
+      useRequirementsListColumns(baseArgs({ coverage }))
+    );
+    const coverageCol = result.current.find((c) => c.id === "coverage")!;
+    const cell = (coverageCol as any).cell({
+      row: { original: makeRow({ id: 24 }), id: "24" },
+      column: { getSize: () => 64 },
+    });
+    render(cell);
+    expect(screen.getByLabelText("Passed: 2")).toBeInTheDocument();
+    expect(screen.getByLabelText("Failed: 1")).toBeInTheDocument();
+  });
+
+  it("a linkedCaseCount: 0 breakdown renders the Uncovered badge", () => {
+    const coverage = makeCoverageResponse({
+      25: makeBreakdown({
+        status: "UNCOVERED",
+        uncovered: true,
+        linkedCaseCount: 0,
+      }),
+    });
+    const { result } = renderHook(() =>
+      useRequirementsListColumns(baseArgs({ coverage }))
+    );
+    const coverageCol = result.current.find((c) => c.id === "coverage")!;
+    const cell = (coverageCol as any).cell({
+      row: { original: makeRow({ id: 25 }), id: "25" },
+      column: { getSize: () => 64 },
+    });
+    render(cell);
+    expect(screen.getByText("coverageUncovered")).toBeInTheDocument();
+  });
+
+  // Regresses to the milestone surface's own definition of Uncovered (no
+  // COMPLETED outcome) if `uncoveredWhen` is ever dropped from the cell --
+  // observed RED with the prop removed, see 26.2-10-SUMMARY.md.
+  it("a linkedCaseCount: 2, statuses: [], untested: 2 breakdown renders pips, not the Uncovered badge", () => {
+    const coverage = makeCoverageResponse({
+      26: makeBreakdown({
+        status: "NOT_RUN",
+        uncovered: false,
+        linkedCaseCount: 2,
+        statuses: [],
+        untested: 2,
+      }),
+    });
+    const { result } = renderHook(() =>
+      useRequirementsListColumns(baseArgs({ coverage }))
+    );
+    const coverageCol = result.current.find((c) => c.id === "coverage")!;
+    const cell = (coverageCol as any).cell({
+      row: { original: makeRow({ id: 26 }), id: "26" },
+      column: { getSize: () => 64 },
+    });
+    render(cell);
+    expect(screen.queryByText("coverageUncovered")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("labels.untested: 2")).toBeInTheDocument();
   });
 
   it("source cell mounts the real RequirementProvenanceBadge, not a mock", () => {

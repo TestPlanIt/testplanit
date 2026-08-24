@@ -115,9 +115,9 @@ export function RequirementCoveragePanel({
           </div>
         ) : isError ? (
           // F6: a failed fetch must never be rendered as "no covering
-          // cases" -- that is exactly the false claim
-          // `RequirementCoverageBadge.tsx`'s own "not loaded yet (or
-          // failed to load) renders nothing" rule exists to prevent for
+          // cases" -- that is exactly the false claim the requirements
+          // list's coverage cell's own "not loaded yet (or failed to load)
+          // renders nothing" rule exists to prevent for
           // the sibling coverage query. This branch keeps that same
           // instinct: visually and semantically distinct from
           // `panelEmpty` below, reusing the datasets-list.tsx error/retry

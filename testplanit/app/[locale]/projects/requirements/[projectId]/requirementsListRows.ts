@@ -186,16 +186,17 @@ export function computeVisibleRequirementIds({
   return visible;
 }
 
-// D-02a: this is NOT `CoverageChip.coverageSortValue`. That function reads
-// `breakdown.statuses` / `breakdown.uncovered` off a `CoverageBreakdown` —
-// this list's cells consume `RequirementCoverageBreakdown`, which has no
-// `statuses` array at all, so casting one into the other's signature
-// type-checks under this repo's config but silently returns nonsense (every
-// requirement would rank as uncovered). The two shapes are produced by two
-// different services and converge only visually (both already share
-// `IterationStatusPip`/`resolvePipColor`), not structurally, so this is
-// written fresh against the correct type, following `coverageSortValue`'s
-// *pattern* — uncovered groups separately, covered rows rank monotonically.
+// D-02a: this is NOT `CoverageChip.coverageSortValue`, even though the
+// coverage cell now renders through `CoverageChip` itself (D-03c/UAT gap 4).
+// `coverageSortValue` ranks by a sum of completed-outcome counts; this
+// function ranks by `RequirementCoverageBreakdown`'s own four-rung
+// precedence ladder (`STATUS_RANK` below), where any FAILED result anywhere
+// in the subtree outranks NOT_RUN regardless of how many cases passed. That
+// ladder is strictly richer than a sum and agrees with the chip by
+// construction: `status === "UNCOVERED"` is true exactly when
+// `linkedCaseCount === 0`, which is exactly the chip's `"no-linked-cases"`
+// gate — the same chip/filter/sort consistency rule `MemberIssuesTable.tsx`
+// states for itself.
 const STATUS_RANK: Record<RequirementCoverageBreakdown["status"], number> = {
   UNCOVERED: 0,
   FAILED: 1,

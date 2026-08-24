@@ -12,6 +12,11 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef } from "react";
 import { useDrag } from "react-dnd";
+// UAT gap 4 reversed Phase 26's decision to keep this column on its own
+// standalone coverage badge -- the operator ruled the Coverage column must
+// match Milestone details > Issues in display model, so this cell now
+// mounts the same `CoverageChip` that table uses (26.2-10).
+import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { Button } from "@/components/ui/button";
@@ -34,7 +39,6 @@ import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
-import { RequirementCoverageBadge } from "./RequirementCoverageBadge";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
 import {
   requirementCoverageSortValue,
@@ -157,20 +161,48 @@ export function useRequirementsListColumns({
       },
       {
         id: "coverage",
+        // KEPT as the accessor even though the cell now renders through
+        // `CoverageChip`: it ranks by `RequirementCoverageBreakdown`'s own
+        // four-rung precedence ladder (failed-anywhere-wins), strictly
+        // richer than a sum of completed outcomes, and it agrees with the
+        // chip's `"no-linked-cases"` gate by construction --
+        // `status === "UNCOVERED"` is true exactly when
+        // `linkedCaseCount === 0`. See requirementsListRows.ts's D-02a
+        // comment.
         accessorFn: (row) =>
           requirementCoverageSortValue(coverageFor(coverage, row.id)),
         header: tColumnCoverage,
         enableSorting: true,
-        size: 180,
-        minSize: 130,
+        // Sizes match MemberIssuesColumns.tsx's own coverage column exactly
+        // -- same display model, same footprint.
+        size: 170,
+        minSize: 150,
         maxSize: 420,
-        // No className passed in -- the badge owns its own shrink/min-width
-        // floor (D-03c).
-        cell: ({ row }) => (
-          <RequirementCoverageBadge
-            breakdown={coverageFor(coverage, row.original.id)}
-          />
-        ),
+        cell: ({ row }) => {
+          const breakdown = coverageFor(coverage, row.original.id);
+          return (
+            <div
+              className="min-w-0"
+              data-testid={`requirement-coverage-cell-${row.original.id}`}
+            >
+              {/* Coverage that has not loaded yet (or failed to load)
+                  renders nothing -- ported from the badge this cell
+                  replaces. `CoverageChip` itself treats an undefined
+                  breakdown as Uncovered (correct for the milestone surface,
+                  which always has a breakdown once its own query resolves),
+                  but here `coverageFor` can legitimately return undefined
+                  purely because the whole-project rollup hasn't arrived
+                  yet, and painting every row Uncovered until then would be
+                  the exact false claim F6 exists to prevent. */}
+              {breakdown ? (
+                <CoverageChip
+                  breakdown={breakdown}
+                  uncoveredWhen="no-linked-cases"
+                />
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         id: "source",

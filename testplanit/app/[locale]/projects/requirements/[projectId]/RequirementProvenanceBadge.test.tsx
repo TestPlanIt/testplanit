@@ -73,10 +73,9 @@ function openMenu(trigger: HTMLElement) {
 }
 
 // --- Driven-ResizeObserver harness (gap closure, 26.2-09) ---------------
-// See RequirementCoverageBadge.test.tsx's identical harness for the full
-// rationale (jsdom's zero-width `getBoundingClientRect` plus the global
+// jsdom's zero-width `getBoundingClientRect` plus the global
 // `MockResizeObserver`'s no-op `observe` mean nothing before this drove a
-// real width through either badge's collapse effect).
+// real width through this badge's collapse effect.
 class FakeResizeObserver {
   static instances: FakeResizeObserver[] = [];
   private callback: ResizeObserverCallback;
@@ -333,9 +332,8 @@ describe("RequirementProvenanceBadge", () => {
     });
 
     // THE REGRESSION TEST for the update-depth defect (26.2-09 task 1's
-    // attribution) — see RequirementCoverageBadge.test.tsx's identical test
-    // for the full mechanism. Same shape here: `compute()`'s level 0->1
-    // boundary sits at available>=34.5; two widths 0.2px apart straddle it.
+    // attribution): `compute()`'s level 0->1 boundary sits at
+    // available>=34.5; two widths 0.2px apart straddle it.
     //
     // Counts TRANSITIONS in the rendered provider segment rather than raw
     // React commits: this badge mounts inside a Radix `DropdownMenu`, whose
