@@ -933,9 +933,19 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
     expect(nameSpan.className).not.toMatch(/shrink-\[/);
 
     const coverageBadge = screen.getByTestId("requirement-coverage-failed");
-    const coverageMatch = coverageBadge.className.match(/shrink-\[(\d+)\]/);
-    expect(coverageMatch).not.toBeNull();
-    const coverageShrink = Number(coverageMatch![1]);
+    // 26-13 moved the coverage badge's shrink class off the testid'd Badge
+    // and onto its own wrapper span (it now needs an in-flow measuring
+    // copy alongside the visible badge, mirroring the provenance badge's
+    // own wrapper/badge split below) -- walk up from the testid'd element
+    // rather than assuming the class sits on it directly.
+    let coverageAncestor: HTMLElement | null = coverageBadge;
+    let coverageShrink: number | null = null;
+    while (coverageAncestor && coverageShrink === null) {
+      const match = coverageAncestor.className.match(/shrink-\[(\d+)\]/);
+      if (match) coverageShrink = Number(match[1]);
+      coverageAncestor = coverageAncestor.parentElement;
+    }
+    expect(coverageShrink).not.toBeNull();
 
     const provenanceBadge = screen.getByTestId("requirement-provenance-locked");
     let ancestor: HTMLElement | null = provenanceBadge;
@@ -949,8 +959,8 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
 
     // Floor-style ordering, not an exact-value pin on either sibling's own
     // weight (neither of which this file owns).
-    expect(provenanceShrink!).toBeGreaterThan(coverageShrink);
-    expect(coverageShrink).toBeGreaterThan(1);
+    expect(provenanceShrink!).toBeGreaterThan(coverageShrink!);
+    expect(coverageShrink!).toBeGreaterThan(1);
 
     // Document order: name span, then the coverage indicator, then the
     // provenance badge.

@@ -17,7 +17,10 @@ vi.mock("next-intl", () => ({
     params ? `${key}:${Object.values(params).join("·")}` : key,
 }));
 
-import { RequirementCoverageBadge } from "./RequirementCoverageBadge";
+import {
+  COVERAGE_BADGE_MIN_WIDTH_PX,
+  RequirementCoverageBadge,
+} from "./RequirementCoverageBadge";
 
 const uncoveredBreakdown: RequirementCoverageBreakdown = {
   linkedCaseCount: 0,
@@ -204,9 +207,19 @@ describe("RequirementCoverageBadge", () => {
   it("encodes the row priority as distinct shrink weights: provenance above coverage above the name", () => {
     render(<RequirementCoverageBadge breakdown={passedBreakdown} />);
     const coverageBadge = screen.getByTestId("requirement-coverage-passed");
-    const coverageMatch = coverageBadge.className.match(/shrink-\[(\d+)\]/);
-    expect(coverageMatch).not.toBeNull();
-    const coverageShrink = Number(coverageMatch![1]);
+    // 26-13 moved the shrink/min-w classes off the visible Badge and onto
+    // its wrapper span (the actual flex item on the row now that this
+    // badge has its own in-flow measuring copy, mirroring
+    // RequirementProvenanceBadge's wrapper/badge split) — walk up from the
+    // testid'd element rather than assuming the class is on it directly.
+    let ancestor: HTMLElement | null = coverageBadge;
+    let coverageShrink: number | null = null;
+    while (ancestor && coverageShrink === null) {
+      const match = ancestor.className.match(/shrink-\[(\d+)\]/);
+      if (match) coverageShrink = Number(match[1]);
+      ancestor = ancestor.parentElement;
+    }
+    expect(coverageShrink).not.toBeNull();
 
     const provenanceSource = fs.readFileSync(
       "app/[locale]/projects/requirements/[projectId]/RequirementProvenanceBadge.tsx",
@@ -239,7 +252,67 @@ describe("RequirementCoverageBadge", () => {
 
     // Floor-style ordering assertion, not an exact-value pin on the
     // provenance badge's own weight (which this file does not own).
-    expect(provenanceShrink).toBeGreaterThan(coverageShrink);
-    expect(coverageShrink).toBeGreaterThan(nameShrink);
+    expect(provenanceShrink).toBeGreaterThan(coverageShrink!);
+    expect(coverageShrink!).toBeGreaterThan(nameShrink);
+  });
+
+  // 26-13 Finding 1 (BLOCKING): the operator's live-browser UAT found the
+  // status word never actually dropped — it shrank into its 48px floor and
+  // hard-clipped its own text instead, with 5 of 11 real badges clipped
+  // mid-word at 1440x900. jsdom has no layout, so this cannot re-run the
+  // visual proof; it proves the STRUCTURAL contract the fix depends on
+  // instead, per 26-13-PLAN.md's own guidance for this exact situation.
+  it("keeps the status word in its own droppable segment, separate from the count, so it can be omitted without truncating either", () => {
+    render(<RequirementCoverageBadge breakdown={notRunBreakdown} />);
+    const countEl = screen.getByTestId("requirement-coverage-count");
+    const statusWordEl = screen.getByTestId("requirement-coverage-status-word");
+
+    // Two distinct elements, neither nested inside the other -- dropping
+    // one can never require truncating or reaching into the other.
+    expect(statusWordEl).not.toBe(countEl);
+    expect(statusWordEl.contains(countEl)).toBe(false);
+    expect(countEl.contains(statusWordEl)).toBe(false);
+
+    // Neither segment carries a character-level truncation class. The old
+    // version's status word was `min-w-0 truncate`, which is exactly what
+    // let it clip mid-word instead of disappearing whole; the count itself
+    // was never supposed to truncate at all, and 26-13 found it doing so
+    // anyway once nothing else was left to give up width.
+    expect(countEl.className).not.toMatch(/\btruncate\b/);
+    expect(countEl.className).not.toMatch(/\bmin-w-0\b/);
+    expect(statusWordEl.className).not.toMatch(/\btruncate\b/);
+    expect(statusWordEl.className).not.toMatch(/\bmin-w-0\b/);
+
+    expect(countEl).toHaveTextContent(notRunBreakdown.linkedCaseCount + "");
+    expect(statusWordEl).toHaveTextContent("statusNotRun");
+  });
+
+  it("raises the width floor above the old 48px value that let both the count and the lone \"Uncovered\" word hard-clip", () => {
+    // 116px is 26-13's measured widest FULL content ("0/10 · Not run"); the
+    // floor must sit below that (so the drop step in the test above stays
+    // reachable) but comfortably above 83px, the measured width of the
+    // "Uncovered" word alone, which has no secondary segment to drop.
+    expect(COVERAGE_BADGE_MIN_WIDTH_PX).toBeGreaterThanOrEqual(84);
+    expect(COVERAGE_BADGE_MIN_WIDTH_PX).toBeLessThan(116);
+
+    const { container: coveredContainer } = render(
+      <RequirementCoverageBadge breakdown={notRunBreakdown} />
+    );
+    const coveredBadge = within(coveredContainer).getByTestId(
+      "requirement-coverage-not_run"
+    );
+    expect(coveredBadge.parentElement!.className).toMatch(/\bmin-w-24\b/);
+    expect(coveredBadge.parentElement!.className).not.toMatch(
+      /\bmin-w-\[3rem\]\b/
+    );
+
+    const { container: uncoveredContainer } = render(
+      <RequirementCoverageBadge breakdown={uncoveredBreakdown} />
+    );
+    const uncoveredBadge = within(uncoveredContainer).getByTestId(
+      "requirement-coverage-uncovered"
+    );
+    expect(uncoveredBadge.className).toMatch(/\bmin-w-24\b/);
+    expect(uncoveredBadge.className).not.toMatch(/\bmin-w-\[3rem\]\b/);
   });
 });
