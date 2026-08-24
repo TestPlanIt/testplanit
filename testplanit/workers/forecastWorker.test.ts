@@ -22,6 +22,7 @@ const mockDb = {
   reviewRequest: {
     findMany: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
   },
   projects: {
     findUnique: vi.fn(),
@@ -265,6 +266,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
     mockDb.testRuns.findUnique.mockResolvedValue({ name: "Smoke Run" });
     mockDb.sessions.findUnique.mockResolvedValue({ name: "Exploration" });
     mockDb.reviewRequest.update.mockResolvedValue({});
+    mockDb.reviewRequest.updateMany.mockResolvedValue({ count: 1 });
     // Default $transaction handler: invoke the callback with a tx whose
     // reviewRequest.update is the same spy as baseDb.reviewRequest.update so
     // tests can assert on the stamp call regardless of whether it landed
@@ -534,6 +536,112 @@ describe("JOB_REVIEW_REMINDERS", () => {
     await runProcessor();
 
     expect(mockDb.reviewRequest.findMany).not.toHaveBeenCalled();
+  });
+
+  // Liveness gate — a review whose subject row is deleted can never be acted
+  // on: `app/[locale]/reviews/page.tsx` hides those rows, so the assignee sees
+  // an empty inbox while the reminder keeps arriving. Normally the delete
+  // cancels what it strands (sideEffectsPlugin), but delete paths running on a
+  // plugin-free client skip that hook, so the scan is the backstop.
+  const staleReviewRow = (overrides: Record<string, unknown> = {}) => ({
+    id: "rr-stale",
+    projectId: 1,
+    entityType: "CASE",
+    entityId: 5,
+    fromStateId: 10,
+    toStateId: 11,
+    requestedByUserId: "user-r",
+    assigneeUserId: "user-a",
+    assigneeRoleId: null,
+    createdAt: THIRTY_SIX_HOURS_AGO,
+    ...overrides,
+  });
+
+  it("skips the reminder and cancels the review when the case is soft-deleted", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
+      name: "Moved away",
+      isDeleted: true,
+    });
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCreateReviewReminderNotification).not.toHaveBeenCalled();
+    expect(mockEmitReviewReminderEvent).not.toHaveBeenCalled();
+    // Cancelled, not stamped — stamping would leave the row PENDING forever.
+    expect(mockDb.reviewRequest.update).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: "rr-stale", status: "PENDING" },
+      data: { status: "CANCELLED" },
+    });
+  });
+
+  it("treats a hard-deleted subject the same as a soft-deleted one", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue(null);
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCreateReviewReminderNotification).not.toHaveBeenCalled();
+    expect(mockDb.reviewRequest.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("selects isDeleted on the subject lookup so the raw client cannot hide it", async () => {
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    const arg = mockDb.repositoryCases.findUnique.mock.calls[0][0];
+    expect(arg).toEqual({
+      where: { id: 5 },
+      select: { name: true, isDeleted: true },
+    });
+  });
+
+  it("routes the liveness lookup to the model matching entityType", async () => {
+    mockDb.reviewRequest.findMany.mockResolvedValue([
+      staleReviewRow({ id: "rr-run", entityType: "RUN", entityId: 77 }),
+    ]);
+
+    await runProcessor();
+
+    expect(mockDb.testRuns.findUnique).toHaveBeenCalledWith({
+      where: { id: 77 },
+      select: { name: true, isDeleted: true },
+    });
+    expect(mockDb.repositoryCases.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("records an ENTITY_DELETED audit row for a cancelled stale review", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
+      name: "Moved away",
+      isDeleted: true,
+    });
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(1);
+    const auditArgs = mockCaptureAuditEvent.mock.calls[0][0];
+    expect(auditArgs.action).toBe("REVIEW_CANCELLED");
+    expect(auditArgs.entityId).toBe("rr-stale");
+    expect(auditArgs.metadata.cancelledBy).toBe("ENTITY_DELETED");
+    expect(auditArgs.metadata.source).toBe("review-reminder-worker");
+  });
+
+  it("does not audit when the cancel loses the race to a concurrent decision", async () => {
+    mockDb.repositoryCases.findUnique.mockResolvedValue({
+      name: "Moved away",
+      isDeleted: true,
+    });
+    // updateMany is scoped to status PENDING; count 0 means someone decided it
+    // between the scan and the flip, and that decision must stand.
+    mockDb.reviewRequest.updateMany.mockResolvedValue({ count: 0 });
+    mockDb.reviewRequest.findMany.mockResolvedValue([staleReviewRow()]);
+
+    await runProcessor();
+
+    expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
   });
 
   it("Test 9: webhook emission per dispatched row — fires once with the eventName-aligned payload", async () => {
