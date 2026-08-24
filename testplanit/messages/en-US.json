@@ -6672,7 +6672,8 @@
       "columnStatus": "Status",
       "columnSource": "Source",
       "expandRow": "Expand {name}",
-      "collapseRow": "Collapse {name}"
+      "collapseRow": "Collapse {name}",
+      "filterAllStatuses": "All statuses"
     },
     "detail": {
       "selectPrompt": "Select a requirement to view its details.",

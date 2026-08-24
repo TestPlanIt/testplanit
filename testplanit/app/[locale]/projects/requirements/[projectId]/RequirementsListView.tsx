@@ -3,7 +3,7 @@
 import type { Row } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { ClipboardPlus, Search, TriangleAlert, X } from "lucide-react";
+import { ClipboardPlus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   useCallback,
@@ -19,6 +19,13 @@ import { DataTable } from "@/components/tables/DataTable";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   invalidateRequirementCoverage,
@@ -37,11 +44,16 @@ import type { RequirementSelection } from "./RequirementsWorkspace";
 import {
   buildDescendantIdMap,
   buildRequirementMaps,
+  collectCoverageStatusOptions,
+  collectRequirementStatusOptions,
   computeVisibleRequirementIds,
   countDescendants,
   flattenRequirementRows,
+  type RequirementCoverageFilter,
+  type RequirementListFilters,
   type RequirementListSortConfig,
   type RequirementRow,
+  type RequirementSourceFilter,
 } from "./requirementsListRows";
 
 /** The exact shape plan 03's per-row `useDrag` produces (the name cell in
@@ -75,7 +87,14 @@ export default function RequirementsListView({
   const queryClient = useQueryClient();
 
   const [filterQuery, setFilterQuery] = useState("");
-  const [showOnlyUncovered, setShowOnlyUncovered] = useState(false);
+  // Gap closure 26.2-12 (UAT gap 7): the milestone table's own filter idiom
+  // -- Coverage/Status/Source, intersecting -- replacing the single
+  // "uncovered" triangle toggle. "" on every axis means "not filtering".
+  const [filters, setFilters] = useState<RequirementListFilters>({
+    coverage: "",
+    status: "",
+    source: "",
+  });
   // Default {} -- every requirement starts collapsed, matching today's
   // initial tree state.
   const [expandedByIssueId, setExpandedByIssueId] = useState<
@@ -115,6 +134,10 @@ export default function RequirementsListView({
   }, []);
 
   const normalizedFilter = filterQuery.trim().toLowerCase();
+  // Text-only, by explicit decision (gap closure 26.2-12): this gates the
+  // drag gesture below, and the old uncovered toggle never gated it either
+  // -- silently disabling drag under a coverage/status/source filter would
+  // be a behaviour change nobody asked for.
   const isFiltering = normalizedFilter.length > 0;
 
   // Reparent/delete/detach are all gated server-side on project-admin, not a
@@ -148,7 +171,10 @@ export default function RequirementsListView({
   const { data: coverage, isError: coverageError } = useRequirementCoverage(
     Number(projectId)
   );
-  const uncoveredToggleUnavailable = !coverage || coverageError;
+  // The Coverage Select's own disabled gate -- generalized from the old
+  // triangle toggle's identical rule. The Status and Source Selects stay
+  // live regardless; only the Coverage axis depends on this query.
+  const coverageFilterUnavailable = !coverage || coverageError;
 
   // One project-scoped invalidation per mutation (create/rename/reparent-
   // success/delete), never per row. Matches the predicate-based query-key
@@ -205,7 +231,7 @@ export default function RequirementsListView({
         requirementMap,
         childrenMap,
         normalizedFilter,
-        showOnlyUncovered,
+        filters,
         coverage,
         coverageError,
       }),
@@ -214,10 +240,22 @@ export default function RequirementsListView({
       requirementMap,
       childrenMap,
       normalizedFilter,
-      showOnlyUncovered,
+      filters,
       coverage,
       coverageError,
     ]
+  );
+
+  // Option lists for the Coverage/Status Selects below -- both pure
+  // collectors from the row module, recomputed only when their own inputs
+  // change (gap closure 26.2-12).
+  const coverageStatusOptions = useMemo(
+    () => collectCoverageStatusOptions(requirements, coverage),
+    [requirements, coverage]
+  );
+  const requirementStatusOptions = useMemo(
+    () => collectRequirementStatusOptions(requirements),
+    [requirements]
   );
 
   const rows = useMemo(
@@ -646,9 +684,9 @@ export default function RequirementsListView({
           )}
         </div>
       ) : (
-        <div className="flex h-full flex-col">
-          <div className="mb-2 ms-1 me-2 flex shrink-0 items-center gap-1">
-            <div className="relative min-w-0 flex-1">
+        <div className="flex h-full min-w-[220px] flex-col">
+          <div className="mb-2 ms-1 me-2 flex flex-wrap items-center gap-2">
+            <div className="relative grow shrink basis-[120px] min-w-[120px] max-w-lg">
               <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
@@ -678,33 +716,118 @@ export default function RequirementsListView({
                 </Button>
               )}
             </div>
-            <Button
-              type="button"
-              variant={showOnlyUncovered ? "secondary" : "ghost"}
-              size="icon"
-              aria-pressed={showOnlyUncovered}
-              disabled={uncoveredToggleUnavailable}
-              aria-label={
-                uncoveredToggleUnavailable
-                  ? t("requirements.coverage.showOnlyUncoveredUnavailable")
-                  : t("requirements.coverage.showOnlyUncovered")
+            <Select
+              value={filters.coverage || "all"}
+              disabled={coverageFilterUnavailable}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  coverage: (value === "all"
+                    ? ""
+                    : value) as RequirementCoverageFilter,
+                }))
               }
-              title={
-                uncoveredToggleUnavailable
-                  ? t("requirements.coverage.showOnlyUncoveredUnavailable")
-                  : t("requirements.coverage.showOnlyUncovered")
-              }
-              className="mt-0.5 h-7 w-7 shrink-0"
-              data-testid="requirements-uncovered-toggle"
-              onClick={() => setShowOnlyUncovered((prev) => !prev)}
             >
-              <TriangleAlert className="h-3.5 w-3.5" />
-            </Button>
+              <SelectTrigger
+                className="w-[160px] shrink-0"
+                data-testid="requirements-coverage-filter"
+                title={
+                  coverageFilterUnavailable
+                    ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                    : undefined
+                }
+              >
+                <SelectValue
+                  placeholder={t("milestones.members.filterAllCoverage")}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t("milestones.members.filterAllCoverage")}
+                </SelectItem>
+                <SelectItem value="UNCOVERED">
+                  {t("requirements.coverage.uncovered")}
+                </SelectItem>
+                <SelectItem value="UNTESTED">
+                  {t("milestones.members.filterHasUntested")}
+                </SelectItem>
+                {coverageStatusOptions.map((entry) => (
+                  <SelectItem
+                    key={`requirements-coverage-filter-status-${entry.statusId}`}
+                    value={`status:${entry.statusId}`}
+                  >
+                    {entry.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.status || "all"}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  status: value === "all" ? "" : value,
+                }))
+              }
+            >
+              <SelectTrigger
+                className="w-[140px] shrink-0"
+                data-testid="requirements-status-filter"
+              >
+                <SelectValue
+                  placeholder={t("requirements.list.filterAllStatuses")}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t("requirements.list.filterAllStatuses")}
+                </SelectItem>
+                {requirementStatusOptions.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.source || "all"}
+              onValueChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  source: (value === "all"
+                    ? ""
+                    : value) as RequirementSourceFilter,
+                }))
+              }
+            >
+              <SelectTrigger
+                className="w-[140px] shrink-0"
+                data-testid="requirements-source-filter"
+              >
+                <SelectValue
+                  placeholder={t("milestones.members.filterAllSources")}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  {t("milestones.members.filterAllSources")}
+                </SelectItem>
+                <SelectItem value="MANUAL">
+                  {t("requirements.provenance.nativeLabel")}
+                </SelectItem>
+                <SelectItem value="SYNCED">
+                  {t("requirements.provenance.syncedLabel")}
+                </SelectItem>
+                <SelectItem value="DETACHED">
+                  {t("requirements.provenance.detachedLabel")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
             {canAddEdit && (
               <Button
                 type="button"
                 variant="secondary"
-                className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 shrink-0"
+                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 shrink-0"
                 title={t("requirements.tree.addRoot")}
                 aria-label={t("requirements.tree.addRoot")}
                 data-testid="requirements-tree-add-root"
@@ -775,7 +898,7 @@ export default function RequirementsListView({
               scrollToRowId={scrollToRequirementId}
               getRowProps={getRowProps}
               emptyMessage={t("common.ui.search.noResultsFound")}
-              resetKey={`${normalizedFilter}|${showOnlyUncovered}|${sortConfig.column}|${sortConfig.direction}`}
+              resetKey={`${normalizedFilter}|${filters.coverage}|${filters.status}|${filters.source}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="requirements-list"
               rowTestIdPrefix="requirement-row"
             />
