@@ -7,13 +7,26 @@ import type { Issue } from "~/zenstack/models";
 import {
   buildDescendantIdMap,
   buildRequirementMaps,
+  collectCoverageStatusOptions,
+  collectRequirementStatusOptions,
   computeVisibleRequirementIds,
   countDescendants,
   flattenRequirementRows,
+  matchesRequirementCoverageFilter,
+  matchesRequirementSourceFilter,
   requirementCoverageSortValue,
   requirementSourceSortValue,
+  type RequirementListFilters,
   type RequirementListSortConfig,
 } from "./requirementsListRows";
+
+// "" on every axis -- the baseline every test below starts from and spreads
+// over to activate exactly the one or two axes it's proving.
+const noFilters: RequirementListFilters = {
+  coverage: "",
+  status: "",
+  source: "",
+};
 
 // Local fixture factory -- deliberately not a full ZenStack model object,
 // only the fields this module's functions actually read.
@@ -236,7 +249,7 @@ describe("compareRequirements linkedCases/coveringCases sort", () => {
 });
 
 describe("computeVisibleRequirementIds", () => {
-  it("returns null when the filter box is empty and the uncovered toggle is off", () => {
+  it("returns null when the filter box is empty and no filter axis is active", () => {
     const requirements = [
       makeRequirement({ id: 1, name: "Root", parentId: null }),
     ];
@@ -247,7 +260,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "",
-      showOnlyUncovered: false,
+      filters: noFilters,
       coverage: undefined,
       coverageError: false,
     });
@@ -255,7 +268,7 @@ describe("computeVisibleRequirementIds", () => {
     expect(result).toBeNull();
   });
 
-  it("the uncovered filter keeps every ancestor of 8 uncovered leaves visible, but excludes a covered sibling", () => {
+  it("the coverage=UNCOVERED filter keeps every ancestor of 8 uncovered leaves visible, but excludes a covered sibling", () => {
     const requirements: Issue[] = [
       makeRequirement({ id: 1, name: "Root", parentId: null }),
       ...Array.from({ length: 8 }, (_, i) =>
@@ -295,7 +308,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "",
-      showOnlyUncovered: true,
+      filters: { ...noFilters, coverage: "UNCOVERED" },
       coverage: makeCoverageResponse(coverageEntries),
       coverageError: false,
     });
@@ -308,7 +321,7 @@ describe("computeVisibleRequirementIds", () => {
     expect(visible!.has(10)).toBe(false);
   });
 
-  it("the uncovered filter keeps ancestors visible transitively, 4 levels deep", () => {
+  it("the coverage=UNCOVERED filter keeps ancestors visible transitively, 4 levels deep", () => {
     const requirements = [
       makeRequirement({ id: 1, name: "Level 1", parentId: null }),
       makeRequirement({ id: 2, name: "Level 2", parentId: 1 }),
@@ -326,7 +339,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "",
-      showOnlyUncovered: true,
+      filters: { ...noFilters, coverage: "UNCOVERED" },
       coverage,
       coverageError: false,
     });
@@ -334,7 +347,7 @@ describe("computeVisibleRequirementIds", () => {
     expect(visible).toEqual(new Set([1, 2, 3, 4]));
   });
 
-  it("intersects the text filter and the uncovered filter rather than unioning them", () => {
+  it("intersects the text filter and the coverage=UNCOVERED filter rather than unioning them", () => {
     const requirements = [
       makeRequirement({ id: 1, name: "Root", parentId: null }),
       makeRequirement({ id: 2, name: "Login Covered", parentId: 1 }),
@@ -357,7 +370,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "login",
-      showOnlyUncovered: true,
+      filters: { ...noFilters, coverage: "UNCOVERED" },
       coverage,
       coverageError: false,
     });
@@ -366,7 +379,7 @@ describe("computeVisibleRequirementIds", () => {
     expect(visible!.has(2)).toBe(false);
   });
 
-  it("expands a text match's descendants when the uncovered filter is off, but not when it is on", () => {
+  it("expands a text match's descendants when no other filter axis is active, but not when the coverage axis is on", () => {
     const requirements = [
       makeRequirement({ id: 1, name: "Login Root", parentId: null }),
       makeRequirement({ id: 2, name: "Covered Child", parentId: 1 }),
@@ -383,27 +396,487 @@ describe("computeVisibleRequirementIds", () => {
       }),
     });
 
-    const withoutToggle = computeVisibleRequirementIds({
+    const withoutCoverageAxis = computeVisibleRequirementIds({
       requirements,
       requirementMap,
       childrenMap,
       normalizedFilter: "login",
-      showOnlyUncovered: false,
+      filters: noFilters,
       coverage,
       coverageError: false,
     });
-    expect(withoutToggle!.has(2)).toBe(true);
+    expect(withoutCoverageAxis!.has(2)).toBe(true);
 
-    const withToggle = computeVisibleRequirementIds({
+    const withCoverageAxis = computeVisibleRequirementIds({
       requirements,
       requirementMap,
       childrenMap,
       normalizedFilter: "login",
-      showOnlyUncovered: true,
+      filters: { ...noFilters, coverage: "UNCOVERED" },
       coverage,
       coverageError: false,
     });
-    expect(withToggle!.has(2)).toBe(false);
+    expect(withCoverageAxis!.has(2)).toBe(false);
+  });
+
+  describe("ancestor retention per axis (SC-4 generalized -- gap closure 26.2-12)", () => {
+    it("text filter alone keeps ancestors of a match visible", () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", parentId: null }),
+        makeRequirement({ id: 2, name: "Mid", parentId: 1 }),
+        makeRequirement({ id: 3, name: "Login Leaf", parentId: 2 }),
+        makeRequirement({ id: 4, name: "Unrelated Leaf", parentId: 2 }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "login",
+        filters: noFilters,
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible).toEqual(new Set([1, 2, 3]));
+    });
+
+    it("coverage filter alone keeps ancestors of a match visible", () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", parentId: null }),
+        makeRequirement({ id: 2, name: "Mid", parentId: 1 }),
+        makeRequirement({ id: 3, name: "Uncovered Leaf", parentId: 2 }),
+        makeRequirement({ id: 4, name: "Covered Sibling", parentId: 2 }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+      // Ancestors 1 and 2 are given EXPLICIT covered breakdowns -- an absent
+      // breakdown matches "UNCOVERED" directly under this predicate's own
+      // comparator-mirroring rule, which would make this test pass even
+      // without the ancestor walk. Marking them covered forces them to be
+      // visible ONLY via ancestor retention, an isolated proof.
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 5,
+          linkedCaseCount: 5,
+        }),
+        2: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 5,
+          linkedCaseCount: 5,
+        }),
+        3: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        4: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 2,
+          linkedCaseCount: 2,
+        }),
+      });
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { ...noFilters, coverage: "UNCOVERED" },
+        coverage,
+        coverageError: false,
+      });
+
+      expect(visible).toEqual(new Set([1, 2, 3]));
+    });
+
+    it("status filter alone keeps ancestors of a match visible", () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", parentId: null }),
+        makeRequirement({ id: 2, name: "Mid", parentId: 1 }),
+        makeRequirement({
+          id: 3,
+          name: "Open Leaf",
+          parentId: 2,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 4,
+          name: "Closed Sibling",
+          parentId: 2,
+          externalStatus: "Closed",
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { ...noFilters, status: "Open" },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible).toEqual(new Set([1, 2, 3]));
+    });
+
+    it("source filter alone keeps ancestors of a match visible", () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", parentId: null }),
+        makeRequirement({ id: 2, name: "Mid", parentId: 1 }),
+        makeRequirement({
+          id: 3,
+          name: "Detached Leaf",
+          parentId: 2,
+          integrationId: 5,
+          requirementDetachedAt: new Date(),
+        }),
+        makeRequirement({
+          id: 4,
+          name: "Synced Sibling",
+          parentId: 2,
+          integrationId: 5,
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { ...noFilters, source: "DETACHED" },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible).toEqual(new Set([1, 2, 3]));
+    });
+  });
+
+  describe("two active filters intersect, never union", () => {
+    it("a requirement matching only one of two active filters is absent, and its ancestor is present only because another descendant matches both", () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", parentId: null }),
+        makeRequirement({
+          id: 2,
+          name: "Uncovered Manual",
+          parentId: 1,
+          integrationId: null,
+        }),
+        makeRequirement({
+          id: 3,
+          name: "Uncovered Synced",
+          parentId: 1,
+          integrationId: 5,
+        }),
+        makeRequirement({
+          id: 4,
+          name: "Covered Manual",
+          parentId: 1,
+          integrationId: null,
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+      const coverage = makeCoverageResponse({
+        2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        3: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        4: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 1,
+          linkedCaseCount: 1,
+        }),
+      });
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { coverage: "UNCOVERED", status: "", source: "MANUAL" },
+        coverage,
+        coverageError: false,
+      });
+
+      // Only id 2 matches BOTH coverage=UNCOVERED and source=MANUAL.
+      expect(visible!.has(2)).toBe(true);
+      // id 3 matches coverage only (it's synced, not manual).
+      expect(visible!.has(3)).toBe(false);
+      // id 4 matches source only (it's covered, not uncovered).
+      expect(visible!.has(4)).toBe(false);
+      // Root is retained as id 2's ancestor.
+      expect(visible!.has(1)).toBe(true);
+    });
+  });
+
+  describe("descendant BFS runs only when no non-text axis is active", () => {
+    it("does not run when the status filter is active, even though the same match would expand under text search alone", () => {
+      const requirements = [
+        makeRequirement({
+          id: 1,
+          name: "Root",
+          parentId: null,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 2,
+          name: "Child",
+          parentId: 1,
+          externalStatus: "Closed",
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { coverage: "", status: "Open", source: "" },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible!.has(1)).toBe(true);
+      expect(visible!.has(2)).toBe(false);
+    });
+
+    it("does not run when the source filter is active", () => {
+      const requirements = [
+        makeRequirement({
+          id: 1,
+          name: "Root",
+          parentId: null,
+          integrationId: null,
+        }),
+        makeRequirement({
+          id: 2,
+          name: "Child",
+          parentId: 1,
+          integrationId: 5,
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { coverage: "", status: "", source: "MANUAL" },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible!.has(1)).toBe(true);
+      expect(visible!.has(2)).toBe(false);
+    });
+  });
+
+  describe("coverage axis degrades gracefully when data is unavailable", () => {
+    it("a missing coverage response makes the coverage filter inert while the status axis keeps working", () => {
+      const requirements = [
+        makeRequirement({
+          id: 1,
+          name: "Root",
+          parentId: null,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 2,
+          name: "Child Open",
+          parentId: 1,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 3,
+          name: "Child Closed",
+          parentId: 1,
+          externalStatus: "Closed",
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { coverage: "UNCOVERED", status: "Open", source: "" },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      // Coverage axis contributes nothing (inert); status alone determines
+      // matches -- both "Open" rows show, not just a subset.
+      expect(visible).toEqual(new Set([1, 2]));
+    });
+
+    it("a coverage error also makes the coverage filter inert", () => {
+      const requirements = [
+        makeRequirement({
+          id: 1,
+          name: "Root",
+          parentId: null,
+          externalStatus: "Open",
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({ status: "PASSED", uncovered: false }),
+      });
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { coverage: "UNCOVERED", status: "Open", source: "" },
+        coverage,
+        coverageError: true,
+      });
+
+      expect(visible).toEqual(new Set([1]));
+    });
+  });
+});
+
+describe("matchesRequirementCoverageFilter", () => {
+  it("the empty filter matches everything, including an absent breakdown", () => {
+    expect(matchesRequirementCoverageFilter("", undefined)).toBe(true);
+    expect(matchesRequirementCoverageFilter("", makeBreakdown())).toBe(true);
+  });
+
+  it("an absent breakdown matches only UNCOVERED, mirroring the comparator", () => {
+    expect(matchesRequirementCoverageFilter("UNCOVERED", undefined)).toBe(
+      true
+    );
+    expect(matchesRequirementCoverageFilter("UNTESTED", undefined)).toBe(
+      false
+    );
+    expect(matchesRequirementCoverageFilter("status:1", undefined)).toBe(
+      false
+    );
+  });
+
+  it("UNTESTED matches only when untested > 0", () => {
+    expect(
+      matchesRequirementCoverageFilter(
+        "UNTESTED",
+        makeBreakdown({ untested: 0 })
+      )
+    ).toBe(false);
+    expect(
+      matchesRequirementCoverageFilter(
+        "UNTESTED",
+        makeBreakdown({ untested: 2 })
+      )
+    ).toBe(true);
+  });
+
+  it("status:<id> matches only a non-zero count for that status id", () => {
+    const breakdown = makeBreakdown({
+      statuses: [{ statusId: 5, name: "Passed", color: null, count: 3 }],
+    });
+    expect(matchesRequirementCoverageFilter("status:5", breakdown)).toBe(
+      true
+    );
+    expect(matchesRequirementCoverageFilter("status:6", breakdown)).toBe(
+      false
+    );
+  });
+});
+
+describe("matchesRequirementSourceFilter", () => {
+  it("matches MANUAL, DETACHED, and SYNCED against requirementSourceSortValue's own ranking", () => {
+    const manual = makeRequirement({ id: 1, name: "M", integrationId: null });
+    const detached = makeRequirement({
+      id: 2,
+      name: "D",
+      integrationId: 5,
+      requirementDetachedAt: new Date(),
+    });
+    const synced = makeRequirement({ id: 3, name: "S", integrationId: 5 });
+
+    expect(matchesRequirementSourceFilter("MANUAL", manual)).toBe(true);
+    expect(matchesRequirementSourceFilter("MANUAL", detached)).toBe(false);
+    expect(matchesRequirementSourceFilter("DETACHED", detached)).toBe(true);
+    expect(matchesRequirementSourceFilter("SYNCED", synced)).toBe(true);
+    expect(matchesRequirementSourceFilter("SYNCED", manual)).toBe(false);
+  });
+});
+
+describe("collectCoverageStatusOptions", () => {
+  it("unions statuses across requirements, summing counts per statusId, ordered by count descending", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "A" }),
+      makeRequirement({ id: 2, name: "B" }),
+    ];
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({
+        statuses: [
+          { statusId: 10, name: "Passed", color: "#0f0", count: 2 },
+          { statusId: 20, name: "Failed", color: "#f00", count: 1 },
+        ],
+      }),
+      2: makeBreakdown({
+        statuses: [{ statusId: 10, name: "Passed", color: "#0f0", count: 5 }],
+      }),
+    });
+
+    const options = collectCoverageStatusOptions(requirements, coverage);
+
+    expect(options).toEqual([
+      { statusId: 10, name: "Passed", color: "#0f0", count: 7 },
+      { statusId: 20, name: "Failed", color: "#f00", count: 1 },
+    ]);
+  });
+
+  it("never includes a status entry with a zero count", () => {
+    const requirements = [makeRequirement({ id: 1, name: "A" })];
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({
+        statuses: [{ statusId: 10, name: "Passed", color: "#0f0", count: 0 }],
+      }),
+    });
+
+    expect(collectCoverageStatusOptions(requirements, coverage)).toEqual([]);
+  });
+
+  it("returns an empty array when coverage hasn't loaded", () => {
+    const requirements = [makeRequirement({ id: 1, name: "A" })];
+    expect(collectCoverageStatusOptions(requirements, undefined)).toEqual([]);
+  });
+});
+
+describe("collectRequirementStatusOptions", () => {
+  it("de-duplicates case-insensitively, preserves first-seen casing, and sorts case-insensitively", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "A", externalStatus: "open" }),
+      makeRequirement({ id: 2, name: "B", externalStatus: "Open" }),
+      makeRequirement({ id: 3, name: "C", externalStatus: "Closed" }),
+      makeRequirement({ id: 4, name: "D", status: "In Progress" }),
+      makeRequirement({ id: 5, name: "E", externalStatus: "" }),
+      makeRequirement({ id: 6, name: "F" }),
+    ];
+
+    expect(collectRequirementStatusOptions(requirements)).toEqual([
+      "Closed",
+      "In Progress",
+      "open",
+    ]);
   });
 });
 

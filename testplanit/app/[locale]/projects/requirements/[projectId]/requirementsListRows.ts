@@ -1,6 +1,9 @@
 import { coverageFor } from "~/hooks/useRequirementCoverage";
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
-import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
+import type {
+  RequirementCoverageBreakdown,
+  RequirementCoverageStatusCount,
+} from "~/lib/services/requirementCoverage";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
 import type { Issue } from "~/zenstack/models";
 
@@ -137,28 +140,108 @@ export function buildDescendantIdMap(
   return map;
 }
 
+/**
+ * "" means "not filtering on this axis" throughout, mirroring the milestone
+ * comparator's own convention (`MemberIssuesTable.tsx`'s
+ * `CoverageStateFilter`/`SourceFilter`). Coverage's non-empty states are the
+ * requirements domain's own definitions (plan 10's chip, the shipped gap
+ * report), NOT the milestone's "no completed outcome" --
+ * `matchesRequirementCoverageFilter` says so explicitly below.
+ */
+export type RequirementCoverageFilter =
+  | ""
+  | "UNCOVERED"
+  | "UNTESTED"
+  | `status:${number}`;
+export type RequirementSourceFilter = "" | "MANUAL" | "SYNCED" | "DETACHED";
+
+export interface RequirementListFilters {
+  coverage: RequirementCoverageFilter;
+  /** Exact match against `externalStatus ?? status ?? ""`; `""` means every
+   *  status, never a literal empty-status match. */
+  status: string;
+  source: RequirementSourceFilter;
+}
+
+/**
+ * The requirements domain's own coverage-state predicate -- deliberately NOT
+ * `MemberIssuesTable.tsx`'s `matchesCoverageState`, even though the shape is
+ * mirrored. `UNCOVERED` here is `breakdown.uncovered === true` (zero linked
+ * cases anywhere in the subtree, the same boolean plan 10's `CoverageChip`
+ * and the gap report both key on), not the milestone's "no completed
+ * outcome" -- a requirement whose linked cases are all NOT_RUN is
+ * "Untested" here, not "Uncovered". An absent breakdown matches only
+ * `"UNCOVERED"`, mirroring the comparator.
+ */
+export function matchesRequirementCoverageFilter(
+  filter: RequirementCoverageFilter,
+  breakdown: RequirementCoverageBreakdown | undefined
+): boolean {
+  if (!filter) return true;
+  if (!breakdown) return filter === "UNCOVERED";
+  if (filter === "UNCOVERED") return breakdown.uncovered === true;
+  if (filter === "UNTESTED") return (breakdown.untested ?? 0) > 0;
+  if (filter.startsWith("status:")) {
+    const statusId = Number(filter.slice("status:".length));
+    return (breakdown.statuses ?? []).some(
+      (entry) => entry.statusId === statusId && entry.count > 0
+    );
+  }
+  return true;
+}
+
+/** Exact match against the same accessor the Status column sorts on
+ *  (`compareRequirements`'s own "status" case below). */
+export function matchesRequirementStatusFilter(
+  filter: string,
+  requirement: Issue
+): boolean {
+  if (!filter) return true;
+  return (requirement.externalStatus ?? requirement.status ?? "") === filter;
+}
+
+// Indexed by `requirementSourceSortValue`'s own 0/1/2 ranking (Native,
+// Detached, Synced) -- reusing that encoding rather than re-deriving the
+// provenance rules a second time.
+const SOURCE_FILTER_BY_RANK: readonly Exclude<RequirementSourceFilter, "">[] =
+  ["MANUAL", "DETACHED", "SYNCED"];
+
+export function matchesRequirementSourceFilter(
+  filter: RequirementSourceFilter,
+  requirement: Issue
+): boolean {
+  if (!filter) return true;
+  return (
+    SOURCE_FILTER_BY_RANK[requirementSourceSortValue(requirement)] === filter
+  );
+}
+
 export interface ComputeVisibleRequirementIdsArgs {
   requirements: Issue[];
   requirementMap: Map<number, Issue>;
   childrenMap: Map<number | null, Issue[]>;
   normalizedFilter: string;
-  showOnlyUncovered: boolean;
+  filters: RequirementListFilters;
   coverage: RequirementCoverageResponse | undefined;
   coverageError: boolean;
 }
 
 /**
  * Ported from the earlier react-arborist tree component this phase
- * replaced (its own lines 367-452), verbatim in behaviour. Returns `null`
- * when neither predicate is active (meaning "no filtering", not "nothing
- * visible").
+ * replaced (its own lines 367-452), generalized for gap closure 26.2-12
+ * (UAT gap 7) from the single boolean "only show uncovered" toggle this
+ * function used to take to four independent filter axes -- text, coverage,
+ * status, source -- that intersect into ONE match set, which then shares
+ * the SAME ancestor-retention walk every prior version of this function
+ * used. Returns `null` when NO axis is active (meaning "no filtering", not
+ * "nothing visible").
  */
 export function computeVisibleRequirementIds({
   requirements,
   requirementMap,
   childrenMap,
   normalizedFilter,
-  showOnlyUncovered,
+  filters,
   coverage,
   coverageError,
 }: ComputeVisibleRequirementIdsArgs): Set<number> | null {
@@ -173,44 +256,77 @@ export function computeVisibleRequirementIds({
     });
   }
 
-  // Requirements whose rolled-up breakdown says `uncovered` -- the
-  // dedicated boolean, never inferred from `status` or from a missing map
-  // entry. `null` (not an empty set) whenever the toggle is off OR coverage
-  // hasn't loaded/errored, so a coverage outage that arrives after the
-  // toggle was switched on degrades to "no filtering from this axis"
-  // rather than silently hiding the whole tree.
-  let uncoveredMatchIds: Set<number> | null = null;
-  if (showOnlyUncovered && coverage && !coverageError) {
-    uncoveredMatchIds = new Set<number>();
+  // The coverage axis degrades to INACTIVE (not "matches nothing") when
+  // coverage hasn't loaded or has errored -- exactly the old toggle's own
+  // no-op-on-outage behaviour, generalized: a coverage outage that arrives
+  // after the Coverage Select was set never hides the whole tree, and the
+  // other three axes keep working regardless.
+  const coverageAxisActive =
+    filters.coverage !== "" && coverage !== undefined && !coverageError;
+  let coverageMatchIds: Set<number> | null = null;
+  if (coverageAxisActive) {
+    coverageMatchIds = new Set<number>();
     requirements.forEach((requirement) => {
-      if (coverageFor(coverage, requirement.id)?.uncovered === true) {
-        uncoveredMatchIds!.add(requirement.id);
+      if (
+        matchesRequirementCoverageFilter(
+          filters.coverage,
+          coverageFor(coverage, requirement.id)
+        )
+      ) {
+        coverageMatchIds!.add(requirement.id);
       }
     });
   }
 
-  // The combined match set is the INTERSECTION of whichever predicates are
-  // active, never a union: union would surface covered requirements the
-  // instant someone typed in the search box, which is the opposite of
-  // "show me the gaps." When only one of the two filters is active, that
-  // filter alone determines matches; when neither is active, there is no
-  // filtering at all.
-  let activeMatchIds: Set<number> | null;
-  if (filterMatchIds && uncoveredMatchIds) {
-    const intersection = new Set<number>();
-    filterMatchIds.forEach((issueId) => {
-      if (uncoveredMatchIds!.has(issueId)) intersection.add(issueId);
+  let statusMatchIds: Set<number> | null = null;
+  if (filters.status) {
+    statusMatchIds = new Set<number>();
+    requirements.forEach((requirement) => {
+      if (matchesRequirementStatusFilter(filters.status, requirement)) {
+        statusMatchIds!.add(requirement.id);
+      }
     });
-    activeMatchIds = intersection;
+  }
+
+  let sourceMatchIds: Set<number> | null = null;
+  if (filters.source) {
+    sourceMatchIds = new Set<number>();
+    requirements.forEach((requirement) => {
+      if (matchesRequirementSourceFilter(filters.source, requirement)) {
+        sourceMatchIds!.add(requirement.id);
+      }
+    });
+  }
+
+  // The combined match set is the INTERSECTION of whichever axes are
+  // active, never a union: union would surface e.g. a covered requirement
+  // the instant someone typed in the search box, which is the opposite of
+  // "show me the gaps." When only one axis is active, that axis alone
+  // determines matches; when none are active, there is no filtering at all.
+  const activeSets = [
+    filterMatchIds,
+    coverageMatchIds,
+    statusMatchIds,
+    sourceMatchIds,
+  ].filter((set): set is Set<number> => set !== null);
+
+  let activeMatchIds: Set<number> | null;
+  if (activeSets.length === 0) {
+    activeMatchIds = null;
   } else {
-    activeMatchIds = filterMatchIds ?? uncoveredMatchIds;
+    const [first, ...rest] = activeSets;
+    activeMatchIds = new Set(
+      [...first].filter((issueId) => rest.every((set) => set.has(issueId)))
+    );
   }
 
   if (!activeMatchIds) return null;
 
   // A match is only reachable with its ancestors present, and only
   // browsable with its descendants present, so both join it in the visible
-  // set -- mirrors TreeView.tsx's `filterVisibleFolderIds`.
+  // set -- mirrors TreeView.tsx's `filterVisibleFolderIds`. ONE walk shared
+  // by every axis: filters choose the match set, they do not each
+  // re-implement this walk.
   const visible = new Set<number>(activeMatchIds);
 
   activeMatchIds.forEach((issueId) => {
@@ -221,17 +337,22 @@ export function computeVisibleRequirementIds({
     }
   });
 
-  // Descendant BFS runs ONLY while the uncovered toggle is off. With the
-  // toggle off this is exactly the pre-26-06 text-filter behavior
-  // (activeMatchIds === filterMatchIds in that case) -- byte-for-byte,
-  // including this expansion. With the toggle on, expanding to every
-  // descendant of a match would re-introduce covered descendants under
-  // an uncovered ancestor, contradicting the toggle's own promise. And
-  // nothing is lost by skipping it: an uncovered requirement's
-  // descendants are uncovered too by construction of the rollup (zero
-  // cases in the subtree means zero cases anywhere beneath it), so they
-  // already match on their own and need no BFS to be reached.
-  if (!showOnlyUncovered) {
+  // Descendant BFS runs ONLY when NO non-text axis is active. With every
+  // non-text axis inactive this is exactly the pre-26-06 text-filter
+  // behavior (activeMatchIds === filterMatchIds in that case) --
+  // byte-for-byte, including this expansion. With any coverage/status/source
+  // axis active, expanding to every descendant of a match would re-admit
+  // rows that do not match, contradicting that axis's own promise -- the
+  // same reason the original uncovered toggle suppressed this walk. Nothing
+  // is lost for coverage specifically: an uncovered requirement's
+  // descendants are uncovered too by construction of the rollup (zero cases
+  // in the subtree means zero cases anywhere beneath it), so they already
+  // match on their own and need no BFS to be reached; status/source are
+  // per-row properties with no such inheritance, so a non-matching
+  // descendant genuinely should stay hidden under those axes.
+  const nonTextAxisActive =
+    coverageAxisActive || filters.status !== "" || filters.source !== "";
+  if (!nonTextAxisActive) {
     const queue = [...activeMatchIds];
     while (queue.length > 0) {
       const parentId = queue.shift()!;
@@ -245,6 +366,59 @@ export function computeVisibleRequirementIds({
   }
 
   return visible;
+}
+
+/**
+ * The union of `statuses[]` across every loaded requirement's breakdown, one
+ * entry per `statusId` with its name/colour and the summed count, ordered by
+ * count descending -- verbatim in shape to the milestone comparator's own
+ * `coverageTotals.statuses` collector (`MemberIssuesTable.tsx` lines
+ * 283-311). A status with a zero count never becomes an option:
+ * `RequirementCoverageBreakdown.statuses` only ever carries COMPLETED
+ * statuses with `count > 0` by construction, but this collector re-asserts
+ * that filter defensively rather than trusting the producer silently.
+ */
+export function collectCoverageStatusOptions(
+  requirements: Issue[],
+  coverage: RequirementCoverageResponse | undefined
+): RequirementCoverageStatusCount[] {
+  if (!coverage) return [];
+  const byStatus = new Map<number, RequirementCoverageStatusCount>();
+  requirements.forEach((requirement) => {
+    const breakdown = coverageFor(coverage, requirement.id);
+    (breakdown?.statuses ?? []).forEach((entry) => {
+      if (entry.count <= 0) return;
+      const existing = byStatus.get(entry.statusId);
+      if (existing) {
+        existing.count += entry.count;
+      } else {
+        byStatus.set(entry.statusId, { ...entry });
+      }
+    });
+  });
+  return Array.from(byStatus.values()).sort((a, b) => b.count - a.count);
+}
+
+/**
+ * The distinct non-empty `externalStatus ?? status` values present across
+ * the loaded requirements, de-duplicated case-insensitively but preserving
+ * the first-seen casing, sorted case-insensitively -- verbatim in shape to
+ * the milestone comparator's own `issueTypes` collector (lines 313-325).
+ */
+export function collectRequirementStatusOptions(
+  requirements: Issue[]
+): string[] {
+  const seen = new Map<string, string>();
+  requirements.forEach((requirement) => {
+    const value = requirement.externalStatus ?? requirement.status;
+    if (value && value.trim() !== "") {
+      const lower = value.toLowerCase();
+      if (!seen.has(lower)) seen.set(lower, value);
+    }
+  });
+  return Array.from(seen.values()).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  );
 }
 
 // D-02a: this is NOT `CoverageChip.coverageSortValue`, even though the
