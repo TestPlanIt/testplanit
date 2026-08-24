@@ -103,6 +103,7 @@ vi.mock("@/components/search/ProjectNameDisplay", () => ({
     ),
 }));
 
+import { toast } from "sonner";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
 
 function decodeQueryParam(url: string, param: string): any {
@@ -343,5 +344,172 @@ describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
     const badge = screen.getByTestId("project-name");
     expect(badge.tagName).toBe("A");
     expect(badge).toHaveAttribute("href", "/projects/overview/9");
+  });
+});
+
+// F5/F9: link/unlink must invalidate the two new coverage queries, using a
+// predicate that actually matches those keys -- not merely "invalidateQueries
+// was called with something". `useRequirementCaseLinks`' own
+// `invalidateLinkedQueries` predicate (JSON.stringify(key).includes(
+// "RepositoryCases" | "Issue")) is exercised here too (it is the real,
+// unmocked hook) but never matches either new key, so any predicate here
+// that DOES match had to come from this panel's own invalidation calls.
+describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () => {
+  // Self-contained setup -- this describe block is a sibling of, not nested
+  // inside, `describe("LinkedRequirementCasesPanel", ...)` above, so that
+  // block's own `beforeEach` is out of scope here and must not be relied on.
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedFetchOptions = null;
+    capturedPick = null;
+    setLinkedCases([]);
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes("/api/model/RepositoryCases/count")) {
+        return { ok: true, json: async () => ({ data: 0 }) } as Response;
+      }
+      if (url.includes("/api/model/RepositoryCases/findMany")) {
+        return { ok: true, json: async () => ({ data: [] }) } as Response;
+      }
+      if (url.includes("/link") || url.includes("/unlink")) {
+        return { ok: true, json: async () => ({ id: 1 }) } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    }) as any;
+  });
+
+  function collectPredicates() {
+    return mockInvalidateQueries.mock.calls
+      .map(([arg]) => arg?.predicate)
+      .filter(
+        (predicate): predicate is (query: { queryKey: unknown[] }) => boolean =>
+          typeof predicate === "function"
+      );
+  }
+
+  it("invalidates the coverage rollup and the covering-cases drill-down after a link", async () => {
+    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+
+    fireEvent.click(screen.getByTestId("requirement-linked-cases-add"));
+    act(() => {
+      capturedPick!({
+        id: 99,
+        name: "New case",
+        source: "MANUAL",
+        projectId: 7,
+      });
+    });
+    fireEvent.click(screen.getByTestId("requirement-linked-cases-submit"));
+
+    await waitFor(() => {
+      const linkCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url === "/api/issues/42/link"
+      );
+      expect(linkCall).toBeDefined();
+    });
+
+    const predicates = collectPredicates();
+    expect(predicates.length).toBeGreaterThan(0);
+
+    // Matches this project's coverage rollup query...
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 7] })
+      )
+    ).toBe(true);
+    // ...and this requirement's covering-cases drill-down...
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoveringCases", 7, 42] })
+      )
+    ).toBe(true);
+    // ...but not a different project's coverage rollup -- proves the
+    // predicate discriminates rather than matching anything handed to it.
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 999] })
+      )
+    ).toBe(false);
+  });
+
+  it("invalidates the coverage rollup and the covering-cases drill-down after an unlink", async () => {
+    setLinkedCases([
+      {
+        id: 55,
+        name: "Removable case",
+        source: "MANUAL",
+        isDeleted: false,
+        projectId: 7,
+        project: { name: "Current Project", iconUrl: null },
+      },
+    ]);
+
+    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+
+    fireEvent.click(screen.getByTestId("requirement-linked-case-remove-55"));
+    fireEvent.click(
+      screen.getByTestId("requirement-linked-case-remove-confirm-55")
+    );
+
+    await waitFor(() => {
+      const unlinkCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url === "/api/issues/42/unlink"
+      );
+      expect(unlinkCall).toBeDefined();
+    });
+
+    const predicates = collectPredicates();
+    expect(predicates.length).toBeGreaterThan(0);
+
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 7] })
+      )
+    ).toBe(true);
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoveringCases", 7, 42] })
+      )
+    ).toBe(true);
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoveringCases", 7, 999] })
+      )
+    ).toBe(false);
+  });
+
+  it("does not invalidate coverage queries when the link request fails", async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url === "/api/issues/42/link") {
+        return {
+          ok: false,
+          json: async () => ({ error: "Failed to link test case." }),
+        } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    }) as any;
+
+    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+
+    fireEvent.click(screen.getByTestId("requirement-linked-cases-add"));
+    act(() => {
+      capturedPick!({
+        id: 99,
+        name: "New case",
+        source: "MANUAL",
+        projectId: 7,
+      });
+    });
+    fireEvent.click(screen.getByTestId("requirement-linked-cases-submit"));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    const predicates = collectPredicates();
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 7] })
+      )
+    ).toBe(false);
   });
 });

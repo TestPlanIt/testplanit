@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
@@ -46,6 +47,7 @@ import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import {
   coverageFor,
+  invalidateRequirementCoverage,
   useRequirementCoverage,
 } from "~/hooks/useRequirementCoverage";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
@@ -155,6 +157,7 @@ export default function RequirementsTreeView({
   onSelectRequirement,
 }: RequirementsTreeViewProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const treeRef = useRef<TreeApi<RequirementArboristNode>>(null);
   // The manager from the SimpleDndProvider this component is mounted under
   // (see RequirementsWorkspace.tsx). Passed to <Tree> below so react-arborist
@@ -251,6 +254,16 @@ export default function RequirementsTreeView({
   // pending counts as "unavailable" too, matching the badge's own render-
   // nothing treatment for the same states.
   const uncoveredToggleUnavailable = !coverage || coverageError;
+
+  // F10: create/reparent/delete all change what the whole-project rollup
+  // should say (a new requirement needs an entry, a moved subtree's cases
+  // count against a different ancestor, a deleted subtree's cases stop
+  // counting at all), but none of them touch the `["requirementCoverage",
+  // projectId]` key -- only `refetchRequirements()` does. One project-scoped
+  // invalidation per mutation, never per node.
+  const invalidateCoverage = useCallback(() => {
+    invalidateRequirementCoverage(queryClient, Number(projectId));
+  }, [queryClient, projectId]);
 
   // In-place rename (HIER-02's "edit" half). `{ name, title }` together --
   // the schema's own field-level @deny on `title` is the real enforcement
@@ -620,6 +633,11 @@ export default function RequirementsTreeView({
         }
         toast.success(t("requirements.tree.moveSuccess"));
         void refetchRequirements();
+        // A successful reparent changes the moved subtree's ancestor rollups
+        // (its failures now count against its new parent, and stop counting
+        // against the old one) -- the rejected branch above never reaches
+        // here, so a rejected move correctly leaves the rollup untouched.
+        invalidateCoverage();
       } catch (error) {
         console.error("Failed to reparent requirement:", error);
         toast.error(t("requirements.tree.moveFailed"));
@@ -632,6 +650,7 @@ export default function RequirementsTreeView({
       projectId,
       t,
       refetchRequirements,
+      invalidateCoverage,
     ]
   );
 
@@ -926,6 +945,7 @@ export default function RequirementsTreeView({
           onCreated={(id) => {
             void refetchRequirements();
             onSelectRequirement(id);
+            invalidateCoverage();
           }}
         />
       </>
@@ -1096,6 +1116,7 @@ export default function RequirementsTreeView({
         onCreated={(id) => {
           void refetchRequirements();
           onSelectRequirement(id);
+          invalidateCoverage();
         }}
       />
       {deleteDialogState.requirementId != null && (
@@ -1109,6 +1130,7 @@ export default function RequirementsTreeView({
           }
           onDeleted={(deletedIds) => {
             void refetchRequirements();
+            invalidateCoverage();
             // The detail panel would otherwise render a row that no longer
             // exists -- clear the selection if the deleted node or one of
             // its descendants was selected. `deletedIds` is the server's own

@@ -52,6 +52,20 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+// F10: create/reparent/delete must invalidate the whole-project coverage
+// rollup, using the same predicate `useRequirementCoverage.ts` exports (NOT
+// re-implemented here) -- if the real predicate ever regresses, this file's
+// own assertions about what it matches would regress with it rather than
+// silently passing against a hand-rolled stand-in.
+const mockInvalidateQueries = vi.fn();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+  };
+});
+
 vi.mock("next-auth/react", () => ({
   useSession: () => ({ data: { user: { id: "test-user-1" } } }),
 }));
@@ -981,5 +995,191 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
       coverageBadge.compareDocumentPosition(provenanceBadge) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+});
+
+// F10: create/reparent/delete refetched only the requirement list and left
+// the `["requirementCoverage", projectId]` rollup stale -- these tests
+// invoke the real onCreated/onMove/onDeleted callbacks this component wires
+// up (never re-implemented here) and assert on the actual predicate
+// `invalidateRequirementCoverage` builds via `isRequirementCoverageQueryKey`.
+describe("RequirementsTreeView coverage rollup invalidation (F10)", () => {
+  // Self-contained setup -- this describe block is a sibling of, not nested
+  // inside, `describe("RequirementsTreeView", ...)` above, so that block's
+  // own `beforeEach` is out of scope here (see the equivalent lesson in
+  // LinkedRequirementCasesPanel.test.tsx's own invalidation describe block).
+  beforeEach(() => {
+    vi.clearAllMocks();
+    toggleSpies.clear();
+    dropSpecRef.current = null;
+    mockIsProjectAdmin = true;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
+    useFindManyIssueMock.mockReturnValue({
+      data: deepChainAndSecondRoot,
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    useCreateIssueMock.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({ id: 1 }),
+    });
+    useUpdateIssueMock.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({}),
+    });
+    useRequirementCoverageMock.mockReturnValue({
+      data: undefined,
+      isError: false,
+    });
+  });
+
+  function collectCoveragePredicates() {
+    return mockInvalidateQueries.mock.calls
+      .map(([arg]) => arg?.predicate)
+      .filter(
+        (predicate): predicate is (query: { queryKey: unknown[] }) => boolean =>
+          typeof predicate === "function"
+      );
+  }
+
+  it("invalidates the coverage rollup after creating a requirement", async () => {
+    const mutateAsync = vi.fn().mockResolvedValue({ id: 99 });
+    useCreateIssueMock.mockReturnValue({ mutateAsync });
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-tree-add-root"));
+    fireEvent.change(screen.getByTestId("create-requirement-name-input"), {
+      target: { value: "New Root Requirement" },
+    });
+    fireEvent.click(screen.getByTestId("create-requirement-submit"));
+
+    await waitFor(() => {
+      expect(mutateAsync).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(mockInvalidateQueries).toHaveBeenCalled();
+    });
+
+    const predicates = collectCoveragePredicates();
+    // Matches this project's coverage rollup query...
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 42] })
+      )
+    ).toBe(true);
+    // ...but not a different project's -- proves the predicate
+    // discriminates rather than matching anything handed to it.
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 999] })
+      )
+    ).toBe(false);
+  });
+
+  it("invalidates the coverage rollup after a successful reparent", async () => {
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const onMove = lastCall[0].onMove;
+    expect(onMove).toBeDefined();
+
+    await onMove!({
+      dragIds: ["2"],
+      dragNodes: [],
+      parentId: "10",
+      parentNode: null,
+      index: 0,
+    });
+
+    await waitFor(() => {
+      expect(mockInvalidateQueries).toHaveBeenCalled();
+    });
+
+    const predicates = collectCoveragePredicates();
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 42] })
+      )
+    ).toBe(true);
+  });
+
+  it("does not invalidate the coverage rollup when the server rejects a reparent", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({
+        error: "Cannot move a requirement under its own descendant",
+      }),
+    }) as any;
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    const lastCall = vi.mocked(Tree).mock.calls.at(-1)!;
+    const onMove = lastCall[0].onMove;
+
+    await onMove!({
+      dragIds: ["1"],
+      dragNodes: [],
+      parentId: "5",
+      parentNode: null,
+      index: 0,
+    });
+
+    // Nothing actually changed server-side on a rejected move -- the rollup
+    // must stay untouched, not merely "not asserted on".
+    expect(mockInvalidateQueries).not.toHaveBeenCalled();
+  });
+
+  it("invalidates the coverage rollup after deleting a requirement", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ deletedIds: [10] }),
+    }) as any;
+
+    render(
+      <RequirementsTreeView
+        projectId="42"
+        selectedRequirementId={null}
+        onSelectRequirement={vi.fn()}
+      />
+    );
+
+    // Node id 10 (Root B) has no children in the fixture and, being a root,
+    // is one of the two nodes the mocked `Tree` actually renders (see the
+    // file-level mock comment above) -- its row menu offers a delete action
+    // with no cascade count to confirm beyond the modal's own single
+    // confirm button.
+    openMenu(screen.getByTestId("requirement-actions-trigger-10"));
+    fireEvent.click(screen.getByTestId("requirement-action-delete-10"));
+    fireEvent.click(screen.getByTestId("delete-requirement-confirm"));
+
+    await waitFor(() => {
+      expect(mockInvalidateQueries).toHaveBeenCalled();
+    });
+
+    const predicates = collectCoveragePredicates();
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 42] })
+      )
+    ).toBe(true);
   });
 });

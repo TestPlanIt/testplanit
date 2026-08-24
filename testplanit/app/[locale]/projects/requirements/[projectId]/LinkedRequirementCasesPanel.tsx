@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { Bot, Link2, ListChecks, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -33,6 +34,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useRequirementCaseLinks } from "~/hooks/useRequirementCaseLinks";
+import { invalidateRequirementCoverage } from "~/hooks/useRequirementCoverage";
+import { invalidateRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { schema } from "~/zenstack/schema";
 import type { RepositoryCaseSource } from "~/zenstack/models";
@@ -82,6 +85,8 @@ export function LinkedRequirementCasesPanel({
   const t = useTranslations("requirements.linkedCases");
   const tGlobal = useTranslations();
   const { link, unlink, isMutating } = useRequirementCaseLinks();
+  const queryClient = useQueryClient();
+  const projectIdNumber = Number(projectId);
 
   const { data: linkedCases, refetch } = useClientQueries(
     schema
@@ -144,6 +149,23 @@ export function LinkedRequirementCasesPanel({
     [linkedCaseIds]
   );
 
+  // F5/F9: `useRequirementCaseLinks`' own `invalidateLinkedQueries` predicate
+  // only matches keys whose JSON contains "RepositoryCases" or "Issue" --
+  // neither ["requirementCoverage", projectId] nor
+  // ["requirementCoveringCases", projectId, requirementId] does, so this
+  // panel -- the surface where the user directly adds/removes the links
+  // coverage is computed FROM -- invalidates both explicitly on every
+  // successful link/unlink rather than relying on that shared predicate to
+  // grow a case it wasn't written for.
+  const invalidateCoverageQueries = useCallback(() => {
+    invalidateRequirementCoverage(queryClient, projectIdNumber);
+    invalidateRequirementCoveringCases(
+      queryClient,
+      projectIdNumber,
+      requirementId
+    );
+  }, [queryClient, projectIdNumber, requirementId]);
+
   const handleLink = async (selectedCase: LinkedCaseRow | null) => {
     if (!selectedCase) return;
     try {
@@ -151,6 +173,7 @@ export function LinkedRequirementCasesPanel({
       toast.success(t("linkSuccess"));
       setIsAddOpen(false);
       void refetch();
+      invalidateCoverageQueries();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("linkFailed"));
     }
@@ -162,6 +185,7 @@ export function LinkedRequirementCasesPanel({
       toast.success(t("unlinkSuccess"));
       setOpenUnlinkId(null);
       void refetch();
+      invalidateCoverageQueries();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("unlinkFailed"));
     }
