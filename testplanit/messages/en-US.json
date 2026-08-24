@@ -6775,7 +6775,7 @@
       "loadFailed": "Failed to load coverage.",
       "retry": "Retry",
       "panelTitle": "Covering Test Cases",
-      "panelDescription": "Test cases linked to this requirement and its descendants.",
+      "panelDescription": "Every test case counted toward this requirement's coverage — cases linked to it directly plus cases linked to any requirement beneath it. To add or remove links, use Linked Test Cases.",
       "panelEmpty": "No test cases cover this requirement yet.",
       "columnCase": "Test Case",
       "columnResult": "Result",
