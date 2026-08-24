@@ -6684,12 +6684,12 @@
       "saveFailed": "Failed to save requirement."
     },
     "provenance": {
-      "nativeLabel": "Native",
+      "nativeLabel": "Manual",
       "syncedLabel": "Synced",
       "detachedLabel": "Detached",
       "nativeTooltip": "Created directly in TestPlanIt.",
       "syncedTooltip": "Synced from the connected tracker. Locked fields can't be edited here.",
-      "detachedTooltip": "Detached from the connected tracker. Now fully editable, like a native requirement.",
+      "detachedTooltip": "Detached from the connected tracker. Now fully editable, like a manually created requirement.",
       "openInTracker": "Open in {provider}",
       "detach": "Detach",
       "detachDialogTitle": "Detach this requirement?",
