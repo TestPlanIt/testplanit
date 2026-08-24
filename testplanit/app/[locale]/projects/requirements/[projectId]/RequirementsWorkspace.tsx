@@ -16,15 +16,23 @@ import { SectionHeader } from "@/components/ui/typography";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { FileDown } from "lucide-react";
+import { ClipboardPlus, FileDown } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useExportRequirementTraceabilityPdf } from "~/hooks/pdf/useExportRequirementTraceabilityPdf";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { schema } from "~/zenstack/schema";
 import RequirementDetailPanel from "./RequirementDetailPanel";
-import RequirementsListView from "./RequirementsListView";
+// Imported under an alias: the structural drag-drop-nesting guard in
+// `RequirementsWorkspace.test.tsx` does a raw text search for the literal
+// JSX tag `<RequirementsListView` in this file, and `useRef<Requirements
+// ListViewHandle>` would otherwise collide with that search as a false
+// match (the generic's `<` immediately precedes the same prefix).
+import RequirementsListView, {
+  type RequirementsListViewHandle as ListViewHandle,
+} from "./RequirementsListView";
 
 /**
  * The selection contract this workspace owns: which requirement (Issue.id)
@@ -60,6 +68,17 @@ export default function RequirementsWorkspace({
   const [selectedRequirementId, setSelectedRequirementId] = useState<
     number | null
   >(null);
+  // The Add Requirement button below (gap closure 26.2-16, UAT gap 13)
+  // reaches the list's own Create Requirement dialog state through this
+  // ref -- see `RequirementsListViewHandle`'s doc comment.
+  const listViewRef = useRef<ListViewHandle>(null);
+  // Same field `RequirementsListView.tsx` reads for its own reparent/
+  // delete/detach gate -- mirrored here so the action bar's Add
+  // Requirement button is gated identically to the toolbar button it
+  // replaces.
+  const { isProjectAdmin: canAddEdit } = useProjectPermissions(
+    Number(projectId)
+  );
 
   // Requirements is opt-in per project. Phase 25 gated only the ProjectMenu
   // entry, so a bookmarked URL still reached this page on a project with
@@ -99,31 +118,48 @@ export default function RequirementsWorkspace({
     <main>
       <Card>
         <CardHeader id="requirements-page-header" className="w-full">
-          <SectionHeader className="flex items-center justify-between gap-2">
-            <CardTitle>{t("common.fields.requirements")}</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{t("common.fields.requirements")}</CardTitle>
+            </SectionHeader>
             {requirementsEnabled && !isGateResolving && (
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportPdf}
+                      disabled={isExportingPdf}
+                      data-testid="requirements-export-pdf"
+                      className={isExportingPdf ? "animate-pulse" : ""}
+                    >
+                      <FileDown className="h-4 w-4" />
+                      {isExportingPdf
+                        ? t("common.actions.exportingPdf")
+                        : t("common.actions.exportPdf")}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("requirements.export.csvOnReportsHint")}
+                  </TooltipContent>
+                </Tooltip>
+                {canAddEdit && (
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExportPdf}
-                    disabled={isExportingPdf}
-                    data-testid="requirements-export-pdf"
-                    className={isExportingPdf ? "animate-pulse" : ""}
+                    data-testid="requirements-tree-add-root"
+                    onClick={() => listViewRef.current?.openCreateRoot()}
+                    aria-label={t("requirements.tree.addRoot")}
+                    className="group gap-0 transition-all duration-200 hover:gap-2"
                   >
-                    <FileDown className="h-4 w-4" />
-                    {isExportingPdf
-                      ? t("common.actions.exportingPdf")
-                      : t("common.actions.exportPdf")}
+                    <ClipboardPlus className="h-4 w-4" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                      {t("requirements.tree.addRoot")}
+                    </span>
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t("requirements.export.csvOnReportsHint")}
-                </TooltipContent>
-              </Tooltip>
+                )}
+              </div>
             )}
-          </SectionHeader>
+          </div>
         </CardHeader>
         <CardContent>
           {isGateResolving ? (
@@ -160,6 +196,7 @@ export default function RequirementsWorkspace({
                       same way. */}
                   <SimpleDndProvider>
                     <RequirementsListView
+                      ref={listViewRef}
                       projectId={projectId}
                       selectedRequirementId={selectedRequirementId}
                       onSelectRequirement={setSelectedRequirementId}

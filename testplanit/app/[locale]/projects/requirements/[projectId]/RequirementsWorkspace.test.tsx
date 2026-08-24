@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
@@ -137,6 +137,15 @@ vi.mock("~/hooks/pdf/useExportRequirementTraceabilityPdf", () => ({
   useExportRequirementTraceabilityPdf: mockUseExportPdf,
 }));
 
+let mockIsProjectAdmin = true;
+vi.mock("~/hooks/useProjectPermissions", () => ({
+  useProjectPermissions: () => ({
+    permissions: null,
+    isProjectAdmin: mockIsProjectAdmin,
+    isLoading: false,
+  }),
+}));
+
 // Same seam RequirementCoveragePanel.test.tsx uses: Radix's Tooltip.Root
 // works standalone, but stubbing it keeps these assertions about the
 // export action itself, not Radix's hover/open-state timing.
@@ -148,8 +157,18 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
+// The action bar's Add Requirement button (gap closure 26.2-16, UAT gap 13)
+// reaches the list's dialog through a ref -- the mock must be `forwardRef`
+// so passing `ref={listViewRef}` in the real component doesn't warn, and so
+// a test can assert the button actually drives `openCreateRoot`.
+const mockOpenCreateRoot = vi.fn();
 vi.mock("./RequirementsListView", () => ({
-  default: () => <div data-testid="mock-requirements-list-view" />,
+  default: React.forwardRef(function MockRequirementsListView(_props, ref) {
+    React.useImperativeHandle(ref, () => ({
+      openCreateRoot: mockOpenCreateRoot,
+    }));
+    return <div data-testid="mock-requirements-list-view" />;
+  }),
 }));
 
 vi.mock("./RequirementDetailPanel", () => ({
@@ -163,6 +182,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     vi.clearAllMocks();
     projectFlags.requirementsEnabled = true;
     projectFlags.isPending = undefined;
+    mockIsProjectAdmin = true;
     mockUseExportPdf.mockReturnValue({
       isExporting: false,
       handleExport: vi.fn(),
@@ -207,6 +227,43 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     expect(screen.queryByTestId("mock-requirements-list-view")).toBeNull();
     expect(screen.queryByTestId("requirements-detail-pane")).toBeNull();
     expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
+    expect(screen.queryByTestId("requirements-tree-add-root")).toBeNull();
+  });
+
+  // Gap closure 26.2-16 (UAT gap 13): the root-level Add Requirement trigger
+  // moved out of the list toolbar into the page's action bar, after Export
+  // PDF, using the same button-group idiom the milestone detail page's
+  // header uses.
+  describe("action bar Add Requirement (gap closure 26.2-16, UAT gap 13)", () => {
+    it("renders Export PDF then Add Requirement, in that order", () => {
+      render(<RequirementsWorkspace projectId="42" />);
+
+      const exportButton = screen.getByTestId("requirements-export-pdf");
+      const addButton = screen.getByTestId("requirements-tree-add-root");
+      expect(addButton.textContent).toContain("requirements.tree.addRoot");
+
+      const position =
+        exportButton.compareDocumentPosition(addButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING;
+      expect(position).toBeTruthy();
+    });
+
+    it("clicking Add Requirement opens the list's root-create dialog through the ref", () => {
+      render(<RequirementsWorkspace projectId="42" />);
+
+      fireEvent.click(screen.getByTestId("requirements-tree-add-root"));
+
+      expect(mockOpenCreateRoot).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the Add Requirement button for a non-admin viewer", () => {
+      mockIsProjectAdmin = false;
+
+      render(<RequirementsWorkspace projectId="42" />);
+
+      expect(screen.getByTestId("requirements-export-pdf")).not.toBeNull();
+      expect(screen.queryByTestId("requirements-tree-add-root")).toBeNull();
+    });
   });
 
   // Gap closure (26.2-08, gap 1): the requirementsEnabled read used to be a

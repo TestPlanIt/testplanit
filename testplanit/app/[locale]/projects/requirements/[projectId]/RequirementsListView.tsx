@@ -6,8 +6,10 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { ClipboardPlus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -68,6 +70,20 @@ interface RequirementsListViewProps extends RequirementSelection {
   projectId: string;
 }
 
+/**
+ * Imperative surface this view exposes to `RequirementsWorkspace` (gap
+ * closure 26.2-16, UAT gap 13): the root-level Create Requirement dialog's
+ * `open`/`parentId` state stays owned HERE (it always has -- the per-row
+ * "add child" entries mutate the same state), so the page action bar's Add
+ * Requirement button reaches it through a ref rather than lifting the
+ * dialog itself, mirroring `IssuesCard.tsx`'s own
+ * scroll-and-expand-through-a-ref convention on the milestone detail page.
+ */
+export interface RequirementsListViewHandle {
+  /** Opens the Create Requirement dialog with parentId=null. */
+  openCreateRoot: () => void;
+}
+
 // Gap closure 26.2-16 (UAT gap 9 rebuild): the attribute + row-lookup
 // contract `markDragActive`/`clearDragActive` below toggle. `data-req-drag`
 // lives on the list container; `data-req-dragged` lives on the one row
@@ -98,11 +114,13 @@ const ROOT_STRIP_HINT_CLASSNAME =
  * Every server contract (the query's `where`, the coverage query key, the
  * reparent route) is ported byte-identical from the file this replaces.
  */
-export default function RequirementsListView({
-  projectId,
-  selectedRequirementId,
-  onSelectRequirement,
-}: RequirementsListViewProps) {
+const RequirementsListView = forwardRef<
+  RequirementsListViewHandle,
+  RequirementsListViewProps
+>(function RequirementsListView(
+  { projectId, selectedRequirementId, onSelectRequirement },
+  ref
+) {
   const t = useTranslations();
   const queryClient = useQueryClient();
 
@@ -465,6 +483,20 @@ export default function RequirementsListView({
       parentName: formatIssueDisplayText(requirement),
     });
   }, []);
+
+  // The page action bar's Add Requirement button (gap closure 26.2-16, UAT
+  // gap 13) lives in `RequirementsWorkspace.tsx`, outside this component --
+  // it reaches this same dialog state through this ref instead of the
+  // dialog itself moving up a level.
+  useImperativeHandle(
+    ref,
+    () => ({
+      openCreateRoot: () => {
+        setCreateDialogState({ open: true, parentId: null, parentName: null });
+      },
+    }),
+    []
+  );
 
   // Computed once, at click time -- never recomputed reactively inside the
   // modal, so the number the user confirms against cannot drift mid-dialog.
@@ -883,28 +915,6 @@ export default function RequirementsListView({
                 </SelectItem>
               </SelectContent>
             </Select>
-            {canAddEdit && (
-              <Button
-                type="button"
-                variant="secondary"
-                className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2 shrink-0"
-                title={t("requirements.tree.addRoot")}
-                aria-label={t("requirements.tree.addRoot")}
-                data-testid="requirements-tree-add-root"
-                onClick={() =>
-                  setCreateDialogState({
-                    open: true,
-                    parentId: null,
-                    parentName: null,
-                  })
-                }
-              >
-                <ClipboardPlus className="w-4 shrink-0" />
-                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                  {t("requirements.tree.addRoot")}
-                </span>
-              </Button>
-            )}
           </div>
           <div
             ref={(el) => {
@@ -1045,4 +1055,6 @@ export default function RequirementsListView({
       )}
     </>
   );
-}
+});
+
+export default RequirementsListView;

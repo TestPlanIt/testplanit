@@ -218,7 +218,9 @@ vi.mock("react-dnd", () => ({
   },
 }));
 
-import RequirementsListView from "./RequirementsListView";
+import RequirementsListView, {
+  type RequirementsListViewHandle,
+} from "./RequirementsListView";
 
 beforeAll(() => {
   if (!Element.prototype.hasPointerCapture) {
@@ -292,11 +294,13 @@ function renderView(
   overrides: {
     selectedRequirementId?: number | null;
     onSelectRequirement?: (id: number | null) => void;
+    ref?: React.Ref<RequirementsListViewHandle>;
   } = {}
 ) {
   const onSelectRequirement = overrides.onSelectRequirement ?? vi.fn();
   const utils = render(
     <RequirementsListView
+      ref={overrides.ref}
       projectId="42"
       selectedRequirementId={overrides.selectedRequirementId ?? null}
       onSelectRequirement={onSelectRequirement}
@@ -854,9 +858,16 @@ describe("RequirementsListView", () => {
       const mutateAsync = vi.fn().mockResolvedValue({ id: 99 });
       useCreateIssueMock.mockReturnValue({ mutateAsync });
 
-      renderView();
+      // The root-level Add Requirement trigger moved to the page action bar
+      // (gap closure 26.2-16, UAT gap 13) -- this dialog's own `open` state
+      // stays owned by the view, reached here through the same
+      // `openCreateRoot` ref `RequirementsWorkspace.tsx` calls.
+      const listRef = React.createRef<RequirementsListViewHandle>();
+      renderView({ ref: listRef });
 
-      fireEvent.click(screen.getByTestId("requirements-tree-add-root"));
+      act(() => {
+        listRef.current?.openCreateRoot();
+      });
       fireEvent.change(screen.getByTestId("create-requirement-name-input"), {
         target: { value: "New Root Requirement" },
       });
@@ -893,6 +904,46 @@ describe("RequirementsListView", () => {
       await waitFor(() => expect(mockInvalidateQueries).toHaveBeenCalled());
       const [{ predicate }] = mockInvalidateQueries.mock.calls.at(-1)!;
       expect(predicate({ queryKey: ["requirementCoverage", 42] })).toBe(true);
+    });
+  });
+
+  // Gap closure 26.2-16 (UAT gap 13): the root-level Add Requirement trigger
+  // moved to the page action bar in `RequirementsWorkspace.tsx`.
+  describe("toolbar (gap closure 26.2-16, UAT gap 13)", () => {
+    it("no longer renders the add-root button in the list toolbar", () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      renderView();
+      expect(
+        screen.queryByTestId("requirements-tree-add-root")
+      ).not.toBeInTheDocument();
+    });
+
+    it("exposes openCreateRoot on its ref for the workspace's action bar button", () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      const listRef = React.createRef<RequirementsListViewHandle>();
+      renderView({ ref: listRef });
+
+      expect(
+        screen.queryByTestId("create-requirement-name-input")
+      ).not.toBeInTheDocument();
+
+      act(() => {
+        listRef.current?.openCreateRoot();
+      });
+
+      expect(
+        screen.getByTestId("create-requirement-name-input")
+      ).toBeInTheDocument();
     });
   });
 
