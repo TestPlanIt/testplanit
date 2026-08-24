@@ -310,6 +310,24 @@ function openMenu(trigger: HTMLElement) {
   fireEvent.pointerUp(trigger, { button: 0, pointerId: 1 });
 }
 
+/** Opens a shadcn/Radix Select by its trigger's testid and clicks the named
+ *  option (matched by accessible name/role, so a same-text badge elsewhere
+ *  in the row -- e.g. a provenance badge -- can never collide: only the
+ *  Select's own `role="option"` items are candidates). Mirrors
+ *  BulkEditModal.test.tsx's own established real-Radix-Select pattern
+ *  (`fireEvent.click` wrapped in `act`, relying on the `hasPointerCapture`/
+ *  `scrollIntoView` polyfills installed in `beforeAll` above). */
+async function selectFilterOption(triggerTestId: string, optionName: string) {
+  const trigger = screen.getByTestId(triggerTestId);
+  await act(async () => {
+    fireEvent.click(trigger);
+  });
+  const option = await screen.findByRole("option", { name: optionName });
+  await act(async () => {
+    fireEvent.click(option);
+  });
+}
+
 /** The event sequence a pointer travelling off the last row into the
  *  wrapper's own blank strip produces: a `dragleave` whose `relatedTarget`
  *  is OUTSIDE the row. jsdom 30 has no `window.DragEvent`, so
@@ -827,6 +845,296 @@ describe("RequirementsListView", () => {
       expect(
         screen.queryByTestId("requirements-tree-empty")
       ).not.toBeInTheDocument();
+    });
+  });
+
+  describe("filters (gap closure 26.2-12)", () => {
+    it("Coverage = Uncovered leaves an uncovered leaf visible and its covered ancestor visible (ancestor retention)", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root" }),
+          makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
+          makeRequirement({ id: 3, name: "Covered Sibling", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({
+          1: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 4,
+            linkedCaseCount: 4,
+          }),
+          2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+          3: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 2,
+            linkedCaseCount: 2,
+          }),
+        }),
+        isError: false,
+      });
+
+      renderView();
+
+      await selectFilterOption(
+        "requirements-coverage-filter",
+        "requirements.coverage.uncovered"
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      });
+      // The covered Root is retained ONLY because it's id 2's ancestor.
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
+    });
+
+    it("Coverage = status:<id> shows only requirements whose breakdown carries that status with a non-zero count, plus ancestors", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root" }),
+          makeRequirement({ id: 2, name: "Failed Leaf", parentId: 1 }),
+          makeRequirement({ id: 3, name: "Blocked Leaf", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({
+          1: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 4,
+            linkedCaseCount: 4,
+          }),
+          2: makeBreakdown({
+            status: "FAILED",
+            uncovered: false,
+            statuses: [
+              { statusId: 7, name: "Failed", color: "#f00", count: 2 },
+            ],
+            linkedCaseCount: 2,
+          }),
+          3: makeBreakdown({
+            status: "NOT_RUN",
+            uncovered: false,
+            statuses: [
+              { statusId: 8, name: "Blocked", color: "#999", count: 1 },
+            ],
+            linkedCaseCount: 1,
+          }),
+        }),
+        isError: false,
+      });
+
+      renderView();
+
+      await selectFilterOption("requirements-coverage-filter", "Failed");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
+    });
+
+    it("Source = Detached shows only detached requirements plus ancestors", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root" }),
+          makeRequirement({
+            id: 2,
+            name: "Detached Child",
+            parentId: 1,
+            integrationId: 5,
+            requirementDetachedAt: new Date(),
+          }),
+          makeRequirement({
+            id: 3,
+            name: "Synced Child",
+            parentId: 1,
+            integrationId: 5,
+          }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderView();
+
+      await selectFilterOption(
+        "requirements-source-filter",
+        "requirements.provenance.detachedLabel"
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
+    });
+
+    it("Coverage + Status intersect: a row matching only one of them is absent", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+          makeRequirement({
+            id: 2,
+            name: "Both Match",
+            parentId: 1,
+            externalStatus: "Open",
+          }),
+          makeRequirement({
+            id: 3,
+            name: "Status Only",
+            parentId: 1,
+            externalStatus: "Open",
+          }),
+          makeRequirement({
+            id: 4,
+            name: "Coverage Only",
+            parentId: 1,
+            externalStatus: "Closed",
+          }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({
+          1: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 1,
+            linkedCaseCount: 1,
+          }),
+          2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+          3: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 1,
+            linkedCaseCount: 1,
+          }),
+          4: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        }),
+        isError: false,
+      });
+
+      renderView();
+
+      await selectFilterOption(
+        "requirements-coverage-filter",
+        "requirements.coverage.uncovered"
+      );
+      await selectFilterOption("requirements-status-filter", "Open");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-4")).not.toBeInTheDocument();
+    });
+
+    it("with coverage unavailable, the Coverage Select is disabled and the other two still filter", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+          makeRequirement({
+            id: 2,
+            name: "Open Child",
+            parentId: 1,
+            externalStatus: "Open",
+          }),
+          makeRequirement({
+            id: 3,
+            name: "Closed Child",
+            parentId: 1,
+            externalStatus: "Closed",
+          }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: undefined,
+        isError: false,
+      });
+
+      renderView();
+
+      expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
+
+      await selectFilterOption("requirements-status-filter", "Open");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
+    });
+
+    it("clearing every filter restores the full unfiltered row set, including rows that were only present as retained ancestors", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root" }),
+          makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
+          makeRequirement({ id: 3, name: "Covered Sibling", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({
+          1: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 4,
+            linkedCaseCount: 4,
+          }),
+          2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+          3: makeBreakdown({
+            status: "PASSED",
+            uncovered: false,
+            passed: 2,
+            linkedCaseCount: 2,
+          }),
+        }),
+        isError: false,
+      });
+
+      renderView();
+
+      await selectFilterOption(
+        "requirements-coverage-filter",
+        "requirements.coverage.uncovered"
+      );
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-row-3")
+        ).not.toBeInTheDocument();
+      });
+
+      await selectFilterOption(
+        "requirements-coverage-filter",
+        "milestones.members.filterAllCoverage"
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-3")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
     });
   });
 });
