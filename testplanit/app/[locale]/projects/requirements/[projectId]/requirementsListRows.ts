@@ -76,6 +76,67 @@ export function countDescendants(
   );
 }
 
+/**
+ * For every requirement id, an array whose FIRST element is that id itself
+ * followed by every descendant id, depth-first (self-inclusive by contract:
+ * every consumer wants `issueId: { in: [self, ...descendants] }`, and a
+ * caller that had to remember to prepend the self id would eventually
+ * forget). Computed in one pass over `childrenMap`, memoised per id so a
+ * child's own descendant list is computed once and reused by every ancestor
+ * -- a deep tree does not go quadratic.
+ *
+ * Depth cap mirrors `flattenRequirementRows`'s own `depth < 100` guard
+ * (itself mirroring `requirementHierarchy.ts`'s CTE caps), so a malformed or
+ * cyclic parent chain cannot hang this computation either. A node reached
+ * via a cycle (an ancestor still on the current recursion path) or past the
+ * depth cap returns just itself, uncached -- caching a partial view under a
+ * cycle would give the WRONG (truncated) answer to a sibling branch that
+ * reaches the same node by a different, cycle-free path.
+ */
+export function buildDescendantIdMap(
+  childrenMap: Map<number | null, Issue[]>
+): Map<number, number[]> {
+  const map = new Map<number, number[]>();
+
+  function visit(
+    id: number,
+    depth: number,
+    ancestorsOnPath: Set<number>
+  ): number[] {
+    const cached = map.get(id);
+    if (cached) return cached;
+    if (ancestorsOnPath.has(id) || depth >= 100) {
+      return [id];
+    }
+
+    ancestorsOnPath.add(id);
+    const seen = new Set<number>([id]);
+    const ids = [id];
+    for (const child of childrenMap.get(id) ?? []) {
+      for (const descendantId of visit(child.id, depth + 1, ancestorsOnPath)) {
+        if (!seen.has(descendantId)) {
+          seen.add(descendantId);
+          ids.push(descendantId);
+        }
+      }
+    }
+    ancestorsOnPath.delete(id);
+
+    map.set(id, ids);
+    return ids;
+  }
+
+  for (const children of childrenMap.values()) {
+    for (const requirement of children) {
+      if (!map.has(requirement.id)) {
+        visit(requirement.id, 0, new Set<number>());
+      }
+    }
+  }
+
+  return map;
+}
+
 export interface ComputeVisibleRequirementIdsArgs {
   requirements: Issue[];
   requirementMap: Map<number, Issue>;
@@ -252,6 +313,18 @@ function compareRequirements(
     }
     case "source": {
       primary = requirementSourceSortValue(a) - requirementSourceSortValue(b);
+      break;
+    }
+    case "linkedCases": {
+      primary =
+        (coverageFor(coverage, a.id)?.directCaseCount ?? 0) -
+        (coverageFor(coverage, b.id)?.directCaseCount ?? 0);
+      break;
+    }
+    case "coveringCases": {
+      primary =
+        (coverageFor(coverage, a.id)?.linkedCaseCount ?? 0) -
+        (coverageFor(coverage, b.id)?.linkedCaseCount ?? 0);
       break;
     }
     case "name":

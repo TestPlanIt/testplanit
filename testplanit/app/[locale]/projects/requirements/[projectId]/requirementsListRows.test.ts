@@ -5,6 +5,7 @@ import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCov
 import type { Issue } from "~/zenstack/models";
 
 import {
+  buildDescendantIdMap,
   buildRequirementMaps,
   computeVisibleRequirementIds,
   countDescendants,
@@ -111,6 +112,126 @@ describe("countDescendants", () => {
 
     expect(countDescendants(childrenMap, 1)).toBe(3);
     expect(countDescendants(childrenMap, 4)).toBe(0);
+  });
+});
+
+describe("buildDescendantIdMap", () => {
+  it("maps a leaf to just itself", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "Root", parentId: null }),
+      makeRequirement({ id: 2, name: "Leaf", parentId: 1 }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const map = buildDescendantIdMap(childrenMap);
+
+    expect(map.get(2)).toEqual([2]);
+  });
+
+  it("maps a parent to itself plus every descendant at every depth, with no duplicates", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "Root", parentId: null }),
+      makeRequirement({ id: 2, name: "Child 1", parentId: 1 }),
+      makeRequirement({ id: 3, name: "Child 2", parentId: 1 }),
+      makeRequirement({ id: 4, name: "Grandchild", parentId: 2 }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const map = buildDescendantIdMap(childrenMap);
+
+    const rootIds = map.get(1)!;
+    expect(rootIds[0]).toBe(1);
+    expect(new Set(rootIds)).toEqual(new Set([1, 2, 3, 4]));
+    expect(new Set(rootIds).size).toBe(rootIds.length);
+  });
+
+  it("a parent's array and its child's array overlap exactly on the child's own subtree", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "Root", parentId: null }),
+      makeRequirement({ id: 2, name: "Child", parentId: 1 }),
+      makeRequirement({ id: 3, name: "Grandchild", parentId: 2 }),
+      makeRequirement({ id: 4, name: "Sibling", parentId: 1 }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const map = buildDescendantIdMap(childrenMap);
+
+    const childIds = new Set(map.get(2)!);
+    const rootIds = new Set(map.get(1)!);
+    // Every id in the child's own subtree is present in the root's subtree
+    // too, and nothing outside the child's subtree (the sibling) leaks in
+    // when comparing the two sets on the child's own membership.
+    childIds.forEach((id) => expect(rootIds.has(id)).toBe(true));
+    expect(childIds.has(4)).toBe(false);
+  });
+
+  it("a cycle (parent pointing at its own descendant) terminates and does not blow the stack", () => {
+    const nodeA = makeRequirement({ id: 1, name: "A", parentId: null });
+    const nodeB = makeRequirement({ id: 2, name: "B", parentId: 1 });
+
+    // Hand-built cyclic fixture, mirroring flattenRequirementRows's own
+    // cycle test: node 1's only child is node 2, and node 2's only child is
+    // node 1 again.
+    const cyclicChildrenMap = new Map<number | null, Issue[]>();
+    cyclicChildrenMap.set(null, [nodeA]);
+    cyclicChildrenMap.set(1, [nodeB]);
+    cyclicChildrenMap.set(2, [nodeA]);
+
+    const start = Date.now();
+    const map = buildDescendantIdMap(cyclicChildrenMap);
+    expect(Date.now() - start).toBeLessThan(1000);
+
+    expect(map.get(1)![0]).toBe(1);
+    expect(map.get(2)![0]).toBe(2);
+  });
+});
+
+describe("compareRequirements linkedCases/coveringCases sort", () => {
+  it("linkedCases sorts by directCaseCount and falls back to the name tie-break when equal", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "B Requirement", parentId: null }),
+      makeRequirement({ id: 2, name: "A Requirement", parentId: null }),
+      makeRequirement({ id: 3, name: "C Requirement", parentId: null }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({ directCaseCount: 5 }),
+      2: makeBreakdown({ directCaseCount: 5 }),
+      3: makeBreakdown({ directCaseCount: 1 }),
+    });
+
+    const rows = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "linkedCases", direction: "asc" },
+      coverage,
+    });
+
+    // 3 (count 1) first, then 1/2 tied at count 5 broken by name ("A" < "B").
+    expect(rows.map((r) => r.id)).toEqual([3, 2, 1]);
+  });
+
+  it("coveringCases sorts by linkedCaseCount", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "Root 1", parentId: null }),
+      makeRequirement({ id: 2, name: "Root 2", parentId: null }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({ linkedCaseCount: 2 }),
+      2: makeBreakdown({ linkedCaseCount: 9 }),
+    });
+
+    const rows = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "coveringCases", direction: "desc" },
+      coverage,
+    });
+
+    expect(rows.map((r) => r.id)).toEqual([2, 1]);
   });
 });
 
