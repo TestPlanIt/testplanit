@@ -57,8 +57,9 @@ interface RequirementsListViewProps extends RequirementSelection {
 
 /**
  * The tree-table rebuild of the requirements list (D-04a: a new file, not an
- * in-place rewrite of `RequirementsTreeView.tsx` -- see 26.2-PATTERNS.md and
- * 26.2-RESEARCH.md Open Question 3). Owns the requirement query, the
+ * in-place rewrite of the earlier react-arborist tree component -- see
+ * 26.2-PATTERNS.md and 26.2-RESEARCH.md Open Question 3). Owns the
+ * requirement query, the
  * hierarchy/coverage/filter derivations (plan 02's pure module), the
  * toolbar, the four render states, and the `<DataTable virtualized>` call.
  * Every server contract (the query's `where`, the coverage query key, the

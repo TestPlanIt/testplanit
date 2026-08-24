@@ -29,7 +29,7 @@ export function formatIssueDisplayText(issue: {
  *
  * Both requirement creation paths write the SAME trimmed string to name and
  * title -- `CreateRequirementDialog.tsx` (`name: trimmedName, title:
- * trimmedName`) and `RequirementsTreeView.tsx`'s rename handler (`data: {
+ * trimmedName`) and `RequirementsListView.tsx`'s rename handler (`data: {
  * name: trimmed, title: trimmed }`) -- so a native requirement always has
  * `requirementTitle === requirementKey`. Without the `title !== key` guard
  * below, every native requirement's cell doubled its own name ("New

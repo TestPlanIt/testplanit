@@ -33,7 +33,7 @@ vi.mock("sonner", () => ({
 
 // Capture the useDrag spec factory's result directly rather than trying to
 // simulate a real HTML5 drag sequence (unassertable in jsdom) -- mirrors
-// RequirementsTreeView.test.tsx's own dropSpecRef convention for useDrop.
+// RequirementsListView.test.tsx's own dropSpecRef convention for useDrop.
 const { dragSpecRef } = vi.hoisted(() => ({
   dragSpecRef: { current: null as any },
 }));

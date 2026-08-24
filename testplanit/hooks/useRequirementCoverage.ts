@@ -66,7 +66,7 @@ export function invalidateRequirementCoverage(
  * this hook self-invalidates on a timer beyond that `staleTime`; callers
  * that mutate what the rollup should say invoke `invalidateRequirementCoverage`
  * explicitly (see `LinkedRequirementCasesPanel.tsx` and
- * `RequirementsTreeView.tsx`).
+ * `RequirementsListView.tsx`).
  */
 export function useRequirementCoverage(projectId: number | undefined) {
   return useQuery<RequirementCoverageResponse>({

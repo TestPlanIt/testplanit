@@ -23,13 +23,13 @@ import { toast } from "sonner";
 import { useExportRequirementTraceabilityPdf } from "~/hooks/pdf/useExportRequirementTraceabilityPdf";
 import { schema } from "~/zenstack/schema";
 import RequirementDetailPanel from "./RequirementDetailPanel";
-import RequirementsTreeView from "./RequirementsTreeView";
+import RequirementsListView from "./RequirementsListView";
 
 /**
  * The selection contract this workspace owns: which requirement (Issue.id)
- * is currently shown in the detail pane. Exported here so plan 25-08's
- * `RequirementsTreeView` and plan 25-10's `RequirementDetailPanel` import
- * this type rather than restating it — the tree and the detail panel never
+ * is currently shown in the detail pane. Exported here so plan 26.2-04's
+ * `RequirementsListView` and plan 25-10's `RequirementDetailPanel` import
+ * this type rather than restating it — the list and the detail panel never
  * negotiate selection directly, they both go through the workspace.
  */
 export interface RequirementSelection {
@@ -45,10 +45,10 @@ interface RequirementsWorkspaceProps {
  * The master-detail shell for the Requirements surface (IA decision,
  * 25-CONTEXT.md): a new top-level route, not a tab on `/projects/issues`.
  *
- * The left pane mounts plan 25-08's `<RequirementsTreeView />`; the right
- * pane (once a requirement is selected) mounts plan 25-10's
- * `<RequirementDetailPanel />`. No `DataTable`, no filter/sort bar — a tree
- * has different interaction needs than the flat sortable issues list.
+ * The left pane mounts plan 26.2-04's `<RequirementsListView />` (a
+ * `DataTable`-based tree-table, replacing the earlier react-arborist tree);
+ * the right pane (once a requirement is selected) mounts plan 25-10's
+ * `<RequirementDetailPanel />`.
  */
 export default function RequirementsWorkspace({
   projectId,
@@ -137,14 +137,14 @@ export default function RequirementsWorkspace({
                   data-testid="requirements-tree-pane"
                   className="h-full overflow-y-auto"
                 >
-                  {/* The provider must wrap the tree from OUT HERE, not from
-                      inside it: RequirementsTreeView calls react-dnd's useDrop
+                  {/* The provider must wrap the list from OUT HERE, not from
+                      inside it: RequirementsListView calls react-dnd's useDrop
                       during its own render, so a provider it rendered itself
                       would not yet exist in the tree when that hook runs. This
                       mirrors ProjectRepository.tsx, which wraps TreeView the
                       same way. */}
                   <SimpleDndProvider>
-                    <RequirementsTreeView
+                    <RequirementsListView
                       projectId={projectId}
                       selectedRequirementId={selectedRequirementId}
                       onSelectRequirement={setSelectedRequirementId}

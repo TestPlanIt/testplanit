@@ -12,8 +12,9 @@ import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 
 // --- Hoisted mock scaffolding -------------------------------------------
-// Adapted from RequirementsTreeView.test.tsx's own module-mock set (this
-// file's read_first analog) rather than inventing a second convention.
+// Adapted from the earlier react-arborist tree component's own test file's
+// module-mock set (this file's read_first analog, since deleted in this
+// same plan) rather than inventing a second convention.
 
 const { useFindManyIssueMock } = vi.hoisted(() => ({
   useFindManyIssueMock: vi.fn(
@@ -145,8 +146,9 @@ vi.mock("@/components/IssueStatusDisplay", () => ({
 // React calls hooks in stable source order every render) and the useDrag
 // spec the name cell's drag source produces -- jsdom cannot drive real HTML5
 // drag choreography, so this file drives the reparent branches through the
-// captured spec objects directly, mirroring RequirementsTreeView.test.tsx's
-// dropSpecRef / RequirementsListColumns.test.tsx's dragSpecRef conventions.
+// captured spec objects directly, mirroring the earlier tree component's
+// own dropSpecRef / RequirementsListColumns.test.tsx's dragSpecRef
+// conventions.
 const { dropSpecs, dropCallCount, dragSpecRef } = vi.hoisted(() => ({
   dropSpecs: { list: null as any, bottom: null as any },
   dropCallCount: { current: 0 },

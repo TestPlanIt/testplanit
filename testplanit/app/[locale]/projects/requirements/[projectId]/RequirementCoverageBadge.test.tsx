@@ -194,13 +194,27 @@ describe("RequirementCoverageBadge", () => {
   });
 
   // Visual collapse order (does the provenance badge actually shrink
-  // before the coverage badge, before the name) is NOT provable in jsdom
-  // — getBoundingClientRect() returns 0 here, same reason
+  // before the coverage badge) is NOT provable in jsdom —
+  // getBoundingClientRect() returns 0 here, same reason
   // RequirementProvenanceBadge's own collapse effect early-returns. What
-  // IS provable, and is what this test proves, is that the three
-  // competitors carry distinct, explicitly-authored shrink weights in the
-  // ORDER D-1 requires. Visual confirmation is 26-13's operator UAT.
-  it("encodes the row priority as distinct shrink weights: provenance above coverage above the name", () => {
+  // IS provable, and is what this test proves, is that the badges still
+  // carry distinct, explicitly-authored shrink weights above the CSS
+  // default. Visual confirmation is 26-13's operator UAT.
+  //
+  // 26.2-05: this test used to also read the row's name-cell span (then
+  // living in the earlier react-arborist tree component this phase
+  // replaced) and assert a three-way ordering —
+  // provenance above coverage above the name — because all three were flex
+  // siblings competing for width on one row. Per UI-SPEC §9.5, the
+  // tree-table rebuild gave each badge its own resizable table column: with
+  // no sibling to negotiate against, that flex-competition math is inert,
+  // and the name-cell half of the old assertion no longer has a row to
+  // assert against. The badges' own internal ResizeObserver collapse
+  // ladders are unchanged and still covered by this file's other tests, so
+  // this test now only proves the two badges that remain flex-relevant to
+  // each other (provenance still wraps its own name-cell drag handle
+  // laterally) keep their documented floor above the CSS default of 1.
+  it("encodes the row priority as distinct shrink weights: provenance above coverage above the CSS default", () => {
     render(<RequirementCoverageBadge breakdown={passedBreakdown} />);
     const coverageBadge = screen.getByTestId("requirement-coverage-passed");
     // 26-13 moved the shrink/min-w classes off the visible Badge and onto
@@ -225,31 +239,12 @@ describe("RequirementCoverageBadge", () => {
     expect(provenanceMatch).not.toBeNull();
     const provenanceShrink = Number(provenanceMatch![1]);
 
-    const treeViewSource = fs.readFileSync(
-      "app/[locale]/projects/requirements/[projectId]/RequirementsTreeView.tsx",
-      "utf8"
-    );
-    // Anchored on the unique `flex-auto` token inside the className
-    // attribute value itself, never a fixed-width character window —
-    // four window-anchored verification scripts have already
-    // mis-reported this milestone (see STATE.md).
-    const nameSpanMatch = treeViewSource.match(
-      /className="([^"]*\bflex-auto\b[^"]*)"/
-    );
-    expect(nameSpanMatch).not.toBeNull();
-    const nameSpanClassName = nameSpanMatch![1];
-    expect(nameSpanClassName).toContain("flex-auto");
-    expect(nameSpanClassName).toContain("min-w-0");
-    expect(nameSpanClassName).not.toMatch(/\bflex-1\b/);
-    // No explicit override on the name span — its shrink weight is the
-    // CSS default, which is 1.
-    expect(nameSpanClassName).not.toMatch(/shrink-\[/);
-    const nameShrink = 1;
-
-    // Floor-style ordering assertion, not an exact-value pin on the
-    // provenance badge's own weight (which this file does not own).
+    // Floor-style ordering assertion, not an exact-value pin on either
+    // badge's own weight (which this file does not own).
     expect(provenanceShrink).toBeGreaterThan(coverageShrink!);
-    expect(coverageShrink!).toBeGreaterThan(nameShrink);
+    // The CSS default shrink weight is 1 -- both badges' authored weights
+    // stay above it even with no sibling left to shrink against.
+    expect(coverageShrink!).toBeGreaterThan(1);
   });
 
   // 26-13 Finding 1 (BLOCKING): the operator's live-browser UAT found the

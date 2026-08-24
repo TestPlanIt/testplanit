@@ -169,7 +169,7 @@ describe("useRequirementCoverageReportColumns", () => {
     expect(getByText("Enrol via portal")).toBeInTheDocument();
   });
 
-  // A native requirement (CreateRequirementDialog, or a RequirementsTreeView
+  // A native requirement (CreateRequirementDialog, or a RequirementsListView
   // rename) writes the SAME trimmed string to its key (requirementKey) and
   // title (requirementTitle) -- unlike every fixture above, which is
   // synced-shaped with a genuinely differing title. Both column sets

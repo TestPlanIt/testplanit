@@ -22,7 +22,8 @@ export interface RequirementListSortConfig {
 }
 
 /**
- * Ported from `RequirementsTreeView.tsx:302-333`. `childrenMap` keys on
+ * Ported from the earlier react-arborist tree component this phase
+ * replaced (its own lines 302-333). `childrenMap` keys on
  * `requirement.parentId ?? null`; `hasChildrenMap` seeds every id `false`
  * then marks every referenced `parentId` `true`.
  */
@@ -59,7 +60,8 @@ export function buildRequirementMaps(requirements: Issue[]): {
 }
 
 /**
- * Ported from `RequirementsTreeView.tsx:340-349`. Root excluded, matching
+ * Ported from the earlier react-arborist tree component this phase
+ * replaced (its own lines 340-349). Root excluded, matching
  * `getIssueSubtreeIds`'s own descendant-only contract and
  * `DeleteRequirementModal`'s `descendantCount` prop (HIER-04's UI contract).
  */
@@ -85,9 +87,10 @@ export interface ComputeVisibleRequirementIdsArgs {
 }
 
 /**
- * Ported from `RequirementsTreeView.tsx:367-452`, verbatim in behaviour.
- * Returns `null` when neither predicate is active (meaning "no filtering",
- * not "nothing visible").
+ * Ported from the earlier react-arborist tree component this phase
+ * replaced (its own lines 367-452), verbatim in behaviour. Returns `null`
+ * when neither predicate is active (meaning "no filtering", not "nothing
+ * visible").
  */
 export function computeVisibleRequirementIds({
   requirements,

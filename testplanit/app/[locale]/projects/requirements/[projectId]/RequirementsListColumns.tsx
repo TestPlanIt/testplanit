@@ -386,8 +386,8 @@ interface RequirementRenameInputProps {
 }
 
 /**
- * Ported from `RequirementsTreeView.tsx`'s `RequirementRenameInput`,
- * decoupled from react-arborist's `NodeApi`.
+ * Ported from the earlier react-arborist tree component's own
+ * `RequirementRenameInput`, decoupled from react-arborist's `NodeApi`.
  */
 function RequirementRenameInput({
   defaultValue,
@@ -435,10 +435,10 @@ interface RequirementRowActionsMenuProps {
 }
 
 /**
- * Ported from `RequirementsTreeView.tsx`'s row action menu verbatim in
- * structure and `data-testid`s. Drops the old `invisible group-hover:visible`
- * wrapper -- in a real column the kebab has its own cell and should always
- * be visible.
+ * Ported from the earlier react-arborist tree component's own row action
+ * menu verbatim in structure and `data-testid`s. Drops the old `invisible
+ * group-hover:visible` wrapper -- in a real column the kebab has its own
+ * cell and should always be visible.
  */
 function RequirementRowActionsMenu({
   requirement,

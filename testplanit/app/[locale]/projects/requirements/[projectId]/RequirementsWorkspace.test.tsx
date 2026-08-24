@@ -5,23 +5,24 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * Structural guard: the drag-drop provider must wrap the tree from OUTSIDE.
+ * Structural guard: the drag-drop provider must wrap the list from OUTSIDE.
  *
- * `RequirementsTreeView` calls react-dnd's `useDrop` during its own render.
+ * `RequirementsListView` calls react-dnd's `useDrop` during its own render.
  * If that same component also renders `<SimpleDndProvider>` in its own
  * returned JSX, the hook runs before the provider exists in the tree and
  * react-dnd throws "Invariant Violation: Expected drag drop context" —
  * a hard 500 on the requirements page.
  *
- * That shipped once. Every component test passed and `tsc` was clean,
- * because `RequirementsTreeView.test.tsx` mocks BOTH `react-dnd` and
- * `SimpleDndProvider` — correctly, since jsdom cannot drive real HTML5 drag
- * choreography — which stubs out the only thing that actually breaks.
+ * That shipped once (against the earlier react-arborist tree this component
+ * replaced). Every component test passed and `tsc` was clean, because that
+ * component's own test mocked BOTH `react-dnd` and `SimpleDndProvider` —
+ * correctly, since jsdom cannot drive real HTML5 drag choreography — which
+ * stubbed out the only thing that actually broke.
  *
  * A render-based guard is not viable here: mounting the real workspace pulls
- * in react-arborist and the resizable panel group unmocked and exhausts the
- * JS heap. So this asserts the invariant on the source text instead, which
- * is what the bug actually was — a nesting mistake, not a behavioural one.
+ * in the resizable panel group unmocked and exhausts the JS heap. So this
+ * asserts the invariant on the source text instead, which is what the bug
+ * actually was — a nesting mistake, not a behavioural one.
  */
 const DIR = path.join(
   process.cwd(),
@@ -31,7 +32,7 @@ const DIR = path.join(
 /**
  * Comments in both files legitimately *name* these components while
  * explaining the nesting rule — `RequirementsWorkspace.tsx`'s own doc block
- * contains the literal text `<RequirementsTreeView />`. Matching raw source
+ * contains the literal text `<RequirementsListView />`. Matching raw source
  * would read those mentions as real JSX and invert the position check, so
  * strip comments first and assert only against code.
  */
@@ -41,29 +42,29 @@ function codeOnly(source: string): string {
     .replace(/^[ \t]*\/\/.*$/gm, "");
 }
 
-const treeSource = codeOnly(
-  fs.readFileSync(path.join(DIR, "RequirementsTreeView.tsx"), "utf8")
+const listSource = codeOnly(
+  fs.readFileSync(path.join(DIR, "RequirementsListView.tsx"), "utf8")
 );
 const workspaceSource = codeOnly(
   fs.readFileSync(path.join(DIR, "RequirementsWorkspace.tsx"), "utf8")
 );
 
 describe("requirements drag-drop context nesting (structural)", () => {
-  it("the tree consumes a drag-drop context it does not provide itself", () => {
+  it("the list consumes a drag-drop context it does not provide itself", () => {
     // Precondition: if this component ever stops calling useDrop, this whole
     // guard is moot and should be revisited rather than silently passing.
-    expect(treeSource).toContain("useDrop");
+    expect(listSource).toContain("useDrop");
 
-    expect(treeSource).not.toMatch(/<SimpleDndProvider[\s>]/);
+    expect(listSource).not.toMatch(/<SimpleDndProvider[\s>]/);
   });
 
-  it("the workspace provides the drag-drop context around the tree", () => {
+  it("the workspace provides the drag-drop context around the list", () => {
     expect(workspaceSource).toMatch(/<SimpleDndProvider[\s>]/);
 
-    // The provider must actually enclose the tree, not merely appear
+    // The provider must actually enclose the list, not merely appear
     // somewhere in the same file.
     const open = workspaceSource.indexOf("<SimpleDndProvider");
-    const mount = workspaceSource.indexOf("<RequirementsTreeView");
+    const mount = workspaceSource.indexOf("<RequirementsListView");
     const close = workspaceSource.indexOf("</SimpleDndProvider>");
 
     expect(open).toBeGreaterThanOrEqual(0);
@@ -74,11 +75,12 @@ describe("requirements drag-drop context nesting (structural)", () => {
 
 // --- Phase 26: traceability export action + requirements-enabled gate ---
 //
-// RequirementsTreeView and RequirementDetailPanel are stubbed here for the
-// same JS-heap-exhaustion reason the structural guard above documents
-// (react-arborist is heavy in jsdom) — NOT to hide the drag-drop nesting
-// invariant, which the structural tests above cover unmocked, on source
-// text, and stay green and untouched. `useExportRequirementTraceabilityPdf`
+// RequirementsListView and RequirementDetailPanel are stubbed here for the
+// same JS-heap-exhaustion reason the structural guard above documents (the
+// real DataTable/virtualizer stack is heavy in jsdom) — NOT to hide the
+// drag-drop nesting invariant, which the structural tests above cover
+// unmocked, on source text, and stay green and untouched.
+// `useExportRequirementTraceabilityPdf`
 // is stubbed so these tests exercise the workspace's own wiring (which
 // action renders where, disabled state, the opt-in gate) rather than
 // re-proving the hook's own PDF-rendering behavior, already covered by
@@ -129,8 +131,8 @@ vi.mock("@/components/ui/tooltip", () => ({
   ),
 }));
 
-vi.mock("./RequirementsTreeView", () => ({
-  default: () => <div data-testid="mock-requirements-tree-view" />,
+vi.mock("./RequirementsListView", () => ({
+  default: () => <div data-testid="mock-requirements-list-view" />,
 }));
 
 vi.mock("./RequirementDetailPanel", () => ({
@@ -180,11 +182,11 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     // Presence: the disabled notice.
     expect(screen.getByTestId("requirements-disabled-notice")).not.toBeNull();
 
-    // Absence: neither the tree, the detail pane, nor the export action —
+    // Absence: neither the list, the detail pane, nor the export action —
     // a bookmarked URL on a project with the feature off must not reach
     // any of them.
     expect(screen.queryByTestId("requirements-tree-pane")).toBeNull();
-    expect(screen.queryByTestId("mock-requirements-tree-view")).toBeNull();
+    expect(screen.queryByTestId("mock-requirements-list-view")).toBeNull();
     expect(screen.queryByTestId("requirements-detail-pane")).toBeNull();
     expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
   });

@@ -166,15 +166,16 @@ const SCOPED_FILES = [
   // assertion further down is the only thing that would catch someone
   // quietly deleting the spread from inside an otherwise-intact call.
   "app/api/report-builder/project-health/route.ts",
-  // 25-08's load-all requirement tree spreads REQUIREMENT_SCOPE_WHERE (the
-  // other half of this module's mirror pair, not DEFECT_SCOPE_WHERE) into
-  // its single findMany call — verified by direct read, and by this file's
-  // own RequirementsTreeView.test.tsx asserting on the hook's actual `where`
-  // argument rather than by source grep alone.
-  "app/[locale]/projects/requirements/[projectId]/RequirementsTreeView.tsx",
+  // 25-08's load-all requirement list (26.2-05: rebuilt as a DataTable-based
+  // tree-table, replacing the earlier react-arborist tree) spreads
+  // REQUIREMENT_SCOPE_WHERE (the other half of this module's mirror pair,
+  // not DEFECT_SCOPE_WHERE) into its single findMany call — verified by
+  // direct read AND by RequirementsListView.test.tsx asserting on the
+  // hook's actual `where` argument rather than by source grep alone.
+  "app/[locale]/projects/requirements/[projectId]/RequirementsListView.tsx",
   // 25-10's detail panel spreads REQUIREMENT_SCOPE_WHERE into its single
   // useFindFirst call (the panel's own read of the selected row) — same
-  // predicate, same reasoning as RequirementsTreeView.tsx above. Verified
+  // predicate, same reasoning as RequirementsListView.tsx above. Verified
   // by direct read; RequirementDetailPanel.test.tsx exercises the mocked
   // hook rather than asserting on the raw `where` argument, so this
   // allowlist entry is the primary guard against the spread being dropped.
@@ -643,7 +644,7 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
     }
   });
 
-  // 26-08: RequirementsTreeView.tsx / RequirementDetailPanel.tsx /
+  // 26-08: RequirementsListView.tsx / RequirementDetailPanel.tsx /
   // LinkedRequirementsPanel.tsx's own SCOPED_FILES entries above rely
   // entirely on their component tests asserting the mocked hook's `where`
   // argument for proof that REQUIREMENT_SCOPE_WHERE actually reaches the

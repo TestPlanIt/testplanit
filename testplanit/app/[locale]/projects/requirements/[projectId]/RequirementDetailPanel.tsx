@@ -130,7 +130,7 @@ export default function RequirementDetailPanel({
     {
       where: {
         id: requirementId,
-        // Spread, never inline -- mirrors RequirementsTreeView.tsx's own
+        // Spread, never inline -- mirrors RequirementsListView.tsx's own
         // read and issueRoleScope.ts's own containment-gate contract.
         ...REQUIREMENT_SCOPE_WHERE,
       },
@@ -154,7 +154,7 @@ export default function RequirementDetailPanel({
   // PROV-03's single editability predicate: every disabled state below --
   // the three scalar fields -- traces back to this one boolean, derived
   // from the same shared service both RequirementProvenanceBadge.tsx and
-  // RequirementsTreeView.tsx already use. The rich-text section
+  // RequirementsListView.tsx already use. The rich-text section
   // deliberately never reads it (see the comment beside its own `readOnly`).
   const locked = isRequirementLocked(requirement ?? null);
 

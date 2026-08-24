@@ -270,7 +270,7 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
   });
 
   // A native requirement (created via CreateRequirementDialog, or renamed
-  // via RequirementsTreeView) writes the SAME trimmed string to its name
+  // via RequirementsListView) writes the SAME trimmed string to its name
   // (requirementKey) and title (requirementTitle) -- unlike the fixture
   // above, which is synced-shaped and has a genuinely differing title. Both
   // report types delegate the Requirement cell to the shared

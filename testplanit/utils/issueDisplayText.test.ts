@@ -38,7 +38,7 @@ describe("formatIssueDisplayText", () => {
 
 describe("formatRequirementCellText", () => {
   // The exact shape a NATIVE requirement produces: CreateRequirementDialog
-  // and RequirementsTreeView's rename handler both write the identical
+  // and RequirementsListView's rename handler both write the identical
   // trimmed string to name (requirementKey) and title (requirementTitle).
   it("renders the name ONCE for a native requirement (title === key)", () => {
     expect(
