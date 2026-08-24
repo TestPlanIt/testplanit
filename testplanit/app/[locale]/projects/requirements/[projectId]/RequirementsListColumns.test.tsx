@@ -193,6 +193,8 @@ const onAddChild = vi.fn();
 const onRequestRename = vi.fn();
 const onRequestDelete = vi.fn();
 const onDetached = vi.fn();
+const markDragActive = vi.fn();
+const clearDragActive = vi.fn();
 
 function baseArgs(overrides: Partial<ColumnsArgs> = {}): ColumnsArgs {
   return {
@@ -212,6 +214,8 @@ function baseArgs(overrides: Partial<ColumnsArgs> = {}): ColumnsArgs {
     onRequestRename,
     onRequestDelete,
     onDetached,
+    markDragActive,
+    clearDragActive,
     ...overrides,
   };
 }
@@ -279,6 +283,8 @@ beforeEach(() => {
   onRequestRename.mockReset();
   onRequestDelete.mockReset();
   onDetached.mockReset();
+  markDragActive.mockReset();
+  clearDragActive.mockReset();
   dragSpecRef.current = null;
   mockIsProjectAdmin = true;
   capturedFetchOptionsList.length = 0;
@@ -793,10 +799,59 @@ describe("RequirementNameCell", () => {
   it("tags the drag item with ItemTypes.REQUIREMENT and carries the requirement id", () => {
     renderNameCell(makeRow({ id: 16, name: "Login flow" }));
     expect(dragSpecRef.current.type).toBe(ItemTypes.REQUIREMENT);
-    expect(dragSpecRef.current.item).toEqual({
+    // `item` is a FUNCTION, not a static object (gap closure 26.2-16): react-
+    // dnd calls it once at dragstart, which is exactly where the
+    // markDragActive side effect below must run.
+    expect(dragSpecRef.current.item()).toEqual({
       requirementId: 16,
       name: "Login flow",
     });
+  });
+
+  it("renders a grab handle when the row can be dragged", () => {
+    renderNameCell(makeRow({ id: 20 }), {
+      canAddEdit: true,
+      isFiltering: false,
+    });
+    expect(
+      screen.getByTestId("requirement-drag-handle-20")
+    ).toBeInTheDocument();
+  });
+
+  it("omits the grab handle when the viewer cannot edit", () => {
+    renderNameCell(makeRow({ id: 21 }), { canAddEdit: false });
+    expect(
+      screen.queryByTestId("requirement-drag-handle-21")
+    ).not.toBeInTheDocument();
+  });
+
+  it("omits the grab handle while filtering", () => {
+    renderNameCell(makeRow({ id: 22 }), {
+      canAddEdit: true,
+      isFiltering: true,
+    });
+    expect(
+      screen.queryByTestId("requirement-drag-handle-22")
+    ).not.toBeInTheDocument();
+  });
+
+  it("dragstart (item()) calls markDragActive with this row's id; end() calls clearDragActive", () => {
+    renderNameCell(makeRow({ id: 23, name: "Login flow" }));
+
+    dragSpecRef.current.item();
+    expect(markDragActive).toHaveBeenCalledWith(23);
+    expect(clearDragActive).not.toHaveBeenCalled();
+
+    dragSpecRef.current.end();
+    expect(clearDragActive).toHaveBeenCalledTimes(1);
+
+    // Belt-and-braces: a second end() (mirroring the native dragend path
+    // this cell also wires) must not throw and stays a no-op on the mock's
+    // own call count assertion above -- idempotency is `clearDragActive`'s
+    // own contract (RequirementsListView.tsx), this only proves the cell
+    // calls it again rather than skipping cleanup.
+    expect(() => dragSpecRef.current.end()).not.toThrow();
+    expect(clearDragActive).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   act,
   fireEvent,
@@ -732,6 +734,111 @@ describe("RequirementsListView", () => {
         target: { value: "root a" },
       });
       expect(dropSpecs.list.canDrop()).toBe(false);
+    });
+  });
+
+  // Gap closure 26.2-16 (UAT gap 9 rebuild): the mechanism-level proof that
+  // the drag affordances are direct DOM attributes/CSS, never React state.
+  // jsdom cannot drive real HTML5 drag choreography or assert computed
+  // visual state -- these tests drive the captured `useDrag` spec's
+  // `item()`/`end()` directly (mirroring the reparent describe block above)
+  // and assert only the DOM attributes/classes those calls produce. The
+  // real-browser drag check remains mandatory UAT.
+  describe("drag affordances (direct DOM attributes, no re-render)", () => {
+    beforeEach(() => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it("useDragLayer is structurally absent -- the mechanism that killed the gesture must never return", () => {
+      const source = fs.readFileSync(
+        path.join(
+          process.cwd(),
+          "app/[locale]/projects/requirements/[projectId]/RequirementsListView.tsx"
+        ),
+        "utf8"
+      );
+      expect(source).not.toContain("useDragLayer");
+    });
+
+    it("item() marks the container and the source row; end() clears both; a second end() is idempotent", () => {
+      renderView();
+
+      const container = screen.getByTestId("requirements-list-container");
+      const row = screen.getByTestId("requirement-row-1");
+
+      expect(container).not.toHaveAttribute("data-req-drag");
+      expect(row).not.toHaveAttribute("data-req-dragged");
+
+      dragSpecRef.current.item();
+
+      expect(container).toHaveAttribute("data-req-drag", "active");
+      expect(row).toHaveAttribute("data-req-dragged", "true");
+
+      dragSpecRef.current.end();
+
+      expect(container).not.toHaveAttribute("data-req-drag");
+      expect(row).not.toHaveAttribute("data-req-dragged");
+
+      // Belt-and-braces: a cancelled drag's native `dragend` firing on top
+      // of react-dnd's own `end()` must never throw or leave a stray
+      // attribute behind.
+      expect(() => dragSpecRef.current.end()).not.toThrow();
+      expect(container).not.toHaveAttribute("data-req-drag");
+    });
+
+    it("rows carry the static candidate-ring classes unconditionally (never toggled by JS)", () => {
+      renderView();
+      const row = screen.getByTestId("requirement-row-1");
+      expect(row.className).toContain(
+        "[[data-req-drag=active]_&]:inset-ring-2"
+      );
+      expect(row.className).toContain(
+        "[[data-req-drag=active]_&[data-req-dragged]]:inset-ring-0"
+      );
+
+      // Unchanged by the drag lifecycle -- these classes are static, so the
+      // row's className string is identical before and after a drag starts.
+      const classNameBeforeDrag = row.className;
+      dragSpecRef.current.item();
+      expect(row.className).toBe(classNameBeforeDrag);
+      dragSpecRef.current.end();
+    });
+
+    it("the bottom root strip carries the static drag classes and an always-mounted (CSS-hidden) hint", () => {
+      renderView();
+      const strip = screen.getByTestId("requirement-tree-end");
+      expect(strip.className).toContain(
+        "[[data-req-drag=active]_&]:outline-dashed"
+      );
+      const hint = screen.getByTestId("requirement-tree-end-hint");
+      expect(hint).toBeInTheDocument();
+      expect(hint.className).toContain("hidden");
+      expect(hint.textContent).toBe("requirements.tree.dropToRootHint");
+    });
+
+    it("markDragActive/clearDragActive never call a state setter (plain DOM mutation only)", () => {
+      const source = fs.readFileSync(
+        path.join(
+          process.cwd(),
+          "app/[locale]/projects/requirements/[projectId]/RequirementsListView.tsx"
+        ),
+        "utf8"
+      );
+      const markerStart = source.indexOf("const markDragActive");
+      const markerEnd = source.indexOf("const normalizedFilter");
+      expect(markerStart).toBeGreaterThanOrEqual(0);
+      expect(markerEnd).toBeGreaterThan(markerStart);
+      const lifecycleSection = source.slice(markerStart, markerEnd);
+      // Excludes DOM method calls like `container.setAttribute(...)` /
+      // `?.setAttribute(...)` (preceded by `.`) -- only a BARE `setFoo(...)`
+      // call (a React state setter, by this file's own naming convention)
+      // would match here.
+      expect(lifecycleSection).not.toMatch(/(?<!\.)\bset[A-Z][a-zA-Z]*\(/);
     });
   });
 

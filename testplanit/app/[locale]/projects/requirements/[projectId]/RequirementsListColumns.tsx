@@ -5,6 +5,7 @@ import {
   Activity,
   ChevronRight,
   ClipboardPlus,
+  GripVertical,
   MoreVertical,
   SquarePenIcon,
   Trash2Icon,
@@ -102,6 +103,16 @@ interface UseRequirementsListColumnsArgs {
   onRequestRename: (requirement: RequirementRow) => void;
   onRequestDelete: (requirement: RequirementRow) => void;
   onDetached: () => void;
+  /**
+   * Plain DOM mutation, owned by `RequirementsListView.tsx` (it owns the
+   * list container the affordance CSS keys off of). Called from the name
+   * cell's `useDrag` lifecycle only -- NEVER a state setter, so calling
+   * these can never trigger a re-render of the (virtualized) row set. See
+   * `RequirementsListView.tsx`'s `markDragActive`/`clearDragActive` doc
+   * comments for the full contract (gap closure 26.2-16, UAT gap 9 rebuild).
+   */
+  markDragActive: (draggedId: number) => void;
+  clearDragActive: () => void;
 }
 
 /**
@@ -128,6 +139,8 @@ export function useRequirementsListColumns({
   onRequestRename,
   onRequestDelete,
   onDetached,
+  markDragActive,
+  clearDragActive,
 }: UseRequirementsListColumnsArgs): ColumnDef<RequirementRow>[] {
   const {
     columnName: tColumnName,
@@ -162,6 +175,8 @@ export function useRequirementsListColumns({
             onSelectRequirement={onSelectRequirement}
             onRenameCommit={onRenameCommit}
             onRenameCancel={onRenameCancel}
+            markDragActive={markDragActive}
+            clearDragActive={clearDragActive}
           />
         ),
       },
@@ -411,6 +426,8 @@ export function useRequirementsListColumns({
     onRequestRename,
     onRequestDelete,
     onDetached,
+    markDragActive,
+    clearDragActive,
   ]);
 }
 
@@ -500,6 +517,10 @@ interface RequirementNameCellProps {
   onSelectRequirement: (issueId: number) => void;
   onRenameCommit: (issueId: number, nextName: string) => void;
   onRenameCancel: () => void;
+  /** See `UseRequirementsListColumnsArgs`'s doc comment -- plain DOM
+   *  mutation, never a state setter. */
+  markDragActive: (draggedId: number) => void;
+  clearDragActive: () => void;
 }
 
 /**
@@ -521,9 +542,16 @@ function RequirementNameCell({
   onSelectRequirement,
   onRenameCommit,
   onRenameCancel,
+  markDragActive,
+  clearDragActive,
 }: RequirementNameCellProps) {
   const t = useTranslations();
   const label = formatIssueDisplayText(requirement);
+
+  // Single source of truth for "can this row be dragged": the grip handle
+  // below renders from this exact expression, so it is physically incapable
+  // of advertising a drag `canDrag` would refuse (gap 9, T-26.2G-13-01).
+  const canDragRow = canAddEdit && !isFiltering;
 
   const [{ isDragging }, dragRef] = useDrag<
     RequirementDragItem,
@@ -532,11 +560,22 @@ function RequirementNameCell({
   >(
     () => ({
       type: ItemTypes.REQUIREMENT,
-      item: { requirementId: requirement.id, name: label },
-      canDrag: () => canAddEdit && !isFiltering,
+      // A function, not a static object: react-dnd calls this once at
+      // dragstart, which is exactly where the DOM-attribute side effect
+      // below must run (gap closure 26.2-16 -- no React state involved).
+      item: () => {
+        markDragActive(requirement.id);
+        return { requirementId: requirement.id, name: label };
+      },
+      canDrag: () => canDragRow,
+      // Fires on both drop and cancel (react-dnd's own contract) -- the
+      // primary cleanup path.
+      end: () => {
+        clearDragActive();
+      },
       collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     }),
-    [requirement.id, label, canAddEdit, isFiltering]
+    [requirement.id, label, canDragRow, markDragActive, clearDragActive]
   );
 
   return (
@@ -550,6 +589,11 @@ function RequirementNameCell({
       )}
       style={{ paddingInlineStart: requirement.depth * 24 }}
       onClick={() => onSelectRequirement(requirement.id)}
+      // Belt-and-braces (gap closure 26.2-16): a native `dragend` listener
+      // alongside react-dnd's own `end()` above, so a drag whose `end()`
+      // never fires (e.g. an unmount race) can never strand the attribute.
+      // `clearDragActive` is idempotent -- see its own doc comment.
+      onDragEnd={() => clearDragActive()}
       data-testid={`requirement-name-cell-${requirement.id}`}
       title={
         !canAddEdit || isFiltering
@@ -557,6 +601,13 @@ function RequirementNameCell({
           : undefined
       }
     >
+      {canDragRow && (
+        <GripVertical
+          className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+          aria-hidden="true"
+          data-testid={`requirement-drag-handle-${requirement.id}`}
+        />
+      )}
       {requirement.hasChildren ? (
         <button
           type="button"

@@ -68,6 +68,26 @@ interface RequirementsListViewProps extends RequirementSelection {
   projectId: string;
 }
 
+// Gap closure 26.2-16 (UAT gap 9 rebuild): the attribute + row-lookup
+// contract `markDragActive`/`clearDragActive` below toggle. `data-req-drag`
+// lives on the list container; `data-req-dragged` lives on the one row
+// being dragged. Every row carries these classes UNCONDITIONALLY (see
+// `getRowProps` below) -- visibility is 100% CSS, driven by the ancestor
+// attribute, so toggling the attribute during a drag re-renders nothing.
+// HARD-WON CONTEXT: a monitor-subscribed className toggle across the row
+// set (the reverted plan-13 mechanism, deliberately not named here so a
+// literal grep for it stays a true structural guard) is the exact thing
+// that broke real HTML5 drag in Chrome (reverted in 1208deb2c) -- this must
+// never regress to that shape.
+const ROW_DRAG_CANDIDATE_CLASSNAME =
+  "[[data-req-drag=active]_&]:inset-ring-2 [[data-req-drag=active]_&]:inset-ring-primary/40 [[data-req-drag=active]_&[data-req-dragged]]:inset-ring-0";
+
+const ROOT_STRIP_DRAG_CLASSNAME =
+  "[[data-req-drag=active]_&]:rounded-md [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40";
+
+const ROOT_STRIP_HINT_CLASSNAME =
+  "pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-muted-foreground [[data-req-drag=active]_&]:flex";
+
 /**
  * The tree-table rebuild of the requirements list (D-04a: a new file, not an
  * in-place rewrite of the earlier react-arborist tree component -- see
@@ -131,6 +151,35 @@ export default function RequirementsListView({
   const setDragOverRow = useCallback((id: number | null) => {
     dragOverRequirementIdRef.current = id;
     setDragOverRequirementId(id);
+  }, []);
+
+  // This view owns the container the affordance CSS above keys off of, so it
+  // owns the attribute lifecycle too -- the name cell (RequirementsListColumns
+  // .tsx) only ever CALLS these two, never touches the DOM itself. Plain
+  // functions, never a state setter: no React re-render can occur on the
+  // dragstart/dragend path.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const markDragActive = useCallback((draggedId: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.setAttribute("data-req-drag", "active");
+    // `requirement-row-` matches `rowTestIdPrefix` on the `<DataTable>`
+    // below -- the two are coupled by construction, not by import, since
+    // `rowTestIdPrefix` is a plain string prop, not an exported constant.
+    container
+      .querySelector(`[data-testid="requirement-row-${draggedId}"]`)
+      ?.setAttribute("data-req-dragged", "true");
+  }, []);
+  const clearDragActive = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    container.removeAttribute("data-req-drag");
+    // Idempotent and belt-and-braces: a cancelled drag whose dragged row
+    // unmounted/remounted (e.g. a filter changed mid-drag) still gets swept
+    // by attribute rather than by remembered id.
+    container
+      .querySelectorAll("[data-req-dragged]")
+      .forEach((el) => el.removeAttribute("data-req-dragged"));
   }, []);
 
   const normalizedFilter = filterQuery.trim().toLowerCase();
@@ -579,10 +628,15 @@ export default function RequirementsListView({
             setDragOverRow(null);
           }
         },
+        // `ROW_DRAG_CANDIDATE_CLASSNAME` is present on EVERY droppable row
+        // regardless of drag state -- it is inert until `data-req-drag`
+        // appears on the container (pure CSS), so appending the existing
+        // hover-outline class here never toggles a NEW class during a drag,
+        // only the pre-existing, operator-proven hover path does.
         className:
           dragOverRequirementId === requirement.id
-            ? "outline outline-2 outline-primary -outline-offset-2"
-            : undefined,
+            ? `${ROW_DRAG_CANDIDATE_CLASSNAME} outline outline-2 outline-primary -outline-offset-2`
+            : ROW_DRAG_CANDIDATE_CLASSNAME,
       };
     },
     [canAddEdit, isFiltering, dragOverRequirementId, setDragOverRow]
@@ -614,6 +668,8 @@ export default function RequirementsListView({
     onRequestRename: handleRequestRename,
     onRequestDelete: handleRequestDelete,
     onDetached: handleDetached,
+    markDragActive,
+    clearDragActive,
   });
 
   // Render states, in this exact order (D-04d fixes a real bug: the prior
@@ -684,7 +740,11 @@ export default function RequirementsListView({
           )}
         </div>
       ) : (
-        <div className="flex h-full min-w-[220px] flex-col">
+        <div
+          ref={containerRef}
+          className="flex h-full min-w-[220px] flex-col"
+          data-testid="requirements-list-container"
+        >
           <div className="mb-2 ms-1 me-2 flex flex-wrap items-center gap-2">
             <div className="relative grow shrink basis-[120px] min-w-[120px] max-w-lg">
               <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -908,9 +968,26 @@ export default function RequirementsListView({
               ref={(el) => {
                 bottomDropRef(el);
               }}
-              className="h-16 w-full relative shrink-0"
+              // `ROOT_STRIP_DRAG_CLASSNAME` is static -- always present,
+              // never toggled by JS -- and only paints once `data-req-drag`
+              // appears on the container above (pure CSS, gap closure
+              // 26.2-16). `isOverBottom` below is unrelated: it comes from
+              // this element's OWN `useDrop` collector, so only this single,
+              // non-virtualized node re-renders on hover, never the row set.
+              className={`h-16 w-full relative shrink-0 ${ROOT_STRIP_DRAG_CLASSNAME}`}
               data-testid="requirement-tree-end"
             >
+              {/* Always mounted; `hidden` by default, shown by the same
+                  container attribute -- see the comment on
+                  `ROOT_STRIP_HINT_CLASSNAME`'s declaration. The real-browser
+                  drag check remains mandatory UAT: jsdom cannot assert
+                  computed visibility here. */}
+              <div
+                className={ROOT_STRIP_HINT_CLASSNAME}
+                data-testid="requirement-tree-end-hint"
+              >
+                {t("requirements.tree.dropToRootHint")}
+              </div>
               {isOverBottom && (
                 <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
                   <div
