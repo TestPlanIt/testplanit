@@ -823,22 +823,56 @@ describe("RequirementsListView", () => {
       expect(container).not.toHaveAttribute("data-req-drag");
     });
 
-    it("rows carry the static candidate-ring classes unconditionally (never toggled by JS)", () => {
+    // Gap closure 26.2-15 (UAT gap 12) moved these classes off the row's own
+    // box onto the engine's pointer-events-none ring overlay (a child of the
+    // row, `requirement-row-{id}-ring`) so the ring paints above the pinned
+    // Actions cell instead of losing to it.
+    it("rows carry the static candidate-ring classes unconditionally on the ring overlay (never toggled by JS)", () => {
       renderView();
       const row = screen.getByTestId("requirement-row-1");
-      expect(row.className).toContain(
+      const ring = row.querySelector(
+        '[data-testid="requirement-row-1-ring"]'
+      ) as HTMLElement;
+      expect(ring).toBeInTheDocument();
+      expect(ring.className).toContain(
         "[[data-req-drag=active]_&]:inset-ring-2"
       );
-      expect(row.className).toContain(
-        "[[data-req-drag=active]_&[data-req-dragged]]:inset-ring-0"
-      );
+      // An ANCESTOR check, not a same-element compound one -- `data-req-
+      // dragged` lives on the ROW (the overlay's parent), never on the
+      // overlay itself.
+      expect(ring.className).toContain("[[data-req-dragged]_&]:inset-ring-0");
 
       // Unchanged by the drag lifecycle -- these classes are static, so the
-      // row's className string is identical before and after a drag starts.
-      const classNameBeforeDrag = row.className;
+      // overlay's className string is identical before and after a drag
+      // starts.
+      const classNameBeforeDrag = ring.className;
       dragSpecRef.current.item();
-      expect(row.className).toBe(classNameBeforeDrag);
+      expect(
+        (
+          row.querySelector(
+            '[data-testid="requirement-row-1-ring"]'
+          ) as HTMLElement
+        ).className
+      ).toBe(classNameBeforeDrag);
       dragSpecRef.current.end();
+    });
+
+    // Gap closure 26.2-15 (UAT gap 12): the SAME overlay treatment applies to
+    // the dynamic drag-over hover ring, not just the static candidate-ring
+    // classes above.
+    it("the drag-over hover ring renders on the row's ring overlay, not the row's own box", () => {
+      renderView();
+      const row = screen.getByTestId("requirement-row-1");
+
+      fireEvent.dragEnter(row);
+
+      const ring = row.querySelector(
+        '[data-testid="requirement-row-1-ring"]'
+      ) as HTMLElement;
+      expect(ring.className).toContain("outline-2");
+      expect(ring.className).toContain("outline-primary");
+      expect(ring.className).toContain("-outline-offset-2");
+      expect(row.className).not.toContain("outline-primary");
     });
 
     it("the bottom root strip carries the static drag classes and an always-mounted (CSS-hidden) hint", () => {

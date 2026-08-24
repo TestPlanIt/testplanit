@@ -87,16 +87,22 @@ export interface RequirementsListViewHandle {
 // Gap closure 26.2-16 (UAT gap 9 rebuild): the attribute + row-lookup
 // contract `markDragActive`/`clearDragActive` below toggle. `data-req-drag`
 // lives on the list container; `data-req-dragged` lives on the one row
-// being dragged. Every row carries these classes UNCONDITIONALLY (see
-// `getRowProps` below) -- visibility is 100% CSS, driven by the ancestor
-// attribute, so toggling the attribute during a drag re-renders nothing.
-// HARD-WON CONTEXT: a monitor-subscribed className toggle across the row
-// set (the reverted plan-13 mechanism, deliberately not named here so a
-// literal grep for it stays a true structural guard) is the exact thing
-// that broke real HTML5 drag in Chrome (reverted in 1208deb2c) -- this must
-// never regress to that shape.
+// being dragged. Every row carries these classes UNCONDITIONALLY, on the
+// engine's own pointer-events-none ring overlay rather than the row's own
+// box (see `getRowProps`'s `ringClassName` below -- gap closure 26.2-15,
+// UAT gap 12: an inset-ring/outline painted directly on the row lost to the
+// pinned Actions cell's opaque sticky background) -- visibility is 100% CSS,
+// driven by the ancestor attribute, so toggling the attribute during a drag
+// re-renders nothing. The third clause below is an ANCESTOR check
+// (`[data-req-dragged] &`), not a same-element compound one, because
+// `data-req-dragged` still lives on the ROW (the overlay's parent), never on
+// the overlay itself. HARD-WON CONTEXT: a monitor-subscribed className
+// toggle across the row set (the reverted plan-13 mechanism, deliberately
+// not named here so a literal grep for it stays a true structural guard) is
+// the exact thing that broke real HTML5 drag in Chrome (reverted in
+// 1208deb2c) -- this must never regress to that shape.
 const ROW_DRAG_CANDIDATE_CLASSNAME =
-  "[[data-req-drag=active]_&]:inset-ring-2 [[data-req-drag=active]_&]:inset-ring-primary/40 [[data-req-drag=active]_&[data-req-dragged]]:inset-ring-0";
+  "[[data-req-drag=active]_&]:inset-ring-2 [[data-req-drag=active]_&]:inset-ring-primary/40 [[data-req-dragged]_&]:inset-ring-0";
 
 const ROOT_STRIP_DRAG_CLASSNAME =
   "[[data-req-drag=active]_&]:rounded-md [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40";
@@ -664,8 +670,10 @@ const RequirementsListView = forwardRef<
         // regardless of drag state -- it is inert until `data-req-drag`
         // appears on the container (pure CSS), so appending the existing
         // hover-outline class here never toggles a NEW class during a drag,
-        // only the pre-existing, operator-proven hover path does.
-        className:
+        // only the pre-existing, operator-proven hover path does. Rendered
+        // on the engine's ring overlay (`ringClassName`), not the row's own
+        // `className` -- gap closure 26.2-15, UAT gap 12.
+        ringClassName:
           dragOverRequirementId === requirement.id
             ? `${ROW_DRAG_CANDIDATE_CLASSNAME} outline outline-2 outline-primary -outline-offset-2`
             : ROW_DRAG_CANDIDATE_CLASSNAME,

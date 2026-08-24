@@ -284,17 +284,26 @@ describe("DataTable (virtualized mode)", () => {
     expect(hookMock.scrollToIndex).not.toHaveBeenCalled();
   });
 
-  it("draws a highlight ring on the deep-linked row", () => {
+  it("draws a highlight ring on the deep-linked row's overlay, not the row's own box (gap closure 26.2-15 moved the outline off the row)", () => {
     renderTable({ highlightRowId: 1 });
     const highlighted = screen
       .getByText("Alpha")
       .closest('[role="row"]') as HTMLElement;
-    expect(highlighted.className).toContain("outline-primary");
-    // The other row is not highlighted.
+    const ring = highlighted.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    expect(ring).toBeInTheDocument();
+    expect(ring.className).toContain("outline-primary");
+    // The row itself only carries the translucent tint now.
+    expect(highlighted.className).toContain("bg-primary/10");
+    expect(highlighted.className).not.toContain("outline-primary");
+    // The other row is not highlighted -- no overlay at all.
     const other = screen
       .getByText("Beta")
       .closest('[role="row"]') as HTMLElement;
-    expect(other.className).not.toContain("outline-primary");
+    expect(
+      other.querySelector('[data-testid="virtualized-row-2-ring"]')
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the highlight ring fully inside the row so the scroll container's clip edge can't shave it (a ring edge clipped by the scroll container)", () => {
@@ -302,12 +311,66 @@ describe("DataTable (virtualized mode)", () => {
     const highlighted = screen
       .getByText("Alpha")
       .closest('[role="row"]') as HTMLElement;
+    const ring = highlighted.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
     // outline-4 with -outline-offset-4 draws the ring entirely inside the
-    // row's own border box. -outline-offset-2 left 2px bleeding outside the
-    // box, which the absolutely-positioned row's clipping scroll container
-    // shaved off the start/end edges.
-    expect(highlighted.className).toContain("-outline-offset-4");
-    expect(highlighted.className).not.toContain("-outline-offset-2");
+    // overlay's own border box (which exactly covers the row via inset-0).
+    // -outline-offset-2 left 2px bleeding outside the box, which the
+    // absolutely-positioned row's clipping scroll container shaved off the
+    // start/end edges.
+    expect(ring.className).toContain("-outline-offset-4");
+    expect(ring.className).not.toContain("-outline-offset-2");
+  });
+
+  it("renders the ring overlay pointer-events-none with a z-index class above the pinned cell's -- jsdom can't compute real paint order, so this pins the MECHANISM: the pinned cell's own z-index (2, set inline by getFlexPinningStyles in dataTableShared.tsx) is a fixed, known constant strictly below the overlay's z-20", () => {
+    renderTable({ highlightRowId: 1 });
+    const row1 = screen.getByTestId("virtualized-row-1");
+    const ring = row1.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    expect(ring.className).toContain("pointer-events-none");
+    expect(ring.className).toContain("z-20");
+
+    // Default pinning (pinFirstLast) freezes the last column ("count") right.
+    const pinnedCell = row1.querySelector(
+      '[data-column-id="count"]'
+    ) as HTMLElement;
+    expect(pinnedCell.style.zIndex).toBe("2");
+  });
+
+  it("composes a consumer's ringClassName with the built-in highlight ring on the SAME overlay, and renders the overlay even without highlightRowId when only ringClassName is supplied", () => {
+    renderTable({
+      highlightRowId: 1,
+      getRowProps: (row) =>
+        row.original.id === 1
+          ? { ringClassName: "drag-ring-test" }
+          : { ringClassName: "drag-ring-test-2" },
+    });
+    const row1 = screen.getByTestId("virtualized-row-1");
+    const ring1 = row1.querySelector(
+      '[data-testid="virtualized-row-1-ring"]'
+    ) as HTMLElement;
+    expect(ring1.className).toContain("outline-primary");
+    expect(ring1.className).toContain("drag-ring-test");
+
+    // Row 2 is not highlighted, but its own ringClassName alone still mounts
+    // the overlay (the candidate-row ring must render without a selection).
+    const row2 = screen.getByTestId("virtualized-row-2");
+    const ring2 = row2.querySelector(
+      '[data-testid="virtualized-row-2-ring"]'
+    ) as HTMLElement;
+    expect(ring2).toBeInTheDocument();
+    expect(ring2.className).toContain("drag-ring-test-2");
+    expect(ring2.className).not.toContain("outline-primary");
+  });
+
+  it("mounts no ring overlay at all for a plain row (no highlight, no ringClassName)", () => {
+    renderTable();
+    const row1 = screen.getByTestId("virtualized-row-1");
+    expect(
+      row1.querySelector('[data-testid="virtualized-row-1-ring"]')
+    ).not.toBeInTheDocument();
   });
 
   it("shows drag-to-reorder grips on non-pinned columns when the table persists state", () => {

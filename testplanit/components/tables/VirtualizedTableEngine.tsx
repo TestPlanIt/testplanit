@@ -165,6 +165,18 @@ function SortableHeaderShell({
  */
 export interface VirtualizedRowExtraProps {
   className?: string;
+  /**
+   * Classes rendered on the row's pointer-events-none ring overlay (gap
+   * closure 26.2-15, UAT gap 12) instead of on the row's own `className`.
+   * An outline/inset-ring drawn directly on the row loses to a pinned
+   * (sticky) cell's opaque background and `z-index: 2` (`getFlexPinningStyles`
+   * in `dataTableShared.tsx`) -- the pinned cell paints over it. The overlay
+   * sits ABOVE every cell (`z-20`) and never intercepts pointer/drag events,
+   * so a candidate-row or drag-hover ring stays visible across the FULL row
+   * width, including over a pinned Actions column, while pinned-cell clicks
+   * (e.g. the kebab menu) keep working unchanged.
+   */
+  ringClassName?: string;
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   onDragEnter?: (event: React.DragEvent<HTMLDivElement>) => void;
   onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -1033,20 +1045,10 @@ export function VirtualizedTableEngine({
                             // next (lighter) parent row is clearly the boundary.
                             tableStyles.rowSurfaceNested
                           : tableStyles.rowSurface,
-                      // Offset must equal the negated outline width: this row
-                      // div is absolutely positioned inside a clipping scroll
-                      // container, so any part of the outline that bleeds
-                      // outside the row's own border box gets clipped. At
-                      // -outline-offset-2 with a 4px outline, 2px bled past
-                      // the edge -- invisible on the start/end sides (the
-                      // container's clip edge) but rendered on top/bottom
-                      // (which overlap neighbouring rows instead), producing
-                      // a ring that looked half-thickness on one side and
-                      // fully clipped on the other. -outline-offset-4 draws
-                      // the whole ring inside the box, so there's nothing
-                      // left for the container to clip.
-                      isHighlighted &&
-                        "bg-primary/10 outline outline-4 -outline-offset-4 outline-primary",
+                      // Tint only -- the outline itself moved to the ring
+                      // overlay below (gap closure 26.2-15) so it paints
+                      // above pinned cells too.
+                      isHighlighted && "bg-primary/10",
                       rowExtra?.className
                     )}
                     style={{
@@ -1119,6 +1121,44 @@ export function VirtualizedTableEngine({
                         </div>
                       );
                     })}
+                    {/* Ring/highlight overlay -- rendered ABOVE every cell,
+                        including a pinned (sticky) one, so an outline drawn
+                        here can never lose to the pinned cell's own opaque
+                        background + `z-index: 2` the way one painted on the
+                        row's own box does (gap closure 26.2-15, UAT gap 12).
+                        `pointer-events-none` so it never steals a click from
+                        the pinned Actions cell's kebab menu, or a native
+                        drag event from the row beneath it. Only mounted when
+                        there is something to show -- `isHighlighted` (the
+                        deep-link ring) or a consumer's own `ringClassName`
+                        (e.g. the requirements list's drag-candidate/drag-over
+                        rings) -- so a plain, unselected row costs nothing
+                        extra. */}
+                    {(isHighlighted || rowExtra?.ringClassName) && (
+                      <div
+                        aria-hidden="true"
+                        data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}-ring`}
+                        className={cn(
+                          "pointer-events-none absolute inset-0 z-20",
+                          // Offset must equal the negated outline width: the
+                          // row is absolutely positioned inside a clipping
+                          // scroll container, so any part of the outline
+                          // that bleeds outside the overlay's own border box
+                          // gets clipped. At -outline-offset-2 with a 4px
+                          // outline, 2px bled past the edge -- invisible on
+                          // the start/end sides (the container's clip edge)
+                          // but rendered on top/bottom (which overlap
+                          // neighbouring rows instead), producing a ring
+                          // that looked half-thickness on one side and fully
+                          // clipped on the other. -outline-offset-4 draws
+                          // the whole ring inside the box, so there's
+                          // nothing left for the container to clip.
+                          isHighlighted &&
+                            "outline outline-4 -outline-offset-4 outline-primary",
+                          rowExtra?.ringClassName
+                        )}
+                      />
+                    )}
                   </div>
                 );
               })}
