@@ -66,6 +66,19 @@ export function coverageSortValue(
 interface CoverageChipProps {
   breakdown: CoverageBreakdown | undefined;
   className?: string;
+  /**
+   * Which state renders the dashed "Uncovered" warning. Defaults to
+   * `"no-completed-outcome"` — the milestone surface defines coverage as a
+   * completed outcome IN THIS RELEASE'S SCOPE, so cases that are linked but
+   * never run here are genuinely a gap on this page. The requirements
+   * domain disagrees: its gap report, its traceability export, and the
+   * coverage service's own status ladder all define Uncovered as "nothing
+   * linked anywhere in the subtree" — a requirement with linked-but-
+   * unexecuted cases is not a gap there. Pass `"no-linked-cases"` to render
+   * with that definition instead; a chip that contradicted two shipped
+   * surfaces would be worse than a prop.
+   */
+  uncoveredWhen?: "no-completed-outcome" | "no-linked-cases";
 }
 
 /**
@@ -81,7 +94,11 @@ interface CoverageChipProps {
  * Issues with no linked cases keep the visually distinct "Uncovered" chip
  * (warning tokens) — a gap warning, not another result color (D-05).
  */
-export function CoverageChip({ breakdown, className }: CoverageChipProps) {
+export function CoverageChip({
+  breakdown,
+  className,
+  uncoveredWhen = "no-completed-outcome",
+}: CoverageChipProps) {
   const t = useTranslations("milestones.members");
   const tCommon = useTranslations("common");
 
@@ -90,11 +107,16 @@ export function CoverageChip({ breakdown, className }: CoverageChipProps) {
   // missing results + no-status/non-completed results + system 'untested'.
   const untested = breakdown?.untested ?? 0;
 
+  const isUncovered =
+    uncoveredWhen === "no-linked-cases"
+      ? !breakdown || breakdown.linkedCaseCount === 0
+      : !hasCompletedCoverage(breakdown);
+
   // Uncovered = no COMPLETED test outcome in scope: either the issue has
   // no linked cases at all, or none of its linked cases has a completed
   // in-scope result. The tooltip keeps the untested count so "cases exist
   // but were never executed here" stays visible.
-  if (!hasCompletedCoverage(breakdown)) {
+  if (isUncovered) {
     const tooltip =
       breakdown && breakdown.linkedCaseCount > 0
         ? `${tCommon("labels.untested")}: ${untested}`
