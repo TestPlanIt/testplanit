@@ -97,6 +97,7 @@ import {
 
 export { reconcileColumnOrder } from "./dataTableShared";
 export type { CustomColumnMeta, DataRow } from "./dataTableShared";
+export type { VirtualizedRowExtraProps } from "./VirtualizedTableEngine";
 
 // Structure for items passed to SortableItem for drag preview
 interface DraggedCaseInfoForSortableItem {
@@ -222,6 +223,7 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "scrollToRowId"
       | "highlightRowId"
       | "testIdPrefix"
+      | "getRowProps"
     > {
   virtualized: true;
 }

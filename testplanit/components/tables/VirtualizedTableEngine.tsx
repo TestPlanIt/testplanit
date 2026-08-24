@@ -25,6 +25,7 @@ import {
   getExpandedRowModel,
   getGroupedRowModel,
   OnChangeFn,
+  Row,
   RowSelectionState,
   Updater,
   useReactTable,
@@ -155,6 +156,19 @@ function SortableHeaderShell({
     </button>
   );
   return <>{children({ setNodeRef, dragStyle, grip })}</>;
+}
+
+/**
+ * Inert DOM props a consumer can attach to a virtualized row's outer element
+ * via `getRowProps`. Deliberately has NO `ref` member — see `getRowProps`'s
+ * own doc comment for why.
+ */
+export interface VirtualizedRowExtraProps {
+  className?: string;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onDragEnter?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave?: (event: React.DragEvent<HTMLDivElement>) => void;
 }
 
 export interface VirtualizedTableEngineProps {
@@ -341,6 +355,24 @@ export interface VirtualizedTableEngineProps {
    * when the highlight should fade.
    */
   highlightRowId?: string | number | null;
+  /**
+   * Per-row extension point for inert DOM props on a virtualized row's outer
+   * element. Called once per VISIBLE row on every render (the visible row
+   * count changes as the user scrolls), so it MUST be a pure function and
+   * MUST NEVER call a React hook — hang any per-row hook off a real
+   * component instead, never off this callback.
+   *
+   * The returned `className` is appended LAST to the row's own class list,
+   * so it composes with (and can override) the engine's `highlightRowId`
+   * treatment rather than replacing it.
+   *
+   * There is deliberately no `ref` slot: the engine's own virtualizer
+   * `measureElement` ref must keep a stable identity, or TanStack Virtual
+   * re-measures every row on every render. A consumer that needs the row's
+   * DOM node reads `event.currentTarget` from one of the handlers below, or
+   * queries `[data-row-id]`.
+   */
+  getRowProps?: (row: Row<any>) => VirtualizedRowExtraProps | undefined;
   testIdPrefix?: string;
   rowTestIdPrefix?: string;
 }
@@ -384,6 +416,7 @@ export function VirtualizedTableEngine({
   fillViewport = false,
   scrollToRowId,
   highlightRowId,
+  getRowProps,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
 }: VirtualizedTableEngineProps) {
@@ -956,6 +989,7 @@ export function VirtualizedTableEngine({
                 const isHighlighted =
                   highlightRowId != null &&
                   String(row.original?.id) === String(highlightRowId);
+                const rowExtra = getRowProps?.(row);
                 return (
                   <div
                     // Key by the virtual item (index), not the data id, so React
@@ -969,10 +1003,23 @@ export function VirtualizedTableEngine({
                     data-row-id={row.original?.id}
                     data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}`}
                     onClick={
-                      onRowClick && !isGrouped && row.original?.id != null
-                        ? () => onRowClick(row.original.id)
+                      (onRowClick && !isGrouped && row.original?.id != null) ||
+                      rowExtra?.onClick
+                        ? (event) => {
+                            if (
+                              onRowClick &&
+                              !isGrouped &&
+                              row.original?.id != null
+                            ) {
+                              onRowClick(row.original.id);
+                            }
+                            rowExtra?.onClick?.(event);
+                          }
                         : undefined
                     }
+                    onDragEnter={rowExtra?.onDragEnter}
+                    onDragOver={rowExtra?.onDragOver}
+                    onDragLeave={rowExtra?.onDragLeave}
                     className={cn(
                       "absolute start-0 top-0 flex border-b",
                       onRowClick && !isGrouped && "cursor-pointer",
@@ -987,7 +1034,8 @@ export function VirtualizedTableEngine({
                             tableStyles.rowSurfaceNested
                           : tableStyles.rowSurface,
                       isHighlighted &&
-                        "bg-primary/10 outline outline-4 -outline-offset-2 outline-primary"
+                        "bg-primary/10 outline outline-4 -outline-offset-2 outline-primary",
+                      rowExtra?.className
                     )}
                     style={{
                       width: tableWidth,
