@@ -6757,6 +6757,7 @@
       "showOnlyUncovered": "Show only uncovered",
       "showOnlyUncoveredUnavailable": "Coverage data isn't available right now.",
       "loadFailed": "Failed to load coverage.",
+      "retry": "Retry",
       "panelTitle": "Covering Test Cases",
       "panelDescription": "Test cases linked to this requirement and its descendants.",
       "panelEmpty": "No test cases cover this requirement yet.",

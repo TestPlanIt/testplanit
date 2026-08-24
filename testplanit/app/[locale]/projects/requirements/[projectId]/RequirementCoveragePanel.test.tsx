@@ -308,6 +308,40 @@ describe("RequirementCoveragePanel", () => {
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 
+  // F6: a failed fetch must never be indistinguishable from a genuine
+  // zero. Before the fix, `useRequirementCoveringCases`'s errored query
+  // still has `data === undefined`, so `rows = data?.cases ?? []` is empty
+  // and the panel fell into the exact same branch as the true-empty test
+  // above -- rendering "panelEmpty" for a fetch that never returned an
+  // answer. This asserts the two states are NOT rendered the same way.
+  it("renders a distinct error affordance -- never the empty-state copy -- when the covering-cases fetch fails", async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes("/covering-cases")) {
+        return { ok: false, json: async () => ({}) } as Response;
+      }
+      if (url.includes("/requirements/coverage")) {
+        return { ok: true, json: async () => ({ coverage: {} }) } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    }) as any;
+
+    renderPanel();
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirement-coverage-error")
+      ).toBeInTheDocument();
+    });
+
+    // The failure copy renders...
+    expect(screen.getByText("loadFailed")).toBeInTheDocument();
+    // ...and the empty-state copy, which would falsely claim zero
+    // covering cases, must NOT render alongside or instead of it.
+    expect(screen.queryByText("panelEmpty")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("loading-spinner")).not.toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
   it("surfaces the cross-project case count when the rollup reports one", async () => {
     stubFetch({
       cases: [baseCase],

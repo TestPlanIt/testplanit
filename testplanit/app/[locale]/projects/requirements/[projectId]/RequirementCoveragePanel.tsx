@@ -8,6 +8,7 @@ import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -60,10 +61,12 @@ export function RequirementCoveragePanel({
 }: RequirementCoveragePanelProps) {
   const t = useTranslations("requirements.coverage");
 
-  const { data, isLoading } = useRequirementCoveringCases(
-    Number(projectId),
-    requirementId
-  );
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } = useRequirementCoveringCases(Number(projectId), requirementId);
 
   // Free read -- the tree above this panel already fetches project-wide
   // coverage through this exact hook, whose stable
@@ -112,11 +115,35 @@ export function RequirementCoveragePanel({
           <div className="flex justify-center p-4">
             <LoadingSpinner />
           </div>
+        ) : isError ? (
+          // F6: a failed fetch must never be rendered as "no covering
+          // cases" -- that is exactly the false claim
+          // `RequirementCoverageBadge.tsx`'s own "not loaded yet (or
+          // failed to load) renders nothing" rule exists to prevent for
+          // the sibling coverage query. This branch keeps that same
+          // instinct: visually and semantically distinct from
+          // `panelEmpty` below, reusing the datasets-list.tsx error/retry
+          // idiom (destructive message + an outline retry button wired to
+          // the query's own `refetch`) rather than inventing a new one.
+          <div
+            className="flex flex-col items-center justify-center gap-3 py-8 text-center"
+            data-testid="requirement-coverage-error"
+          >
+            <p className="text-sm text-destructive">{t("loadFailed")}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void refetch()}
+            >
+              {t("retry")}
+            </Button>
+          </div>
         ) : rows.length === 0 ? (
           // Absence is the normal, expected result for a requirement with
           // no covering cases -- not an error, not "still loading." Never
-          // rendered while `isLoading` is true (the branch above owns
-          // that), so this can never be mistaken for a pending fetch.
+          // rendered while `isLoading` or `isError` is true (the branches
+          // above own those), so this can never be mistaken for a pending
+          // or failed fetch.
           <div className="text-muted-foreground ms-4 -mt-2 mb-4 text-sm">
             {t("panelEmpty")}
           </div>
