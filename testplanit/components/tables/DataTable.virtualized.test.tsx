@@ -423,13 +423,12 @@ describe("DataTable (virtualized mode) — getRowProps row extension point", () 
     // must be read synchronously inside the handler — reading it back off
     // `mock.calls` afterward observes it already reset to null.
     let observedCurrentTarget: EventTarget | null = null;
-    const onDragEnter = vi.fn(
-      (event: React.DragEvent<HTMLDivElement>) => {
-        observedCurrentTarget = event.currentTarget;
-      }
-    );
+    const onDragEnter = vi.fn((event: React.DragEvent<HTMLDivElement>) => {
+      observedCurrentTarget = event.currentTarget;
+    });
     renderTable({
-      getRowProps: (row) => (row.original.id === 2 ? { onDragEnter } : undefined),
+      getRowProps: (row) =>
+        row.original.id === 2 ? { onDragEnter } : undefined,
     });
     const row2 = screen.getByTestId("virtualized-row-2");
     fireEvent.dragEnter(row2);
