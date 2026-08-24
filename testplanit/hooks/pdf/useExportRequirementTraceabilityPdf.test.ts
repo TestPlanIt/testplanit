@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RequirementTraceabilityData } from "~/app/api/projects/[projectId]/requirements/traceability/route";
-import { PdfRenderer } from "./pdfHelpers";
+import { PdfRenderer, sanitizeTextForPdf } from "./pdfHelpers";
 
 // --- Hoisted mocks ---
 const { mockLogDataExport } = vi.hoisted(() => ({
@@ -227,6 +227,61 @@ describe("useExportRequirementTraceabilityPdf", () => {
     ).resolves.toBeUndefined();
 
     expect(result.current.isExporting).toBe(false);
+  });
+
+  // F7: `sanitizeTextForPdf` maps every character outside Latin-1 to "?"
+  // (pdfHelpers.ts:57), and `PdfRenderer.renderTable`'s own `wrapCell`
+  // runs every cell through it (pdfHelpers.ts:548) before drawing. A date
+  // formatted with a non-Latin locale like ar-SA emits Arabic-Indic
+  // digits, which are outside Latin-1 -- so the Executed column must not
+  // be formatted with the viewer's own app locale, or the sanitizer
+  // reduces it to an unreadable "???/??/????". This is not the deliberate
+  // English-only chrome carve-out (section headers, column labels): the
+  // carve-out covers those; the date formatters are supposed to already
+  // emit a Latin-digit string on their own, independent of whatever
+  // locale the hook is called with.
+  it("keeps the Executed date readable after sanitizeTextForPdf even when exported under a non-Latin locale", async () => {
+    const data = buildData({
+      rows: [
+        {
+          requirementId: 2,
+          requirementKey: "REQ-2",
+          requirementTitle: "Enrol international students",
+          requirementPath: "Enrolments > Enrol international students",
+          caseId: 10,
+          caseName: "Login works",
+          caseProjectId: 5,
+          caseProjectName: "QA Project",
+          statusName: "Passed",
+          statusColor: "#22c55e",
+          executedAt: "2026-08-18T09:00:00.000Z",
+          linkedCaseCount: 1,
+          coverageStatus: "PASSED",
+        },
+      ],
+    });
+    global.fetch = buildFetchMock(data);
+    vi.spyOn(PdfRenderer.prototype, "save").mockImplementation(() => {});
+    const tableSpy = vi.spyOn(PdfRenderer.prototype, "renderTable");
+
+    const { result } = renderHook(() =>
+      useExportRequirementTraceabilityPdf({ projectId: 42, locale: "ar-SA" })
+    );
+
+    await act(async () => {
+      await result.current.handleExport();
+    });
+
+    const executedCell = tableSpy.mock.calls[0][0].rows[0][3] as string;
+
+    // Run the captured cell through the REAL (unmodified) sanitizer --
+    // this is exactly what `PdfRenderer.renderTable`'s internal
+    // `wrapCell` does to every cell before it is drawn, so this proves
+    // the value survives the actual pipeline, not merely that it looked
+    // fine before reaching it.
+    const sanitized = sanitizeTextForPdf(executedCell);
+    expect(sanitized).not.toBe("");
+    expect(sanitized).toMatch(/\d/);
   });
 
   // Additive coverage (not one of the five scaffolded titles): the

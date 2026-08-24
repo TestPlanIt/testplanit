@@ -26,9 +26,28 @@ import {
  * `cs-CZ` would emit a page of question marks instead of a report. The
  * *invocation* (menu label, toast, error) is normal React and IS
  * localized, in `RequirementsWorkspace.tsx`.
+ *
+ * Carve-out 1 also governs the "Generated:"/per-page-header/"Executed"
+ * dates below (F7): `fmtDate`/`fmtDateTime` deliberately format with a
+ * fixed Latin-digit locale rather than the viewer's own `locale`, because
+ * `toLocaleDateString`/`toLocaleString` under a locale like `ar-SA` emit
+ * Arabic-Indic digits, which `sanitizeTextForPdf` then reduces to
+ * "???/??/????" — a blank/garbled date instead of a readable one. This
+ * is the same carve-out already applied to the surrounding chrome, just
+ * honored consistently rather than left half-applied to these two
+ * formatters.
  */
+const PDF_DATE_LOCALE = "en-US";
 interface UseExportRequirementTraceabilityPdfProps {
   projectId: number;
+  /**
+   * Kept for call-site symmetry with `useExportMilestonePdf` (and because
+   * `RequirementsWorkspace.tsx` already threads its own app locale
+   * through here) but NOT used to format the "Generated:"/"Executed"
+   * dates below — see the F7 carve-out note above `PDF_DATE_LOCALE`.
+   * Those always render in a fixed Latin-digit locale regardless of what
+   * is passed here.
+   */
   locale?: string;
   /** Current user's display name, stamped into the generation header. */
   generatedByName?: string | null;
@@ -63,9 +82,9 @@ export function useExportRequirementTraceabilityPdf({
       const data = (await res.json()) as RequirementTraceabilityData;
 
       const fmtDate = (iso: string | null) =>
-        iso ? new Date(iso).toLocaleDateString(locale) : "—";
+        iso ? new Date(iso).toLocaleDateString(PDF_DATE_LOCALE) : "—";
       const fmtDateTime = (iso: string | null) =>
-        iso ? new Date(iso).toLocaleString(locale) : "—";
+        iso ? new Date(iso).toLocaleString(PDF_DATE_LOCALE) : "—";
 
       const { default: jsPDF } = await import("jspdf");
       // A traceability matrix is wide (requirement path, case, result,
