@@ -5,6 +5,7 @@ import {
   Activity,
   ChevronRight,
   ClipboardPlus,
+  GripVertical,
   MoreVertical,
   SquarePenIcon,
   Trash2Icon,
@@ -525,6 +526,11 @@ function RequirementNameCell({
   const t = useTranslations();
   const label = formatIssueDisplayText(requirement);
 
+  // Single source of truth for "can this row be dragged": the handle below
+  // renders from this exact expression, so it is physically incapable of
+  // advertising a drag that `canDrag` would refuse (gap 9, T-26.2G-13-01).
+  const canDragRow = canAddEdit && !isFiltering;
+
   const [{ isDragging }, dragRef] = useDrag<
     RequirementDragItem,
     void,
@@ -533,10 +539,10 @@ function RequirementNameCell({
     () => ({
       type: ItemTypes.REQUIREMENT,
       item: { requirementId: requirement.id, name: label },
-      canDrag: () => canAddEdit && !isFiltering,
+      canDrag: () => canDragRow,
       collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     }),
-    [requirement.id, label, canAddEdit, isFiltering]
+    [requirement.id, label, canDragRow]
   );
 
   return (
@@ -557,6 +563,13 @@ function RequirementNameCell({
           : undefined
       }
     >
+      {canDragRow && (
+        <GripVertical
+          className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
+          aria-hidden="true"
+          data-testid={`requirement-drag-handle-${requirement.id}`}
+        />
+      )}
       {requirement.hasChildren ? (
         <button
           type="button"

@@ -766,28 +766,46 @@ describe("RequirementNameCell", () => {
     expect(onRenameCancel).toHaveBeenCalled();
   });
 
-  it("disallows dragging when the viewer cannot edit", () => {
+  it("disallows dragging when the viewer cannot edit, and shows no grab handle (same case proves both)", () => {
     renderNameCell(makeRow({ id: 13 }), {
       canAddEdit: false,
       isFiltering: false,
     });
     expect(dragSpecRef.current.canDrag()).toBe(false);
+    expect(
+      screen.queryByTestId("requirement-drag-handle-13")
+    ).not.toBeInTheDocument();
   });
 
-  it("disallows dragging while filtering", () => {
+  it("disallows dragging while filtering, and shows no grab handle (same case proves both)", () => {
     renderNameCell(makeRow({ id: 14 }), {
       canAddEdit: true,
       isFiltering: true,
     });
     expect(dragSpecRef.current.canDrag()).toBe(false);
+    expect(
+      screen.queryByTestId("requirement-drag-handle-14")
+    ).not.toBeInTheDocument();
   });
 
-  it("allows dragging when the viewer can edit and is not filtering", () => {
+  it("allows dragging when the viewer can edit and is not filtering, and shows the grab handle", () => {
     renderNameCell(makeRow({ id: 15 }), {
       canAddEdit: true,
       isFiltering: false,
     });
     expect(dragSpecRef.current.canDrag()).toBe(true);
+    expect(screen.getByTestId("requirement-drag-handle-15")).toBeInTheDocument();
+  });
+
+  it("the grab handle is decorative: aria-hidden, not a button, and cursor-grab", () => {
+    renderNameCell(makeRow({ id: 20 }), {
+      canAddEdit: true,
+      isFiltering: false,
+    });
+    const handle = screen.getByTestId("requirement-drag-handle-20");
+    expect(handle).toHaveAttribute("aria-hidden", "true");
+    expect(handle.tagName).not.toBe("BUTTON");
+    expect(handle.getAttribute("class")).toContain("cursor-grab");
   });
 
   it("tags the drag item with ItemTypes.REQUIREMENT and carries the requirement id", () => {
