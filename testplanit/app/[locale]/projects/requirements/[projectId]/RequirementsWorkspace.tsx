@@ -129,8 +129,8 @@ export default function RequirementsWorkspace({
                 id="requirements-tree"
                 order={1}
                 defaultSize={30}
-                minSize={20}
-                maxSize={60}
+                minSize={0}
+                maxSize={100}
                 className="p-0 m-0"
               >
                 <div
@@ -157,8 +157,8 @@ export default function RequirementsWorkspace({
                 id="requirements-detail"
                 order={2}
                 defaultSize={70}
-                minSize={30}
-                className="p-0 m-0 min-w-[320px]"
+                minSize={0}
+                className="p-0 m-0 min-w-[220px]"
               >
                 <div
                   data-testid="requirements-detail-pane"
