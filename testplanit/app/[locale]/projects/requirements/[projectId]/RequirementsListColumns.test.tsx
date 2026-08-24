@@ -158,7 +158,10 @@ function baseArgs(overrides: Partial<ColumnsArgs> = {}): ColumnsArgs {
   };
 }
 
-function renderNameCell(row: RequirementRow, overrides: Partial<ColumnsArgs> = {}) {
+function renderNameCell(
+  row: RequirementRow,
+  overrides: Partial<ColumnsArgs> = {}
+) {
   const { result } = renderHook(() =>
     useRequirementsListColumns(baseArgs(overrides))
   );
@@ -170,7 +173,10 @@ function renderNameCell(row: RequirementRow, overrides: Partial<ColumnsArgs> = {
   return render(cell);
 }
 
-function renderActionsCell(row: RequirementRow, overrides: Partial<ColumnsArgs> = {}) {
+function renderActionsCell(
+  row: RequirementRow,
+  overrides: Partial<ColumnsArgs> = {}
+) {
   const { result } = renderHook(() =>
     useRequirementsListColumns(baseArgs({ canAddEdit: true, ...overrides }))
   );
@@ -299,7 +305,9 @@ describe("useRequirementsListColumns -- column contract", () => {
       .accessorFn;
 
     expect(
-      accessorFn(makeRow({ id: 1, externalStatus: "In Review", status: "open" }))
+      accessorFn(
+        makeRow({ id: 1, externalStatus: "In Review", status: "open" })
+      )
     ).toBe("In Review");
     expect(
       accessorFn(makeRow({ id: 1, externalStatus: null, status: "open" }))
@@ -348,7 +356,9 @@ describe("useRequirementsListColumns -- column contract", () => {
       column: { getSize: () => 64 },
     });
     render(cell);
-    expect(screen.getByTestId("requirement-coverage-passed")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirement-coverage-passed")
+    ).toBeInTheDocument();
   });
 
   it("source cell mounts the real RequirementProvenanceBadge, not a mock", () => {
@@ -391,10 +401,9 @@ describe("RequirementNameCell", () => {
   });
 
   it("chevron aria-label resolves the expand key when collapsed, never the old togglePanel key", () => {
-    renderNameCell(
-      makeRow({ id: 5, hasChildren: true, name: "Login flow" }),
-      { expandedByIssueId: {} }
-    );
+    renderNameCell(makeRow({ id: 5, hasChildren: true, name: "Login flow" }), {
+      expandedByIssueId: {},
+    });
     const chevron = screen.getByTestId("requirement-chevron-5");
     expect(chevron).toHaveAttribute(
       "aria-label",
@@ -406,10 +415,9 @@ describe("RequirementNameCell", () => {
   });
 
   it("chevron aria-label resolves the collapse key when expanded", () => {
-    renderNameCell(
-      makeRow({ id: 6, hasChildren: true, name: "Login flow" }),
-      { expandedByIssueId: { 6: true } }
-    );
+    renderNameCell(makeRow({ id: 6, hasChildren: true, name: "Login flow" }), {
+      expandedByIssueId: { 6: true },
+    });
     const chevron = screen.getByTestId("requirement-chevron-6");
     expect(chevron).toHaveAttribute(
       "aria-label",

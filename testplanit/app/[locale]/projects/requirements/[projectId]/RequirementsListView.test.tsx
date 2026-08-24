@@ -18,7 +18,10 @@ import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCov
 
 const { useFindManyIssueMock } = vi.hoisted(() => ({
   useFindManyIssueMock: vi.fn(
-    (_args?: { where?: Record<string, unknown>; orderBy?: unknown }): {
+    (_args?: {
+      where?: Record<string, unknown>;
+      orderBy?: unknown;
+    }): {
       data: Record<string, unknown>[] | undefined;
       isLoading: boolean;
       error: unknown;
@@ -54,8 +57,7 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 // F10-style rollup invalidation proof, never a hand-rolled predicate stand-in.
 const mockInvalidateQueries = vi.fn();
 vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@tanstack/react-query")>();
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
   return {
     ...actual,
     useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
@@ -112,7 +114,10 @@ const virtualizedHookMock = vi.hoisted(() => ({
   scrollToIndex: vi.fn(),
 }));
 vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
-  useVirtualizedInfiniteList: (opts: { count: number; onLoadMore: () => void }) => ({
+  useVirtualizedInfiniteList: (opts: {
+    count: number;
+    onLoadMore: () => void;
+  }) => ({
     scrollRef: () => {},
     sentinelRef: { current: null },
     virtualizer: { scrollToIndex: virtualizedHookMock.scrollToIndex },
@@ -298,7 +303,10 @@ beforeEach(() => {
   useUpdateIssueMock.mockReturnValue({
     mutateAsync: vi.fn().mockResolvedValue({}),
   });
-  useRequirementCoverageMock.mockReturnValue({ data: undefined, isError: false });
+  useRequirementCoverageMock.mockReturnValue({
+    data: undefined,
+    isError: false,
+  });
 });
 
 describe("RequirementsListView", () => {
@@ -350,7 +358,9 @@ describe("RequirementsListView", () => {
       const collapsedCount = screen.getByTestId(
         "requirement-coverage-count"
       ).textContent;
-      expect(screen.getByTestId("requirement-coverage-passed")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-coverage-passed")
+      ).toBeInTheDocument();
 
       fireEvent.click(screen.getByTestId("requirement-chevron-1"));
 
@@ -359,7 +369,9 @@ describe("RequirementsListView", () => {
 
       // The parent's own coverage badge is server-supplied and unchanged by
       // expansion -- never re-derived from the now-rendered children.
-      expect(screen.getByTestId("requirement-coverage-passed")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-coverage-passed")
+      ).toBeInTheDocument();
       expect(screen.getByTestId("requirement-coverage-count").textContent).toBe(
         collapsedCount
       );
@@ -413,16 +425,18 @@ describe("RequirementsListView", () => {
 
       const { toast } = await import("sonner");
       await waitFor(() =>
-        expect(toast.success).toHaveBeenCalledWith("requirements.tree.moveSuccess")
+        expect(toast.success).toHaveBeenCalledWith(
+          "requirements.tree.moveSuccess"
+        )
       );
       expect(refetch).toHaveBeenCalled();
 
       await waitFor(() => expect(mockInvalidateQueries).toHaveBeenCalled());
       const [{ predicate }] = mockInvalidateQueries.mock.calls.at(-1)!;
       expect(predicate({ queryKey: ["requirementCoverage", 42] })).toBe(true);
-      expect(
-        predicate({ queryKey: ["requirementCoveringCases", 42, 7] })
-      ).toBe(false);
+      expect(predicate({ queryKey: ["requirementCoveringCases", 42, 7] })).toBe(
+        false
+      );
     });
 
     it("rejection: fetch ok:false surfaces the server message and never invalidates coverage", async () => {
@@ -520,7 +534,9 @@ describe("RequirementsListView", () => {
 
       const lastRow = screen.getByTestId("requirement-row-7");
       fireEvent.dragEnter(lastRow);
-      const childCell = lastRow.querySelector("[data-testid^='requirement-name-cell-']")!;
+      const childCell = lastRow.querySelector(
+        "[data-testid^='requirement-name-cell-']"
+      )!;
       dispatchDragLeave(lastRow, childCell);
 
       await act(async () => {
@@ -621,7 +637,9 @@ describe("RequirementsListView", () => {
       expect(screen.getByTestId("requirements-list-error")).toBeInTheDocument();
       expect(document.querySelector(".animate-spin")).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: "search.errors.tryAgain" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "search.errors.tryAgain" })
+      );
       expect(refetch).toHaveBeenCalled();
     });
   });
@@ -654,7 +672,9 @@ describe("RequirementsListView", () => {
         target: { value: "no such requirement" },
       });
 
-      expect(screen.getByText("common.ui.search.noResultsFound")).toBeInTheDocument();
+      expect(
+        screen.getByText("common.ui.search.noResultsFound")
+      ).toBeInTheDocument();
       expect(
         screen.queryByTestId("requirements-tree-empty")
       ).not.toBeInTheDocument();
