@@ -67,6 +67,10 @@ export function CreateRequirementDialog({
   }, [open]);
 
   const trimmedName = name.trim();
+  // Single source of truth for "Return/click would submit" -- the hint below
+  // renders from this exact expression, so it can never promise Return works
+  // while the button itself stays disabled.
+  const canSubmit = Boolean(trimmedName) && !isSubmitting;
 
   const handleSubmit = async () => {
     if (!trimmedName || !session?.user?.id || isSubmitting) return;
@@ -150,11 +154,21 @@ export function CreateRequirementDialog({
           </Button>
           <Button
             type="button"
-            disabled={!trimmedName || isSubmitting}
+            disabled={!canSubmit}
             onClick={() => void handleSubmit()}
+            title={canSubmit ? t("requirements.create.submitHint") : undefined}
             data-testid="create-requirement-submit"
           >
             {t("requirements.create.submit")}
+            {canSubmit && (
+              <kbd
+                aria-hidden="true"
+                className="rounded border border-current px-1 font-sans text-[10px] leading-normal opacity-70"
+                data-testid="create-requirement-submit-hint"
+              >
+                {"⏎"}
+              </kbd>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

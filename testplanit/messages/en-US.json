@@ -6707,6 +6707,7 @@
       "parentLabel": "Parent",
       "parentNone": "No parent (top level)",
       "submit": "Create Requirement",
+      "submitHint": "Press Enter to create",
       "success": "Requirement created.",
       "failed": "Failed to create requirement."
     },
