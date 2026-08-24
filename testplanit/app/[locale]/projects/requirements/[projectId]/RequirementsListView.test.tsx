@@ -306,13 +306,13 @@ describe("RequirementsListView", () => {
     renderView();
 
     expect(useFindManyIssueMock).toHaveBeenCalled();
-    const [args] = useFindManyIssueMock.mock.calls[0];
-    expect(args.where).toEqual({
+    const [args] = useFindManyIssueMock.mock.calls[0]!;
+    expect(args!.where).toEqual({
       projectId: 42,
       isDeleted: false,
       isRequirement: true,
     });
-    expect(args.orderBy).toEqual({ name: "asc" });
+    expect(args!.orderBy).toEqual({ name: "asc" });
   });
 
   describe("hierarchy", () => {
