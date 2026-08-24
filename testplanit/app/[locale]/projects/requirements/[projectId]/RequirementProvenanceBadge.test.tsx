@@ -107,12 +107,10 @@ let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClien
 beforeEach(() => {
   FakeResizeObserver.instances = [];
   originalResizeObserver = globalThis.ResizeObserver;
-  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
-  originalGetBoundingClientRect =
-    HTMLElement.prototype.getBoundingClientRect;
-  HTMLElement.prototype.getBoundingClientRect = function (
-    this: HTMLElement
-  ) {
+  globalThis.ResizeObserver =
+    FakeResizeObserver as unknown as typeof ResizeObserver;
+  originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function (this: HTMLElement) {
     const width = rectWidths.get(this) ?? 0;
     return {
       width,
@@ -365,7 +363,8 @@ describe("RequirementProvenanceBadge", () => {
       for (let i = 0; i < 20; i++) {
         setRectWidth(h.wrap, i % 2 === 0 ? belowThreshold : aboveThreshold);
         ro.trigger();
-        const current = badge.textContent?.includes("sync.providerJira") ?? false;
+        const current =
+          badge.textContent?.includes("sync.providerJira") ?? false;
         if (current !== last) {
           transitions += 1;
           last = current;

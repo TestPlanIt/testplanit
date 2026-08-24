@@ -149,10 +149,7 @@ export function buildDescendantIdMap(
  * `matchesRequirementCoverageFilter` says so explicitly below.
  */
 export type RequirementCoverageFilter =
-  | ""
-  | "UNCOVERED"
-  | "UNTESTED"
-  | `status:${number}`;
+  "" | "UNCOVERED" | "UNTESTED" | `status:${number}`;
 export type RequirementSourceFilter = "" | "MANUAL" | "SYNCED" | "DETACHED";
 
 export interface RequirementListFilters {
@@ -203,8 +200,11 @@ export function matchesRequirementStatusFilter(
 // Indexed by `requirementSourceSortValue`'s own 0/1/2 ranking (Native,
 // Detached, Synced) -- reusing that encoding rather than re-deriving the
 // provenance rules a second time.
-const SOURCE_FILTER_BY_RANK: readonly Exclude<RequirementSourceFilter, "">[] =
-  ["MANUAL", "DETACHED", "SYNCED"];
+const SOURCE_FILTER_BY_RANK: readonly Exclude<RequirementSourceFilter, "">[] = [
+  "MANUAL",
+  "DETACHED",
+  "SYNCED",
+];
 
 export function matchesRequirementSourceFilter(
   filter: RequirementSourceFilter,

@@ -961,7 +961,9 @@ describeIntegration(
       // "Untested" status's own name anywhere in statuses[] — belt and
       // suspenders alongside the empty-array check above.
       expect(
-        untestedMix.statuses.some((entry) => entry.statusId === untestedStatusId)
+        untestedMix.statuses.some(
+          (entry) => entry.statusId === untestedStatusId
+        )
       ).toBe(false);
     });
 

@@ -760,15 +760,9 @@ describe("matchesRequirementCoverageFilter", () => {
   });
 
   it("an absent breakdown matches only UNCOVERED, mirroring the comparator", () => {
-    expect(matchesRequirementCoverageFilter("UNCOVERED", undefined)).toBe(
-      true
-    );
-    expect(matchesRequirementCoverageFilter("UNTESTED", undefined)).toBe(
-      false
-    );
-    expect(matchesRequirementCoverageFilter("status:1", undefined)).toBe(
-      false
-    );
+    expect(matchesRequirementCoverageFilter("UNCOVERED", undefined)).toBe(true);
+    expect(matchesRequirementCoverageFilter("UNTESTED", undefined)).toBe(false);
+    expect(matchesRequirementCoverageFilter("status:1", undefined)).toBe(false);
   });
 
   it("UNTESTED matches only when untested > 0", () => {
@@ -790,12 +784,8 @@ describe("matchesRequirementCoverageFilter", () => {
     const breakdown = makeBreakdown({
       statuses: [{ statusId: 5, name: "Passed", color: null, count: 3 }],
     });
-    expect(matchesRequirementCoverageFilter("status:5", breakdown)).toBe(
-      true
-    );
-    expect(matchesRequirementCoverageFilter("status:6", breakdown)).toBe(
-      false
-    );
+    expect(matchesRequirementCoverageFilter("status:5", breakdown)).toBe(true);
+    expect(matchesRequirementCoverageFilter("status:6", breakdown)).toBe(false);
   });
 });
 

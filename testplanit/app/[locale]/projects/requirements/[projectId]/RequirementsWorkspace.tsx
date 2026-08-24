@@ -71,14 +71,15 @@ export default function RequirementsWorkspace({
   // (26-VALIDATION.md carve-out 4) -- it is a presentation opt-in, not an
   // access-control boundary; their real boundary is the viewer's project
   // scope.
-  const { data: project, isPending: isProjectFlagPending } =
-    useClientQueries(schema).projects.useFindUnique(
-      {
-        where: { id: Number(projectId) },
-        select: { requirementsEnabled: true },
-      },
-      { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
-    );
+  const { data: project, isPending: isProjectFlagPending } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    {
+      where: { id: Number(projectId) },
+      select: { requirementsEnabled: true },
+    },
+    { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
+  );
   const requirementsEnabled = project?.requirementsEnabled === true;
   // Three states, not two: while the query is in flight neither the enabled
   // panel group nor the disabled notice is known to be correct yet, so both
