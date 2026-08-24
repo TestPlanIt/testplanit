@@ -13,6 +13,7 @@ import type {
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowRight,
+  Ban,
   CheckCircle2,
   MessageCircleWarning,
   XCircle,
@@ -20,6 +21,8 @@ import {
 import { useMemo } from "react";
 
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
+import { NudgeReviewButton } from "~/components/reviews/NudgeReviewButton";
+import { RoleAssigneeChip } from "~/components/reviews/RoleAssigneeChip";
 import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
@@ -113,12 +116,20 @@ export type InboxTableRow = ExtendedReviewRequest & { name: string };
 /**
  * Callbacks the inbox table wires into each row's inline action buttons.
  * The table owns the dialog state — these callbacks just record which row
- * the reviewer is acting on so the right dialog opens with the right id.
+ * the viewer is acting on so the right dialog opens with the right id.
+ *
+ * The first three belong to the reviewer; `onCancel` belongs to the
+ * requester, on rows they submitted and are waiting on someone else to
+ * decide. "Send reminder" isn't here because it needs no dialog — see
+ * {@link NudgeReviewButton}, which fires the action itself.
  */
 export interface InboxActionHandlers {
   onApprove: (row: ExtendedReviewRequest) => void;
   onRequestChanges: (row: ExtendedReviewRequest) => void;
   onReject: (row: ExtendedReviewRequest) => void;
+  onCancel: (row: ExtendedReviewRequest) => void;
+  /** Refresh the queue after a reminder lands so the cooldown re-reads. */
+  onNudged: () => void;
 }
 
 /**
@@ -134,6 +145,14 @@ interface UseColumnsArgs {
   view: InboxView;
   /** Required when `view === 'pending'`. Ignored on the Decided tab. */
   actions?: InboxActionHandlers;
+  /**
+   * The signed-in viewer. The Pending tab mixes two kinds of row — reviews
+   * waiting on the viewer and reviews the viewer is waiting on someone else
+   * for — so each row's action set is decided per row, not per tab.
+   */
+  viewerUserId: string;
+  /** Roles the viewer can be reached through as an assignee (global + SPECIFIC_ROLE). */
+  viewerRoleIds: number[];
   caseById: Map<number, InboxCaseRow>;
   testRunById: Map<number, InboxTestRunRow>;
   sessionById: Map<number, InboxSessionRow>;
@@ -208,6 +227,8 @@ export const useColumns = ({
   t,
   view,
   actions,
+  viewerUserId,
+  viewerRoleIds,
   caseById,
   testRunById,
   sessionById,
@@ -425,6 +446,35 @@ export const useColumns = ({
             },
           };
 
+    // Pending tab only — the queue mixes rows waiting on the viewer with
+    // rows the viewer is waiting on someone else for, so "who is this
+    // parked with?" stops being answerable from the tab alone. Role
+    // assignees render the shared chip, whose tooltip lists the people who
+    // could actually act — the question a requester chasing a stalled
+    // review asks next.
+    const assigneeColumn: ColumnDef<InboxTableRow> = {
+      id: "assignee",
+      accessorKey: "assigneeUserId",
+      header: t("reviews.inbox.columnAssignee"),
+      enableSorting: true,
+      minSize: 125,
+      size: 220,
+      cell: ({ row }) => {
+        const { assigneeUser, assigneeRole, projectId } = row.original;
+        if (assigneeUser) return <UserNameCell userId={assigneeUser.id} />;
+        if (assigneeRole) {
+          return (
+            <RoleAssigneeChip
+              projectId={projectId}
+              roleId={assigneeRole.id}
+              roleName={assigneeRole.name}
+            />
+          );
+        }
+        return <span className="text-muted-foreground">-</span>;
+      },
+    };
+
     // Decided tab only — the tab now lists decisions on reviews the viewer
     // requested alongside their own decisions, so the row has to say who
     // actually decided it.
@@ -453,34 +503,84 @@ export const useColumns = ({
             enableHiding: false,
             size: 122,
             meta: { isPinned: "right" } satisfies CustomColumnMeta,
-            cell: ({ row }) => (
-              <div
-                className="flex items-center gap-1"
-                data-testid="reviews-inbox-row-actions"
-              >
-                <ActionIconButton
-                  label={t("reviews.inbox.actionApprove")}
-                  testId={`reviews-inbox-approve-${row.original.id}`}
-                  icon={CheckCircle2}
-                  onClick={() => actions?.onApprove(row.original)}
-                  iconClassName="h-4 w-4 text-emerald-500"
-                />
-                <ActionIconButton
-                  label={t("reviews.inbox.actionRequestChanges")}
-                  testId={`reviews-inbox-request-changes-${row.original.id}`}
-                  icon={MessageCircleWarning}
-                  onClick={() => actions?.onRequestChanges(row.original)}
-                  iconClassName="h-4 w-4 text-amber-500"
-                />
-                <ActionIconButton
-                  label={t("reviews.inbox.actionReject")}
-                  testId={`reviews-inbox-reject-${row.original.id}`}
-                  icon={XCircle}
-                  onClick={() => actions?.onReject(row.original)}
-                  iconClassName="h-4 w-4 text-destructive"
-                />
-              </div>
-            ),
+            cell: ({ row }) => {
+              const {
+                id,
+                assigneeUserId,
+                assigneeRoleId,
+                requestedByUserId,
+                lastRemindedAt,
+              } = row.original;
+
+              // Same predicate the Pending where-clause reaches these rows
+              // by: direct assignee, or holder of the assigned role.
+              const isAssignee =
+                assigneeUserId === viewerUserId ||
+                (assigneeRoleId !== null &&
+                  viewerRoleIds.includes(assigneeRoleId));
+
+              // Deciding beats chasing: a viewer who is both the requester
+              // and an eligible role-holder can resolve the row outright, so
+              // they get the decision cluster. Cancel is still reachable for
+              // them from the entity's own review banner.
+              if (isAssignee) {
+                return (
+                  <div
+                    className="flex items-center gap-1"
+                    data-testid="reviews-inbox-row-actions"
+                  >
+                    <ActionIconButton
+                      label={t("reviews.inbox.actionApprove")}
+                      testId={`reviews-inbox-approve-${id}`}
+                      icon={CheckCircle2}
+                      onClick={() => actions?.onApprove(row.original)}
+                      iconClassName="h-4 w-4 text-emerald-500"
+                    />
+                    <ActionIconButton
+                      label={t("reviews.inbox.actionRequestChanges")}
+                      testId={`reviews-inbox-request-changes-${id}`}
+                      icon={MessageCircleWarning}
+                      onClick={() => actions?.onRequestChanges(row.original)}
+                      iconClassName="h-4 w-4 text-amber-500"
+                    />
+                    <ActionIconButton
+                      label={t("reviews.inbox.actionReject")}
+                      testId={`reviews-inbox-reject-${id}`}
+                      icon={XCircle}
+                      onClick={() => actions?.onReject(row.original)}
+                      iconClassName="h-4 w-4 text-destructive"
+                    />
+                  </div>
+                );
+              }
+
+              // Requester's own row. Nothing here decides the review — the
+              // two things they can do are withdraw it or re-ping whoever
+              // owes them the decision.
+              if (requestedByUserId === viewerUserId) {
+                return (
+                  <div
+                    className="flex items-center gap-1"
+                    data-testid="reviews-inbox-row-requester-actions"
+                  >
+                    <NudgeReviewButton
+                      reviewRequestId={id}
+                      lastRemindedAt={lastRemindedAt}
+                      onNudged={() => actions?.onNudged()}
+                    />
+                    <ActionIconButton
+                      label={t("reviews.cancel.confirm")}
+                      testId={`reviews-inbox-cancel-${id}`}
+                      icon={Ban}
+                      onClick={() => actions?.onCancel(row.original)}
+                      iconClassName="h-4 w-4 text-destructive"
+                    />
+                  </div>
+                );
+              }
+
+              return null;
+            },
           }
         : {
             id: "status",
@@ -496,6 +596,16 @@ export const useColumns = ({
 
     return view === "decided"
       ? [...baseColumns, decidedByColumn, timestampColumn, tailColumn]
-      : [...baseColumns, timestampColumn, tailColumn];
-  }, [t, view, actions, caseById, testRunById, sessionById, onOpenCase]);
+      : [...baseColumns, assigneeColumn, timestampColumn, tailColumn];
+  }, [
+    t,
+    view,
+    actions,
+    viewerUserId,
+    viewerRoleIds,
+    caseById,
+    testRunById,
+    sessionById,
+    onOpenCase,
+  ]);
 };

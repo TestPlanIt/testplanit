@@ -3701,6 +3701,13 @@
       "success": "Richiesta di revisione annullata.",
       "error": "Impossibile annullare la richiesta di revisione. Riprova tra un attimo."
     },
+    "nudge": {
+      "success": "{count, plural, one {Promemoria inviato a # revisore.} other {Promemoria inviato a # revisori.}}",
+      "error": "Impossibile inviare il promemoria. Riprova tra un attimo.",
+      "tooSoon": "Un promemoria per questa richiesta è già stato inviato nell'ultima ora. Riprova più tardi.",
+      "cooldownTooltip": "Promemoria già inviato {ago}",
+      "noRecipients": "Nessuno può agire su questa richiesta al momento. Verifica che l'assegnatario abbia ancora accesso al progetto."
+    },
     "list": {
       "pendingTooltip": "In attesa di revisione da parte di {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "In attesa di",
       "tabDecided": "Deciso",
       "emptyDecided": "Nessuna revisione decisa ancora. Le revisioni che decidi e le decisioni sulle revisioni che richiedi appariranno qui.",
-      "empty": "Nessuna revisione in sospeso. Sei in regola con tutto.",
+      "empty": "Nessuna revisione in sospeso. Non c'è nulla in attesa e ogni revisione richiesta è stata decisa.",
       "featureDisabled": "La funzionalità di gestione del flusso di lavoro di revisione è attualmente disabilitata. Le revisioni in sospeso vengono conservate e saranno nuovamente disponibili quando la funzionalità verrà riattivata.",
       "columnEntity": "Entità",
       "columnProject": "Progetto",
       "columnRequester": "Richiedente",
+      "columnAssignee": "Assegnatario",
       "columnTransition": "Transizione",
       "columnRequestedAt": "Richiesto a",
       "columnDecidedBy": "Decisa da",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Approvare",
       "actionRequestChanges": "Richiesta di modifiche",
       "actionReject": "Rifiutare",
+      "actionNudge": "Invia promemoria",
       "filterEntityType": "Tipo di entità",
       "filterProject": "Progetto",
       "filterRequester": "Richiedente",

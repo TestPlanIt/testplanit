@@ -3701,6 +3701,13 @@
       "success": "Solicitud de revisión cancelada.",
       "error": "No se pudo cancelar la solicitud de revisión. Inténtelo de nuevo en un momento."
     },
+    "nudge": {
+      "success": "{count, plural, one {Recordatorio enviado a # revisor.} other {Recordatorio enviado a # revisores.}}",
+      "error": "No se pudo enviar el recordatorio. Inténtelo de nuevo en un momento.",
+      "tooSoon": "Ya se envió un recordatorio para esta solicitud en la última hora. Inténtelo de nuevo más tarde.",
+      "cooldownTooltip": "Recordatorio ya enviado {ago}",
+      "noRecipients": "Nadie puede actuar sobre esta solicitud en este momento. Compruebe que el cesionario todavía tenga acceso al proyecto."
+    },
     "list": {
       "pendingTooltip": "Pendiente de revisión por parte de {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Pendiente",
       "tabDecided": "Decidido",
       "emptyDecided": "Aún no hay revisiones decididas. Las revisiones que decidas, y las decisiones sobre las revisiones que solicites, aparecerán aquí.",
-      "empty": "No hay revisiones pendientes. Ya estás al día.",
+      "empty": "No hay revisiones pendientes. No hay nada esperando por usted, y todas las revisiones que ha solicitado han sido decididas.",
       "featureDisabled": "La función de flujo de trabajo de revisiones está actualmente desactivada. Las revisiones pendientes se conservan y volverán a aparecer cuando se vuelva a activar la función.",
       "columnEntity": "Entidad",
       "columnProject": "Proyecto",
       "columnRequester": "Solicitante",
+      "columnAssignee": "Cesionario",
       "columnTransition": "Transición",
       "columnRequestedAt": "Solicitado en",
       "columnDecidedBy": "Decidido por",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Aprobar",
       "actionRequestChanges": "Solicitar cambios",
       "actionReject": "Rechazar",
+      "actionNudge": "Enviar recordatorio",
       "filterEntityType": "Tipo de entidad",
       "filterProject": "Proyecto",
       "filterRequester": "Solicitante",

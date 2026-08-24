@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { useTranslations } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificationContent } from "./NotificationContent";
@@ -804,6 +804,58 @@ describe("NotificationContent", () => {
       expect(
         screen.queryByText("reviewReminderHoursPending")
       ).not.toBeInTheDocument();
+    });
+
+    it("renders a 0-hour reminder exactly like one with no hoursPending at all", () => {
+      // A manually sent reminder has no minimum age — nudge a request seconds
+      // after creating it and hoursPending is 0. The scheduled scan can never
+      // produce that (its threshold floor is a full day), so this path was
+      // unreachable until reminders became sendable on demand.
+      //
+      // Asserting the two renders are textually IDENTICAL is what catches the
+      // bug: under `data.hoursPending && (...)`, 0 short-circuits to the
+      // number 0, which React renders as a bare text node with no surrounding
+      // whitespace ("...reviewTransition0"). Matching on a "0" substring is
+      // too weak to notice that; equality with the absent-value render is not.
+      const base = {
+        reviewRequestId: "rr-3",
+        requesterUserId: "user-r",
+        requesterName: "Alice",
+        projectId: 100,
+        projectName: "Project Alpha",
+        entityType: "CASE",
+        entityId: 7,
+        entityName: "Login flow",
+        fromStateName: "Draft",
+        toStateName: "Approved",
+      };
+      const notification = (data: Record<string, unknown>) => ({
+        id: "rr-3",
+        type: "REVIEW_REMINDER",
+        title: "Review still pending",
+        message: "fallback",
+        data,
+      });
+
+      const absent = render(
+        <NotificationContent notification={notification({ ...base })} />
+      );
+      const absentText = absent.container.textContent;
+      cleanup();
+
+      const zero = render(
+        <NotificationContent
+          notification={notification({ ...base, hoursPending: 0 })}
+        />
+      );
+
+      expect(zero.container.textContent).toBe(absentText);
+      expect(zero.container.textContent).not.toMatch(/0$/);
+      expect(
+        screen.queryByText("reviewReminderHoursPending")
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("reviewReminderTitle")).toBeInTheDocument();
+      expect(screen.getByText("reviewReminderAction")).toBeInTheDocument();
     });
   });
 

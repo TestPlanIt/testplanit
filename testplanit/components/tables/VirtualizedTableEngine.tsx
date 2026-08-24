@@ -208,6 +208,10 @@ export interface VirtualizedTableEngineProps {
    * selection by row INDEX, which silently re-targets selections when the
    * data is filtered or re-sorted. */
   getRowId?: (originalRow: any, index: number) => string;
+  /** Row-level click, mirroring paged mode's `onTestCaseClick`. Interactive
+   * cell content (checkboxes, buttons) must stop propagation to opt out.
+   * Grouped lead rows never fire it. */
+  onRowClick?: (id: number | string) => void;
 
   /**
    * Id of a column that should flex to absorb any horizontal space left over
@@ -360,6 +364,7 @@ export function VirtualizedTableEngine({
   rowSelection,
   onRowSelectionChange,
   getRowId,
+  onRowClick,
   flexColumnId,
   enableColumnPinning = true,
   pinFirstLast = true,
@@ -428,15 +433,24 @@ export function VirtualizedTableEngine({
   // The header menu only appears when a handler is wired to act on it.
   const enableColumnMenu =
     enableColumnMenuProp ?? Boolean(onSortColumn || onHideColumn);
-  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>(() => {
-    if (!columnSizingStorage || typeof window === "undefined") return {};
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
+
+  // Stored widths are applied AFTER mount, never from the initializer: the
+  // server has no localStorage, so seeding there makes the first client render
+  // disagree with the server markup — React keeps the server's default widths
+  // and the table is stranded on them for the life of the page. Keyed on the
+  // storage key rather than mount-once because a surface can swap keys while
+  // mounted (the report renderer scopes the key per report type); with nothing
+  // stored under the key the current widths stand.
+  useEffect(() => {
+    if (!columnSizingStorage) return;
     try {
       const raw = window.localStorage.getItem(columnSizingStorage);
-      return raw ? (JSON.parse(raw) as ColumnSizingState) : {};
+      if (raw) setColumnSizing(JSON.parse(raw) as ColumnSizingState);
     } catch {
-      return {};
+      // storage unavailable / malformed entry — keep the default widths
     }
-  });
+  }, [columnSizingStorage]);
 
   // Column pinning: seed the left/right pin sets once (explicit `meta.isPinned`
   // first, first/last fallback otherwise), then let TanStack own the state.
@@ -954,8 +968,14 @@ export function VirtualizedTableEngine({
                     role="row"
                     data-row-id={row.original?.id}
                     data-testid={`${rowTestIdPrefix}-${row.original?.id ?? vItem.index}`}
+                    onClick={
+                      onRowClick && !isGrouped && row.original?.id != null
+                        ? () => onRowClick(row.original.id)
+                        : undefined
+                    }
                     className={cn(
                       "absolute start-0 top-0 flex border-b",
+                      onRowClick && !isGrouped && "cursor-pointer",
                       tableStyles.rowDivider,
                       isGrouped
                         ? "bg-accent font-semibold text-foreground"

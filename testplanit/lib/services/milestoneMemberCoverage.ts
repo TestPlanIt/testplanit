@@ -13,11 +13,12 @@ import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendant
  * results, non-completed statuses, the system 'untested' status —
  * aggregates into the explicit `untested` total.
  *
- * Deleted runs never decide readiness. A case with no in-scope run-case
- * rollup at all classifies from its latest in-scope automated (JUnit)
- * result instead — automated submissions don't always add the case to the
- * run's composition. A rollup that exists always wins over the fallback,
- * even when it is still untested.
+ * Deleted runs never decide readiness. A case with no in-scope
+ * STATUS-CARRYING run-case rollup classifies from its latest in-scope
+ * automated (JUnit) result instead — automated submissions create the
+ * run-case row empty (or not at all), so presence of a rollup row is never
+ * the test. A status-carrying rollup always wins over the fallback, even
+ * when the fallback is newer.
  *
  * Cross-project blend: a member issue's linked cases can live in OTHER
  * projects. Those cases count toward `linkedCaseCount` (and separately
@@ -110,6 +111,16 @@ export async function getMemberCoverage(
   // Cases with no run-case rollup at all fall back to their latest in-scope
   // automated (JUnit) result — automated submissions don't always add the
   // case to the run's composition, and those executions still count.
+  //
+  // "No run-case rollup" includes a run-case row that carries no status:
+  // automated (JUnit/TestNG/Mocha/etc.) runs record their outcome in
+  // JUnitTestResult and never denormalise it onto TestRunCases.statusId.
+  // latest_result reads the "EffectiveCaseStatus" view, whose
+  // RUN_CASE-sourced rows are exactly the status-carrying live run-cases —
+  // a status-less row must not win precedence over the JUnit fallback and
+  // report "Not run". latest_junit stays hand-rolled because it resolves at
+  // a different grain than the view: the latest non-'untested' automated
+  // result per CASE across every in-scope run, orphan results included.
   const rows = await db.$queryRaw<
     Array<{
       issueId: number;
@@ -133,27 +144,23 @@ export async function getMemberCoverage(
       SELECT DISTINCT ON (lc."issueId", lc."caseId")
         lc."issueId",
         lc."caseId",
-        trc.id AS "testRunCaseId",
+        ecs."testRunCaseId",
         s."isSuccess" AS "isSuccess",
         s."isFailure" AS "isFailure",
         s."isCompleted" AS "isCompleted"
       FROM linked_cases lc
-      LEFT JOIN "TestRunCases" trc
-        ON trc."repositoryCaseId" = lc."caseId"
-        AND trc."isDeleted" = false
-      LEFT JOIN "TestRuns" tr
-        ON tr.id = trc."testRunId"
-        AND tr."isDeleted" = false
+      JOIN "EffectiveCaseStatus" ecs
+        ON ecs."repositoryCaseId" = lc."caseId"
+        AND ecs."statusSource" = 'RUN_CASE'
         AND (
-          tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
+          ecs."milestoneId" = ANY(${scopedMilestoneIds}::int[])
           OR (
             lc."projectId" <> ${scope.projectId}
-            AND tr."projectId" = lc."projectId"
+            AND ecs."projectId" = lc."projectId"
           )
         )
-      LEFT JOIN "Status" s ON s.id = trc."statusId"
-      WHERE tr.id IS NOT NULL OR trc.id IS NULL
-      ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+      JOIN "Status" s ON s.id = ecs."statusId"
+      ORDER BY lc."issueId", lc."caseId", ecs."executedAt" DESC NULLS LAST, ecs."testRunCaseId" DESC
     ),
     latest_junit AS (
       SELECT DISTINCT ON (lc."issueId", lc."caseId")
@@ -250,24 +257,20 @@ export async function getMemberCoverage(
       SELECT DISTINCT ON (lc."issueId", lc."caseId")
         lc."issueId",
         lc."caseId",
-        trc.id AS "testRunCaseId",
-        trc."statusId" AS "statusId"
+        ecs."testRunCaseId",
+        ecs."statusId" AS "statusId"
       FROM linked_cases lc
-      LEFT JOIN "TestRunCases" trc
-        ON trc."repositoryCaseId" = lc."caseId"
-        AND trc."isDeleted" = false
-      LEFT JOIN "TestRuns" tr
-        ON tr.id = trc."testRunId"
-        AND tr."isDeleted" = false
+      JOIN "EffectiveCaseStatus" ecs
+        ON ecs."repositoryCaseId" = lc."caseId"
+        AND ecs."statusSource" = 'RUN_CASE'
         AND (
-          tr."milestoneId" = ANY(${scopedMilestoneIds}::int[])
+          ecs."milestoneId" = ANY(${scopedMilestoneIds}::int[])
           OR (
             lc."projectId" <> ${scope.projectId}
-            AND tr."projectId" = lc."projectId"
+            AND ecs."projectId" = lc."projectId"
           )
         )
-      WHERE tr.id IS NOT NULL OR trc.id IS NULL
-      ORDER BY lc."issueId", lc."caseId", trc."completedAt" DESC NULLS LAST, trc.id DESC
+      ORDER BY lc."issueId", lc."caseId", ecs."executedAt" DESC NULLS LAST, ecs."testRunCaseId" DESC
     ),
     latest_junit AS (
       SELECT DISTINCT ON (lc."issueId", lc."caseId")

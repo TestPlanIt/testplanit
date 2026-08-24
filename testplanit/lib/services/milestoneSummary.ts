@@ -1,4 +1,5 @@
 import { baseDb } from "~/lib/db";
+import { getEffectiveCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
@@ -53,46 +54,16 @@ export type MilestoneSummaryData = {
   scopeCount: number;
 };
 
-export async function calculateMilestoneCompletion(
+/**
+ * Split a milestone (rollup)'s non-deleted test runs into manual vs.
+ * automated/imported (JUnit, TestNG, Mocha, etc.) run IDs. Automated runs
+ * record their outcomes in JUnitTestResult, not TestRunCases.statusId /
+ * TestRunResults, so any per-case status or elapsed aggregation needs to
+ * treat the two separately.
+ */
+async function splitRunIdsByAutomation(
   milestoneIds: number[]
-): Promise<number> {
-  // Get total test cases in all test runs for these milestones
-  const totalCasesResult = await baseDb.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) as count
-    FROM "TestRunCases" trc
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
-      AND tr."isDeleted" = false
-  `;
-  const totalTestCases = Number(totalCasesResult[0]?.count || 0);
-
-  if (totalTestCases === 0) {
-    return 0;
-  }
-
-  // Get count of completed test cases (where TestRunCases.status.isCompleted = true)
-  const completedCasesResult = await baseDb.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) as count
-    FROM "TestRunCases" trc
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    JOIN "Status" s ON trc."statusId" = s.id
-    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
-      AND tr."isDeleted" = false
-      AND s."isCompleted" = true
-  `;
-  const completedTestCases = Number(completedCasesResult[0]?.count || 0);
-
-  // Calculate percentage, capped at 100%
-  return Math.min((completedTestCases / totalTestCases) * 100, 100);
-}
-
-export async function getTestRunSegments(
-  milestoneIds: number[]
-): Promise<MilestoneSegment[]> {
-  // Split the milestone's runs into manual vs. automated. Automated/imported
-  // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
-  // TestRunResults, so they need a separate aggregation path — otherwise every
-  // automated case looks "pending" with zero elapsed.
+): Promise<{ regularRunIds: number[]; automatedRunIds: number[] }> {
   const runs = await baseDb.$queryRaw<
     Array<{ id: number; testRunType: string }>
   >`
@@ -108,6 +79,34 @@ export async function getTestRunSegments(
   const automatedRunIds = runs
     .filter((r) => automatedTypes.has(r.testRunType))
     .map((r) => r.id);
+  return { regularRunIds, automatedRunIds };
+}
+
+export async function calculateMilestoneCompletion(
+  milestoneIds: number[]
+): Promise<number> {
+  // Manual and automated run-cases record their outcomes in different
+  // tables; the accessor owns that split.
+  const { total, completed } = await getEffectiveCaseCompletion({
+    milestoneIds,
+  });
+  if (total === 0) {
+    return 0;
+  }
+
+  // Calculate percentage, capped at 100%
+  return Math.min((completed / total) * 100, 100);
+}
+
+export async function getTestRunSegments(
+  milestoneIds: number[]
+): Promise<MilestoneSegment[]> {
+  // Split the milestone's runs into manual vs. automated. Automated/imported
+  // runs (JUnit, TestNG, etc.) record their outcomes in JUnitTestResult, not
+  // TestRunResults, so they need a separate aggregation path — otherwise every
+  // automated case looks "pending" with zero elapsed.
+  const { regularRunIds, automatedRunIds } =
+    await splitRunIdsByAutomation(milestoneIds);
 
   const [manual, automated] = await Promise.all([
     getManualTestRunSegments(regularRunIds),
@@ -166,6 +165,7 @@ async function getManualTestRunSegments(
       LEFT JOIN "Color" c ON s."colorId" = c.id
       WHERE tr.id = ANY(${runIds}::int[])
         AND tr."isDeleted" = false
+        AND trc."isDeleted" = false
       GROUP BY tr.id, tr.name, tr."testRunType", trc."statusId", s.name, c.value, s.order
     )
     SELECT

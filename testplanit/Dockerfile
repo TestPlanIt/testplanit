@@ -133,6 +133,12 @@ ARG BASE_DOMAIN
 # SaaS build leaves it unset and bakes BASE_DOMAIN instead. See next.config.ts.
 ARG SELF_HOSTED
 ENV SELF_HOSTED=${SELF_HOSTED}
+# Sizes serverActions.bodySizeLimit in next.config.ts. Next freezes experimental
+# config into the standalone output, so this has to be present at BUILD time --
+# a runtime-only value is too late. The production stage re-declares it for
+# app/actions/uploadFile.ts, which reads it at runtime.
+ARG UPLOAD_MAX_MB
+ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
 ENV NODE_ENV=production
 # next build self-caps at 4096 (build script); the whole build tree peaks ~7 GB,
 # so 8192 leaves comfortable headroom.
@@ -155,6 +161,12 @@ RUN npm run build
 # ---- Production ----
 FROM node:24-alpine AS production
 WORKDIR /app
+# Read at runtime by app/actions/uploadFile.ts. Defaulted from the same build arg
+# so an image built for a larger ceiling stays self-consistent under plain
+# `docker run`; compose passes it again via `environment:` so one variable in
+# .env drives both the baked body limit and the runtime per-file limit.
+ARG UPLOAD_MAX_MB
+ENV UPLOAD_MAX_MB=${UPLOAD_MAX_MB}
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN apk add --no-cache curl

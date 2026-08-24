@@ -12,6 +12,7 @@ import { CommentService } from "~/lib/services/commentService";
 import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import { NUDGE_COOLDOWN_MS } from "~/lib/services/reviewReminderConfig";
 import { resolveBulkReviewTargets } from "~/lib/services/reviewGate";
 import { baseDb } from "~/lib/db";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
@@ -23,6 +24,7 @@ import {
 import { areaForEntityType } from "~/lib/utils/reviewAreas";
 import {
   emitReviewCompletedEvent,
+  emitReviewReminderEvent,
   emitReviewRequestedEvent,
 } from "~/lib/webhooks/event-emitters/reviewEvents";
 import { getServerAuthSession } from "~/server/auth";
@@ -1193,6 +1195,266 @@ export const cancelReviewRequest = withActionAuditContext(
 
     revalidatePath("/");
     return { success: true, reviewRequestId };
+  }
+);
+
+interface NudgeReviewSuccess {
+  success: true;
+  reviewRequestId: string;
+  /** How many reviewers the reminder actually reached. */
+  recipientCount: number;
+}
+
+interface NudgeReviewFailure {
+  success: false;
+  error:
+    | "UNAUTHORIZED"
+    | "NOT_FOUND"
+    | "ALREADY_DECIDED"
+    | "FORBIDDEN"
+    | "FEATURE_DISABLED"
+    | "NO_RECIPIENTS"
+    | "TOO_SOON"
+    | "INTERNAL_ERROR";
+  /** TOO_SOON only — ISO timestamp of the earliest permitted next nudge. */
+  retryAt?: string;
+}
+
+export type NudgeReviewResult = NudgeReviewSuccess | NudgeReviewFailure;
+
+/**
+ * Send the pending-review reminder for one request right now, on the
+ * requester's command, instead of waiting for the scheduled scan.
+ *
+ * Deliberately reuses the recurring reminder's whole pipeline rather than
+ * inventing a second "nudge" notion: the same REVIEW_REMINDER notification
+ * (so it renders, localizes, and digests identically), the same
+ * `*.review_reminder` webhook, the same `lastRemindedAt` stamp, and the same
+ * REVIEW_REMINDED audit action — separated only by `metadata.source`. A
+ * reviewer should not be able to tell a nudge from an overdue reminder;
+ * both mean "this is still waiting on you".
+ *
+ * Permission model mirrors `cancelReviewRequest`: original requester or a
+ * system admin. Those two actions are the requester's entire vocabulary on a
+ * request they can't decide themselves.
+ *
+ * The system-level kill switch applies, but the reminder *threshold* does
+ * not — a threshold of 0 disables the unattended scan, not a person
+ * deliberately asking for their own request to be re-surfaced.
+ */
+export const nudgeReviewRequest = withActionAuditContext(
+  async (reviewRequestId: string): Promise<NudgeReviewResult> => {
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return { success: false, error: "UNAUTHORIZED" };
+    }
+    const userId = session.user.id;
+
+    const systemEnabled = await isReviewFeatureSystemEnabled(baseDb);
+    if (!systemEnabled) {
+      return { success: false, error: "FEATURE_DISABLED" };
+    }
+
+    const req = await baseDb.reviewRequest.findUnique({
+      where: { id: reviewRequestId },
+      include: {
+        project: {
+          select: { id: true, name: true, reviewWorkflowEnabled: true },
+        },
+        fromState: { select: { id: true, name: true } },
+        toState: {
+          select: {
+            id: true,
+            name: true,
+            color: { select: { value: true } },
+          },
+        },
+        // The reminder copy is written from the ORIGINAL requester's point of
+        // view ("Alice's review request is still waiting on you"), so it has
+        // to come off the row — an admin nudging on someone else's behalf
+        // must not rewrite whose request it is.
+        requestedBy: { select: { id: true, name: true } },
+        assigneeUser: { select: { id: true, name: true } },
+        assigneeRole: { select: { id: true, name: true } },
+      },
+    });
+    if (!req) {
+      return { success: false, error: "NOT_FOUND" };
+    }
+    if (req.project.reviewWorkflowEnabled !== true) {
+      return { success: false, error: "FEATURE_DISABLED" };
+    }
+    if (req.status !== "PENDING") {
+      return { success: false, error: "ALREADY_DECIDED" };
+    }
+
+    const isAdmin = session.user.access === "ADMIN";
+    if (!isAdmin && req.requestedByUserId !== userId) {
+      return { success: false, error: "FORBIDDEN" };
+    }
+
+    const now = new Date();
+    if (req.lastRemindedAt !== null) {
+      const lastRemindedMs = new Date(req.lastRemindedAt).getTime();
+      if (now.getTime() - lastRemindedMs < NUDGE_COOLDOWN_MS) {
+        return {
+          success: false,
+          error: "TOO_SOON",
+          retryAt: new Date(lastRemindedMs + NUDGE_COOLDOWN_MS).toISOString(),
+        };
+      }
+    }
+
+    // Recipients: direct assignee XOR every holder of the assigned role.
+    // Requester exclusion matches the scheduled scan — a request can't be
+    // self-assigned (schema @@validate), and role holders are filtered
+    // against the requester, not the actor, so an admin nudge reaches the
+    // same people the automatic reminder would have.
+    let targetUserIds: string[] = [];
+    try {
+      if (
+        req.assigneeUserId !== null &&
+        req.assigneeUserId !== req.requestedByUserId
+      ) {
+        targetUserIds = [req.assigneeUserId];
+      } else if (req.assigneeRoleId !== null) {
+        targetUserIds = await NotificationService.resolveRoleHolderUserIds(
+          req.project.id,
+          req.assigneeRoleId,
+          req.requestedByUserId
+        );
+      }
+    } catch (resolveErr) {
+      console.error(
+        "nudgeReviewRequest: role-holder resolution failed",
+        resolveErr
+      );
+      return { success: false, error: "INTERNAL_ERROR" };
+    }
+
+    // Distinct from the worker, which stamps and moves on: a person pressed a
+    // button here, so "nobody would receive this" is an answer they need,
+    // not a row to quietly skip. No stamp either — restoring project access
+    // should make the next nudge work.
+    if (targetUserIds.length === 0) {
+      return { success: false, error: "NO_RECIPIENTS" };
+    }
+
+    const entityName = await loadEntityName(req.entityType, req.entityId);
+    if (entityName === null) {
+      return { success: false, error: "NOT_FOUND" };
+    }
+
+    const hoursPending = Math.floor(
+      (now.getTime() - new Date(req.createdAt).getTime()) / (1000 * 60 * 60)
+    );
+
+    // Fatal on failure, unlike every other notification dispatch in this
+    // file: elsewhere the notification is an announcement of work already
+    // committed, so losing it beats rolling the work back. Here the
+    // notification IS the work — reporting success on a reminder nobody
+    // received would leave the requester waiting on a ping that never landed.
+    try {
+      await NotificationService.createReviewReminderNotification({
+        targetUserIds,
+        requesterUserId: req.requestedByUserId,
+        requesterName: req.requestedBy?.name ?? "Unknown User",
+        projectId: req.project.id,
+        projectName: req.project.name,
+        entityType: req.entityType,
+        entityId: req.entityId,
+        entityName,
+        fromStateName: req.fromState.name,
+        toStateName: req.toState.name,
+        reviewRequestId,
+        hoursPending,
+      });
+    } catch (notifyErr) {
+      console.error(
+        "nudgeReviewRequest: reminder notification dispatch failed",
+        notifyErr
+      );
+      return { success: false, error: "INTERNAL_ERROR" };
+    }
+
+    // Webhook emit + cooldown stamp share a transaction, matching the
+    // scheduled scan. Where the two diverge is the fallback: the worker
+    // leaves the row unstamped so the next scan retries, but the
+    // notifications above have already gone out, so an unstamped row here
+    // would let the requester immediately nudge again and double-ping the
+    // reviewer. Stamp regardless; the webhook is the recoverable half.
+    try {
+      await baseDb.$transaction(async (tx: any) => {
+        await emitReviewReminderEvent(
+          {
+            reviewRequestId,
+            projectId: req.project.id,
+            entityType: req.entityType,
+            entityId: req.entityId,
+            entityName,
+            fromStateId: req.fromStateId,
+            fromStateName: req.fromState.name,
+            toStateId: req.toStateId,
+            toStateName: req.toState.name,
+            toStateColor: req.toState.color?.value ?? null,
+            requestedByUserId: req.requestedByUserId,
+            requesterName: req.requestedBy?.name ?? "Unknown User",
+            assigneeUserId: req.assigneeUserId,
+            assigneeUserName: req.assigneeUser?.name ?? null,
+            assigneeRoleId: req.assigneeRoleId,
+            assigneeRoleName: req.assigneeRole?.name ?? null,
+            hoursPending,
+          },
+          { tx, actorUserId: userId }
+        );
+        await tx.reviewRequest.update({
+          where: { id: reviewRequestId },
+          data: { lastRemindedAt: now },
+        });
+      });
+    } catch (webhookErr) {
+      console.error(
+        "nudgeReviewRequest: reminder webhook emit failed",
+        webhookErr
+      );
+      try {
+        await baseDb.reviewRequest.update({
+          where: { id: reviewRequestId },
+          data: { lastRemindedAt: now },
+        });
+      } catch (stampErr) {
+        console.error("nudgeReviewRequest: cooldown stamp failed", stampErr);
+      }
+    }
+
+    try {
+      await captureAuditEvent({
+        action: "REVIEW_REMINDED",
+        entityType: "ReviewRequest",
+        entityId: reviewRequestId,
+        projectId: req.project.id,
+        userId,
+        metadata: {
+          // The scheduled scan stamps "review-reminder-worker" here; this is
+          // the seam that tells an auditor a human asked for the ping.
+          source: "manual-nudge",
+          recipientCount: targetUserIds.length,
+          hoursPending,
+          requestedByUserId: req.requestedByUserId,
+          entityType: req.entityType,
+          entityId: req.entityId,
+        },
+      });
+    } catch (auditErr) {
+      console.error("nudgeReviewRequest: audit emission failed", auditErr);
+    }
+
+    revalidatePath("/");
+    return {
+      success: true,
+      reviewRequestId,
+      recipientCount: targetUserIds.length,
+    };
   }
 );
 

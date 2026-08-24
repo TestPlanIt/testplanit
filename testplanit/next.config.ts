@@ -10,6 +10,13 @@ const withNextIntl = createNextIntlPlugin({
   },
 });
 
+// Mirrors DEFAULT_UPLOAD_MAX_MB in app/actions/uploadFile.ts -- keep the two in
+// step. Read here only to size the server-action body limit below.
+const uploadMaxMb = (() => {
+  const parsed = Number(process.env.UPLOAD_MAX_MB);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+})();
+
 // Helper function to extract hostname and port from URL
 const parseUrlForPattern = (url: string) => {
   try {
@@ -156,9 +163,20 @@ const nextConfig: NextConfig = {
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,
     cpus: 2,
-    // Increase body size limit for server actions (file uploads)
+    // Server actions carry the file uploads, so this ceiling must stay
+    // comfortably ABOVE the largest per-type maxSize in app/actions/uploadFile.ts:
+    // multipart FormData adds overhead on top of the file itself, and Next
+    // rejects an oversized body before the action ever runs — so a limit equal
+    // to maxSize turns the friendly "File is too large" into an opaque
+    // server-action error. The 10mb of headroom covers that overhead.
+    //
+    // Like SELF_HOSTED, this MUST be set from a build ARG: Next freezes
+    // experimental config into the standalone build
+    // (.next/required-server-files.json) and the running server reads that
+    // frozen copy, so a runtime-only env var is too late and silently has no
+    // effect (uploads fail at the proxy layer with no useful message).
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: `${uploadMaxMb + 10}mb`,
     },
   },
   images: {

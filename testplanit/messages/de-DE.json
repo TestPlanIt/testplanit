@@ -3701,6 +3701,13 @@
       "success": "Überprüfungsanfrage storniert.",
       "error": "Die Überprüfungsanfrage konnte nicht abgebrochen werden. Bitte versuchen Sie es in Kürze erneut."
     },
+    "nudge": {
+      "success": "{count, plural, one {Erinnerung an # Prüfer gesendet.} other {Erinnerung an # Prüfer gesendet.}}",
+      "error": "Die Erinnerung konnte nicht gesendet werden. Bitte versuchen Sie es in Kürze erneut.",
+      "tooSoon": "Für diese Anfrage wurde bereits innerhalb der letzten Stunde eine Erinnerung gesendet. Bitte versuchen Sie es später erneut.",
+      "cooldownTooltip": "Erinnerung bereits gesendet {ago}",
+      "noRecipients": "Im Moment kann niemand auf diese Anfrage reagieren. Überprüfen Sie, ob der Zuständige noch Zugriff auf das Projekt hat."
+    },
     "list": {
       "pendingTooltip": "Prüfung ausstehend von {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Ausstehend",
       "tabDecided": "Entschieden",
       "emptyDecided": "Noch keine entschiedenen Reviews. Reviews, die Sie entscheiden, sowie Entscheidungen zu von Ihnen angeforderten Reviews werden hier angezeigt.",
-      "empty": "Keine ausstehenden Überprüfungen. Sie sind auf dem neuesten Stand.",
+      "empty": "Keine ausstehenden Prüfungen. Es wartet nichts auf Sie, und über alle von Ihnen angeforderten Prüfungen wurde bereits entschieden.",
       "featureDisabled": "Die Funktion „Prüfprozess“ ist derzeit deaktiviert. Ausstehende Prüfungen bleiben erhalten und werden wieder angezeigt, sobald die Funktion erneut aktiviert wird.",
       "columnEntity": "Juristische Person",
       "columnProject": "Projekt",
       "columnRequester": "Anforderer",
+      "columnAssignee": "Zugewiesen an",
       "columnTransition": "Übergang",
       "columnRequestedAt": "Angefordert bei",
       "columnDecidedBy": "Beschlossen von",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Genehmigen",
       "actionRequestChanges": "Änderungen anfordern",
       "actionReject": "Ablehnen",
+      "actionNudge": "Erinnerung senden",
       "filterEntityType": "Entitätstyp",
       "filterProject": "Projekt",
       "filterRequester": "Anforderer",

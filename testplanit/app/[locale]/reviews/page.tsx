@@ -2,6 +2,16 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageCardHeader } from "@/components/ui/page-card-header";
 import { Label } from "@/components/ui/label";
@@ -26,8 +36,16 @@ import type { LucideIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import type { PanelImperativeHandle } from "react-resizable-panels";
+import { toast } from "sonner";
 
 import { Loading } from "@/components/Loading";
 import { DataTable } from "@/components/tables/DataTable";
@@ -46,6 +64,7 @@ import {
   RequestChangesDialog,
   type ReviewableEntityType,
 } from "~/components/reviews/ReviewDecisionDialogs";
+import { cancelReviewRequest } from "~/app/actions/reviews";
 import { useReviewAssigneeRoleIds } from "~/hooks/useReviewAssigneeRoleIds";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
@@ -320,9 +339,17 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
             { isDeleted: false },
             { project: { reviewWorkflowEnabled: true } },
             {
+              // Two kinds of undecided row, one queue: reviews parked with
+              // the viewer, and reviews the viewer parked with someone else.
+              // The requester branch is what makes this the single place to
+              // see everything still awaiting a decision — previously a
+              // request you submitted was invisible here until it was
+              // decided and surfaced on the Decided tab. Per-row actions
+              // (see ./columns) keep the two straight.
               OR: [
                 { assigneeUserId: userId },
                 { assigneeRoleId: { in: currentUserRoleIds } },
+                { requestedByUserId: userId },
               ],
             },
           ]
@@ -668,15 +695,53 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
   );
   const closeDialog = () => setActiveDialog(null);
 
+  // Cancel lives beside the decision dialogs rather than reusing
+  // `CancelRequestButton` (which ships its own action-bar-shaped trigger):
+  // the inbox's action cells are uniform icon buttons, and every other
+  // confirmation on this page is already hoisted to the page root so the
+  // dialog isn't unmounted by DataTable's row virtualization mid-confirm.
+  const [cancelTarget, setCancelTarget] =
+    useState<ExtendedReviewRequest | null>(null);
+  const [isCancelling, startCancel] = useTransition();
+
+  const invalidateReviewRows = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "ReviewRequest"],
+    });
+  }, [queryClient]);
+
   const actions: InboxActionHandlers = useMemo(
     () => ({
       onApprove: (row) => setActiveDialog({ decision: "APPROVED", row }),
       onRequestChanges: (row) =>
         setActiveDialog({ decision: "CHANGES_REQUESTED", row }),
       onReject: (row) => setActiveDialog({ decision: "REJECTED", row }),
+      onCancel: (row) => setCancelTarget(row),
+      // A reminder doesn't move the row out of the queue, but it does bump
+      // `lastRemindedAt` — refetch so the button settles into its cooldown.
+      onNudged: invalidateReviewRows,
     }),
-    []
+    [invalidateReviewRows]
   );
+
+  const handleCancelConfirm = () => {
+    const target = cancelTarget;
+    if (!target) return;
+    startCancel(async () => {
+      try {
+        const result = await cancelReviewRequest(target.id);
+        if (!result.success) {
+          toast.error(t("reviews.cancel.error"));
+          return;
+        }
+        invalidateReviewRows();
+        toast.success(t("reviews.cancel.success"));
+        setCancelTarget(null);
+      } catch {
+        toast.error(t("reviews.cancel.error"));
+      }
+    });
+  };
 
   // --- Docked case-details panel ------------------------------------------
   // Clicking a CASE row's name opens the case in a panel beside the queue —
@@ -733,6 +798,8 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     t,
     view,
     actions,
+    viewerUserId: userId,
+    viewerRoleIds: currentUserRoleIds,
     caseById,
     testRunById,
     sessionById,
@@ -1205,6 +1272,42 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
             return <RequestChangesDialog {...shared} />;
           return <RejectDialog {...shared} />;
         })()}
+
+      {/* Requester-side confirmation. Cancelling is a status flip, not a
+          deletion, but it does revoke the reviewer's ability to act — hence
+          a confirm step where "Send reminder" has none. */}
+      <AlertDialog
+        open={cancelTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setCancelTarget(null);
+        }}
+      >
+        <AlertDialogContent data-testid="reviews-inbox-cancel-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("reviews.cancel.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("reviews.cancel.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                // Keep the dialog mounted through the transition — the
+                // default AlertDialogAction closes on click, which would
+                // unmount the pending state before the toast lands.
+                e.preventDefault();
+                handleCancelConfirm();
+              }}
+              disabled={isCancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="reviews-inbox-cancel-confirm"
+            >
+              {t("reviews.cancel.confirm")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

@@ -201,6 +201,7 @@ async function fetchCaseAxis(
       INNER JOIN "TestRuns" tr ON trc."testRunId" = tr.id
       WHERE tr."projectId" = ${projectId}
         AND tr."isDeleted" = false
+        AND trc."isDeleted" = false
         ${scopeFragment}
     )
       AND rc."isDeleted" = false
@@ -244,6 +245,7 @@ async function fetchConfigAxis(
         ON trc."repositoryCaseId" = rc.id
       WHERE tr."projectId" = ${projectId}
         AND tr."isDeleted" = false
+        AND trc."isDeleted" = false
         AND rc."isDeleted" = false
         AND rc."hasParameters" = true
         ${scopeFragment}
@@ -275,6 +277,7 @@ async function fetchParamRowsByCaseId(
     INNER JOIN "TestRuns" tr ON trc."testRunId" = tr.id
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
+      AND trc."isDeleted" = false
       AND trcs."isDeleted" = false
       ${scopeFragment}
     ORDER BY trc."repositoryCaseId" ASC, tr."createdAt" DESC, trc.id DESC
@@ -387,6 +390,7 @@ async function fetchAggregateCells(
     LEFT JOIN "Status" st ON st.id = iter."statusId"
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
+      AND trc."isDeleted" = false
       AND iter."isDeleted" = false
       ${scopeFragment}
       ${iterationFragment}

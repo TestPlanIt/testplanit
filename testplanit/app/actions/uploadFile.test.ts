@@ -1,13 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Since uploadFile is a server action that creates S3Client internally,
-// we focus on testing the validation logic which doesn't require S3
+// uploadFile constructs its own S3Client and PUTs to it. Without this mock the
+// under-limit cases issue a real request to whatever AWS_ENDPOINT_URL resolves
+// to -- against live s3.amazonaws.com that came back InvalidAccessKeyId, which
+// happened to satisfy a "no size error" assertion while making the suite
+// network-dependent. Mocking the transport lets those cases assert the upload
+// actually succeeded instead.
+const { mockSend } = vi.hoisted(() => ({ mockSend: vi.fn() }));
+
+// Both are invoked with `new`, so the implementations must be constructable --
+// vitest 4 rejects an arrow function here ("is not a constructor").
+vi.mock("@aws-sdk/client-s3", () => ({
+  S3Client: vi.fn(function () {
+    return { send: mockSend };
+  }),
+  PutObjectCommand: vi.fn(function (input: unknown) {
+    return { input };
+  }),
+}));
 
 describe("uploadFile validation", () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // UPLOAD_CONFIGS is built at module load, so each test needs a fresh import
+    // to see its own env. Without the reset the first import in the file would
+    // pin the limits for every test after it.
+    vi.resetModules();
     process.env = {
       ...originalEnv,
       AWS_BUCKET_NAME: "test-bucket",
@@ -15,6 +35,10 @@ describe("uploadFile validation", () => {
       AWS_ACCESS_KEY_ID: "test-access-key",
       AWS_SECRET_ACCESS_KEY: "test-secret-key",
     };
+    // Exercise the shipped default unless a test opts into an override.
+    delete process.env.UPLOAD_MAX_MB;
+    mockSend.mockReset();
+    mockSend.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -142,8 +166,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "avatar");
 
-      // Should not return size error
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/avatars/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it("project-icon should have 4MB limit", async () => {
@@ -155,7 +180,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "project-icon");
 
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/project-icons/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it("docimage should have 10MB limit", async () => {
@@ -167,7 +194,9 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "docimage");
 
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/document-images/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
     it("attachment should have 10MB limit", async () => {
@@ -181,7 +210,90 @@ describe("uploadFile validation", () => {
 
       const result = await uploadFile(formData, "attachment");
 
-      expect(result.error).not.toContain("File is too large");
+      expect(result.error).toBeUndefined();
+      expect(result.success?.key).toContain("uploads/attachments/");
+      expect(mockSend).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // Operators raise the per-file ceiling with UPLOAD_MAX_MB (see
+  // nginx-local/README.md); next.config.ts sizes the server-action body limit
+  // from the same variable. Sizes here stay small on purpose — the point is the
+  // ceiling that gets applied, and multi-hundred-MB ArrayBuffers make the suite
+  // needlessly heavy.
+  describe("UPLOAD_MAX_MB override", () => {
+    async function getUploadFileWith(maxMb?: string) {
+      if (maxMb === undefined) {
+        delete process.env.UPLOAD_MAX_MB;
+      } else {
+        process.env.UPLOAD_MAX_MB = maxMb;
+      }
+      vi.resetModules();
+      const uploadFileModule = await import("./uploadFile");
+      return uploadFileModule.uploadFile;
+    }
+
+    async function upload(
+      uploadFile: Awaited<ReturnType<typeof getUploadFileWith>>,
+      type: "attachment" | "docimage" | "avatar",
+      bytes: number
+    ) {
+      const file = new File([new ArrayBuffer(bytes)], "f.pdf", {
+        type: "application/pdf",
+      });
+      const formData = new FormData();
+      formData.append("file", file);
+      return uploadFile(formData, type);
+    }
+
+    it("defaults to 10MB when the variable is unset", async () => {
+      const uploadFile = await getUploadFileWith();
+
+      const result = await upload(uploadFile, "attachment", 11 * 1024 * 1024);
+
+      expect(result.error).toContain("File is too large");
+      expect(result.error).toContain("10MB");
+    });
+
+    it("raises the attachment and docimage ceilings together", async () => {
+      const uploadFile = await getUploadFileWith("25");
+
+      const under = await upload(uploadFile, "attachment", 11 * 1024 * 1024);
+      expect(under.error).toBeUndefined();
+      expect(under.success?.key).toContain("uploads/attachments/");
+
+      const overAttachment = await upload(
+        uploadFile,
+        "attachment",
+        26 * 1024 * 1024
+      );
+      expect(overAttachment.error).toContain("25MB");
+
+      const overDocimage = await upload(
+        uploadFile,
+        "docimage",
+        26 * 1024 * 1024
+      );
+      expect(overDocimage.error).toContain("25MB");
+    });
+
+    it("falls back to the default for a non-numeric or non-positive value", async () => {
+      for (const bad of ["not-a-number", "0", "-5", ""]) {
+        const uploadFile = await getUploadFileWith(bad);
+
+        const result = await upload(uploadFile, "attachment", 11 * 1024 * 1024);
+
+        expect(result.error, `UPLOAD_MAX_MB=${bad}`).toContain("10MB");
+      }
+    });
+
+    it("does not move the avatar ceiling", async () => {
+      const uploadFile = await getUploadFileWith("25");
+
+      const result = await upload(uploadFile, "avatar", 3 * 1024 * 1024);
+
+      expect(result.error).toContain("File is too large");
+      expect(result.error).toContain("2MB");
     });
   });
 });

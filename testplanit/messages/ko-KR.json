@@ -3701,6 +3701,13 @@
       "success": "리뷰 요청이 취소되었습니다.",
       "error": "리뷰 요청을 취소할 수 없습니다. 잠시 후 다시 시도해 주세요."
     },
+    "nudge": {
+      "success": "{count, plural, other {검토자 #명에게 알림을 보냈습니다.}}",
+      "error": "알림을 보낼 수 없습니다. 잠시 후 다시 시도해 주세요.",
+      "tooSoon": "이 요청에 대한 알림이 지난 1시간 이내에 이미 전송되었습니다. 나중에 다시 시도해 주세요.",
+      "cooldownTooltip": "{ago} 전에 이미 알림을 보냈습니다",
+      "noRecipients": "현재 이 요청을 처리할 수 있는 사람이 없습니다. 담당자가 프로젝트에 대한 접근 권한을 계속 가지고 있는지 확인하세요."
+    },
     "list": {
       "pendingTooltip": "{assignee}의 검토 대기 중"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "보류 중",
       "tabDecided": "결정했다",
       "emptyDecided": "결정된 리뷰가 아직 없습니다. 회원님이 결정한 리뷰와 회원님이 요청한 리뷰에 대한 결정이 여기에 표시됩니다.",
-      "empty": "보류 중인 리뷰가 없습니다. 모든 리뷰가 완료되었습니다.",
+      "empty": "대기 중인 검토가 없습니다. 귀하를 기다리는 항목이 없으며, 요청한 모든 검토가 결정되었습니다.",
       "featureDisabled": "현재 검토 워크플로 기능이 비활성화되어 있습니다. 보류 중인 검토는 보존되며 기능이 다시 활성화되면 다시 표시됩니다.",
       "columnEntity": "실재",
       "columnProject": "프로젝트",
       "columnRequester": "요청자",
+      "columnAssignee": "담당자",
       "columnTransition": "이행",
       "columnRequestedAt": "요청됨",
       "columnDecidedBy": "결정자",
@@ -3736,6 +3744,7 @@
       "actionApprove": "승인하다",
       "actionRequestChanges": "변경 요청",
       "actionReject": "거부하다",
+      "actionNudge": "알림 보내기",
       "filterEntityType": "엔티티 유형",
       "filterProject": "프로젝트",
       "filterRequester": "요청자",

@@ -3701,6 +3701,13 @@
       "success": "Yêu cầu xem xét đã bị hủy bỏ.",
       "error": "Không thể hủy yêu cầu xem xét. Vui lòng thử lại sau."
     },
+    "nudge": {
+      "success": "{count, plural, other {Đã gửi lời nhắc đến # người đánh giá.}}",
+      "error": "Không thể gửi lời nhắc. Vui lòng thử lại sau.",
+      "tooSoon": "Lời nhắc cho yêu cầu này đã được gửi trong giờ qua. Vui lòng thử lại sau.",
+      "cooldownTooltip": "Đã gửi lời nhắc {ago}",
+      "noRecipients": "Hiện không có ai có thể xử lý yêu cầu này. Hãy kiểm tra xem người được chỉ định có còn quyền truy cập vào dự án hay không."
+    },
     "list": {
       "pendingTooltip": "Đang chờ xem xét từ {assignee}"
     },
@@ -3722,11 +3729,12 @@
       "tabPending": "Chưa giải quyết",
       "tabDecided": "Quyết định",
       "emptyDecided": "Chưa có đánh giá nào được quyết định. Các đánh giá bạn quyết định và các quyết định về đánh giá bạn yêu cầu sẽ xuất hiện ở đây.",
-      "empty": "Không còn đánh giá nào đang chờ xử lý. Bạn đã hoàn tất mọi thủ tục.",
+      "empty": "Không có đánh giá nào đang chờ xử lý. Không có gì đang chờ bạn, và mọi đánh giá bạn đã yêu cầu đều đã được quyết định.",
       "featureDisabled": "Tính năng quy trình đánh giá hiện đang bị vô hiệu hóa. Các đánh giá đang chờ xử lý vẫn được lưu giữ và sẽ xuất hiện trở lại khi tính năng này được kích hoạt lại.",
       "columnEntity": "Thực thể",
       "columnProject": "Dự án",
       "columnRequester": "Người yêu cầu",
+      "columnAssignee": "Người được chỉ định",
       "columnTransition": "Chuyển đổi",
       "columnRequestedAt": "Yêu cầu tại",
       "columnDecidedBy": "Được quyết định bởi",
@@ -3736,6 +3744,7 @@
       "actionApprove": "Chấp thuận",
       "actionRequestChanges": "Yêu cầu thay đổi",
       "actionReject": "Từ chối",
+      "actionNudge": "Gửi lời nhắc",
       "filterEntityType": "Loại thực thể",
       "filterProject": "Dự án",
       "filterRequester": "Người yêu cầu",

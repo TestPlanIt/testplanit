@@ -13,6 +13,7 @@ import {
 } from "~/app/[locale]/projects/milestones/[projectId]/[milestoneId]/milestoneReadiness";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import type {
   DrillDownRequest,
@@ -261,6 +262,29 @@ async function handleMilestoneReadinessDrillDown(
   return Response.json(response);
 }
 
+/**
+ * Fill in `status` on run-case rows that carry none, from the case's latest
+ * automated result within the same run (the shared effective-status
+ * accessor). Mutates the rows in place so the response shape stays identical
+ * to a manually-executed case — the drill-down columns read `row.status` and
+ * shouldn't have to know which table it came from. Rows that genuinely never
+ * executed keep a null status.
+ */
+async function resolveAutomatedRunCaseStatuses(rows: any[]) {
+  const pending = (rows ?? []).filter(
+    (r) => r?.status == null && r?.id != null
+  );
+  if (pending.length === 0) return;
+
+  const effectiveStatuses = await getEffectiveRunCaseStatuses(
+    pending.map((r) => r.id)
+  );
+  for (const row of pending) {
+    const resolved = effectiveStatuses.get(row.id);
+    if (resolved) row.status = resolved;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
@@ -402,6 +426,15 @@ export async function POST(req: NextRequest) {
       model.findMany(query),
       model.count({ where: query.where }),
     ]);
+
+    // Automated runs (JUnit, TestNG, Mocha, etc.) never denormalise a status
+    // onto TestRunCases.statusId — the outcome lives in JUnitTestResult — so a
+    // run-case with no status here may well have executed. Resolve those before
+    // shaping the response, otherwise the drill-down reports "Completed: No"
+    // for every automated case and contradicts the metric it drills into.
+    if (context.metricId === "milestoneCompletion") {
+      await resolveAutomatedRunCaseStatuses(rawData);
+    }
 
     // Transform data to ensure 'name' field is populated correctly
     const data = rawData.map((record: any) => {

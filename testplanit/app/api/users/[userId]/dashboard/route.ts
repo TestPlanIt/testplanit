@@ -131,6 +131,10 @@ export async function GET(
       LEFT JOIN "Status" latest_result_status ON latest_result."statusId" = latest_result_status.id
       WHERE trc."assignedToId" = ${userId}
         AND trc."isCompleted" = false
+        -- Removing a case from a run soft-deletes its TestRunCases row rather
+        -- than dropping it, so without this the assignee keeps seeing work that
+        -- is no longer part of any run.
+        AND trc."isDeleted" = false
         AND tr."isDeleted" = false
         AND p."isDeleted" = false
       ORDER BY tr.id, trc.id

@@ -54,9 +54,9 @@ export const getColumns = (
     enableSorting: false,
     enableResizing: false,
     enableHiding: false,
-    size: 40,
-    maxSize: 40,
-    minSize: 40,
+    size: 41,
+    maxSize: 41,
+    minSize: 41,
     meta: { isPinned: "left" },
   },
   {
@@ -65,7 +65,7 @@ export const getColumns = (
     header: tCommon("fields.steps"),
     enableSorting: true,
     enableResizing: true,
-    size: 80,
+    size: 105,
     cell: ({ row }) => (
       <span className="text-end block font-medium">
         {row.original.stepCount}
@@ -96,7 +96,7 @@ export const getColumns = (
     header: t("columns.casesCount"),
     enableSorting: true,
     enableResizing: true,
-    size: 80,
+    size: 105,
     cell: ({ row }) => (
       <Badge variant="secondary">{row.original.casesCount}</Badge>
     ),

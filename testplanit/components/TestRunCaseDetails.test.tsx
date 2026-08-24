@@ -15,6 +15,7 @@ const {
   mockUseUpdateTestRunCases,
   mockUseUpdateTestRuns,
   mockUseFindManyTemplates,
+  mockUseFindManyJUnitTestResult,
   mockUseSession,
 } = vi.hoisted(() => ({
   mockUseTestRunCaseDetail: vi.fn(),
@@ -26,6 +27,7 @@ const {
   mockUseUpdateTestRunCases: vi.fn(),
   mockUseUpdateTestRuns: vi.fn(),
   mockUseFindManyTemplates: vi.fn(),
+  mockUseFindManyJUnitTestResult: vi.fn(),
   mockUseSession: vi.fn(),
 }));
 
@@ -51,6 +53,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     testRunCases: { useUpdate: mockUseUpdateTestRunCases },
     testRuns: { useUpdate: mockUseUpdateTestRuns },
     templates: { useFindMany: mockUseFindManyTemplates },
+    // Automated (JUnit/Mocha/etc.) runs keep their outcome here rather than on
+    // TestRunCases.statusId, so the sheet falls back to it when the run-case
+    // carries no status of its own.
+    jUnitTestResult: { useFindMany: mockUseFindManyJUnitTestResult },
   }),
 }));
 
@@ -262,6 +268,9 @@ function setupDefaultMocks() {
     data: [mockStatus, mockSuccessStatus],
   });
   mockUseFindManyTemplates.mockReturnValue({ data: [] });
+  // Default: no automated result for this case, so the sheet uses the
+  // run-case's own status.
+  mockUseFindManyJUnitTestResult.mockReturnValue({ data: [] });
   mockUseSession.mockReturnValue({
     data: { user: { id: "user-1", name: "Test User" } },
     status: "authenticated",
@@ -536,5 +545,46 @@ describe("TestRunCaseDetails", () => {
   it("renders linked cases panel", () => {
     renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
     expect(screen.getByTestId("linked-cases-panel")).toBeInTheDocument();
+  });
+
+  // Automated runs (JUnit, TestNG, Mocha, etc.) record their outcome in
+  // JUnitTestResult and never denormalise it onto TestRunCases.statusId, so
+  // `currentStatus` arrives null for a case that has in fact executed. Users
+  // reach this sheet straight from the Latest Results chips, which include
+  // JUnit executions — so without the fallback, clicking a passing result
+  // opened a sheet reading "Untested".
+  describe("automated run status fallback", () => {
+    it("shows the latest automated result when the run-case has no status", () => {
+      mockUseFindManyJUnitTestResult.mockReturnValue({
+        data: [{ status: mockSuccessStatus }],
+      });
+
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} currentStatus={null} />
+      );
+
+      expect(screen.getByText(mockSuccessStatus.name)).toBeInTheDocument();
+      expect(screen.queryByText("Untested")).not.toBeInTheDocument();
+    });
+
+    it("falls back to Untested when the case has no result in either source", () => {
+      mockUseFindManyJUnitTestResult.mockReturnValue({ data: [] });
+
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} currentStatus={null} />
+      );
+
+      expect(screen.getByText("Untested")).toBeInTheDocument();
+    });
+
+    it("prefers the run-case's own status over an automated result", () => {
+      mockUseFindManyJUnitTestResult.mockReturnValue({
+        data: [{ status: mockSuccessStatus }],
+      });
+
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+
+      expect(screen.getByText("Untested")).toBeInTheDocument();
+    });
   });
 });

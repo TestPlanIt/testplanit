@@ -23,7 +23,7 @@ A request asks a reviewer (a specific user, or any holder of a chosen role) to a
 
 Approving a request performs the transition it asked for. The reviewer's decision moves the entity into the target state and consumes the approval in the same act, so the requester never has to go back and repeat the state change by hand.
 
-A request is one-shot: once it has been approved AND consumed by a transition, it can't be reused. Requesters can also cancel a request before a reviewer has decided.
+A request is one-shot: once it has been approved AND consumed by a transition, it can't be reused. While a request is still undecided, the requester can send its reviewer a reminder or cancel it outright.
 
 ### Strict transitive gates
 
@@ -131,13 +131,39 @@ When the reviewer is a role, the banner renders a role chip with a small role ic
 
 There is nothing left for the requester to do once the request is in. An approval moves the entity into the target state on its own; the requester is notified and the banner clears.
 
+### Tracking requests you submitted
+
+Requests you're waiting on someone else to decide appear on the **Pending** tab of your **Review inbox**, alongside the requests assigned to you. That makes the inbox the single place to see everything still awaiting a decision, without opening each entity to check. An **Assignee** column says who each request is parked with; for role-assigned requests, hovering the role chip lists every project-eligible holder who could act on it.
+
+Your own requests carry two row actions instead of the reviewer's Approve / Request changes / Reject:
+
+- **Send reminder** — pings the assignee (or every holder of the assigned role) right away with the same reminder notification the scheduled reminders send. See [Nudging a reviewer](#nudging-a-reviewer) below.
+- **Cancel request** — withdraws the request. See [Cancelling a request](#cancelling-a-request) below.
+
+Once a request you submitted is decided, it moves off the Pending tab and onto the **Decided** tab, where the **Decided by** column shows who acted on it.
+
+### Nudging a reviewer
+
+When a request has been sitting longer than you'd like, you don't have to wait for the next scheduled reminder:
+
+1. Open your **Review inbox** and stay on the **Pending** tab.
+2. Find the row you submitted.
+3. Click the **Send reminder** (bell) action.
+
+The assignee — or, for a role-assigned request, every project-eligible holder of that role — gets the same **Review still pending** notification the scheduled reminders send, including the elapsed pending time, and the same `review_reminder` webhook event fires. Reviewers can't tell a nudge from an automatic reminder; both mean "this is still waiting on you."
+
+To keep a reviewer from being pinged twice for the same request, the action shares its cooldown with the scheduled reminders: for one hour after *either* fires, the button is greyed out and its tooltip says when the last reminder went out. If the assigned role currently has no project-eligible holders, the reminder isn't sent and TestPlanIt says so rather than reporting a silent success.
+
+System administrators can also send a reminder on a request they didn't submit. The notification still names the original requester.
+
 ### Cancelling a request
 
-If the requester changes their mind before a decision lands, they can cancel:
+If the requester changes their mind before a decision lands, they can cancel from either surface:
 
-1. Open the entity.
-2. Click the **Pending review** banner.
-3. Click **Cancel request**.
+- From the entity — open it, click the **Pending review** banner, then **Cancel request**.
+- From the **Review inbox** — on the **Pending** tab, click the **Cancel request** action on the row you submitted.
+
+Either path asks for confirmation first.
 
 Cancelling does not affect the entity's current state. Anyone who was asked to review the request — the direct assignee or every role holder — is notified so they can drop the item from their queue, and the cancellation is emitted as a `review_completed` webhook event with `decision: "CANCELLED"`.
 
@@ -145,9 +171,9 @@ Cancelling does not affect the entity's current state. Anyone who was asked to r
 
 Reviewers find pending requests in their inbox:
 
-1. Click the **Review inbox** icon in the top navigation bar (an inbox icon with a count badge when there are pending items). The icon is hidden for users who have no access to any project with **Review Workflow** turned on — there's nothing for them to act on.
+1. Click the **Review inbox** icon in the top navigation bar (an inbox icon with a count badge). The badge counts only the requests waiting on *you* to decide, so it stays an accurate "work to do" signal — requests you submitted are listed inside the inbox but never inflate the badge. The icon is hidden for users who have no access to any project with **Review Workflow** turned on — there's nothing for them to act on.
 2. The inbox shows two tabs:
-    - **Pending** — requests assigned to you, directly or via a role you hold.
+    - **Pending** — everything still awaiting a decision: requests assigned to you (directly or via a role you hold), plus requests you submitted and are waiting on someone else to decide. Row actions differ per row — the reviewer's three decisions on requests assigned to you, **Send reminder** and **Cancel request** on the ones you submitted.
     - **Decided** — requests you've decided, plus decided requests you originally submitted, with a **Decided by** column showing who acted.
 3. Click a request to open the entity in a side panel showing:
     - Requester name and comment
@@ -202,6 +228,8 @@ If users on this instance use the daily-digest email mode and you set the remind
 
 ### Slack and webhook subscribers (stretch)
 
+Requesters don't have to wait for the threshold: the **Send reminder** action on their own rows in the Review inbox fires the same reminder on demand, sharing the same one-hour cooldown so a reviewer can't be pinged twice for one request. See [Nudging a reviewer](#nudging-a-reviewer).
+
 Each reminder also emits an outbound webhook event, in three entity-scoped variants — `case.review_reminder`, `test_run.review_reminder`, and `session.review_reminder`. Subscribers configured on a project's **Settings → Webhooks** can route these to Slack (formatted with a "Review reminder" header showing the pending duration alongside the entity / requester / assignee context) or to any generic HMAC endpoint as structured JSON.
 
 ## Bulk operations
@@ -254,7 +282,7 @@ Reviewers receive an in-app notification (and an email, if email notifications a
 - A request is **assigned** to them directly, or to a role they hold.
 - A request they own (or are watching) is **decided**.
 - A request is **cancelled** by the requester.
-- A request they're assigned to has **been pending past the reminder threshold** (see [Review reminders](#review-reminders) above).
+- A request they're assigned to has **been pending past the reminder threshold** (see [Review reminders](#review-reminders) above), or the requester **sent a reminder** manually (see [Nudging a reviewer](#nudging-a-reviewer)).
 
 Requesters receive a notification when a reviewer decides on a request they submitted.
 
@@ -266,7 +294,7 @@ Review events can be delivered to external systems (Slack, generic HMAC endpoint
 | --- | --- |
 | `case.review_requested` / `test_run.review_requested` / `session.review_requested` | A reviewer is requested on a Test Case / Test Run / Session |
 | `case.review_completed` / `test_run.review_completed` / `session.review_completed` | The request is approved, sent back for changes, rejected, or cancelled |
-| `case.review_reminder` / `test_run.review_reminder` / `session.review_reminder` | The scheduled reminder fires on a request that's been pending past the configured threshold (see [Review reminders](#review-reminders)) |
+| `case.review_reminder` / `test_run.review_reminder` / `session.review_reminder` | The scheduled reminder fires on a request that's been pending past the configured threshold, or a requester sends one manually (see [Review reminders](#review-reminders)) |
 
 To subscribe:
 

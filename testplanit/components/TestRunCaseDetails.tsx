@@ -245,6 +245,37 @@ export function TestRunCaseDetails({
   const hasRequiredResultField =
     (requiredResultFieldAssignments?.length ?? 0) > 0;
 
+  // Automated runs (JUnit, TestNG, Mocha, etc.) record their outcome in
+  // JUnitTestResult and never denormalise it onto TestRunCases.statusId, so
+  // `currentStatus` arrives null for a case that has in fact executed. Only
+  // fetched when there is no run-case status to show — a manual case never
+  // pays for this. Scoped to this case and run rather than added to the run's
+  // own testCases select, which is deliberately thin (a run can hold thousands
+  // of unpaginated cases).
+  const { data: automatedResults } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindMany(
+    {
+      where: {
+        repositoryCaseId: caseId,
+        testSuite: { testRunId },
+      },
+      select: {
+        status: {
+          select: {
+            id: true,
+            name: true,
+            color: { select: { value: true } },
+          },
+        },
+      },
+      orderBy: [{ executedAt: "desc" }, { id: "desc" }],
+      take: 1,
+    },
+    { enabled: !currentStatus && testRunId != null }
+  );
+  const automatedStatus = automatedResults?.[0]?.status ?? null;
+
   const { data: _templates } = useClientQueries(schema).templates.useFindMany({
     where: {
       isDeleted: false,
@@ -310,7 +341,7 @@ export function TestRunCaseDetails({
     (status: Status) => status.isSuccess === true
   );
 
-  const displayStatus = currentStatus || defaultStatus;
+  const displayStatus = currentStatus || automatedStatus || defaultStatus;
   if (!displayStatus) return null;
 
   const handleStatusChange = (statusId: string) => {

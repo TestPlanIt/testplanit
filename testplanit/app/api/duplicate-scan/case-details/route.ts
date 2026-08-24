@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { baseDb } from "~/lib/db";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { authOptions } from "~/server/auth";
 
 const querySchema = z.object({
@@ -74,6 +75,7 @@ async function fetchCaseDetails(caseId: number) {
         take: 1,
         select: {
           id: true,
+          testRunId: true,
           status: { select: { id: true, name: true } },
           createdAt: true,
           testRun: { select: { name: true } },
@@ -84,6 +86,20 @@ async function fetchCaseDetails(caseId: number) {
 
   if (!result) {
     return result;
+  }
+
+  // The last run may be an automated one (JUnit, TestNG, Mocha, etc.), which
+  // records its outcome in JUnitTestResult and leaves TestRunCases.statusId
+  // empty. Without this the panel shows a run name and date with a blank
+  // status — which reads as "never executed" for the automation-heavy cases
+  // that dominate duplicate scans.
+  const lastRun = result.testRuns?.[0];
+  if (lastRun && lastRun.status == null) {
+    const effectiveStatuses = await getEffectiveRunCaseStatuses([lastRun.id]);
+    const resolved = effectiveStatuses.get(lastRun.id);
+    if (resolved) {
+      lastRun.status = { id: resolved.id, name: resolved.name };
+    }
   }
 
   // Remap the explicit join (caseTags) back to the prior tags shape so the

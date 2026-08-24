@@ -1,6 +1,7 @@
 import { baseDb } from "@/lib/db";
 import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
+import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 import { buildDateFilter } from "~/utils/reportUtils";
@@ -203,11 +204,14 @@ const METRIC_REGISTRY: Record<
     id: "milestoneCompletion",
     label: "Milestone Completion (%)",
     aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
-      // Completion = distinct run-cases whose rolled-up status is completed,
-      // over all run-cases in the milestone's live runs. The run-case status
-      // rollup is written by manual execution and the automated-result import
-      // alike, so both sources count — and a case executed N times counts
-      // once.
+      // Completion is counted from whichever table actually holds the outcome:
+      // manual runs roll their status up onto TestRunCases.statusId, while
+      // automated runs (JUnit, TestNG, Mocha, etc.) record theirs in
+      // JUnitTestResult and leave the run-case row empty. The shared accessor
+      // owns that split — the same one `calculateMilestoneCompletion` uses, so
+      // the report and the milestone page agree. It aggregates in Postgres
+      // rather than loading every run-case row into memory, which on a large
+      // project meant pulling ~1M rows to count them.
       const milestones = await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
@@ -226,37 +230,9 @@ const METRIC_REGISTRY: Record<
         return groupBy.length === 0 ? [{ milestoneCompletion: null }] : [];
       }
 
-      const runCases = await baseDb.testRunCases.findMany({
-        where: {
-          isDeleted: false,
-          testRun: {
-            isDeleted: false,
-            milestoneId: { in: milestones.map((m: any) => m.id) },
-          },
-        },
-        select: {
-          testRun: { select: { milestoneId: true } },
-          status: { select: { isCompleted: true } },
-        },
-      });
-
-      const countsByMilestone = new Map<
-        number,
-        { total: number; completed: number }
-      >();
-      runCases.forEach((rc: any) => {
-        const milestoneId = rc.testRun?.milestoneId;
-        if (milestoneId == null) return;
-        const entry = countsByMilestone.get(milestoneId) ?? {
-          total: 0,
-          completed: 0,
-        };
-        entry.total++;
-        if (rc.status?.isCompleted === true) {
-          entry.completed++;
-        }
-        countsByMilestone.set(milestoneId, entry);
-      });
+      const countsByMilestone = await getMilestoneCaseCompletion(
+        milestones.map((m: any) => m.id)
+      );
 
       const grouped = new Map<string, any>();
       milestones.forEach((milestone: any) => {
