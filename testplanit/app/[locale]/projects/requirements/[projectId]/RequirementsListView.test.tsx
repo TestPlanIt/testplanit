@@ -780,18 +780,24 @@ describe("RequirementsListView", () => {
       }
     });
 
-    it("dragging requirement 1: every other row is outlined as a candidate, and row 1 (the dragged row) is not", () => {
+    it("dragging requirement 1: every other row is outlined as a candidate, and row 1 (the dragged row) is not", async () => {
       dragLayerState.current = {
         isDragging: true,
         item: { requirementId: 1, name: "Root A" },
         itemType: ItemTypes.REQUIREMENT,
       };
       renderView();
+      // Candidate rings apply one animation frame AFTER the monitor flips:
+      // painting them in the dragstart tick makes Chrome cancel the native
+      // drag (the virtualizer re-measures while the drag is being set up).
+      // waitFor flushes that deferral frame.
+      await waitFor(() =>
+        expect(screen.getByTestId("requirement-row-7").className).toContain(
+          "inset-ring-2"
+        )
+      );
       expect(screen.getByTestId("requirement-row-1").className).not.toContain(
         "inset-ring"
-      );
-      expect(screen.getByTestId("requirement-row-7").className).toContain(
-        "inset-ring-2"
       );
       expect(screen.getByTestId("requirement-row-9").className).toContain(
         "inset-ring-2"
@@ -830,7 +836,7 @@ describe("RequirementsListView", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("the root strip shows the drop-to-root hint while dragging, and shows nothing while idle", () => {
+    it("the root strip shows the drop-to-root hint while dragging, and shows nothing while idle", async () => {
       const { unmount } = renderView();
       expect(
         screen.queryByTestId("requirement-tree-end-hint")
@@ -843,8 +849,11 @@ describe("RequirementsListView", () => {
         itemType: ItemTypes.REQUIREMENT,
       };
       renderView();
-      expect(screen.getByTestId("requirement-tree-end-hint")).toHaveTextContent(
-        "requirements.tree.dropToRootHint"
+      // Same one-frame deferral as the candidate rings (see above).
+      await waitFor(() =>
+        expect(
+          screen.getByTestId("requirement-tree-end-hint")
+        ).toHaveTextContent("requirements.tree.dropToRootHint")
       );
     });
 

@@ -519,6 +519,33 @@ export default function RequirementsListView({
     })
   );
 
+  // The candidate-zone visuals must NOT apply in the same tick as
+  // `dragstart`: repainting every row's className right then triggers the
+  // virtualizer's re-measure cascade while the browser is still setting up
+  // the native drag, and Chrome cancels a drag whose source DOM churns
+  // during that window -- the gesture dies the instant it starts. Deferring
+  // by one frame lets the native drag establish itself first; the rings
+  // appear a frame later, which is imperceptible.
+  const [deferredDragVisuals, setDeferredDragVisuals] = useState<{
+    active: boolean;
+    draggedId: number | null;
+  }>({ active: false, draggedId: null });
+  useEffect(() => {
+    if (
+      deferredDragVisuals.active === isDraggingRequirement &&
+      deferredDragVisuals.draggedId === draggedRequirementId
+    ) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      setDeferredDragVisuals({
+        active: isDraggingRequirement,
+        draggedId: draggedRequirementId,
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isDraggingRequirement, draggedRequirementId, deferredDragVisuals]);
+
   // The single list-level drop target (D-04b). The wrapper this attaches to
   // is taller than the row set whenever the list is short, so the hovered
   // id is the only reliable signal for "which row is actually being
@@ -609,7 +636,8 @@ export default function RequirementsListView({
         className:
           dragOverRequirementId === requirement.id
             ? "outline outline-2 outline-primary -outline-offset-2"
-            : isDraggingRequirement && requirement.id !== draggedRequirementId
+            : deferredDragVisuals.active &&
+                requirement.id !== deferredDragVisuals.draggedId
               ? "inset-ring-2 inset-ring-primary/40"
               : undefined,
       };
@@ -618,8 +646,7 @@ export default function RequirementsListView({
       canDropRequirement,
       dragOverRequirementId,
       setDragOverRow,
-      isDraggingRequirement,
-      draggedRequirementId,
+      deferredDragVisuals,
     ]
   );
 
@@ -947,13 +974,13 @@ export default function RequirementsListView({
                 "h-16 w-full relative shrink-0" +
                 (isOverBottom
                   ? " rounded-md outline outline-2 -outline-offset-2 outline-primary"
-                  : isDraggingRequirement
+                  : deferredDragVisuals.active
                     ? " rounded-md outline-dashed outline-2 -outline-offset-2 outline-primary/40"
                     : "")
               }
               data-testid="requirement-tree-end"
             >
-              {isDraggingRequirement && (
+              {deferredDragVisuals.active && (
                 <div
                   className="pointer-events-none absolute inset-0 flex items-center justify-center text-xs text-muted-foreground"
                   data-testid="requirement-tree-end-hint"
