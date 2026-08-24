@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { SectionHeader } from "@/components/ui/typography";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { FileDown } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -70,14 +71,20 @@ export default function RequirementsWorkspace({
   // (26-VALIDATION.md carve-out 4) -- it is a presentation opt-in, not an
   // access-control boundary; their real boundary is the viewer's project
   // scope.
-  const { data: project } = useClientQueries(schema).projects.useFindUnique(
-    {
-      where: { id: Number(projectId) },
-      select: { requirementsEnabled: true },
-    },
-    { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
-  );
+  const { data: project, isPending: isProjectFlagPending } =
+    useClientQueries(schema).projects.useFindUnique(
+      {
+        where: { id: Number(projectId) },
+        select: { requirementsEnabled: true },
+      },
+      { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
+    );
   const requirementsEnabled = project?.requirementsEnabled === true;
+  // Three states, not two: while the query is in flight neither the enabled
+  // panel group nor the disabled notice is known to be correct yet, so both
+  // stay hidden behind a loading placeholder (fails CLOSED -- the export
+  // action below is gated on `!isGateResolving` too, for the same reason).
+  const isGateResolving = isProjectFlagPending === true;
 
   const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
     useExportRequirementTraceabilityPdf({
@@ -93,7 +100,7 @@ export default function RequirementsWorkspace({
         <CardHeader id="requirements-page-header" className="w-full">
           <SectionHeader className="flex items-center justify-between gap-2">
             <CardTitle>{t("common.fields.requirements")}</CardTitle>
-            {requirementsEnabled && (
+            {requirementsEnabled && !isGateResolving && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -118,7 +125,14 @@ export default function RequirementsWorkspace({
           </SectionHeader>
         </CardHeader>
         <CardContent>
-          {requirementsEnabled ? (
+          {isGateResolving ? (
+            <div
+              data-testid="requirements-gate-loading"
+              className="flex h-[calc(100vh-14rem)] min-h-[400px] items-center justify-center"
+            >
+              <LoadingSpinner />
+            </div>
+          ) : requirementsEnabled ? (
             <ResizablePanelGroup
               direction="horizontal"
               autoSaveId="project-requirements-panels"

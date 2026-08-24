@@ -87,7 +87,14 @@ describe("requirements drag-drop context nesting (structural)", () => {
 // useExportRequirementTraceabilityPdf.test.ts.
 const { mockUseExportPdf, projectFlags, mockToastError } = vi.hoisted(() => ({
   mockUseExportPdf: vi.fn(),
-  projectFlags: { requirementsEnabled: true },
+  projectFlags: {
+    requirementsEnabled: true,
+    // Left undefined by default so the mocked query result has no
+    // `isPending` field at all -- matching the shape the four pre-existing
+    // cases below were written against. A test that needs the pending gate
+    // sets this explicitly.
+    isPending: undefined as boolean | undefined,
+  },
   mockToastError: vi.fn(),
 }));
 
@@ -108,7 +115,17 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     projects: {
       useFindUnique: () => ({
-        data: { requirementsEnabled: projectFlags.requirementsEnabled },
+        // Real TanStack Query has no `data` while `isPending` is true --
+        // mirror that here so the pending case actually exercises the gate
+        // reading `isPending` rather than an incidental data shape.
+        data:
+          projectFlags.isPending === true
+            ? undefined
+            : { requirementsEnabled: projectFlags.requirementsEnabled },
+        // Only present when a test opts in -- see the hoisted default above.
+        ...(projectFlags.isPending !== undefined
+          ? { isPending: projectFlags.isPending }
+          : {}),
       }),
     },
   }),
@@ -145,6 +162,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     projectFlags.requirementsEnabled = true;
+    projectFlags.isPending = undefined;
     mockUseExportPdf.mockReturnValue({
       isExporting: false,
       handleExport: vi.fn(),
@@ -189,6 +207,39 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     expect(screen.queryByTestId("mock-requirements-list-view")).toBeNull();
     expect(screen.queryByTestId("requirements-detail-pane")).toBeNull();
     expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
+  });
+
+  // Gap closure (26.2-08, gap 1): the requirementsEnabled read used to be a
+  // two-state ternary, so a project with the feature ON would flash the
+  // disabled notice for one render while the query was still pending. These
+  // two cases pin the three-state gate that replaced it.
+  it("shows a loading placeholder, not the disabled notice or the export action, while the flag query is pending", () => {
+    projectFlags.isPending = true;
+
+    render(<RequirementsWorkspace projectId="42" />);
+
+    const loading = screen.getByTestId("requirements-gate-loading");
+    expect(loading).not.toBeNull();
+    // Same height box the enabled and disabled branches use, so the card
+    // does not jump height once the flag resolves.
+    expect(loading.className).toContain("h-[calc(100vh-14rem)]");
+    expect(loading.className).toContain("min-h-[400px]");
+
+    // Fail closed: neither the disabled notice nor the export action (which
+    // would otherwise let an operator export a feature not yet known to be
+    // on) may render before the query resolves.
+    expect(screen.queryByTestId("requirements-disabled-notice")).toBeNull();
+    expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
+  });
+
+  it("renders the disabled notice, not the loading placeholder, once the query resolves with the flag off", () => {
+    projectFlags.requirementsEnabled = false;
+    projectFlags.isPending = false;
+
+    render(<RequirementsWorkspace projectId="42" />);
+
+    expect(screen.getByTestId("requirements-disabled-notice")).not.toBeNull();
+    expect(screen.queryByTestId("requirements-gate-loading")).toBeNull();
   });
 
   // Additive coverage (not one of the three scaffolded titles): the plan's
