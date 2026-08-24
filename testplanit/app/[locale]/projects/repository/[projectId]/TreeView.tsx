@@ -49,6 +49,7 @@ import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
 import { isMacPlatform, useDragModifier } from "~/hooks/useDragModifier";
+import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
 import { DeleteFolderModal } from "./DeleteFolderModal";
 import { EditFolderModal } from "./EditFolder";
@@ -84,11 +85,13 @@ export interface FolderNode {
  *  input stays hidden and the panel keeps a single control. */
 export const FOLDER_FILTER_MIN_COUNT = 15;
 
-/** Floor for the tree's scroll viewport, and the space kept below it for the
- *  root drop zone. react-arborist virtualizes against the height it is handed,
- *  so it has to be the visible height and never the height of all rows. */
+/** Floor for the tree's scroll viewport. react-arborist virtualizes against
+ *  the height it is handed, so it has to be the visible height and never the
+ *  height of all rows. */
 const MIN_TREE_VIEWPORT = 320;
-const TREE_VIEWPORT_GUTTER = 96;
+/** Height of the root drop zone rendered below the tree; keep in sync with its
+ *  h-16 class. */
+const ROOT_DROP_ZONE_HEIGHT = 64;
 
 /** Far longer than the app-wide tooltip delay: the chevron is a click target
  *  first, and working down through subfolders must not summon a hint over the
@@ -283,6 +286,14 @@ const TreeView: React.FC<{
   const normalizedFilter = filterQuery.trim().toLowerCase();
   const isFiltering = normalizedFilter.length > 0;
   const showFilterInput = folders.length > FOLDER_FILTER_MIN_COUNT;
+  // The root drop zone only accepts folder ("NODE") drags, so it exists — and
+  // the viewport measurement reserves its height — only while one is active.
+  // Any other time it would just hold the tree short of the panel bottom. One
+  // variable drives both the render and the reservation, so the two can never
+  // disagree.
+  const { isDraggingFolder } = useDragTargetKind();
+  const showRootDropZone =
+    canAddEdit && !filteredFolders && !isFiltering && isDraggingFolder;
   // Which folders were open before the current filter session started, so
   // clearing the filter leaves the tree how the user had it.
   const preFilterOpenIdsRef = useRef<Set<string> | null>(null);
@@ -1178,13 +1189,17 @@ const TreeView: React.FC<{
     const measure = () => {
       const element = treeViewportRef.current;
       if (!element) return;
+      const parent = element.parentElement;
       const { top } = element.getBoundingClientRect();
-      // Once the page is scrolled past the tree, top goes negative; cap at the
-      // window so the viewport never grows beyond what can be seen.
-      const available = Math.min(
-        window.innerHeight - TREE_VIEWPORT_GUTTER,
-        window.innerHeight - top - TREE_VIEWPORT_GUTTER
+      // The parent is the panel-sized wrapper, so its bottom edge is where the
+      // tree should end. Cap at the window so a panel stretched tall by the
+      // case list never hands the tree an off-screen viewport.
+      const bottom = Math.min(
+        parent?.getBoundingClientRect().bottom ?? window.innerHeight,
+        window.innerHeight
       );
+      const available =
+        bottom - top - (showRootDropZone ? ROOT_DROP_ZONE_HEIGHT : 0);
       setTreeViewportHeight(Math.max(MIN_TREE_VIEWPORT, Math.round(available)));
     };
 
@@ -1194,14 +1209,21 @@ const TreeView: React.FC<{
     };
 
     measure();
+    // The wrapper's height follows the tallest panel in the group, so it moves
+    // with the case list and panel resizes, not just the window.
+    const observer = new ResizeObserver(schedule);
+    if (treeViewportRef.current?.parentElement) {
+      observer.observe(treeViewportRef.current.parentElement);
+    }
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, { passive: true });
     return () => {
       cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener("resize", schedule);
       window.removeEventListener("scroll", schedule);
     };
-  }, [showFilterInput]);
+  }, [showFilterInput, showRootDropZone]);
 
   // Update hierarchy when tree changes
   useEffect(() => {
@@ -1753,8 +1775,9 @@ const TreeView: React.FC<{
             {t("common.ui.search.noResultsFound")}
           </div>
         )}
-        {/* Bottom drop zone for moving folders to end of root level - fills remaining space */}
-        {canAddEdit && !filteredFolders && !isFiltering && (
+        {/* Bottom drop zone for moving folders to the end of the root level,
+            shown only while a folder drag is in progress */}
+        {showRootDropZone && (
           <div
             ref={(el) => {
               bottomDropRef(el);

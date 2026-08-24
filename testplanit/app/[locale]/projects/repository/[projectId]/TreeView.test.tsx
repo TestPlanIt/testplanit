@@ -166,6 +166,23 @@ vi.mock("react-dnd", () => ({
   useDragLayer: vi.fn(() => false),
 }));
 
+// Drag-kind context, with a switch so tests can simulate an active folder drag
+// (the root drop zone only renders during one).
+const { dragTargetMock } = vi.hoisted(() => ({
+  dragTargetMock: { isDraggingFolder: false },
+}));
+
+vi.mock("~/hooks/useDragTargetKind", () => ({
+  useDragTargetKind: () => ({
+    isOverReorderZone: false,
+    setIsOverReorderZone: vi.fn(),
+    isDraggingCase: false,
+    setIsDraggingCase: vi.fn(),
+    isDraggingFolder: dragTargetMock.isDraggingFolder,
+    setIsDraggingFolder: vi.fn(),
+  }),
+}));
+
 // Mock DnD types
 vi.mock("~/types/dndTypes", () => ({
   ItemTypes: {
@@ -233,6 +250,7 @@ describe("TreeView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     treeMock.reset();
+    dragTargetMock.isDraggingFolder = false;
   });
 
   it("renders empty state when no data while loading (spinner delay prevents flash)", async () => {
@@ -463,7 +481,7 @@ describe("TreeView", () => {
     // If no call with data found, at minimum verify onHierarchyChange was called
   });
 
-  it("renders the folder tree end drop zone for editors", async () => {
+  it("shows the folder tree end drop zone only while a folder drag is active", async () => {
     const mockFolders = [
       {
         id: 7,
@@ -485,10 +503,19 @@ describe("TreeView", () => {
       refetch: vi.fn(),
     } as any);
 
-    render(<TreeView {...defaultProps} canAddEdit={true} />);
+    // Idle: the zone would only hold the tree short of the panel bottom.
+    const { rerender } = render(
+      <TreeView {...defaultProps} canAddEdit={true} />
+    );
+    expect(screen.queryByTestId("folder-tree-end")).not.toBeInTheDocument();
 
-    // The bottom drop zone should be present when canAddEdit=true
+    dragTargetMock.isDraggingFolder = true;
+    rerender(<TreeView {...defaultProps} canAddEdit={true} />);
     expect(screen.getByTestId("folder-tree-end")).toBeInTheDocument();
+
+    // Editors only — viewers cannot reorder folders at all.
+    rerender(<TreeView {...defaultProps} canAddEdit={false} />);
+    expect(screen.queryByTestId("folder-tree-end")).not.toBeInTheDocument();
   });
 
   describe("virtualization", () => {
@@ -670,6 +697,7 @@ describe("TreeView", () => {
 
     it("suppresses folder drag and drop while filtering", async () => {
       const user = userEvent.setup();
+      dragTargetMock.isDraggingFolder = true;
       renderWithFolders(manyFolders);
 
       expect(screen.getByTestId("folder-tree-end")).toBeInTheDocument();

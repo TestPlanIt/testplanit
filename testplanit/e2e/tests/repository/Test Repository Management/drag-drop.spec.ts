@@ -728,6 +728,16 @@ test.describe("Drag & Drop", () => {
       const box = await folder3.boundingBox();
       expect(box).not.toBeNull();
 
+      await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+      await page.mouse.down();
+      // Nudge to start the drag: the bottom drop zone only mounts while a
+      // folder drag is active, so it cannot be located before this.
+      await page.mouse.move(
+        box!.x + box!.width / 2 + 10,
+        box!.y + box!.height / 2 + 10,
+        { steps: 3 }
+      );
+
       // Find the bottom of the tree
       const treeBottom = page
         .locator('[data-testid="folder-tree-end"], .tree-end')
@@ -735,10 +745,8 @@ test.describe("Drag & Drop", () => {
       await expect(treeBottom).toBeVisible({ timeout: 2000 });
       const bottomBox = await treeBottom.boundingBox();
       expect(bottomBox).not.toBeNull();
-      const targetY = bottomBox!.y + bottomBox!.height;
+      const targetY = bottomBox!.y + bottomBox!.height / 2;
 
-      await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-      await page.mouse.down();
       await page.mouse.move(box!.x, targetY, { steps: 10 });
       await page.mouse.up();
 
