@@ -853,6 +853,51 @@ describe("RequirementNameCell", () => {
     expect(() => dragSpecRef.current.end()).not.toThrow();
     expect(clearDragActive).toHaveBeenCalledTimes(2);
   });
+
+  // Gap closure 26.2-16 (UAT gap 14 follow-up): the provenance gate. Each
+  // case pairs grip visibility with `canDrag()`'s outcome in the SAME test
+  // -- the shared-predicate discipline the reverted work got right (only its
+  // useDragLayer mechanism was poison).
+  it("locked (synced, not detached): no grip, canDrag() false, tooltip explains why", () => {
+    const row = makeRow({
+      id: 24,
+      integrationId: 9,
+      requirementDetachedAt: null,
+      isRequirement: true,
+    });
+    renderNameCell(row);
+    expect(
+      screen.queryByTestId("requirement-drag-handle-24")
+    ).not.toBeInTheDocument();
+    expect(dragSpecRef.current.canDrag()).toBe(false);
+    expect(screen.getByTestId("requirement-name-cell-24")).toHaveAttribute(
+      "title",
+      "requirements.list.dragLockedSynced"
+    );
+  });
+
+  it("detached (previously synced, now free): grip present, canDrag() true", () => {
+    const row = makeRow({
+      id: 25,
+      integrationId: 9,
+      requirementDetachedAt: new Date("2026-01-01"),
+      isRequirement: true,
+    });
+    renderNameCell(row);
+    expect(
+      screen.getByTestId("requirement-drag-handle-25")
+    ).toBeInTheDocument();
+    expect(dragSpecRef.current.canDrag()).toBe(true);
+  });
+
+  it("native (never synced): grip present, canDrag() true", () => {
+    const row = makeRow({ id: 26, integrationId: null, isRequirement: true });
+    renderNameCell(row);
+    expect(
+      screen.getByTestId("requirement-drag-handle-26")
+    ).toBeInTheDocument();
+    expect(dragSpecRef.current.canDrag()).toBe(true);
+  });
 });
 
 describe("RequirementRowActionsMenu", () => {

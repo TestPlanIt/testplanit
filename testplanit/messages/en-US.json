@@ -6673,7 +6673,8 @@
       "columnSource": "Source",
       "expandRow": "Expand {name}",
       "collapseRow": "Collapse {name}",
-      "filterAllStatuses": "All statuses"
+      "filterAllStatuses": "All statuses",
+      "dragLockedSynced": "Synced requirements mirror the tracker's hierarchy. Detach to move it."
     },
     "detail": {
       "selectPrompt": "Select a requirement to view its details.",

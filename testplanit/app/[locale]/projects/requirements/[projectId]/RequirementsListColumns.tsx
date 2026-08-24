@@ -548,10 +548,16 @@ function RequirementNameCell({
   const t = useTranslations();
   const label = formatIssueDisplayText(requirement);
 
-  // Single source of truth for "can this row be dragged": the grip handle
-  // below renders from this exact expression, so it is physically incapable
-  // of advertising a drag `canDrag` would refuse (gap 9, T-26.2G-13-01).
-  const canDragRow = canAddEdit && !isFiltering;
+  // Single source of truth for "can this row be dragged": the grip handle,
+  // `canDrag`, and the tooltip below all derive from this exact expression
+  // (T-26.2G-16-02), so the affordance can never outrun the gate. The
+  // reparent route's schema-level @deny on a synced, non-detached
+  // requirement's parentId (its own 403 backstop) is the actual authority
+  // here -- this client-side narrowing only ever REMOVES an offer the
+  // server would refuse anyway (gap closure 26.2-16, gap 9 rebuild + gap 14
+  // follow-up).
+  const canDragRow =
+    canAddEdit && !isFiltering && !isRequirementLocked(requirement);
 
   const [{ isDragging }, dragRef] = useDrag<
     RequirementDragItem,
@@ -596,9 +602,11 @@ function RequirementNameCell({
       onDragEnd={() => clearDragActive()}
       data-testid={`requirement-name-cell-${requirement.id}`}
       title={
-        !canAddEdit || isFiltering
-          ? t("requirements.tree.dragDisabled")
-          : undefined
+        isRequirementLocked(requirement)
+          ? t("requirements.list.dragLockedSynced")
+          : !canAddEdit || isFiltering
+            ? t("requirements.tree.dragDisabled")
+            : undefined
       }
     >
       {canDragRow && (
