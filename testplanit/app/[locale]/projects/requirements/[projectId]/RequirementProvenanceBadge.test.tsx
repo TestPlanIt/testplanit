@@ -1,6 +1,13 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { Profiler, type ProfilerOnRenderCallback } from "react";
 import React from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, any>) =>
@@ -61,6 +68,100 @@ const detachedRow = {
 function openMenu(trigger: HTMLElement) {
   fireEvent.pointerDown(trigger, { button: 0, pointerId: 1 });
   fireEvent.pointerUp(trigger, { button: 0, pointerId: 1 });
+}
+
+// --- Driven-ResizeObserver harness (gap closure, 26.2-09) ---------------
+// See RequirementCoverageBadge.test.tsx's identical harness for the full
+// rationale (jsdom's zero-width `getBoundingClientRect` plus the global
+// `MockResizeObserver`'s no-op `observe` mean nothing before this drove a
+// real width through either badge's collapse effect).
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  private callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    FakeResizeObserver.instances.push(this);
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  trigger() {
+    act(() => {
+      this.callback(
+        [] as unknown as ResizeObserverEntry[],
+        this as unknown as ResizeObserver
+      );
+    });
+  }
+}
+
+const rectWidths = new WeakMap<Element, number>();
+function setRectWidth(el: Element, width: number) {
+  rectWidths.set(el, width);
+}
+
+let originalResizeObserver: typeof globalThis.ResizeObserver;
+let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
+
+beforeEach(() => {
+  FakeResizeObserver.instances = [];
+  originalResizeObserver = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  originalGetBoundingClientRect =
+    HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function (
+    this: HTMLElement
+  ) {
+    const width = rectWidths.get(this) ?? 0;
+    return {
+      width,
+      height: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect;
+  };
+});
+
+afterEach(() => {
+  globalThis.ResizeObserver = originalResizeObserver;
+  HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+});
+
+/** Locates the measuring copy (`aria-hidden="true"`, always rendered at
+ *  FULL content) and its wrapper (the actual `ResizeObserver` target) for
+ *  the three-segment provenance ladder, plus each individually-measured
+ *  segment inside the copy. */
+function getProvenanceHarness(container: HTMLElement) {
+  const icon = container.querySelector('[data-seg="icon"]');
+  if (!icon) throw new Error("icon segment not found");
+  const measure = icon.closest('[aria-hidden="true"]');
+  if (!measure) throw new Error("measuring copy not found");
+  const wrap = measure.parentElement;
+  if (!wrap) throw new Error("wrapper not found");
+  const provider = measure.querySelector('[data-seg="provider"]');
+  const label = measure.querySelector('[data-seg="label"]');
+  if (!provider || !label) throw new Error("segment(s) not found");
+  return { measure, wrap, icon, provider, label };
+}
+
+function renderCounting(ui: React.ReactElement) {
+  let commits = 0;
+  const onRender: ProfilerOnRenderCallback = () => {
+    commits += 1;
+  };
+  const utils = render(
+    <Profiler id="provenance-badge-harness" onRender={onRender}>
+      {ui}
+    </Profiler>
+  );
+  return { ...utils, getCommits: () => commits };
 }
 
 describe("RequirementProvenanceBadge", () => {
@@ -189,5 +290,93 @@ describe("RequirementProvenanceBadge", () => {
     // pays for the badge.
     const wrapper = measure!.parentElement!;
     expect(wrapper.className).toMatch(/shrink-\[999\]/);
+  });
+
+  // --- Driven-ResizeObserver tests (26.2-09 gap closure) -----------------
+  //
+  // Segment widths are fixed by the harness: icon=10, provider=20, label=15,
+  // chrome=5 (full = 50). Level thresholds fall out of `compute()`'s own
+  // cumulative-sum loop: level 0->1 at available>=34.5 (chrome+icon+provider
+  // = 35, minus the 0.5 epsilon), level 1->2 at available>=49.5 (+label=15).
+  describe("driven collapse decision (26.2-09)", () => {
+    const ICON_W = 10;
+    const PROVIDER_W = 20;
+    const LABEL_W = 15;
+    const FULL_WIDTH = ICON_W + PROVIDER_W + LABEL_W + 5; // + chrome
+
+    function seedSegments(h: ReturnType<typeof getProvenanceHarness>) {
+      setRectWidth(h.measure, FULL_WIDTH);
+      setRectWidth(h.icon, ICON_W);
+      setRectWidth(h.provider, PROVIDER_W);
+      setRectWidth(h.label, LABEL_W);
+    }
+
+    it("sits at the top level (provider and state word both shown) when the wrapper is comfortably wide", () => {
+      const { container } = render(
+        <RequirementProvenanceBadge requirement={lockedRow} projectId={7} />
+      );
+      const badge = screen.getByTestId("requirement-provenance-locked");
+      const h = getProvenanceHarness(container);
+      seedSegments(h);
+      setRectWidth(h.wrap, FULL_WIDTH + 20); // comfortably wide
+      FakeResizeObserver.instances[
+        FakeResizeObserver.instances.length - 1
+      ]!.trigger();
+
+      expect(badge).toHaveTextContent("sync.providerJira");
+      expect(badge).toHaveTextContent("syncedLabel");
+    });
+
+    it("drops to the bare Jira mark (no provider, no state word) when the wrapper is comfortably narrow", () => {
+      const { container } = render(
+        <RequirementProvenanceBadge requirement={lockedRow} projectId={7} />
+      );
+      const badge = screen.getByTestId("requirement-provenance-locked");
+      const h = getProvenanceHarness(container);
+      seedSegments(h);
+      setRectWidth(h.wrap, 10); // well below even the icon-only floor
+      FakeResizeObserver.instances[
+        FakeResizeObserver.instances.length - 1
+      ]!.trigger();
+
+      expect(badge).not.toHaveTextContent("sync.providerJira");
+      expect(badge).not.toHaveTextContent("syncedLabel");
+    });
+
+    // THE ATTRIBUTION — see RequirementCoverageBadge.test.tsx's identical
+    // test for the full mechanism. Same shape here: `compute()`'s
+    // level 0->1 boundary sits at available>=34.5; two widths 0.2px apart
+    // straddle it.
+    it("alternates the provider segment on every fire when the wrapper width jitters across a level boundary (reproduces the update-depth defect)", () => {
+      const { container, getCommits } = renderCounting(
+        <RequirementProvenanceBadge requirement={lockedRow} projectId={7} />
+      );
+      const badge = screen.getByTestId("requirement-provenance-locked");
+      const h = getProvenanceHarness(container);
+      seedSegments(h);
+      const ro =
+        FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!;
+
+      const belowThreshold = 34.4;
+      const aboveThreshold = 34.6;
+
+      const commitsBefore = getCommits();
+      let sawProvider = false;
+      let sawNoProvider = false;
+      for (let i = 0; i < 20; i++) {
+        setRectWidth(h.wrap, i % 2 === 0 ? belowThreshold : aboveThreshold);
+        ro.trigger();
+        if (badge.textContent?.includes("sync.providerJira")) {
+          sawProvider = true;
+        } else {
+          sawNoProvider = true;
+        }
+      }
+      const commitsAfter = getCommits();
+
+      expect(sawProvider).toBe(true);
+      expect(sawNoProvider).toBe(true);
+      expect(commitsAfter - commitsBefore).toBeGreaterThan(1);
+    });
   });
 });

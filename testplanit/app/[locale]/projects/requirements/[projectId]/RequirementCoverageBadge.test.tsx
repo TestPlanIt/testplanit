@@ -6,9 +6,10 @@
 // can never discriminate the mutation — only a text-content check can.
 
 import fs from "node:fs";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
+import { Profiler, type ProfilerOnRenderCallback } from "react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 
@@ -100,6 +101,113 @@ const adversarialBreakdown: RequirementCoverageBreakdown = {
   uncovered: false,
   status: "FAILED",
 };
+
+// --- Driven-ResizeObserver harness (gap closure, 26.2-09) ---------------
+//
+// jsdom's `getBoundingClientRect()` always returns zeros, and the global
+// `MockResizeObserver` in vitest.setup.tsx discards the callback it is
+// constructed with (`observe`/`disconnect` are no-ops) — between the two,
+// the component's layout effect always early-returns on `full === 0` and
+// 15 previously-green tests never drove a single real width through it.
+// This harness removes both excuses for the tests below only: it swaps in
+// a `ResizeObserver` fake that records its callback and lets a test fire
+// it on demand, and stubs `getBoundingClientRect` per-element so the
+// measuring copy and the wrapper can be given independent, test-chosen
+// widths.
+class FakeResizeObserver {
+  static instances: FakeResizeObserver[] = [];
+  private callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+    FakeResizeObserver.instances.push(this);
+  }
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  /** Test-only: invoke the callback the way a real browser would on an
+   *  actual resize, wrapped in `act` so the resulting `setState` commits
+   *  before the next assertion. */
+  trigger() {
+    act(() => {
+      this.callback(
+        [] as unknown as ResizeObserverEntry[],
+        this as unknown as ResizeObserver
+      );
+    });
+  }
+}
+
+const rectWidths = new WeakMap<Element, number>();
+/** Sets the width `getBoundingClientRect()` reports for one specific DOM
+ *  node, independent of every other node — this is what lets a test give
+ *  the invisible measuring copy a fixed FULL width while driving the
+ *  wrapper's own reported width up and down across a threshold. */
+function setRectWidth(el: Element, width: number) {
+  rectWidths.set(el, width);
+}
+
+let originalResizeObserver: typeof globalThis.ResizeObserver;
+let originalGetBoundingClientRect: typeof HTMLElement.prototype.getBoundingClientRect;
+
+beforeEach(() => {
+  FakeResizeObserver.instances = [];
+  originalResizeObserver = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+  originalGetBoundingClientRect =
+    HTMLElement.prototype.getBoundingClientRect;
+  HTMLElement.prototype.getBoundingClientRect = function (
+    this: HTMLElement
+  ) {
+    const width = rectWidths.get(this) ?? 0;
+    return {
+      width,
+      height: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: 0,
+      x: 0,
+      y: 0,
+      toJSON() {
+        return {};
+      },
+    } as DOMRect;
+  };
+});
+
+afterEach(() => {
+  globalThis.ResizeObserver = originalResizeObserver;
+  HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+});
+
+/** Locates the badge's own measuring copy (`aria-hidden="true"`, always
+ *  rendered at FULL content size) and its wrapper (the measuring copy's
+ *  direct parent, the actual `ResizeObserver` target) inside a rendered
+ *  container. */
+function getMeasureAndWrap(container: HTMLElement) {
+  const measure = container.querySelector('[aria-hidden="true"]');
+  if (!measure) throw new Error("measuring copy not found");
+  const wrap = measure.parentElement;
+  if (!wrap) throw new Error("wrapper not found");
+  return { measure, wrap };
+}
+
+/** Renders wrapped in a `Profiler` so the test can count actual commits —
+ *  React's own equal-value bail-out means a commit only happens when a
+ *  `setState` call actually changed a value, so this is a direct proxy for
+ *  "how many times did the collapse decision's state actually change". */
+function renderCounting(ui: React.ReactElement) {
+  let commits = 0;
+  const onRender: ProfilerOnRenderCallback = () => {
+    commits += 1;
+  };
+  const utils = render(
+    <Profiler id="coverage-badge-harness" onRender={onRender}>
+      {ui}
+    </Profiler>
+  );
+  return { ...utils, getCommits: () => commits };
+}
 
 describe("RequirementCoverageBadge", () => {
   it("renders the dashed warning treatment for an uncovered requirement", () => {
@@ -325,5 +433,95 @@ describe("RequirementCoverageBadge", () => {
     );
     expect(uncoveredBadge.className).toMatch(/\bmin-w-24\b/);
     expect(uncoveredBadge.className).not.toMatch(/\bmin-w-\[3rem\]\b/);
+  });
+
+  // --- Driven-ResizeObserver tests (26.2-09 gap closure) -----------------
+  //
+  // Both assertions below are new in the sense the acceptance criteria
+  // means: the existing suite (above) could never make them, because
+  // nothing before this drove a real, non-zero width through
+  // `getBoundingClientRect()`.
+  describe("driven collapse decision (26.2-09)", () => {
+    const FULL_WIDTH = 100;
+
+    it("renders the status word when the wrapper reports a width wide enough to fit the full content", () => {
+      const { container } = render(
+        <RequirementCoverageBadge breakdown={notRunBreakdown} />
+      );
+      const { measure, wrap } = getMeasureAndWrap(container);
+      setRectWidth(measure, FULL_WIDTH);
+      setRectWidth(wrap, FULL_WIDTH + 20); // comfortably wide
+      FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!.trigger();
+
+      expect(
+        screen.getByTestId("requirement-coverage-status-word")
+      ).toBeInTheDocument();
+    });
+
+    it("drops the status word when the wrapper narrows below the full content width", () => {
+      const { container } = render(
+        <RequirementCoverageBadge breakdown={notRunBreakdown} />
+      );
+      const { measure, wrap } = getMeasureAndWrap(container);
+      setRectWidth(measure, FULL_WIDTH);
+      setRectWidth(wrap, FULL_WIDTH - 20); // comfortably narrow
+      FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!.trigger();
+
+      expect(
+        screen.queryByTestId("requirement-coverage-status-word")
+      ).toBeNull();
+      // The count itself must still be present and un-clipped (26-13
+      // Finding 1) -- the status word is what drops, never the count.
+      expect(
+        screen.getByTestId("requirement-coverage-count")
+      ).toBeInTheDocument();
+    });
+
+    // THE ATTRIBUTION. `compute()` reads `available`/`full` fresh from
+    // `getBoundingClientRect()` on every fire and writes unconditionally
+    // when the raw comparison result differs from the CURRENT render's
+    // value -- there is no dead zone and no ref-gated idempotent write. A
+    // width sitting exactly on the `available + 0.5 >= full` boundary
+    // needs only sub-pixel measurement noise between successive
+    // `ResizeObserver` fires (real browsers report exactly this kind of
+    // jitter -- font metrics settling, sub-pixel layout rounding differing
+    // between paints) to alternate forever. This test drives that
+    // documented noise directly: two widths 0.2px apart, straddling the
+    // boundary, fed on alternating fires.
+    it("alternates the status word on every fire when the wrapper width jitters across the boundary (reproduces the update-depth defect)", () => {
+      const { container, getCommits } = renderCounting(
+        <RequirementCoverageBadge breakdown={notRunBreakdown} />
+      );
+      const { measure, wrap } = getMeasureAndWrap(container);
+      setRectWidth(measure, FULL_WIDTH);
+      const ro =
+        FakeResizeObserver.instances[FakeResizeObserver.instances.length - 1]!;
+
+      // available + 0.5 >= 100 flips exactly between 99.4 (false) and 99.6
+      // (true) -- 0.2px apart, well inside real sub-pixel jitter range.
+      const belowThreshold = 99.4;
+      const aboveThreshold = 99.6;
+
+      const commitsBefore = getCommits();
+      let sawStatusWord = false;
+      let sawNoStatusWord = false;
+      for (let i = 0; i < 20; i++) {
+        setRectWidth(wrap, i % 2 === 0 ? belowThreshold : aboveThreshold);
+        ro.trigger();
+        if (screen.queryByTestId("requirement-coverage-status-word")) {
+          sawStatusWord = true;
+        } else {
+          sawNoStatusWord = true;
+        }
+      }
+      const commitsAfter = getCommits();
+
+      // The attribution: genuine true<->false alternation (both states
+      // observed across the 20 fires), and MORE than one state-changing
+      // commit was produced by inputs that never moved more than 0.2px.
+      expect(sawStatusWord).toBe(true);
+      expect(sawNoStatusWord).toBe(true);
+      expect(commitsAfter - commitsBefore).toBeGreaterThan(1);
+    });
   });
 });
