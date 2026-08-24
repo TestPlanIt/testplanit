@@ -825,6 +825,15 @@ describe("RequirementNameCell", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("a hidden grab handle leaves a same-width spacer so icon/name alignment matches draggable rows (gap 15a)", () => {
+    renderNameCell(makeRow({ id: 21 }), { canAddEdit: false });
+    const spacer = screen.getByTestId("requirement-drag-handle-spacer-21");
+    // Same footprint classes as the grip itself -- the name never shifts.
+    expect(spacer.className).toContain("h-4");
+    expect(spacer.className).toContain("w-4");
+    expect(spacer.className).toContain("shrink-0");
+  });
+
   it("omits the grab handle while filtering", () => {
     renderNameCell(makeRow({ id: 22 }), {
       canAddEdit: true,

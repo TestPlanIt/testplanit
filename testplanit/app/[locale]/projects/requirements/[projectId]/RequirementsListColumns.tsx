@@ -609,11 +609,21 @@ function RequirementNameCell({
             : undefined
       }
     >
-      {canDragRow && (
+      {canDragRow ? (
         <GripVertical
           className="h-4 w-4 shrink-0 cursor-grab text-muted-foreground/50 hover:text-foreground active:cursor-grabbing"
           aria-hidden="true"
           data-testid={`requirement-drag-handle-${requirement.id}`}
+        />
+      ) : (
+        // Locked/non-draggable rows reserve the grip's exact slot so the
+        // requirement icon and name start at the same x position on every
+        // row -- a conditionally absent handle makes mixed synced/manual
+        // lists ragged (operator UAT, gap 15a).
+        <span
+          className="h-4 w-4 shrink-0"
+          aria-hidden="true"
+          data-testid={`requirement-drag-handle-spacer-${requirement.id}`}
         />
       )}
       {requirement.hasChildren ? (
