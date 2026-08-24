@@ -157,8 +157,7 @@ export function useRequirementTraceabilityColumns(
   const t = useTranslations("reports.ui.requirementCoverage");
 
   return useMemo(() => {
-    const columnHelper =
-      createColumnHelper<RequirementTraceabilityReportRow>();
+    const columnHelper = createColumnHelper<RequirementTraceabilityReportRow>();
     const columns: ColumnDef<RequirementTraceabilityReportRow, any>[] = [];
 
     columns.push(

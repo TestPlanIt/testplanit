@@ -429,10 +429,7 @@ describe("Phase 26 requirement report registration (six sites)", () => {
     }
 
     const messages = JSON.parse(
-      fs.readFileSync(
-        path.join(process.cwd(), "messages/en-US.json"),
-        "utf8"
-      )
+      fs.readFileSync(path.join(process.cwd(), "messages/en-US.json"), "utf8")
     );
     for (const key of REQUIRED_I18N_KEYS) {
       if (!getIn(messages, key)) {

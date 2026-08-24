@@ -75,7 +75,10 @@ describe("GET /api/projects/[projectId]/requirements/traceability", () => {
 
     // 400 next: a session exists, but the project id is not numeric.
     mockedSession.mockResolvedValue({ user: { id: "user-1", access: "USER" } });
-    const badRequest = await GET(makeRequest("not-a-number"), params("not-a-number"));
+    const badRequest = await GET(
+      makeRequest("not-a-number"),
+      params("not-a-number")
+    );
     expect(badRequest.status).toBe(400);
     expect(mockedResolveScope).not.toHaveBeenCalled();
     expect(mockedLoad).not.toHaveBeenCalled();

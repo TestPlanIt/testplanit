@@ -99,9 +99,7 @@ export async function handleRequirementCoverageReportPOST(
       accessibleProjectIds = null;
     } else {
       const session = await getServerSession(authOptions);
-      accessibleProjectIds = await resolveViewerProjectScope(
-        session!.user.id
-      );
+      accessibleProjectIds = await resolveViewerProjectScope(session!.user.id);
     }
 
     const data = await loadRequirementTraceability(projectId, {
@@ -109,16 +107,16 @@ export async function handleRequirementCoverageReportPOST(
     });
 
     if (variant === "gaps") {
-      const rows: RequirementCoverageGapReportRow[] = toGapRows(
-        data.rows
-      ).map((row, index) => ({
-        id: index,
-        requirementId: row.requirementId,
-        requirementKey: row.requirementKey,
-        requirementTitle: row.requirementTitle,
-        requirementPath: row.requirementPath,
-        linkedCases: row.linkedCaseCount,
-      }));
+      const rows: RequirementCoverageGapReportRow[] = toGapRows(data.rows).map(
+        (row, index) => ({
+          id: index,
+          requirementId: row.requirementId,
+          requirementKey: row.requirementKey,
+          requirementTitle: row.requirementTitle,
+          requirementPath: row.requirementPath,
+          linkedCases: row.linkedCaseCount,
+        })
+      );
       return Response.json({ data: rows, total: rows.length });
     }
 

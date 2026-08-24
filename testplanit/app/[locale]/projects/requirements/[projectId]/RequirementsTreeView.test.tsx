@@ -94,9 +94,8 @@ const { useRequirementCoverageMock } = vi.hoisted(() => ({
   })),
 }));
 vi.mock("~/hooks/useRequirementCoverage", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("~/hooks/useRequirementCoverage")
-  >();
+  const actual =
+    await importOriginal<typeof import("~/hooks/useRequirementCoverage")>();
   return {
     ...actual,
     useRequirementCoverage: useRequirementCoverageMock,
@@ -698,7 +697,13 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
     // not a recomputation from the tree's own in-memory children.
     useRequirementCoverageMock.mockReturnValue({
       data: makeCoverageResponse({
-        1: { linkedCaseCount: 7, passed: 3, failed: 1, notRun: 3, status: "FAILED" },
+        1: {
+          linkedCaseCount: 7,
+          passed: 3,
+          failed: 1,
+          notRun: 3,
+          status: "FAILED",
+        },
         10: { uncovered: true, status: "UNCOVERED" },
       }),
       isError: false,
@@ -906,7 +911,13 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
     });
     useRequirementCoverageMock.mockReturnValue({
       data: makeCoverageResponse({
-        1: { linkedCaseCount: 7, passed: 3, failed: 1, notRun: 3, status: "FAILED" },
+        1: {
+          linkedCaseCount: 7,
+          passed: 3,
+          failed: 1,
+          notRun: 3,
+          status: "FAILED",
+        },
       }),
       isError: false,
     });
@@ -923,9 +934,7 @@ describe("RequirementsTreeView (Phase 26 coverage additions)", () => {
     // Anchored on the unique `flex-auto` token, never a fixed-width
     // character window -- four window-anchored verification scripts have
     // already mis-reported this milestone (see STATE.md).
-    const nameSpan = row.querySelector(
-      '[class*="flex-auto"]'
-    ) as HTMLElement;
+    const nameSpan = row.querySelector('[class*="flex-auto"]') as HTMLElement;
     expect(nameSpan).toBeTruthy();
     expect(nameSpan.className).toContain("min-w-0");
     expect(nameSpan.className).toContain("flex-auto");

@@ -224,7 +224,11 @@ export function RequirementCoverageBadge({
   // in the numerator would say the same thing twice, and read backwards
   // while doing it (a bigger number reading as "worse").
   const glyph: IterationStatusGlyph =
-    status === "PASSED" ? "passed" : status === "FAILED" ? "failed" : "notStarted";
+    status === "PASSED"
+      ? "passed"
+      : status === "FAILED"
+        ? "failed"
+        : "notStarted";
   const pipColor =
     status === "PASSED"
       ? resolvePipColor("passed", "hsl(var(--success))")
@@ -244,7 +248,12 @@ export function RequirementCoverageBadge({
   // the row. Carried on the visible `Badge` unconditionally, so the
   // accessible name never degrades even when `showStatusWord` drops the
   // visible status word.
-  const fullBreakdown = t("breakdownTooltip", { passed, failed, inProgress, notRun });
+  const fullBreakdown = t("breakdownTooltip", {
+    passed,
+    failed,
+    inProgress,
+    notRun,
+  });
 
   return (
     <span ref={wrapRef} className={cn(WRAPPER_CLASSNAME, className)}>

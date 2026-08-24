@@ -240,8 +240,18 @@ describeIntegration(
       reqMidId = await createNode("req-mid", projectOneId, reqRootId);
       reqLeafId = await createNode("req-leaf", projectOneId, reqMidId);
 
-      caseA1Id = await createCase("case-a1", projectOneId, repositoryOneId, folderOneId);
-      caseA2Id = await createCase("case-a2", projectOneId, repositoryOneId, folderOneId);
+      caseA1Id = await createCase(
+        "case-a1",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
+      caseA2Id = await createCase(
+        "case-a2",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
       caseOtherProjectId = await createCase(
         "case-other-project",
         projectTwoId,
@@ -255,7 +265,12 @@ describeIntegration(
         folderOneId,
         { isDeleted: true, deletedAt: new Date() }
       );
-      caseLeafId = await createCase("case-leaf", projectOneId, repositoryOneId, folderOneId);
+      caseLeafId = await createCase(
+        "case-leaf",
+        projectOneId,
+        repositoryOneId,
+        folderOneId
+      );
 
       const links = [
         { caseId: caseA1Id, issueId: reqAId },
@@ -392,12 +407,16 @@ describeIntegration(
     });
 
     it("produces exactly one null-case row per uncovered requirement", async () => {
-      const nullCaseRows = unrestricted.rows.filter((row) => row.caseId === null);
+      const nullCaseRows = unrestricted.rows.filter(
+        (row) => row.caseId === null
+      );
       expect(nullCaseRows).toHaveLength(2);
       const nullCaseRequirementIds = nullCaseRows
         .map((row) => row.requirementId)
         .sort((a, b) => a - b);
-      expect(nullCaseRequirementIds).toEqual([reqBId, reqCId].sort((a, b) => a - b));
+      expect(nullCaseRequirementIds).toEqual(
+        [reqBId, reqCId].sort((a, b) => a - b)
+      );
       // Both are greater than zero as a set, i.e. not a vacuous fixture
       // where every requirement happens to be covered.
       expect(nullCaseRows.length).toBeGreaterThan(0);

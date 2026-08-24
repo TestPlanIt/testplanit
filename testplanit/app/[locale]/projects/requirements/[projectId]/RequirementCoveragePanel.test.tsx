@@ -122,7 +122,12 @@ describe("RequirementCoveragePanel", () => {
   it("lists every covering case with its latest result", async () => {
     stubFetch({
       cases: [
-        { ...baseCase, caseId: 1, caseName: "Case A", lastStatusName: "Passed" },
+        {
+          ...baseCase,
+          caseId: 1,
+          caseName: "Case A",
+          lastStatusName: "Passed",
+        },
         {
           ...baseCase,
           caseId: 2,
@@ -147,7 +152,9 @@ describe("RequirementCoveragePanel", () => {
     renderPanel();
 
     await waitFor(() => {
-      expect(screen.getByTestId("requirement-covering-case-1")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-covering-case-1")
+      ).toBeInTheDocument();
     });
 
     const row1 = screen.getByTestId("requirement-covering-case-1");
@@ -190,7 +197,9 @@ describe("RequirementCoveragePanel", () => {
     renderPanel();
 
     await waitFor(() => {
-      expect(screen.getByTestId("requirement-covering-case-2")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-covering-case-2")
+      ).toBeInTheDocument();
     });
 
     const failedRow = screen.getByTestId("requirement-covering-case-1");
@@ -224,7 +233,9 @@ describe("RequirementCoveragePanel", () => {
     renderPanel();
 
     await waitFor(() => {
-      expect(screen.getByTestId("requirement-covering-case-2")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-covering-case-2")
+      ).toBeInTheDocument();
     });
 
     const directRow = screen.getByTestId("requirement-covering-case-1");
@@ -261,7 +272,9 @@ describe("RequirementCoveragePanel", () => {
     renderPanel("7", 42);
 
     await waitFor(() => {
-      expect(screen.getByTestId("requirement-covering-case-1")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-covering-case-1")
+      ).toBeInTheDocument();
     });
 
     const row = screen.getByTestId("requirement-covering-case-1");
@@ -276,7 +289,9 @@ describe("RequirementCoveragePanel", () => {
     expect(caseLink).toBeDefined();
     expect(projectLink).toBeDefined();
     // Neither href carries the requirement's own project id (7).
-    expect(caseLink!.getAttribute("href")).not.toContain("/projects/repository/7/");
+    expect(caseLink!.getAttribute("href")).not.toContain(
+      "/projects/repository/7/"
+    );
     expect(projectLink!.getAttribute("href")).not.toBe("/projects/overview/7");
   });
 
@@ -319,7 +334,9 @@ describe("RequirementCoveragePanel", () => {
     renderPanel();
 
     await waitFor(() => {
-      expect(screen.getByTestId("requirement-covering-case-1")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirement-covering-case-1")
+      ).toBeInTheDocument();
     });
     expect(
       screen.queryByTestId("requirement-coverage-cross-project-count")

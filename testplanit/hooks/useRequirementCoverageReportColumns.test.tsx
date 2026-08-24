@@ -89,9 +89,7 @@ describe("useRequirementCoverageReportColumns", () => {
   });
 
   it("renders the uncovered treatment for a null case row", () => {
-    const { result } = renderHook(() =>
-      useRequirementTraceabilityColumns(10)
-    );
+    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
     const columns = result.current;
 
     const gapRow = {
@@ -120,9 +118,7 @@ describe("useRequirementCoverageReportColumns", () => {
   });
 
   it("renders a not-run treatment for a covering case with no execution", () => {
-    const { result } = renderHook(() =>
-      useRequirementTraceabilityColumns(10)
-    );
+    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
     const columns = result.current;
 
     const notRunRow = {

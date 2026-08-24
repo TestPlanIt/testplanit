@@ -199,9 +199,9 @@ describe("requirementCoverageReportUtils", () => {
       (row: { requirementId: number }) => row.requirementId === 3
     );
     expect(req3Rows).toHaveLength(2);
-    expect(req3Rows.map((row: { testCaseId: number }) => row.testCaseId)).toEqual(
-      [10, 11]
-    );
+    expect(
+      req3Rows.map((row: { testCaseId: number }) => row.testCaseId)
+    ).toEqual([10, 11]);
     const gapRows = body.data.filter(
       (row: { testCaseId: number | null }) => row.testCaseId === null
     );

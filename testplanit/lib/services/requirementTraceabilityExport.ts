@@ -99,7 +99,9 @@ const MAX_PATH_HOPS = 25;
 export function buildRequirementPaths(
   requirements: RequirementNode[]
 ): Map<number, string> {
-  const byId = new Map(requirements.map((requirement) => [requirement.id, requirement]));
+  const byId = new Map(
+    requirements.map((requirement) => [requirement.id, requirement])
+  );
   const paths = new Map<number, string>();
 
   for (const requirement of requirements) {
@@ -117,7 +119,8 @@ export function buildRequirementPaths(
       }
       visited.add(current.id);
       segments.unshift(formatIssueDisplayText(current));
-      current = current.parentId != null ? byId.get(current.parentId) : undefined;
+      current =
+        current.parentId != null ? byId.get(current.parentId) : undefined;
       hops++;
     }
 
@@ -151,10 +154,12 @@ export function buildTraceabilityRows(params: {
   const rows: RequirementTraceabilityRow[] = [];
 
   for (const requirement of requirements) {
-    const path = paths.get(requirement.id) ?? formatIssueDisplayText(requirement);
+    const path =
+      paths.get(requirement.id) ?? formatIssueDisplayText(requirement);
     const breakdown = coverage.get(requirement.id);
     const linkedCaseCount = breakdown?.linkedCaseCount ?? 0;
-    const coverageStatus: RequirementCoverageStatus = breakdown?.status ?? "UNCOVERED";
+    const coverageStatus: RequirementCoverageStatus =
+      breakdown?.status ?? "UNCOVERED";
     const cases = coveringCases.get(requirement.id) ?? [];
 
     if (cases.length === 0) {

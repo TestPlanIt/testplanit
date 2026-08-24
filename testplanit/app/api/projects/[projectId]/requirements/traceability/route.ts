@@ -60,10 +60,7 @@ export async function GET(
       (error instanceof Error &&
         error.message.includes("projectId must be an integer"))
     ) {
-      return NextResponse.json(
-        { error: "Invalid request" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     console.error("Requirement traceability error:", error);
     return NextResponse.json(

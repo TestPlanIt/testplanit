@@ -162,9 +162,7 @@ describe("RequirementCoverageBadge", () => {
     expect(
       screen.getByTestId("requirement-coverage-failed")
     ).toBeInTheDocument();
-    expect(
-      screen.queryByTestId("requirement-coverage-passed")
-    ).toBeNull();
+    expect(screen.queryByTestId("requirement-coverage-passed")).toBeNull();
     expect(screen.getByTestId("requirement-coverage-failed")).toHaveTextContent(
       "statusFailed"
     );
@@ -191,9 +189,7 @@ describe("RequirementCoverageBadge", () => {
   // "coverageUncovered", which itself contains "Uncovered".
   it("never renders an uncovered treatment for a requirement with passing cases", () => {
     render(<RequirementCoverageBadge breakdown={passedBreakdown} />);
-    expect(
-      screen.queryByTestId("requirement-coverage-uncovered")
-    ).toBeNull();
+    expect(screen.queryByTestId("requirement-coverage-uncovered")).toBeNull();
     expect(screen.queryByText(/uncovered/i)).toBeNull();
   });
 
@@ -287,7 +283,7 @@ describe("RequirementCoverageBadge", () => {
     expect(statusWordEl).toHaveTextContent("statusNotRun");
   });
 
-  it("raises the width floor above the old 48px value that let both the count and the lone \"Uncovered\" word hard-clip", () => {
+  it('raises the width floor above the old 48px value that let both the count and the lone "Uncovered" word hard-clip', () => {
     // 116px is 26-13's measured widest FULL content ("0/10 · Not run"); the
     // floor must sit below that (so the drop step in the test above stays
     // reachable) but comfortably above 83px, the measured width of the

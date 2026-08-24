@@ -23,7 +23,9 @@ import type {
   RequirementCoveringCase,
 } from "./requirementCoverage";
 
-function node(overrides: Partial<RequirementNode> & { id: number; name: string }): RequirementNode {
+function node(
+  overrides: Partial<RequirementNode> & { id: number; name: string }
+): RequirementNode {
   return {
     title: null,
     externalUrl: null,
@@ -49,7 +51,10 @@ function breakdown(
 }
 
 function coveringCase(
-  overrides: Partial<RequirementCoveringCase> & { caseId: number; caseName: string }
+  overrides: Partial<RequirementCoveringCase> & {
+    caseId: number;
+    caseName: string;
+  }
 ): RequirementCoveringCase {
   return {
     projectId: 1,
@@ -81,8 +86,19 @@ describe("requirementTraceabilityExport", () => {
     const reqB = node({ id: 2, name: "B-REQ" });
 
     const coverage = new Map<number, RequirementCoverageBreakdown>([
-      [1, breakdown({ linkedCaseCount: 3, passed: 3, uncovered: false, status: "PASSED" })],
-      [2, breakdown({ linkedCaseCount: 0, uncovered: true, status: "UNCOVERED" })],
+      [
+        1,
+        breakdown({
+          linkedCaseCount: 3,
+          passed: 3,
+          uncovered: false,
+          status: "PASSED",
+        }),
+      ],
+      [
+        2,
+        breakdown({ linkedCaseCount: 0, uncovered: true, status: "UNCOVERED" }),
+      ],
     ]);
     const coveringCases = new Map<number, RequirementCoveringCase[]>([
       [
@@ -120,7 +136,10 @@ describe("requirementTraceabilityExport", () => {
   it("emits a null caseName row for an uncovered requirement", () => {
     const uncovered = node({ id: 5, name: "UNCOVERED-REQ" });
     const coverage = new Map<number, RequirementCoverageBreakdown>([
-      [5, breakdown({ linkedCaseCount: 0, uncovered: true, status: "UNCOVERED" })],
+      [
+        5,
+        breakdown({ linkedCaseCount: 0, uncovered: true, status: "UNCOVERED" }),
+      ],
     ]);
 
     const rows = buildTraceabilityRows({
@@ -140,7 +159,15 @@ describe("requirementTraceabilityExport", () => {
   it("emits a null statusName for a covering case with no execution", () => {
     const covered = node({ id: 6, name: "COVERED-REQ" });
     const coverage = new Map<number, RequirementCoverageBreakdown>([
-      [6, breakdown({ linkedCaseCount: 1, notRun: 1, uncovered: false, status: "NOT_RUN" })],
+      [
+        6,
+        breakdown({
+          linkedCaseCount: 1,
+          notRun: 1,
+          uncovered: false,
+          status: "NOT_RUN",
+        }),
+      ],
     ]);
     const coveringCases = new Map<number, RequirementCoveringCase[]>([
       [6, [coveringCase({ caseId: 100, caseName: "Never Run Case" })]],

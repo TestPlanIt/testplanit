@@ -28,7 +28,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { coverageFor, useRequirementCoverage } from "~/hooks/useRequirementCoverage";
+import {
+  coverageFor,
+  useRequirementCoverage,
+} from "~/hooks/useRequirementCoverage";
 import { useRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
 
 interface RequirementCoveragePanelProps {

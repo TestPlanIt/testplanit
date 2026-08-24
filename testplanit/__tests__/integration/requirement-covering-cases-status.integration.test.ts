@@ -383,7 +383,9 @@ describeIntegration(
       await db.jUnitTestResult.deleteMany({
         where: { testSuite: { id: { in: allSuiteIds } } },
       });
-      await db.jUnitTestSuite.deleteMany({ where: { id: { in: allSuiteIds } } });
+      await db.jUnitTestSuite.deleteMany({
+        where: { id: { in: allSuiteIds } },
+      });
       await db.testRunResults.deleteMany({
         where: { testRunId: { in: allRunIds } },
       });
@@ -440,9 +442,7 @@ describeIntegration(
       const distinctTimestamps = new Set(
         latestExecutions.map((e) => e.executedAt?.getTime())
       );
-      const distinctStatuses = new Set(
-        latestExecutions.map((e) => e.statusId)
-      );
+      const distinctStatuses = new Set(latestExecutions.map((e) => e.statusId));
       const distinctRuns = new Set(latestExecutions.map((e) => e.testRunId));
       expect(
         distinctTimestamps.size,
