@@ -72,7 +72,10 @@ export async function GET(
     // returns a `Record`, so copying it without noticing the difference
     // ships a silently empty response. `Object.fromEntries` is what
     // defends against that. The keys become STRINGS in the process, so
-    // the client indexes with `String(id)`.
+    // the client indexes with `String(id)`. Each breakdown now also
+    // carries `statuses[]` / `untested` (the same shape CoverageChip
+    // reads) and `directCaseCount` / `directCrossProjectCaseCount` — all
+    // four ride this same `Object.fromEntries` with no route change.
     const response: RequirementCoverageResponse = {
       projectId,
       coverage: Object.fromEntries(coverage),

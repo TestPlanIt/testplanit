@@ -14,11 +14,16 @@ import { latestCaseResultsCte } from "./latestCaseResults";
  * `uncovered`) is adopted verbatim from the existing shipped per-issue
  * coverage breakdown shape elsewhere in this codebase, dropping that
  * shape's release-scoped framing, so a later UI can share one
- * coverage-chip renderer across both surfaces. Deliberately NOT carried
- * over: that shape's per-status matrix array and its untested counter —
- * those exist to drive a status-by-status breakdown table this phase has
- * no UI for yet; a later phase can add them back onto this same
- * breakdown shape if a matrix view needs them.
+ * coverage-chip renderer across both surfaces. `statuses[]` and
+ * `untested` (gap-closure plan 26.2-07) ride the same single statement:
+ * one extra CTE and one GROUP BY over the already-gated covering-case
+ * set, mirroring `lib/services/milestoneMemberCoverage.ts`'s shipped
+ * per-status rollup so the list's coverage cell can render through the
+ * same `CoverageChip` the milestone details page already uses.
+ * `directCaseCount` / `directCrossProjectCaseCount` (same plan) are
+ * SUBSETS of `linkedCaseCount` / `crossProjectCaseCount` — cases linked
+ * to the anchor requirement itself, never additive with the whole-subtree
+ * totals.
  *
  * "Most recent" is global and unscoped: the single latest execution a
  * covering case has ever recorded, independent of any particular release
@@ -45,6 +50,20 @@ import { latestCaseResultsCte } from "./latestCaseResults";
 export type RequirementCoverageStatus =
   "UNCOVERED" | "FAILED" | "NOT_RUN" | "PASSED";
 
+/**
+ * One row of the per-completed-status breakdown. Field names are dictated
+ * by the milestone details page's `CoverageChip`/`CoverageStatusCount`
+ * (`app/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip.tsx`)
+ * so a requirement breakdown can be handed straight to that component with
+ * no translation layer.
+ */
+export interface RequirementCoverageStatusCount {
+  statusId: number;
+  name: string;
+  color: string | null;
+  count: number;
+}
+
 export interface RequirementCoverageBreakdown {
   linkedCaseCount: number;
   /**
@@ -56,10 +75,41 @@ export interface RequirementCoverageBreakdown {
    * codebase.
    */
   crossProjectCaseCount: number;
+  /**
+   * How many of `linkedCaseCount` are linked DIRECTLY to this requirement
+   * (min depth zero in the closure walk), as opposed to inherited from a
+   * descendant. A SUBSET of `linkedCaseCount`, never additive with it.
+   */
+  directCaseCount: number;
+  /**
+   * How many of `directCaseCount` live in a project other than this
+   * requirement's own. A SUBSET of both `directCaseCount` and
+   * `crossProjectCaseCount` — a cross-project case inherited from a
+   * descendant counts toward `crossProjectCaseCount` but not this field.
+   */
+  directCrossProjectCaseCount: number;
   passed: number;
   failed: number;
   inProgress: number;
   notRun: number;
+  /**
+   * One entry per distinct COMPLETED status among the covering cases'
+   * latest results (the system `untested` status excluded — it rides
+   * `untested` below instead), ordered by count descending. Always
+   * present, even when empty — the producer always fills this array, so
+   * an optional field here would be a lie every consumer has to defend
+   * against.
+   */
+  statuses: RequirementCoverageStatusCount[];
+  /**
+   * Explicit count of covering cases that are neither in `statuses`' sum
+   * nor otherwise classified — missing results, non-completed results, and
+   * results whose status IS the system `untested` status. Derived as
+   * `linkedCaseCount - sum(statuses[].count)`, floored at zero — NOT
+   * re-derived from `notRun`, which also absorbs a completed-but-
+   * unclassifiable result and would silently disagree with this total.
+   */
+  untested: number;
   uncovered: boolean;
   status: RequirementCoverageStatus;
 }
@@ -75,13 +125,30 @@ export interface RequirementCoverageScope {
 }
 
 /**
+ * The exact six counters `classifyRequirementCoverage` reads — spelled out
+ * explicitly rather than derived via `Omit<RequirementCoverageBreakdown,
+ * ...>`, so adding a new REQUIRED field to the breakdown (e.g. `statuses`,
+ * `untested`) never silently widens this ladder's parameter type and
+ * breaks every existing call site that only ever supplied these six.
+ */
+export type RequirementCoverageCounts = Pick<
+  RequirementCoverageBreakdown,
+  | "linkedCaseCount"
+  | "crossProjectCaseCount"
+  | "passed"
+  | "failed"
+  | "inProgress"
+  | "notRun"
+>;
+
+/**
  * The four-rung failed-anywhere-wins precedence ladder, evaluated over a
  * requirement's covering-case counts. Pure — no I/O, no db client — so it
  * is unit-testable on its own, independent of the query that produces the
  * counts.
  */
 export function classifyRequirementCoverage(
-  counts: Omit<RequirementCoverageBreakdown, "status" | "uncovered">
+  counts: RequirementCoverageCounts
 ): RequirementCoverageStatus {
   // Rung 1 — structural: no covering cases anywhere in the subtree wins
   // first, regardless of every other counter also being zero.
@@ -157,15 +224,29 @@ closure AS (
 `;
 }
 
+/** One element of the `statuses` JSON array before JS-side coercion — the
+ * pg driver parses the `json` column into a plain JS value automatically,
+ * but `count` still arrives as whatever JSON number type `json_build_object`
+ * produced from the underlying bigint, so the JS loop coerces it too. */
+interface RequirementCoverageStatusRawEntry {
+  statusId: number;
+  name: string;
+  color: string | null;
+  count: number;
+}
+
 /** Row shape returned by the rollup statement below, before JS-side coercion. */
 interface RequirementCoverageRow {
   id: number | bigint;
   linked_case_count: number | bigint;
   cross_project_case_count: number | bigint;
+  direct_case_count: number | bigint;
+  direct_cross_project_case_count: number | bigint;
   passed: number | bigint;
   failed: number | bigint;
   in_progress: number | bigint;
   not_run: number | bigint;
+  statuses: RequirementCoverageStatusRawEntry[] | null;
 }
 
 export interface GetRequirementCoverageOptions {
@@ -178,12 +259,20 @@ export interface GetRequirementCoverageOptions {
 /**
  * Computes a coverage breakdown for every requirement in a project (or,
  * with `opts.rootIds`, a bounded subset), in one statement: the closure
- * above supplies the whole-subtree walk, a DISTINCT covering-case set
- * removes double-counting across levels (COV-02), the shared latest-result
- * fragment classifies each covering case's most recent execution, and a
- * LEFT JOIN plus COALESCE turns a requirement with nothing beneath it into
- * an explicit zero row instead of an absence (COV-03) — no application-code
- * loop ever fills that gap.
+ * above supplies the whole-subtree walk, a grouped covering-case set
+ * removes double-counting across levels (COV-02) while also tracking the
+ * shallowest depth each case attaches at (`direct_*` counters), the shared
+ * latest-result fragment classifies each covering case's most recent
+ * execution, an additional per-status GROUP BY collapsed into one
+ * `json_agg` supplies `statuses[]`, and a LEFT JOIN plus COALESCE turns a
+ * requirement with nothing beneath it into an explicit zero row instead of
+ * an absence (COV-03) — no application-code loop ever fills that gap. One
+ * statement, one round trip: the shipped milestone analogue this
+ * per-status rollup mirrors issues a SECOND statement for its own
+ * per-status counts, but doing that here would either re-declare
+ * `buildClosureFragment`'s closure (putting the anchor role predicate in
+ * this file twice, which the structural test above forbids) or spend a
+ * second round trip on data this statement already has in scope.
  */
 export async function getRequirementCoverage(
   projectId: number,
@@ -222,16 +311,19 @@ export async function getRequirementCoverage(
   const { rows } = await sql<RequirementCoverageRow>`
     WITH RECURSIVE ${closure},
     covering_cases AS (
-      -- COV-02: DISTINCT collapses a case linked at both an ancestor and
+      -- COV-02: GROUP BY collapses a case linked at both an ancestor and
       -- one of its own descendants into exactly one row for that
-      -- ancestor. Carrying the case's own project alongside the case id
-      -- does not weaken that guarantee — a case determines its own
-      -- project, so it can never produce two distinct rows for the same
-      -- (ancestor, case) pair that differ only by that column.
-      SELECT DISTINCT
+      -- ancestor — the identical row set the prior DISTINCT produced (a
+      -- case determines its own project, so no group can split). Riding
+      -- along for free: MIN(cl.depth), the shallowest level at which the
+      -- case attaches under that ancestor. 0 means linked to the ancestor
+      -- itself (a direct link); anything deeper means inherited from a
+      -- descendant — consumed below by the rollup's direct_* counters.
+      SELECT
         cl.ancestor_id,
         rci."caseId" AS case_id,
-        rc."projectId" AS case_project_id
+        rc."projectId" AS case_project_id,
+        MIN(cl.depth) AS min_depth
       FROM closure cl
       JOIN "RepositoryCaseIssue" rci ON rci."issueId" = cl.node_id
       JOIN "RepositoryCases" rc
@@ -244,18 +336,25 @@ export async function getRequirementCoverage(
       -- mirroring this service family's existing null-means-ADMIN
       -- convention.
       WHERE (${unrestricted} OR rc."projectId" = ANY(${accessibleProjectIds}::int[]))
+      GROUP BY cl.ancestor_id, rci."caseId", rc."projectId"
     ),
     ${latestCaseResultsCte()},
     rollup AS (
       -- The four counters below are mutually exclusive and exhaustive
       -- over covering_cases: every row lands in exactly one of them, so
-      -- they always sum to linked_case_count.
+      -- they always sum to linked_case_count. The two direct_* counters
+      -- are SUBSETS of linked_case_count / cross_project_case_count,
+      -- never additive with them.
       SELECT
         cc.ancestor_id,
         COUNT(*) AS linked_case_count,
         COUNT(*) FILTER (
           WHERE cc.case_project_id <> ${projectId}
         ) AS cross_project_case_count,
+        COUNT(*) FILTER (WHERE cc.min_depth = 0) AS direct_case_count,
+        COUNT(*) FILTER (
+          WHERE cc.min_depth = 0 AND cc.case_project_id <> ${projectId}
+        ) AS direct_cross_project_case_count,
         COUNT(*) FILTER (WHERE lr.is_success = true) AS passed,
         COUNT(*) FILTER (WHERE lr.is_failure = true) AS failed,
         COUNT(*) FILTER (
@@ -270,6 +369,48 @@ export async function getRequirementCoverage(
       FROM covering_cases cc
       LEFT JOIN latest_results lr ON lr.test_case_id = cc.case_id
       GROUP BY cc.ancestor_id
+    ),
+    status_rollup AS (
+      -- Per-status counts over the SAME already-gated covering_cases set
+      -- (never a fresh read of "RepositoryCases") — mirrors
+      -- lib/services/milestoneMemberCoverage.ts's shipped per-status
+      -- rollup: only COMPLETED statuses count, and the system 'untested'
+      -- status is excluded even if matched, because 'untested' rides its
+      -- own explicit aggregate below instead. The LEFT JOIN to "Status"
+      -- (never an inner one) is what keeps the synthetic negative JUnit
+      -- status ids (-1/-2/-3) present instead of silently dropping every
+      -- automated-only result — the shared latest-result fragment already
+      -- COALESCEd a name and a colour for exactly those rows.
+      SELECT
+        cc.ancestor_id,
+        lr.status_id,
+        lr.status_name,
+        lr.status_color,
+        COUNT(*) AS status_count
+      FROM covering_cases cc
+      JOIN latest_results lr ON lr.test_case_id = cc.case_id
+      LEFT JOIN "Status" s ON s.id = lr.status_id
+      WHERE lr.is_completed = true
+        AND (s.id IS NULL OR s."systemName" IS DISTINCT FROM 'untested')
+      GROUP BY cc.ancestor_id, lr.status_id, lr.status_name, lr.status_color
+    ),
+    statuses_agg AS (
+      -- Collapses the per-status rows into one JSON array per ancestor,
+      -- ordered by count descending — the same shape and ordering
+      -- CoverageChip already reads (statusId / name / color / count).
+      SELECT
+        ancestor_id,
+        json_agg(
+          json_build_object(
+            'statusId', status_id,
+            'name', status_name,
+            'color', status_color,
+            'count', status_count
+          )
+          ORDER BY status_count DESC
+        ) AS statuses
+      FROM status_rollup
+      GROUP BY ancestor_id
     )
     -- COV-03: rows come from the closure's own depth-zero entries — which
     -- ARE the anchor rows by construction — left-joined to the rollup
@@ -277,17 +418,22 @@ export async function getRequirementCoverage(
     -- with nothing beneath it in its subtree simply never appears in
     -- rollup; COALESCE turns that absence into a real, explicit zero
     -- row here, in the join, rather than in an application-code fill
-    -- loop afterward.
+    -- loop afterward. The same COV-03 property holds for statuses_agg: an
+    -- absence becomes '[]', never an application-code fill.
     SELECT
       cl.ancestor_id AS id,
       COALESCE(r.linked_case_count, 0) AS linked_case_count,
       COALESCE(r.cross_project_case_count, 0) AS cross_project_case_count,
+      COALESCE(r.direct_case_count, 0) AS direct_case_count,
+      COALESCE(r.direct_cross_project_case_count, 0) AS direct_cross_project_case_count,
       COALESCE(r.passed, 0) AS passed,
       COALESCE(r.failed, 0) AS failed,
       COALESCE(r.in_progress, 0) AS in_progress,
-      COALESCE(r.not_run, 0) AS not_run
+      COALESCE(r.not_run, 0) AS not_run,
+      COALESCE(sa.statuses, '[]'::json) AS statuses
     FROM closure cl
     LEFT JOIN rollup r ON r.ancestor_id = cl.ancestor_id
+    LEFT JOIN statuses_agg sa ON sa.ancestor_id = cl.ancestor_id
     WHERE cl.depth = 0
     ORDER BY cl.ancestor_id
   `.execute(db.$qb);
@@ -302,8 +448,27 @@ export async function getRequirementCoverage(
       inProgress: Number(row.in_progress ?? 0),
       notRun: Number(row.not_run ?? 0),
     };
+    const statuses: RequirementCoverageStatusCount[] = (row.statuses ?? []).map(
+      (entry) => ({
+        statusId: Number(entry.statusId),
+        name: entry.name,
+        color: entry.color ?? null,
+        count: Number(entry.count),
+      })
+    );
+    const statusesTotal = statuses.reduce((sum, entry) => sum + entry.count, 0);
     breakdowns.set(Number(row.id), {
       ...counts,
+      directCaseCount: Number(row.direct_case_count ?? 0),
+      directCrossProjectCaseCount: Number(
+        row.direct_cross_project_case_count ?? 0
+      ),
+      statuses,
+      // Same derivation and zero floor the shipped milestone per-status
+      // service uses — NOT re-derived from notRun, which also absorbs a
+      // completed-but-unclassifiable result and would silently disagree
+      // with this total.
+      untested: Math.max(0, counts.linkedCaseCount - statusesTotal),
       uncovered: counts.linkedCaseCount === 0,
       status: classifyRequirementCoverage(counts),
     });
