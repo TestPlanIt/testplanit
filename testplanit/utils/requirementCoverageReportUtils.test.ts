@@ -13,6 +13,10 @@ vi.mock("~/lib/authContext", () => ({
   resolveViewerProjectScope: vi.fn(),
 }));
 
+vi.mock("~/lib/api-token-auth", () => ({
+  authenticateRequest: vi.fn(),
+}));
+
 vi.mock("~/lib/services/requirementTraceability", () => ({
   loadRequirementTraceability: vi.fn(),
 }));
@@ -26,6 +30,7 @@ vi.mock("~/utils/reportApiUtils", async (importOriginal) => ({
 }));
 
 import { getServerSession } from "next-auth";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { loadRequirementTraceability } from "~/lib/services/requirementTraceability";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
@@ -43,6 +48,9 @@ const mockedLoad = loadRequirementTraceability as unknown as ReturnType<
   typeof vi.fn
 >;
 const mockedAuthorize = authorizeReportRequest as unknown as ReturnType<
+  typeof vi.fn
+>;
+const mockedAuthenticateRequest = authenticateRequest as unknown as ReturnType<
   typeof vi.fn
 >;
 
@@ -140,6 +148,12 @@ describe("requirementCoverageReportUtils", () => {
     mockedSession.mockResolvedValue({
       user: { id: "user-1", access: "USER" },
     });
+    // Mirrors authenticateRequest's real session-first behavior for a
+    // signed-in caller, without touching the DB-backed API-token path.
+    mockedAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1", access: "USER" },
+    });
     mockedResolveScope.mockResolvedValue([5]);
     mockedLoad.mockResolvedValue(traceabilityData(fixtureRows()));
   });
@@ -222,5 +236,55 @@ describe("requirementCoverageReportUtils", () => {
       "traceability"
     );
     expect(mockedLoad).toHaveBeenCalledTimes(1);
+  });
+
+  // F1 [CRITICAL]: the shared-report bypass branch must never resolve to an
+  // unrestricted (null) scope — that leaks every project's covering cases
+  // through a public share link. Asserting the exact array (not just
+  // "did not throw") means reverting to `accessibleProjectIds = null` fails
+  // this test loudly.
+  it("scopes the bypass branch to the requested project, never to unrestricted null", async () => {
+    mockedAuthorize.mockResolvedValue({ ok: true, bypass: true });
+
+    const res = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5 }),
+      "gaps"
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalledWith(5, {
+      accessibleProjectIds: [5],
+    });
+    // The bypass branch has no authenticated viewer to resolve a scope
+    // from, so it must not consult the per-user resolver at all.
+    expect(mockedResolveScope).not.toHaveBeenCalled();
+  });
+
+  // F3/F4 [WARNING]: a Bearer-token-authenticated caller has no NextAuth
+  // session. authorizeReportRequest already authenticates it (via its own
+  // session-then-token fallback) and returns { ok: true, bypass: false };
+  // the handler must resolve the real scope from that same fallback rather
+  // than dereferencing a session that is null for this caller.
+  it("resolves a correctly-scoped response for a token-authenticated caller with no session", async () => {
+    mockedAuthorize.mockResolvedValue({ ok: true, bypass: false });
+    mockedSession.mockResolvedValue(null);
+    mockedAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "token-user-1", access: "USER" },
+    });
+    mockedResolveScope.mockResolvedValue([5]);
+
+    const res = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5 }),
+      "gaps"
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.total).toBe(2);
+    expect(mockedResolveScope).toHaveBeenCalledWith("token-user-1");
+    expect(mockedLoad).toHaveBeenCalledWith(5, {
+      accessibleProjectIds: [5],
+    });
   });
 });

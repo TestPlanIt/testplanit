@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import { authenticateRequest } from "~/lib/api-token-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import type { RequirementCoverageStatus } from "~/lib/services/requirementCoverage";
 import { loadRequirementTraceability } from "~/lib/services/requirementTraceability";
@@ -92,14 +93,41 @@ export async function handleRequirementCoverageReportPOST(
       // The share-link bypass token IS the authorization for this request
       // — already validated inside authorizeReportRequest before it
       // returned ok, matching every shipped bypass consumer's convention
-      // (see app/api/report-builder/iteration-matrix/route.ts). There is
-      // no session on this path to resolve a per-user scope from, so
-      // cross-project visibility is unrestricted for the request, the
-      // same way the share link itself is the sole read grant there.
-      accessibleProjectIds = null;
+      // (see app/api/report-builder/iteration-matrix/route.ts). Unlike
+      // iteration-matrix's data, requirement coverage deliberately spans
+      // projects (crossProjectCaseCount exists precisely because a
+      // covering case can live outside the shared project), so — unlike
+      // that precedent — `null` here would let an anonymous visitor see
+      // case names, project names, statuses and execution dates from
+      // projects the share link's own creator was never granted. There is
+      // also no authenticated viewer on this path to resolve a per-user
+      // scope from. Confine the request to the single project the link was
+      // created for instead: the same boundary the raw project-existence
+      // gate applies on every other bypass consumer.
+      //
+      // Semantic consequence: a shared report can UNDER-report relative to
+      // the signed-in creator's own view of the same report — a covering
+      // case that lives in another project never appears in the shared
+      // copy, and a requirement covered only by such a case renders as a
+      // gap in the shared copy even though the creator sees it as covered.
+      accessibleProjectIds = [projectId];
     } else {
+      // Resolve auth the same way authorizeReportRequest just did — session
+      // first, Bearer API-token fallback second — instead of re-reading
+      // only the session. A token-authenticated caller (supported, shipped
+      // capability) has no NextAuth session, so `session!.user.id` alone
+      // throws and turns an authorized request into a 500.
       const session = await getServerSession(authOptions);
-      accessibleProjectIds = await resolveViewerProjectScope(session!.user.id);
+      const auth = await authenticateRequest(req, session);
+      if (!auth.authenticated) {
+        // authorizeReportRequest already authenticated this request via the
+        // same helper, so this should be unreachable in practice; fail
+        // closed with the real status rather than crashing into a 500.
+        return Response.json({ error: auth.error }, { status: auth.status });
+      }
+      accessibleProjectIds = await resolveViewerProjectScope(
+        auth.user.userId
+      );
     }
 
     const data = await loadRequirementTraceability(projectId, {
