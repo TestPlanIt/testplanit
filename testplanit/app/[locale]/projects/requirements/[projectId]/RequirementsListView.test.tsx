@@ -71,6 +71,11 @@ vi.mock("next-auth/react", () => ({
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, any>) =>
     params ? `${key}:${Object.values(params).join("·")}` : key,
+  // The real RequirementsListColumns (rendered here, not mocked) now mounts
+  // CasesListDisplay for the linkedCases/coveringCases cells, which reads
+  // useLocale() for its count formatting -- the bare useTranslations-only
+  // mock above left it undefined otherwise.
+  useLocale: () => "en-US",
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -145,6 +150,39 @@ vi.mock("@/components/IssueStatusDisplay", () => ({
     <span data-testid="mock-issue-status">{status ?? ""}</span>
   ),
 }));
+
+// CasesListDisplay itself stays real (its trigger badge and count-hiding-at-
+// zero rule are exercised through the real columns); only its own internal
+// search-dropdown seam, AsyncCombobox, is stubbed -- the SAME convention
+// RequirementsListColumns.test.tsx established for this exact primitive, so
+// a test here can invoke the real fetch-building code path directly instead
+// of driving a real Radix popover through jsdom.
+const capturedFetchOptionsList: Array<
+  (query: string, page: number, size: number) => Promise<unknown>
+> = [];
+vi.mock("@/components/ui/async-combobox", () => ({
+  AsyncCombobox: ({
+    fetchOptions,
+    renderTrigger,
+    triggerLabel,
+  }: {
+    fetchOptions: (
+      query: string,
+      page: number,
+      size: number
+    ) => Promise<unknown>;
+    renderTrigger: (args: { triggerLabel: unknown }) => unknown;
+    triggerLabel: unknown;
+  }) => {
+    capturedFetchOptionsList.push(fetchOptions);
+    return renderTrigger({ triggerLabel });
+  },
+}));
+
+function decodeQueryParam(url: string, param: string): any {
+  const raw = new URL(url, "http://localhost").searchParams.get(param);
+  return raw ? JSON.parse(raw) : null;
+}
 
 // Capture the useDrop spec factories (one per call site: the list-level
 // target is always registered before the bottom-of-list root zone, since
@@ -294,6 +332,7 @@ beforeEach(() => {
   dropSpecs.bottom = null;
   dropCallCount.current = 0;
   dragSpecRef.current = null;
+  capturedFetchOptionsList.length = 0;
   global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   useFindManyIssueMock.mockReturnValue({
     data: [],
@@ -378,6 +417,113 @@ describe("RequirementsListView", () => {
       expect(
         screen.getByTestId("requirement-coverage-cell-1").textContent
       ).toBe(collapsedContent);
+    });
+  });
+
+  describe("column layout (gap closure 26.2-11)", () => {
+    beforeEach(() => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it("renders the seven column ids, in order, at the pane's default width", () => {
+      renderView();
+
+      const table = screen.getByTestId("requirements-list");
+      const headerCells = Array.from(
+        table.querySelectorAll('[role="columnheader"]')
+      );
+      expect(headerCells.length).toBeGreaterThanOrEqual(7);
+      // Ported label text for every column in expected order -- proves
+      // ordering, not just presence (a column inserted in the wrong place
+      // is invisible to an id-only check).
+      const labels = headerCells.map((cell) => cell.textContent);
+      expect(labels[0]).toBe("requirements.list.columnName");
+      expect(labels[1]).toBe("requirements.list.columnStatus");
+      expect(labels[2]).toBe("requirements.coverage.title");
+      expect(labels[3]).toBe("requirements.linkedCases.title");
+      expect(labels[4]).toBe("requirements.coverage.panelTitle");
+      expect(labels[5]).toBe("requirements.list.columnSource");
+    });
+
+    it("moves horizontal scroll onto the table body (enableColumnPinning), never overflow-x-hidden", () => {
+      renderView();
+
+      const scrollBody = screen.getByTestId("requirements-list-scroll");
+      expect(scrollBody.className).toContain("overflow-auto");
+      expect(scrollBody.className).not.toContain("overflow-x-hidden");
+
+      const tableContainer = screen.getByTestId("requirements-list");
+      expect(tableContainer.className).toContain("overflow-hidden");
+      expect(tableContainer.className).not.toContain("overflow-x-auto");
+    });
+
+    it("does not stretch to 100% width (flexColumnId removed) -- the header row sits at its natural summed column width", () => {
+      renderView();
+
+      const headerRow = screen
+        .getByTestId("requirements-list")
+        .querySelector('[role="row"]') as HTMLElement;
+      // A `flexColumnId="name"` table would render this as the literal
+      // string "100%"; with it removed the row sits at the columns' summed
+      // pixel width instead.
+      expect(headerRow.style.width).not.toBe("100%");
+      expect(headerRow.style.width).toMatch(/^\d+(\.\d+)?px$/);
+    });
+  });
+
+  describe("descendant map reaches the covering cell (gap closure 26.2-11)", () => {
+    it("the child's id appears in the parent row's coveringCases filter", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Parent" }),
+          makeRequirement({ id: 2, name: "Child", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({
+          1: makeBreakdown({ linkedCaseCount: 2, crossProjectCaseCount: 0 }),
+        }),
+        isError: false,
+      });
+      global.fetch = vi.fn(async (url: string) => {
+        if (url.includes("/api/model/RepositoryCases/count")) {
+          return { ok: true, json: async () => ({ data: 0 }) } as Response;
+        }
+        return { ok: true, json: async () => ({ data: [] }) } as Response;
+      }) as any;
+
+      renderView();
+
+      // Row 1 (Parent) is collapsed by default -- its own linkedCases cell
+      // renders no combobox at all (directCaseCount defaults to 0). One or
+      // more AsyncCombobox instances are captured for row 1's coveringCases
+      // cell (the virtualized engine may mount a cell more than once); walk
+      // all of them and find the one whose filter carries the descendant.
+      expect(capturedFetchOptionsList.length).toBeGreaterThan(0);
+      let sawDescendant = false;
+      for (const fetchOptions of capturedFetchOptionsList) {
+        await fetchOptions("", 0, 10);
+        const findManyCalls = (global.fetch as any).mock.calls.filter(
+          ([url]: [string]) =>
+            url.includes("/api/model/RepositoryCases/findMany")
+        );
+        const params = decodeQueryParam(findManyCalls.at(-1)[0], "q");
+        const issueIdIn = params?.where?.AND?.[1]?.caseIssues?.some?.issueId
+          ?.in as number[] | undefined;
+        if (Array.isArray(issueIdIn) && issueIdIn.includes(2)) {
+          expect(issueIdIn[0]).toBe(1);
+          sawDescendant = true;
+        }
+      }
+      expect(sawDescendant).toBe(true);
     });
   });
 

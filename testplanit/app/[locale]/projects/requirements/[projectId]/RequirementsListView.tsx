@@ -35,6 +35,7 @@ import { DeleteRequirementModal } from "./DeleteRequirementModal";
 import { useRequirementsListColumns } from "./RequirementsListColumns";
 import type { RequirementSelection } from "./RequirementsWorkspace";
 import {
+  buildDescendantIdMap,
   buildRequirementMaps,
   computeVisibleRequirementIds,
   countDescendants,
@@ -187,6 +188,14 @@ export default function RequirementsListView({
   const { requirementMap, childrenMap } = useMemo(
     () => buildRequirementMaps(requirements),
     [requirements]
+  );
+
+  // Self-plus-subtree id lists for the coveringCases column's filter (gap
+  // closure 26.2-11) -- computed once per tree alongside the other
+  // `childrenMap`-derived maps above, never per row.
+  const descendantIdsByRequirementId = useMemo(
+    () => buildDescendantIdMap(childrenMap),
+    [childrenMap]
   );
 
   const visibleRequirementIds = useMemo(
@@ -546,6 +555,8 @@ export default function RequirementsListView({
       columnName: t("requirements.list.columnName"),
       columnStatus: t("requirements.list.columnStatus"),
       columnCoverage: t("requirements.coverage.title"),
+      columnLinkedCases: t("requirements.linkedCases.title"),
+      columnCoveringCases: t("requirements.coverage.panelTitle"),
       columnSource: t("requirements.list.columnSource"),
       actionsLabel: t("common.actions.actionsLabel"),
     },
@@ -554,6 +565,7 @@ export default function RequirementsListView({
     isFiltering,
     normalizedFilter,
     coverage,
+    descendantIdsByRequirementId,
     expandedByIssueId,
     editingRequirementId,
     onToggleExpand: handleToggleExpand,
@@ -729,9 +741,34 @@ export default function RequirementsListView({
               onColumnVisibilityChange={setColumnVisibility}
               hasMore={false}
               getRowId={(row) => String(row.id)}
+              // 48 stays the estimate even with the two new case-count cells
+              // (D-11b): the virtualizer measures every row's real height
+              // dynamically, so an unchanged estimate costs at most one
+              // frame of layout shift on first paint, never a correctness
+              // issue, and these cells render at the same line-height as the
+              // coverage cell they sit beside.
               estimateSize={48}
               columnSizingStorageKey="requirements-list-columns"
-              flexColumnId="name"
+              // D-11c (operator may overrule at re-UAT): seven columns at
+              // their natural summed width (~960px) exceed the list pane's
+              // default 30%-of-window size, so `enableColumnPinning` (never
+              // `flexColumnId`) moves horizontal scroll onto the table body
+              // and keeps `actions` (already `meta: { isPinned: "right" }`)
+              // frozen at the right edge -- matching MemberIssuesTable.tsx's
+              // own proven configuration exactly. `flexColumnId` is REMOVED
+              // rather than combined with pinning: a flex column stretched
+              // to 100% alongside sticky column pinning is an untested
+              // combination in VirtualizedTableEngine, and the only thing it
+              // would buy back is trailing whitespace in a pane wide enough
+              // to not need scrolling at all. Trade-off: in a very wide pane
+              // the table now shows trailing space (never occupied by
+              // `name`) until the user manually widens the `name` column,
+              // which then persists via `columnSizingStorageKey` like every
+              // other resize. `name` is deliberately NOT pinned left -- at
+              // this pane's default width a 320px frozen first column would
+              // leave almost nothing left to scroll, which was considered
+              // and rejected, not merely overlooked.
+              enableColumnPinning
               enableColumnReorder={false}
               pinFirstLast={false}
               highlightRowId={selectedRequirementId}

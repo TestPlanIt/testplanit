@@ -231,7 +231,8 @@ export function useRequirementsListColumns({
         // Sorts by directCaseCount, the SAME counter the cell's in-project
         // badge renders -- cases attached to this requirement ITSELF, never
         // inherited from a descendant.
-        accessorFn: (row) => coverageFor(coverage, row.id)?.directCaseCount ?? 0,
+        accessorFn: (row) =>
+          coverageFor(coverage, row.id)?.directCaseCount ?? 0,
         header: tColumnLinkedCases,
         enableSorting: true,
         // Comparator's own cases column footprint (MemberIssuesColumns.tsx),
@@ -278,7 +279,8 @@ export function useRequirementsListColumns({
         // requirement plus everything beneath it, mirroring the coverage
         // column's own "richer than a sum" precedent of ranking by the
         // rollup's own field rather than re-deriving one.
-        accessorFn: (row) => coverageFor(coverage, row.id)?.linkedCaseCount ?? 0,
+        accessorFn: (row) =>
+          coverageFor(coverage, row.id)?.linkedCaseCount ?? 0,
         header: tColumnCoveringCases,
         enableSorting: true,
         size: 120,
@@ -331,7 +333,11 @@ export function useRequirementsListColumns({
         accessorFn: (row) => requirementSourceSortValue(row),
         header: tColumnSource,
         enableSorting: true,
-        size: 170,
+        // Narrowed from 170 to 140 (D-11c) to help buy back width for the
+        // two new case-count columns under `enableColumnPinning` -- the
+        // provenance badge this cell renders through fits comfortably at
+        // this width.
+        size: 140,
         minSize: 60,
         maxSize: 260,
         // No className passed in here either -- same reasoning as coverage.

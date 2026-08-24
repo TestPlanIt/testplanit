@@ -333,7 +333,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       coverage: { size: 170, minSize: 150, maxSize: 420 },
       linkedCases: { size: 110, minSize: 80, maxSize: 160 },
       coveringCases: { size: 120, minSize: 90, maxSize: 200 },
-      source: { size: 170, minSize: 60, maxSize: 260 },
+      source: { size: 140, minSize: 60, maxSize: 260 },
       actions: { size: 64, minSize: 56, maxSize: 100 },
     };
     result.current.forEach((col) => {
@@ -353,12 +353,17 @@ describe("useRequirementsListColumns -- column contract", () => {
     expect(actionsCol.enableHiding).toBe(false);
     expect((actionsCol.meta as any)?.isPinned).toBe("right");
 
-    ["name", "status", "coverage", "linkedCases", "coveringCases", "source"].forEach(
-      (id) => {
-        const col = result.current.find((c) => c.id === id)!;
-        expect(col.enableSorting).toBe(true);
-      }
-    );
+    [
+      "name",
+      "status",
+      "coverage",
+      "linkedCases",
+      "coveringCases",
+      "source",
+    ].forEach((id) => {
+      const col = result.current.find((c) => c.id === id)!;
+      expect(col.enableSorting).toBe(true);
+    });
   });
 
   it("coverage accessorFn ranks uncovered below failed below passed, and -1 for a row absent from the map", () => {
