@@ -82,6 +82,13 @@ vi.mock("next-intl", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
+  // The covering cell's drill-down popover renders `TestCaseNameDisplay`
+  // (gap closure 26.2-15), which links through this seam.
+  Link: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("sonner", () => ({
@@ -111,6 +118,24 @@ vi.mock("~/hooks/useRequirementCoverage", async (importOriginal) => {
     useRequirementCoverage: useRequirementCoverageMock,
   };
 });
+
+// The covering column's drill-down seam (gap closure 26.2-15) -- mocked the
+// same way as `useRequirementCoverage` above: this suite exercises the REAL
+// RequirementsListColumns/DataTable, so without a mock every visible row's
+// covering cell would call the real `useQuery` with no QueryClientProvider
+// ancestor. Its own expand/split/error behavior is RequirementsListColumns
+// .test.tsx's responsibility -- this suite only needs a default, configurable
+// per test that never crashes.
+const { useRequirementCoveringCasesMock } = vi.hoisted(() => ({
+  useRequirementCoveringCasesMock: vi.fn(() => ({
+    data: undefined as unknown,
+    isLoading: false,
+    isError: false,
+  })),
+}));
+vi.mock("~/hooks/useRequirementCoveringCases", () => ({
+  useRequirementCoveringCases: useRequirementCoveringCasesMock,
+}));
 
 // The real hook owns TanStack Virtual + an IntersectionObserver, neither of
 // which produce layout under jsdom -- replace with a pass-through that
@@ -180,11 +205,6 @@ vi.mock("@/components/ui/async-combobox", () => ({
     return renderTrigger({ triggerLabel });
   },
 }));
-
-function decodeQueryParam(url: string, param: string): any {
-  const raw = new URL(url, "http://localhost").searchParams.get(param);
-  return raw ? JSON.parse(raw) : null;
-}
 
 // Capture the useDrop spec factories (one per call site: the list-level
 // target is always registered before the bottom-of-list root zone, since
@@ -374,6 +394,11 @@ beforeEach(() => {
     data: undefined,
     isError: false,
   });
+  useRequirementCoveringCasesMock.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+  });
 });
 
 describe("RequirementsListView", () => {
@@ -500,54 +525,57 @@ describe("RequirementsListView", () => {
     });
   });
 
-  describe("descendant map reaches the covering cell (gap closure 26.2-11)", () => {
-    it("the child's id appears in the parent row's coveringCases filter", async () => {
+  // Gap closure 26.2-15 (UAT gap 11) replaced the covering cell's client-side
+  // descendant filter with the covering-cases drill-down -- this suite's own
+  // proof of that filter (the retired "descendant map reaches the covering
+  // cell" test, gap closure 26.2-11) is superseded by RequirementsListColumns
+  // .test.tsx's "ABT-47193 shape" test at the unit level; this one proves the
+  // SAME shape survives through the real, wired-up RequirementsListView.
+  describe("covering cell drill-down (gap closure 26.2-15)", () => {
+    it("the covering cell's other-project expansion renders a case reached only through a non-requirement descendant (ABT-47193 shape)", () => {
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Parent" }),
-          makeRequirement({ id: 2, name: "Child", parentId: 1 }),
-        ],
+        data: [makeRequirement({ id: 1, name: "Parent" })],
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
       useRequirementCoverageMock.mockReturnValue({
         data: makeCoverageResponse({
-          1: makeBreakdown({ linkedCaseCount: 2, crossProjectCaseCount: 0 }),
+          1: makeBreakdown({ linkedCaseCount: 1, crossProjectCaseCount: 1 }),
         }),
         isError: false,
       });
-      global.fetch = vi.fn(async (url: string) => {
-        if (url.includes("/api/model/RepositoryCases/count")) {
-          return { ok: true, json: async () => ({ data: 0 }) } as Response;
-        }
-        return { ok: true, json: async () => ({ data: [] }) } as Response;
-      }) as any;
+      useRequirementCoveringCasesMock.mockReturnValue({
+        data: {
+          requirementId: 1,
+          cases: [
+            {
+              caseId: 500,
+              caseName: "Non-requirement descendant case",
+              projectId: 99,
+              projectName: "Other Project",
+              lastStatusName: null,
+              lastStatusColor: null,
+              lastStatusIsSuccess: null,
+              lastStatusIsFailure: null,
+              lastExecutedAt: null,
+              direct: false,
+            },
+          ],
+        },
+        isLoading: false,
+        isError: false,
+      });
 
       renderView();
 
-      // Row 1 (Parent) is collapsed by default -- its own linkedCases cell
-      // renders no combobox at all (directCaseCount defaults to 0). One or
-      // more AsyncCombobox instances are captured for row 1's coveringCases
-      // cell (the virtualized engine may mount a cell more than once); walk
-      // all of them and find the one whose filter carries the descendant.
-      expect(capturedFetchOptionsList.length).toBeGreaterThan(0);
-      let sawDescendant = false;
-      for (const fetchOptions of capturedFetchOptionsList) {
-        await fetchOptions("", 0, 10);
-        const findManyCalls = (global.fetch as any).mock.calls.filter(
-          ([url]: [string]) =>
-            url.includes("/api/model/RepositoryCases/findMany")
-        );
-        const params = decodeQueryParam(findManyCalls.at(-1)[0], "q");
-        const issueIdIn = params?.where?.AND?.[1]?.caseIssues?.some?.issueId
-          ?.in as number[] | undefined;
-        if (Array.isArray(issueIdIn) && issueIdIn.includes(2)) {
-          expect(issueIdIn[0]).toBe(1);
-          sawDescendant = true;
-        }
-      }
-      expect(sawDescendant).toBe(true);
+      fireEvent.click(
+        screen.getByTestId("requirement-covering-cases-other-trigger-1")
+      );
+
+      expect(
+        screen.getByText("Non-requirement descendant case")
+      ).toBeInTheDocument();
     });
   });
 

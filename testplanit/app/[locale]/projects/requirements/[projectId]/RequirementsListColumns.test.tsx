@@ -1,13 +1,32 @@
 import fs from "fs";
 import path from "path";
-import { fireEvent, render, renderHook, screen } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
+import type { RequirementCoveringCaseRow } from "~/app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 import { ItemTypes } from "~/types/dndTypes";
 
 import type { RequirementRow } from "./requirementsListRows";
+
+// The covering column's drill-down seam (gap closure 26.2-15) -- mocked at
+// the hook level (not react-query/global.fetch) so a test can assert the
+// EXACT arguments the cell calls it with, proving the fetch is disabled
+// (both ids undefined) until the cell is expanded, per the hook's own
+// "enabled on both ids finite" contract.
+const mockUseRequirementCoveringCases = vi.fn();
+vi.mock("~/hooks/useRequirementCoveringCases", () => ({
+  useRequirementCoveringCases: (
+    projectId: number | undefined,
+    requirementId: number | undefined
+  ) => mockUseRequirementCoveringCases(projectId, requirementId),
+}));
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, unknown>) =>
@@ -77,6 +96,14 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
 
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
+  // The new covering-cases drill-down popover renders `TestCaseNameDisplay`,
+  // which links through this seam -- mirrors RequirementCoveragePanel.test
+  // .tsx's own plain-anchor stub for the same primitive.
+  Link: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("sonner", () => ({
@@ -289,7 +316,34 @@ beforeEach(() => {
   mockIsProjectAdmin = true;
   capturedFetchOptionsList.length = 0;
   global.fetch = mockCasesFetch();
+  mockUseRequirementCoveringCases.mockReset();
+  mockUseRequirementCoveringCases.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+    isError: false,
+  });
 });
+
+/** `RequirementCoveringCaseRow` fixture factory -- only the fields the
+ *  covering-cases cell actually reads. */
+function makeCoveringCase(
+  overrides: Partial<RequirementCoveringCaseRow> & {
+    caseId: number;
+  }
+): RequirementCoveringCaseRow {
+  return {
+    caseName: `Case ${overrides.caseId}`,
+    projectId: 5,
+    projectName: "Current Project",
+    lastStatusName: null,
+    lastStatusColor: null,
+    lastStatusIsSuccess: null,
+    lastStatusIsFailure: null,
+    lastExecutedAt: null,
+    direct: true,
+    ...overrides,
+  };
+}
 
 describe("useRequirementsListColumns -- column contract", () => {
   it("returns name/status/coverage/linkedCases/coveringCases/source/actions in order when canAddEdit is true", () => {
@@ -570,81 +624,29 @@ describe("linkedCases / coveringCases columns", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("the coveringCases cell's filter carries issueId: { in: [...] } with the requirement's own id FIRST, plus every descendant id", async () => {
-    const coverage = makeCoverageResponse({
-      1: makeBreakdown({ linkedCaseCount: 4, crossProjectCaseCount: 0 }),
-    });
-    const descendantIdsByRequirementId = new Map<number, number[]>([
-      [1, [1, 2, 3]],
-    ]);
-    renderColumnCell("coveringCases", makeRow({ id: 1 }), {
-      coverage,
-      descendantIdsByRequirementId,
-    });
-
-    expect(capturedFetchOptionsList).toHaveLength(1);
-    await capturedFetchOptionsList[0]!("", 0, 10);
-
-    const findManyCall = (global.fetch as any).mock.calls.find(
-      ([url]: [string]) => url.includes("/api/model/RepositoryCases/findMany")
-    );
-    expect(findManyCall).toBeDefined();
-    const params = decodeQueryParam(findManyCall[0], "q");
-    const filter = params.where.AND[1];
-    expect(filter.caseIssues.some.issueId.in).toEqual([1, 2, 3]);
-    expect(filter.caseIssues.some.issueId.in[0]).toBe(1);
-  });
-
-  it("falls back to [id] for the covering cell's filter when the descendant map has no entry for this row", async () => {
-    const coverage = makeCoverageResponse({
-      40: makeBreakdown({ linkedCaseCount: 2, crossProjectCaseCount: 0 }),
-    });
-    renderColumnCell("coveringCases", makeRow({ id: 40 }), {
-      coverage,
-      descendantIdsByRequirementId: new Map(),
-    });
-
-    await capturedFetchOptionsList[0]!("", 0, 10);
-    const findManyCall = (global.fetch as any).mock.calls.find(
-      ([url]: [string]) => url.includes("/api/model/RepositoryCases/findMany")
-    );
-    const params = decodeQueryParam(findManyCall[0], "q");
-    expect(params.where.AND[1].caseIssues.some.issueId.in).toEqual([40]);
-  });
-
-  // The security assertion this boundary depends on: every one of the four
-  // case-list filters (linkedCases in-project/cross-project, coveringCases
-  // in-project/cross-project) narrows to this project (or explicitly
-  // excludes it) and to non-archived cases -- the ZenStack model API is the
-  // real enforcement point, but a filter that silently dropped `projectId`
-  // would still hand back a project-unscoped read through a policy-scoped
-  // route (T-26.2G-11-01). This test FAILS if `projectId` is dropped from
-  // any one of the four filters -- see 26.2-11-SUMMARY.md for the recorded
-  // RED.
-  it("scopes every one of the four case-list filters to this project (or explicitly not-this-project) and to non-archived cases", async () => {
+  // The security assertion this boundary depends on: both linkedCases
+  // filters (direct links only, never inherited from a descendant) narrow to
+  // this project (or explicitly exclude it) and to non-archived cases -- the
+  // ZenStack model API is the real enforcement point, but a filter that
+  // silently dropped `projectId` would still hand back a project-unscoped
+  // read through a policy-scoped route (T-26.2G-11-01). `coveringCases` no
+  // longer builds a client-side filter at all (gap closure 26.2-15) -- its
+  // own security boundary is the covering-cases route's own viewer-scope
+  // check (T-26.2G-15-01), asserted in that route's own test, not here.
+  it("scopes both linkedCases filters to this project (or explicitly not-this-project) and to non-archived cases", async () => {
     const coverage = makeCoverageResponse({
       50: makeBreakdown({
         directCaseCount: 3,
         directCrossProjectCaseCount: 1,
-        linkedCaseCount: 5,
-        crossProjectCaseCount: 2,
       }),
     });
-    const descendantIdsByRequirementId = new Map<number, number[]>([
-      [50, [50, 51]],
-    ]);
 
     renderColumnCell("linkedCases", makeRow({ id: 50 }), {
       coverage,
       projectId: 5,
     });
-    renderColumnCell("coveringCases", makeRow({ id: 50 }), {
-      coverage,
-      projectId: 5,
-      descendantIdsByRequirementId,
-    });
 
-    expect(capturedFetchOptionsList).toHaveLength(4);
+    expect(capturedFetchOptionsList).toHaveLength(2);
 
     const filters = [];
     for (const fetchOptions of capturedFetchOptionsList) {
@@ -654,18 +656,228 @@ describe("linkedCases / coveringCases columns", () => {
       filters.push(params.where.AND[1]);
     }
 
-    // [linkedCases in-project, linkedCases other-project, coveringCases
-    // in-project, coveringCases other-project] -- DOM/render order.
+    // [in-project, other-project] -- DOM/render order.
     expect(filters[0]).toMatchObject({ projectId: 5, isArchived: false });
     expect(filters[1]).toMatchObject({
       projectId: { not: 5 },
       isArchived: false,
     });
-    expect(filters[2]).toMatchObject({ projectId: 5, isArchived: false });
-    expect(filters[3]).toMatchObject({
-      projectId: { not: 5 },
-      isArchived: false,
+  });
+});
+
+describe("coveringCases cell -- drill-down expansion (gap closure 26.2-15, UAT gap 11)", () => {
+  it("ABT-47193 shape: 8 covering cases reached only through a non-requirement descendant render as 8/8 in the other-project expansion, not 0-of-8 -- FAILS against the old descendant-filter implementation (mutation proof recorded in 26.2-15-SUMMARY.md)", () => {
+    const otherProjectCases = Array.from({ length: 8 }, (_, i) =>
+      makeCoveringCase({
+        caseId: 100 + i,
+        caseName: `Other Case ${i}`,
+        projectId: 9,
+        projectName: "Other Project",
+        direct: false,
+      })
+    );
+    mockUseRequirementCoveringCases.mockReturnValue({
+      data: { requirementId: 1, cases: otherProjectCases },
+      isLoading: false,
+      isError: false,
     });
+    // linkedCaseCount === crossProjectCaseCount: every covering case is in
+    // another project, so inProjectCount is 0 and only the other-project
+    // badge renders -- exactly ABT-47193's own shape.
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({ linkedCaseCount: 8, crossProjectCaseCount: 8 }),
+    });
+
+    renderColumnCell("coveringCases", makeRow({ id: 1 }), {
+      coverage,
+      projectId: 5,
+    });
+
+    const otherBadge = screen.getByTestId("requirement-covering-cases-other-1");
+    expect(otherBadge).toHaveTextContent("+8");
+    expect(
+      screen.queryByTestId("requirement-covering-cases-trigger-1")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByTestId("requirement-covering-cases-other-trigger-1")
+    );
+
+    otherProjectCases.forEach((row) => {
+      expect(screen.getByText(row.caseName)).toBeInTheDocument();
+    });
+    expect(screen.getAllByText("Other Project")).toHaveLength(8);
+  });
+
+  function mixedRows() {
+    return [
+      makeCoveringCase({
+        caseId: 1,
+        caseName: "In-project case",
+        projectId: 5,
+        projectName: "Current Project",
+      }),
+      makeCoveringCase({
+        caseId: 2,
+        caseName: "Other-project case",
+        projectId: 9,
+        projectName: "Other Project",
+        direct: false,
+      }),
+    ];
+  }
+
+  it("the drill-down never fires (both ids stay undefined) until the cell is expanded, then fires with this row's own ids", () => {
+    mockUseRequirementCoveringCases.mockReturnValue({
+      data: { requirementId: 1, cases: mixedRows() },
+      isLoading: false,
+      isError: false,
+    });
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({ linkedCaseCount: 2, crossProjectCaseCount: 1 }),
+    });
+
+    renderColumnCell("coveringCases", makeRow({ id: 1 }), {
+      coverage,
+      projectId: 5,
+    });
+
+    // Every pre-expand call is disabled (both args undefined) -- the fetch
+    // itself never fires merely because the row is visible in the
+    // virtualized table.
+    const callsThatWouldFetch = mockUseRequirementCoveringCases.mock.calls.filter(
+      ([projectIdArg, requirementIdArg]) =>
+        projectIdArg !== undefined || requirementIdArg !== undefined
+    );
+    expect(callsThatWouldFetch).toHaveLength(0);
+
+    fireEvent.click(
+      screen.getByTestId("requirement-covering-cases-trigger-1")
+    );
+
+    expect(mockUseRequirementCoveringCases).toHaveBeenCalledWith(5, 1);
+  });
+
+  it("mixed projectIds: the in-project list shows only the in-project row once expanded", () => {
+    mockUseRequirementCoveringCases.mockReturnValue({
+      data: { requirementId: 1, cases: mixedRows() },
+      isLoading: false,
+      isError: false,
+    });
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({ linkedCaseCount: 2, crossProjectCaseCount: 1 }),
+    });
+
+    renderColumnCell("coveringCases", makeRow({ id: 1 }), {
+      coverage,
+      projectId: 5,
+    });
+
+    fireEvent.click(
+      screen.getByTestId("requirement-covering-cases-trigger-1")
+    );
+
+    expect(screen.getByText("In-project case")).toBeInTheDocument();
+    expect(screen.queryByText("Other-project case")).not.toBeInTheDocument();
+    // showProject is off for the in-project list.
+    expect(screen.queryByText("Current Project")).not.toBeInTheDocument();
+  });
+
+  it("mixed projectIds: the other-project list shows only the other-project row, with its own project name, once expanded", () => {
+    mockUseRequirementCoveringCases.mockReturnValue({
+      data: { requirementId: 1, cases: mixedRows() },
+      isLoading: false,
+      isError: false,
+    });
+    const coverage = makeCoverageResponse({
+      1: makeBreakdown({ linkedCaseCount: 2, crossProjectCaseCount: 1 }),
+    });
+
+    renderColumnCell("coveringCases", makeRow({ id: 1 }), {
+      coverage,
+      projectId: 5,
+    });
+
+    fireEvent.click(
+      screen.getByTestId("requirement-covering-cases-other-trigger-1")
+    );
+
+    expect(screen.getByText("Other-project case")).toBeInTheDocument();
+    expect(screen.getByText("Other Project")).toBeInTheDocument();
+    expect(screen.queryByText("In-project case")).not.toBeInTheDocument();
+  });
+
+  it("the linked column's cell is untouched by this gap closure (byte-identical column definition)", () => {
+    const coverage = makeCoverageResponse({
+      60: makeBreakdown({ directCaseCount: 2, directCrossProjectCaseCount: 0 }),
+    });
+    renderColumnCell("linkedCases", makeRow({ id: 60 }), { coverage });
+
+    expect(screen.getByTestId("requirement-linked-cases-60")).toHaveTextContent(
+      "2"
+    );
+    // The linked column still renders through CasesListDisplay's own
+    // AsyncCombobox seam (captured by the stub above) -- proof it was never
+    // rerouted onto the covering-cases hook.
+    expect(mockUseRequirementCoveringCases).not.toHaveBeenCalledWith(
+      expect.any(Number),
+      60
+    );
+  });
+
+  it("a failed drill-down renders the trusted rollup count as plain, non-interactive text -- never an empty list passed off as the truth", () => {
+    mockUseRequirementCoveringCases.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    });
+    const coverage = makeCoverageResponse({
+      70: makeBreakdown({ linkedCaseCount: 5, crossProjectCaseCount: 2 }),
+    });
+
+    renderColumnCell("coveringCases", makeRow({ id: 70 }), {
+      coverage,
+      projectId: 5,
+    });
+
+    // Expand first -- the error only exists once the drill-down actually
+    // ran and failed.
+    fireEvent.click(
+      screen.getByTestId("requirement-covering-cases-trigger-70")
+    );
+
+    expect(
+      screen.queryByTestId("requirement-covering-cases-trigger-70")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requirement-covering-cases-other-trigger-70")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("+2")).toBeInTheDocument();
+  });
+
+  it("shows the loading affordance while the drill-down is in flight after expansion", () => {
+    mockUseRequirementCoveringCases.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isError: false,
+    });
+    const coverage = makeCoverageResponse({
+      80: makeBreakdown({ linkedCaseCount: 3, crossProjectCaseCount: 0 }),
+    });
+
+    renderColumnCell("coveringCases", makeRow({ id: 80 }), {
+      coverage,
+      projectId: 5,
+    });
+
+    fireEvent.click(
+      screen.getByTestId("requirement-covering-cases-trigger-80")
+    );
+
+    expect(
+      screen.getByTestId("requirement-covering-cases-popover-loading")
+    ).toBeInTheDocument();
   });
 });
 

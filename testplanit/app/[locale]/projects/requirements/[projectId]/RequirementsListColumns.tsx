@@ -6,12 +6,13 @@ import {
   ChevronRight,
   ClipboardPlus,
   GripVertical,
+  ListChecks,
   MoreVertical,
   SquarePenIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrag } from "react-dnd";
 // UAT gap 4 reversed Phase 26's decision to keep this column on its own
 // standalone coverage badge -- the operator ruled the Coverage column must
@@ -20,7 +21,11 @@ import { useDrag } from "react-dnd";
 import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,12 +35,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
+import type { RequirementCoveringCaseRow } from "~/app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route";
 import { coverageFor } from "~/hooks/useRequirementCoverage";
+import { useRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { ItemTypes } from "~/types/dndTypes";
 import type { RepositoryCasesWhereInput } from "~/zenstack/input";
@@ -87,10 +100,17 @@ interface UseRequirementsListColumnsArgs {
   coverage: RequirementCoverageResponse | undefined;
   /**
    * `buildDescendantIdMap`'s output: every requirement id mapped to itself
-   * plus its whole subtree. Powers the `coveringCases` column's filter --
-   * `map.get(id) ?? [id]` is the deliberate fallback for a row rendered
-   * before the map has rebuilt for a freshly-created id, matching this
-   * requirement's own self-inclusive contract instead of showing nothing.
+   * plus its whole subtree. NO LONGER READ by this hook (gap closure
+   * 26.2-15): the `coveringCases` column's expanded lists moved off this
+   * REQUIREMENT-only descendant filter onto the covering-cases drill-down
+   * (`useRequirementCoveringCases`), because the filter disagreed with the
+   * rollup's own subtree walk whenever a covering case hung off a
+   * NON-requirement descendant (ABT-47193's shape -- "+8" in the count,
+   * "0 of 8" in the old filtered list). Still accepted (and still computed
+   * and passed by `RequirementsListView.tsx`) purely so that call site needs
+   * no change; left in place rather than threading a removal through
+   * `requirementsListRows.ts`/`RequirementsListView.tsx`, which are outside
+   * this gap closure's scope.
    */
   descendantIdsByRequirementId?: Map<number, number[]>;
   expandedByIssueId: Record<number, boolean>;
@@ -128,7 +148,8 @@ export function useRequirementsListColumns({
   isFiltering,
   normalizedFilter,
   coverage,
-  descendantIdsByRequirementId,
+  // `descendantIdsByRequirementId` is intentionally NOT destructured here --
+  // see its own doc comment on `UseRequirementsListColumnsArgs` above.
   expandedByIssueId,
   editingRequirementId,
   onToggleExpand,
@@ -306,39 +327,13 @@ export function useRequirementsListColumns({
           const isLoadingCell = breakdown === undefined;
           const linkedCaseCount = breakdown?.linkedCaseCount ?? 0;
           const crossProjectCaseCount = breakdown?.crossProjectCaseCount ?? 0;
-          // Self-inclusive fallback (D-11a): a row rendered before the
-          // descendant map has rebuilt for a freshly-created id still gets
-          // its own id, matching buildDescendantIdMap's own self-inclusive
-          // contract instead of an empty (and therefore all-projects) filter.
-          const descendantIds = descendantIdsByRequirementId?.get(
-            row.original.id
-          ) ?? [row.original.id];
           return (
-            <RequirementCasesCell
+            <RequirementCoveringCasesCell
               rowId={row.original.id}
-              testIdPrefix="requirement-covering-cases"
+              projectId={projectId}
               inProjectCount={linkedCaseCount - crossProjectCaseCount}
               otherProjectCount={crossProjectCaseCount}
-              // Known, accepted edge (not fixed here): the rollup's
-              // recursive arm descends through NON-requirement children too
-              // (deliberately -- see requirementCoverage.ts's own structural
-              // asymmetry test), while `childrenMap` (and therefore
-              // `descendantIds` below) only contains requirements. A case
-              // linked to a non-requirement issue parented under a
-              // requirement counts in `linkedCaseCount` above but cannot
-              // appear in this expanded list -- not worth a per-row server
-              // call to reconcile.
-              inProjectFilter={{
-                caseIssues: { some: { issueId: { in: descendantIds } } },
-                projectId,
-                isArchived: false,
-              }}
-              otherProjectFilter={{
-                caseIssues: { some: { issueId: { in: descendantIds } } },
-                projectId: { not: projectId },
-                isArchived: false,
-              }}
-              isLoading={isLoadingCell}
+              isCountLoading={isLoadingCell}
             />
           );
         },
@@ -415,7 +410,6 @@ export function useRequirementsListColumns({
     isFiltering,
     normalizedFilter,
     coverage,
-    descendantIdsByRequirementId,
     expandedByIssueId,
     editingRequirementId,
     onToggleExpand,
@@ -498,6 +492,243 @@ function RequirementCasesCell({
         </Tooltip>
       )}
     </div>
+  );
+}
+
+interface RequirementCoveringCasesCellProps {
+  rowId: number;
+  projectId: number;
+  inProjectCount: number;
+  otherProjectCount: number;
+  /** `coverageFor(coverage, rowId) === undefined` -- the rollup breakdown
+   *  itself hasn't loaded yet. Unrelated to the drill-down fetch below. */
+  isCountLoading: boolean;
+}
+
+/**
+ * Gap closure 26.2-15 (UAT gap 11): the covering column's counts come from
+ * the coverage rollup (`requirementCoverage.ts`'s recursive subtree walk,
+ * which descends through non-requirement children too), but its expanded
+ * lists used to come from a client-side ZenStack filter keyed on
+ * `descendantIdsByRequirementId` -- a REQUIREMENT-only descendant set. The
+ * two subtree definitions disagree whenever a covering case hangs off a
+ * non-requirement descendant (ABT-47193's shape: crossProjectCaseCount: 8,
+ * zero requirement descendants beyond itself -- the old filter rendered
+ * "0 of 8"). This cell instead lazy-fetches the SAME per-requirement
+ * covering-cases drill-down `RequirementCoveragePanel.tsx` (the detail
+ * panel) already renders correctly, and splits its rows client-side by
+ * `projectId` -- one subtree definition, shared by the count and the list.
+ */
+function RequirementCoveringCasesCell({
+  rowId,
+  projectId,
+  inProjectCount,
+  otherProjectCount,
+  isCountLoading,
+}: RequirementCoveringCasesCellProps) {
+  const t = useTranslations("milestones.members");
+  const tCoverage = useTranslations("requirements.coverage");
+
+  // Lazy, and only once the cell has actually been opened -- mirrors
+  // `useRequirementCoveringCases`'s own "enabled on both ids finite"
+  // contract, gated one level further so a row merely being visible in the
+  // virtualized table (unopened) never fires the request. `expanded` never
+  // resets back to false once true: the cache underneath (`staleTime:
+  // 30000`, invalidated explicitly by link/unlink/reparent/create/delete
+  // per 26.1) is what keeps a re-opened popover cheap, not remounting.
+  const [expanded, setExpanded] = useState(false);
+  const handleOpenChange = useCallback((open: boolean) => {
+    if (open) setExpanded(true);
+  }, []);
+
+  const {
+    data,
+    isLoading: isCasesLoading,
+    isError,
+  } = useRequirementCoveringCases(
+    expanded ? projectId : undefined,
+    expanded ? rowId : undefined
+  );
+
+  const cases = data?.cases;
+  const inProjectRows = useMemo(
+    () => (cases ?? []).filter((c) => c.projectId === projectId),
+    [cases, projectId]
+  );
+  const otherProjectRows = useMemo(
+    () => (cases ?? []).filter((c) => c.projectId !== projectId),
+    [cases, projectId]
+  );
+
+  if (isCountLoading) {
+    return (
+      <div
+        className="flex items-center justify-center gap-1.5"
+        data-testid={`requirement-covering-cases-${rowId}`}
+      >
+        <Skeleton className="h-6 w-12" />
+      </div>
+    );
+  }
+
+  // F6 (never render an empty list as if it were the truth): a failed
+  // drill-down fetch renders the ALREADY-TRUSTED rollup count as plain,
+  // non-interactive text -- never a clickable trigger backed by an empty
+  // list, which is the exact "0 of N" failure this cell exists to fix.
+  const fetchFailed = expanded && isError;
+
+  return (
+    <div
+      className="flex items-center justify-center gap-1.5"
+      data-testid={`requirement-covering-cases-${rowId}`}
+    >
+      {inProjectCount > 0 &&
+        (fetchFailed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-xs text-muted-foreground">
+                {inProjectCount}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{tCoverage("loadFailed")}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <CoveringCasesPopover
+            triggerTestId={`requirement-covering-cases-trigger-${rowId}`}
+            rows={inProjectRows}
+            count={inProjectCount}
+            isLoading={expanded && isCasesLoading}
+            onOpenChange={handleOpenChange}
+          />
+        ))}
+      {/* Absent entirely at zero (never a "+0" badge), mirroring
+          `RequirementCasesCell`'s own rule -- sourced from the rollup's
+          crossProjectCaseCount, never from the (lazy, possibly still
+          unfetched) drill-down rows. */}
+      {otherProjectCount > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span data-testid={`requirement-covering-cases-other-${rowId}`}>
+              {fetchFailed ? (
+                <span
+                  className={cn(
+                    badgeVariants({ variant: "outline" }),
+                    "gap-1 whitespace-nowrap text-xs"
+                  )}
+                >
+                  {`+${otherProjectCount}`}
+                </span>
+              ) : (
+                <CoveringCasesPopover
+                  triggerTestId={`requirement-covering-cases-other-trigger-${rowId}`}
+                  rows={otherProjectRows}
+                  count={otherProjectCount}
+                  showProject
+                  triggerPrefix="+"
+                  triggerVariant="outline"
+                  isLoading={expanded && isCasesLoading}
+                  onOpenChange={handleOpenChange}
+                />
+              )}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            {fetchFailed
+              ? tCoverage("loadFailed")
+              : t("casesOtherProjects", { count: otherProjectCount })}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
+interface CoveringCasesPopoverProps {
+  triggerTestId: string;
+  rows: RequirementCoveringCaseRow[];
+  count: number;
+  /** Cross-project rows get each row's own `projectName` next to its case --
+   *  the in-project list never does, mirroring `RequirementCasesCell`'s own
+   *  `showProject` split. */
+  showProject?: boolean;
+  triggerPrefix?: string;
+  triggerVariant?: "default" | "outline";
+  isLoading: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+/**
+ * The trigger-badge-plus-dropdown-list shape `CasesListDisplay` renders,
+ * mirrored for a list that is already fully in memory (the covering-cases
+ * drill-down has no server-side search/pagination of its own) rather than
+ * `AsyncCombobox`'s fetch-per-keystroke contract.
+ */
+function CoveringCasesPopover({
+  triggerTestId,
+  rows,
+  count,
+  showProject = false,
+  triggerPrefix,
+  triggerVariant = "default",
+  isLoading,
+  onOpenChange,
+}: CoveringCasesPopoverProps) {
+  const t = useTranslations("common");
+  return (
+    <Popover onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          data-testid={triggerTestId}
+          className={cn(
+            badgeVariants({ variant: triggerVariant }),
+            "gap-1 whitespace-nowrap text-xs"
+          )}
+        >
+          <ListChecks className="h-4 w-4" />
+          <span>{triggerPrefix ? `${triggerPrefix}${count}` : count}</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="max-h-[320px] w-[360px] max-w-[480px] overflow-y-auto p-1"
+      >
+        {isLoading ? (
+          <div
+            className="flex justify-center p-3"
+            data-testid="requirement-covering-cases-popover-loading"
+          >
+            <LoadingSpinner />
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="p-3 text-sm text-muted-foreground">
+            {t("labels.noResults")}
+          </div>
+        ) : (
+          rows.map((row) => (
+            <div
+              key={row.caseId}
+              className="flex items-center justify-between gap-2 rounded px-2 py-1.5 hover:bg-muted"
+              data-testid={`requirement-covering-case-option-${row.caseId}`}
+            >
+              <TestCaseNameDisplay
+                testCase={{ id: row.caseId, name: row.caseName }}
+                projectId={row.projectId}
+                className="text-sm"
+              />
+              {showProject && (
+                <ProjectNameDisplay
+                  projectName={row.projectName}
+                  projectId={row.projectId}
+                  className="shrink-0 text-xs text-muted-foreground"
+                  fitContainer
+                />
+              )}
+            </div>
+          ))
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }
 
