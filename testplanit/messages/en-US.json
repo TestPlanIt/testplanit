@@ -6667,6 +6667,13 @@
       "moveRejected": "This move was rejected:",
       "dragDisabled": "This requirement can't be moved right now."
     },
+    "list": {
+      "columnName": "Name",
+      "columnStatus": "Status",
+      "columnSource": "Source",
+      "expandRow": "Expand {name}",
+      "collapseRow": "Collapse {name}"
+    },
     "detail": {
       "selectPrompt": "Select a requirement to view its details.",
       "documentation": "Documentation",
