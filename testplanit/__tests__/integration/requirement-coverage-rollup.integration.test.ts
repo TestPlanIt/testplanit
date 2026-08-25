@@ -1038,3 +1038,22 @@ describeIntegration(
     });
   }
 );
+
+// Todo-only scaffold, owner 27-08. Proves LINK-03's non-interference
+// requirement (CONTEXT.md): attaching or removing a manual traceability
+// reference must leave every one of this file's coverage counters
+// byte-identical, and must never harvest the referenced issue's own linked
+// cases into the requirement's rollup (the roadmap's recorded trap — never
+// route references through parentId, or the role-unscoped recursive rollup
+// arm double-counts them).
+describeIntegration("LINK-03 non-interference", () => {
+  it.todo(
+    "leaves every coverage counter byte-identical after a reference is attached"
+  );
+  it.todo(
+    "leaves every coverage counter byte-identical after a reference is removed"
+  );
+  it.todo(
+    "does not harvest the referenced issue's own linked cases into the requirement's rollup"
+  );
+});

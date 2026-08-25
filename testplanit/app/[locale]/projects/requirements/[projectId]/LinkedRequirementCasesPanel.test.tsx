@@ -512,4 +512,20 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
       )
     ).toBe(false);
   });
+
+  // Todo-only scaffold, owner 27-11. Proves COV-05/D-06/D-08: the
+  // dismissible suspect flag on the requirement-side linkage panel.
+  describe("COV-05 suspect flag (requirement side)", () => {
+    it.todo(
+      "renders a suspect badge on a directly linked case whose last run predates the requirement's content edit"
+    );
+    it.todo("renders no badge for an inherited (non-direct) covering case");
+    it.todo("renders no badge when the case has never been executed");
+    it.todo(
+      "dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair"
+    );
+    it.todo(
+      "does not invalidate the coverage queries when a flag is dismissed"
+    );
+  });
 });

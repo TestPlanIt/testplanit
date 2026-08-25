@@ -378,4 +378,22 @@ describe("LinkedRequirementsPanel", () => {
       JSON.parse(requirementSideCall![1].body as string)
     );
   });
+
+  // Todo-only scaffold, owner 27-11. Proves COV-05/D-06/D-08: the
+  // dismissible suspect flag on the case-side linkage panel.
+  describe("COV-05 suspect flag (case side)", () => {
+    it.todo(
+      "renders a suspect badge on a linkage whose requirement was edited after the case's last run"
+    );
+    it.todo("renders no badge when the case has never been executed");
+    it.todo(
+      "renders no badge when the flag was already dismissed and no newer edit followed"
+    );
+    it.todo(
+      "dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair"
+    );
+    it.todo(
+      "does not invalidate the coverage queries when a flag is dismissed"
+    );
+  });
 });

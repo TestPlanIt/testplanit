@@ -196,4 +196,12 @@ describe("CreateRequirementDialog", () => {
       screen.getByRole("button", { name: "requirements.create.submit" })
     ).toBeInTheDocument();
   });
+
+  // Todo-only scaffold, owner 27-10. Proves LINK-03/D-16: references
+  // attachable from the Create Requirement dialog via DeferredIssueManager.
+  describe("LINK-03 references on create", () => {
+    it.todo("clears the picked references every time the dialog re-opens");
+    it.todo("attaches each picked reference after the requirement is created");
+    it.todo("still creates the requirement when a reference attach call fails");
+  });
 });

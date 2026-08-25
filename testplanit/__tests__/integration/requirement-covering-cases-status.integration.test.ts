@@ -557,3 +557,21 @@ describeIntegration(
     });
   }
 );
+
+// Todo-only scaffold, owner 27-05. Proves COV-05's data-delivery seam
+// (CONTEXT.md/UI-SPEC.md): the suspect predicate composes this helper's
+// per-case executed_at rather than re-deriving "latest execution" itself,
+// agreeing byte-for-byte with the rollup and the drill-down's own
+// latest-result extension above.
+describeIntegration("getCaseLatestExecutedAt", () => {
+  it.todo(
+    "returns the manual execution timestamp for a case whose latest result is a run result"
+  );
+  it.todo(
+    "returns the JUnit execution timestamp for a case whose latest result is automated"
+  );
+  it.todo("returns null for a case that has never been executed");
+  it.todo(
+    "returns one entry per requested case id, including the never-executed ones"
+  );
+});
