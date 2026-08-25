@@ -174,65 +174,76 @@ export default function RequirementsWorkspace({
               <LoadingSpinner />
             </div>
           ) : requirementsEnabled ? (
-            <ResizablePanelGroup
-              direction="horizontal"
-              autoSaveId="project-requirements-panels"
-              className="h-[calc(100vh-14rem)] min-h-[400px]"
-              data-testid="requirements-layout"
-            >
-              <ResizablePanel
-                id="requirements-tree"
-                order={1}
-                defaultSize={30}
-                minSize={0}
-                maxSize={100}
-                className="p-0 m-0"
+            // The height cap lives on this WRAPPER, not the group:
+            // react-resizable-panels sets an inline height on the group
+            // element that silently overrides a Tailwind h-[...] class, so
+            // the "capped" group actually grew with the detail panel's
+            // content and pushed the list (and the drop-to-root strip)
+            // below the fold (operator UAT, measured at 1396px vs the
+            // 852px cap). With the cap on a plain parent div, the group's
+            // inline 100% resolves against it and the detail pane scrolls
+            // internally instead of stretching the page.
+            <div className="h-[calc(100vh-14rem)] min-h-[400px]">
+              <ResizablePanelGroup
+                direction="horizontal"
+                autoSaveId="project-requirements-panels"
+                className="h-full"
+                data-testid="requirements-layout"
               >
-                <div
-                  data-testid="requirements-tree-pane"
-                  className="h-full overflow-y-auto"
+                <ResizablePanel
+                  id="requirements-tree"
+                  order={1}
+                  defaultSize={30}
+                  minSize={0}
+                  maxSize={100}
+                  className="p-0 m-0"
                 >
-                  {/* The provider must wrap the list from OUT HERE, not from
+                  <div
+                    data-testid="requirements-tree-pane"
+                    className="h-full overflow-y-auto"
+                  >
+                    {/* The provider must wrap the list from OUT HERE, not from
                       inside it: RequirementsListView calls react-dnd's useDrop
                       during its own render, so a provider it rendered itself
                       would not yet exist in the tree when that hook runs. This
                       mirrors ProjectRepository.tsx, which wraps TreeView the
                       same way. */}
-                  <SimpleDndProvider>
-                    <RequirementsListView
-                      ref={listViewRef}
-                      projectId={projectId}
-                      selectedRequirementId={selectedRequirementId}
-                      onSelectRequirement={setSelectedRequirementId}
-                    />
-                  </SimpleDndProvider>
-                </div>
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel
-                id="requirements-detail"
-                order={2}
-                defaultSize={70}
-                minSize={0}
-                className="p-0 m-0 min-w-[220px]"
-              >
-                <div
-                  data-testid="requirements-detail-pane"
-                  className="h-full overflow-y-auto"
+                    <SimpleDndProvider>
+                      <RequirementsListView
+                        ref={listViewRef}
+                        projectId={projectId}
+                        selectedRequirementId={selectedRequirementId}
+                        onSelectRequirement={setSelectedRequirementId}
+                      />
+                    </SimpleDndProvider>
+                  </div>
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel
+                  id="requirements-detail"
+                  order={2}
+                  defaultSize={70}
+                  minSize={0}
+                  className="p-0 m-0 min-w-[220px]"
                 >
-                  {selectedRequirementId === null ? (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                      {t("requirements.detail.selectPrompt")}
-                    </div>
-                  ) : (
-                    <RequirementDetailPanel
-                      projectId={projectId}
-                      requirementId={selectedRequirementId}
-                    />
-                  )}
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+                  <div
+                    data-testid="requirements-detail-pane"
+                    className="h-full overflow-y-auto"
+                  >
+                    {selectedRequirementId === null ? (
+                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                        {t("requirements.detail.selectPrompt")}
+                      </div>
+                    ) : (
+                      <RequirementDetailPanel
+                        projectId={projectId}
+                        requirementId={selectedRequirementId}
+                      />
+                    )}
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </div>
           ) : (
             <div
               data-testid="requirements-disabled-notice"

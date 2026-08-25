@@ -103,7 +103,7 @@ export interface RequirementsListViewHandle {
 // the exact thing that broke real HTML5 drag in Chrome (reverted in
 // 1208deb2c) -- this must never regress to that shape.
 const ROW_DRAG_CANDIDATE_CLASSNAME =
-  "[[data-req-drag=active]_&]:inset-ring-2 [[data-req-drag=active]_&]:inset-ring-primary/40 [[data-req-dragged]_&]:inset-ring-0";
+  "rounded [[data-req-drag=active]_&]:border-2 [[data-req-drag=active]_&]:border-dotted [[data-req-drag=active]_&]:border-primary/40 [[data-req-dragged]_&]:border-0";
 
 const ROOT_STRIP_DRAG_CLASSNAME =
   "[[data-req-drag=active]_&]:rounded-md [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40 [[data-req-drag=active]_&]:bg-background/95";
@@ -928,9 +928,12 @@ const RequirementsListView = forwardRef<
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {/* Same status-dot legend the Milestone details > Issues in
-                scope section mounts beside ITS CoverageChip column, so the
-                pips read identically on both surfaces (operator UAT). */}
+              {/* Status-dot legend (same popover as Milestone > Issues in
+                  scope). Lives HERE, beside the filters, because the column
+                  header wraps its content in the sort-menu trigger BUTTON --
+                  mounting the legend (itself a button) there nests buttons,
+                  which is invalid HTML and a hydration error (operator hit
+                  the broken sort menu live). */}
               <IterationStatusLegendPopover projectId={Number(projectId)} />
             </div>
           </div>
