@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -31,6 +37,23 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 
+let capturedOnIssuesChange: ((ids: number[]) => void) | null = null;
+let capturedLinkedIssueIds: number[] | null = null;
+vi.mock("@/components/issues/DeferredIssueManager", () => ({
+  DeferredIssueManager: ({ linkedIssueIds, onIssuesChange, label }: any) => {
+    capturedOnIssuesChange = onIssuesChange;
+    capturedLinkedIssueIds = linkedIssueIds;
+    return (
+      <div data-testid="mock-deferred-issue-manager" data-label={label}>
+        {(linkedIssueIds ?? []).map((id: number) => (
+          <span key={id} data-testid={`mock-linked-issue-${id}`} />
+        ))}
+      </div>
+    );
+  },
+}));
+
+import { toast } from "sonner";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 
 describe("CreateRequirementDialog", () => {
@@ -39,6 +62,12 @@ describe("CreateRequirementDialog", () => {
     useCreateIssueMock.mockReturnValue({
       mutateAsync: vi.fn().mockResolvedValue({ id: 42 }),
     });
+    capturedOnIssuesChange = null;
+    capturedLinkedIssueIds = null;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ created: true }),
+    }) as any;
   });
 
   it("submits on Return in the name field", async () => {
@@ -197,11 +226,164 @@ describe("CreateRequirementDialog", () => {
     ).toBeInTheDocument();
   });
 
-  // Todo-only scaffold, owner 27-10. Proves LINK-03/D-16: references
-  // attachable from the Create Requirement dialog via DeferredIssueManager.
+  // Proves LINK-03/D-16: references attachable from the Create Requirement
+  // dialog via DeferredIssueManager.
   describe("LINK-03 references on create", () => {
-    it.todo("clears the picked references every time the dialog re-opens");
-    it.todo("attaches each picked reference after the requirement is created");
-    it.todo("still creates the requirement when a reference attach call fails");
+    it("clears the picked references every time the dialog re-opens", () => {
+      const { rerender } = render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+
+      expect(capturedLinkedIssueIds).toEqual([]);
+      expect(capturedOnIssuesChange).not.toBeNull();
+
+      // Simulate a pick via the mocked DeferredIssueManager's onIssuesChange.
+      act(() => {
+        capturedOnIssuesChange!([88]);
+      });
+      rerender(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+      expect(capturedLinkedIssueIds).toEqual([88]);
+
+      // Close, then re-open -- the picked reference must not survive.
+      rerender(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open={false}
+          onOpenChange={vi.fn()}
+        />
+      );
+      rerender(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+      expect(capturedLinkedIssueIds).toEqual([]);
+    });
+
+    it("attaches each picked reference after the requirement is created", async () => {
+      const mutateAsync = vi.fn().mockResolvedValue({ id: 42 });
+      useCreateIssueMock.mockReturnValue({ mutateAsync });
+      const onOpenChange = vi.fn();
+      const onCreated = vi.fn();
+
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={onOpenChange}
+          onCreated={onCreated}
+        />
+      );
+
+      expect(capturedOnIssuesChange).not.toBeNull();
+      act(() => {
+        capturedOnIssuesChange!([88, 99]);
+      });
+
+      const input = screen.getByTestId("create-requirement-name-input");
+      fireEvent.change(input, { target: { value: "New requirement" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+      await waitFor(() =>
+        expect((global.fetch as any).mock.calls.length).toBe(2)
+      );
+
+      const urls = (global.fetch as any).mock.calls.map(
+        ([url]: [string]) => url
+      );
+      expect(urls).toEqual([
+        "/api/projects/7/requirements/42/references",
+        "/api/projects/7/requirements/42/references",
+      ]);
+      const bodies = (global.fetch as any).mock.calls.map(([, init]: any) =>
+        JSON.parse(init.body)
+      );
+      expect(bodies).toEqual(
+        expect.arrayContaining([
+          { internalIssueId: 88 },
+          { internalIssueId: 99 },
+        ])
+      );
+
+      await waitFor(() => expect(onCreated).toHaveBeenCalledWith(42));
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it("issues no POST when no references were picked", async () => {
+      const mutateAsync = vi.fn().mockResolvedValue({ id: 42 });
+      useCreateIssueMock.mockReturnValue({ mutateAsync });
+
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+
+      const input = screen.getByTestId("create-requirement-name-input");
+      fireEvent.change(input, { target: { value: "New requirement" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it("still creates the requirement when a reference attach call fails", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        json: async () => ({ error: "Failed to attach reference." }),
+      }) as any;
+
+      const mutateAsync = vi.fn().mockResolvedValue({ id: 42 });
+      useCreateIssueMock.mockReturnValue({ mutateAsync });
+      const onOpenChange = vi.fn();
+      const onCreated = vi.fn();
+
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={onOpenChange}
+          onCreated={onCreated}
+        />
+      );
+
+      act(() => {
+        capturedOnIssuesChange!([88]);
+      });
+
+      const input = screen.getByTestId("create-requirement-name-input");
+      fireEvent.change(input, { target: { value: "New requirement" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(onCreated).toHaveBeenCalledWith(42));
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(toast.error).toHaveBeenCalledWith(
+        "requirements.references.attachFailed"
+      );
+    });
   });
 });

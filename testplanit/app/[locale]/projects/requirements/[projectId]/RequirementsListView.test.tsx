@@ -56,6 +56,19 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   }),
 }));
 
+// 27-10: CreateRequirementDialog now mounts DeferredIssueManager for its
+// references affordance. That component (and the SearchIssuesDialog it
+// always renders) reaches several ZenStack models this file's issue-only
+// mock above doesn't expose (issue.useUpsert, projectIntegration,
+// integrationProject, ...). This file's own scope is the coverage-rollup
+// invalidation/toolbar-ref behavior, not DeferredIssueManager's internals
+// (covered by DeferredIssueManager.test.tsx) -- same stand-in convention
+// UnifiedIssueManager.test.tsx and caseIssueLinkSave.test.tsx already use
+// for this exact component.
+vi.mock("@/components/issues/DeferredIssueManager", () => ({
+  DeferredIssueManager: () => <div data-testid="deferred-issue-manager" />,
+}));
+
 // F10-style rollup invalidation proof, never a hand-rolled predicate stand-in.
 const mockInvalidateQueries = vi.fn();
 vi.mock("@tanstack/react-query", async (importOriginal) => {

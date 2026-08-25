@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { DeferredIssueManager } from "@/components/issues/DeferredIssueManager";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -55,14 +56,22 @@ export function CreateRequirementDialog({
   const { data: session } = useSession();
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // LINK-03/D-16: references picked via DeferredIssueManager while creating
+  // this requirement. Only numeric Issue ids -- an external pick has
+  // already been upserted to a real Issue row by the time it reaches this
+  // component's onIssuesChange, same as every other DeferredIssueManager
+  // consumer.
+  const [referencedIssueIds, setReferencedIssueIds] = useState<number[]>([]);
   const createIssue = useClientQueries(schema).issue.useCreate();
 
   // Start every open with a blank field — this dialog is reused across every
   // "Add root" / "Add child" invocation rather than being remounted per
-  // target, so a stale name from a previous create must never survive.
+  // target, so a stale name (or a stale reference pick) from a previous
+  // create must never survive.
   useEffect(() => {
     if (open) {
       setName("");
+      setReferencedIssueIds([]);
     }
   }, [open]);
 
@@ -91,6 +100,38 @@ export function CreateRequirementDialog({
       }
       const created = await createIssue.mutateAsync({ data: createData });
       toast.success(t("requirements.create.success"));
+
+      // Post-create batch attach (D-16): a requirement has no id until
+      // submit, so references picked in the dialog can only be attached now.
+      // Uniformly send `{ internalIssueId }` for every id -- DeferredIssueManager
+      // only ever reports numeric Issue ids through onIssuesChange, and an
+      // external pick has already been upserted to a real Issue row by the
+      // time it lands in referencedIssueIds, so there is no `external`
+      // payload left to reconstruct here (27-07's internal branch verifies
+      // the row and creates the join). Independently wrapped: a failed
+      // attach must never cost the user the requirement they just created.
+      if (created?.id && referencedIssueIds.length > 0) {
+        try {
+          const responses = await Promise.all(
+            referencedIssueIds.map((referencedIssueId) =>
+              fetch(
+                `/api/projects/${projectId}/requirements/${created.id}/references`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ internalIssueId: referencedIssueId }),
+                }
+              )
+            )
+          );
+          if (!responses.every((res) => res.ok)) {
+            toast.error(t("requirements.references.attachFailed"));
+          }
+        } catch {
+          toast.error(t("requirements.references.attachFailed"));
+        }
+      }
+
       onOpenChange(false);
       if (created?.id) {
         onCreated?.(created.id);
@@ -141,6 +182,18 @@ export function CreateRequirementDialog({
               placeholder={t("requirements.create.namePlaceholder")}
               autoFocus
               data-testid="create-requirement-name-input"
+            />
+          </div>
+          <div
+            className="space-y-1"
+            data-testid="create-requirement-references"
+          >
+            <DeferredIssueManager
+              projectId={Number(projectId)}
+              selectedIssues={[]}
+              linkedIssueIds={referencedIssueIds}
+              onIssuesChange={setReferencedIssueIds}
+              label={t("requirements.references.createDialogLabel")}
             />
           </div>
         </div>
