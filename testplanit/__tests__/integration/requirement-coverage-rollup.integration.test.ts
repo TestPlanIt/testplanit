@@ -40,6 +40,7 @@ import {
   getRequirementCoverage,
   getRequirementCoveringCases,
 } from "~/lib/services/requirementCoverage";
+import { getAuthDb } from "~/lib/zenstack";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -1039,21 +1040,417 @@ describeIntegration(
   }
 );
 
-// Todo-only scaffold, owner 27-08. Proves LINK-03's non-interference
-// requirement (CONTEXT.md): attaching or removing a manual traceability
-// reference must leave every one of this file's coverage counters
-// byte-identical, and must never harvest the referenced issue's own linked
-// cases into the requirement's rollup (the roadmap's recorded trap — never
-// route references through parentId, or the role-unscoped recursive rollup
-// arm double-counts them).
+/** Sorted `[id, breakdown]` pairs for a coverage map — used instead of a
+ * bare `expect(mapA).toEqual(mapB)` so the whole-map comparisons below are
+ * unambiguously structural (every requirement, every counter, key order
+ * irrelevant) rather than resting on `Map` equality semantics. */
+function sortedCoverageEntries<V>(map: Map<number, V>): Array<[number, V]> {
+  return [...map.entries()].sort(([a], [b]) => a - b);
+}
+
+// LINK-03 non-interference (owner 27-08, converting the it.todo scaffold
+// plan 27-01 left behind). Proves the roadmap's recorded trap stays closed:
+// a manual traceability reference is a RequirementIssueReference join row,
+// attached and detached through the SAME enhanced-client statements plan
+// 27-07's POST/DELETE routes issue, never a parentId edge — and the two
+// coverage entry points above compose the same closure walk that trap
+// would corrupt. This block seeds its own isolated project rather than
+// reusing the fixture above: the scenario here is orthogonal to every
+// COV-01/02/03 case shape already covered above, and the mutation check
+// documented in the SUMMARY (a temporary parentId corruption) is safer to
+// run against a fixture nothing else in this file depends on.
+// A DEDICATED raw client, independent of the shared module-level `db`
+// above: the outer describe block's own `afterAll` calls `db.$disconnect()`
+// on that shared pool, and top-level `describe` blocks in this file run
+// sequentially — by the time THIS block's `beforeAll` runs, the outer
+// block's `afterAll` has already destroyed it. A fresh pool here is the
+// only thing that keeps this block runnable on its own, regardless of the
+// outer block's lifecycle.
+const linkDb = createRawDbClient();
+
 describeIntegration("LINK-03 non-interference", () => {
-  it.todo(
-    "leaves every coverage counter byte-identical after a reference is attached"
-  );
-  it.todo(
-    "leaves every coverage counter byte-identical after a reference is removed"
-  );
-  it.todo(
-    "does not harvest the referenced issue's own linked cases into the requirement's rollup"
-  );
+  let adminUserId: string;
+  let projectId: number;
+  let repositoryId: number;
+  let folderId: number;
+  let templateId: number;
+  let caseStateId: number;
+  let runStateId: number;
+  let passingStatusId: number;
+  let failingStatusId: number;
+
+  // reqUnderTest: two PASSED-latest-result cases, giving it a PASSED
+  // rollup before the reference below ever touches it. reqControl: an
+  // unrelated requirement with its own PASSED case, present solely so the
+  // whole-map comparisons below compare MORE than one entry — a
+  // single-key map could pass the same assertion for a much weaker
+  // reason. referencedIssue: NOT a requirement (isRequirement false),
+  // carrying its OWN linked case whose latest result is FAILED — the
+  // exact bait the role-unscoped recursive descendant arm would harvest
+  // if a reference were ever routed through parentId instead of the join
+  // table.
+  let reqUnderTestId: number;
+  let reqControlId: number;
+  let referencedIssueId: number;
+
+  let caseUnderTestOneId: number;
+  let caseUnderTestTwoId: number;
+  let caseControlId: number;
+  let caseReferencedFailingId: number;
+
+  const allIssueIds: number[] = [];
+  const allCaseIds: number[] = [];
+  const allRunIds: number[] = [];
+
+  let mapBeforeAttach: Awaited<ReturnType<typeof getRequirementCoverage>>;
+  let mapAfterAttach: Awaited<ReturnType<typeof getRequirementCoverage>>;
+  let mapAfterDetach: Awaited<ReturnType<typeof getRequirementCoverage>>;
+  let coveringBeforeAttach: Awaited<
+    ReturnType<typeof getRequirementCoveringCases>
+  >;
+  let coveringAfterAttach: Awaited<
+    ReturnType<typeof getRequirementCoveringCases>
+  >;
+  let coveringAfterDetach: Awaited<
+    ReturnType<typeof getRequirementCoveringCases>
+  >;
+
+  async function authDbFor(userId: string) {
+    const user = await linkDb.user.findUnique({
+      where: { id: userId },
+      include: { role: { include: { rolePermissions: true } } },
+    });
+    if (!user) throw new Error(`Test setup: user ${userId} not found`);
+    return getAuthDb(user as never);
+  }
+
+  beforeAll(async () => {
+    const [{ current_database: dbName }] = await linkDb.$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
+    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+      throw new Error(
+        `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+      );
+    }
+
+    const role = await linkDb.roles.findFirst({
+      where: { isDefault: true, isDeleted: false },
+    });
+    if (!role) throw new Error("Test prerequisite: no default role row");
+
+    const admin = await linkDb.user.create({
+      data: {
+        email: `${STAMP}-link03-admin@example.com`,
+        name: `LINK-03 Coverage Admin ${STAMP}`,
+        authMethod: "INTERNAL",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+        roleId: role.id,
+        password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+      },
+      select: { id: true },
+    });
+    adminUserId = admin.id;
+
+    const project = await linkDb.projects.create({
+      data: { name: `${STAMP}-link03-project`, createdBy: adminUserId },
+      select: { id: true },
+    });
+    projectId = project.id;
+
+    const repository = await linkDb.repositories.create({
+      data: { projectId },
+      select: { id: true },
+    });
+    repositoryId = repository.id;
+
+    const folder = await linkDb.repositoryFolders.create({
+      data: {
+        name: `${STAMP}-link03-folder`,
+        repositoryId,
+        projectId,
+        creatorId: adminUserId,
+      },
+      select: { id: true },
+    });
+    folderId = folder.id;
+
+    const template = await linkDb.templates.findFirst({
+      select: { id: true },
+    });
+    if (!template)
+      throw new Error("Test prerequisite: no Templates row available");
+    const caseWorkflow = await linkDb.workflows.findFirst({
+      where: { scope: "CASES", isDeleted: false, isEnabled: true },
+      select: { id: true },
+    });
+    if (!caseWorkflow)
+      throw new Error(
+        "Test prerequisite: no CASES-scoped Workflows row available"
+      );
+    const runWorkflow = await linkDb.workflows.findFirst({
+      where: { scope: "RUNS", isDeleted: false, isEnabled: true },
+      select: { id: true },
+    });
+    if (!runWorkflow)
+      throw new Error(
+        "Test prerequisite: no RUNS-scoped Workflows row available"
+      );
+    const passingStatus = await linkDb.status.findFirst({
+      where: { isSuccess: true, isDeleted: false },
+      select: { id: true },
+    });
+    if (!passingStatus)
+      throw new Error("Test prerequisite: no Status row with isSuccess = true");
+    const failingStatus = await linkDb.status.findFirst({
+      where: { isFailure: true, isDeleted: false },
+      select: { id: true },
+    });
+    if (!failingStatus)
+      throw new Error("Test prerequisite: no Status row with isFailure = true");
+
+    templateId = template.id;
+    caseStateId = caseWorkflow.id;
+    runStateId = runWorkflow.id;
+    passingStatusId = passingStatus.id;
+    failingStatusId = failingStatus.id;
+
+    async function createNode(name: string, hasSharedRole: boolean) {
+      const issue = await linkDb.issue.create({
+        data: {
+          name: `${STAMP}-link03-${name}`,
+          title: `${STAMP}-link03-${name}`,
+          createdById: adminUserId,
+          projectId,
+          isRequirement: hasSharedRole,
+        },
+        select: { id: true },
+      });
+      allIssueIds.push(issue.id);
+      return issue.id;
+    }
+
+    async function createCase(name: string) {
+      const testCase = await linkDb.repositoryCases.create({
+        data: {
+          projectId,
+          repositoryId,
+          folderId,
+          templateId,
+          name: `${STAMP}-link03-${name}`,
+          stateId: caseStateId,
+          creatorId: adminUserId,
+        },
+        select: { id: true },
+      });
+      allCaseIds.push(testCase.id);
+      return testCase.id;
+    }
+
+    async function recordExecution(
+      runId: number,
+      repositoryCaseId: number,
+      statusId: number,
+      executedAt: Date
+    ) {
+      const runCase = await linkDb.testRunCases.create({
+        data: { testRunId: runId, repositoryCaseId },
+        select: { id: true },
+      });
+      await linkDb.testRunResults.create({
+        data: {
+          testRunId: runId,
+          testRunCaseId: runCase.id,
+          statusId,
+          executedById: adminUserId,
+          executedAt,
+        },
+      });
+    }
+
+    reqUnderTestId = await createNode("req-under-test", true);
+    reqControlId = await createNode("req-control", true);
+    referencedIssueId = await createNode("referenced-issue", false);
+
+    caseUnderTestOneId = await createCase("case-under-test-one");
+    caseUnderTestTwoId = await createCase("case-under-test-two");
+    caseControlId = await createCase("case-control");
+    caseReferencedFailingId = await createCase("case-referenced-failing");
+
+    await linkDb.repositoryCaseIssue.createMany({
+      data: [
+        { caseId: caseUnderTestOneId, issueId: reqUnderTestId },
+        { caseId: caseUnderTestTwoId, issueId: reqUnderTestId },
+        { caseId: caseControlId, issueId: reqControlId },
+        { caseId: caseReferencedFailingId, issueId: referencedIssueId },
+      ],
+    });
+
+    const run = await linkDb.testRuns.create({
+      data: {
+        projectId,
+        name: `${STAMP}-link03-run`,
+        stateId: runStateId,
+        createdById: adminUserId,
+      },
+      select: { id: true },
+    });
+    allRunIds.push(run.id);
+
+    const now = new Date();
+    await recordExecution(run.id, caseUnderTestOneId, passingStatusId, now);
+    await recordExecution(run.id, caseUnderTestTwoId, passingStatusId, now);
+    await recordExecution(run.id, caseControlId, passingStatusId, now);
+    await recordExecution(
+      run.id,
+      caseReferencedFailingId,
+      failingStatusId,
+      now
+    );
+
+    const scope = { accessibleProjectIds: null };
+    mapBeforeAttach = await getRequirementCoverage(
+      projectId,
+      scope,
+      undefined,
+      linkDb
+    );
+    coveringBeforeAttach = await getRequirementCoveringCases(
+      projectId,
+      [reqUnderTestId],
+      scope,
+      linkDb
+    );
+
+    // Attach through the ENHANCED client's join create — the exact
+    // statement plan 27-07's POST route issues, never a raw parentId
+    // write. This is the "attaches references the same way production
+    // does" the plan calls for.
+    const edb = await authDbFor(adminUserId);
+    await edb.requirementIssueReference.create({
+      data: {
+        requirementId: reqUnderTestId,
+        referencedIssueId,
+        createdById: adminUserId,
+      },
+    });
+
+    mapAfterAttach = await getRequirementCoverage(
+      projectId,
+      scope,
+      undefined,
+      linkDb
+    );
+    coveringAfterAttach = await getRequirementCoveringCases(
+      projectId,
+      [reqUnderTestId],
+      scope,
+      linkDb
+    );
+
+    // Detach through the same enhanced client's deleteMany plan 27-07's
+    // DELETE route issues.
+    await edb.requirementIssueReference.deleteMany({
+      where: { requirementId: reqUnderTestId, referencedIssueId },
+    });
+
+    mapAfterDetach = await getRequirementCoverage(
+      projectId,
+      scope,
+      undefined,
+      linkDb
+    );
+    coveringAfterDetach = await getRequirementCoveringCases(
+      projectId,
+      [reqUnderTestId],
+      scope,
+      linkDb
+    );
+  });
+
+  afterAll(async () => {
+    // Safety net in case a test above ever left the join row behind.
+    await linkDb.requirementIssueReference.deleteMany({
+      where: { requirementId: reqUnderTestId },
+    });
+    await linkDb.testRunResults.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await linkDb.testRunCases.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await linkDb.testRuns.deleteMany({ where: { id: { in: allRunIds } } });
+    await linkDb.repositoryCaseIssue.deleteMany({
+      where: { caseId: { in: allCaseIds } },
+    });
+    await linkDb.repositoryCases.deleteMany({
+      where: { id: { in: allCaseIds } },
+    });
+    await linkDb.issue.deleteMany({ where: { id: { in: allIssueIds } } });
+    await linkDb.repositoryFolders.delete({ where: { id: folderId } });
+    await linkDb.repositories.delete({ where: { id: repositoryId } });
+    await linkDb.projects.delete({ where: { id: projectId } });
+    await linkDb.user.delete({ where: { id: adminUserId } });
+    await linkDb.$disconnect();
+  });
+
+  it("leaves every coverage counter byte-identical after a reference is attached", () => {
+    // Whole-map comparison (reqUnderTest AND reqControl, every counter on
+    // each) — not a single counter pulled off one requirement. A rollup
+    // that gained a case on one entry while losing one on another would
+    // still pass a narrower, single-counter assertion.
+    expect(sortedCoverageEntries(mapAfterAttach)).toEqual(
+      sortedCoverageEntries(mapBeforeAttach)
+    );
+  });
+
+  it("leaves every coverage counter byte-identical after a reference is removed", () => {
+    expect(sortedCoverageEntries(mapAfterDetach)).toEqual(
+      sortedCoverageEntries(mapBeforeAttach)
+    );
+  });
+
+  it("does not harvest the referenced issue's own linked cases into the requirement's rollup", async () => {
+    // Prove the bait is real: the referenced issue's own case's latest
+    // result IS a failure, read back directly rather than trusted from
+    // fixture setup — a fixture that silently failed to record this
+    // execution would make every assertion below vacuously pass.
+    const referencedRunCase = await linkDb.testRunCases.findFirst({
+      where: { repositoryCaseId: caseReferencedFailingId },
+      select: { id: true },
+    });
+    const referencedResult = await linkDb.testRunResults.findFirst({
+      where: { testRunCaseId: referencedRunCase?.id ?? -1 },
+      select: { status: { select: { isFailure: true, isSuccess: true } } },
+    });
+    expect(
+      referencedResult?.status.isFailure,
+      "fixture defect: the referenced issue's own case must carry a FAILED latest result for this test to mean anything"
+    ).toBe(true);
+
+    const reqAfterAttach = mapAfterAttach.get(reqUnderTestId)!;
+    expect(reqAfterAttach.status).toBe("PASSED");
+    expect(reqAfterAttach.linkedCaseCount).toBe(2);
+    expect(reqAfterAttach.failed).toBe(0);
+
+    const coveringCaseIdsAfterAttach = (
+      coveringAfterAttach.get(reqUnderTestId) ?? []
+    )
+      .map((entry) => entry.caseId)
+      .sort((a, b) => a - b);
+    expect(coveringCaseIdsAfterAttach).not.toContain(caseReferencedFailingId);
+    expect(coveringCaseIdsAfterAttach).toEqual(
+      [caseUnderTestOneId, caseUnderTestTwoId].sort((a, b) => a - b)
+    );
+  });
+
+  it("the covering-case drill-down for the requirement is unaffected by attach or detach", () => {
+    expect(coveringAfterAttach.get(reqUnderTestId)).toEqual(
+      coveringBeforeAttach.get(reqUnderTestId)
+    );
+    expect(coveringAfterDetach.get(reqUnderTestId)).toEqual(
+      coveringBeforeAttach.get(reqUnderTestId)
+    );
+  });
 });
