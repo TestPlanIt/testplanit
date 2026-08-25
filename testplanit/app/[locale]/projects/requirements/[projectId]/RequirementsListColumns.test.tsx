@@ -341,14 +341,14 @@ function makeCoveringCase(
 }
 
 describe("useRequirementsListColumns -- column contract", () => {
-  it("returns name/status/coverage/linkedCases/coveringCases/source/actions in order when canAddEdit is true", () => {
+  it("returns name/status/coverage/coveringCases/linkedCases/source/actions in order when canAddEdit is true", () => {
     const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
     expect(result.current.map((col) => col.id)).toEqual([
       "name",
       "status",
       "coverage",
-      "linkedCases",
       "coveringCases",
+      "linkedCases",
       "source",
       "actions",
     ]);
@@ -362,8 +362,8 @@ describe("useRequirementsListColumns -- column contract", () => {
       "name",
       "status",
       "coverage",
-      "linkedCases",
       "coveringCases",
+      "linkedCases",
       "source",
     ]);
   });

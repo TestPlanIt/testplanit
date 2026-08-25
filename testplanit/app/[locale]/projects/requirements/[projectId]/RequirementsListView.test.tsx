@@ -172,6 +172,13 @@ vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
 // issue-only useClientQueries mock above does not expose. A passthrough
 // mock is the seam UI-SPEC/the plan explicitly permits for this reason (see
 // SUMMARY.md "IssueStatusDisplay mock" note).
+// The status-dot legend (transplanted from Milestone > Issues in scope)
+// reads status rows through its own data hook -- a seam outside this file's
+// issue-only ZenStack mock, so stub it like IssueStatusDisplay below.
+vi.mock("@/components/iterations/IterationStatusLegendPopover", () => ({
+  IterationStatusLegendPopover: () => <span data-testid="mock-status-legend" />,
+}));
+
 vi.mock("@/components/IssueStatusDisplay", () => ({
   IssueStatusDisplay: ({ status }: { status: string | null }) => (
     <span data-testid="mock-issue-status">{status ?? ""}</span>
@@ -494,8 +501,8 @@ describe("RequirementsListView", () => {
       expect(labels[0]).toBe("requirements.list.columnName");
       expect(labels[1]).toBe("requirements.list.columnStatus");
       expect(labels[2]).toBe("requirements.coverage.title");
-      expect(labels[3]).toBe("requirements.linkedCases.title");
-      expect(labels[4]).toBe("requirements.coverage.panelTitle");
+      expect(labels[3]).toBe("requirements.coverage.panelTitle");
+      expect(labels[4]).toBe("requirements.linkedCases.title");
       expect(labels[5]).toBe("requirements.list.columnSource");
     });
 

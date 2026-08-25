@@ -128,16 +128,20 @@ export default function RequirementsWorkspace({
                   <TooltipTrigger asChild>
                     <Button
                       variant="outline"
-                      size="sm"
                       onClick={handleExportPdf}
                       disabled={isExportingPdf}
                       data-testid="requirements-export-pdf"
-                      className={isExportingPdf ? "animate-pulse" : ""}
+                      aria-label={t("common.actions.exportPdf")}
+                      className={`group gap-0 transition-all duration-200 hover:gap-2${
+                        isExportingPdf ? " animate-pulse" : ""
+                      }`}
                     >
                       <FileDown className="h-4 w-4" />
-                      {isExportingPdf
-                        ? t("common.actions.exportingPdf")
-                        : t("common.actions.exportPdf")}
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {isExportingPdf
+                          ? t("common.actions.exportingPdf")
+                          : t("common.actions.exportPdf")}
+                      </span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

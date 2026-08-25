@@ -18,6 +18,7 @@ import {
 import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { DataTable } from "@/components/tables/DataTable";
+import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,7 +106,7 @@ const ROW_DRAG_CANDIDATE_CLASSNAME =
   "[[data-req-drag=active]_&]:inset-ring-2 [[data-req-drag=active]_&]:inset-ring-primary/40 [[data-req-dragged]_&]:inset-ring-0";
 
 const ROOT_STRIP_DRAG_CLASSNAME =
-  "[[data-req-drag=active]_&]:rounded-md [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40";
+  "[[data-req-drag=active]_&]:rounded-md [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40 [[data-req-drag=active]_&]:bg-background/95";
 
 const ROOT_STRIP_HINT_CLASSNAME =
   "pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-muted-foreground [[data-req-drag=active]_&]:flex";
@@ -785,7 +786,7 @@ const RequirementsListView = forwardRef<
           className="flex h-full min-w-[220px] flex-col"
           data-testid="requirements-list-container"
         >
-          <div className="mb-2 ms-1 me-2 flex flex-wrap items-center gap-2">
+          <div className="my-1 ms-1 me-2 flex flex-wrap items-center justify-between gap-2">
             <div className="relative grow shrink basis-[120px] min-w-[120px] max-w-lg">
               <Search className="pointer-events-none absolute start-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -816,113 +817,122 @@ const RequirementsListView = forwardRef<
                 </Button>
               )}
             </div>
-            <Select
-              value={filters.coverage || "all"}
-              disabled={coverageFilterUnavailable}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  coverage: (value === "all"
-                    ? ""
-                    : value) as RequirementCoverageFilter,
-                }))
-              }
-            >
-              <SelectTrigger
-                className="w-[160px] shrink-0"
-                data-testid="requirements-coverage-filter"
-                title={
-                  coverageFilterUnavailable
-                    ? t("requirements.coverage.showOnlyUncoveredUnavailable")
-                    : undefined
+            {/* Filters live in their own group so the row can justify the
+                search input left and the whole filter set right
+                (operator UAT). */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                value={filters.coverage || "all"}
+                disabled={coverageFilterUnavailable}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    coverage: (value === "all"
+                      ? ""
+                      : value) as RequirementCoverageFilter,
+                  }))
                 }
               >
-                <SelectValue
-                  placeholder={t("milestones.members.filterAllCoverage")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {t("milestones.members.filterAllCoverage")}
-                </SelectItem>
-                <SelectItem value="UNCOVERED">
-                  {t("requirements.coverage.uncovered")}
-                </SelectItem>
-                <SelectItem value="UNTESTED">
-                  {t("milestones.members.filterHasUntested")}
-                </SelectItem>
-                {coverageStatusOptions.map((entry) => (
-                  <SelectItem
-                    key={`requirements-coverage-filter-status-${entry.statusId}`}
-                    value={`status:${entry.statusId}`}
-                  >
-                    {entry.name}
+                <SelectTrigger
+                  className="w-[160px] shrink-0"
+                  data-testid="requirements-coverage-filter"
+                  title={
+                    coverageFilterUnavailable
+                      ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                      : undefined
+                  }
+                >
+                  <SelectValue
+                    placeholder={t("milestones.members.filterAllCoverage")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("milestones.members.filterAllCoverage")}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.status || "all"}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  status: value === "all" ? "" : value,
-                }))
-              }
-            >
-              <SelectTrigger
-                className="w-[140px] shrink-0"
-                data-testid="requirements-status-filter"
-              >
-                <SelectValue
-                  placeholder={t("requirements.list.filterAllStatuses")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {t("requirements.list.filterAllStatuses")}
-                </SelectItem>
-                {requirementStatusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
+                  <SelectItem value="UNCOVERED">
+                    {t("requirements.coverage.uncovered")}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={filters.source || "all"}
-              onValueChange={(value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  source: (value === "all"
-                    ? ""
-                    : value) as RequirementSourceFilter,
-                }))
-              }
-            >
-              <SelectTrigger
-                className="w-[140px] shrink-0"
-                data-testid="requirements-source-filter"
+                  <SelectItem value="UNTESTED">
+                    {t("milestones.members.filterHasUntested")}
+                  </SelectItem>
+                  {coverageStatusOptions.map((entry) => (
+                    <SelectItem
+                      key={`requirements-coverage-filter-status-${entry.statusId}`}
+                      value={`status:${entry.statusId}`}
+                    >
+                      {entry.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.status || "all"}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    status: value === "all" ? "" : value,
+                  }))
+                }
               >
-                <SelectValue
-                  placeholder={t("milestones.members.filterAllSources")}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  {t("milestones.members.filterAllSources")}
-                </SelectItem>
-                <SelectItem value="MANUAL">
-                  {t("requirements.provenance.nativeLabel")}
-                </SelectItem>
-                <SelectItem value="SYNCED">
-                  {t("requirements.provenance.syncedLabel")}
-                </SelectItem>
-                <SelectItem value="DETACHED">
-                  {t("requirements.provenance.detachedLabel")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                <SelectTrigger
+                  className="w-[140px] shrink-0"
+                  data-testid="requirements-status-filter"
+                >
+                  <SelectValue
+                    placeholder={t("requirements.list.filterAllStatuses")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("requirements.list.filterAllStatuses")}
+                  </SelectItem>
+                  {requirementStatusOptions.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={filters.source || "all"}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    source: (value === "all"
+                      ? ""
+                      : value) as RequirementSourceFilter,
+                  }))
+                }
+              >
+                <SelectTrigger
+                  className="w-[140px] shrink-0"
+                  data-testid="requirements-source-filter"
+                >
+                  <SelectValue
+                    placeholder={t("milestones.members.filterAllSources")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("milestones.members.filterAllSources")}
+                  </SelectItem>
+                  <SelectItem value="MANUAL">
+                    {t("requirements.provenance.nativeLabel")}
+                  </SelectItem>
+                  <SelectItem value="SYNCED">
+                    {t("requirements.provenance.syncedLabel")}
+                  </SelectItem>
+                  <SelectItem value="DETACHED">
+                    {t("requirements.provenance.detachedLabel")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {/* Same status-dot legend the Milestone details > Issues in
+                scope section mounts beside ITS CoverageChip column, so the
+                pips read identically on both surfaces (operator UAT). */}
+              <IterationStatusLegendPopover projectId={Number(projectId)} />
+            </div>
           </div>
           <div
             ref={(el) => {
@@ -992,7 +1002,7 @@ const RequirementsListView = forwardRef<
               // 26.2-16). `isOverBottom` below is unrelated: it comes from
               // this element's OWN `useDrop` collector, so only this single,
               // non-virtualized node re-renders on hover, never the row set.
-              className={`h-16 w-full relative shrink-0 ${ROOT_STRIP_DRAG_CLASSNAME}`}
+              className={`h-16 w-full relative shrink-0 sticky bottom-0 z-10 ${ROOT_STRIP_DRAG_CLASSNAME}`}
               data-testid="requirement-tree-end"
             >
               {/* Always mounted; `hidden` by default, shown by the same

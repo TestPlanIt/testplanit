@@ -263,6 +263,35 @@ export function useRequirementsListColumns({
         },
       },
       {
+        id: "coveringCases",
+        // Sorts by linkedCaseCount, the whole-subtree counter -- this
+        // requirement plus everything beneath it, mirroring the coverage
+        // column's own "richer than a sum" precedent of ranking by the
+        // rollup's own field rather than re-deriving one.
+        accessorFn: (row) =>
+          coverageFor(coverage, row.id)?.linkedCaseCount ?? 0,
+        header: tColumnCoveringCases,
+        enableSorting: true,
+        size: 120,
+        minSize: 90,
+        maxSize: 200,
+        cell: ({ row }) => {
+          const breakdown = coverageFor(coverage, row.original.id);
+          const isLoadingCell = breakdown === undefined;
+          const linkedCaseCount = breakdown?.linkedCaseCount ?? 0;
+          const crossProjectCaseCount = breakdown?.crossProjectCaseCount ?? 0;
+          return (
+            <RequirementCoveringCasesCell
+              rowId={row.original.id}
+              projectId={projectId}
+              inProjectCount={linkedCaseCount - crossProjectCaseCount}
+              otherProjectCount={crossProjectCaseCount}
+              isCountLoading={isLoadingCell}
+            />
+          );
+        },
+      },
+      {
         id: "linkedCases",
         // Sorts by directCaseCount, the SAME counter the cell's in-project
         // badge renders -- cases attached to this requirement ITSELF, never
@@ -305,35 +334,6 @@ export function useRequirementsListColumns({
                 isArchived: false,
               }}
               isLoading={isLoadingCell}
-            />
-          );
-        },
-      },
-      {
-        id: "coveringCases",
-        // Sorts by linkedCaseCount, the whole-subtree counter -- this
-        // requirement plus everything beneath it, mirroring the coverage
-        // column's own "richer than a sum" precedent of ranking by the
-        // rollup's own field rather than re-deriving one.
-        accessorFn: (row) =>
-          coverageFor(coverage, row.id)?.linkedCaseCount ?? 0,
-        header: tColumnCoveringCases,
-        enableSorting: true,
-        size: 120,
-        minSize: 90,
-        maxSize: 200,
-        cell: ({ row }) => {
-          const breakdown = coverageFor(coverage, row.original.id);
-          const isLoadingCell = breakdown === undefined;
-          const linkedCaseCount = breakdown?.linkedCaseCount ?? 0;
-          const crossProjectCaseCount = breakdown?.crossProjectCaseCount ?? 0;
-          return (
-            <RequirementCoveringCasesCell
-              rowId={row.original.id}
-              projectId={projectId}
-              inProjectCount={linkedCaseCount - crossProjectCaseCount}
-              otherProjectCount={crossProjectCaseCount}
-              isCountLoading={isLoadingCell}
             />
           );
         },
@@ -386,12 +386,16 @@ export function useRequirementsListColumns({
         minSize: 56,
         maxSize: 100,
         cell: ({ row }) => (
-          <RequirementRowActionsMenu
-            requirement={row.original}
-            onAddChild={onAddChild}
-            onRequestRename={onRequestRename}
-            onRequestDelete={onRequestDelete}
-          />
+          // Centered like the header's own justify-center icon well --
+          // without this the kebab hugs the cell's start edge (operator UAT).
+          <div className="flex justify-center">
+            <RequirementRowActionsMenu
+              requirement={row.original}
+              onAddChild={onAddChild}
+              onRequestRename={onRequestRename}
+              onRequestDelete={onRequestDelete}
+            />
+          </div>
         ),
       });
     }
