@@ -39,6 +39,7 @@ function makeRequirement(args: {
   requirementDetachedAt?: Date | string | null;
   externalStatus?: string | null;
   status?: string | null;
+  createdAt?: Date | string | null;
 }): Issue {
   return {
     id: args.id,
@@ -49,6 +50,7 @@ function makeRequirement(args: {
     requirementDetachedAt: args.requirementDetachedAt ?? null,
     externalStatus: args.externalStatus ?? null,
     status: args.status ?? null,
+    createdAt: args.createdAt ?? null,
   } as Issue;
 }
 
@@ -245,6 +247,102 @@ describe("compareRequirements linkedCases/coveringCases sort", () => {
     });
 
     expect(rows.map((r) => r.id)).toEqual([2, 1]);
+  });
+});
+
+// Gap closure 26.2-17: only `createdAt` -- `Issue` has no `updatedAt` column,
+// and adding one is the schema change this gap-closure plan explicitly ruled
+// out (see 26.2-17-SUMMARY.md).
+describe("compareRequirements createdAt sort", () => {
+  it("sorts a sibling group by createdAt asc without interleaving children across parents", () => {
+    const requirements = [
+      makeRequirement({
+        id: 1,
+        name: "Apple Root",
+        parentId: null,
+        createdAt: new Date("2026-01-01"),
+      }),
+      makeRequirement({
+        id: 2,
+        name: "Apple Child Newer",
+        parentId: 1,
+        createdAt: new Date("2026-03-01"),
+      }),
+      makeRequirement({
+        id: 3,
+        name: "Apple Child Older",
+        parentId: 1,
+        createdAt: new Date("2026-02-01"),
+      }),
+      makeRequirement({
+        id: 4,
+        name: "Zebra Root",
+        parentId: null,
+        createdAt: new Date("2026-01-15"),
+      }),
+      makeRequirement({
+        id: 5,
+        name: "Zebra Child",
+        parentId: 4,
+        createdAt: new Date("2026-01-20"),
+      }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const rows = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: { 1: true, 4: true },
+      sortConfig: { column: "createdAt", direction: "asc" },
+      coverage: undefined,
+    });
+
+    // Root order by createdAt asc: 1 (Jan 1) before 4 (Jan 15); within 1's own
+    // sibling group, 3 (Feb 1) before 2 (Mar 1) -- and neither ever
+    // interleaves with 4/5, proving the sort stays per-sibling-group.
+    expect(rows.map((r) => r.id)).toEqual([1, 3, 2, 4, 5]);
+  });
+
+  it("a null createdAt sorts last in asc and first in desc (one rule, both directions)", () => {
+    const requirements = [
+      makeRequirement({
+        id: 1,
+        name: "Has Date",
+        parentId: null,
+        createdAt: new Date("2026-01-01"),
+      }),
+      makeRequirement({
+        id: 2,
+        name: "No Date",
+        parentId: null,
+        createdAt: null,
+      }),
+      makeRequirement({
+        id: 3,
+        name: "Has Later Date",
+        parentId: null,
+        createdAt: new Date("2026-02-01"),
+      }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const asc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "createdAt", direction: "asc" },
+      coverage: undefined,
+    });
+    expect(asc.map((r) => r.id)).toEqual([1, 3, 2]);
+
+    const desc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "createdAt", direction: "desc" },
+      coverage: undefined,
+    });
+    expect(desc.map((r) => r.id)).toEqual([2, 3, 1]);
   });
 });
 

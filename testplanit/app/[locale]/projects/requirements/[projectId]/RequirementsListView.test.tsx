@@ -506,6 +506,23 @@ describe("RequirementsListView", () => {
       expect(labels[5]).toBe("requirements.list.columnSource");
     });
 
+    // Gap closure 26.2-17: createdAt ships hidden by default (meta.isVisible:
+    // false) -- it must be ABSENT from the header row at default width, not
+    // merely present-somewhere, since the assertion above only proves the
+    // first six labels' order and would miss a hidden column rendering
+    // anyway.
+    it("does not render the hidden-by-default createdAt column as a header at the pane's default width", () => {
+      renderView();
+
+      const table = screen.getByTestId("requirements-list");
+      const headerCells = Array.from(
+        table.querySelectorAll('[role="columnheader"]')
+      );
+      expect(headerCells).toHaveLength(7);
+      const labels = headerCells.map((cell) => cell.textContent);
+      expect(labels).not.toContain("common.fields.createdAt");
+    });
+
     it("moves horizontal scroll onto the table body (enableColumnPinning), never overflow-x-hidden", () => {
       renderView();
 

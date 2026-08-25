@@ -19,6 +19,7 @@ import { useDrag } from "react-dnd";
 // match Milestone details > Issues in display model, so this cell now
 // mounts the same `CoverageChip` that table uses (26.2-10).
 import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
+import { DateFormatter } from "@/components/DateFormatter";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
@@ -88,6 +89,9 @@ export interface RequirementsListColumnsTranslations {
   columnCoveringCases: string;
   /** requirements.list.columnSource */
   columnSource: string;
+  /** common.fields.createdAt -- an existing key, reused, no new key (gap
+   *  closure 26.2-17) */
+  columnCreatedAt: string;
   /** common.actions.actionsLabel -- existing, reused */
   actionsLabel: string;
 }
@@ -171,6 +175,7 @@ export function useRequirementsListColumns({
     columnLinkedCases: tColumnLinkedCases,
     columnCoveringCases: tColumnCoveringCases,
     columnSource: tColumnSource,
+    columnCreatedAt: tColumnCreatedAt,
     actionsLabel: tActionsLabel,
   } = translations;
 
@@ -367,6 +372,36 @@ export function useRequirementsListColumns({
           />
         ),
       },
+      {
+        id: "createdAt",
+        // Gap closure 26.2-17 (operator-directed, 2026-08-25): Created/Updated
+        // were meant to ship as a pair, but `Issue` has no `updatedAt` column
+        // (only `createdAt`) -- adding one is a schema change the plan
+        // explicitly ruled out, so only `createdAt` is implemented here. See
+        // this plan's SUMMARY for the full note.
+        accessorFn: (row) => row.createdAt,
+        header: tColumnCreatedAt,
+        enableSorting: true,
+        // Hidden by default (single-owner visibility rule: `meta.isVisible`,
+        // never a `toggleVisibility` call) -- the operator asked for this pair
+        // OFF until explicitly turned on through the column-visibility menu.
+        meta: { isVisible: false },
+        size: 130,
+        minSize: 100,
+        maxSize: 200,
+        cell: ({ row }) => (
+          <div
+            className="whitespace-nowrap text-sm"
+            data-testid={`requirement-createdAt-cell-${row.original.id}`}
+          >
+            {/* No `formatString`/`timezone` override -- the same bare call
+                `RequirementCoveragePanel.tsx` already makes in this same
+                folder for `lastExecutedAt`: date-only via the default
+                "MM-dd-yyyy" format, locale-aware through `useLocale()`. */}
+            <DateFormatter date={row.original.createdAt} />
+          </div>
+        ),
+      },
     ];
 
     // A viewer who cannot edit gets no dead actions column at all.
@@ -416,6 +451,7 @@ export function useRequirementsListColumns({
     tColumnLinkedCases,
     tColumnCoveringCases,
     tColumnSource,
+    tColumnCreatedAt,
     tActionsLabel,
     projectId,
     canAddEdit,

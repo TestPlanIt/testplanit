@@ -501,6 +501,23 @@ function compareRequirements(
         (coverageFor(coverage, b.id)?.linkedCaseCount ?? 0);
       break;
     }
+    // Gap closure 26.2-17: `createdAt` is a non-nullable Issue column, but
+    // this comparator stays defensive the same way `requirementCoverageSortValue`
+    // does for an absent breakdown -- a missing timestamp becomes
+    // `POSITIVE_INFINITY` rather than a special-cased branch, so the SAME
+    // `direction === "desc"` negation below (never a second sentinel) is what
+    // produces "null last in asc, null first in desc" -- one rule, proven by
+    // the existing negation path every other column already relies on.
+    case "createdAt": {
+      const aTime = a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : Number.POSITIVE_INFINITY;
+      const bTime = b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : Number.POSITIVE_INFINITY;
+      primary = aTime - bTime;
+      break;
+    }
     case "name":
     default: {
       primary = formatIssueDisplayText(a).localeCompare(

@@ -29,7 +29,15 @@ vi.mock("next-intl", () => ({
   // CasesListDisplay (rendered for real -- see the async-combobox mock note
   // below) reads useLocale() for its toLocaleString() count formatting; the
   // bare useTranslations-only mock above leaves it undefined otherwise.
+  // Gap closure 26.2-17: DateFormatter (the new createdAt cell) reads it too.
   useLocale: () => "en-US",
+}));
+
+// DateFormatter's own dependency (gap closure 26.2-17's createdAt cell) --
+// mirrors RequirementCoveragePanel.test.tsx's own convention for this exact
+// primitive in this same folder.
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: null }),
 }));
 
 // CasesListDisplay itself is NOT mocked (its trigger badge, count-hiding-at-
@@ -136,6 +144,7 @@ const translations = {
   columnLinkedCases: "Linked Test Cases",
   columnCoveringCases: "Covering Test Cases",
   columnSource: "Source",
+  columnCreatedAt: "Created At",
   actionsLabel: "Actions",
 };
 
@@ -158,6 +167,7 @@ function makeRow(args: {
   issueTypeIconUrl?: string | null;
   externalUrl?: string | null;
   externalKey?: string | null;
+  createdAt?: Date | string | null;
 }): RequirementRow {
   const name = args.name ?? `Requirement ${args.id}`;
   return {
@@ -176,6 +186,7 @@ function makeRow(args: {
     issueTypeIconUrl: args.issueTypeIconUrl ?? null,
     externalUrl: args.externalUrl ?? null,
     externalKey: args.externalKey ?? null,
+    createdAt: args.createdAt ?? null,
   } as unknown as RequirementRow;
 }
 
@@ -347,7 +358,7 @@ function makeCoveringCase(
 }
 
 describe("useRequirementsListColumns -- column contract", () => {
-  it("returns name/status/coverage/coveringCases/linkedCases/source/actions in order when canAddEdit is true", () => {
+  it("returns name/status/coverage/coveringCases/linkedCases/source/createdAt/actions in order when canAddEdit is true", () => {
     const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
     expect(result.current.map((col) => col.id)).toEqual([
       "name",
@@ -356,6 +367,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       "coveringCases",
       "linkedCases",
       "source",
+      "createdAt",
       "actions",
     ]);
   });
@@ -371,6 +383,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       "coveringCases",
       "linkedCases",
       "source",
+      "createdAt",
     ]);
   });
 
@@ -395,6 +408,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       linkedCases: { size: 110, minSize: 80, maxSize: 160 },
       coveringCases: { size: 120, minSize: 90, maxSize: 200 },
       source: { size: 140, minSize: 60, maxSize: 260 },
+      createdAt: { size: 130, minSize: 100, maxSize: 200 },
       actions: { size: 64, minSize: 56, maxSize: 100 },
     };
     result.current.forEach((col) => {
@@ -421,6 +435,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       "linkedCases",
       "coveringCases",
       "source",
+      "createdAt",
     ].forEach((id) => {
       const col = result.current.find((c) => c.id === id)!;
       expect(col.enableSorting).toBe(true);
@@ -596,6 +611,46 @@ describe("useRequirementsListColumns -- column contract", () => {
     expect(
       screen.getByTestId("requirement-provenance-native")
     ).toBeInTheDocument();
+  });
+});
+
+// Gap closure 26.2-17: only `createdAt` ships -- `Issue` has no `updatedAt`
+// column, and adding one is the schema change this gap-closure plan
+// explicitly ruled out (see 26.2-17-SUMMARY.md).
+describe("createdAt column (gap closure 26.2-17)", () => {
+  it("is hidden by default (meta.isVisible === false)", () => {
+    const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
+    const col = result.current.find((c) => c.id === "createdAt")!;
+    expect((col.meta as any)?.isVisible).toBe(false);
+  });
+
+  it("accessorFn reads the row's own createdAt timestamp", () => {
+    const createdAt = new Date("2026-01-15T12:00:00.000Z");
+    const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
+    const accessorFn = (
+      result.current.find((c) => c.id === "createdAt") as any
+    ).accessorFn;
+
+    expect(accessorFn(makeRow({ id: 40, createdAt }))).toBe(createdAt);
+  });
+
+  it("renders a locale-formatted date, never the raw ISO string, in the DOM", () => {
+    const isoDate = "2026-01-15T12:00:00.000Z";
+    renderColumnCell("createdAt", makeRow({ id: 41, createdAt: isoDate }));
+
+    const cell = screen.getByTestId("requirement-createdAt-cell-41");
+    // Date-only, no time component (DateFormatter's default "MM-dd-yyyy") --
+    // exact day/timezone rendering is DateFormatter's own tested contract
+    // (DateFormatter.test.tsx); this only proves the cell wires it in rather
+    // than ever printing the raw ISO string.
+    expect(cell.textContent).toMatch(/^\d{2}-\d{2}-\d{4}$/);
+    expect(cell.textContent).not.toContain(isoDate);
+  });
+
+  it("renders nothing for a null createdAt rather than throwing", () => {
+    renderColumnCell("createdAt", makeRow({ id: 42, createdAt: null }));
+    const cell = screen.getByTestId("requirement-createdAt-cell-42");
+    expect(cell.textContent).toBe("");
   });
 });
 

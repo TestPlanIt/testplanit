@@ -18,6 +18,7 @@ import {
 import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { DataTable } from "@/components/tables/DataTable";
+import type { CustomColumnMeta } from "@/components/tables/dataTableShared";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,9 +168,6 @@ const RequirementsListView = forwardRef<
     column: "name",
     direction: "asc",
   });
-  const [columnVisibility, setColumnVisibility] = useState<
-    Record<string, boolean>
-  >({});
   // The currently drag-hovered row (D-04g's lifecycle). The ref mirrors the
   // state so the list-level drop callback below can read the latest value
   // synchronously; the state drives the outline-ring render. Only event
@@ -696,6 +694,10 @@ const RequirementsListView = forwardRef<
       columnLinkedCases: t("requirements.linkedCases.title"),
       columnCoveringCases: t("requirements.coverage.panelTitle"),
       columnSource: t("requirements.list.columnSource"),
+      // Gap closure 26.2-17: reused, not new -- `common.fields.createdAt`
+      // already backs every other DataTable's own hidden-by-default Created
+      // column in this codebase (admin/llm, admin/integrations, etc.).
+      columnCreatedAt: t("common.fields.createdAt"),
       actionsLabel: t("common.actions.actionsLabel"),
     },
     projectId: Number(projectId),
@@ -716,6 +718,35 @@ const RequirementsListView = forwardRef<
     onDetached: handleDetached,
     markDragActive,
     clearDragActive,
+  });
+
+  // Gap closure 26.2-17: `VirtualizedTableEngine.tsx` (this view's own
+  // `<DataTable virtualized>` mode) passes `columnVisibility` straight through
+  // to `useReactTable`'s state with no `meta.isVisible` fallback of its own
+  // -- that derivation lives ONLY in `PagedTable`'s internal
+  // `getInitialVisibility`. Without seeding it here, a hidden-by-default
+  // column (createdAt) would render VISIBLE on first paint, since TanStack
+  // treats an id absent from the map as visible. Mirrors `Cases.tsx`'s own
+  // `getInitialColumnVisibility` (first/last always visible,
+  // `enableHiding === false` always visible, else `meta.isVisible ?? true`)
+  // -- computed once, lazily, from `columns`'s own identity at mount, not
+  // recomputed on every column-def re-memoization.
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(() => {
+    const initial: Record<string, boolean> = {};
+    columns.forEach((column, index) => {
+      const columnId = column.id as string;
+      if (column.enableHiding === false) {
+        initial[columnId] = true;
+      } else if (index === 0 || index === columns.length - 1) {
+        initial[columnId] = true;
+      } else {
+        initial[columnId] =
+          (column.meta as CustomColumnMeta | undefined)?.isVisible ?? true;
+      }
+    });
+    return initial;
   });
 
   // Render states, in this exact order (D-04d fixes a real bug: the prior
