@@ -1,18 +1,11 @@
-// Wave 0 scaffold, owner 27-06. GET /api/repository-cases/[caseId]/latest-execution
-// returns a single case's latest executed_at, sourced from the shared
-// latestCaseResultsCte() union of manual + JUnit results (CONTEXT.md — the
-// only source for "the case's last execution"; never re-derived).
-//
-// Mirrors the co-located route unit-test convention this directory already
-// uses (see covering-cases/route.test.ts): vi.mock of next-auth,
-// ~/server/auth, ~/lib/authContext, ~/lib/db, then a makeRequest helper.
-//
-// Todo-only in this plan (27-01) — no route.ts exists yet at this path,
-// so this file does not import "./route". 27-06 converts each title into a
-// real assertion once the route lands.
+// Converted from the it.todo scaffold (27-01) by 27-06. Mirrors the
+// co-located route unit-test convention this directory already uses
+// (see ../../projects/[projectId]/requirements/[issueId]/covering-cases/route.test.ts):
+// vi.mock of next-auth, ~/server/auth, ~/lib/authContext, ~/lib/db, the
+// service module, then a makeRequest helper.
 
 import { NextRequest } from "next/server";
-import { describe, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
@@ -27,6 +20,26 @@ vi.mock("~/lib/db", () => ({
   },
 }));
 
+vi.mock("~/lib/services/latestCaseResults", () => ({
+  getCaseLatestExecutedAt: vi.fn(),
+}));
+
+import { getServerSession } from "next-auth";
+import { resolveViewerProjectScope } from "~/lib/authContext";
+import { baseDb } from "~/lib/db";
+import { getCaseLatestExecutedAt } from "~/lib/services/latestCaseResults";
+
+import { GET } from "./route";
+
+const mockedSession = getServerSession as unknown as ReturnType<typeof vi.fn>;
+const mockedResolveScope = resolveViewerProjectScope as unknown as ReturnType<
+  typeof vi.fn
+>;
+const mockedFindFirst = baseDb.repositoryCases
+  .findFirst as unknown as ReturnType<typeof vi.fn>;
+const mockedGetLatestExecutedAt =
+  getCaseLatestExecutedAt as unknown as ReturnType<typeof vi.fn>;
+
 function makeRequest(caseId = "100"): NextRequest {
   return new NextRequest(
     `http://localhost/api/repository-cases/${caseId}/latest-execution`
@@ -38,21 +51,92 @@ const params = (caseId = "100") => ({
 });
 
 describe("GET /api/repository-cases/[caseId]/latest-execution", () => {
-  it.todo("returns 401 without a session");
-  it.todo("returns 400 for a non-integer case id");
-  it.todo("returns 404 when the case does not exist or is soft-deleted");
-  it.todo(
-    "returns 403 when the viewer's project scope excludes the case's own project"
-  );
-  it.todo(
-    "returns the case's latest executed_at from the shared latest-results CTE"
-  );
-  it.todo(
-    "returns null lastExecutedAt for a case that has never been executed"
-  );
-});
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+    mockedFindFirst.mockResolvedValue({ id: 100, projectId: 5 });
+    mockedResolveScope.mockResolvedValue([5]);
+    mockedGetLatestExecutedAt.mockResolvedValue(new Map([[100, null]]));
+  });
 
-// Keep the helpers referenced so lint's unused-vars rule stays quiet until
-// 27-06 wires them into real assertions.
-void makeRequest;
-void params;
+  it("returns 401 without a session", async () => {
+    mockedSession.mockResolvedValue(null);
+
+    const res = await GET(makeRequest(), params());
+
+    expect(res.status).toBe(401);
+    expect(mockedFindFirst).not.toHaveBeenCalled();
+    expect(mockedGetLatestExecutedAt).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a non-integer case id", async () => {
+    const res = await GET(makeRequest("not-a-number"), params("not-a-number"));
+
+    expect(res.status).toBe(400);
+    expect(mockedFindFirst).not.toHaveBeenCalled();
+    expect(mockedGetLatestExecutedAt).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the case does not exist or is soft-deleted", async () => {
+    // Represents a missing OR soft-deleted case -- the pre-check binds
+    // isDeleted: false into the query, so a real Postgres client would
+    // return null for either case exactly as this mock does.
+    mockedFindFirst.mockResolvedValue(null);
+
+    const res = await GET(makeRequest(), params());
+
+    expect(res.status).toBe(404);
+    expect(mockedFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 100, isDeleted: false }),
+      })
+    );
+    expect(mockedResolveScope).not.toHaveBeenCalled();
+    expect(mockedGetLatestExecutedAt).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when the viewer's project scope excludes the case's own project", async () => {
+    mockedResolveScope.mockResolvedValue([6, 7]);
+
+    const res = await GET(makeRequest(), params());
+
+    expect(res.status).toBe(403);
+    expect(mockedGetLatestExecutedAt).not.toHaveBeenCalled();
+  });
+
+  it("returns 200 when the viewer's project scope includes the case's own project", async () => {
+    mockedResolveScope.mockResolvedValue([5]);
+
+    const res = await GET(makeRequest(), params());
+
+    expect(res.status).toBe(200);
+  });
+
+  it("returns the case's latest executed_at from the shared latest-results CTE", async () => {
+    mockedGetLatestExecutedAt.mockResolvedValue(
+      new Map([[100, new Date("2026-08-01T00:00:00.000Z")]])
+    );
+
+    const res = await GET(makeRequest(), params());
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({
+      caseId: 100,
+      lastExecutedAt: "2026-08-01T00:00:00.000Z",
+    });
+    expect(mockedGetLatestExecutedAt).toHaveBeenCalledWith([100]);
+  });
+
+  it("returns null lastExecutedAt for a case that has never been executed", async () => {
+    mockedGetLatestExecutedAt.mockResolvedValue(new Map([[100, null]]));
+
+    const res = await GET(makeRequest(), params());
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ caseId: 100, lastExecutedAt: null });
+  });
+});
