@@ -17,6 +17,11 @@ import {
 } from "react";
 import { useDrop } from "react-dnd";
 import { toast } from "sonner";
+import {
+  ColumnSelection,
+  type ColumnMetadata,
+  type CustomColumnDef,
+} from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import type { CustomColumnMeta } from "@/components/tables/dataTableShared";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -720,34 +725,81 @@ const RequirementsListView = forwardRef<
     clearDragActive,
   });
 
-  // Gap closure 26.2-17: `VirtualizedTableEngine.tsx` (this view's own
-  // `<DataTable virtualized>` mode) passes `columnVisibility` straight through
-  // to `useReactTable`'s state with no `meta.isVisible` fallback of its own
-  // -- that derivation lives ONLY in `PagedTable`'s internal
+  // Gap closure 26.2-17 (reworked): `VirtualizedTableEngine.tsx` (this view's
+  // own `<DataTable virtualized>` mode) passes `columnVisibility` straight
+  // through to `useReactTable`'s state with no `meta.isVisible` fallback of
+  // its own -- that derivation lives ONLY in `PagedTable`'s internal
   // `getInitialVisibility`. Without seeding it here, a hidden-by-default
   // column (createdAt) would render VISIBLE on first paint, since TanStack
-  // treats an id absent from the map as visible. Mirrors `Cases.tsx`'s own
-  // `getInitialColumnVisibility` (first/last always visible,
-  // `enableHiding === false` always visible, else `meta.isVisible ?? true`)
-  // -- computed once, lazily, from `columns`'s own identity at mount, not
-  // recomputed on every column-def re-memoization.
+  // treats an id absent from the map as visible. Deliberately NO
+  // first/last-always-visible clause (unlike `Cases.tsx`'s seed): this
+  // initializer runs at view mount, while `useProjectPermissions` is still
+  // resolving, so `columns` omits `actions` and createdAt IS the last column
+  // -- an index rule would bake it visible forever (a live cold-load bug).
+  // Neither anchor needs the rule anyway: `name` and `actions` carry no
+  // `meta.isVisible`, so they default visible. Once the Columns control below
+  // mounts it becomes the single owner of this map.
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >(() => {
     const initial: Record<string, boolean> = {};
-    columns.forEach((column, index) => {
+    columns.forEach((column) => {
       const columnId = column.id as string;
-      if (column.enableHiding === false) {
-        initial[columnId] = true;
-      } else if (index === 0 || index === columns.length - 1) {
-        initial[columnId] = true;
-      } else {
-        initial[columnId] =
-          (column.meta as CustomColumnMeta | undefined)?.isVisible ?? true;
-      }
+      initial[columnId] =
+        column.enableHiding === false ||
+        ((column.meta as CustomColumnMeta | undefined)?.isVisible ?? true);
     });
     return initial;
   });
+
+  // Single, stable visibility setter shared by the Columns control and the
+  // header "Hide column" menu -- `Cases.tsx`'s exact recipe: stable
+  // (useCallback) so ColumnSelection's emit effect doesn't re-fire on every
+  // render, and shallow-equal-guarded so an equal-but-new-reference map (the
+  // two controls echoing each other) bails instead of looping.
+  const handleColumnVisibilityChange = useCallback(
+    (next: Record<string, boolean>) => {
+      setColumnVisibility((prev) => {
+        const keys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+        for (const key of keys) {
+          if (prev[key] !== next[key]) return next;
+        }
+        return prev;
+      });
+    },
+    []
+  );
+
+  // ColumnSelection assigns its "hide a column" function here; the header
+  // "Hide column" menu calls it so a hide flows through the Columns control's
+  // own state (persists + keeps its checkboxes in sync), never a table
+  // round-trip -- the single-owner visibility rule.
+  const columnHideRef = useRef<((columnId: string) => void) | null>(null);
+
+  // Lightweight metadata for ColumnSelection (`Cases.tsx`'s convention). The
+  // `actions` entry is appended UNCONDITIONALLY -- while `canAddEdit` is
+  // still resolving AND for read-only viewers, who never get the real
+  // column -- so ColumnSelection's own first/last-always-visible convention
+  // lands on `actions`, never on the hidden-by-default `createdAt` that
+  // would otherwise sit last and be forced visible. A stray `actions: true`
+  // entry in the visibility map is inert when the column doesn't exist.
+  const actionsColumnLabel = t("common.actions.actionsLabel");
+  const columnMetadata: ColumnMetadata[] = useMemo(() => {
+    const metadata: ColumnMetadata[] = columns
+      .filter((column) => column.id !== "actions")
+      .map((column) => ({
+        id: column.id as string,
+        label: typeof column.header === "string" ? column.header : "",
+        isVisible: (column.meta as CustomColumnMeta | undefined)?.isVisible,
+        enableHiding: column.enableHiding,
+      }));
+    metadata.push({
+      id: "actions",
+      label: actionsColumnLabel,
+      enableHiding: false,
+    });
+    return metadata;
+  }, [columns, actionsColumnLabel]);
 
   // Render states, in this exact order (D-04d fixes a real bug: the prior
   // spinner guard alone spun forever on a genuine fetch failure, because the
@@ -964,6 +1016,14 @@ const RequirementsListView = forwardRef<
                   </SelectItem>
                 </SelectContent>
               </Select>
+              <ColumnSelection
+                key="requirements-list-column-selection"
+                storageKey={`requirements-list:${projectId}`}
+                columns={columns as CustomColumnDef<RequirementRow>[]}
+                columnMetadata={columnMetadata}
+                hideColumnRef={columnHideRef}
+                onVisibilityChange={handleColumnVisibilityChange}
+              />
             </div>
           </div>
           <div
@@ -978,6 +1038,7 @@ const RequirementsListView = forwardRef<
               data={rows}
               onSortChange={handleSortChange}
               onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
               sortConfig={sortConfig}
               isLoading={requirementsLoading}
               columnVisibility={columnVisibility}

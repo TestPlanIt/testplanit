@@ -81,7 +81,10 @@ vi.mock("next-intl", () => ({
 }));
 
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn() }),
+  // `replace`/`usePathname` are ColumnSelection's URL-sync seam; `refresh` is
+  // the provenance badge's post-detach seam.
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }),
+  usePathname: () => "/test",
   // The covering cell's drill-down popover renders `TestCaseNameDisplay`
   // (gap closure 26.2-15), which links through this seam.
   Link: ({ children, href, ...props }: any) => (
@@ -89,6 +92,11 @@ vi.mock("~/lib/navigation", () => ({
       {children}
     </a>
   ),
+}));
+
+// ColumnSelection reads the shareable `?columns=` param through this seam.
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(""),
 }));
 
 vi.mock("sonner", () => ({
@@ -378,6 +386,9 @@ function dispatchDragLeave(el: Element, relatedTarget: EventTarget) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // ColumnSelection remembers visibility per storageKey; a choice persisted
+  // by one test must never leak into the next one's "default layout" checks.
+  window.localStorage.clear();
   mockIsProjectAdmin = true;
   dropSpecs.list = null;
   dropSpecs.bottom = null;
@@ -521,6 +532,66 @@ describe("RequirementsListView", () => {
       expect(headerCells).toHaveLength(7);
       const labels = headerCells.map((cell) => cell.textContent);
       expect(labels).not.toContain("common.fields.createdAt");
+    });
+
+    // Cold-load race regression: on a real first load `useProjectPermissions`
+    // resolves AFTER the visibility map is seeded, so `columns` omits
+    // `actions` and createdAt IS the last column at seed time. The original
+    // seed's first/last-always-visible clause therefore baked
+    // `createdAt: true` permanently (live-confirmed bug, 2026-08-25). A
+    // viewer (`isProjectAdmin: false`) reproduces the same "createdAt sits
+    // last" configuration statically.
+    it("keeps createdAt hidden when the actions column is absent (viewer / permissions still resolving)", () => {
+      mockIsProjectAdmin = false;
+      renderView();
+
+      const table = screen.getByTestId("requirements-list");
+      const labels = Array.from(
+        table.querySelectorAll('[role="columnheader"]')
+      ).map((cell) => cell.textContent);
+      expect(labels).toHaveLength(6);
+      expect(labels).not.toContain("common.fields.createdAt");
+    });
+
+    it("keeps createdAt hidden across the permissions flip that appends the actions column after mount", () => {
+      mockIsProjectAdmin = false;
+      const onSelectRequirement = vi.fn();
+      const { rerender } = render(
+        <RequirementsListView
+          projectId="42"
+          selectedRequirementId={null}
+          onSelectRequirement={onSelectRequirement}
+        />
+      );
+
+      mockIsProjectAdmin = true;
+      rerender(
+        <RequirementsListView
+          projectId="42"
+          selectedRequirementId={null}
+          onSelectRequirement={onSelectRequirement}
+        />
+      );
+
+      const table = screen.getByTestId("requirements-list");
+      const labels = Array.from(
+        table.querySelectorAll('[role="columnheader"]')
+      ).map((cell) => cell.textContent);
+      // actions joined (7 headers again), createdAt stayed hidden.
+      expect(labels).toHaveLength(7);
+      expect(labels).not.toContain("common.fields.createdAt");
+    });
+
+    // The reveal path the hidden-by-default column depends on: the shared
+    // Columns control (ColumnSelection) is mounted and wired. Its checkbox
+    // mechanics are ColumnSelection.test.tsx's responsibility; this proves
+    // the requirements toolbar actually offers it.
+    it("renders the Columns control in the toolbar", () => {
+      renderView();
+
+      expect(
+        screen.getByTestId("column-selection-trigger")
+      ).toBeInTheDocument();
     });
 
     it("moves horizontal scroll onto the table body (enableColumnPinning), never overflow-x-hidden", () => {
