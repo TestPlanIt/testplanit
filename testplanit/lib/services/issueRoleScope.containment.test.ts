@@ -275,6 +275,12 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   // defect-typed reference target). Both are identity lookups on an
   // already-addressed id, never a listing read.
   "app/api/projects/[projectId]/requirements/[issueId]/references/route.ts",
+  // 27-07's manual-traceability-reference DELETE route shares the POST
+  // route's exact requirement identity pre-check (bound to projectId and
+  // spread with REQUIREMENT_SCOPE_WHERE) so the two halves of the feature
+  // can never disagree about who may edit references — same reasoning as
+  // the entry immediately above.
+  "app/api/projects/[projectId]/requirements/[issueId]/references/[referencedIssueId]/route.ts",
 ];
 
 // EXEMPT — milestone membership legitimately spans both row kinds (an Epic
