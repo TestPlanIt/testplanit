@@ -169,6 +169,7 @@ model User {
     createdDataSetVersions          DataSetVersion[]              @relation("DataSetVersionsCreatedBy")
     createdSharedDataSetAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSetAssignmentCreatedBy")
     createdIssues                   Issue[]                       @relation("IssueCreator")
+    createdRequirementReferences    RequirementIssueReference[]   @relation("RequirementIssueReferenceCreator")
     projectPermissions              UserProjectPermission[]
     junitTestSuites                 JUnitTestSuite[]
     junitTestResults                JUnitTestResult[]
@@ -1625,6 +1626,10 @@ model RepositoryCaseIssue {
     case    RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
     issueId Int
     issue   Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    // D-07: dismissal rides this join's EXISTING create,update,delete policy
+    // (TestCaseRepository canAddEdit -- the same people who can link and
+    // unlink), so no policy clause changes and no new route are needed.
+    suspectDismissedAt DateTime? @db.Timestamptz(6)
 
     @@id([caseId, issueId])
     @@index([issueId])
@@ -1660,6 +1665,66 @@ model RepositoryCaseIssue {
          case.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
         (case.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
          case.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// D-09 load-bearing companion rule: a reference NEVER routes through
+// Issue.parentId and a reference-created shell NEVER sets isRequirement --
+// the coverage rollup's recursive descendant arm in
+// lib/services/requirementCoverage.ts is deliberately role-unscoped, so a
+// reference routed through the hierarchy column would harvest the
+// referenced issue's own linked cases into the requirement's counts.
+model RequirementIssueReference {
+    requirementId     Int
+    // A reference means "related ticket" -- always joined through this
+    // model, never through the issue hierarchy relation. See the
+    // model-level comment above for the full rationale (D-09).
+    requirement       Issue    @relation("RequirementIssueReferenceSource", fields: [requirementId], references: [id], onDelete: Cascade)
+    referencedIssueId Int
+    referencedIssue   Issue    @relation("RequirementIssueReferenceTarget", fields: [referencedIssueId], references: [id], onDelete: Cascade)
+    createdAt         DateTime @default(now()) @db.Timestamptz(6)
+    createdById       String?
+    createdBy         User?    @relation("RequirementIssueReferenceCreator", fields: [createdById], references: [id])
+
+    // Composite PK is the unique-pair constraint -- mirrors RepositoryCaseIssue.
+    @@id([requirementId, referencedIssueId])
+    @@index([referencedIssueId])
+
+    // Removal hard-deletes this join row only; the referenced Issue always
+    // survives (it may be shared). Mirrors RepositoryCaseIssue unlink
+    // semantics -- a deliberate, precedent-based exception to the general
+    // soft-delete rule. This model carries no soft-delete tombstone columns (D-15).
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('create', requirementId == referencedIssueId)
+
+    @@allow('read',
+        requirement.projectId in auth().accessibleProjectIds
+    )
+
+    @@allow('create,update,delete',
+        requirement.project.creator.id == auth().id ||
+        requirement.project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                      (role.name == 'Project Admin' ||
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        requirement.project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                      auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        requirement.project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        requirement.project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                       ((accessType == 'SPECIFIC_ROLE' &&
+                                         role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                        (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+        (requirement.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (requirement.project.assignedUsers?[user.id == auth().id] &&
+         requirement.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         requirement.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (requirement.project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         requirement.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -3368,6 +3433,12 @@ model Issue {
     issueTypeName         String?
     issueTypeIconUrl      String?
     lastSyncedAt          DateTime?             @db.Timestamptz(6)
+    // D-01: plain nullable timestamp, NOT @updatedAt -- SyncService.ts
+    // rewrites title/description unconditionally on every poll, so an
+    // ORM-managed @updatedAt would mark every synced requirement suspect
+    // after every poll. A diff-aware BEFORE UPDATE trigger (see
+    // scripts/apply-triggers.ts) sets this column, never the app.
+    contentUpdatedAt      DateTime?             @db.Timestamptz(6)
     data                  Json?
     note                  Json?
     isDeleted             Boolean               @default(false)
@@ -3376,6 +3447,10 @@ model Issue {
     createdById           String
     createdBy             User                  @relation("IssueCreator", fields: [createdById], references: [id])
     caseIssues            RepositoryCaseIssue[]
+    // LINK-03 manual traceability references. Never routed through parentId
+    // and never set alongside isRequirement (D-09).
+    outgoingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceSource")
+    incomingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceTarget")
     sessions              Sessions[]
     sessionResults        SessionResults[]
     testRuns              TestRuns[]
