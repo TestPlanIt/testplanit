@@ -1622,14 +1622,14 @@ model RepositoryCaseTag {
 
 // Explicit join model for RepositoryCases <-> Issue (see RepositoryCaseTag).
 model RepositoryCaseIssue {
-    caseId  Int
-    case    RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
-    issueId Int
-    issue   Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    caseId             Int
+    case               RepositoryCases @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    issueId            Int
+    issue              Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
     // D-07: dismissal rides this join's EXISTING create,update,delete policy
     // (TestCaseRepository canAddEdit -- the same people who can link and
     // unlink), so no policy clause changes and no new route are needed.
-    suspectDismissedAt DateTime? @db.Timestamptz(6)
+    suspectDismissedAt DateTime?       @db.Timestamptz(6)
 
     @@id([caseId, issueId])
     @@index([issueId])
@@ -3418,34 +3418,34 @@ model TestRunCaseDataSetSnapshot {
 }
 
 model Issue {
-    id                    Int                   @id @default(autoincrement())
-    name                  String                @length(1)
-    title                 String                @length(1) @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
-    description           String?               @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
-    status                String?               @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
-    priority              String?               @default("medium") @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    id                    Int                         @id @default(autoincrement())
+    name                  String                      @length(1)
+    title                 String                      @length(1) @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    description           String?                     @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    status                String?                     @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    priority              String?                     @default("medium") @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
     externalId            String?
     externalKey           String?
-    externalUrl           String?               @url
+    externalUrl           String?                     @url
     externalStatus        String?
     externalData          Json?
     issueTypeId           String?
     issueTypeName         String?
     issueTypeIconUrl      String?
-    lastSyncedAt          DateTime?             @db.Timestamptz(6)
+    lastSyncedAt          DateTime?                   @db.Timestamptz(6)
     // D-01: plain nullable timestamp, NOT @updatedAt -- SyncService.ts
     // rewrites title/description unconditionally on every poll, so an
     // ORM-managed @updatedAt would mark every synced requirement suspect
     // after every poll. A diff-aware BEFORE UPDATE trigger (see
     // scripts/apply-triggers.ts) sets this column, never the app.
-    contentUpdatedAt      DateTime?             @db.Timestamptz(6)
+    contentUpdatedAt      DateTime?                   @db.Timestamptz(6)
     data                  Json?
     note                  Json?
-    isDeleted             Boolean               @default(false)
-    deletedAt             DateTime?             @db.Timestamptz(6)
-    createdAt             DateTime              @default(now()) @db.Timestamptz(6)
+    isDeleted             Boolean                     @default(false)
+    deletedAt             DateTime?                   @db.Timestamptz(6)
+    createdAt             DateTime                    @default(now()) @db.Timestamptz(6)
     createdById           String
-    createdBy             User                  @relation("IssueCreator", fields: [createdById], references: [id])
+    createdBy             User                        @relation("IssueCreator", fields: [createdById], references: [id])
     caseIssues            RepositoryCaseIssue[]
     // LINK-03 manual traceability references. Never routed through parentId
     // and never set alongside isRequirement (D-09).
@@ -3457,23 +3457,23 @@ model Issue {
     testRunResults        TestRunResults[]
     testRunStepResults    TestRunStepResults[]
     projectId             Int?
-    project               Projects?             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project               Projects?                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
     integrationId         Int?
-    integration           Integration?          @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+    integration           Integration?                @relation(fields: [integrationId], references: [id], onDelete: SetNull)
     milestoneIssues       MilestoneIssue[]
-    parentId              Int?                  @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
-    parent                Issue?                @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
-    children              Issue[]               @relation("IssueParent")
+    parentId              Int?                        @deny('update', isRequirement == true && integrationId != null && requirementDetachedAt == null)
+    parent                Issue?                      @relation("IssueParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children              Issue[]                     @relation("IssueParent")
     attachments           Attachments[]
     // Three orthogonal states: synced+locked (isRequirement true,
     // integrationId set, requirementDetachedAt null — tracker-owned fields
     // locked), detached/local (requirementDetachedAt set — locks lift,
     // integrationId stays non-null for badge/identity), native
     // (integrationId null — never locked).
-    requirementDetachedAt DateTime?             @db.Timestamptz(6)
+    requirementDetachedAt DateTime?                   @db.Timestamptz(6)
     // Set by the classification write path; not derived per read.
-    isRequirement         Boolean               @default(false)
-    currentVersion        Int                   @default(1)
+    isRequirement         Boolean                     @default(false)
+    currentVersion        Int                         @default(1)
 
     @@unique([externalId, integrationId])
     @@index([externalId])
