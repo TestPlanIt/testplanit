@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   fireEvent,
@@ -30,16 +31,28 @@ vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 // Both this panel (`issue.useFindMany`) and LinkedRequirementCasesPanel.tsx
 // (`repositoryCases.useFindMany`, from 25-13) are exercised in this file --
 // the last test renders both to prove bidirectionality, so the mocked
-// client-queries object needs both models.
+// client-queries object needs both models. `repositoryCaseIssue` and
+// `issue.useFindUnique` are COV-05's additions (27-11): the case-side panel
+// reads/writes `repositoryCaseIssue` for dismissal state, and the
+// requirement-side panel (rendered in the bidirectionality test too) reads
+// `issue.useFindUnique` for the requirement's own `contentUpdatedAt`.
 const mockIssueFindMany = vi.fn();
+const mockIssueFindUnique = vi.fn();
 const mockRepositoryCasesFindMany = vi.fn();
+const mockRepositoryCaseIssueFindMany = vi.fn();
+const mockRepositoryCaseIssueUseUpdate = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     issue: {
       useFindMany: (...args: any[]) => mockIssueFindMany(...args),
+      useFindUnique: (...args: any[]) => mockIssueFindUnique(...args),
     },
     repositoryCases: {
       useFindMany: (...args: any[]) => mockRepositoryCasesFindMany(...args),
+    },
+    repositoryCaseIssue: {
+      useFindMany: (...args: any[]) => mockRepositoryCaseIssueFindMany(...args),
+      useUpdate: (...args: any[]) => mockRepositoryCaseIssueUseUpdate(...args),
     },
   }),
 }));
@@ -146,6 +159,52 @@ function setLinkedCases(rows: any[]) {
   });
 }
 
+// COV-05's per-linkage dismissal state (`repositoryCaseIssue.useFindMany`),
+// keyed by issueId on the case-side panel.
+const mockRefetchDismissals = vi.fn();
+function setDismissals(rows: any[]) {
+  mockRepositoryCaseIssueFindMany.mockReturnValue({
+    data: rows,
+    isLoading: false,
+    refetch: mockRefetchDismissals,
+  });
+}
+
+// COV-05's dismiss mutation (`repositoryCaseIssue.useUpdate`).
+const mockDismissMutateAsync = vi.fn();
+function setDismissMutation(overrides: { isPending?: boolean } = {}) {
+  mockRepositoryCaseIssueUseUpdate.mockReturnValue({
+    mutateAsync: mockDismissMutateAsync,
+    isPending: overrides.isPending ?? false,
+  });
+}
+
+// COV-05's one missing case-side value (`useCaseLatestExecution`, a real
+// hook backed by a real fetch to /api/repository-cases/[caseId]/latest-execution)
+// -- controlled through the shared fetch stub below, not through a ZenStack
+// mock, since the hook is hand-written rather than generated.
+let latestExecutionResponse: {
+  caseId: number;
+  lastExecutedAt: string | null;
+} = { caseId: 99, lastExecutedAt: null };
+function setLatestExecution(lastExecutedAt: string | null, caseId = 99) {
+  latestExecutionResponse = { caseId, lastExecutedAt };
+}
+
+// Real useQuery (unmocked at the module-internal level, only useQueryClient
+// is intercepted above) needs a real QueryClientProvider ancestor now that
+// this panel composes useCaseLatestExecution -- mirrors
+// RequirementCoveragePanel.test.tsx's own established convention for a
+// hand-written useQuery hook.
+function renderWithClient(ui: React.ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+  );
+}
+
 describe("LinkedRequirementsPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -153,6 +212,11 @@ describe("LinkedRequirementsPanel", () => {
     capturedPick = null;
     setLinkedRequirements([]);
     setLinkedCases([]);
+    setDismissals([]);
+    setDismissMutation();
+    mockDismissMutateAsync.mockResolvedValue({});
+    mockIssueFindUnique.mockReturnValue({ data: undefined });
+    setLatestExecution(null);
     global.fetch = vi.fn(async (url: string) => {
       if (url.includes("/api/model/Issue/count")) {
         return { ok: true, json: async () => ({ data: 0 }) } as Response;
@@ -165,6 +229,18 @@ describe("LinkedRequirementsPanel", () => {
       }
       if (url.includes("/api/model/RepositoryCases/findMany")) {
         return { ok: true, json: async () => ({ data: [] }) } as Response;
+      }
+      if (url.includes("/latest-execution")) {
+        return {
+          ok: true,
+          json: async () => latestExecutionResponse,
+        } as Response;
+      }
+      if (url.includes("/covering-cases")) {
+        return {
+          ok: true,
+          json: async () => ({ requirementId: 42, cases: [] }),
+        } as Response;
       }
       if (url.includes("/link") || url.includes("/unlink")) {
         return { ok: true, json: async () => ({ id: 1 }) } as Response;
@@ -193,7 +269,7 @@ describe("LinkedRequirementsPanel", () => {
       },
     ]);
 
-    render(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
 
     expect(screen.getByTestId("linked-requirement-name-42")).toHaveTextContent(
       "Login must support SSO"
@@ -207,7 +283,7 @@ describe("LinkedRequirementsPanel", () => {
   });
 
   it("scopes the add-link search to requirement-typed issues only", async () => {
-    render(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
 
     fireEvent.click(screen.getByTestId("case-linked-requirements-add"));
 
@@ -228,7 +304,7 @@ describe("LinkedRequirementsPanel", () => {
   });
 
   it("commits a new link through the same /api/issues/[issueId]/link route, with the requirement as the path param", async () => {
-    render(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
 
     fireEvent.click(screen.getByTestId("case-linked-requirements-add"));
     expect(capturedPick).not.toBeNull();
@@ -274,7 +350,7 @@ describe("LinkedRequirementsPanel", () => {
       },
     ]);
 
-    render(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
 
     fireEvent.click(screen.getByTestId("case-linked-requirement-remove-55"));
     fireEvent.click(
@@ -308,7 +384,7 @@ describe("LinkedRequirementsPanel", () => {
 
     // Side 1: the requirement surface (LinkedRequirementCasesPanel, 25-13)
     // links a test case.
-    const { unmount } = render(
+    const { unmount } = renderWithClient(
       <LinkedRequirementCasesPanel
         projectId="7"
         requirementId={requirementId}
@@ -339,6 +415,9 @@ describe("LinkedRequirementsPanel", () => {
     capturedPick = null;
     setLinkedRequirements([]);
     setLinkedCases([]);
+    setDismissals([]);
+    setDismissMutation();
+    mockIssueFindUnique.mockReturnValue({ data: undefined });
     global.fetch = vi.fn(async (url: string) => {
       if (url.includes("/link") || url.includes("/unlink")) {
         return { ok: true, json: async () => ({ id: 1 }) } as Response;
@@ -348,7 +427,7 @@ describe("LinkedRequirementsPanel", () => {
 
     // Side 2: the case detail page (LinkedRequirementsPanel, this plan)
     // links the SAME requirement to the SAME case.
-    render(<LinkedRequirementsPanel caseId={caseId} projectId={7} />);
+    renderWithClient(<LinkedRequirementsPanel caseId={caseId} projectId={7} />);
     fireEvent.click(screen.getByTestId("case-linked-requirements-add"));
     act(() => {
       capturedPick!({
@@ -379,21 +458,162 @@ describe("LinkedRequirementsPanel", () => {
     );
   });
 
-  // Todo-only scaffold, owner 27-11. Proves COV-05/D-06/D-08: the
+  // Converted from 27-01's todo-only scaffold. Proves COV-05/D-06/D-08: the
   // dismissible suspect flag on the case-side linkage panel.
   describe("COV-05 suspect flag (case side)", () => {
-    it.todo(
-      "renders a suspect badge on a linkage whose requirement was edited after the case's last run"
-    );
-    it.todo("renders no badge when the case has never been executed");
-    it.todo(
-      "renders no badge when the flag was already dismissed and no newer edit followed"
-    );
-    it.todo(
-      "dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair"
-    );
-    it.todo(
-      "does not invalidate the coverage queries when a flag is dismissed"
-    );
+    it("renders a suspect badge on a linkage whose requirement was edited after the case's last run", async () => {
+      setLinkedRequirements([
+        {
+          id: 42,
+          name: "Login must support SSO",
+          isRequirement: true,
+          integrationId: null,
+          requirementDetachedAt: null,
+          projectId: 7,
+          contentUpdatedAt: "2026-01-10T00:00:00.000Z",
+        },
+      ]);
+      setLatestExecution("2026-01-01T00:00:00.000Z");
+
+      renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("case-linked-requirement-suspect-42")
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("renders no badge when the case has never been executed", async () => {
+      setLinkedRequirements([
+        {
+          id: 42,
+          name: "Login must support SSO",
+          isRequirement: true,
+          integrationId: null,
+          requirementDetachedAt: null,
+          projectId: 7,
+          contentUpdatedAt: "2026-01-10T00:00:00.000Z",
+        },
+      ]);
+      setLatestExecution(null);
+
+      renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.some(([url]: [string]) =>
+            url.includes("/latest-execution")
+          )
+        ).toBe(true);
+      });
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("case-linked-requirement-suspect-42")
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("renders no badge when the flag was already dismissed and no newer edit followed", async () => {
+      setLinkedRequirements([
+        {
+          id: 42,
+          name: "Login must support SSO",
+          isRequirement: true,
+          integrationId: null,
+          requirementDetachedAt: null,
+          projectId: 7,
+          contentUpdatedAt: "2026-01-10T00:00:00.000Z",
+        },
+      ]);
+      setLatestExecution("2026-01-01T00:00:00.000Z");
+      setDismissals([
+        { issueId: 42, suspectDismissedAt: "2026-01-10T00:00:00.000Z" },
+      ]);
+
+      renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.some(([url]: [string]) =>
+            url.includes("/latest-execution")
+          )
+        ).toBe(true);
+      });
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("case-linked-requirement-suspect-42")
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair", async () => {
+      setLinkedRequirements([
+        {
+          id: 42,
+          name: "Login must support SSO",
+          isRequirement: true,
+          integrationId: null,
+          requirementDetachedAt: null,
+          projectId: 7,
+          contentUpdatedAt: "2026-01-10T00:00:00.000Z",
+        },
+      ]);
+      setLatestExecution("2026-01-01T00:00:00.000Z");
+
+      renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("case-linked-requirement-suspect-42")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("case-linked-requirement-suspect-42"));
+      fireEvent.click(
+        screen.getByTestId("case-linked-requirement-suspect-confirm-42")
+      );
+
+      await waitFor(() => {
+        expect(mockDismissMutateAsync).toHaveBeenCalledWith({
+          where: { caseId_issueId: { caseId: 99, issueId: 42 } },
+          data: { suspectDismissedAt: expect.any(Date) },
+        });
+      });
+    });
+
+    it("does not invalidate the coverage queries when a flag is dismissed", async () => {
+      setLinkedRequirements([
+        {
+          id: 42,
+          name: "Login must support SSO",
+          isRequirement: true,
+          integrationId: null,
+          requirementDetachedAt: null,
+          projectId: 7,
+          contentUpdatedAt: "2026-01-10T00:00:00.000Z",
+        },
+      ]);
+      setLatestExecution("2026-01-01T00:00:00.000Z");
+
+      renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("case-linked-requirement-suspect-42")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("case-linked-requirement-suspect-42"));
+      fireEvent.click(
+        screen.getByTestId("case-linked-requirement-suspect-confirm-42")
+      );
+
+      await waitFor(() => {
+        expect(mockDismissMutateAsync).toHaveBeenCalled();
+      });
+
+      expect(mockInvalidateQueries).not.toHaveBeenCalled();
+    });
   });
 });
