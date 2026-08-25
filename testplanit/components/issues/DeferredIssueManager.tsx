@@ -32,8 +32,12 @@ interface DeferredIssueManagerProps {
 }
 
 /**
- * DeferredIssueManager - Creates Issue records but marks them for cleanup on cancel
- * This provides immediate UI feedback while allowing cancellation without permanent changes.
+ * DeferredIssueManager - Links Issue records to an entity that doesn't have
+ * an id yet (an unsaved test case, run, session, etc.). An externally picked
+ * issue is upserted into a real Issue shell immediately; an internal pick is
+ * simply tracked, since it already refers to an existing Issue row. Either
+ * way, an Issue shell created here survives even if the surrounding form is
+ * later cancelled -- nothing in this component removes it.
  */
 export function DeferredIssueManager({
   projectId,
@@ -107,6 +111,23 @@ export function DeferredIssueManager({
   };
 
   const handleAddIssue = async (issue: any) => {
+    // Internal pick: `issue.id` is already a real Issue primary key (not a
+    // tracker key), so there's nothing to upsert -- just register it in the
+    // tracked array. Skip silently on a repeat pick rather than duplicating
+    // the id or re-toasting.
+    if (!issue.isExternal) {
+      if (linkedIssueIds.includes(issue.id)) {
+        return;
+      }
+      const updatedIds = [...linkedIssueIds, issue.id];
+      onIssuesChange(updatedIds);
+      void refetch(); // Refresh the display
+      toast.success(
+        `Issue ${issue.externalKey || issue.name} linked successfully`
+      );
+      return;
+    }
+
     if (!issue.isExternal || !session?.user?.id) return;
 
     // console.log("DeferredIssueManager: Creating issue:", {
