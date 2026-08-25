@@ -230,6 +230,24 @@ export default function ProjectsMenu({
       section: "project",
     },
     // Management
+    // Requirements leads the section: it is the upstream artifact the rest of
+    // the pipeline (repository → runs → issues) traces back to, and users in a
+    // requirements-first workflow bounce between it and the repository.
+    // Distinct icon from Issues (defects) keeps the two visually
+    // distinguishable. Gated on the project's own opt-in rather than a
+    // permission: nothing server-side gates on an
+    // ApplicationArea.Requirements today.
+    ...(requirementsEnabled
+      ? [
+          {
+            icon: RequirementsIcon,
+            label: t("common.fields.requirements"),
+            path: "requirements",
+            id: "project-requirements-link",
+            section: "management" as MenuSection,
+          },
+        ]
+      : []),
     {
       icon: RepositoryIcon,
       label: t("navigation.projects.menu.repository"),
@@ -276,21 +294,6 @@ export default function ProjectsMenu({
       id: "project-issues-link",
       section: "management",
     },
-    // Requirements is a new top-level surface, distinct from Issues (defects)
-    // — a different icon keeps them visually distinguishable in the menu.
-    // Gated on the project's own opt-in rather than a permission: nothing
-    // server-side gates on an ApplicationArea.Requirements today.
-    ...(requirementsEnabled
-      ? [
-          {
-            icon: RequirementsIcon,
-            label: t("common.fields.requirements"),
-            path: "requirements",
-            id: "project-requirements-link",
-            section: "management" as MenuSection,
-          },
-        ]
-      : []),
     ...(canSeeReports
       ? [
           {
