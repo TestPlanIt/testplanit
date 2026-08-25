@@ -10,7 +10,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
+import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { recomputeRequirementClassification } from "~/lib/services/requirementHierarchy";
+import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -293,5 +295,211 @@ describeIntegration("requirements-config recompute (live DB)", () => {
     // survived a de-classification that actually happened, not one the
     // recompute skipped entirely.
     expect(row?.isRequirement).toBe(false);
+  });
+});
+
+// LINK-03 reference shells never enter the tree (owner 27-08). A
+// reference's external branch (plan 27-07's POST route) upserts its
+// referenced-issue shell through upsertLinkedIssueShell -- the ONE
+// reviewed guarded Issue-write path -- which never sets issueTypeId or
+// isRequirement on either its create or update payload (confirmed by a
+// direct grep of the route file elsewhere in this plan). This block proves
+// that omission survives a REAL requirements-config recompute: the classify
+// statement above keys on issueTypeId alone, so a shell with no issueTypeId
+// can never match it. A control row seeded WITH the matching issueTypeId
+// proves the recompute call actually ran, rather than being a no-op that
+// would make the shell's exclusion pass for the wrong reason.
+//
+// A DEDICATED raw client, independent of the shared module-level `db`
+// above: the outer describe block's own `afterAll` calls `db.$disconnect()`
+// on that shared pool, and top-level `describe` blocks in this file run
+// sequentially — by the time THIS block's `beforeAll` runs, the outer
+// block's `afterAll` has already destroyed it.
+const linkDb = createRawDbClient();
+
+describeIntegration("LINK-03 reference shells never enter the tree", () => {
+  const LINK03_TYPE = "40001";
+
+  let adminUserId: string;
+  let projectId: number;
+  let integrationId: number;
+  let shellIssueId: number;
+  let controlIssueId: number;
+
+  const allIssueIds: number[] = [];
+
+  let shellBefore: { isRequirement: boolean; issueTypeId: string | null };
+  let controlBefore: { isRequirement: boolean; issueTypeId: string | null };
+  let shellAfter: { isRequirement: boolean; issueTypeId: string | null };
+  let controlAfter: { isRequirement: boolean; issueTypeId: string | null };
+  let treeIdsBefore: number[];
+  let treeIdsAfter: number[];
+  let recomputeResult: { classified: number; declassified: number };
+
+  beforeAll(async () => {
+    const [{ current_database: dbName }] = await linkDb.$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
+    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+      throw new Error(
+        `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+      );
+    }
+
+    const role = await linkDb.roles.findFirst({
+      where: { isDefault: true, isDeleted: false },
+    });
+    if (!role) throw new Error("Test prerequisite: no default role row");
+
+    const admin = await linkDb.user.create({
+      data: {
+        email: `${STAMP}-link03-admin@example.com`,
+        name: `LINK-03 Tree Recompute Admin ${STAMP}`,
+        authMethod: "INTERNAL",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+        roleId: role.id,
+        password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+      },
+      select: { id: true },
+    });
+    adminUserId = admin.id;
+
+    const project = await linkDb.projects.create({
+      data: { name: `${STAMP}-link03-project`, createdBy: adminUserId },
+      select: { id: true },
+    });
+    projectId = project.id;
+
+    const integration = await linkDb.integration.create({
+      data: {
+        name: `${STAMP}-link03-jira`,
+        provider: "JIRA",
+        authType: "OAUTH2",
+        status: "ACTIVE",
+        credentials: {},
+        settings: {},
+      },
+      select: { id: true },
+    });
+    integrationId = integration.id;
+
+    // The shell, created through the EXACT function the references POST
+    // route's external branch calls — never a hand-rolled issue.create.
+    // Its create payload mirrors the route's own trackerFields
+    // (name/title/description/externalId/integrationId/projectId/
+    // createdById), which carries no issueTypeId.
+    const shell = await upsertLinkedIssueShell(linkDb, {
+      externalId: `${STAMP}-link03-shell-ext`,
+      integrationId,
+      create: {
+        name: `${STAMP}-link03-shell`,
+        title: `${STAMP}-link03-shell`,
+        description: "",
+        externalId: `${STAMP}-link03-shell-ext`,
+        integrationId,
+        projectId,
+        createdById: adminUserId,
+      },
+      update: {
+        title: `${STAMP}-link03-shell-updated`,
+      },
+      select: { id: true },
+    });
+    shellIssueId = shell.id;
+    allIssueIds.push(shellIssueId);
+
+    // Control row: an ordinary Issue seeded WITH the exact type id the
+    // recompute below adds — the load-bearing half. Without it, a
+    // recompute that silently did nothing would make the shell's
+    // exclusion below pass for the wrong reason.
+    const control = await linkDb.issue.create({
+      data: {
+        name: `${STAMP}-link03-control`,
+        title: `${STAMP}-link03-control`,
+        createdById: adminUserId,
+        projectId,
+        issueTypeId: LINK03_TYPE,
+        isRequirement: false,
+      },
+      select: { id: true },
+    });
+    controlIssueId = control.id;
+    allIssueIds.push(controlIssueId);
+
+    // Raw select, read back BEFORE the recompute — a client-side default
+    // must never be able to satisfy the assertions below.
+    async function readBack(id: number) {
+      const rows = await linkDb.$queryRaw<
+        Array<{ isRequirement: boolean; issueTypeId: string | null }>
+      >`SELECT "isRequirement", "issueTypeId" FROM "Issue" WHERE id = ${id}`;
+      return rows[0];
+    }
+    shellBefore = await readBack(shellIssueId);
+    controlBefore = await readBack(controlIssueId);
+
+    // The exact query the requirements list uses — a findMany over Issue
+    // for the project spreading REQUIREMENT_SCOPE_WHERE and excluding
+    // soft-deleted rows.
+    async function treeIds() {
+      const rows = await linkDb.issue.findMany({
+        where: { projectId, isDeleted: false, ...REQUIREMENT_SCOPE_WHERE },
+        select: { id: true },
+      });
+      return rows.map((row) => row.id);
+    }
+    treeIdsBefore = await treeIds();
+
+    recomputeResult = await recomputeRequirementClassification(
+      projectId,
+      [LINK03_TYPE],
+      []
+    );
+
+    shellAfter = await readBack(shellIssueId);
+    controlAfter = await readBack(controlIssueId);
+    treeIdsAfter = await treeIds();
+  });
+
+  afterAll(async () => {
+    await linkDb.issue.deleteMany({ where: { id: { in: allIssueIds } } });
+    await linkDb.integration.delete({ where: { id: integrationId } });
+    await linkDb.projects.delete({ where: { id: projectId } });
+    await linkDb.user.delete({ where: { id: adminUserId } });
+    await linkDb.$disconnect();
+  });
+
+  it("a reference-created shell has isRequirement false and issueTypeId NULL immediately after attach", () => {
+    expect(shellBefore.isRequirement).toBe(false);
+    expect(shellBefore.issueTypeId).toBeNull();
+  });
+
+  it("running the recompute with the referenced tracker issue's type id in the added list classifies the control row while leaving the reference shell unclassified in the same call", () => {
+    // Confirms the "classify" flip below is a real state change, not a
+    // no-op on a row that was already true.
+    expect(controlBefore.isRequirement).toBe(false);
+    // Only the control row's type matches — exactly one row classified,
+    // proving the call was real rather than a no-op that happened to
+    // touch zero rows.
+    expect(recomputeResult.classified).toBe(1);
+    expect(
+      shellAfter.isRequirement,
+      "a reference shell with no issueTypeId must never be swept into the tree by a project-wide recompute"
+    ).toBe(false);
+    expect(shellAfter.issueTypeId).toBeNull();
+    expect(
+      controlAfter.isRequirement,
+      "the control row (seeded WITH the matching issueTypeId) must be classified by the same recompute call — otherwise the shell's exclusion above would be unprovable"
+    ).toBe(true);
+  });
+
+  it("a query spreading REQUIREMENT_SCOPE_WHERE never returns the shell, before or after the recompute", () => {
+    expect(treeIdsBefore).not.toContain(shellIssueId);
+    expect(treeIdsAfter).not.toContain(shellIssueId);
+    // The control row DOES appear post-recompute — confirms this project
+    // actually changed, not merely one where nothing was ever eligible to
+    // appear.
+    expect(treeIdsBefore).not.toContain(controlIssueId);
+    expect(treeIdsAfter).toContain(controlIssueId);
   });
 });
