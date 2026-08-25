@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -152,6 +153,7 @@ const {
   mockCreateAttachmentMutateAsync,
   mockUpdateAttachmentMutateAsync,
   mockRepositoryCasesFindMany,
+  mockRepositoryCaseIssueFindMany,
   mockRequirementIssueReferenceFindMany,
 } = vi.hoisted(() => ({
   mockUseFindFirst: vi.fn(),
@@ -160,6 +162,7 @@ const {
   mockCreateAttachmentMutateAsync: vi.fn(),
   mockUpdateAttachmentMutateAsync: vi.fn(),
   mockRepositoryCasesFindMany: vi.fn(),
+  mockRepositoryCaseIssueFindMany: vi.fn(),
   mockRequirementIssueReferenceFindMany: vi.fn(),
 }));
 
@@ -168,6 +171,10 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     issue: {
       useFindFirst: mockUseFindFirst,
       useUpdate: () => ({ mutateAsync: mockUpdateMutateAsync }),
+      // COV-05's requirement-side content timestamp, read by
+      // LinkedRequirementCasesPanel (27-11) -- not exercised by this file's
+      // own assertions, only needed so the panel renders without crashing.
+      useFindUnique: () => ({ data: undefined }),
     },
     attachments: {
       useFindMany: mockAttachmentsFindMany,
@@ -180,6 +187,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // below).
     repositoryCases: {
       useFindMany: mockRepositoryCasesFindMany,
+    },
+    // COV-05's requirement-side suspect-flag inputs, mounted inside
+    // LinkedRequirementCasesPanel (27-11) -- again only needed here to
+    // render without crashing; the flag's own behavior is
+    // LinkedRequirementCasesPanel.test.tsx's job.
+    repositoryCaseIssue: {
+      useFindMany: mockRepositoryCaseIssueFindMany,
+      useUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
     },
     // RequirementReferencesPanel's own read -- its full behavior is covered
     // by RequirementReferencesPanel.test.tsx; this file only needs it to
@@ -233,6 +248,21 @@ function setRequirement(row: any) {
   mockUseFindFirst.mockReturnValue({ data: row, isLoading: false });
 }
 
+// COV-05 (27-11) gave LinkedRequirementCasesPanel -- mounted for real in
+// every test below -- its own real useRequirementCoveringCases() call
+// (useQueryClient is mocked above, but that only intercepts the PUBLIC
+// export; useQuery's own module-internal reference to it still needs a
+// real QueryClientProvider ancestor). retry: false keeps a stubbed-away
+// fetch failure from retrying and slowing teardown.
+function renderPanel(ui: React.ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+  );
+}
+
 function getFieldDisabledMap(): Record<string, boolean> {
   return {
     title: (screen.getByTestId("requirement-field-title") as HTMLInputElement)
@@ -260,17 +290,35 @@ describe("RequirementDetailPanel", () => {
       isLoading: false,
       refetch: vi.fn(),
     });
+    mockRepositoryCaseIssueFindMany.mockReturnValue({
+      data: [],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
     mockRequirementIssueReferenceFindMany.mockReturnValue({
       data: [],
       isLoading: false,
       refetch: vi.fn(),
     });
-    global.fetch = vi.fn();
+    // LinkedRequirementCasesPanel's useRequirementCoveringCases (27-11) now
+    // fires a real fetch to the covering-cases route on every render --
+    // answered here so it resolves cleanly instead of rejecting; every
+    // other path this file exercises still goes through a mocked ZenStack
+    // hook or mocked mutateAsync, never this fetch.
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes("/covering-cases")) {
+        return {
+          ok: true,
+          json: async () => ({ requirementId: 0, cases: [] }),
+        } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    }) as any;
   });
 
   it("renders the provenance badge for the selected requirement", () => {
     setRequirement(nativeRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
 
     const badge = screen.getByTestId("requirement-provenance-badge");
     expect(badge).toHaveAttribute("data-requirement-id", "1");
@@ -278,7 +326,7 @@ describe("RequirementDetailPanel", () => {
 
   it("renders the Tiptap editor bound to Issue.note", () => {
     setRequirement(lockedRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
 
     const editor = screen.getByTestId("tiptap-note");
     expect(editor).toBeInTheDocument();
@@ -292,7 +340,7 @@ describe("RequirementDetailPanel", () => {
       note: JSON.stringify(sampleDoc),
     };
     setRequirement(legacyRow);
-    const { unmount } = render(
+    const { unmount } = renderPanel(
       <RequirementDetailPanel projectId="7" requirementId={4} />
     );
     const legacyContent = screen
@@ -302,7 +350,7 @@ describe("RequirementDetailPanel", () => {
 
     const structuredRow = { ...lockedRequirement, id: 5, note: sampleDoc };
     setRequirement(structuredRow);
-    render(<RequirementDetailPanel projectId="7" requirementId={5} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={5} />);
     const structuredContent = screen
       .getByTestId("tiptap-note")
       .getAttribute("data-content");
@@ -312,7 +360,7 @@ describe("RequirementDetailPanel", () => {
 
   it("keeps the note editable on a synced, non-detached requirement", () => {
     setRequirement(lockedRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
 
     expect(screen.getByTestId("tiptap-note")).toHaveAttribute(
       "data-readonly",
@@ -332,7 +380,7 @@ describe("RequirementDetailPanel", () => {
 
   it("disables the locked fields on a synced, non-detached requirement", () => {
     setRequirement(lockedRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
     fireEvent.click(screen.getByTestId("requirement-detail-edit"));
 
     const disabledMap = getFieldDisabledMap();
@@ -341,7 +389,7 @@ describe("RequirementDetailPanel", () => {
 
   it("enables the same fields on a detached requirement", () => {
     setRequirement(detachedRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={3} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);
     fireEvent.click(screen.getByTestId("requirement-detail-edit"));
 
     const disabledMap = getFieldDisabledMap();
@@ -350,7 +398,7 @@ describe("RequirementDetailPanel", () => {
 
   it("enables the same fields on a native requirement, identically to a detached one", () => {
     setRequirement(detachedRequirement);
-    const { unmount } = render(
+    const { unmount } = renderPanel(
       <RequirementDetailPanel projectId="7" requirementId={3} />
     );
     fireEvent.click(screen.getByTestId("requirement-detail-edit"));
@@ -358,7 +406,7 @@ describe("RequirementDetailPanel", () => {
     unmount();
 
     setRequirement(nativeRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
     fireEvent.click(screen.getByTestId("requirement-detail-edit"));
     const nativeMap = getFieldDisabledMap();
 
@@ -372,7 +420,7 @@ describe("RequirementDetailPanel", () => {
 
   it("saves the note through the ZenStack issue update hook, not a bespoke route", async () => {
     setRequirement(lockedRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
     fireEvent.click(screen.getByTestId("requirement-detail-edit"));
 
     const saveButton = screen.getByTestId(
@@ -401,12 +449,20 @@ describe("RequirementDetailPanel", () => {
         },
       });
     });
-    expect(global.fetch).not.toHaveBeenCalled();
+    // The note save itself must never reach a REST route -- narrowed to
+    // "no /api/issues call" (27-11: the sibling LinkedRequirementCasesPanel
+    // now legitimately fetches its own covering-cases route on every
+    // render, so a blanket "fetch was never called" assertion no longer
+    // isolates the note-save path specifically).
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining("/api/issues"),
+      expect.anything()
+    );
   });
 
   it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
     setRequirement(lockedRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
 
     fireEvent.click(
       screen.getByTestId("requirement-attachments-upload-simulate-select")
@@ -462,7 +518,7 @@ describe("RequirementDetailPanel", () => {
       isLoading: false,
     });
 
-    render(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
 
     expect(screen.getByText("existing-spec.pdf")).toBeInTheDocument();
 
@@ -483,7 +539,7 @@ describe("RequirementDetailPanel", () => {
 describe("RequirementDetailPanel (Phase 26 coverage additions)", () => {
   it("mounts the coverage panel above the linked-cases panel", () => {
     setRequirement(nativeRequirement);
-    render(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
 
     const coveragePanel = screen.getByTestId("requirement-coverage-panel");
     const linkedCasesPanel = screen.getByTestId("requirement-linked-cases");
