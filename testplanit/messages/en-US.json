@@ -6785,7 +6785,9 @@
       "attachFailed": "Failed to attach reference.",
       "removeConfirm": "Are you sure you want to remove this reference?",
       "removeSuccess": "Reference removed.",
-      "removeFailed": "Failed to remove reference."
+      "removeFailed": "Failed to remove reference.",
+      "columnReference": "Reference",
+      "columnStatus": "Status"
     },
     "coverage": {
       "title": "Coverage",

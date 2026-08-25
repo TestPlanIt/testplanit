@@ -39,6 +39,7 @@ import {
   RequirementProvenanceBadge,
   type RequirementProvenanceBadgeRow,
 } from "./RequirementProvenanceBadge";
+import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
 
 interface RequirementDetailPanelProps {
   projectId: string;
@@ -383,6 +384,13 @@ export default function RequirementDetailPanel({
         requirementId={requirement.id}
       />
       <LinkedRequirementCasesPanel
+        projectId={projectId}
+        requirementId={requirement.id}
+      />
+      {/* LINK-03's References card, last in the stack (D-13) -- deliberately
+          NOT gated on `locked`; see RequirementReferencesPanel.tsx's own
+          header comment for why (D-11). */}
+      <RequirementReferencesPanel
         projectId={projectId}
         requirementId={requirement.id}
       />

@@ -152,6 +152,7 @@ const {
   mockCreateAttachmentMutateAsync,
   mockUpdateAttachmentMutateAsync,
   mockRepositoryCasesFindMany,
+  mockRequirementIssueReferenceFindMany,
 } = vi.hoisted(() => ({
   mockUseFindFirst: vi.fn(),
   mockUpdateMutateAsync: vi.fn(),
@@ -159,6 +160,7 @@ const {
   mockCreateAttachmentMutateAsync: vi.fn(),
   mockUpdateAttachmentMutateAsync: vi.fn(),
   mockRepositoryCasesFindMany: vi.fn(),
+  mockRequirementIssueReferenceFindMany: vi.fn(),
 }));
 
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
@@ -178,6 +180,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // below).
     repositoryCases: {
       useFindMany: mockRepositoryCasesFindMany,
+    },
+    // RequirementReferencesPanel's own read -- its full behavior is covered
+    // by RequirementReferencesPanel.test.tsx; this file only needs it to
+    // render without crashing (empty list, matching every fixture below).
+    requirementIssueReference: {
+      useFindMany: mockRequirementIssueReferenceFindMany,
     },
   }),
 }));
@@ -248,6 +256,11 @@ describe("RequirementDetailPanel", () => {
       "https://storage.example.com/spec.pdf"
     );
     mockRepositoryCasesFindMany.mockReturnValue({
+      data: [],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    mockRequirementIssueReferenceFindMany.mockReturnValue({
       data: [],
       isLoading: false,
       refetch: vi.fn(),
