@@ -11,6 +11,7 @@ import {
   SquarePenIcon,
   Trash2Icon,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDrag } from "react-dnd";
@@ -168,6 +169,16 @@ export function useRequirementsListColumns({
   markDragActive,
   clearDragActive,
 }: UseRequirementsListColumnsArgs): ColumnDef<RequirementRow>[] {
+  // "Created At" is an instant, so it renders date AND time in the viewer's
+  // preferred formats (operator UAT) -- the same session-preference recipe
+  // datasets-list.tsx uses; "PPp" is the no-preference datetime fallback the
+  // Issues list already uses for lastSyncedAt.
+  const { data: session } = useSession();
+  const preferredDateTimeFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : "PPp";
+  const preferredTimezone = session?.user?.preferences?.timezone || undefined;
+
   const {
     columnName: tColumnName,
     columnStatus: tColumnStatus,
@@ -394,11 +405,11 @@ export function useRequirementsListColumns({
             className="whitespace-nowrap text-sm"
             data-testid={`requirement-createdAt-cell-${row.original.id}`}
           >
-            {/* No `formatString`/`timezone` override -- the same bare call
-                `RequirementCoveragePanel.tsx` already makes in this same
-                folder for `lastExecutedAt`: date-only via the default
-                "MM-dd-yyyy" format, locale-aware through `useLocale()`. */}
-            <DateFormatter date={row.original.createdAt} />
+            <DateFormatter
+              date={row.original.createdAt}
+              formatString={preferredDateTimeFormat}
+              timezone={preferredTimezone}
+            />
           </div>
         ),
       },
@@ -470,6 +481,8 @@ export function useRequirementsListColumns({
     onDetached,
     markDragActive,
     clearDragActive,
+    preferredDateTimeFormat,
+    preferredTimezone,
   ]);
 }
 

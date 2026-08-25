@@ -36,8 +36,9 @@ vi.mock("next-intl", () => ({
 // DateFormatter's own dependency (gap closure 26.2-17's createdAt cell) --
 // mirrors RequirementCoveragePanel.test.tsx's own convention for this exact
 // primitive in this same folder.
+let mockSessionData: any = null;
 vi.mock("next-auth/react", () => ({
-  useSession: () => ({ data: null }),
+  useSession: () => ({ data: mockSessionData }),
 }));
 
 // CasesListDisplay itself is NOT mocked (its trigger badge, count-hiding-at-
@@ -627,24 +628,44 @@ describe("createdAt column (gap closure 26.2-17)", () => {
   it("accessorFn reads the row's own createdAt timestamp", () => {
     const createdAt = new Date("2026-01-15T12:00:00.000Z");
     const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
-    const accessorFn = (
-      result.current.find((c) => c.id === "createdAt") as any
-    ).accessorFn;
+    const accessorFn = (result.current.find((c) => c.id === "createdAt") as any)
+      .accessorFn;
 
     expect(accessorFn(makeRow({ id: 40, createdAt }))).toBe(createdAt);
   });
 
-  it("renders a locale-formatted date, never the raw ISO string, in the DOM", () => {
+  it("renders a date AND time, never the raw ISO string, in the DOM", () => {
+    // "Created At" is an instant -- with no stored preference the cell falls
+    // back to date-fns "PPp" (e.g. "Jan 15, 2026, 6:00 AM"), matching the
+    // Issues list's lastSyncedAt convention. Exact rendering is
+    // DateFormatter's own tested contract; this proves the cell wires a
+    // DATETIME format in rather than ever printing the raw ISO string.
+    mockSessionData = null;
     const isoDate = "2026-01-15T12:00:00.000Z";
     renderColumnCell("createdAt", makeRow({ id: 41, createdAt: isoDate }));
 
     const cell = screen.getByTestId("requirement-createdAt-cell-41");
-    // Date-only, no time component (DateFormatter's default "MM-dd-yyyy") --
-    // exact day/timezone rendering is DateFormatter's own tested contract
-    // (DateFormatter.test.tsx); this only proves the cell wires it in rather
-    // than ever printing the raw ISO string.
-    expect(cell.textContent).toMatch(/^\d{2}-\d{2}-\d{4}$/);
+    expect(cell.textContent).toMatch(/\d{4}/); // a year
+    expect(cell.textContent).toMatch(/\d{1,2}:\d{2}/); // a time component
     expect(cell.textContent).not.toContain(isoDate);
+  });
+
+  it("honors the viewer's preferred date and time formats from session preferences", () => {
+    mockSessionData = {
+      user: {
+        preferences: {
+          dateFormat: "dd.MM.yyyy",
+          timeFormat: "HH:mm",
+          timezone: "Etc/UTC",
+        },
+      },
+    };
+    const isoDate = "2026-01-15T12:00:00.000Z";
+    renderColumnCell("createdAt", makeRow({ id: 43, createdAt: isoDate }));
+
+    const cell = screen.getByTestId("requirement-createdAt-cell-43");
+    expect(cell.textContent).toBe("15.01.2026 12:00");
+    mockSessionData = null;
   });
 
   it("renders nothing for a null createdAt rather than throwing", () => {
