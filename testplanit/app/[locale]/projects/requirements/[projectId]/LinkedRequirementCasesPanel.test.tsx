@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   fireEvent,
@@ -27,11 +28,24 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 
+// `issue.useFindUnique` and `repositoryCaseIssue.*` are COV-05's additions
+// (27-11): the requirement's own contentUpdatedAt and the per-linkage
+// dismissal state/write.
 const mockRepositoryCasesFindMany = vi.fn();
+const mockIssueFindUnique = vi.fn();
+const mockRepositoryCaseIssueFindMany = vi.fn();
+const mockRepositoryCaseIssueUseUpdate = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     repositoryCases: {
       useFindMany: (...args: any[]) => mockRepositoryCasesFindMany(...args),
+    },
+    issue: {
+      useFindUnique: (...args: any[]) => mockIssueFindUnique(...args),
+    },
+    repositoryCaseIssue: {
+      useFindMany: (...args: any[]) => mockRepositoryCaseIssueFindMany(...args),
+      useUpdate: (...args: any[]) => mockRepositoryCaseIssueUseUpdate(...args),
     },
   }),
 }));
@@ -119,18 +133,93 @@ function setLinkedCases(rows: any[]) {
   });
 }
 
+// COV-05's requirement-side content timestamp (`issue.useFindUnique`).
+function setRequirementContentUpdatedAt(contentUpdatedAt: string | null) {
+  mockIssueFindUnique.mockReturnValue({ data: { contentUpdatedAt } });
+}
+
+// COV-05's per-linkage dismissal state (`repositoryCaseIssue.useFindMany`),
+// keyed by caseId on the requirement-side panel.
+const mockRefetchDismissals = vi.fn();
+function setDismissals(rows: any[]) {
+  mockRepositoryCaseIssueFindMany.mockReturnValue({
+    data: rows,
+    isLoading: false,
+    refetch: mockRefetchDismissals,
+  });
+}
+
+// COV-05's dismiss mutation (`repositoryCaseIssue.useUpdate`).
+const mockDismissMutateAsync = vi.fn();
+function setDismissMutation(overrides: { isPending?: boolean } = {}) {
+  mockRepositoryCaseIssueUseUpdate.mockReturnValue({
+    mutateAsync: mockDismissMutateAsync,
+    isPending: overrides.isPending ?? false,
+  });
+}
+
+// COV-05's covering-cases reuse (`useRequirementCoveringCases`, a real hook
+// backed by a real fetch to /api/projects/[projectId]/requirements/[issueId]/covering-cases)
+// -- controlled through the shared fetch stub below, not through a
+// ZenStack mock, since RequirementCoveragePanel.tsx already mounts the
+// identical hook call on this same page (a cache hit in production, and
+// here simply a second real fetch against the same stub).
+let coveringCasesResponse: {
+  requirementId: number;
+  cases: Array<{
+    caseId: number;
+    lastExecutedAt: string | null;
+    direct: boolean;
+  }>;
+} = { requirementId: 42, cases: [] };
+function setCoveringCases(
+  cases: Array<{
+    caseId: number;
+    lastExecutedAt: string | null;
+    direct: boolean;
+  }>,
+  requirementId = 42
+) {
+  coveringCasesResponse = { requirementId, cases };
+}
+
+// Real useQuery (unmocked at the module-internal level, only useQueryClient
+// is intercepted above) needs a real QueryClientProvider ancestor now that
+// this panel composes useRequirementCoveringCases -- mirrors
+// RequirementCoveragePanel.test.tsx's own established convention for a
+// hand-written useQuery hook.
+function renderWithClient(ui: React.ReactElement) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+  );
+}
+
 describe("LinkedRequirementCasesPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedFetchOptions = null;
     capturedPick = null;
     setLinkedCases([]);
+    setRequirementContentUpdatedAt(null);
+    setDismissals([]);
+    setDismissMutation();
+    mockDismissMutateAsync.mockResolvedValue({});
+    setCoveringCases([]);
     global.fetch = vi.fn(async (url: string) => {
       if (url.includes("/api/model/RepositoryCases/count")) {
         return { ok: true, json: async () => ({ data: 0 }) } as Response;
       }
       if (url.includes("/api/model/RepositoryCases/findMany")) {
         return { ok: true, json: async () => ({ data: [] }) } as Response;
+      }
+      if (url.includes("/covering-cases")) {
+        return {
+          ok: true,
+          json: async () => coveringCasesResponse,
+        } as Response;
       }
       if (url.includes("/link") || url.includes("/unlink")) {
         return { ok: true, json: async () => ({ id: 1 }) } as Response;
@@ -159,7 +248,9 @@ describe("LinkedRequirementCasesPanel", () => {
       },
     ]);
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     expect(screen.getByTestId("case-name-10")).toHaveTextContent("Login works");
     expect(screen.getByTestId("case-name-11")).toHaveTextContent(
@@ -179,7 +270,9 @@ describe("LinkedRequirementCasesPanel", () => {
       },
     ]);
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-cases-add"));
 
@@ -200,7 +293,9 @@ describe("LinkedRequirementCasesPanel", () => {
   });
 
   it("commits a new link through the existing /api/issues/[issueId]/link route", async () => {
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-cases-add"));
     expect(capturedPick).not.toBeNull();
@@ -241,7 +336,9 @@ describe("LinkedRequirementCasesPanel", () => {
       },
     ]);
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-case-remove-55"));
     fireEvent.click(
@@ -274,7 +371,9 @@ describe("LinkedRequirementCasesPanel", () => {
     ]);
     const confirmSpy = vi.spyOn(window, "confirm");
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-case-remove-55"));
     fireEvent.click(
@@ -297,7 +396,9 @@ describe("LinkedRequirementCasesPanel", () => {
     // isRequirementLocked, so the same add-link flow that works for any
     // requirement id also completes for one that represents a synced,
     // locked row. There is nothing here to disable.
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={999} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={999} />
+    );
 
     const addButton = screen.getByTestId(
       "requirement-linked-cases-add"
@@ -325,6 +426,27 @@ describe("LinkedRequirementCasesPanel", () => {
 });
 
 describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedFetchOptions = null;
+    capturedPick = null;
+    setLinkedCases([]);
+    setRequirementContentUpdatedAt(null);
+    setDismissals([]);
+    setDismissMutation();
+    mockDismissMutateAsync.mockResolvedValue({});
+    setCoveringCases([]);
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes("/covering-cases")) {
+        return {
+          ok: true,
+          json: async () => coveringCasesResponse,
+        } as Response;
+      }
+      return { ok: true, json: async () => ({ data: [] }) } as Response;
+    }) as any;
+  });
+
   it("links a cross-project row's project badge to the owning project", () => {
     setLinkedCases([
       {
@@ -339,7 +461,9 @@ describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
 
     // Panel is mounted for project 7's requirement; the row's case lives
     // in project 9.
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     const badge = screen.getByTestId("project-name");
     expect(badge.tagName).toBe("A");
@@ -361,7 +485,9 @@ describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
       },
     ]);
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     const badge = screen.getByTestId("project-name");
     expect(badge.tagName).toBe("A");
@@ -386,12 +512,23 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
     capturedFetchOptions = null;
     capturedPick = null;
     setLinkedCases([]);
+    setRequirementContentUpdatedAt(null);
+    setDismissals([]);
+    setDismissMutation();
+    mockDismissMutateAsync.mockResolvedValue({});
+    setCoveringCases([]);
     global.fetch = vi.fn(async (url: string) => {
       if (url.includes("/api/model/RepositoryCases/count")) {
         return { ok: true, json: async () => ({ data: 0 }) } as Response;
       }
       if (url.includes("/api/model/RepositoryCases/findMany")) {
         return { ok: true, json: async () => ({ data: [] }) } as Response;
+      }
+      if (url.includes("/covering-cases")) {
+        return {
+          ok: true,
+          json: async () => coveringCasesResponse,
+        } as Response;
       }
       if (url.includes("/link") || url.includes("/unlink")) {
         return { ok: true, json: async () => ({ id: 1 }) } as Response;
@@ -410,7 +547,9 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
   }
 
   it("invalidates the coverage rollup and the covering-cases drill-down after a link", async () => {
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-cases-add"));
     act(() => {
@@ -466,7 +605,9 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
       },
     ]);
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-case-remove-55"));
     fireEvent.click(
@@ -508,10 +649,18 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
           json: async () => ({ error: "Failed to link test case." }),
         } as Response;
       }
+      if (url.includes("/covering-cases")) {
+        return {
+          ok: true,
+          json: async () => coveringCasesResponse,
+        } as Response;
+      }
       return { ok: true, json: async () => ({}) } as Response;
     }) as any;
 
-    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
 
     fireEvent.click(screen.getByTestId("requirement-linked-cases-add"));
     act(() => {
@@ -536,19 +685,209 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
     ).toBe(false);
   });
 
-  // Todo-only scaffold, owner 27-11. Proves COV-05/D-06/D-08: the
+  // Converted from 27-01's todo-only scaffold. Proves COV-05/D-06/D-08: the
   // dismissible suspect flag on the requirement-side linkage panel.
   describe("COV-05 suspect flag (requirement side)", () => {
-    it.todo(
-      "renders a suspect badge on a directly linked case whose last run predates the requirement's content edit"
-    );
-    it.todo("renders no badge for an inherited (non-direct) covering case");
-    it.todo("renders no badge when the case has never been executed");
-    it.todo(
-      "dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair"
-    );
-    it.todo(
-      "does not invalidate the coverage queries when a flag is dismissed"
-    );
+    it("renders a suspect badge on a directly linked case whose last run predates the requirement's content edit", async () => {
+      setLinkedCases([
+        {
+          id: 10,
+          name: "Login works",
+          source: "MANUAL",
+          isDeleted: false,
+          projectId: 7,
+          project: { name: "Current Project", iconUrl: null },
+        },
+      ]);
+      setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
+      setCoveringCases([
+        {
+          caseId: 10,
+          lastExecutedAt: "2026-01-01T00:00:00.000Z",
+          direct: true,
+        },
+      ]);
+
+      renderWithClient(
+        <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-linked-case-suspect-10")
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("renders no badge for an inherited (non-direct) covering case", async () => {
+      setLinkedCases([
+        {
+          id: 10,
+          name: "Login works",
+          source: "MANUAL",
+          isDeleted: false,
+          projectId: 7,
+          project: { name: "Current Project", iconUrl: null },
+        },
+      ]);
+      setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
+      // Reported by the covering-cases hook, but NOT direct -- this panel
+      // only lists and only flags direct links, since only a direct link
+      // has a RepositoryCaseIssue row to dismiss a flag on.
+      setCoveringCases([
+        {
+          caseId: 10,
+          lastExecutedAt: "2026-01-01T00:00:00.000Z",
+          direct: false,
+        },
+      ]);
+
+      renderWithClient(
+        <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+      );
+
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.some(([url]: [string]) =>
+            url.includes("/covering-cases")
+          )
+        ).toBe(true);
+      });
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-linked-case-suspect-10")
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("renders no badge when the case has never been executed", async () => {
+      setLinkedCases([
+        {
+          id: 10,
+          name: "Login works",
+          source: "MANUAL",
+          isDeleted: false,
+          projectId: 7,
+          project: { name: "Current Project", iconUrl: null },
+        },
+      ]);
+      setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
+      setCoveringCases([{ caseId: 10, lastExecutedAt: null, direct: true }]);
+
+      renderWithClient(
+        <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+      );
+
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.some(([url]: [string]) =>
+            url.includes("/covering-cases")
+          )
+        ).toBe(true);
+      });
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-linked-case-suspect-10")
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair", async () => {
+      setLinkedCases([
+        {
+          id: 10,
+          name: "Login works",
+          source: "MANUAL",
+          isDeleted: false,
+          projectId: 7,
+          project: { name: "Current Project", iconUrl: null },
+        },
+      ]);
+      setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
+      setCoveringCases([
+        {
+          caseId: 10,
+          lastExecutedAt: "2026-01-01T00:00:00.000Z",
+          direct: true,
+        },
+      ]);
+
+      renderWithClient(
+        <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-linked-case-suspect-10")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-linked-case-suspect-10"));
+      fireEvent.click(
+        screen.getByTestId("requirement-linked-case-suspect-confirm-10")
+      );
+
+      await waitFor(() => {
+        // The id order is the whole point of this assertion -- inverted
+        // relative to the case-side panel, since here `row.id` is the
+        // caseId and `requirementId` is the issueId.
+        expect(mockDismissMutateAsync).toHaveBeenCalledWith({
+          where: { caseId_issueId: { caseId: 10, issueId: 42 } },
+          data: { suspectDismissedAt: expect.any(Date) },
+        });
+      });
+    });
+
+    it("does not invalidate the coverage queries when a flag is dismissed", async () => {
+      setLinkedCases([
+        {
+          id: 10,
+          name: "Login works",
+          source: "MANUAL",
+          isDeleted: false,
+          projectId: 7,
+          project: { name: "Current Project", iconUrl: null },
+        },
+      ]);
+      setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
+      setCoveringCases([
+        {
+          caseId: 10,
+          lastExecutedAt: "2026-01-01T00:00:00.000Z",
+          direct: true,
+        },
+      ]);
+
+      renderWithClient(
+        <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-linked-case-suspect-10")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-linked-case-suspect-10"));
+      fireEvent.click(
+        screen.getByTestId("requirement-linked-case-suspect-confirm-10")
+      );
+
+      await waitFor(() => {
+        expect(mockDismissMutateAsync).toHaveBeenCalled();
+      });
+
+      const predicates = collectPredicates();
+      expect(
+        predicates.some((predicate) =>
+          predicate({ queryKey: ["requirementCoverage", 7] })
+        )
+      ).toBe(false);
+      expect(
+        predicates.some((predicate) =>
+          predicate({ queryKey: ["requirementCoveringCases", 7, 42] })
+        )
+      ).toBe(false);
+    });
   });
 });

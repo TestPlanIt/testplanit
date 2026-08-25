@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { Bot, Link2, ListChecks, Plus, X } from "lucide-react";
+import { AlertTriangle, Bot, Link2, ListChecks, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -33,9 +34,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useRequirementCaseLinks } from "~/hooks/useRequirementCaseLinks";
 import { invalidateRequirementCoverage } from "~/hooks/useRequirementCoverage";
-import { invalidateRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
+import {
+  invalidateRequirementCoveringCases,
+  useRequirementCoveringCases,
+} from "~/hooks/useRequirementCoveringCases";
+import { isLinkageSuspect } from "~/lib/services/suspectLinkage";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { schema } from "~/zenstack/schema";
 import type { RepositoryCaseSource } from "~/zenstack/models";
@@ -83,6 +93,7 @@ export function LinkedRequirementCasesPanel({
   requirementId,
 }: LinkedRequirementCasesPanelProps) {
   const t = useTranslations("requirements.linkedCases");
+  const tSuspect = useTranslations("requirements.suspect");
   const tGlobal = useTranslations();
   const { link, unlink, isMutating } = useRequirementCaseLinks();
   const queryClient = useQueryClient();
@@ -99,8 +110,60 @@ export function LinkedRequirementCasesPanel({
     orderBy: { name: "asc" },
   });
 
+  // COV-05's requirement-side input: a single PK identity lookup for this
+  // requirement's own content timestamp -- deliberately not one of the
+  // listing shapes the role-scope containment gate polices (see this
+  // panel's own acceptance criteria for why the distinction matters here).
+  const { data: requirementRow } = useClientQueries(schema).issue.useFindUnique(
+    {
+      where: { id: requirementId },
+      select: { contentUpdatedAt: true },
+    }
+  );
+
+  // Reused from RequirementCoveragePanel.tsx, mounted on this same page with
+  // the same arguments -- a TanStack Query cache hit, not a second request.
+  // Reduced to a Map of caseId -> lastExecutedAt for DIRECT rows only: only
+  // a direct link has a RepositoryCaseIssue row to dismiss a flag on.
+  const { data: coveringCasesData } = useRequirementCoveringCases(
+    projectIdNumber,
+    requirementId
+  );
+  const directLastExecutedAt = useMemo(() => {
+    const map = new Map<number, string | null>();
+    for (const row of coveringCasesData?.cases ?? []) {
+      if (row.direct) {
+        map.set(row.caseId, row.lastExecutedAt);
+      }
+    }
+    return map;
+  }, [coveringCasesData]);
+
+  // This requirement's per-linkage dismissal state, reduced to a Map keyed
+  // by caseId.
+  const { data: dismissals, refetch: refetchDismissals } = useClientQueries(
+    schema
+  ).repositoryCaseIssue.useFindMany({
+    where: { issueId: requirementId },
+    select: { caseId: true, suspectDismissedAt: true },
+  });
+  const dismissalsByCaseId = useMemo(() => {
+    const map = new Map<number, Date | string | null>();
+    for (const row of dismissals ?? []) {
+      map.set(row.caseId, row.suspectDismissedAt ?? null);
+    }
+    return map;
+  }, [dismissals]);
+
+  const dismissSuspectFlag =
+    useClientQueries(schema).repositoryCaseIssue.useUpdate();
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [openUnlinkId, setOpenUnlinkId] = useState<number | null>(null);
+  // Independent of openUnlinkId -- the suspect-dismiss popover and the
+  // unlink popover are two separate affordances that can both live in the
+  // same row; sharing state would open both at once.
+  const [openDismissId, setOpenDismissId] = useState<number | null>(null);
 
   const linkedCaseIds = useMemo(
     () =>
@@ -191,6 +254,25 @@ export function LinkedRequirementCasesPanel({
     }
   };
 
+  // Deliberately does NOT call invalidateCoverageQueries -- that helper
+  // exists for link/unlink, where the coverage numbers genuinely change; a
+  // dismissal changes none. Refetch ONLY this panel's own dismissals query.
+  const handleDismissSuspect = async (caseId: number) => {
+    try {
+      await dismissSuspectFlag.mutateAsync({
+        where: { caseId_issueId: { caseId, issueId: requirementId } },
+        data: { suspectDismissedAt: new Date() },
+      });
+      toast.success(tSuspect("dismissSuccess"));
+      setOpenDismissId(null);
+      void refetchDismissals();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : tSuspect("dismissFailed")
+      );
+    }
+  };
+
   const rows = (linkedCases ?? []) as LinkedCaseRow[];
 
   return (
@@ -228,22 +310,88 @@ export function LinkedRequirementCasesPanel({
             </TableHeader>
             <TableBody>
               {rows.map((row) => {
+                // COV-05/D-03: computed, never stored -- composes the
+                // requirement's own contentUpdatedAt, this row's direct
+                // last-execution value (absent/undefined for an inherited,
+                // non-direct covering case, which the predicate then
+                // treats as "no badge" by construction), and this row's own
+                // dismissal state.
+                const isSuspect = isLinkageSuspect({
+                  contentUpdatedAt: requirementRow?.contentUpdatedAt,
+                  lastExecutedAt: directLastExecutedAt.get(row.id),
+                  suspectDismissedAt: dismissalsByCaseId.get(row.id) ?? null,
+                });
+
                 return (
                   // No numeric id on the join row (composite caseId/issueId
                   // primary key) -- key on the pair, not a nonexistent link id.
                   <TableRow key={`${requirementId}-${row.id}`}>
                     <TableCell>
-                      <TestCaseNameDisplay
-                        testCase={{
-                          id: row.id,
-                          name: row.name,
-                          source: row.source,
-                          isDeleted: row.isDeleted,
-                          hasParameters: row.hasParameters ?? undefined,
-                        }}
-                        projectId={row.projectId}
-                        className="font-medium"
-                      />
+                      <div className="flex items-center gap-2 min-w-0">
+                        <TestCaseNameDisplay
+                          testCase={{
+                            id: row.id,
+                            name: row.name,
+                            source: row.source,
+                            isDeleted: row.isDeleted,
+                            hasParameters: row.hasParameters ?? undefined,
+                          }}
+                          projectId={row.projectId}
+                          className="font-medium"
+                        />
+                        {isSuspect && (
+                          // Gated on openDismissId, its own state -- never
+                          // openUnlinkId, which gates the unrelated remove
+                          // popover in this same row.
+                          <Popover
+                            open={openDismissId === row.id}
+                            onOpenChange={(open) =>
+                              setOpenDismissId(open ? row.id : null)
+                            }
+                          >
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <PopoverTrigger asChild>
+                                  <Badge
+                                    variant="outline"
+                                    data-testid={`requirement-linked-case-suspect-${row.id}`}
+                                    className="gap-2 shrink-0 cursor-pointer border-dashed border-warning bg-warning/15 text-foreground"
+                                    onClick={() => setOpenDismissId(row.id)}
+                                  >
+                                    <AlertTriangle className="h-3 w-3 text-warning" />
+                                    {tSuspect("badgeLabel")}
+                                  </Badge>
+                                </PopoverTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {tSuspect("tooltipRequirementSide")}
+                              </TooltipContent>
+                            </Tooltip>
+                            <PopoverContent className="w-fit" side="bottom">
+                              <div className="mb-2">
+                                {tSuspect("dismissConfirm")}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  onClick={() => setOpenDismissId(null)}
+                                >
+                                  {tGlobal("common.cancel")}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  disabled={dismissSuspectFlag.isPending}
+                                  data-testid={`requirement-linked-case-suspect-confirm-${row.id}`}
+                                  onClick={() => handleDismissSuspect(row.id)}
+                                >
+                                  {tSuspect("dismissAction")}
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {/* Every row shows its case's OWN project (operator
