@@ -264,6 +264,17 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   // mutation-proven RED and reverted) are what prove the predicate is
   // still there.
   "app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route.ts",
+  // 27-07's manual-traceability-reference POST route resolves two rows by
+  // id via baseDb.issue.findFirst before authorizing the attach: the
+  // requirement's own identity pre-check (which ALSO spreads
+  // REQUIREMENT_SCOPE_WHERE, same reasoning as the four Phase 25 routes
+  // and covering-cases above) and, for an internal pick, the referenced
+  // issue's own identity + projectId lookup (unscoped by design -- a
+  // reference may point at either row kind, D-09/D-10 "reference means
+  // related ticket", so REQUIREMENT_SCOPE_WHERE would wrongly reject a
+  // defect-typed reference target). Both are identity lookups on an
+  // already-addressed id, never a listing read.
+  "app/api/projects/[projectId]/requirements/[issueId]/references/route.ts",
 ];
 
 // EXEMPT — milestone membership legitimately spans both row kinds (an Epic
