@@ -699,6 +699,9 @@ const RequirementsListView = forwardRef<
       columnLinkedCases: t("requirements.linkedCases.title"),
       columnCoveringCases: t("requirements.coverage.panelTitle"),
       columnSource: t("requirements.list.columnSource"),
+      // D-17: reused, not new -- `common.fields.priority` already backs the
+      // Priority field elsewhere in this codebase.
+      columnPriority: t("common.fields.priority"),
       // Gap closure 26.2-17: reused, not new -- `common.fields.createdAt`
       // already backs every other DataTable's own hidden-by-default Created
       // column in this codebase (admin/llm, admin/integrations, etc.).

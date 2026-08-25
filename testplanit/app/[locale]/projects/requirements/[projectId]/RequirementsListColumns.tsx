@@ -23,6 +23,7 @@ import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milest
 import { DateFormatter } from "@/components/DateFormatter";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
@@ -66,14 +67,15 @@ import {
 } from "./requirementsListRows";
 
 /**
- * The seven columns the tree-table renders through (D-03a, extended by UAT
- * gaps 5/6). Deliberately NOT ported from `MemberIssuesColumns.tsx`: no
- * `select` (no bulk action on requirements), no `description` (belongs to
- * the detail panel's Tiptap `Issue.note`). The comparator's single `cases`
- * column IS ported, but split into two -- `linkedCases` (this requirement
- * only) and `coveringCases` (its whole subtree) -- because a requirement's
- * own coverage badge already blends both scopes into one number and gap 5/6
- * asked for the direct-vs-inherited distinction the badge can't show.
+ * The eight columns the tree-table renders through (D-03a, extended by UAT
+ * gaps 5/6, plus D-17's Priority column). Deliberately NOT ported from
+ * `MemberIssuesColumns.tsx`: no `select` (no bulk action on requirements), no
+ * `description` (belongs to the detail panel's Tiptap `Issue.note`). The
+ * comparator's single `cases` column IS ported, but split into two --
+ * `linkedCases` (this requirement only) and `coveringCases` (its whole
+ * subtree) -- because a requirement's own coverage badge already blends both
+ * scopes into one number and gap 5/6 asked for the direct-vs-inherited
+ * distinction the badge can't show.
  */
 export interface RequirementsListColumnsTranslations {
   /** requirements.list.columnName */
@@ -90,6 +92,10 @@ export interface RequirementsListColumnsTranslations {
   columnCoveringCases: string;
   /** requirements.list.columnSource */
   columnSource: string;
+  /** common.fields.priority -- an existing key, reused, no new key (D-17,
+   *  promoted carry-over from the 26.2-17 "Priority column + editable pair"
+   *  deferral) */
+  columnPriority: string;
   /** common.fields.createdAt -- an existing key, reused, no new key (gap
    *  closure 26.2-17) */
   columnCreatedAt: string;
@@ -186,6 +192,7 @@ export function useRequirementsListColumns({
     columnLinkedCases: tColumnLinkedCases,
     columnCoveringCases: tColumnCoveringCases,
     columnSource: tColumnSource,
+    columnPriority: tColumnPriority,
     columnCreatedAt: tColumnCreatedAt,
     actionsLabel: tActionsLabel,
   } = translations;
@@ -384,6 +391,37 @@ export function useRequirementsListColumns({
         ),
       },
       {
+        id: "priority",
+        // D-17 (promoted carry-over, 2026-08-25): the 26.2-17 "Priority
+        // column + editable pair" deferral, explicitly promoted into Phase
+        // 27 by Brad at plan time. Visible by default is the operator's
+        // explicit REVERSAL of `createdAt`'s hidden-by-default choice below
+        // -- the editable half of the pair is satisfied entirely by
+        // `RequirementDetailPanel`'s existing priority field (already
+        // shipped, already gated on `isRequirementLocked`); this cell is
+        // read-only display only.
+        accessorFn: (row) => row.priority ?? "",
+        header: tColumnPriority,
+        enableSorting: true,
+        // Omitted `meta.isVisible` (unlike `createdAt` below) -- this
+        // codebase's single-owner visibility convention treats an absent
+        // `meta.isVisible` as visible, matching every other column in this
+        // file except `createdAt`.
+        // Status column's own footprint (both render a short-text Badge),
+        // narrower than createdAt's 130px.
+        size: 120,
+        minSize: 80,
+        maxSize: 200,
+        cell: ({ row }) => (
+          <div
+            className="whitespace-nowrap"
+            data-testid={`requirement-priority-cell-${row.original.id}`}
+          >
+            <IssuePriorityDisplay priority={row.original.priority} />
+          </div>
+        ),
+      },
+      {
         id: "createdAt",
         // Gap closure 26.2-17 (operator-directed, 2026-08-25): Created/Updated
         // were meant to ship as a pair, but `Issue` has no `updatedAt` column
@@ -462,6 +500,7 @@ export function useRequirementsListColumns({
     tColumnLinkedCases,
     tColumnCoveringCases,
     tColumnSource,
+    tColumnPriority,
     tColumnCreatedAt,
     tActionsLabel,
     projectId,

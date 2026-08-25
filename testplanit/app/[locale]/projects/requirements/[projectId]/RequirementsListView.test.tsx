@@ -193,6 +193,16 @@ vi.mock("@/components/IssueStatusDisplay", () => ({
   ),
 }));
 
+// D-17's priority column cell renders IssuePriorityDisplay, which reads
+// Color rows through the SAME useClientQueries(schema).color.useFindMany
+// seam IssueStatusDisplay does above -- identical passthrough mock for the
+// identical reason.
+vi.mock("@/components/IssuePriorityDisplay", () => ({
+  IssuePriorityDisplay: ({ priority }: { priority: string | null }) => (
+    <span data-testid="mock-issue-priority">{priority ?? ""}</span>
+  ),
+}));
+
 // CasesListDisplay itself stays real (its trigger badge and count-hiding-at-
 // zero rule are exercised through the real columns); only its own internal
 // search-dropdown seam, AsyncCombobox, is stubbed -- the SAME convention
@@ -497,14 +507,14 @@ describe("RequirementsListView", () => {
       });
     });
 
-    it("renders the seven column ids, in order, at the pane's default width", () => {
+    it("renders the eight column ids, in order, at the pane's default width", () => {
       renderView();
 
       const table = screen.getByTestId("requirements-list");
       const headerCells = Array.from(
         table.querySelectorAll('[role="columnheader"]')
       );
-      expect(headerCells.length).toBeGreaterThanOrEqual(7);
+      expect(headerCells.length).toBeGreaterThanOrEqual(8);
       // Ported label text for every column in expected order -- proves
       // ordering, not just presence (a column inserted in the wrong place
       // is invisible to an id-only check).
@@ -515,6 +525,8 @@ describe("RequirementsListView", () => {
       expect(labels[3]).toBe("requirements.coverage.panelTitle");
       expect(labels[4]).toBe("requirements.linkedCases.title");
       expect(labels[5]).toBe("requirements.list.columnSource");
+      // D-17: Priority ships visible-by-default, immediately after Source.
+      expect(labels[6]).toBe("common.fields.priority");
     });
 
     // Gap closure 26.2-17: createdAt ships hidden by default (meta.isVisible:
@@ -529,7 +541,9 @@ describe("RequirementsListView", () => {
       const headerCells = Array.from(
         table.querySelectorAll('[role="columnheader"]')
       );
-      expect(headerCells).toHaveLength(7);
+      // D-17 adds a ninth (visible-by-default) column def -- eight visible
+      // headers now, createdAt still absent.
+      expect(headerCells).toHaveLength(8);
       const labels = headerCells.map((cell) => cell.textContent);
       expect(labels).not.toContain("common.fields.createdAt");
     });
@@ -549,7 +563,9 @@ describe("RequirementsListView", () => {
       const labels = Array.from(
         table.querySelectorAll('[role="columnheader"]')
       ).map((cell) => cell.textContent);
-      expect(labels).toHaveLength(6);
+      // D-17 adds Priority to the base (actions-absent) set: name/status/
+      // coverage/coveringCases/linkedCases/source/priority = 7.
+      expect(labels).toHaveLength(7);
       expect(labels).not.toContain("common.fields.createdAt");
     });
 
@@ -577,8 +593,9 @@ describe("RequirementsListView", () => {
       const labels = Array.from(
         table.querySelectorAll('[role="columnheader"]')
       ).map((cell) => cell.textContent);
-      // actions joined (7 headers again), createdAt stayed hidden.
-      expect(labels).toHaveLength(7);
+      // actions joined (8 headers again, D-17's priority column included),
+      // createdAt stayed hidden.
+      expect(labels).toHaveLength(8);
       expect(labels).not.toContain("common.fields.createdAt");
     });
 

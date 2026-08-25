@@ -145,6 +145,7 @@ const translations = {
   columnLinkedCases: "Linked Test Cases",
   columnCoveringCases: "Covering Test Cases",
   columnSource: "Source",
+  columnPriority: "Priority",
   columnCreatedAt: "Created At",
   actionsLabel: "Actions",
 };
@@ -169,6 +170,7 @@ function makeRow(args: {
   externalUrl?: string | null;
   externalKey?: string | null;
   createdAt?: Date | string | null;
+  priority?: string | null;
 }): RequirementRow {
   const name = args.name ?? `Requirement ${args.id}`;
   return {
@@ -188,6 +190,7 @@ function makeRow(args: {
     externalUrl: args.externalUrl ?? null,
     externalKey: args.externalKey ?? null,
     createdAt: args.createdAt ?? null,
+    priority: args.priority ?? null,
   } as unknown as RequirementRow;
 }
 
@@ -359,7 +362,7 @@ function makeCoveringCase(
 }
 
 describe("useRequirementsListColumns -- column contract", () => {
-  it("returns name/status/coverage/coveringCases/linkedCases/source/createdAt/actions in order when canAddEdit is true", () => {
+  it("returns name/status/coverage/coveringCases/linkedCases/source/priority/createdAt/actions in order when canAddEdit is true", () => {
     const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
     expect(result.current.map((col) => col.id)).toEqual([
       "name",
@@ -368,6 +371,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       "coveringCases",
       "linkedCases",
       "source",
+      "priority",
       "createdAt",
       "actions",
     ]);
@@ -384,6 +388,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       "coveringCases",
       "linkedCases",
       "source",
+      "priority",
       "createdAt",
     ]);
   });
@@ -409,6 +414,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       linkedCases: { size: 110, minSize: 80, maxSize: 160 },
       coveringCases: { size: 120, minSize: 90, maxSize: 200 },
       source: { size: 140, minSize: 60, maxSize: 260 },
+      priority: { size: 120, minSize: 80, maxSize: 200 },
       createdAt: { size: 130, minSize: 100, maxSize: 200 },
       actions: { size: 64, minSize: 56, maxSize: 100 },
     };
@@ -436,6 +442,7 @@ describe("useRequirementsListColumns -- column contract", () => {
       "linkedCases",
       "coveringCases",
       "source",
+      "priority",
       "createdAt",
     ].forEach((id) => {
       const col = result.current.find((c) => c.id === id)!;
@@ -672,6 +679,65 @@ describe("createdAt column (gap closure 26.2-17)", () => {
     renderColumnCell("createdAt", makeRow({ id: 42, createdAt: null }));
     const cell = screen.getByTestId("requirement-createdAt-cell-42");
     expect(cell.textContent).toBe("");
+  });
+});
+
+// D-17: promoted carry-over from 26.2-17. Visible-by-default, sortable,
+// display-only Priority column rendering the existing IssuePriorityDisplay
+// badge -- editing stays in RequirementDetailPanel's already-shipped field.
+describe("priority column (D-17)", () => {
+  it("is present with id 'priority' and enableSorting true", () => {
+    const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
+    const col = result.current.find((c) => c.id === "priority")!;
+    expect(col).toBeDefined();
+    expect(col.enableSorting).toBe(true);
+  });
+
+  it("carries no meta.isVisible === false, so it is visible by default -- unlike createdAt", () => {
+    const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
+    const col = result.current.find((c) => c.id === "priority")!;
+    expect((col.meta as any)?.isVisible).not.toBe(false);
+  });
+
+  it("accessorFn reads the row's own priority, defaulting to '' when null", () => {
+    const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
+    const accessorFn = (result.current.find((c) => c.id === "priority") as any)
+      .accessorFn;
+
+    expect(accessorFn(makeRow({ id: 44, priority: "high" }))).toBe("high");
+    expect(accessorFn(makeRow({ id: 45, priority: null }))).toBe("");
+  });
+
+  it("the header string comes from translations, not a hardcoded literal", () => {
+    const { result } = renderHook(() =>
+      useRequirementsListColumns(
+        baseArgs({
+          translations: {
+            ...translations,
+            columnPriority: "Custom Priority Header",
+          },
+        })
+      )
+    );
+    const col = result.current.find((c) => c.id === "priority")!;
+    expect(col.header).toBe("Custom Priority Header");
+  });
+
+  it("renders IssuePriorityDisplay for the row's own priority, with no input/button/combobox descendant (read-only)", () => {
+    renderColumnCell("priority", makeRow({ id: 46, priority: "high" }));
+
+    const cell = screen.getByTestId("requirement-priority-cell-46");
+    expect(cell).toHaveTextContent("high");
+    expect(cell.querySelector("input")).toBeNull();
+    expect(cell.querySelector("button")).toBeNull();
+    expect(cell.querySelector('[role="combobox"]')).toBeNull();
+  });
+
+  it("renders the muted dash for a null priority, matching IssuePriorityDisplay's own contract", () => {
+    renderColumnCell("priority", makeRow({ id: 47, priority: null }));
+
+    const cell = screen.getByTestId("requirement-priority-cell-47");
+    expect(cell).toHaveTextContent("-");
   });
 });
 
