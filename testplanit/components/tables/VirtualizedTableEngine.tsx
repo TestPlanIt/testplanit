@@ -860,6 +860,10 @@ export function VirtualizedTableEngine({
                                 onHideColumn={onHideColumn}
                               />
                             </DropdownMenuContent>
+                            {(
+                              column.columnDef.meta as
+                                CustomColumnMeta | undefined
+                            )?.headerExtra ?? null}
                           </DropdownMenu>
                         );
                       }

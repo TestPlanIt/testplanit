@@ -842,7 +842,7 @@ describe("RequirementsListView", () => {
       ) as HTMLElement;
       expect(ring).toBeInTheDocument();
       expect(ring.className).toContain(
-        "[[data-req-drag=active]_&]:border-dotted"
+        "[[data-req-drag=active]_&]:border-dashed"
       );
       // An ANCESTOR check, not a same-element compound one -- `data-req-
       // dragged` lives on the ROW (the overlay's parent), never on the

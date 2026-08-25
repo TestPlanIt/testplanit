@@ -20,6 +20,7 @@ import { useDrag } from "react-dnd";
 // mounts the same `CoverageChip` that table uses (26.2-10).
 import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
+import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
@@ -230,6 +231,13 @@ export function useRequirementsListColumns({
         accessorFn: (row) =>
           requirementCoverageSortValue(coverageFor(coverage, row.id)),
         header: tColumnCoverage,
+        // The legend rides in the header CELL as a SIBLING of the sort-menu
+        // trigger (operator UAT) -- through the engine's meta.headerExtra
+        // slot, never inside the `header` renderer: header content renders
+        // INSIDE the trigger <button>, and the legend is itself a button.
+        meta: {
+          headerExtra: <IterationStatusLegendPopover projectId={projectId} />,
+        },
         enableSorting: true,
         // Sizes match MemberIssuesColumns.tsx's own coverage column exactly
         // -- same display model, same footprint.

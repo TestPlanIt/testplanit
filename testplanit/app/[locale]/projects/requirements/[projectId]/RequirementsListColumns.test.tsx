@@ -89,6 +89,12 @@ vi.mock("~/hooks/useProjectPermissions", () => ({
   }),
 }));
 
+// The coverage column mounts the status-dot legend through the engine's
+// meta.headerExtra slot; its data hook is outside this file's mock set.
+vi.mock("@/components/iterations/IterationStatusLegendPopover", () => ({
+  IterationStatusLegendPopover: () => <span data-testid="mock-status-legend" />,
+}));
+
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
   // The new covering-cases drill-down popover renders `TestCaseNameDisplay`,

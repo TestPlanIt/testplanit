@@ -18,7 +18,6 @@ import {
 import { useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { DataTable } from "@/components/tables/DataTable";
-import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,10 +102,10 @@ export interface RequirementsListViewHandle {
 // the exact thing that broke real HTML5 drag in Chrome (reverted in
 // 1208deb2c) -- this must never regress to that shape.
 const ROW_DRAG_CANDIDATE_CLASSNAME =
-  "rounded [[data-req-drag=active]_&]:border-2 [[data-req-drag=active]_&]:border-dotted [[data-req-drag=active]_&]:border-primary/40 [[data-req-dragged]_&]:border-0";
+  "rounded [[data-req-drag=active]_&]:border-2 [[data-req-drag=active]_&]:border-dashed [[data-req-drag=active]_&]:border-primary/40 [[data-req-dragged]_&]:border-0";
 
 const ROOT_STRIP_DRAG_CLASSNAME =
-  "[[data-req-drag=active]_&]:rounded-md [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40 [[data-req-drag=active]_&]:bg-background/95";
+  "[[data-req-drag=active]_&]:rounded-full [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40 [[data-req-drag=active]_&]:bg-background/95";
 
 const ROOT_STRIP_HINT_CLASSNAME =
   "pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-muted-foreground [[data-req-drag=active]_&]:flex";
@@ -928,13 +927,6 @@ const RequirementsListView = forwardRef<
                   </SelectItem>
                 </SelectContent>
               </Select>
-              {/* Status-dot legend (same popover as Milestone > Issues in
-                  scope). Lives HERE, beside the filters, because the column
-                  header wraps its content in the sort-menu trigger BUTTON --
-                  mounting the legend (itself a button) there nests buttons,
-                  which is invalid HTML and a hydration error (operator hit
-                  the broken sort menu live). */}
-              <IterationStatusLegendPopover projectId={Number(projectId)} />
             </div>
           </div>
           <div
@@ -1010,7 +1002,7 @@ const RequirementsListView = forwardRef<
                 // page scrolled (operator UAT, twice). `hidden` while idle via
                 // the same drag attribute, so it never blocks clicks on the
                 // rows it overlays and appears only while a drag is active.
-                className={`absolute inset-x-0 bottom-0 z-10 hidden h-16 [[data-req-drag=active]_&]:block ${ROOT_STRIP_DRAG_CLASSNAME}`}
+                className={`absolute bottom-2 left-1/2 z-10 hidden h-11 w-auto min-w-[280px] max-w-[90%] -translate-x-1/2 [[data-req-drag=active]_&]:block ${ROOT_STRIP_DRAG_CLASSNAME}`}
                 data-testid="requirement-tree-end"
               >
                 {/* Always mounted; `hidden` by default, shown by the same

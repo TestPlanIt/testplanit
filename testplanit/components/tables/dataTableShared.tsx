@@ -76,6 +76,15 @@ export interface CustomColumnMeta {
   isPinned?: "left" | "right";
   /** Opt a column out of the default single-line truncation so its cells wrap. */
   wrap?: boolean;
+  /**
+   * Rendered INSIDE the header cell but AFTER (as a sibling of) the
+   * column-menu trigger button. The header content itself lives inside that
+   * trigger `<button>`, so any interactive header adornment (a popover, a
+   * legend) MUST come through this slot instead of the `header` renderer --
+   * nesting a button inside the trigger is invalid HTML and breaks the sort
+   * menu (requirements list UAT).
+   */
+  headerExtra?: ReactNode;
 }
 
 export type SortConfig = { column: string; direction: "asc" | "desc" };
