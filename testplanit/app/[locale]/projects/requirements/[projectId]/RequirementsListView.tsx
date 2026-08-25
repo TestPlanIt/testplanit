@@ -938,7 +938,7 @@ const RequirementsListView = forwardRef<
             ref={(el) => {
               listDropRef(el);
             }}
-            className="min-h-0 flex-1"
+            className="relative min-h-0 flex-1"
           >
             <DataTable
               virtualized
@@ -990,50 +990,56 @@ const RequirementsListView = forwardRef<
               testIdPrefix="requirements-list"
               rowTestIdPrefix="requirement-row"
             />
-          </div>
-          {canAddEdit && !isFiltering && (
-            <div
-              ref={(el) => {
-                bottomDropRef(el);
-              }}
-              // `ROOT_STRIP_DRAG_CLASSNAME` is static -- always present,
-              // never toggled by JS -- and only paints once `data-req-drag`
-              // appears on the container above (pure CSS, gap closure
-              // 26.2-16). `isOverBottom` below is unrelated: it comes from
-              // this element's OWN `useDrop` collector, so only this single,
-              // non-virtualized node re-renders on hover, never the row set.
-              className={`h-16 w-full relative shrink-0 sticky bottom-0 z-10 ${ROOT_STRIP_DRAG_CLASSNAME}`}
-              data-testid="requirement-tree-end"
-            >
-              {/* Always mounted; `hidden` by default, shown by the same
+            {canAddEdit && !isFiltering && (
+              <div
+                ref={(el) => {
+                  bottomDropRef(el);
+                }}
+                // `ROOT_STRIP_DRAG_CLASSNAME` is static -- always present,
+                // never toggled by JS -- and only paints once `data-req-drag`
+                // appears on the container above (pure CSS, gap closure
+                // 26.2-16). `isOverBottom` below is unrelated: it comes from
+                // this element's OWN `useDrop` collector, so only this single,
+                // non-virtualized node re-renders on hover, never the row set.
+                // Absolute overlay pinned to the BOTTOM OF THE LIST VIEWPORT
+                // (the wrapper above), not a sibling below the full-height
+                // layout -- as a sibling it sat below the fold whenever the
+                // page scrolled (operator UAT, twice). `hidden` while idle via
+                // the same drag attribute, so it never blocks clicks on the
+                // rows it overlays and appears only while a drag is active.
+                className={`absolute inset-x-0 bottom-0 z-10 hidden h-16 [[data-req-drag=active]_&]:block ${ROOT_STRIP_DRAG_CLASSNAME}`}
+                data-testid="requirement-tree-end"
+              >
+                {/* Always mounted; `hidden` by default, shown by the same
                   container attribute -- see the comment on
                   `ROOT_STRIP_HINT_CLASSNAME`'s declaration. The real-browser
                   drag check remains mandatory UAT: jsdom cannot assert
                   computed visibility here. */}
-              <div
-                className={ROOT_STRIP_HINT_CLASSNAME}
-                data-testid="requirement-tree-end-hint"
-              >
-                {t("requirements.tree.dropToRootHint")}
-              </div>
-              {isOverBottom && (
-                <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
-                  <div
-                    className="rounded-full"
-                    style={{
-                      width: 4,
-                      height: 4,
-                      boxShadow: "0 0 0 3px #4B91E2",
-                    }}
-                  />
-                  <div
-                    className="flex-1 rounded-sm"
-                    style={{ height: 2, background: "#4B91E2" }}
-                  />
+                <div
+                  className={ROOT_STRIP_HINT_CLASSNAME}
+                  data-testid="requirement-tree-end-hint"
+                >
+                  {t("requirements.tree.dropToRootHint")}
                 </div>
-              )}
-            </div>
-          )}
+                {isOverBottom && (
+                  <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
+                    <div
+                      className="rounded-full"
+                      style={{
+                        width: 4,
+                        height: 4,
+                        boxShadow: "0 0 0 3px #4B91E2",
+                      }}
+                    />
+                    <div
+                      className="flex-1 rounded-sm"
+                      style={{ height: 2, background: "#4B91E2" }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
       <CreateRequirementDialog
