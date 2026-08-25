@@ -107,6 +107,12 @@ const ROW_DRAG_CANDIDATE_CLASSNAME =
 const ROOT_STRIP_DRAG_CLASSNAME =
   "[[data-req-drag=active]_&]:rounded-full [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-primary/40 [[data-req-drag=active]_&]:bg-background/95";
 
+// While a drag hovers the pill, the dashed advertisement turns into a solid
+// primary outline (operator UAT -- replaced the ported blue dot+line marker).
+// Plain classes are safe here: the pill is only visible mid-drag anyway.
+const ROOT_STRIP_OVER_CLASSNAME =
+  "rounded-full outline outline-2 -outline-offset-2 outline-primary bg-background/95";
+
 const ROOT_STRIP_HINT_CLASSNAME =
   "pointer-events-none absolute inset-0 hidden items-center justify-center text-xs text-muted-foreground [[data-req-drag=active]_&]:flex";
 
@@ -1002,7 +1008,7 @@ const RequirementsListView = forwardRef<
                 // page scrolled (operator UAT, twice). `hidden` while idle via
                 // the same drag attribute, so it never blocks clicks on the
                 // rows it overlays and appears only while a drag is active.
-                className={`absolute bottom-2 left-1/2 z-10 hidden h-11 w-auto min-w-[280px] max-w-[90%] -translate-x-1/2 [[data-req-drag=active]_&]:block ${ROOT_STRIP_DRAG_CLASSNAME}`}
+                className={`absolute bottom-2 left-1/2 z-10 hidden h-11 w-auto min-w-[280px] max-w-[90%] -translate-x-1/2 [[data-req-drag=active]_&]:block ${isOverBottom ? ROOT_STRIP_OVER_CLASSNAME : ROOT_STRIP_DRAG_CLASSNAME}`}
                 data-testid="requirement-tree-end"
               >
                 {/* Always mounted; `hidden` by default, shown by the same
@@ -1016,22 +1022,6 @@ const RequirementsListView = forwardRef<
                 >
                   {t("requirements.tree.dropToRootHint")}
                 </div>
-                {isOverBottom && (
-                  <div className="absolute top-0 start-0 end-6 flex items-center z-10 pointer-events-none">
-                    <div
-                      className="rounded-full"
-                      style={{
-                        width: 4,
-                        height: 4,
-                        boxShadow: "0 0 0 3px #4B91E2",
-                      }}
-                    />
-                    <div
-                      className="flex-1 rounded-sm"
-                      style={{ height: 2, background: "#4B91E2" }}
-                    />
-                  </div>
-                )}
               </div>
             )}
           </div>
