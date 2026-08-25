@@ -518,6 +518,17 @@ function compareRequirements(
       primary = aTime - bTime;
       break;
     }
+    // D-17: `Issue.priority` is a free-form `String?` that carries whatever
+    // vocabulary the connected tracker uses (Jira priorities are per-project
+    // configurable), so a hardcoded critical/high/medium/low rank would
+    // mis-order every non-default tracker vocabulary and silently disagree
+    // with `IssuePriorityDisplay`, which also treats the value as an opaque
+    // string. The `status` case above already made this exact call for
+    // `externalStatus`.
+    case "priority": {
+      primary = (a.priority ?? "").localeCompare(b.priority ?? "");
+      break;
+    }
     case "name":
     default: {
       primary = formatIssueDisplayText(a).localeCompare(

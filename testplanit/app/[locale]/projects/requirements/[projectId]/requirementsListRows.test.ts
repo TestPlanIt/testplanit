@@ -40,6 +40,7 @@ function makeRequirement(args: {
   externalStatus?: string | null;
   status?: string | null;
   createdAt?: Date | string | null;
+  priority?: string | null;
 }): Issue {
   return {
     id: args.id,
@@ -51,6 +52,7 @@ function makeRequirement(args: {
     externalStatus: args.externalStatus ?? null,
     status: args.status ?? null,
     createdAt: args.createdAt ?? null,
+    priority: args.priority ?? null,
   } as Issue;
 }
 
@@ -343,6 +345,136 @@ describe("compareRequirements createdAt sort", () => {
       coverage: undefined,
     });
     expect(desc.map((r) => r.id)).toEqual([2, 3, 1]);
+  });
+});
+
+// D-17: promoted carry-over from 26.2-17. `Issue.priority` is a free-form
+// `String?` -- no rank table, so these tests freeze the actual
+// `localeCompare` ordering the implementation produces rather than assuming
+// a specific "critical/high/medium/low" order.
+describe("compareRequirements priority sort", () => {
+  it("sorts siblings by priority using localeCompare ascending, and reverses under desc", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "A Requirement", priority: "high" }),
+      makeRequirement({ id: 2, name: "B Requirement", priority: "low" }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const asc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "priority", direction: "asc" },
+      coverage: undefined,
+    });
+    // "high".localeCompare("low") < 0, so high sorts before low ascending.
+    expect(asc.map((r) => r.id)).toEqual([1, 2]);
+
+    const desc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "priority", direction: "desc" },
+      coverage: undefined,
+    });
+    expect(desc.map((r) => r.id)).toEqual([2, 1]);
+  });
+
+  it("a null priority sorts against '' -- freezing the actual localeCompare ordering, not a sentinel", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "Has Priority", priority: "high" }),
+      makeRequirement({ id: 2, name: "No Priority", priority: null }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    // "".localeCompare("high") < 0, so the null-priority row sorts BEFORE
+    // "high" ascending -- not a sentinel-driven "nulls last" rule.
+    const asc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "priority", direction: "asc" },
+      coverage: undefined,
+    });
+    expect(asc.map((r) => r.id)).toEqual([2, 1]);
+
+    const desc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "priority", direction: "desc" },
+      coverage: undefined,
+    });
+    expect(desc.map((r) => r.id)).toEqual([1, 2]);
+  });
+
+  it("sorts a sibling group by priority without interleaving children across parents", () => {
+    const requirements = [
+      makeRequirement({
+        id: 1,
+        name: "Apple Root",
+        parentId: null,
+        priority: "medium",
+      }),
+      makeRequirement({
+        id: 2,
+        name: "Apple Child Low",
+        parentId: 1,
+        priority: "low",
+      }),
+      makeRequirement({
+        id: 3,
+        name: "Apple Child High",
+        parentId: 1,
+        priority: "high",
+      }),
+      makeRequirement({
+        id: 4,
+        name: "Zebra Root",
+        parentId: null,
+        priority: "low",
+      }),
+      makeRequirement({
+        id: 5,
+        name: "Zebra Child",
+        parentId: 4,
+        priority: "medium",
+      }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const rows = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: { 1: true, 4: true },
+      sortConfig: { column: "priority", direction: "asc" },
+      coverage: undefined,
+    });
+
+    // Root order by priority asc: "low" (4) before "medium" (1); within 1's
+    // own sibling group, "high" (3) before "low" (2) -- and neither ever
+    // interleaves with 4/5, proving the sort stays per-sibling-group.
+    expect(rows.map((r) => r.id)).toEqual([4, 5, 1, 3, 2]);
+  });
+
+  it("equal priorities fall through to the name-then-id tie-break, ascending even when direction is desc", () => {
+    const requirements = [
+      makeRequirement({ id: 2, name: "B Requirement", priority: "medium" }),
+      makeRequirement({ id: 1, name: "A Requirement", priority: "medium" }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const desc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "priority", direction: "desc" },
+      coverage: undefined,
+    });
+
+    // Tied priorities never get reversed by `direction: "desc"` -- name
+    // tie-break stays ascending ("A" before "B").
+    expect(desc.map((r) => r.id)).toEqual([1, 2]);
   });
 });
 
