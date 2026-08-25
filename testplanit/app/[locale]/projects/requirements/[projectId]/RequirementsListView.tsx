@@ -102,10 +102,10 @@ export interface RequirementsListViewHandle {
 // the exact thing that broke real HTML5 drag in Chrome (reverted in
 // 1208deb2c) -- this must never regress to that shape.
 const ROW_DRAG_CANDIDATE_CLASSNAME =
-  "rounded [[data-req-drag=active]_&]:border-2 [[data-req-drag=active]_&]:border-dashed [[data-req-drag=active]_&]:border-accent/40 [[data-req-dragged]_&]:border-0";
+  "rounded [[data-req-drag=active]_&]:border-2 [[data-req-drag=active]_&]:border-dashed [[data-req-drag=active]_&]:border-muted-foreground/60 [[data-req-dragged]_&]:border-0";
 
 const ROOT_STRIP_DRAG_CLASSNAME =
-  "[[data-req-drag=active]_&]:rounded-full [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-accent/40 [[data-req-drag=active]_&]:bg-background/95";
+  "[[data-req-drag=active]_&]:rounded-full [[data-req-drag=active]_&]:outline-dashed [[data-req-drag=active]_&]:outline-2 [[data-req-drag=active]_&]:-outline-offset-2 [[data-req-drag=active]_&]:outline-muted-foreground/60 [[data-req-drag=active]_&]:bg-background/95";
 
 // While a drag hovers the pill, the dashed advertisement turns into a solid
 // primary outline (operator UAT -- replaced the ported blue dot+line marker).
