@@ -147,7 +147,7 @@ export function CreateRequirementDialog({
         <DialogFooter>
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={() => onOpenChange(false)}
           >
             {t("common.cancel")}
@@ -160,15 +160,6 @@ export function CreateRequirementDialog({
             data-testid="create-requirement-submit"
           >
             {t("requirements.create.submit")}
-            {canSubmit && (
-              <kbd
-                aria-hidden="true"
-                className="rounded border border-current px-1 font-sans text-[10px] leading-normal opacity-70"
-                data-testid="create-requirement-submit-hint"
-              >
-                {"⏎"}
-              </kbd>
-            )}
           </Button>
         </DialogFooter>
       </DialogContent>

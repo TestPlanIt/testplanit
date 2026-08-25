@@ -145,7 +145,10 @@ describe("CreateRequirementDialog", () => {
     expect(rootPayload.data).not.toHaveProperty("parent");
   });
 
-  it("shows the hint exactly when the button is enabled -- one decision, not two", () => {
+  it("carries the Return hint as a title exactly when the button is enabled -- one decision, not two", () => {
+    // The visible kbd glyph was removed by operator UAT ruling (the Create
+    // button carries no icon); the Return affordance survives as the
+    // button's title tooltip, still gated on the same canSubmit decision.
     render(
       <CreateRequirementDialog
         projectId="7"
@@ -157,6 +160,7 @@ describe("CreateRequirementDialog", () => {
 
     const submitButton = screen.getByTestId("create-requirement-submit");
     expect(submitButton).toBeDisabled();
+    expect(submitButton).not.toHaveAttribute("title");
     expect(
       screen.queryByTestId("create-requirement-submit-hint")
     ).not.toBeInTheDocument();
@@ -165,12 +169,17 @@ describe("CreateRequirementDialog", () => {
     fireEvent.change(input, { target: { value: "New requirement" } });
 
     expect(submitButton).toBeEnabled();
+    expect(submitButton).toHaveAttribute(
+      "title",
+      "requirements.create.submitHint"
+    );
+    // Still no visible glyph -- the hint is title-only now.
     expect(
-      screen.getByTestId("create-requirement-submit-hint")
-    ).toBeInTheDocument();
+      screen.queryByTestId("create-requirement-submit-hint")
+    ).not.toBeInTheDocument();
   });
 
-  it("keeps the hint glyph out of the button's accessible name", () => {
+  it("keeps the hint out of the button's accessible name", () => {
     render(
       <CreateRequirementDialog
         projectId="7"
