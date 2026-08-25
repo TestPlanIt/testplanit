@@ -295,6 +295,28 @@ describe("RequirementCoveragePanel", () => {
     expect(projectLink!.getAttribute("href")).not.toBe("/projects/overview/7");
   });
 
+  // Operator decision 2026-08-25: the Project column is uniform -- a case in
+  // the requirement's OWN project shows its project name too, instead of the
+  // old cross-project-only badge that left same-project cells empty.
+  it("shows the project name on a same-project row", async () => {
+    stubFetch({ cases: [baseCase] });
+
+    renderPanel("7", 42);
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirement-covering-case-1")
+      ).toBeInTheDocument();
+    });
+
+    const row = screen.getByTestId("requirement-covering-case-1");
+    const projectLink = within(row)
+      .getAllByRole("link")
+      .find((l) => l.getAttribute("href") === "/projects/overview/7");
+    expect(projectLink).toBeDefined();
+    expect(projectLink).toHaveTextContent("Current Project");
+  });
+
   it("renders the empty state for a requirement with no covering cases", async () => {
     stubFetch({ cases: [] });
 

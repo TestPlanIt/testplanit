@@ -228,7 +228,6 @@ export function LinkedRequirementCasesPanel({
             </TableHeader>
             <TableBody>
               {rows.map((row) => {
-                const crossProject = row.projectId !== Number(projectId);
                 return (
                   // No numeric id on the join row (composite caseId/issueId
                   // primary key) -- key on the pair, not a nonexistent link id.
@@ -247,7 +246,10 @@ export function LinkedRequirementCasesPanel({
                       />
                     </TableCell>
                     <TableCell>
-                      {crossProject && row.project?.name && (
+                      {/* Every row shows its case's OWN project (operator
+                          decision 2026-08-25) -- same convention as
+                          `RequirementCoveragePanel`'s Project column. */}
+                      {row.project?.name && (
                         <ProjectNameDisplay
                           projectName={row.project.name}
                           projectId={row.projectId}

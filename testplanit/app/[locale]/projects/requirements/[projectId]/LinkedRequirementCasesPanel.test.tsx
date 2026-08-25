@@ -345,6 +345,29 @@ describe("LinkedRequirementCasesPanel (Phase 26 coverage additions)", () => {
     expect(badge.tagName).toBe("A");
     expect(badge).toHaveAttribute("href", "/projects/overview/9");
   });
+
+  // Operator decision 2026-08-25: the Project column is uniform -- a case in
+  // the requirement's OWN project shows its project badge too, instead of the
+  // old cross-project-only display that left same-project cells empty.
+  it("shows the project badge on a same-project row", () => {
+    setLinkedCases([
+      {
+        id: 21,
+        name: "Same project case",
+        source: "MANUAL",
+        isDeleted: false,
+        projectId: 7,
+        project: { name: "Current Project", iconUrl: null },
+      },
+    ]);
+
+    render(<LinkedRequirementCasesPanel projectId="7" requirementId={42} />);
+
+    const badge = screen.getByTestId("project-name");
+    expect(badge.tagName).toBe("A");
+    expect(badge).toHaveAttribute("href", "/projects/overview/7");
+    expect(badge).toHaveTextContent("Current Project");
+  });
 });
 
 // F5/F9: link/unlink must invalidate the two new coverage queries, using a

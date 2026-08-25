@@ -153,11 +153,11 @@ export function RequirementCoveragePanel({
             </TableHeader>
             <TableBody>
               {rows.map((row) => {
-                // Cross-project is judged against the requirement's OWN
-                // project, never the case's -- a case that lives in the
-                // same project as the requirement never shows a badge,
-                // matching `LinkedRequirementCasesPanel`'s own convention.
-                const crossProject = row.projectId !== Number(projectId);
+                // Every row shows its case's OWN project (operator decision
+                // 2026-08-25): a uniform Project column reads better than the
+                // old cross-project-only badge, which left same-project cells
+                // empty. Cross-project rows stay distinct because their links
+                // lead out of this project.
                 return (
                   <TableRow
                     key={row.caseId}
@@ -204,15 +204,13 @@ export function RequirementCoveragePanel({
                       )}
                     </TableCell>
                     <TableCell>
-                      {crossProject && (
-                        <ProjectNameDisplay
-                          projectName={row.projectName}
-                          projectId={row.projectId}
-                          showLink
-                          fitContainer
-                          className="text-xs text-muted-foreground"
-                        />
-                      )}
+                      <ProjectNameDisplay
+                        projectName={row.projectName}
+                        projectId={row.projectId}
+                        showLink
+                        fitContainer
+                        className="text-xs text-muted-foreground"
+                      />
                     </TableCell>
                   </TableRow>
                 );
