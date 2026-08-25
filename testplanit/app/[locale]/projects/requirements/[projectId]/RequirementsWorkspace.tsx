@@ -16,7 +16,13 @@ import { SectionHeader } from "@/components/ui/typography";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { ClipboardPlus, FileDown } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardPlus,
+  FileDown,
+} from "lucide-react";
+import { PanelImperativeHandle } from "react-resizable-panels";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRef, useState } from "react";
@@ -72,6 +78,23 @@ export default function RequirementsWorkspace({
   // reaches the list's own Create Requirement dialog state through this
   // ref -- see `RequirementsListViewHandle`'s doc comment.
   const listViewRef = useRef<ListViewHandle>(null);
+
+  // Collapse/expand for the tree pane, ported from ProjectRepository.tsx's
+  // folder-tree toggle (operator request 2026-08-25): same collapsible-panel
+  // wiring, same chevron button riding the resize handle.
+  const treePanelRef = useRef<PanelImperativeHandle>(null);
+  const [isTreeCollapsed, setIsTreeCollapsed] = useState(false);
+
+  const toggleTreeCollapse = () => {
+    const panel = treePanelRef.current;
+    if (!panel) return;
+    if (isTreeCollapsed) {
+      panel.expand();
+    } else {
+      panel.collapse();
+    }
+    setIsTreeCollapsed(!isTreeCollapsed);
+  };
   // Same field `RequirementsListView.tsx` reads for its own reparent/
   // delete/detach gate -- mirrored here so the action bar's Add
   // Requirement button is gated identically to the toolbar button it
@@ -193,9 +216,14 @@ export default function RequirementsWorkspace({
                 <ResizablePanel
                   id="requirements-tree"
                   order={1}
+                  ref={treePanelRef}
                   defaultSize={30}
-                  minSize={0}
+                  collapsedSize={0}
+                  minSize={10}
                   maxSize={100}
+                  collapsible
+                  onCollapse={() => setIsTreeCollapsed(true)}
+                  onExpand={() => setIsTreeCollapsed(false)}
                   className="p-0 m-0"
                 >
                   <div
@@ -218,7 +246,18 @@ export default function RequirementsWorkspace({
                     </SimpleDndProvider>
                   </div>
                 </ResizablePanel>
-                <ResizableHandle withHandle />
+                <ResizableHandle withHandle className="w-1" />
+                <div className="shrink-0 pt-0.5">
+                  <Button
+                    type="button"
+                    onClick={toggleTreeCollapse}
+                    variant="secondary"
+                    className="p-0 -ms-1 rounded-s-none"
+                    data-testid="requirements-tree-collapse-toggle"
+                  >
+                    {isTreeCollapsed ? <ChevronRight /> : <ChevronLeft />}
+                  </Button>
+                </div>
                 <ResizablePanel
                   id="requirements-detail"
                   order={2}

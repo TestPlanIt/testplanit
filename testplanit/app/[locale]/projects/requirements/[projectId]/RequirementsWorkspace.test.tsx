@@ -177,6 +177,30 @@ vi.mock("./RequirementDetailPanel", () => ({
 
 import RequirementsWorkspace from "./RequirementsWorkspace";
 
+describe("requirements tree pane collapse toggle (structural)", () => {
+  // Ported from ProjectRepository.tsx's folder-tree toggle (operator request
+  // 2026-08-25). Rendering the real workspace exhausts the jsdom heap (see
+  // the header comment), so the wiring is pinned on source text, matching
+  // this file's established idiom.
+  it("the tree panel is collapsible and driven by an imperative handle", () => {
+    expect(workspaceSource).toContain("PanelImperativeHandle");
+    expect(workspaceSource).toMatch(
+      /id="requirements-tree"[\s\S]*?collapsible/
+    );
+    expect(workspaceSource).toContain("collapsedSize={0}");
+    expect(workspaceSource).toContain("treePanelRef.current");
+  });
+
+  it("a toggle button flips the chevron and calls expand/collapse", () => {
+    expect(workspaceSource).toContain("requirements-tree-collapse-toggle");
+    expect(workspaceSource).toMatch(
+      /isTreeCollapsed\s*\?\s*<ChevronRight\s*\/>\s*:\s*<ChevronLeft\s*\/>/
+    );
+    expect(workspaceSource).toMatch(/panel\.expand\(\)/);
+    expect(workspaceSource).toMatch(/panel\.collapse\(\)/);
+  });
+});
+
 describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
