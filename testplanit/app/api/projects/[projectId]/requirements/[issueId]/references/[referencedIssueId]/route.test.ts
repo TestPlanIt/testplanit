@@ -1,19 +1,16 @@
-// Wave 0 scaffold, owner 27-08. DELETE removes a manual traceability
-// reference (LINK-03, D-15): hard-deletes only the RequirementIssueReference
-// join row — the referenced Issue row always survives, mirroring the
-// sibling bare-join RepositoryCaseIssue unlink semantics.
+// Converted from the it.todo scaffold (27-01) by 27-07. DELETE removes a
+// manual traceability reference (LINK-03, D-15): hard-deletes only the
+// RequirementIssueReference join row -- the referenced Issue row always
+// survives, mirroring the sibling bare-join RepositoryCaseIssue unlink
+// semantics.
 //
 // Mirrors the co-located route unit-test convention this directory already
-// uses (see ../route.test.ts / covering-cases/route.test.ts): vi.mock of
+// uses (see ../route.test.ts / ../covering-cases/route.test.ts): vi.mock of
 // next-auth, ~/server/auth, ~/lib/authContext, ~/lib/db, then a makeRequest
 // helper.
-//
-// Todo-only in this plan (27-01) — no route.ts exists yet at this path,
-// so this file does not import "./route". 27-08 converts each title into a
-// real assertion once the route lands.
 
 import { NextRequest } from "next/server";
-import { describe, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
@@ -25,9 +22,30 @@ vi.mock("~/lib/authContext", () => ({
 vi.mock("~/lib/db", () => ({
   baseDb: {
     issue: { findFirst: vi.fn() },
-    requirementIssueReference: { findFirst: vi.fn(), delete: vi.fn() },
   },
 }));
+
+vi.mock("~/lib/auth/utils", () => ({
+  getEnhancedDb: vi.fn(),
+}));
+
+import { getServerSession } from "next-auth";
+import { resolveViewerProjectScope } from "~/lib/authContext";
+import { getEnhancedDb } from "~/lib/auth/utils";
+import { baseDb } from "~/lib/db";
+
+import { DELETE } from "./route";
+
+const mockedSession = getServerSession as unknown as ReturnType<typeof vi.fn>;
+const mockedResolveScope = resolveViewerProjectScope as unknown as ReturnType<
+  typeof vi.fn
+>;
+const mockedFindFirst = baseDb.issue.findFirst as unknown as ReturnType<
+  typeof vi.fn
+>;
+const mockedGetEnhancedDb = getEnhancedDb as unknown as ReturnType<
+  typeof vi.fn
+>;
 
 function makeRequest(
   projectId = "5",
@@ -45,19 +63,85 @@ const params = (projectId = "5", issueId = "10", referencedIssueId = "20") => ({
 });
 
 describe("DELETE /api/projects/[projectId]/requirements/[issueId]/references/[referencedIssueId]", () => {
-  it.todo("returns 401 without a session");
-  it.todo("returns 400 for a non-integer id in the path");
-  it.todo(
-    "returns 403 when the viewer's project scope excludes the requirement's project"
-  );
-  it.todo(
-    "returns 404 when the addressed id is not a live requirement in the project"
-  );
-  it.todo("deletes only the join row and never touches the referenced Issue");
-  it.todo("succeeds as a no-op when the pair does not exist");
-});
+  let mockDeleteMany: ReturnType<typeof vi.fn>;
+  let mockIssueMethods: Record<string, ReturnType<typeof vi.fn>>;
 
-// Keep the helpers referenced so lint's unused-vars rule stays quiet until
-// 27-08 wires them into real assertions.
-void makeRequest;
-void params;
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+    mockedResolveScope.mockResolvedValue([5]);
+    mockedFindFirst.mockResolvedValue({ id: 10 });
+    mockDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
+    mockIssueMethods = {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    };
+    mockedGetEnhancedDb.mockResolvedValue({
+      requirementIssueReference: { deleteMany: mockDeleteMany },
+      issue: mockIssueMethods,
+    });
+  });
+
+  it("returns 401 without a session", async () => {
+    mockedSession.mockResolvedValue(null);
+
+    const res = await DELETE(makeRequest(), params());
+
+    expect(res.status).toBe(401);
+    expect(mockedFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for a non-integer id in the path", async () => {
+    const res = await DELETE(
+      makeRequest("5", "10", "abc"),
+      params("5", "10", "abc")
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when the viewer's project scope excludes the requirement's project", async () => {
+    mockedResolveScope.mockResolvedValue([6, 7]);
+
+    const res = await DELETE(makeRequest(), params());
+
+    expect(res.status).toBe(403);
+    expect(mockedFindFirst).not.toHaveBeenCalled();
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when the addressed id is not a live requirement in the project", async () => {
+    mockedFindFirst.mockResolvedValue(null);
+
+    const res = await DELETE(makeRequest(), params());
+
+    expect(res.status).toBe(404);
+    expect(mockDeleteMany).not.toHaveBeenCalled();
+  });
+
+  it("deletes only the join row and never touches the referenced Issue", async () => {
+    const res = await DELETE(makeRequest(), params());
+
+    expect(res.status).toBe(200);
+    expect(mockDeleteMany).toHaveBeenCalledWith({
+      where: { requirementId: 10, referencedIssueId: 20 },
+    });
+    expect(mockIssueMethods.findFirst).not.toHaveBeenCalled();
+    expect(mockIssueMethods.update).not.toHaveBeenCalled();
+    expect(mockIssueMethods.delete).not.toHaveBeenCalled();
+  });
+
+  it("succeeds as a no-op when the pair does not exist", async () => {
+    mockDeleteMany.mockResolvedValue({ count: 0 });
+
+    const res = await DELETE(makeRequest(), params());
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ deletedCount: 0 });
+  });
+});
