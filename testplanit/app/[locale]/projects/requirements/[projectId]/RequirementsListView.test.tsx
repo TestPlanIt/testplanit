@@ -521,12 +521,13 @@ describe("RequirementsListView", () => {
       const labels = headerCells.map((cell) => cell.textContent);
       expect(labels[0]).toBe("requirements.list.columnName");
       expect(labels[1]).toBe("requirements.list.columnStatus");
-      expect(labels[2]).toBe("requirements.coverage.title");
-      expect(labels[3]).toBe("requirements.coverage.panelTitle");
-      expect(labels[4]).toBe("requirements.linkedCases.title");
-      expect(labels[5]).toBe("requirements.list.columnSource");
-      // D-17: Priority ships visible-by-default, immediately after Source.
-      expect(labels[6]).toBe("common.fields.priority");
+      // D-17: Priority ships visible-by-default, immediately after Status
+      // (operator direction 2026-08-25).
+      expect(labels[2]).toBe("common.fields.priority");
+      expect(labels[3]).toBe("requirements.coverage.title");
+      expect(labels[4]).toBe("requirements.coverage.panelTitle");
+      expect(labels[5]).toBe("requirements.linkedCases.title");
+      expect(labels[6]).toBe("requirements.list.columnSource");
     });
 
     // Gap closure 26.2-17: createdAt ships hidden by default (meta.isVisible:

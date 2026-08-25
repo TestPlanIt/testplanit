@@ -242,6 +242,38 @@ export function useRequirementsListColumns({
         ),
       },
       {
+        id: "priority",
+        // D-17 (promoted carry-over, 2026-08-25): the 26.2-17 "Priority
+        // column + editable pair" deferral, explicitly promoted into Phase
+        // 27 by Brad at plan time. Placed directly after Status (operator
+        // direction 2026-08-25). Visible by default is the operator's
+        // explicit REVERSAL of `createdAt`'s hidden-by-default choice below
+        // -- the editable half of the pair is satisfied entirely by
+        // `RequirementDetailPanel`'s existing priority field (already
+        // shipped, already gated on `isRequirementLocked`); this cell is
+        // read-only display only.
+        accessorFn: (row) => row.priority ?? "",
+        header: tColumnPriority,
+        enableSorting: true,
+        // Omitted `meta.isVisible` (unlike `createdAt` below) -- this
+        // codebase's single-owner visibility convention treats an absent
+        // `meta.isVisible` as visible, matching every other column in this
+        // file except `createdAt`.
+        // Status column's own footprint (both render a short-text Badge),
+        // narrower than createdAt's 130px.
+        size: 120,
+        minSize: 80,
+        maxSize: 200,
+        cell: ({ row }) => (
+          <div
+            className="whitespace-nowrap"
+            data-testid={`requirement-priority-cell-${row.original.id}`}
+          >
+            <IssuePriorityDisplay priority={row.original.priority} />
+          </div>
+        ),
+      },
+      {
         id: "coverage",
         // KEPT as the accessor even though the cell now renders through
         // `CoverageChip`: it ranks by `RequirementCoverageBreakdown`'s own
@@ -391,37 +423,6 @@ export function useRequirementsListColumns({
         ),
       },
       {
-        id: "priority",
-        // D-17 (promoted carry-over, 2026-08-25): the 26.2-17 "Priority
-        // column + editable pair" deferral, explicitly promoted into Phase
-        // 27 by Brad at plan time. Visible by default is the operator's
-        // explicit REVERSAL of `createdAt`'s hidden-by-default choice below
-        // -- the editable half of the pair is satisfied entirely by
-        // `RequirementDetailPanel`'s existing priority field (already
-        // shipped, already gated on `isRequirementLocked`); this cell is
-        // read-only display only.
-        accessorFn: (row) => row.priority ?? "",
-        header: tColumnPriority,
-        enableSorting: true,
-        // Omitted `meta.isVisible` (unlike `createdAt` below) -- this
-        // codebase's single-owner visibility convention treats an absent
-        // `meta.isVisible` as visible, matching every other column in this
-        // file except `createdAt`.
-        // Status column's own footprint (both render a short-text Badge),
-        // narrower than createdAt's 130px.
-        size: 120,
-        minSize: 80,
-        maxSize: 200,
-        cell: ({ row }) => (
-          <div
-            className="whitespace-nowrap"
-            data-testid={`requirement-priority-cell-${row.original.id}`}
-          >
-            <IssuePriorityDisplay priority={row.original.priority} />
-          </div>
-        ),
-      },
-      {
         id: "createdAt",
         // Gap closure 26.2-17 (operator-directed, 2026-08-25): Created/Updated
         // were meant to ship as a pair, but `Issue` has no `updatedAt` column
@@ -565,6 +566,7 @@ function RequirementCasesCell({
       <CasesListDisplay
         count={inProjectCount}
         filter={inProjectFilter}
+        showProject
         isLoading={isLoading}
       />
       {/* Absent entirely at zero (never a "+0" badge) -- ported verbatim
@@ -697,6 +699,7 @@ function RequirementCoveringCasesCell({
             triggerTestId={`requirement-covering-cases-trigger-${rowId}`}
             rows={inProjectRows}
             count={inProjectCount}
+            showProject
             isLoading={expanded && isCasesLoading}
             onOpenChange={handleOpenChange}
           />
@@ -747,9 +750,9 @@ interface CoveringCasesPopoverProps {
   triggerTestId: string;
   rows: RequirementCoveringCaseRow[];
   count: number;
-  /** Cross-project rows get each row's own `projectName` next to its case --
-   *  the in-project list never does, mirroring `RequirementCasesCell`'s own
-   *  `showProject` split. */
+  /** Every list shows each row's own `projectName` next to its case
+   *  (operator decision 2026-08-25) -- both the in-project and the
+   *  cross-project triggers pass this, mirroring `RequirementCasesCell`. */
   showProject?: boolean;
   triggerPrefix?: string;
   triggerVariant?: "default" | "outline";

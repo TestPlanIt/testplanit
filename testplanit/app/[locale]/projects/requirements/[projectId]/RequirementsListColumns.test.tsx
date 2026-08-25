@@ -362,16 +362,16 @@ function makeCoveringCase(
 }
 
 describe("useRequirementsListColumns -- column contract", () => {
-  it("returns name/status/coverage/coveringCases/linkedCases/source/priority/createdAt/actions in order when canAddEdit is true", () => {
+  it("returns name/status/priority/coverage/coveringCases/linkedCases/source/createdAt/actions in order when canAddEdit is true", () => {
     const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
     expect(result.current.map((col) => col.id)).toEqual([
       "name",
       "status",
+      "priority",
       "coverage",
       "coveringCases",
       "linkedCases",
       "source",
-      "priority",
       "createdAt",
       "actions",
     ]);
@@ -384,11 +384,11 @@ describe("useRequirementsListColumns -- column contract", () => {
     expect(result.current.map((col) => col.id)).toEqual([
       "name",
       "status",
+      "priority",
       "coverage",
       "coveringCases",
       "linkedCases",
       "source",
-      "priority",
       "createdAt",
     ]);
   });
@@ -919,8 +919,8 @@ describe("coveringCases cell -- drill-down expansion (gap closure 26.2-15, UAT g
 
     expect(screen.getByText("In-project case")).toBeInTheDocument();
     expect(screen.queryByText("Other-project case")).not.toBeInTheDocument();
-    // showProject is off for the in-project list.
-    expect(screen.queryByText("Current Project")).not.toBeInTheDocument();
+    // Every list shows each row's project (operator decision 2026-08-25).
+    expect(screen.getByText("Current Project")).toBeInTheDocument();
   });
 
   it("mixed projectIds: the other-project list shows only the other-project row, with its own project name, once expanded", () => {
