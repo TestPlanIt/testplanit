@@ -425,6 +425,52 @@ CREATE TRIGGER tpl_issue_hierarchy_cycle_guard_upd BEFORE UPDATE OF "parentId" O
 `;
 
 /**
+ * Issue content-change stamp (COV-05, D-01) — the authoritative signal a linked case's
+ * suspect flag composes against. `lib/integrations/services/SyncService.ts` rewrites
+ * `title`/`description` unconditionally on every sync poll with `lastSyncedAt: new
+ * Date()`, so an ORM-managed `@updatedAt` would mark every synced requirement suspect
+ * after every poll — dead on arrival. This BEFORE UPDATE trigger instead stamps
+ * "contentUpdatedAt" only when title, description, or note actually changed, gated by
+ * the `WHEN (... IS DISTINCT FROM ...)` clause so a no-op identical-value rewrite never
+ * fires the function body. Write-path agnostic: native edits, sync-applied Jira edits,
+ * and any future write surface all pass through the same gate.
+ *
+ * Watched columns are exactly "title", "description", "note" (D-02) — status shuffles,
+ * priority tweaks, reparents, and attachment changes must NOT arm the suspect flag; do
+ * not widen this column list.
+ *
+ * Deliberately NO BEFORE INSERT trigger: a freshly created Issue keeps contentUpdatedAt
+ * NULL, which is the chosen backfill posture — pre-existing and newly created rows are
+ * never suspect until their first real content edit. Do not "helpfully" add an insert
+ * trigger.
+ *
+ * "note" is verified JSONB (not json) in migrations/20260625193632_init/migration.sql,
+ * and `IS DISTINCT FROM` is natively defined for jsonb — no cast is needed or wanted; a
+ * defensive `::text` cast would silently change comparison semantics from jsonb
+ * key-order-insensitive equality to text exact-match.
+ *
+ * The distinct tpl_issue_content_updated_at prefix keeps this out of the tpl_audit_% /
+ * tpl_composition_% / tpl_issue_hierarchy_% / tpl_stamp_% drift checks.
+ */
+export const ISSUE_CONTENT_UPDATED_AT_TRIGGER_SQL = `
+CREATE OR REPLACE FUNCTION tpl_issue_content_updated_at() RETURNS TRIGGER AS $$
+BEGIN
+  NEW."contentUpdatedAt" := now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_issue_content_updated_at_upd ON "Issue";
+CREATE TRIGGER tpl_issue_content_updated_at_upd BEFORE UPDATE OF "title", "description", "note" ON "Issue"
+  FOR EACH ROW WHEN (
+    NEW."title" IS DISTINCT FROM OLD."title" OR
+    NEW."description" IS DISTINCT FROM OLD."description" OR
+    NEW."note" IS DISTINCT FROM OLD."note"
+  )
+  EXECUTE FUNCTION tpl_issue_content_updated_at();
+`;
+
+/**
  * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
  * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
  * CLI / deploy-entrypoint paths — `db push` silently drops these triggers, so they must be
@@ -666,6 +712,14 @@ export async function applyAuditTriggers(
     //     tpl_issue_hierarchy_* prefix keeps it out of every drift self-check below,
     //     exactly like tpl_composition_* above.
     await client.query(ISSUE_HIERARCHY_CYCLE_GUARD_SQL);
+
+    // 3d. Issue content-change stamp (COV-05) — diff-aware BEFORE UPDATE trigger that
+    //     stamps contentUpdatedAt only when title/description/note actually change, so
+    //     SyncService.ts's unconditional identical-value sync-poll rewrite is a no-op
+    //     (D-01). Idempotent CREATE OR REPLACE + DROP/CREATE TRIGGER pair, safe to
+    //     re-run. Distinct tpl_issue_content_updated_at prefix keeps it out of every
+    //     drift self-check below, exactly like tpl_issue_hierarchy_* above.
+    await client.query(ISSUE_CONTENT_UPDATED_AT_TRIGGER_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The

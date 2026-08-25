@@ -154,9 +154,13 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   }, // no updatedAt column; a Projects audit belongs to its own id
   // externalData/data are opaque machine-written integration payloads (denylisted); note is a
   // human-authored TipTap description — captured, flattened at render (humanize.ts). No updatedAt.
+  // contentUpdatedAt is bookkeeping stamped by tpl_issue_content_updated_at_upd (COV-05,
+  // D-01), not an app write — without this entry, every genuine title/description/note
+  // edit would report a redundant contentUpdatedAt change in the human-facing audit diff
+  // alongside the real field change.
   {
     table: "Issue",
-    denylist: ["createdAt", "externalData", "data"],
+    denylist: ["createdAt", "externalData", "data", "contentUpdatedAt"],
     // Issue.name is the reference key (e.g. "#213"); title is the human summary
     // ("[FEATURE] Webhook System"), which reads far better in the audit log.
     nameCol: "title",
