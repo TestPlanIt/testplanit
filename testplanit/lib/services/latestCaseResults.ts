@@ -1,5 +1,7 @@
 import { sql } from "kysely";
 
+import { baseDb } from "~/lib/db";
+
 /**
  * The shared "latest result for a test case" definition for the
  * issue-coverage family — a composable CTE fragment, not a query that runs
@@ -140,4 +142,59 @@ latest_results AS (
   ORDER BY test_case_id, executed_at DESC
 )
 `;
+}
+
+/** Row shape returned by `getCaseLatestExecutedAt`'s statement below, before
+ * JS-side coercion. */
+interface CaseLatestExecutedAtRow {
+  test_case_id: number | bigint;
+  executed_at: Date | string | null;
+}
+
+/**
+ * Resolves "when was this case last executed" for a batch of cases, composed
+ * directly from `latestCaseResultsCte()` above — never a second, independent
+ * definition of "latest."
+ *
+ * This is the ONLY sanctioned way to answer that question for the suspect
+ * flag (COV-05, D-03/D-04/D-05): `lib/services/latestTestResults.ts`'s
+ * `queryLatestTestResults` answers a DELIBERATELY DIFFERENT question for a
+ * different pair of product surfaces (the Repository Case List and the
+ * Flaky Test Report) — it walks past a case's most recent skipped or
+ * never-run result to find an older, more "meaningful" one. Calling that
+ * function here would make the suspect flag and the coverage panel disagree
+ * about the very same case's "latest execution."
+ *
+ * Returns a fully-populated `Map` — every id in `caseIds` is a key, with
+ * `null` for a case that has never been executed — so a caller can
+ * distinguish "never executed" from "not asked about" without a second
+ * lookup.
+ */
+export async function getCaseLatestExecutedAt(
+  caseIds: number[],
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<Map<number, Date | null>> {
+  const result = new Map<number, Date | null>();
+  if (caseIds.length === 0) {
+    return result;
+  }
+  for (const caseId of caseIds) {
+    result.set(caseId, null);
+  }
+
+  const { rows } = await sql<CaseLatestExecutedAtRow>`
+    WITH ${latestCaseResultsCte()}
+    SELECT test_case_id, executed_at
+    FROM latest_results
+    WHERE test_case_id = ANY(${caseIds}::int[])
+  `.execute(db.$qb);
+
+  for (const row of rows) {
+    result.set(
+      Number(row.test_case_id),
+      row.executed_at ? new Date(row.executed_at) : null
+    );
+  }
+
+  return result;
 }

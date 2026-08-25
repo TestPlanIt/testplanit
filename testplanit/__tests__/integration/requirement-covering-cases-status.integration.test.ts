@@ -28,6 +28,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
+import { getCaseLatestExecutedAt } from "~/lib/services/latestCaseResults";
 import {
   getRequirementCoverage,
   getRequirementCoveringCases,
@@ -558,20 +559,281 @@ describeIntegration(
   }
 );
 
-// Todo-only scaffold, owner 27-05. Proves COV-05's data-delivery seam
-// (CONTEXT.md/UI-SPEC.md): the suspect predicate composes this helper's
-// per-case executed_at rather than re-deriving "latest execution" itself,
-// agreeing byte-for-byte with the rollup and the drill-down's own
-// latest-result extension above.
+// Proves COV-05's data-delivery seam (CONTEXT.md/UI-SPEC.md): the suspect
+// predicate composes this helper's per-case executed_at rather than
+// re-deriving "latest execution" itself, agreeing byte-for-byte with the
+// rollup and the drill-down's own latest-result extension above. A sibling
+// fixture to the describe block above, not nested in it — its own
+// beforeAll/afterAll so this block stays runnable in isolation. It also
+// owns an INDEPENDENT raw client (`db2`, not the module-level `db`): the
+// block above disconnects `db` in its own afterAll, and vitest's default
+// sequential describe ordering means that disconnect can already have run
+// by the time this block's beforeAll fires.
 describeIntegration("getCaseLatestExecutedAt", () => {
-  it.todo(
-    "returns the manual execution timestamp for a case whose latest result is a run result"
-  );
-  it.todo(
-    "returns the JUnit execution timestamp for a case whose latest result is automated"
-  );
-  it.todo("returns null for a case that has never been executed");
-  it.todo(
-    "returns one entry per requested case id, including the never-executed ones"
-  );
+  const db2 = createRawDbClient();
+  const GCEA_STAMP = `gcea-${Date.now()}`;
+
+  let adminUserId: string;
+  let projectId: number;
+  let repositoryId: number;
+  let folderId: number;
+  let templateId: number;
+  let caseStateId: number;
+  let runStateId: number;
+  let passingStatusId: number;
+
+  let caseManualId: number;
+  let caseJunitId: number;
+  let caseNeverId: number;
+
+  const allCaseIds: number[] = [];
+  const allRunIds: number[] = [];
+  const allSuiteIds: number[] = [];
+
+  let executedAtManual: Date;
+  let executedAtJunit: Date;
+
+  beforeAll(async () => {
+    // Same scratch-database guard as the describe block above — this block
+    // has its own beforeAll/afterAll, so the guard is repeated rather than
+    // shared.
+    const [{ current_database: dbName }] = await db2.$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
+    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+      throw new Error(
+        `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+      );
+    }
+
+    const role = await db2.roles.findFirst({
+      where: { isDefault: true, isDeleted: false },
+    });
+    if (!role) throw new Error("Test prerequisite: no default role row");
+
+    const admin = await db2.user.create({
+      data: {
+        email: `${GCEA_STAMP}-admin@example.com`,
+        name: `Case Latest Executed At Admin ${GCEA_STAMP}`,
+        authMethod: "INTERNAL",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+        roleId: role.id,
+        password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+      },
+      select: { id: true },
+    });
+    adminUserId = admin.id;
+
+    const project = await db2.projects.create({
+      data: { name: `${GCEA_STAMP}-project`, createdBy: adminUserId },
+      select: { id: true },
+    });
+    projectId = project.id;
+
+    const repository = await db2.repositories.create({
+      data: { projectId },
+      select: { id: true },
+    });
+    repositoryId = repository.id;
+
+    const folder = await db2.repositoryFolders.create({
+      data: {
+        name: `${GCEA_STAMP}-folder`,
+        repositoryId,
+        projectId,
+        creatorId: adminUserId,
+      },
+      select: { id: true },
+    });
+    folderId = folder.id;
+
+    const template = await db2.templates.findFirst({ select: { id: true } });
+    if (!template)
+      throw new Error("Test prerequisite: no Templates row available");
+    const caseWorkflow = await db2.workflows.findFirst({
+      where: { scope: "CASES", isDeleted: false, isEnabled: true },
+      select: { id: true },
+    });
+    if (!caseWorkflow)
+      throw new Error(
+        "Test prerequisite: no CASES-scoped Workflows row available"
+      );
+    const runWorkflow = await db2.workflows.findFirst({
+      where: { scope: "RUNS", isDeleted: false, isEnabled: true },
+      select: { id: true },
+    });
+    if (!runWorkflow)
+      throw new Error(
+        "Test prerequisite: no RUNS-scoped Workflows row available"
+      );
+    // Looked up by its boolean column, never by name or system name — this
+    // is an admin-configurable row, not a hardcoded enum.
+    const passingStatus = await db2.status.findFirst({
+      where: { isSuccess: true, isDeleted: false },
+      select: { id: true },
+    });
+    if (!passingStatus)
+      throw new Error("Test prerequisite: no Status row with isSuccess = true");
+
+    templateId = template.id;
+    caseStateId = caseWorkflow.id;
+    runStateId = runWorkflow.id;
+    passingStatusId = passingStatus.id;
+
+    async function createCase(name: string) {
+      const testCase = await db2.repositoryCases.create({
+        data: {
+          projectId,
+          repositoryId,
+          folderId,
+          templateId,
+          name: `${GCEA_STAMP}-${name}`,
+          stateId: caseStateId,
+          creatorId: adminUserId,
+        },
+        select: { id: true },
+      });
+      allCaseIds.push(testCase.id);
+      return testCase.id;
+    }
+
+    async function createRun(name: string) {
+      const run = await db2.testRuns.create({
+        data: {
+          projectId,
+          name: `${GCEA_STAMP}-${name}`,
+          stateId: runStateId,
+          createdById: adminUserId,
+        },
+        select: { id: true },
+      });
+      allRunIds.push(run.id);
+      return run.id;
+    }
+
+    caseManualId = await createCase("case-manual");
+    caseJunitId = await createCase("case-junit");
+    caseNeverId = await createCase("case-never");
+
+    const runManual = await createRun("run-manual");
+    const runJunit = await createRun("run-junit");
+
+    executedAtManual = new Date();
+    executedAtJunit = new Date(executedAtManual.getTime() - 60 * 1000);
+
+    const runCase = await db2.testRunCases.create({
+      data: { testRunId: runManual, repositoryCaseId: caseManualId },
+      select: { id: true },
+    });
+    await db2.testRunResults.create({
+      data: {
+        testRunId: runManual,
+        testRunCaseId: runCase.id,
+        statusId: passingStatusId,
+        executedById: adminUserId,
+        executedAt: executedAtManual,
+      },
+    });
+
+    const suite = await db2.jUnitTestSuite.create({
+      data: {
+        name: `${GCEA_STAMP}-suite`,
+        testRunId: runJunit,
+        createdById: adminUserId,
+      },
+      select: { id: true },
+    });
+    allSuiteIds.push(suite.id);
+    await db2.jUnitTestResult.create({
+      data: {
+        type: "PASSED",
+        repositoryCaseId: caseJunitId,
+        testSuiteId: suite.id,
+        createdById: adminUserId,
+        statusId: passingStatusId,
+        executedAt: executedAtJunit,
+        time: 1.5,
+      },
+    });
+
+    // caseNeverId deliberately carries zero executions.
+  });
+
+  afterAll(async () => {
+    await db2.jUnitTestResult.deleteMany({
+      where: { testSuite: { id: { in: allSuiteIds } } },
+    });
+    await db2.jUnitTestSuite.deleteMany({
+      where: { id: { in: allSuiteIds } },
+    });
+    await db2.testRunResults.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await db2.testRunCases.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await db2.testRuns.deleteMany({ where: { id: { in: allRunIds } } });
+    await db2.repositoryCases.deleteMany({
+      where: { id: { in: allCaseIds } },
+    });
+    await db2.repositoryFolders.delete({ where: { id: folderId } });
+    await db2.repositories.delete({ where: { id: repositoryId } });
+    await db2.projects.delete({ where: { id: projectId } });
+    await db2.user.delete({ where: { id: adminUserId } });
+
+    const remainingCases = await db2.repositoryCases.count({
+      where: { name: { startsWith: GCEA_STAMP } },
+    });
+    const remainingProjects = await db2.projects.count({
+      where: { name: { startsWith: GCEA_STAMP } },
+    });
+    expect(remainingCases).toBe(0);
+    expect(remainingProjects).toBe(0);
+
+    await db2.$disconnect();
+  });
+
+  it("returns the manual execution timestamp for a case whose latest result is a run result", async () => {
+    const result = await getCaseLatestExecutedAt([caseManualId], db2);
+    expect(result.get(caseManualId)?.toISOString()).toBe(
+      executedAtManual.toISOString()
+    );
+  });
+
+  it("returns the JUnit execution timestamp for a case whose latest result is automated", async () => {
+    const result = await getCaseLatestExecutedAt([caseJunitId], db2);
+    expect(result.get(caseJunitId)?.toISOString()).toBe(
+      executedAtJunit.toISOString()
+    );
+  });
+
+  it("returns null for a case that has never been executed", async () => {
+    const result = await getCaseLatestExecutedAt([caseNeverId], db2);
+    expect(
+      result.has(caseNeverId),
+      "a never-executed case must still be a present key, not dropped"
+    ).toBe(true);
+    expect(result.get(caseNeverId)).toBeNull();
+  });
+
+  it("returns one entry per requested case id, including the never-executed ones", async () => {
+    const result = await getCaseLatestExecutedAt(
+      [caseManualId, caseJunitId, caseNeverId],
+      db2
+    );
+    expect(result.size).toBe(3);
+    expect(result.get(caseManualId)?.toISOString()).toBe(
+      executedAtManual.toISOString()
+    );
+    expect(result.get(caseJunitId)?.toISOString()).toBe(
+      executedAtJunit.toISOString()
+    );
+    expect(result.get(caseNeverId)).toBeNull();
+  });
+
+  it("performs no query and returns an empty map for an empty id array", async () => {
+    const result = await getCaseLatestExecutedAt([], db2);
+    expect(result.size).toBe(0);
+  });
 });
