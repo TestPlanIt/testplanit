@@ -834,7 +834,7 @@ function RequirementNameCell({
       }}
       className={cn(
         "flex min-w-0 items-center gap-1 cursor-pointer",
-        isDragging && "opacity-50"
+        isDragging && "opacity-30"
       )}
       style={{ paddingInlineStart: requirement.depth * 24 }}
       onClick={() => onSelectRequirement(requirement.id)}
