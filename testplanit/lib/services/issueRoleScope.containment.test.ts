@@ -203,6 +203,16 @@ const SCOPED_FILES = [
   // (requirement rows plus the null-case gap row), not by source grep
   // alone.
   "lib/services/requirementTraceability.ts",
+  // 27-09's LINK-03 reference picker forks components/issues/search-issues-dialog.tsx
+  // wholesale (D-09/D-12) and inherits its exact DEFECT_SCOPE_WHERE /
+  // includeRequirements toggle at the same query boundary, unchanged by the
+  // fork. Verified by direct read (the fork is a copy plus a reviewed,
+  // narrow set of edits — see the file's own header comment); this file's
+  // own containment gate below (the threshold table) is the only guard
+  // against the spread being silently dropped, since the fork has no
+  // dedicated where-argument assertion of its own (RequirementReferencesPanel.test.tsx
+  // exercises the fork only as a mocked child).
+  "components/issues/requirement-reference-search-dialog.tsx",
 ];
 
 // ROLE-AWARE BY DESIGN — queries the role explicitly, in both directions,
@@ -478,6 +488,12 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
           minimum: 3,
           reason:
             "1 import + 2 uses (issue-creator distribution, issue-date series) — this route has no test file of its own, so this is the only guard against a silent regression",
+        },
+        {
+          file: "components/issues/requirement-reference-search-dialog.tsx",
+          minimum: 2,
+          reason:
+            "1 import + 1 conditional spread guarding the opt-in includeRequirements toggle — inherited unchanged from the search-issues-dialog.tsx fork source",
         },
       ];
 
