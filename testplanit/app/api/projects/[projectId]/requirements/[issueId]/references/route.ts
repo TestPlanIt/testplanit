@@ -16,13 +16,32 @@ import { z } from "zod/v4";
 // already produces (27-PATTERNS.md), so the fork this route eventually backs
 // can post the exact object the picker already builds without reshaping it.
 const externalPickSchema = z.object({
-  externalId: z.string().min(1),
-  key: z.string().optional(),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  status: z.string().optional(),
-  priority: z.string().optional(),
-  externalUrl: z.string().optional(),
+  externalId: z.string().min(1).max(255),
+  key: z.string().max(255).optional(),
+  title: z.string().max(2000).optional(),
+  description: z.string().max(100000).optional(),
+  status: z.string().max(255).optional(),
+  priority: z.string().max(255).optional(),
+  // This route writes through baseDb, which does not run the schema-level
+  // Issue.externalUrl @url validator, and other shipped surfaces (e.g.
+  // DeferredIssueManager.tsx) render Issue.externalUrl as a raw anchor
+  // href -- so the scheme is enforced here, at parse time, rather than
+  // relying on a downstream render-time guard.
+  externalUrl: z
+    .string()
+    .max(2048)
+    .refine(
+      (value) => {
+        try {
+          const parsed = new URL(value);
+          return parsed.protocol === "http:" || parsed.protocol === "https:";
+        } catch {
+          return false;
+        }
+      },
+      { message: "externalUrl must be an http(s) URL" }
+    )
+    .optional(),
 });
 
 // Exactly one of internalIssueId / external must be present — a body naming

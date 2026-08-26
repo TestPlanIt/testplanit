@@ -322,6 +322,89 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     });
   });
 
+  it("rejects a javascript: externalUrl with 400 and writes nothing", async () => {
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: {
+          externalId: "EXT-9",
+          externalUrl: "javascript:alert(document.cookie)",
+        },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedUpsertShell).not.toHaveBeenCalled();
+  });
+
+  it("rejects a data: externalUrl with 400", async () => {
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: {
+          externalId: "EXT-9",
+          externalUrl: "data:text/html;base64,PHNjcmlwdD4=",
+        },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a scheme-less externalUrl with 400", async () => {
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: {
+          externalId: "EXT-9",
+          externalUrl: "//evil.example.com/x",
+        },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  it("accepts an https externalUrl", async () => {
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: {
+          externalId: "EXT-9",
+          externalUrl: "https://tracker.example.com/browse/EXT-9",
+        },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedUpsertShell).toHaveBeenCalledWith(
+      baseDb,
+      expect.objectContaining({
+        create: expect.objectContaining({
+          externalUrl: "https://tracker.example.com/browse/EXT-9",
+        }),
+        update: expect.objectContaining({
+          externalUrl: "https://tracker.example.com/browse/EXT-9",
+        }),
+      })
+    );
+  });
+
+  it("rejects an oversized title with 400", async () => {
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: {
+          externalId: "EXT-9",
+          title: "x".repeat(2001),
+        },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedUpsertShell).not.toHaveBeenCalled();
+  });
+
   it("never sends isRequirement or parentId in the shell payload", async () => {
     await POST(
       makeRequest("5", "10", {
