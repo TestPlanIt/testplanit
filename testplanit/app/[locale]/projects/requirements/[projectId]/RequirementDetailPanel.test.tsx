@@ -12,6 +12,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, any>) =>
     params ? `${key}:${Object.values(params).join("·")}` : key,
+  // AttachmentsDisplay -> DateFormatter reads this directly (25-19); the
+  // mock above only covers useTranslations, so without this a real mount of
+  // AttachmentsDisplay throws the moment it renders a "created" timestamp.
+  useLocale: () => "en-US",
 }));
 
 vi.mock("sonner", () => ({
@@ -33,7 +37,22 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
 });
 
 vi.mock("next-auth/react", () => ({
-  useSession: () => ({ data: { user: { id: "user-1" } } }),
+  // preferences (25-19) -- AttachmentsDisplay -> DateFormatter reads
+  // session.user.preferences.{dateFormat,timeFormat,timezone} directly and
+  // throws inside date-fns' format() on an undefined format string. Same
+  // shape components/AttachmentsDisplay.test.tsx's own mock already uses.
+  useSession: () => ({
+    data: {
+      user: {
+        id: "user-1",
+        preferences: {
+          dateFormat: "MM/dd/yyyy",
+          timeFormat: "HH:mm",
+          timezone: "Etc/UTC",
+        },
+      },
+    },
+  }),
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -71,6 +90,26 @@ vi.mock("@/components/ui/popover", () => ({
 vi.mock("@/components/AttachmentPreview", () => ({
   AttachmentPreview: ({ attachment }: any) => (
     <div data-testid={`attachment-preview-${attachment.id}`} />
+  ),
+}));
+
+// AttachmentsCarousel is a viewer, not part of any claim this file makes --
+// mocked so "opens the carousel" tests can assert on what it was mounted
+// with, without depending on its own internal editing/paging UI.
+vi.mock("@/components/AttachmentsCarousel", () => ({
+  AttachmentsCarousel: ({ attachments, initialIndex, onClose }: any) => (
+    <div
+      data-testid="attachments-carousel"
+      data-attachment-id={attachments[initialIndex]?.id}
+    >
+      <button
+        type="button"
+        data-testid="attachments-carousel-close"
+        onClick={onClose}
+      >
+        close
+      </button>
+    </div>
   ),
 }));
 
@@ -217,6 +256,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     color: {
       useFindMany: () => ({ data: [], isLoading: false }),
     },
+    // AttachmentsDisplay -> UserNameCell (components/tables/UserNameCell.tsx)
+    // calls this directly to render a "Created By" cell (25-19). A falsy
+    // user is safe -- UserNameCell returns null on it.
+    user: {
+      useFindFirst: () => ({ data: undefined }),
+    },
   }),
 }));
 
@@ -272,6 +317,20 @@ const detachedRequirement = {
 const detachedRequirementSameTitle = {
   ...detachedRequirement,
   title: detachedRequirement.name,
+};
+
+// Shared existing-attachment fixture for the 25-19 attachments gap closure
+// tests below.
+const existingAttachment = {
+  id: 501,
+  issueId: 2,
+  name: "existing-spec.pdf",
+  url: "requirements/existing-spec.pdf",
+  mimeType: "application/pdf",
+  size: 2048,
+  isDeleted: false,
+  createdAt: new Date().toISOString(),
+  createdById: "user-1",
 };
 
 function setRequirement(row: any) {
@@ -647,79 +706,106 @@ describe("RequirementDetailPanel", () => {
     expect("status" in payload).toBe(false);
   });
 
-  it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
-    setRequirement(lockedRequirement);
-    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
-
-    fireEvent.click(
-      screen.getByTestId("requirement-attachments-upload-simulate-select")
-    );
-
-    await waitFor(() => {
-      expect(mockFetchSignedUrl).toHaveBeenCalledWith(
-        expect.any(File),
-        "/api/get-attachment-url/",
-        expect.stringContaining("7")
-      );
-    });
-
-    await waitFor(() => {
-      expect(mockCreateAttachmentMutateAsync).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          issue: { connect: { id: 2 } },
-          url: "https://storage.example.com/spec.pdf",
-          name: "spec.pdf",
-          mimeType: "application/pdf",
-          size: expect.any(BigInt),
-          createdBy: { connect: { id: "user-1" } },
-        }),
-      });
-    });
-    const payload = mockCreateAttachmentMutateAsync.mock.calls[0][0].data;
-    expect(typeof payload.size).toBe("bigint");
-
-    // The zero-consumer legacy upload route must never be reached -- the
-    // signed-url path above is the entire upload mechanism.
-    expect(global.fetch).not.toHaveBeenCalledWith(
-      expect.stringContaining("/api/upload-attachment"),
-      expect.anything()
-    );
-  });
-
-  it("lists the requirement's existing attachments and offers a soft-delete removal", async () => {
+  // 25-19 RED (Task 1, Step 1): today RequirementAttachments renders its
+  // upload control and remove affordance unconditionally -- display mode is
+  // not view-only. Run this against HEAD before touching the component.
+  it("renders attachments read-only in display mode", () => {
     setRequirement(lockedRequirement);
     mockAttachmentsFindMany.mockReturnValue({
-      data: [
-        {
-          id: 501,
-          issueId: 2,
-          name: "existing-spec.pdf",
-          url: "requirements/existing-spec.pdf",
-          mimeType: "application/pdf",
-          size: 2048,
-          isDeleted: false,
-          createdAt: new Date().toISOString(),
-          createdById: "user-1",
-        },
-      ],
+      data: [existingAttachment],
       isLoading: false,
     });
-
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
 
-    expect(screen.getByText("existing-spec.pdf")).toBeInTheDocument();
+    const section = screen.getByTestId("requirement-attachments");
+    expect(
+      within(section).queryByTestId("requirement-attachments-upload")
+    ).not.toBeInTheDocument();
+    expect(
+      within(section).queryByText("common.actions.delete")
+    ).not.toBeInTheDocument();
+    // Display mode's read-only Name field renders the same string a second
+    // time (a plain div, not an input) alongside the clickable title --
+    // getAllByText, not getByText, matching AttachmentsDisplay.test.tsx's
+    // own convention for this exact component.
+    expect(
+      within(section).getAllByText("existing-spec.pdf").length
+    ).toBeGreaterThan(0);
+  });
 
-    fireEvent.click(screen.getByTestId("requirement-attachment-remove-501"));
-    fireEvent.click(
-      screen.getByTestId("requirement-attachment-remove-confirm-501")
-    );
-
-    await waitFor(() => {
-      expect(mockUpdateAttachmentMutateAsync).toHaveBeenCalledWith({
-        where: { id: 501 },
-        data: { isDeleted: true },
-      });
+  it("offers upload and staged removal only in edit mode", () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [existingAttachment],
+      isLoading: false,
     });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    // The inverse of the display-mode test above -- pins the gate in both
+    // directions rather than only proving one mode.
+    const section = screen.getByTestId("requirement-attachments");
+    expect(
+      within(section).getByTestId("requirement-attachments-upload")
+    ).toBeInTheDocument();
+    expect(
+      within(section).getByText("common.actions.delete")
+    ).toBeInTheDocument();
+  });
+
+  it("stages a removal without writing anything", () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [existingAttachment],
+      isLoading: false,
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const section = screen.getByTestId("requirement-attachments");
+    fireEvent.click(within(section).getByText("common.actions.delete"));
+
+    // A pending badge alone would pass even if a write also fired -- assert
+    // the mutation itself was never reached.
+    expect(
+      within(section).getByText("common.status.pendingDelete")
+    ).toBeInTheDocument();
+    expect(mockUpdateAttachmentMutateAsync).not.toHaveBeenCalled();
+  });
+
+  // The operator asked explicitly (2026-08-26) for the test-case
+  // click-to-view-larger convention on requirement attachments too -- pinned
+  // in both directions since the click goes through a different
+  // AttachmentsDisplay mount (read-only vs. deferred) in each mode.
+  it("opens the attachments carousel when an attachment is clicked, in both modes", () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [existingAttachment],
+      isLoading: false,
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    const section = screen.getByTestId("requirement-attachments");
+
+    // Display mode's read-only Name field duplicates the title text -- the
+    // FIRST match is always the clickable title (renders earlier in the
+    // DOM), same convention AttachmentsDisplay.test.tsx uses for this exact
+    // component.
+    fireEvent.click(within(section).getAllByText("existing-spec.pdf")[0]);
+    expect(screen.getByTestId("attachments-carousel")).toHaveAttribute(
+      "data-attachment-id",
+      "501"
+    );
+    fireEvent.click(screen.getByTestId("attachments-carousel-close"));
+    expect(
+      screen.queryByTestId("attachments-carousel")
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+    fireEvent.click(within(section).getAllByText("existing-spec.pdf")[0]);
+    expect(screen.getByTestId("attachments-carousel")).toHaveAttribute(
+      "data-attachment-id",
+      "501"
+    );
   });
 
   // 25-18 gap closure (25-UAT gap 1): the form used to seed exactly once per

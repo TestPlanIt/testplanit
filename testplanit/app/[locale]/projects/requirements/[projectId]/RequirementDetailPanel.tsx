@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import type { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -203,6 +204,14 @@ export default function RequirementDetailPanel({
 
   const { mutateAsync: updateRequirement } =
     useClientQueries(schema).issue.useUpdate();
+
+  // 25-19 gap closure (Task 1): the panel now holds the staged attachment
+  // state RequirementAttachments.tsx reports through its two callbacks.
+  // Task 2 wires Save/Cancel to actually apply/discard it -- for now this
+  // is only fed, matching Task 1's own scope.
+  const [stagedFiles, setStagedFiles] = useState<File[]>([]);
+  const [pendingAttachmentChanges, setPendingAttachmentChanges] =
+    useState<AttachmentChanges>({ edits: [], deletes: [] });
 
   const form = useForm<RequirementDetailFormData>({
     defaultValues: {
@@ -572,6 +581,9 @@ export default function RequirementDetailPanel({
       <RequirementAttachments
         projectId={projectId}
         requirementId={requirement.id}
+        isEditMode={isEditMode}
+        onStagedFilesChange={setStagedFiles}
+        onPendingChangesChange={setPendingAttachmentChanges}
       />
       {/* Coverage summary first, then the editable link list -- read-only
           subtree drill-down above, direct-link editor below. See
