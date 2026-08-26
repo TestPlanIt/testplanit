@@ -187,11 +187,17 @@ export function SearchIssuesDialog({
   );
 
   // Automatically enable external search when integration is available
+  // Default to the tracker when an integration is present; the source
+  // toggle below can flip back (operator direction 2026-08-25, extending
+  // the requirement-reference fork's toggle to every linking surface).
+  // Keyed on the id, not the object -- a refetched identity must not stomp
+  // a user's Internal selection.
+  const activeIntegrationId = activeIntegration?.id;
   useEffect(() => {
-    if (activeIntegration) {
+    if (activeIntegrationId) {
       setSearchExternal(true);
     }
-  }, [activeIntegration]);
+  }, [activeIntegrationId]);
 
   // Search internal issues (only when no integration or explicitly internal)
   const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(
@@ -234,10 +240,9 @@ export function SearchIssuesDialog({
       take: 20,
     },
     {
-      enabled:
-        !activeIntegration &&
-        !searchExternal &&
-        debouncedSearchQuery.length > 0,
+      // Gated on the source toggle alone: internal issues stay reachable
+      // even while an integration is active (operator direction 2026-08-25).
+      enabled: !searchExternal && debouncedSearchQuery.length > 0,
     }
   );
 
@@ -576,7 +581,7 @@ export function SearchIssuesDialog({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <DialogTitle>
-                  {activeIntegration ? (
+                  {activeIntegration && searchExternal ? (
                     <div className="flex items-center gap-2">
                       {t("issues.searchIssues")}
                       <span className="text-sm font-normal text-muted-foreground">
@@ -590,7 +595,7 @@ export function SearchIssuesDialog({
                   )}
                 </DialogTitle>
                 <DialogDescription>
-                  {activeIntegration
+                  {activeIntegration && searchExternal
                     ? t("issues.searchExternalDescription", {
                         provider: activeIntegration.integration.provider,
                       })
@@ -660,8 +665,34 @@ export function SearchIssuesDialog({
               />
             </div>
 
+            {/* Source toggle: reachable internal search while an
+                integration is active. Hidden without an integration -- the
+                dialog is already internal-only then. */}
+            {activeIntegration && (
+              <div className="flex flex-wrap gap-1 px-0">
+                <Badge
+                  variant={searchExternal ? "outline" : "default"}
+                  className="cursor-pointer"
+                  data-testid="issue-source-internal"
+                  onClick={() => setSearchExternal(false)}
+                >
+                  {t("common.fields.internalIssues")}
+                </Badge>
+                <Badge
+                  variant={searchExternal ? "default" : "outline"}
+                  className="cursor-pointer max-w-40 truncate"
+                  data-testid="issue-source-external"
+                  onClick={() => setSearchExternal(true)}
+                  title={activeIntegration.integration.name}
+                >
+                  {activeIntegration.integration.name}
+                </Badge>
+              </div>
+            )}
+
             {/* Project filter chips — only shown when 2+ active IntegrationProject records exist (D-05) */}
-            {activeIntegrationProjects &&
+            {searchExternal &&
+              activeIntegrationProjects &&
               activeIntegrationProjects.length >= 2 && (
                 <div className="flex flex-wrap gap-1 px-0">
                   <Badge
