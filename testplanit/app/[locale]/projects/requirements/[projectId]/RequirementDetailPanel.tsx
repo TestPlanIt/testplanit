@@ -280,12 +280,22 @@ export default function RequirementDetailPanel({
     const freshSnapshot = JSON.stringify(freshValues);
 
     if (!isFormReady) {
-      // First seed for this requirementId -- unchanged from before this
-      // plan: reset, record the loaded id, force display mode.
+      // First seed for this requirementId: reset, record the loaded id,
+      // force display mode. Staged attachment work belongs to the
+      // requirement it was staged on, so a selection change is an implicit
+      // cancel of it -- the same discard `handleCancel` performs. The
+      // reset-key bump matters even when the newly selected requirement has
+      // no attachments at all: `AttachmentsDisplay` clears its own pending
+      // state only when the `attachments` array identity it was handed
+      // changes, and that never happens here because the component with
+      // zero attachments to show doesn't mount in the first place.
       form.reset(freshValues);
       lastSeededValuesRef.current = freshSnapshot;
       setLoadedRequirementId(requirementId);
       setIsEditMode(false);
+      setStagedFiles([]);
+      setPendingAttachmentChanges({ edits: [], deletes: [] });
+      setAttachmentsResetKey((key) => key + 1);
       return;
     }
 

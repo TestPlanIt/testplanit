@@ -949,6 +949,74 @@ describe("RequirementDetailPanel", () => {
     ).toBeInTheDocument();
   });
 
+  // A row clicked mid-edit must never let the previous row's staged
+  // attachment work reach the newly selected requirement's own Save -- no
+  // staged file, edit or delete should be able to cross a selection change.
+  describe("requirement selection discards staged attachment work", () => {
+    it("does not carry a staged file across a requirement selection change", async () => {
+      setRequirement(lockedRequirement);
+      const { rerenderWithProvider } = renderPanel(
+        <RequirementDetailPanel projectId="7" requirementId={2} />
+      );
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      fireEvent.click(
+        screen.getByTestId("requirement-attachments-upload-simulate-select")
+      );
+
+      mockAttachmentsFindMany.mockReturnValue({ data: [], isLoading: false });
+      setRequirement(nativeRequirement);
+      rerenderWithProvider(
+        <RequirementDetailPanel projectId="7" requirementId={1} />
+      );
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      const saveButton = screen.getByTestId(
+        "requirement-detail-save"
+      ) as HTMLButtonElement;
+      // Nothing dirty, nothing staged -- the switch itself must not leave
+      // anything from requirement 2 armed against requirement 1.
+      expect(saveButton.disabled).toBe(true);
+
+      fireEvent.click(screen.getByTestId("tiptap-note-simulate-edit"));
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(mockUpdateMutateAsync).toHaveBeenCalled();
+      });
+      expect(mockFetchSignedUrl).not.toHaveBeenCalled();
+      expect(mockCreateAttachmentMutateAsync).not.toHaveBeenCalled();
+    });
+
+    it("does not carry a staged removal across a requirement selection change", async () => {
+      setRequirement(lockedRequirement);
+      mockAttachmentsFindMany.mockReturnValue({
+        data: [existingAttachment],
+        isLoading: false,
+      });
+      const { rerenderWithProvider } = renderPanel(
+        <RequirementDetailPanel projectId="7" requirementId={2} />
+      );
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      const section = screen.getByTestId("requirement-attachments");
+      fireEvent.click(within(section).getByText("common.actions.delete"));
+
+      mockAttachmentsFindMany.mockReturnValue({ data: [], isLoading: false });
+      setRequirement(nativeRequirement);
+      rerenderWithProvider(
+        <RequirementDetailPanel projectId="7" requirementId={1} />
+      );
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      fireEvent.click(screen.getByTestId("tiptap-note-simulate-edit"));
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(mockUpdateMutateAsync).toHaveBeenCalled();
+      });
+      expect(mockUpdateAttachmentMutateAsync).not.toHaveBeenCalled();
+    });
+  });
+
   // 25-18 gap closure (25-UAT gap 1): the form used to seed exactly once per
   // requirementId and never again -- a rename made elsewhere (webhook,
   // another tab, the tree's own inline rename) updated the header (it reads
