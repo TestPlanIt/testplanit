@@ -40,11 +40,19 @@ vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 let capturedOnIssuesChange: ((ids: number[]) => void) | null = null;
 let capturedLinkedIssueIds: number[] | null = null;
 vi.mock("@/components/issues/DeferredIssueManager", () => ({
-  DeferredIssueManager: ({ linkedIssueIds, onIssuesChange, label }: any) => {
+  DeferredIssueManager: ({
+    linkedIssueIds,
+    onIssuesChange,
+    label,
+    triggerLabel,
+  }: any) => {
     capturedOnIssuesChange = onIssuesChange;
     capturedLinkedIssueIds = linkedIssueIds;
     return (
       <div data-testid="mock-deferred-issue-manager" data-label={label}>
+        <span data-testid="mock-deferred-issue-manager-trigger-label">
+          {triggerLabel}
+        </span>
         {(linkedIssueIds ?? []).map((id: number) => (
           <span key={id} data-testid={`mock-linked-issue-${id}`} />
         ))}
@@ -229,6 +237,21 @@ describe("CreateRequirementDialog", () => {
   // Proves LINK-03/D-16: references attachable from the Create Requirement
   // dialog via DeferredIssueManager.
   describe("LINK-03 references on create", () => {
+    it("passes a neutral trigger label to the References DeferredIssueManager", () => {
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+
+      expect(
+        screen.getByTestId("mock-deferred-issue-manager-trigger-label")
+      ).toHaveTextContent("issues.linkIssue");
+    });
+
     it("clears the picked references every time the dialog re-opens", () => {
       const { rerender } = render(
         <CreateRequirementDialog

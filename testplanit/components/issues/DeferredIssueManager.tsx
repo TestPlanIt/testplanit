@@ -20,6 +20,15 @@ interface DeferredIssueManagerProps {
   linkedIssueIds?: number[]; // The actual Issue IDs to display
   maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
   /**
+   * Overrides the trigger button's copy. `label` (above) is the section
+   * heading rendered ABOVE the badge list; this is the `<Button>` itself.
+   * Its default copy is provider-specific ("Link Jira Issue"), which no
+   * longer fits a picker that also accepts internal issues -- callers on a
+   * neutral surface (e.g. the requirement References picker) pass their own.
+   * Every other consumer omits this and keeps the provider-specific default.
+   */
+  triggerLabel?: string;
+  /**
    * INT-05: when set, the underlying SearchIssuesDialog prefills the
    * Create New Issue form with title + description from the iteration
    * body builder. Threaded through unchanged.
@@ -48,6 +57,7 @@ export function DeferredIssueManager({
   linkedIssueIds = [],
   maxBadgeWidth = "max-w-xl",
   iterationContext,
+  triggerLabel,
 }: DeferredIssueManagerProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -257,11 +267,12 @@ export function DeferredIssueManager({
         disabled={disabled}
       >
         <Plus className="h-4 w-4" />
-        {t("issues.linkExternalIssue", {
-          provider: formatProviderName(
-            activeIntegration?.integration?.provider || "Issue"
-          ),
-        })}
+        {triggerLabel ??
+          t("issues.linkExternalIssue", {
+            provider: formatProviderName(
+              activeIntegration?.integration?.provider || "Issue"
+            ),
+          })}
       </Button>
 
       <SearchIssuesDialog

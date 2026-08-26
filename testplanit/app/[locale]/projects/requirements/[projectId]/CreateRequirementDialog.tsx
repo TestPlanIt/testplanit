@@ -194,6 +194,7 @@ export function CreateRequirementDialog({
               linkedIssueIds={referencedIssueIds}
               onIssuesChange={setReferencedIssueIds}
               label={t("requirements.references.createDialogLabel")}
+              triggerLabel={t("issues.linkIssue")}
             />
           </div>
         </div>

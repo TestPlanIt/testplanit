@@ -143,4 +143,16 @@ describe("DeferredIssueManager", () => {
     renderManager({ label: "References" });
     expect(screen.getByText("References")).toBeInTheDocument();
   });
+
+  describe("trigger label", () => {
+    it("renders a caller-supplied trigger label instead of the provider-specific one", () => {
+      renderManager({ triggerLabel: "Link Issue" });
+      expect(screen.getByText("Link Issue")).toBeInTheDocument();
+    });
+
+    it("falls back to the provider-specific trigger label when triggerLabel is omitted", () => {
+      renderManager();
+      expect(screen.getByText("linkExternalIssue")).toBeInTheDocument();
+    });
+  });
 });
