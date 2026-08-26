@@ -122,9 +122,7 @@ export function DeferredIssueManager({
       const updatedIds = [...linkedIssueIds, issue.id];
       onIssuesChange(updatedIds);
       void refetch(); // Refresh the display
-      toast.success(
-        `Issue ${issue.externalKey || issue.name} linked successfully`
-      );
+      toast.success(t("common.errors.issueManagement.linkedSuccess"));
       return;
     }
 
@@ -196,7 +194,7 @@ export function DeferredIssueManager({
         const updatedIds = [...linkedIssueIds, newIssue.id];
         onIssuesChange(updatedIds);
         void refetch(); // Refresh the display
-        toast.success(`Issue ${issue.key} linked successfully`);
+        toast.success(t("common.errors.issueManagement.linkedSuccess"));
       }
     } catch (error: any) {
       console.error("DeferredIssueManager: Error upserting issue:", error);

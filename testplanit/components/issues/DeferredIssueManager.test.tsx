@@ -108,7 +108,7 @@ describe("DeferredIssueManager", () => {
       await capturedOnIssueSelected!(internalPick);
 
       expect(onIssuesChange).toHaveBeenCalledWith([1, 2, 88]);
-      expect(toast.success).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith("linkedSuccess");
     });
 
     it("does not call the issue upsert for an internally picked issue", async () => {
@@ -126,7 +126,7 @@ describe("DeferredIssueManager", () => {
 
       expect(mockUpsertAsync).toHaveBeenCalledTimes(1);
       expect(onIssuesChange).toHaveBeenCalledWith([99]);
-      expect(toast.success).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalledWith("linkedSuccess");
     });
 
     it("does not duplicate an internally picked issue already in linkedIssueIds", async () => {
