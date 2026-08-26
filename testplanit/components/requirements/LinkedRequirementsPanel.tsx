@@ -315,13 +315,13 @@ export function LinkedRequirementsPanel({
                               <div className="flex items-center gap-2">
                                 <Button
                                   type="button"
-                                  variant="secondary"
                                   onClick={() => setOpenDismissId(null)}
                                 >
                                   {tGlobal("common.cancel")}
                                 </Button>
                                 <Button
                                   type="button"
+                                  variant="outline"
                                   disabled={dismissSuspectFlag.isPending}
                                   data-testid={`case-linked-requirement-suspect-confirm-${row.id}`}
                                   onClick={() => handleDismissSuspect(row.id)}

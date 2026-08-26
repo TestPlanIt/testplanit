@@ -6769,7 +6769,7 @@
       "tooltipCaseSide": "This requirement was updated after this case's last run.",
       "tooltipRequirementSide": "This case's last run is older than this requirement's last update.",
       "dismissConfirm": "Dismiss this suspect flag? A newer edit to the requirement will re-flag it.",
-      "dismissAction": "Dismiss",
+      "dismissAction": "Dismiss flag",
       "dismissSuccess": "Suspect flag dismissed.",
       "dismissFailed": "Failed to dismiss the suspect flag."
     },
