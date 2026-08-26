@@ -377,8 +377,17 @@ export default function RequirementDetailPanel({
       ) {
         updateData.note = JSON.parse(data.note);
       }
+      // An empty title makes `hasDistinctIssueTitle` false, which removes
+      // the Title field from this panel and leaves no way back through it,
+      // so a blank title is treated the way the list's in-place rename
+      // already treats one -- a silent no-op rather than a write. The
+      // silence is deliberate and matches the rename path, so no new
+      // message is introduced here.
       if (!locked) {
-        if (dirtyFields.title) updateData.title = data.title;
+        if (dirtyFields.title) {
+          const trimmedTitle = data.title.trim();
+          if (trimmedTitle) updateData.title = trimmedTitle;
+        }
         if (dirtyFields.status) updateData.status = data.status || null;
         if (dirtyFields.priority) updateData.priority = data.priority || null;
       }

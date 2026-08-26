@@ -757,7 +757,61 @@ describe("RequirementDetailPanel", () => {
     expect("status" in payload).toBe(false);
   });
 
-  // 25-19 RED (Task 1, Step 1): today RequirementAttachments renders its
+  it("never saves a blanked title, but still saves the fields beside it", async () => {
+    setRequirement(detachedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.change(screen.getByTestId("requirement-field-title"), {
+      target: { value: "   " },
+    });
+    fireEvent.change(screen.getByTestId("requirement-field-priority"), {
+      target: { value: "high" },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalled();
+    });
+    const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+    expect(payload.priority).toBe("high");
+    expect("title" in payload).toBe(false);
+  });
+
+  it("trims a padded title before saving", async () => {
+    setRequirement(detachedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.change(screen.getByTestId("requirement-field-title"), {
+      target: { value: "  Renamed  " },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalled();
+    });
+    const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+    expect(payload.title).toBe("Renamed");
+  });
+
+  it("writes nothing when the only change is a blanked title", async () => {
+    setRequirement(detachedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.change(screen.getByTestId("requirement-field-title"), {
+      target: { value: "   " },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalled();
+    });
+    expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
+  });
+
+  // RED (Task 1, Step 1): today RequirementAttachments renders its
   // upload control and remove affordance unconditionally -- display mode is
   // not view-only. Run this against HEAD before touching the component.
   it("renders attachments read-only in display mode", () => {
