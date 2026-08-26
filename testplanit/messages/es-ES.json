@@ -371,6 +371,7 @@
       "issues": "Problemas",
       "internalIssues": "Problemas Internos",
       "externalIssues": "{provider} Problemas",
+      "requirements": "Requisitos",
       "data": "Datos",
       "note": "Nota",
       "externalId": "ID Externo",
@@ -709,6 +710,7 @@
       "userProfile": "Perfil de usuario",
       "users": "Usuarios",
       "issues": "Asuntos",
+      "requirements": "Requisitos",
       "tags": "Etiquetas",
       "tagDetails": "Detalles de la etiqueta",
       "aiModels": "Modelos de IA",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "Buscar hitos nuevos en estos proyectos conectados",
             "settingsSaved": "Ajustes de sincronización de hitos guardados",
             "saveError": "No se pudieron guardar los ajustes de sincronización de hitos"
+          },
+          "requirementsConfig": {
+            "title": "Tipos de requisito",
+            "description": "Elija qué tipos de asunto del sistema de seguimiento cuentan como requisitos. Los asuntos existentes se reclasifican para coincidir.",
+            "enableLabel": "Habilitar clasificación de requisitos",
+            "issueTypesLabel": "Tipos de asunto",
+            "issueTypesPlaceholder": "Seleccionar tipos de asunto",
+            "issueTypesAriaLabel": "Tipos de asunto de requisito",
+            "previewHeading": "Impacto de este cambio",
+            "becomingRequirements": "{count, plural, one {{count} asunto se convertirá en requisito} other {{count} asuntos se convertirán en requisitos}}",
+            "stoppingRequirements": "{count, plural, one {{count} asunto dejará de ser requisito} other {{count} asuntos dejarán de ser requisitos}}",
+            "detachedCallout": "{count, plural, one {{count} de esos está desvinculado del sistema de seguimiento o fue editado localmente y perderá su estado de requisito} other {{count} de esos están desvinculados del sistema de seguimiento o fueron editados localmente y perderán su estado de requisito}}",
+            "reversibilityNote": "Volver a añadir un tipo restaura la clasificación. No se elimina nada.",
+            "noChanges": "No hay cambios de clasificación que aplicar.",
+            "settingsSaved": "Configuración de tipos de requisito guardada",
+            "saveError": "No se pudo guardar la configuración de tipos de requisito"
           }
         },
         "integrationAssigned": "Integración asignada correctamente",
@@ -2107,6 +2125,13 @@
           "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión.",
           "systemDisabledTitle": "El flujo de trabajo de revisión está desactivado en todo el sistema.",
           "systemDisabledDescription": "Se guarda la preferencia de tu proyecto, pero no se bloqueará nada hasta que un administrador del sistema active la función en Administración → Flujos de trabajo."
+        },
+        "requirements": {
+          "label": "Habilitar requisitos",
+          "description": "Añade un área de Requisitos a este proyecto para construir jerarquías de lo que el sistema debe hacer, y vincular casos de prueba a ellos para su cobertura. Active esto si mantiene aquí un modelo de requisitos actualizado; déjelo desactivado si sus requisitos residen completamente en su sistema de seguimiento de incidencias.",
+          "enabledToast": "Requisitos habilitados para este proyecto",
+          "disabledToast": "Requisitos deshabilitados para este proyecto",
+          "saveError": "No se pudo actualizar la configuración de requisitos"
         },
         "flipJustification": {
           "label": "Se requiere justificación en caso de cambio de resultado.",
@@ -6624,6 +6649,182 @@
       "errorDescription": "No se pudo completar la autorización. Cierre esta ventana e inténtelo de nuevo."
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "Buscar requisitos...",
+      "emptyTitle": "Aún no hay requisitos",
+      "emptyDescription": "Cree su primer requisito para empezar a construir el árbol de requisitos de este proyecto.",
+      "loadFailed": "No se pudieron cargar los requisitos.",
+      "addRoot": "Agregar requisito",
+      "addChild": "Agregar requisito secundario",
+      "rename": "Cambiar nombre",
+      "delete": "Eliminar",
+      "expandAll": "Expandir todo",
+      "collapseAll": "Colapsar todo",
+      "dropToRootHint": "Suelte aquí para mover al nivel superior",
+      "moveSuccess": "Requisito movido.",
+      "moveFailed": "No se pudo mover el requisito.",
+      "moveRejected": "Este movimiento fue rechazado:",
+      "dragDisabled": "Este requisito no se puede mover en este momento."
+    },
+    "list": {
+      "columnName": "Nombre",
+      "columnStatus": "Estado",
+      "columnSource": "Origen",
+      "expandRow": "Expandir {name}",
+      "collapseRow": "Colapsar {name}",
+      "filterAllStatuses": "Todos los estados",
+      "dragLockedSynced": "Los requisitos sincronizados reflejan la jerarquía del rastreador. Desvincúlelo para moverlo."
+    },
+    "detail": {
+      "selectPrompt": "Seleccione un requisito para ver sus detalles.",
+      "documentation": "Documentación",
+      "documentationEmpty": "No se proporcionó documentación",
+      "documentationPlaceholder": "Introduzca la documentación del requisito...",
+      "lockedHint": "Este campo es administrado por el rastreador conectado y no se puede editar aquí.",
+      "saveSuccess": "Requisito guardado.",
+      "saveFailed": "No se pudo guardar el requisito."
+    },
+    "provenance": {
+      "nativeLabel": "Manual",
+      "syncedLabel": "Sincronizado",
+      "detachedLabel": "Desvinculado",
+      "nativeTooltip": "Creado directamente en TestPlanIt.",
+      "syncedTooltip": "Sincronizado desde el rastreador conectado. Los campos bloqueados no se pueden editar aquí.",
+      "detachedTooltip": "Desvinculado del rastreador conectado. Ahora es totalmente editable, como un requisito creado manualmente.",
+      "openInTracker": "Abrir en {provider}",
+      "detach": "Desvincular",
+      "detachDialogTitle": "¿Desvincular este requisito?",
+      "detachDialogDescription": "Desvincular hace que este requisito sea totalmente editable en TestPlanIt y rompe su enlace con el rastreador conectado. Esta acción no se puede deshacer; volver a vincular con el rastreador aún no es compatible.",
+      "detachConfirm": "Desvincular",
+      "detachSuccess": "Requisito desvinculado.",
+      "detachFailed": "No se pudo desvincular el requisito."
+    },
+    "create": {
+      "dialogTitle": "Crear requisito",
+      "dialogDescription": "Agregue un nuevo requisito al árbol de requisitos de este proyecto.",
+      "nameLabel": "Nombre",
+      "namePlaceholder": "Introduzca un nombre de requisito...",
+      "parentLabel": "Principal",
+      "parentNone": "Sin elemento principal (nivel superior)",
+      "submit": "Crear requisito",
+      "submitHint": "Presione Enter para crear",
+      "success": "Requisito creado.",
+      "failed": "No se pudo crear el requisito."
+    },
+    "edit": {
+      "dialogTitle": "Editar requisito",
+      "submit": "Guardar cambios",
+      "success": "Requisito actualizado.",
+      "failed": "No se pudo actualizar el requisito.",
+      "lockedTooltip": "Este requisito está sincronizado desde el rastreador conectado. Desvincúlelo para cambiarle el nombre."
+    },
+    "delete": {
+      "dialogTitle": "Eliminar requisito",
+      "confirmNoChildren": "¿Está seguro de que desea eliminar este requisito? Esta acción se puede deshacer.",
+      "confirmWithChildren": "Este requisito tiene {count, plural, one {{count} descendiente} other {{count} descendientes}} que también se eliminarán. Esta acción se puede deshacer.",
+      "submit": "Eliminar",
+      "success": "Requisito eliminado.",
+      "failed": "No se pudo eliminar el requisito.",
+      "undo": "Deshacer",
+      "undoSuccess": "Requisito restaurado.",
+      "undoFailed": "No se pudo restaurar el requisito."
+    },
+    "attachments": {
+      "title": "Adjuntos",
+      "empty": "Sin adjuntos",
+      "uploadSuccess": "Adjunto subido.",
+      "uploadFailed": "No se pudo subir el adjunto.",
+      "removeSuccess": "Adjunto eliminado.",
+      "removeFailed": "No se pudo eliminar el adjunto."
+    },
+    "linkedCases": {
+      "title": "Casos de prueba vinculados",
+      "empty": "No hay casos de prueba vinculados.",
+      "addLink": "Agregar enlace",
+      "addLinkDialogTitle": "Vincular casos de prueba",
+      "searchPlaceholder": "Buscar casos de prueba...",
+      "linkSuccess": "Caso de prueba vinculado.",
+      "linkFailed": "No se pudo vincular el caso de prueba.",
+      "unlinkConfirm": "¿Está seguro de que desea desvincular este caso de prueba?",
+      "unlinkSuccess": "Caso de prueba desvinculado.",
+      "unlinkFailed": "No se pudo desvincular el caso de prueba.",
+      "columnCase": "Caso de prueba",
+      "columnProject": "Proyecto"
+    },
+    "linkedRequirements": {
+      "title": "Requisitos vinculados",
+      "empty": "No hay requisitos vinculados.",
+      "addLink": "Agregar enlace",
+      "addLinkDialogTitle": "Vincular requisitos",
+      "searchPlaceholder": "Buscar requisitos...",
+      "linkSuccess": "Requisito vinculado.",
+      "linkFailed": "No se pudo vincular el requisito.",
+      "unlinkConfirm": "¿Está seguro de que desea desvincular este requisito?",
+      "unlinkSuccess": "Requisito desvinculado.",
+      "unlinkFailed": "No se pudo desvincular el requisito."
+    },
+    "suspect": {
+      "badgeLabel": "Sospechoso",
+      "tooltipCaseSide": "Este requisito se actualizó después de la última ejecución de este caso.",
+      "tooltipRequirementSide": "La última ejecución de este caso es anterior a la última actualización de este requisito.",
+      "dismissConfirm": "¿Descartar esta marca de sospecha? Una edición más reciente del requisito la volverá a marcar.",
+      "dismissAction": "Descartar marca",
+      "dismissSuccess": "Marca de sospecha descartada.",
+      "dismissFailed": "No se pudo descartar la marca de sospecha."
+    },
+    "references": {
+      "title": "{count, plural, =0 {Referencias} =1 {{count} Referencia} other {{count} Referencias}}",
+      "empty": "Aún no hay referencias.",
+      "emptyHint": "Adjunte los tickets que dieron forma a este requisito.",
+      "addReference": "Agregar referencia",
+      "addDialogTitle": "Agregar referencia",
+      "searchPlaceholder": "Buscar problemas...",
+      "createDialogLabel": "Referencias",
+      "attachSuccess": "Referencia adjuntada.",
+      "attachFailed": "No se pudo adjuntar la referencia.",
+      "removeConfirm": "¿Está seguro de que desea eliminar esta referencia?",
+      "removeSuccess": "Referencia eliminada.",
+      "removeFailed": "No se pudo eliminar la referencia.",
+      "columnReference": "Referencia",
+      "columnStatus": "Estado"
+    },
+    "coverage": {
+      "title": "Cobertura",
+      "uncovered": "Sin cubrir",
+      "uncoveredTooltip": "No hay casos de prueba vinculados a este requisito ni a ninguno de sus descendientes.",
+      "statusPassed": "Aprobado",
+      "statusFailed": "Fallido",
+      "statusNotRun": "No ejecutado",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "Aprobado: {passed} · Fallido: {failed} · En curso: {inProgress} · No ejecutado: {notRun}",
+      "showOnlyUncovered": "Mostrar solo sin cubrir",
+      "showOnlyUncoveredUnavailable": "Los datos de cobertura no están disponibles en este momento.",
+      "loadFailed": "No se pudo cargar la cobertura.",
+      "retry": "Reintentar",
+      "panelTitle": "Casos de prueba de cobertura",
+      "panelDescription": "Todos los casos de prueba contabilizados para la cobertura de este requisito: los vinculados directamente más los vinculados a cualquier requisito debajo de él. Para agregar o eliminar enlaces, use Casos de prueba vinculados.",
+      "panelEmpty": "Aún ningún caso de prueba cubre este requisito.",
+      "columnCase": "Caso de prueba",
+      "columnResult": "Resultado",
+      "columnExecutedAt": "Ejecutado en",
+      "columnProject": "Proyecto",
+      "inherited": "Heredado",
+      "inheritedTooltip": "Vinculado a un descendiente de este requisito, no directamente a él.",
+      "notRunCell": "No ejecutado",
+      "crossProjectCount": "{count, plural, one {También cubierto por un caso en # otro proyecto} other {También cubierto por casos en # otros proyectos}}"
+    },
+    "export": {
+      "menuLabel": "Exportar trazabilidad",
+      "exportFailed": "No se pudo exportar la trazabilidad.",
+      "pdfEnglishOnlyHint": "Las exportaciones en PDF se generan solo en inglés.",
+      "csvOnReportsHint": "Para una exportación en CSV, ejecute el informe de Trazabilidad de Requisitos."
+    },
+    "disabled": {
+      "title": "Los requisitos no están habilitados",
+      "description": "Este proyecto no ha activado la función de requisitos. Pida a un administrador del proyecto que la habilite en la configuración del proyecto para empezar a crear árboles de requisitos."
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "Navegue y gestione todos los asuntos.",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## Sesiones\nSesiones de pruebas exploratorias: pruebas no guionadas y con tiempo limitado, capturadas como notas y resultados en los estados activo y completado.",
     "projectTags": "## Etiquetas\nLas etiquetas identifican y agrupan los casos de prueba, sesiones y ejecuciones de este proyecto para que el trabajo relacionado sea fácil de encontrar.",
     "projectIssues": "## Problemas\nProblemas de los rastreadores conectados a este proyecto, vinculados a los casos de prueba, ejecuciones y sesiones donde se encontraron o se hizo referencia a ellos.",
+    "projectRequirements": "## Requisitos\nLos requisitos del proyecto en una jerarquía, creados de forma nativa en TestPlanIt o sincronizados desde un rastreador conectado, con casos de prueba vinculados y cobertura acumulada a través del árbol.",
     "projectReports": "## Informes\nLos informes resumen las pruebas de este proyecto —ejecuciones de prueba, sesiones y resultados— en gráficos y tablas que puede filtrar y exportar.",
     "projectAuditLogs": "## Registros de auditoría\nEl registro de auditoría de las acciones realizadas en este proyecto —quién cambió qué y cuándo— para el seguimiento de la seguridad y el cumplimiento.",
     "projectIntegrations": "## Integraciones de problemas\nConecte este proyecto a un rastreador de problemas para que sus casos de prueba, ejecuciones y sesiones puedan vincularse y sincronizarse con problemas e hitos externos.",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "Candidatos a automatización",
           "description": "Lista clasificada de los casos de prueba manuales que se deben automatizar a continuación, según el contenido del caso, los campos personalizados y el contexto del problema vinculado."
+        },
+        "requirementCoverageGaps": {
+          "label": "Brechas de Cobertura de Requisitos",
+          "description": "Enumera todos los requisitos sin casos de prueba vinculados, para que las brechas sean visibles sin necesidad de abrir el árbol"
+        },
+        "requirementTraceability": {
+          "label": "Trazabilidad de Requisitos",
+          "description": "Cada requisito emparejado con sus casos de prueba vinculados y su último resultado de ejecución"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "Número de casos de prueba no probados",
           "testCoverageVsExecution": "Cobertura de la prueba vs. Estado de ejecución"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "Requisito",
+        "path": "Ruta",
+        "testCase": "Caso de Prueba",
+        "result": "Resultado",
+        "executedAt": "Ejecutado en",
+        "project": "Proyecto",
+        "linkedCases": "Casos Vinculados",
+        "uncovered": "Sin cubrir",
+        "notRun": "No ejecutado",
+        "noData": "No hay datos de requisitos disponibles para este informe.",
+        "noGaps": "No se encontraron brechas de cobertura: todos los requisitos tienen al menos un caso de prueba vinculado."
       },
       "crossProjectReportTypes": {
         "testExecution": {

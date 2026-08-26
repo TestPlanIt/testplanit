@@ -371,6 +371,7 @@
       "issues": "問題",
       "internalIssues": "内部問題",
       "externalIssues": "{provider} 問題",
+      "requirements": "要件",
       "data": "データ",
       "note": "注記",
       "externalId": "外部ID",
@@ -709,6 +710,7 @@
       "userProfile": "ユーザープロフィール",
       "users": "ユーザー",
       "issues": "問題",
+      "requirements": "要件",
       "tags": "タグ",
       "tagDetails": "タグの詳細",
       "aiModels": "AIモデル",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "これらの接続されたプロジェクトを新しいマイルストーンについてスキャンする",
             "settingsSaved": "マイルストーン同期設定を保存しました",
             "saveError": "マイルストーン同期設定の保存に失敗しました"
+          },
+          "requirementsConfig": {
+            "title": "要件タイプ",
+            "description": "要件としてカウントするトラッカーの問題タイプを選択します。既存の問題は一致するように再分類されます。",
+            "enableLabel": "要件分類を有効にする",
+            "issueTypesLabel": "問題タイプ",
+            "issueTypesPlaceholder": "問題タイプを選択",
+            "issueTypesAriaLabel": "要件の問題タイプ",
+            "previewHeading": "この変更の影響",
+            "becomingRequirements": "{count, plural, other {{count}件の問題が要件になります}}",
+            "stoppingRequirements": "{count, plural, other {{count}件の問題が要件でなくなります}}",
+            "detachedCallout": "{count, plural, other {そのうち{count}件はトラッカーから切り離されているか、ローカルで編集されているため、要件ステータスを失います}}",
+            "reversibilityNote": "タイプを再度追加すると、分類が復元されます。何も削除されません。",
+            "noChanges": "適用する分類の変更はありません。",
+            "settingsSaved": "要件タイプの設定が保存されました",
+            "saveError": "要件タイプの設定の保存に失敗しました"
           }
         },
         "integrationAssigned": "統合が正常に割り当てられました",
@@ -2107,6 +2125,13 @@
           "saveError": "レビューワークフロー設定の更新に失敗しました",
           "systemDisabledTitle": "レビューワークフローがシステム全体で停止しています",
           "systemDisabledDescription": "プロジェクトの設定は保存されますが、システム管理者が「管理」→「ワークフロー」でこの機能を有効にするまでは、何も制限されません。"
+        },
+        "requirements": {
+          "label": "要件を有効にする",
+          "description": "このプロジェクトに要件エリアを追加し、システムが実行すべき内容の階層を構築し、テストケースをリンクしてカバレッジを確保できるようにします。現状の要件モデルをここで維持する場合は有効にしてください。要件がすべて課題トラッカーにある場合は無効のままにしてください。",
+          "enabledToast": "このプロジェクトで要件が有効になりました",
+          "disabledToast": "このプロジェクトで要件が無効になりました",
+          "saveError": "要件設定を更新できませんでした"
         },
         "flipJustification": {
           "label": "結果反転の正当化が必要",
@@ -6624,6 +6649,182 @@
       "errorDescription": "認可を完了できませんでした。このウィンドウを閉じて、再度お試しください。"
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "要件を検索…",
+      "emptyTitle": "まだ要件がありません",
+      "emptyDescription": "最初の要件を作成して、このプロジェクトの要件ツリーの構築を開始しましょう。",
+      "loadFailed": "要件の読み込みに失敗しました。",
+      "addRoot": "要件を追加",
+      "addChild": "子要件を追加",
+      "rename": "名前を変更",
+      "delete": "削除",
+      "expandAll": "すべて展開",
+      "collapseAll": "すべて折りたたむ",
+      "dropToRootHint": "ここにドロップしてトップレベルに移動",
+      "moveSuccess": "要件が移動されました。",
+      "moveFailed": "要件の移動に失敗しました。",
+      "moveRejected": "この移動は拒否されました：",
+      "dragDisabled": "この要件は現在移動できません。"
+    },
+    "list": {
+      "columnName": "名前",
+      "columnStatus": "ステータス",
+      "columnSource": "ソース",
+      "expandRow": "{name}を展開",
+      "collapseRow": "{name}を折りたたむ",
+      "filterAllStatuses": "すべてのステータス",
+      "dragLockedSynced": "同期された要件はトラッカーの階層をミラーリングします。移動するには切り離してください。"
+    },
+    "detail": {
+      "selectPrompt": "要件を選択すると詳細が表示されます。",
+      "documentation": "ドキュメント",
+      "documentationEmpty": "ドキュメントは提供されていません",
+      "documentationPlaceholder": "要件のドキュメントを入力してください…",
+      "lockedHint": "このフィールドは接続されたトラッカーによって管理されており、ここでは編集できません。",
+      "saveSuccess": "要件が保存されました。",
+      "saveFailed": "要件の保存に失敗しました。"
+    },
+    "provenance": {
+      "nativeLabel": "手動",
+      "syncedLabel": "同期済み",
+      "detachedLabel": "切り離し済み",
+      "nativeTooltip": "TestPlanIt内で直接作成されました。",
+      "syncedTooltip": "接続されたトラッカーから同期されています。ロックされたフィールドはここでは編集できません。",
+      "detachedTooltip": "接続されたトラッカーから切り離されています。手動で作成された要件と同様に、完全に編集可能です。",
+      "openInTracker": "{provider}で開く",
+      "detach": "切り離す",
+      "detachDialogTitle": "この要件を切り離しますか？",
+      "detachDialogDescription": "切り離すと、この要件はTestPlanIt内で完全に編集可能になり、接続されたトラッカーとのリンクが解除されます。この操作は元に戻せません。トラッカーへの再接続はまだサポートされていません。",
+      "detachConfirm": "切り離す",
+      "detachSuccess": "要件が切り離されました。",
+      "detachFailed": "要件の切り離しに失敗しました。"
+    },
+    "create": {
+      "dialogTitle": "要件を作成",
+      "dialogDescription": "このプロジェクトの要件ツリーに新しい要件を追加します。",
+      "nameLabel": "名前",
+      "namePlaceholder": "要件名を入力してください…",
+      "parentLabel": "親",
+      "parentNone": "親なし(トップレベル)",
+      "submit": "要件を作成",
+      "submitHint": "Enterキーを押して作成",
+      "success": "要件が作成されました。",
+      "failed": "要件の作成に失敗しました。"
+    },
+    "edit": {
+      "dialogTitle": "要件を編集",
+      "submit": "変更を保存",
+      "success": "要件が更新されました。",
+      "failed": "要件の更新に失敗しました。",
+      "lockedTooltip": "この要件は接続されたトラッカーから同期されています。名前を変更するには切り離してください。"
+    },
+    "delete": {
+      "dialogTitle": "要件を削除",
+      "confirmNoChildren": "この要件を削除してもよろしいですか?この操作は元に戻すことができます。",
+      "confirmWithChildren": "{count, plural, other {この要件には{count}件の子要素があり、これらも削除されます。この操作は元に戻すことができます。}}",
+      "submit": "削除",
+      "success": "要件が削除されました。",
+      "failed": "要件の削除に失敗しました。",
+      "undo": "元に戻す",
+      "undoSuccess": "要件が復元されました。",
+      "undoFailed": "要件の復元に失敗しました。"
+    },
+    "attachments": {
+      "title": "添付ファイル",
+      "empty": "添付ファイルなし",
+      "uploadSuccess": "添付ファイルがアップロードされました。",
+      "uploadFailed": "添付ファイルのアップロードに失敗しました。",
+      "removeSuccess": "添付ファイルが削除されました。",
+      "removeFailed": "添付ファイルの削除に失敗しました。"
+    },
+    "linkedCases": {
+      "title": "リンクされたテストケース",
+      "empty": "リンクされたテストケースはありません。",
+      "addLink": "リンクを追加",
+      "addLinkDialogTitle": "テストケースをリンク",
+      "searchPlaceholder": "テストケースを検索…",
+      "linkSuccess": "テストケースがリンクされました。",
+      "linkFailed": "テストケースのリンクに失敗しました。",
+      "unlinkConfirm": "このテストケースのリンクを解除してもよろしいですか？",
+      "unlinkSuccess": "テストケースのリンクが解除されました。",
+      "unlinkFailed": "テストケースのリンク解除に失敗しました。",
+      "columnCase": "テストケース",
+      "columnProject": "プロジェクト"
+    },
+    "linkedRequirements": {
+      "title": "リンクされた要件",
+      "empty": "リンクされた要件はありません。",
+      "addLink": "リンクを追加",
+      "addLinkDialogTitle": "要件をリンク",
+      "searchPlaceholder": "要件を検索…",
+      "linkSuccess": "要件がリンクされました。",
+      "linkFailed": "要件のリンクに失敗しました。",
+      "unlinkConfirm": "この要件のリンクを解除してもよろしいですか？",
+      "unlinkSuccess": "要件のリンクが解除されました。",
+      "unlinkFailed": "要件のリンク解除に失敗しました。"
+    },
+    "suspect": {
+      "badgeLabel": "疑わしい",
+      "tooltipCaseSide": "この要件は、このケースの最終実行後に更新されました。",
+      "tooltipRequirementSide": "このケースの最終実行は、この要件の最終更新より前です。",
+      "dismissConfirm": "この疑わしいフラグを解除しますか?要件が再度編集されると、再びフラグが立てられます。",
+      "dismissAction": "フラグを解除",
+      "dismissSuccess": "疑わしいフラグが解除されました。",
+      "dismissFailed": "疑わしいフラグの解除に失敗しました。"
+    },
+    "references": {
+      "title": "{count, plural, =0 {参照} =1 {{count} 件の参照} other {{count} 件の参照}}",
+      "empty": "まだ参照がありません。",
+      "emptyHint": "この要件に関連するチケットを添付してください。",
+      "addReference": "参照を追加",
+      "addDialogTitle": "参照を追加",
+      "searchPlaceholder": "課題を検索…",
+      "createDialogLabel": "参照",
+      "attachSuccess": "参照が添付されました。",
+      "attachFailed": "参照の添付に失敗しました。",
+      "removeConfirm": "この参照を削除してもよろしいですか？",
+      "removeSuccess": "参照が削除されました。",
+      "removeFailed": "参照の削除に失敗しました。",
+      "columnReference": "参照",
+      "columnStatus": "ステータス"
+    },
+    "coverage": {
+      "title": "カバレッジ",
+      "uncovered": "未カバー",
+      "uncoveredTooltip": "この要件およびその子要素にリンクされたテストケースはありません。",
+      "statusPassed": "合格",
+      "statusFailed": "失敗",
+      "statusNotRun": "未実行",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "合格: {passed} · 失敗: {failed} · 進行中: {inProgress} · 未実行: {notRun}",
+      "showOnlyUncovered": "未カバーのみ表示",
+      "showOnlyUncoveredUnavailable": "カバレッジデータは現在利用できません。",
+      "loadFailed": "カバレッジの読み込みに失敗しました。",
+      "retry": "再試行",
+      "panelTitle": "カバーしているテストケース",
+      "panelDescription": "この要件のカバレッジに含まれるすべてのテストケースです。直接リンクされたケースと、その下位の要件にリンクされたケースが含まれます。リンクの追加や削除は、「リンクされたテストケース」から行ってください。",
+      "panelEmpty": "この要件をカバーするテストケースはまだありません。",
+      "columnCase": "テストケース",
+      "columnResult": "結果",
+      "columnExecutedAt": "実行日時",
+      "columnProject": "プロジェクト",
+      "inherited": "継承",
+      "inheritedTooltip": "この要件に直接ではなく、その子要素にリンクされています。",
+      "notRunCell": "未実行",
+      "crossProjectCount": "{count, plural, other {他の#件のプロジェクトのケースでもカバーされています}}"
+    },
+    "export": {
+      "menuLabel": "トレーサビリティをエクスポート",
+      "exportFailed": "トレーサビリティのエクスポートに失敗しました。",
+      "pdfEnglishOnlyHint": "PDFエクスポートは英語のみで生成されます。",
+      "csvOnReportsHint": "CSVエクスポートには、要件トレーサビリティレポートを実行してください。"
+    },
+    "disabled": {
+      "title": "要件機能が有効になっていません",
+      "description": "このプロジェクトでは要件機能が有効になっていません。要件ツリーの構築を開始するには、プロジェクト管理者にプロジェクト設定で有効にするよう依頼してください。"
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "すべての問題を参照および管理します。",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## セッション\n探索的テストセッションは、時間を区切った台本のないテストであり、進行中および完了状態にわたってメモと結果として記録されます。",
     "projectTags": "## タグ\nタグはこのプロジェクトのテストケース、セッション、テスト実行にラベルを付けてグループ化し、関連作業を見つけやすくします。",
     "projectIssues": "## 課題\nこのプロジェクトに接続されたトラッカーからの課題で、発見または参照されたテストケース、テスト実行、セッションにリンクされます。",
+    "projectRequirements": "## 要件\nプロジェクトの要件を階層構造で管理します。TestPlanIt内で直接作成するか、接続されたトラッカーから同期され、リンクされたテストケースとカバレッジがツリー全体で集計されます。",
     "projectReports": "## レポート\nレポートは、このプロジェクトのテスト実行やセッション、結果などのテスト状況を、フィルタリングおよびエクスポート可能なグラフと表にまとめます。",
     "projectAuditLogs": "## 監査ログ\nセキュリティとコンプライアンスの追跡のために、このプロジェクトで実行されたアクションの監査証跡です。誰が何をいつ変更したかを記録します。",
     "projectIntegrations": "## 課題連携\nこのプロジェクトを課題トラッカーに接続し、テストケース、テスト実行、セッションを外部の課題やマイルストーンにリンクして同期できるようにします。",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "自動化候補者",
           "description": "ケースの内容、カスタムフィールド、および関連する問題のコンテキストに基づいて、次に自動化する手動テストケースのランキングリスト"
+        },
+        "requirementCoverageGaps": {
+          "label": "要件カバレッジギャップ",
+          "description": "リンクされたテストケースが一つもない要件をすべて一覧表示し、ツリーを開かなくてもギャップを確認できるようにします"
+        },
+        "requirementTraceability": {
+          "label": "要件トレーサビリティ",
+          "description": "すべての要件を、リンクされたテストケースと最新の実行結果と組み合わせて表示します"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "未テストのテストケース数",
           "testCoverageVsExecution": "テストカバレッジと実行状況の比較"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "要件",
+        "path": "パス",
+        "testCase": "テストケース",
+        "result": "結果",
+        "executedAt": "実行日時",
+        "project": "プロジェクト",
+        "linkedCases": "リンクされたケース",
+        "uncovered": "未カバー",
+        "notRun": "未実行",
+        "noData": "このレポートに利用できる要件データはありません。",
+        "noGaps": "カバレッジギャップは見つかりませんでした。すべての要件に少なくとも1つのリンクされたテストケースがあります。"
       },
       "crossProjectReportTypes": {
         "testExecution": {

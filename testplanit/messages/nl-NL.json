@@ -371,6 +371,7 @@
       "issues": "Problemen",
       "internalIssues": "Interne problemen",
       "externalIssues": "{provider} Problemen",
+      "requirements": "Vereisten",
       "data": "Gegevens",
       "note": "Opmerking",
       "externalId": "Externe ID",
@@ -709,6 +710,7 @@
       "userProfile": "Gebruikersprofiel",
       "users": "Gebruikers",
       "issues": "Problemen",
+      "requirements": "Vereisten",
       "tags": "Tags",
       "tagDetails": "Labeldetails",
       "aiModels": "AI-modellen",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "Scan deze verbonden projecten op nieuwe mijlpalen",
             "settingsSaved": "Instellingen voor mijlpaalsynchronisatie opgeslagen",
             "saveError": "Instellingen voor mijlpaalsynchronisatie konden niet worden opgeslagen"
+          },
+          "requirementsConfig": {
+            "title": "Vereistetypen",
+            "description": "Kies welke trackerprobleemtypen als vereisten tellen. Bestaande problemen worden dienovereenkomstig opnieuw geclassificeerd.",
+            "enableLabel": "Vereisteclassificatie inschakelen",
+            "issueTypesLabel": "Probleemtypen",
+            "issueTypesPlaceholder": "Selecteer probleemtypen",
+            "issueTypesAriaLabel": "Probleemtypen voor vereisten",
+            "previewHeading": "Impact van deze wijziging",
+            "becomingRequirements": "{count, plural, one {{count} probleem wordt een vereiste} other {{count} problemen worden vereisten}}",
+            "stoppingRequirements": "{count, plural, one {{count} probleem is niet langer een vereiste} other {{count} problemen zijn niet langer vereisten}}",
+            "detachedCallout": "{count, plural, one {{count} daarvan is losgekoppeld van de tracker of lokaal bewerkt en verliest zijn vereistestatus} other {{count} daarvan zijn losgekoppeld van de tracker of lokaal bewerkt en verliezen hun vereistestatus}}",
+            "reversibilityNote": "Als u een type opnieuw toevoegt, wordt de classificatie hersteld. Er wordt niets verwijderd.",
+            "noChanges": "Geen classificatiewijzigingen om toe te passen.",
+            "settingsSaved": "Instellingen voor vereistetype opgeslagen",
+            "saveError": "Instellingen voor vereistetype konden niet worden opgeslagen"
           }
         },
         "integrationAssigned": "Integratie succesvol toegewezen",
@@ -2107,6 +2125,13 @@
           "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt.",
           "systemDisabledTitle": "De beoordelingsworkflow is systeembreed uitgeschakeld.",
           "systemDisabledDescription": "De voorkeur van uw project wordt opgeslagen, maar er worden geen beperkingen opgelegd totdat een systeembeheerder de functie inschakelt onder Beheer → Werkstromen."
+        },
+        "requirements": {
+          "label": "Vereisten inschakelen",
+          "description": "Voegt een gebied Vereisten toe aan dit project voor het opbouwen van hiërarchieën van wat het systeem moet doen, en het koppelen van testgevallen hieraan voor dekking. Schakel dit in als u hier een actueel vereistenmodel bijhoudt; laat het uit als uw vereisten volledig in uw issuetracker staan.",
+          "enabledToast": "Vereisten ingeschakeld voor dit project",
+          "disabledToast": "Vereisten uitgeschakeld voor dit project",
+          "saveError": "De vereisteninstelling kon niet worden bijgewerkt"
         },
         "flipJustification": {
           "label": "Vereist een rechtvaardiging voor het omkeren van het resultaat.",
@@ -6624,6 +6649,182 @@
       "errorDescription": "De autorisatie kon niet worden voltooid. Sluit dit venster en probeer het opnieuw."
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "Vereisten zoeken...",
+      "emptyTitle": "Nog geen vereisten",
+      "emptyDescription": "Maak uw eerste vereiste aan om de vereistenboom van dit project op te bouwen.",
+      "loadFailed": "Het laden van vereisten is mislukt.",
+      "addRoot": "Vereiste toevoegen",
+      "addChild": "Onderliggende vereiste toevoegen",
+      "rename": "Naam wijzigen",
+      "delete": "Verwijderen",
+      "expandAll": "Alles uitvouwen",
+      "collapseAll": "Alles samenvouwen",
+      "dropToRootHint": "Zet hier neer om naar het bovenste niveau te verplaatsen",
+      "moveSuccess": "Vereiste verplaatst.",
+      "moveFailed": "Het verplaatsen van de vereiste is mislukt.",
+      "moveRejected": "Deze verplaatsing is geweigerd:",
+      "dragDisabled": "Deze vereiste kan momenteel niet worden verplaatst."
+    },
+    "list": {
+      "columnName": "Naam",
+      "columnStatus": "Status",
+      "columnSource": "Bron",
+      "expandRow": "{name} uitvouwen",
+      "collapseRow": "{name} samenvouwen",
+      "filterAllStatuses": "Alle statussen",
+      "dragLockedSynced": "Gesynchroniseerde vereisten weerspiegelen de hiërarchie van de tracker. Ontkoppel om deze te verplaatsen."
+    },
+    "detail": {
+      "selectPrompt": "Selecteer een vereiste om de details te bekijken.",
+      "documentation": "Documentatie",
+      "documentationEmpty": "Geen documentatie verstrekt",
+      "documentationPlaceholder": "Voer vereistedocumentatie in...",
+      "lockedHint": "Dit veld wordt beheerd door de gekoppelde tracker en kan hier niet worden bewerkt.",
+      "saveSuccess": "Vereiste opgeslagen.",
+      "saveFailed": "Het opslaan van de vereiste is mislukt."
+    },
+    "provenance": {
+      "nativeLabel": "Handmatig",
+      "syncedLabel": "Gesynchroniseerd",
+      "detachedLabel": "Ontkoppeld",
+      "nativeTooltip": "Rechtstreeks aangemaakt in TestPlanIt.",
+      "syncedTooltip": "Gesynchroniseerd vanuit de gekoppelde tracker. Vergrendelde velden kunnen hier niet worden bewerkt.",
+      "detachedTooltip": "Ontkoppeld van de gekoppelde tracker. Nu volledig bewerkbaar, zoals een handmatig aangemaakte vereiste.",
+      "openInTracker": "Openen in {provider}",
+      "detach": "Ontkoppelen",
+      "detachDialogTitle": "Deze vereiste ontkoppelen?",
+      "detachDialogDescription": "Door te ontkoppelen wordt deze vereiste volledig bewerkbaar in TestPlanIt en wordt de koppeling met de gekoppelde tracker verbroken. Dit kan niet ongedaan worden gemaakt — opnieuw koppelen aan de tracker wordt nog niet ondersteund.",
+      "detachConfirm": "Ontkoppelen",
+      "detachSuccess": "Vereiste ontkoppeld.",
+      "detachFailed": "Het ontkoppelen van de vereiste is mislukt."
+    },
+    "create": {
+      "dialogTitle": "Vereiste aanmaken",
+      "dialogDescription": "Voeg een nieuwe vereiste toe aan de vereistenboom van dit project.",
+      "nameLabel": "Naam",
+      "namePlaceholder": "Voer een vereistenaam in...",
+      "parentLabel": "Ouder",
+      "parentNone": "Geen ouder (bovenste niveau)",
+      "submit": "Vereiste aanmaken",
+      "submitHint": "Druk op Enter om aan te maken",
+      "success": "Vereiste aangemaakt.",
+      "failed": "Het aanmaken van de vereiste is mislukt."
+    },
+    "edit": {
+      "dialogTitle": "Vereiste bewerken",
+      "submit": "Wijzigingen opslaan",
+      "success": "Vereiste bijgewerkt.",
+      "failed": "Het bijwerken van de vereiste is mislukt.",
+      "lockedTooltip": "Deze vereiste is gesynchroniseerd vanuit de gekoppelde tracker. Ontkoppel deze om de naam te wijzigen."
+    },
+    "delete": {
+      "dialogTitle": "Vereiste verwijderen",
+      "confirmNoChildren": "Weet u zeker dat u deze vereiste wilt verwijderen? Deze actie kan ongedaan worden gemaakt.",
+      "confirmWithChildren": "Deze vereiste heeft {count, plural, one {{count} onderliggend item} other {{count} onderliggende items}} die ook worden verwijderd. Deze actie kan ongedaan worden gemaakt.",
+      "submit": "Verwijderen",
+      "success": "Vereiste verwijderd.",
+      "failed": "Het verwijderen van de vereiste is mislukt.",
+      "undo": "Ongedaan maken",
+      "undoSuccess": "Vereiste hersteld.",
+      "undoFailed": "Het herstellen van de vereiste is mislukt."
+    },
+    "attachments": {
+      "title": "Bijlagen",
+      "empty": "Geen bijlagen",
+      "uploadSuccess": "Bijlage geüpload.",
+      "uploadFailed": "Het uploaden van de bijlage is mislukt.",
+      "removeSuccess": "Bijlage verwijderd.",
+      "removeFailed": "Het verwijderen van de bijlage is mislukt."
+    },
+    "linkedCases": {
+      "title": "Gekoppelde testcases",
+      "empty": "Geen gekoppelde testcases.",
+      "addLink": "Link toevoegen",
+      "addLinkDialogTitle": "Testcases koppelen",
+      "searchPlaceholder": "Testcases zoeken...",
+      "linkSuccess": "Testcase gekoppeld.",
+      "linkFailed": "Het koppelen van de testcase is mislukt.",
+      "unlinkConfirm": "Weet u zeker dat u deze testcase wilt ontkoppelen?",
+      "unlinkSuccess": "Testcase ontkoppeld.",
+      "unlinkFailed": "Het ontkoppelen van de testcase is mislukt.",
+      "columnCase": "Testgeval",
+      "columnProject": "Project"
+    },
+    "linkedRequirements": {
+      "title": "Gekoppelde vereisten",
+      "empty": "Geen gekoppelde vereisten.",
+      "addLink": "Link toevoegen",
+      "addLinkDialogTitle": "Vereisten koppelen",
+      "searchPlaceholder": "Vereisten zoeken...",
+      "linkSuccess": "Vereiste gekoppeld.",
+      "linkFailed": "Het koppelen van de vereiste is mislukt.",
+      "unlinkConfirm": "Weet u zeker dat u deze vereiste wilt ontkoppelen?",
+      "unlinkSuccess": "Vereiste ontkoppeld.",
+      "unlinkFailed": "Het ontkoppelen van de vereiste is mislukt."
+    },
+    "suspect": {
+      "badgeLabel": "Verdacht",
+      "tooltipCaseSide": "Deze vereiste is bijgewerkt na de laatste uitvoering van deze testcase.",
+      "tooltipRequirementSide": "De laatste uitvoering van deze testcase is ouder dan de laatste update van deze vereiste.",
+      "dismissConfirm": "Deze verdachte markering negeren? Een nieuwere bewerking van de vereiste zal deze opnieuw markeren.",
+      "dismissAction": "Markering negeren",
+      "dismissSuccess": "Verdachte markering genegeerd.",
+      "dismissFailed": "Het negeren van de verdachte markering is mislukt."
+    },
+    "references": {
+      "title": "{count, plural, =0 {Referenties} =1 {{count} Referentie} other {{count} Referenties}}",
+      "empty": "Nog geen referenties.",
+      "emptyHint": "Voeg tickets toe die deze vereiste hebben gevormd.",
+      "addReference": "Referentie toevoegen",
+      "addDialogTitle": "Referentie toevoegen",
+      "searchPlaceholder": "Problemen zoeken...",
+      "createDialogLabel": "Referenties",
+      "attachSuccess": "Referentie toegevoegd.",
+      "attachFailed": "Het toevoegen van de referentie is mislukt.",
+      "removeConfirm": "Weet u zeker dat u deze referentie wilt verwijderen?",
+      "removeSuccess": "Referentie verwijderd.",
+      "removeFailed": "Het verwijderen van de referentie is mislukt.",
+      "columnReference": "Referentie",
+      "columnStatus": "Status"
+    },
+    "coverage": {
+      "title": "Dekking",
+      "uncovered": "Niet gedekt",
+      "uncoveredTooltip": "Er zijn geen testcases gekoppeld aan deze vereiste of aan een van de onderliggende items.",
+      "statusPassed": "Geslaagd",
+      "statusFailed": "Mislukt",
+      "statusNotRun": "Niet uitgevoerd",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "Geslaagd: {passed} · Mislukt: {failed} · In behandeling: {inProgress} · Niet uitgevoerd: {notRun}",
+      "showOnlyUncovered": "Alleen niet-gedekte tonen",
+      "showOnlyUncoveredUnavailable": "Dekkingsgegevens zijn momenteel niet beschikbaar.",
+      "loadFailed": "Het laden van de dekking is mislukt.",
+      "retry": "Opnieuw proberen",
+      "panelTitle": "Dekkende testcases",
+      "panelDescription": "Elke testcase die meetelt voor de dekking van deze vereiste — testcases die er rechtstreeks aan zijn gekoppeld plus testcases die zijn gekoppeld aan een onderliggende vereiste. Gebruik Gekoppelde testcases om links toe te voegen of te verwijderen.",
+      "panelEmpty": "Er zijn nog geen testcases die deze vereiste dekken.",
+      "columnCase": "Testgeval",
+      "columnResult": "Resultaat",
+      "columnExecutedAt": "Uitgevoerd op",
+      "columnProject": "Project",
+      "inherited": "Overgeërfd",
+      "inheritedTooltip": "Gekoppeld aan een onderliggend item van deze vereiste, niet rechtstreeks eraan.",
+      "notRunCell": "Niet uitgevoerd",
+      "crossProjectCount": "{count, plural, one {Ook gedekt door een testcase in # ander project} other {Ook gedekt door testcases in # andere projecten}}"
+    },
+    "export": {
+      "menuLabel": "Traceerbaarheid exporteren",
+      "exportFailed": "Het exporteren van de traceerbaarheid is mislukt.",
+      "pdfEnglishOnlyHint": "PDF-exports worden alleen in het Engels gegenereerd.",
+      "csvOnReportsHint": "Voer voor een CSV-export het rapport Vereistentraceerbaarheid uit."
+    },
+    "disabled": {
+      "title": "Vereisten zijn niet ingeschakeld",
+      "description": "Dit project heeft de functie Vereisten niet ingeschakeld. Vraag een projectbeheerder om deze in de projectinstellingen in te schakelen om vereistenbomen te kunnen opbouwen."
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "Bekijk en beheer alle problemen.",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## Sessies\nVerkennende testsessies — tijdgebonden, ongescript testen vastgelegd als notities en resultaten in actieve en afgeronde statussen.",
     "projectTags": "## Tags\nTags labelen en groeperen de testgevallen, sessies en runs van dit project, zodat gerelateerd werk gemakkelijk te vinden is.",
     "projectIssues": "## Issues\nIssues van de verbonden trackers van dit project, gekoppeld aan de testgevallen, runs en sessies waarin ze zijn gevonden of vermeld.",
+    "projectRequirements": "## Vereisten\nDe vereisten van het project in een hiërarchie — rechtstreeks aangemaakt in TestPlanIt of gesynchroniseerd vanuit een gekoppelde tracker — met gekoppelde testcases en dekking die door de boom heen wordt samengevoegd.",
     "projectReports": "## Rapporten\nRapporten vatten het testen van dit project samen — testruns, sessies en resultaten — in grafieken en tabellen die u kunt filteren en exporteren.",
     "projectAuditLogs": "## Auditlogboeken\nHet auditlogboek van acties die in dit project zijn uitgevoerd — wie wat heeft gewijzigd en wanneer — voor het bijhouden van beveiliging en naleving.",
     "projectIntegrations": "## Issue-integraties\nVerbind dit project met een issuetracker, zodat de testgevallen, runs en sessies kunnen worden gekoppeld aan en gesynchroniseerd met externe issues en mijlpalen.",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "Automatiseringskandidaten",
           "description": "Gerangschikte lijst van handmatige testgevallen die als volgende geautomatiseerd moeten worden, gebaseerd op de inhoud van het testgeval, aangepaste velden en de context van het gekoppelde probleem."
+        },
+        "requirementCoverageGaps": {
+          "label": "Hiaten in vereistendekking",
+          "description": "Toon alle vereisten zonder gekoppelde testgevallen, zodat hiaten zichtbaar zijn zonder de boomstructuur te openen"
+        },
+        "requirementTraceability": {
+          "label": "Traceerbaarheid van vereisten",
+          "description": "Elke vereiste gekoppeld aan de bijbehorende testgevallen en hun laatste uitvoeringsresultaat"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "Aantal niet-geteste testgevallen",
           "testCoverageVsExecution": "Testdekking versus uitvoeringsstatus"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "Vereiste",
+        "path": "Pad",
+        "testCase": "Testgeval",
+        "result": "Resultaat",
+        "executedAt": "Uitgevoerd op",
+        "project": "Project",
+        "linkedCases": "Gekoppelde gevallen",
+        "uncovered": "Niet gedekt",
+        "notRun": "Niet uitgevoerd",
+        "noData": "Er zijn geen vereistegegevens beschikbaar voor dit rapport.",
+        "noGaps": "Geen dekkingshiaten gevonden — elke vereiste heeft ten minste één gekoppeld testgeval."
       },
       "crossProjectReportTypes": {
         "testExecution": {

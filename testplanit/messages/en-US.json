@@ -6926,6 +6926,7 @@
     "projectSessions": "## Sessions\nExploratory testing sessions — time-boxed, unscripted testing captured as notes and results across active and completed states.",
     "projectTags": "## Tags\nTags label and group this project's test cases, sessions, and runs so related work is easy to find.",
     "projectIssues": "## Issues\nIssues from this project's connected trackers, linked to the test cases, runs, and sessions where they were found or referenced.",
+    "projectRequirements": "## Requirements\nThe project's requirements in a hierarchy \u2014 authored natively in TestPlanIt or synced from a connected tracker \u2014 with linked test cases and coverage rolled up through the tree.",
     "projectReports": "## Reports\nReports summarize this project's testing — test runs, sessions, and results — as charts and tables you can filter and export.",
     "projectAuditLogs": "## Audit Logs\nThe audit trail of actions performed in this project — who changed what, and when — for security and compliance tracking.",
     "projectIntegrations": "## Issue Integrations\nConnect this project to an issue tracker so its test cases, runs, and sessions can link to and sync with external issues and milestones.",

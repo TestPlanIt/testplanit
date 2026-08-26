@@ -371,6 +371,7 @@
       "issues": "Vấn đề",
       "internalIssues": "Các vấn đề nội bộ",
       "externalIssues": "{provider} Vấn đề",
+      "requirements": "Yêu cầu",
       "data": "Dữ liệu",
       "note": "Ghi chú",
       "externalId": "ID bên ngoài",
@@ -709,6 +710,7 @@
       "userProfile": "Hồ sơ người dùng",
       "users": "Người dùng",
       "issues": "Vấn đề",
+      "requirements": "Yêu cầu",
       "tags": "Thẻ",
       "tagDetails": "Chi tiết thẻ",
       "aiModels": "Mô hình AI",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "Quét các dự án đã kết nối này để tìm cột mốc mới",
             "settingsSaved": "Đã lưu cài đặt đồng bộ cột mốc",
             "saveError": "Không thể lưu cài đặt đồng bộ cột mốc"
+          },
+          "requirementsConfig": {
+            "title": "Loại yêu cầu",
+            "description": "Chọn loại sự cố trong trình theo dõi được tính là yêu cầu. Các sự cố hiện có sẽ được phân loại lại cho phù hợp.",
+            "enableLabel": "Bật phân loại yêu cầu",
+            "issueTypesLabel": "Loại sự cố",
+            "issueTypesPlaceholder": "Chọn loại sự cố",
+            "issueTypesAriaLabel": "Loại sự cố yêu cầu",
+            "previewHeading": "Tác động của thay đổi này",
+            "becomingRequirements": "{count, plural, other {{count} sự cố sẽ trở thành yêu cầu}}",
+            "stoppingRequirements": "{count, plural, other {{count} sự cố sẽ không còn là yêu cầu}}",
+            "detachedCallout": "{count, plural, other {{count} trong số đó bị tách khỏi trình theo dõi hoặc đã được chỉnh sửa cục bộ và sẽ mất trạng thái yêu cầu}}",
+            "reversibilityNote": "Thêm lại một loại sẽ khôi phục phân loại. Không có gì bị xóa.",
+            "noChanges": "Không có thay đổi phân loại nào để áp dụng.",
+            "settingsSaved": "Đã lưu cài đặt loại yêu cầu",
+            "saveError": "Không thể lưu cài đặt loại yêu cầu"
           }
         },
         "integrationAssigned": "Quá trình tích hợp được thực hiện thành công.",
@@ -2107,6 +2125,13 @@
           "saveError": "Không thể cập nhật cài đặt quy trình đánh giá.",
           "systemDisabledTitle": "Quy trình xem xét đã bị tắt trên toàn hệ thống.",
           "systemDisabledDescription": "Tùy chọn dự án của bạn đã được lưu, nhưng quá trình sẽ không được kích hoạt cho đến khi quản trị viên hệ thống bật tính năng này trong mục Quản trị → Quy trình làm việc."
+        },
+        "requirements": {
+          "label": "Bật yêu cầu",
+          "description": "Thêm khu vực Yêu cầu vào dự án này để xây dựng cấu trúc phân cấp về những gì hệ thống cần thực hiện, và liên kết các trường hợp kiểm thử với chúng để đảm bảo độ bao phủ. Bật tính năng này nếu bạn duy trì mô hình yêu cầu hiện tại ở đây; tắt nếu yêu cầu của bạn hoàn toàn nằm trong trình theo dõi sự cố.",
+          "enabledToast": "Đã bật yêu cầu cho dự án này",
+          "disabledToast": "Đã tắt yêu cầu cho dự án này",
+          "saveError": "Không thể cập nhật cài đặt yêu cầu"
         },
         "flipJustification": {
           "label": "Cần có lời giải thích cho sự đảo ngược kết quả.",
@@ -6624,6 +6649,182 @@
       "errorDescription": "Không thể hoàn tất ủy quyền. Đóng cửa sổ này và thử lại."
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "Tìm kiếm yêu cầu...",
+      "emptyTitle": "Chưa có yêu cầu nào",
+      "emptyDescription": "Tạo yêu cầu đầu tiên của bạn để bắt đầu xây dựng cây yêu cầu của dự án này.",
+      "loadFailed": "Không thể tải các yêu cầu.",
+      "addRoot": "Thêm yêu cầu",
+      "addChild": "Thêm yêu cầu con",
+      "rename": "Đổi tên",
+      "delete": "Xóa",
+      "expandAll": "Mở rộng tất cả",
+      "collapseAll": "Thu gọn tất cả",
+      "dropToRootHint": "Thả vào đây để di chuyển lên cấp cao nhất",
+      "moveSuccess": "Đã di chuyển yêu cầu.",
+      "moveFailed": "Không thể di chuyển yêu cầu.",
+      "moveRejected": "Thao tác di chuyển này đã bị từ chối:",
+      "dragDisabled": "Không thể di chuyển yêu cầu này ngay bây giờ."
+    },
+    "list": {
+      "columnName": "Tên",
+      "columnStatus": "Trạng thái",
+      "columnSource": "Nguồn",
+      "expandRow": "Mở rộng {name}",
+      "collapseRow": "Thu gọn {name}",
+      "filterAllStatuses": "Tất cả trạng thái",
+      "dragLockedSynced": "Các yêu cầu được đồng bộ phản ánh cấu trúc phân cấp của trình theo dõi. Hãy tách rời để di chuyển."
+    },
+    "detail": {
+      "selectPrompt": "Chọn một yêu cầu để xem chi tiết.",
+      "documentation": "Tài liệu",
+      "documentationEmpty": "Không có tài liệu nào được cung cấp",
+      "documentationPlaceholder": "Nhập tài liệu yêu cầu...",
+      "lockedHint": "Trường này được quản lý bởi trình theo dõi được kết nối và không thể chỉnh sửa tại đây.",
+      "saveSuccess": "Đã lưu yêu cầu.",
+      "saveFailed": "Không thể lưu yêu cầu."
+    },
+    "provenance": {
+      "nativeLabel": "Thủ công",
+      "syncedLabel": "Đã đồng bộ",
+      "detachedLabel": "Đã tách rời",
+      "nativeTooltip": "Được tạo trực tiếp trong TestPlanIt.",
+      "syncedTooltip": "Được đồng bộ từ trình theo dõi được kết nối. Các trường bị khóa không thể chỉnh sửa tại đây.",
+      "detachedTooltip": "Đã tách rời khỏi trình theo dõi được kết nối. Hiện có thể chỉnh sửa hoàn toàn, giống như một yêu cầu được tạo thủ công.",
+      "openInTracker": "Mở trong {provider}",
+      "detach": "Tách rời",
+      "detachDialogTitle": "Tách rời yêu cầu này?",
+      "detachDialogDescription": "Việc tách rời sẽ làm cho yêu cầu này có thể chỉnh sửa hoàn toàn trong TestPlanIt và phá vỡ liên kết của nó với trình theo dõi được kết nối. Thao tác này không thể hoàn tác — việc gắn lại vào trình theo dõi hiện chưa được hỗ trợ.",
+      "detachConfirm": "Tách rời",
+      "detachSuccess": "Đã tách rời yêu cầu.",
+      "detachFailed": "Không thể tách rời yêu cầu."
+    },
+    "create": {
+      "dialogTitle": "Tạo yêu cầu",
+      "dialogDescription": "Thêm một yêu cầu mới vào cây yêu cầu của dự án này.",
+      "nameLabel": "Tên",
+      "namePlaceholder": "Nhập tên yêu cầu...",
+      "parentLabel": "Cấp cha",
+      "parentNone": "Không có cấp cha (cấp cao nhất)",
+      "submit": "Tạo yêu cầu",
+      "submitHint": "Nhấn Enter để tạo",
+      "success": "Đã tạo yêu cầu.",
+      "failed": "Không thể tạo yêu cầu."
+    },
+    "edit": {
+      "dialogTitle": "Chỉnh sửa yêu cầu",
+      "submit": "Lưu thay đổi",
+      "success": "Đã cập nhật yêu cầu.",
+      "failed": "Không thể cập nhật yêu cầu.",
+      "lockedTooltip": "Yêu cầu này được đồng bộ từ trình theo dõi được kết nối. Hãy tách rời để đổi tên."
+    },
+    "delete": {
+      "dialogTitle": "Xóa yêu cầu",
+      "confirmNoChildren": "Bạn có chắc chắn muốn xóa yêu cầu này không? Thao tác này có thể hoàn tác.",
+      "confirmWithChildren": "{count, plural, other {Yêu cầu này có {count} mục con sẽ cũng bị xóa. Thao tác này có thể hoàn tác.}}",
+      "submit": "Xóa",
+      "success": "Đã xóa yêu cầu.",
+      "failed": "Không thể xóa yêu cầu.",
+      "undo": "Hoàn tác",
+      "undoSuccess": "Đã khôi phục yêu cầu.",
+      "undoFailed": "Không thể khôi phục yêu cầu."
+    },
+    "attachments": {
+      "title": "Tệp đính kèm",
+      "empty": "Không có tệp đính kèm",
+      "uploadSuccess": "Đã tải lên tệp đính kèm.",
+      "uploadFailed": "Không thể tải lên tệp đính kèm.",
+      "removeSuccess": "Đã xóa tệp đính kèm.",
+      "removeFailed": "Không thể xóa tệp đính kèm."
+    },
+    "linkedCases": {
+      "title": "Các trường hợp kiểm thử được liên kết",
+      "empty": "Không có trường hợp kiểm thử nào được liên kết.",
+      "addLink": "Thêm liên kết",
+      "addLinkDialogTitle": "Liên kết trường hợp kiểm thử",
+      "searchPlaceholder": "Tìm kiếm trường hợp kiểm thử...",
+      "linkSuccess": "Đã liên kết trường hợp kiểm thử.",
+      "linkFailed": "Không thể liên kết trường hợp kiểm thử.",
+      "unlinkConfirm": "Bạn có chắc chắn muốn hủy liên kết trường hợp kiểm thử này không?",
+      "unlinkSuccess": "Đã hủy liên kết trường hợp kiểm thử.",
+      "unlinkFailed": "Không thể hủy liên kết trường hợp kiểm thử.",
+      "columnCase": "Trường hợp kiểm thử",
+      "columnProject": "Dự án"
+    },
+    "linkedRequirements": {
+      "title": "Các yêu cầu được liên kết",
+      "empty": "Không có yêu cầu nào được liên kết.",
+      "addLink": "Thêm liên kết",
+      "addLinkDialogTitle": "Liên kết yêu cầu",
+      "searchPlaceholder": "Tìm kiếm yêu cầu...",
+      "linkSuccess": "Đã liên kết yêu cầu.",
+      "linkFailed": "Không thể liên kết yêu cầu.",
+      "unlinkConfirm": "Bạn có chắc chắn muốn hủy liên kết yêu cầu này không?",
+      "unlinkSuccess": "Đã hủy liên kết yêu cầu.",
+      "unlinkFailed": "Không thể hủy liên kết yêu cầu."
+    },
+    "suspect": {
+      "badgeLabel": "Nghi vấn",
+      "tooltipCaseSide": "Yêu cầu này đã được cập nhật sau lần chạy gần nhất của trường hợp kiểm thử này.",
+      "tooltipRequirementSide": "Lần chạy gần nhất của trường hợp kiểm thử này cũ hơn lần cập nhật gần nhất của yêu cầu này.",
+      "dismissConfirm": "Bỏ qua cờ nghi vấn này? Một chỉnh sửa mới hơn đối với yêu cầu sẽ đánh dấu lại nó.",
+      "dismissAction": "Bỏ qua cờ",
+      "dismissSuccess": "Đã bỏ qua cờ nghi vấn.",
+      "dismissFailed": "Không thể bỏ qua cờ nghi vấn."
+    },
+    "references": {
+      "title": "{count, plural, =0 {Tham chiếu} =1 {{count} Tham chiếu} other {{count} Tham chiếu}}",
+      "empty": "Chưa có tham chiếu nào.",
+      "emptyHint": "Đính kèm các phiếu công việc đã hình thành nên yêu cầu này.",
+      "addReference": "Thêm tham chiếu",
+      "addDialogTitle": "Thêm tham chiếu",
+      "searchPlaceholder": "Tìm kiếm vấn đề...",
+      "createDialogLabel": "Tham chiếu",
+      "attachSuccess": "Đã đính kèm tham chiếu.",
+      "attachFailed": "Không thể đính kèm tham chiếu.",
+      "removeConfirm": "Bạn có chắc chắn muốn xóa tham chiếu này không?",
+      "removeSuccess": "Đã xóa tham chiếu.",
+      "removeFailed": "Không thể xóa tham chiếu.",
+      "columnReference": "Tham chiếu",
+      "columnStatus": "Trạng thái"
+    },
+    "coverage": {
+      "title": "Độ phủ",
+      "uncovered": "Chưa được phủ",
+      "uncoveredTooltip": "Không có trường hợp kiểm thử nào được liên kết với yêu cầu này hoặc bất kỳ mục con nào của nó.",
+      "statusPassed": "Đạt",
+      "statusFailed": "Không đạt",
+      "statusNotRun": "Chưa chạy",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "Đạt: {passed} · Không đạt: {failed} · Đang tiến hành: {inProgress} · Chưa chạy: {notRun}",
+      "showOnlyUncovered": "Chỉ hiển thị chưa được phủ",
+      "showOnlyUncoveredUnavailable": "Dữ liệu độ phủ hiện không khả dụng.",
+      "loadFailed": "Không thể tải độ phủ.",
+      "retry": "Thử lại",
+      "panelTitle": "Các trường hợp kiểm thử bao phủ",
+      "panelDescription": "Mọi trường hợp kiểm thử được tính vào độ phủ của yêu cầu này — bao gồm các trường hợp được liên kết trực tiếp với nó cùng với các trường hợp được liên kết với bất kỳ yêu cầu con nào bên dưới nó. Để thêm hoặc xóa liên kết, hãy sử dụng mục Trường hợp kiểm thử được liên kết.",
+      "panelEmpty": "Chưa có trường hợp kiểm thử nào bao phủ yêu cầu này.",
+      "columnCase": "Trường hợp kiểm thử",
+      "columnResult": "Kết quả",
+      "columnExecutedAt": "Thời điểm thực thi",
+      "columnProject": "Dự án",
+      "inherited": "Được kế thừa",
+      "inheritedTooltip": "Được liên kết với một mục con của yêu cầu này, không phải trực tiếp với nó.",
+      "notRunCell": "Chưa chạy",
+      "crossProjectCount": "{count, plural, other {Cũng được bao phủ bởi các trường hợp kiểm thử trong # dự án khác}}"
+    },
+    "export": {
+      "menuLabel": "Xuất khả năng truy xuất nguồn gốc",
+      "exportFailed": "Không thể xuất khả năng truy xuất nguồn gốc.",
+      "pdfEnglishOnlyHint": "Các tệp xuất PDF chỉ được tạo bằng tiếng Anh.",
+      "csvOnReportsHint": "Để xuất tệp CSV, hãy chạy báo cáo Khả năng truy xuất nguồn gốc yêu cầu."
+    },
+    "disabled": {
+      "title": "Tính năng yêu cầu chưa được bật",
+      "description": "Dự án này chưa bật tính năng yêu cầu. Hãy yêu cầu quản trị viên dự án bật tính năng này trong cài đặt dự án để bắt đầu xây dựng cây yêu cầu."
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "Xem và quản lý tất cả các vấn đề.",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## Phiên\nPhiên kiểm thử khám phá — kiểm thử không kịch bản, giới hạn thời gian được ghi lại dưới dạng ghi chú và kết quả qua các trạng thái đang hoạt động và đã hoàn thành.",
     "projectTags": "## Thẻ\nThẻ gắn nhãn và nhóm các trường hợp kiểm thử, phiên và lần chạy của dự án này để công việc liên quan dễ dàng tìm thấy.",
     "projectIssues": "## Vấn đề\nCác vấn đề từ trình theo dõi được kết nối của dự án này, được liên kết với các trường hợp kiểm thử, lần chạy và phiên nơi chúng được tìm thấy hoặc tham chiếu.",
+    "projectRequirements": "## Yêu cầu\nCác yêu cầu của dự án được sắp xếp theo cấu trúc phân cấp — được tạo trực tiếp trong TestPlanIt hoặc được đồng bộ từ trình theo dõi được kết nối — cùng với các trường hợp kiểm thử được liên kết và độ phủ được tổng hợp xuyên suốt cây yêu cầu.",
     "projectReports": "## Báo cáo\nBáo cáo tóm tắt hoạt động kiểm thử của dự án này — lần chạy kiểm thử, phiên và kết quả — dưới dạng biểu đồ và bảng mà bạn có thể lọc và xuất.",
     "projectAuditLogs": "## Nhật ký kiểm toán\nNhật ký kiểm toán các hành động được thực hiện trong dự án này — ai đã thay đổi gì và khi nào — để theo dõi bảo mật và tuân thủ.",
     "projectIntegrations": "## Tích hợp theo dõi vấn đề\nKết nối dự án này với trình theo dõi vấn đề để các trường hợp kiểm thử, lần chạy và phiên của dự án có thể liên kết và đồng bộ với các vấn đề và mốc bên ngoài.",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "Ứng viên tự động hóa",
           "description": "Danh sách xếp hạng các trường hợp kiểm thử thủ công cần tự động hóa tiếp theo, dựa trên nội dung trường hợp, trường tùy chỉnh và ngữ cảnh vấn đề liên kết."
+        },
+        "requirementCoverageGaps": {
+          "label": "Khoảng Trống Bao Phủ Yêu Cầu",
+          "description": "Liệt kê mọi yêu cầu không có trường hợp thử nghiệm liên kết nào, để các khoảng trống được hiển thị mà không cần mở cây thư mục"
+        },
+        "requirementTraceability": {
+          "label": "Truy Xuất Nguồn Gốc Yêu Cầu",
+          "description": "Mỗi yêu cầu được ghép cặp với các trường hợp thử nghiệm liên kết và kết quả thực thi mới nhất của chúng"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "Số lượng trường hợp kiểm thử chưa được kiểm thử",
           "testCoverageVsExecution": "Độ phủ kiểm thử so với trạng thái thực thi"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "Yêu Cầu",
+        "path": "Đường Dẫn",
+        "testCase": "Trường Hợp Thử Nghiệm",
+        "result": "Kết Quả",
+        "executedAt": "Thực Thi Lúc",
+        "project": "Dự Án",
+        "linkedCases": "Trường Hợp Liên Kết",
+        "uncovered": "Chưa Được Bao Phủ",
+        "notRun": "Chưa chạy",
+        "noData": "Không có dữ liệu yêu cầu cho báo cáo này.",
+        "noGaps": "Không tìm thấy khoảng trống bao phủ nào — mọi yêu cầu đều có ít nhất một trường hợp thử nghiệm liên kết."
       },
       "crossProjectReportTypes": {
         "testExecution": {

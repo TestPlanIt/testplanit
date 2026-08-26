@@ -371,6 +371,7 @@
       "issues": "문제점",
       "internalIssues": "내부 문제",
       "externalIssues": "{provider} 문제",
+      "requirements": "요구 사항",
       "data": "데이터",
       "note": "메모",
       "externalId": "외부 ID",
@@ -709,6 +710,7 @@
       "userProfile": "사용자 프로필",
       "users": "사용자",
       "issues": "문제점",
+      "requirements": "요구 사항",
       "tags": "태그",
       "tagDetails": "태그 세부 정보",
       "aiModels": "AI 모델",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "새 마일스톤을 위해 연결된 프로젝트 스캔",
             "settingsSaved": "마일스톤 동기화 설정이 저장되었습니다",
             "saveError": "마일스톤 동기화 설정을 저장하는 데 실패했습니다"
+          },
+          "requirementsConfig": {
+            "title": "요구 사항 유형",
+            "description": "트래커 이슈 유형 중 요구 사항으로 간주할 유형을 선택하세요. 기존 이슈는 그에 맞게 재분류됩니다.",
+            "enableLabel": "요구 사항 분류 활성화",
+            "issueTypesLabel": "이슈 유형",
+            "issueTypesPlaceholder": "이슈 유형 선택",
+            "issueTypesAriaLabel": "요구 사항 이슈 유형",
+            "previewHeading": "이 변경 사항의 영향",
+            "becomingRequirements": "{count, plural, other {{count}개의 이슈가 요구 사항이 됩니다}}",
+            "stoppingRequirements": "{count, plural, other {{count}개의 이슈가 더 이상 요구 사항이 아니게 됩니다}}",
+            "detachedCallout": "{count, plural, other {그 중 {count}개는 트래커에서 분리되었거나 로컬에서 수정되어 요구 사항 상태를 잃게 됩니다}}",
+            "reversibilityNote": "유형을 다시 추가하면 분류가 복원됩니다. 삭제되는 항목은 없습니다.",
+            "noChanges": "적용할 분류 변경 사항이 없습니다.",
+            "settingsSaved": "요구 사항 유형 설정이 저장되었습니다",
+            "saveError": "요구 사항 유형 설정을 저장하는 데 실패했습니다"
           }
         },
         "integrationAssigned": "통합 작업이 성공적으로 완료되었습니다.",
@@ -2107,6 +2125,13 @@
           "saveError": "검토 워크플로 설정 업데이트에 실패했습니다.",
           "systemDisabledTitle": "검토 워크플로가 시스템 전체에서 비활성화되었습니다.",
           "systemDisabledDescription": "프로젝트 기본 설정은 저장되지만, 시스템 관리자가 관리 → 워크플로에서 해당 기능을 활성화하기 전까지는 아무것도 제한되지 않습니다."
+        },
+        "requirements": {
+          "label": "요구 사항 활성화",
+          "description": "이 프로젝트에 시스템이 수행해야 할 작업의 계층 구조를 구축하고, 테스트 케이스를 연결하여 커버리지를 확인할 수 있는 요구 사항 영역을 추가합니다. 현재 상태의 요구 사항 모델을 여기서 유지 관리한다면 이 기능을 켜고, 요구 사항이 전적으로 이슈 트래커에 있다면 꺼두세요.",
+          "enabledToast": "이 프로젝트에 대해 요구 사항이 활성화되었습니다",
+          "disabledToast": "이 프로젝트에 대해 요구 사항이 비활성화되었습니다",
+          "saveError": "요구 사항 설정을 업데이트할 수 없습니다"
         },
         "flipJustification": {
           "label": "결과 반전에 대한 정당성을 요구합니다",
@@ -2754,9 +2779,9 @@
       "mentionedComments": {
         "title": "댓글에서 언급됨",
         "description": "당신이 언급된 댓글",
-        "noComments": "아직 댓글에서 당신의 이름이 언급되지 않았습니다.",
-        "comment": "논평",
-        "showingResults": "{start} - {end} 의 {total}를 표시합니다."
+        "noComments": "아직 댓글에서 언급되지 않았습니다.",
+        "comment": "댓글",
+        "showingResults": "{total}개 중 {start} - {end} 표시"
       },
       "twoFactor": {
         "enable": "2단계 인증을 활성화하세요",
@@ -6624,6 +6649,182 @@
       "errorDescription": "인증을 완료할 수 없습니다. 이 창을 닫고 다시 시도해 주세요."
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "요구 사항 검색...",
+      "emptyTitle": "아직 요구 사항이 없습니다",
+      "emptyDescription": "첫 요구 사항을 생성하여 이 프로젝트의 요구 사항 트리 구성을 시작하세요.",
+      "loadFailed": "요구 사항을 불러오는 데 실패했습니다.",
+      "addRoot": "요구 사항 추가",
+      "addChild": "하위 요구 사항 추가",
+      "rename": "이름 변경",
+      "delete": "삭제",
+      "expandAll": "모두 펼치기",
+      "collapseAll": "모두 접기",
+      "dropToRootHint": "여기로 드롭하여 최상위 레벨로 이동",
+      "moveSuccess": "요구 사항이 이동되었습니다.",
+      "moveFailed": "요구 사항 이동에 실패했습니다.",
+      "moveRejected": "이 이동은 거부되었습니다:",
+      "dragDisabled": "이 요구 사항은 지금 이동할 수 없습니다."
+    },
+    "list": {
+      "columnName": "이름",
+      "columnStatus": "상태",
+      "columnSource": "원본",
+      "expandRow": "{name} 펼치기",
+      "collapseRow": "{name} 접기",
+      "filterAllStatuses": "모든 상태",
+      "dragLockedSynced": "동기화된 요구 사항은 트래커의 계층 구조를 그대로 따릅니다. 이동하려면 분리하세요."
+    },
+    "detail": {
+      "selectPrompt": "세부 정보를 보려면 요구 사항을 선택하세요.",
+      "documentation": "문서",
+      "documentationEmpty": "제공된 문서가 없습니다",
+      "documentationPlaceholder": "요구 사항 문서를 입력하세요...",
+      "lockedHint": "이 필드는 연결된 트래커에서 관리되며 여기서 편집할 수 없습니다.",
+      "saveSuccess": "요구 사항이 저장되었습니다.",
+      "saveFailed": "요구 사항 저장에 실패했습니다."
+    },
+    "provenance": {
+      "nativeLabel": "수동",
+      "syncedLabel": "동기화됨",
+      "detachedLabel": "분리됨",
+      "nativeTooltip": "TestPlanIt에서 직접 생성되었습니다.",
+      "syncedTooltip": "연결된 트래커에서 동기화되었습니다. 잠긴 필드는 여기서 편집할 수 없습니다.",
+      "detachedTooltip": "연결된 트래커에서 분리되었습니다. 이제 수동으로 생성된 요구 사항처럼 완전히 편집할 수 있습니다.",
+      "openInTracker": "{provider}에서 열기",
+      "detach": "분리",
+      "detachDialogTitle": "이 요구 사항을 분리하시겠습니까?",
+      "detachDialogDescription": "분리하면 이 요구 사항이 TestPlanIt에서 완전히 편집 가능해지며 연결된 트래커와의 연결이 끊어집니다. 이 작업은 되돌릴 수 없으며, 트래커에 다시 연결하는 기능은 아직 지원되지 않습니다.",
+      "detachConfirm": "분리",
+      "detachSuccess": "요구 사항이 분리되었습니다.",
+      "detachFailed": "요구 사항 분리에 실패했습니다."
+    },
+    "create": {
+      "dialogTitle": "요구 사항 생성",
+      "dialogDescription": "이 프로젝트의 요구 사항 트리에 새 요구 사항을 추가합니다.",
+      "nameLabel": "이름",
+      "namePlaceholder": "요구 사항 이름을 입력하세요...",
+      "parentLabel": "상위 항목",
+      "parentNone": "상위 항목 없음(최상위 레벨)",
+      "submit": "요구 사항 생성",
+      "submitHint": "생성하려면 Enter 키를 누르세요",
+      "success": "요구 사항이 생성되었습니다.",
+      "failed": "요구 사항 생성에 실패했습니다."
+    },
+    "edit": {
+      "dialogTitle": "요구 사항 편집",
+      "submit": "변경 사항 저장",
+      "success": "요구 사항이 업데이트되었습니다.",
+      "failed": "요구 사항 업데이트에 실패했습니다.",
+      "lockedTooltip": "이 요구 사항은 연결된 트래커에서 동기화되었습니다. 이름을 변경하려면 분리하세요."
+    },
+    "delete": {
+      "dialogTitle": "요구 사항 삭제",
+      "confirmNoChildren": "이 요구 사항을 삭제하시겠습니까? 이 작업은 취소할 수 있습니다.",
+      "confirmWithChildren": "이 요구 사항에는 함께 삭제될 하위 항목이 {count, plural, other {{count}개}} 있습니다. 이 작업은 취소할 수 있습니다.",
+      "submit": "삭제",
+      "success": "요구 사항이 삭제되었습니다.",
+      "failed": "요구 사항 삭제에 실패했습니다.",
+      "undo": "실행 취소",
+      "undoSuccess": "요구 사항이 복원되었습니다.",
+      "undoFailed": "요구 사항 복원에 실패했습니다."
+    },
+    "attachments": {
+      "title": "첨부파일",
+      "empty": "첨부파일 없음",
+      "uploadSuccess": "첨부파일이 업로드되었습니다.",
+      "uploadFailed": "첨부파일 업로드에 실패했습니다.",
+      "removeSuccess": "첨부파일이 삭제되었습니다.",
+      "removeFailed": "첨부파일 삭제에 실패했습니다."
+    },
+    "linkedCases": {
+      "title": "연결된 테스트 케이스",
+      "empty": "연결된 테스트 케이스가 없습니다.",
+      "addLink": "링크 추가",
+      "addLinkDialogTitle": "테스트 케이스 연결",
+      "searchPlaceholder": "테스트 케이스 검색...",
+      "linkSuccess": "테스트 케이스가 연결되었습니다.",
+      "linkFailed": "테스트 케이스 연결에 실패했습니다.",
+      "unlinkConfirm": "이 테스트 케이스 연결을 해제하시겠습니까?",
+      "unlinkSuccess": "테스트 케이스 연결이 해제되었습니다.",
+      "unlinkFailed": "테스트 케이스 연결 해제에 실패했습니다.",
+      "columnCase": "테스트 케이스",
+      "columnProject": "프로젝트"
+    },
+    "linkedRequirements": {
+      "title": "연결된 요구 사항",
+      "empty": "연결된 요구 사항이 없습니다.",
+      "addLink": "링크 추가",
+      "addLinkDialogTitle": "요구 사항 연결",
+      "searchPlaceholder": "요구 사항 검색...",
+      "linkSuccess": "요구 사항이 연결되었습니다.",
+      "linkFailed": "요구 사항 연결에 실패했습니다.",
+      "unlinkConfirm": "이 요구 사항 연결을 해제하시겠습니까?",
+      "unlinkSuccess": "요구 사항 연결이 해제되었습니다.",
+      "unlinkFailed": "요구 사항 연결 해제에 실패했습니다."
+    },
+    "suspect": {
+      "badgeLabel": "의심",
+      "tooltipCaseSide": "이 요구 사항은 이 케이스의 마지막 실행 이후에 업데이트되었습니다.",
+      "tooltipRequirementSide": "이 케이스의 마지막 실행이 이 요구 사항의 마지막 업데이트보다 오래되었습니다.",
+      "dismissConfirm": "이 의심 플래그를 해제하시겠습니까? 요구 사항이 다시 수정되면 플래그가 재설정됩니다.",
+      "dismissAction": "플래그 해제",
+      "dismissSuccess": "의심 플래그가 해제되었습니다.",
+      "dismissFailed": "의심 플래그 해제에 실패했습니다."
+    },
+    "references": {
+      "title": "{count, plural, =0 {참조} =1 {참조 {count}개} other {참조 {count}개}}",
+      "empty": "아직 참조가 없습니다.",
+      "emptyHint": "이 요구 사항을 형성한 티켓을 첨부하세요.",
+      "addReference": "참조 추가",
+      "addDialogTitle": "참조 추가",
+      "searchPlaceholder": "이슈 검색...",
+      "createDialogLabel": "참조",
+      "attachSuccess": "참조가 첨부되었습니다.",
+      "attachFailed": "참조 첨부에 실패했습니다.",
+      "removeConfirm": "이 참조를 삭제하시겠습니까?",
+      "removeSuccess": "참조가 삭제되었습니다.",
+      "removeFailed": "참조 삭제에 실패했습니다.",
+      "columnReference": "참조",
+      "columnStatus": "상태"
+    },
+    "coverage": {
+      "title": "커버리지",
+      "uncovered": "커버되지 않음",
+      "uncoveredTooltip": "이 요구 사항 또는 그 하위 항목에 연결된 테스트 케이스가 없습니다.",
+      "statusPassed": "통과됨",
+      "statusFailed": "실패",
+      "statusNotRun": "실행되지 않음",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "통과: {passed} · 실패: {failed} · 진행 중: {inProgress} · 미실행: {notRun}",
+      "showOnlyUncovered": "커버되지 않은 항목만 표시",
+      "showOnlyUncoveredUnavailable": "지금은 커버리지 데이터를 사용할 수 없습니다.",
+      "loadFailed": "커버리지를 불러오는 데 실패했습니다.",
+      "retry": "다시 시도",
+      "panelTitle": "커버하는 테스트 케이스",
+      "panelDescription": "이 요구 사항의 커버리지에 포함되는 모든 테스트 케이스입니다. 직접 연결된 케이스뿐만 아니라 하위 요구 사항에 연결된 케이스도 포함됩니다. 링크를 추가하거나 삭제하려면 연결된 테스트 케이스를 사용하세요.",
+      "panelEmpty": "아직 이 요구 사항을 커버하는 테스트 케이스가 없습니다.",
+      "columnCase": "테스트 케이스",
+      "columnResult": "결과",
+      "columnExecutedAt": "실행 시각",
+      "columnProject": "프로젝트",
+      "inherited": "상속됨",
+      "inheritedTooltip": "이 요구 사항이 아니라 하위 항목에 연결되어 있습니다.",
+      "notRunCell": "실행되지 않음",
+      "crossProjectCount": "{count, plural, other {다른 프로젝트 #개의 케이스에서도 커버됨}}"
+    },
+    "export": {
+      "menuLabel": "추적성 내보내기",
+      "exportFailed": "추적성 내보내기에 실패했습니다.",
+      "pdfEnglishOnlyHint": "PDF 내보내기는 영어로만 생성됩니다.",
+      "csvOnReportsHint": "CSV로 내보내려면 요구 사항 추적성 보고서를 실행하세요."
+    },
+    "disabled": {
+      "title": "요구 사항이 활성화되지 않음",
+      "description": "이 프로젝트에서는 요구 사항 기능이 켜져 있지 않습니다. 요구 사항 트리를 구성하려면 프로젝트 관리자에게 프로젝트 설정에서 이 기능을 활성화하도록 요청하세요."
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "모든 이슈를 찾아보고 관리하세요.",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## 세션\n탐색적 테스트 세션은 시간 제한이 있는 비정형 테스트로, 진행 중 및 완료 상태에서 메모와 결과로 기록됩니다.",
     "projectTags": "## 태그\n태그는 이 프로젝트의 테스트 케이스, 세션, 실행에 라벨을 지정하고 그룹화하여 관련 작업을 쉽게 찾을 수 있게 합니다.",
     "projectIssues": "## 이슈\n이 프로젝트에 연결된 트래커의 이슈로, 발견되거나 참조된 테스트 케이스, 실행, 세션에 연결됩니다.",
+    "projectRequirements": "## 요구 사항\n프로젝트의 요구 사항을 계층 구조로 표시합니다. TestPlanIt에서 직접 작성되거나 연결된 트래커에서 동기화되며, 연결된 테스트 케이스와 커버리지가 트리 전체에 걸쳐 집계됩니다.",
     "projectReports": "## 보고서\n보고서는 이 프로젝트의 테스트 실행, 세션, 결과를 차트와 표로 요약하며 필터링 및 내보내기가 가능합니다.",
     "projectAuditLogs": "## 감사 로그\n이 프로젝트에서 수행된 작업의 감사 기록으로, 누가 무엇을 언제 변경했는지 보안 및 규정 준수 추적을 위해 확인할 수 있습니다.",
     "projectIntegrations": "## 이슈 통합\n이 프로젝트를 이슈 트래커에 연결하여 테스트 케이스, 실행, 세션이 외부 이슈 및 마일스톤과 연결되고 동기화될 수 있도록 합니다.",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "자동화 후보",
           "description": "테스트 케이스 내용, 사용자 정의 필드 및 연결된 이슈 컨텍스트를 기반으로 다음에 자동화할 수동 테스트 케이스 순위 목록입니다."
+        },
+        "requirementCoverageGaps": {
+          "label": "요구 사항 커버리지 격차",
+          "description": "연결된 테스트 케이스가 없는 모든 요구 사항을 나열하여 트리를 열지 않고도 격차를 확인할 수 있습니다"
+        },
+        "requirementTraceability": {
+          "label": "요구 사항 추적성",
+          "description": "모든 요구 사항과 연결된 테스트 케이스 및 최신 실행 결과를 짝지어 표시"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "테스트되지 않은 테스트 케이스 수",
           "testCoverageVsExecution": "테스트 커버리지와 실행 상태"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "요구 사항",
+        "path": "경로",
+        "testCase": "테스트 케이스",
+        "result": "결과",
+        "executedAt": "실행 시각",
+        "project": "프로젝트",
+        "linkedCases": "연결된 케이스",
+        "uncovered": "커버되지 않음",
+        "notRun": "실행되지 않음",
+        "noData": "이 보고서에 대한 요구 사항 데이터가 없습니다.",
+        "noGaps": "발견된 커버리지 격차가 없습니다 — 모든 요구 사항에 연결된 테스트 케이스가 하나 이상 있습니다."
       },
       "crossProjectReportTypes": {
         "testExecution": {

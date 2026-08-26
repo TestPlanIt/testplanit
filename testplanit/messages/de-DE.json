@@ -371,6 +371,7 @@
       "issues": "Tickets",
       "internalIssues": "Interne Tickets",
       "externalIssues": "{provider} Tickets",
+      "requirements": "Anforderungen",
       "data": "Daten",
       "note": "Notiz",
       "externalId": "Externe ID",
@@ -709,6 +710,7 @@
       "userProfile": "Benutzerprofil",
       "users": "Benutzer",
       "issues": "Tickets",
+      "requirements": "Anforderungen",
       "tags": "Tags",
       "tagDetails": "Tag-Details",
       "aiModels": "KI-Modelle",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "Diese verbundenen Projekte nach neuen Meilensteinen durchsuchen",
             "settingsSaved": "Einstellungen für die Meilenstein-Synchronisierung gespeichert",
             "saveError": "Einstellungen für die Meilenstein-Synchronisierung konnten nicht gespeichert werden"
+          },
+          "requirementsConfig": {
+            "title": "Anforderungstypen",
+            "description": "Wählen Sie aus, welche Vorgangstypen des Trackers als Anforderungen zählen. Bestehende Vorgänge werden entsprechend neu klassifiziert.",
+            "enableLabel": "Anforderungsklassifizierung aktivieren",
+            "issueTypesLabel": "Vorgangstypen",
+            "issueTypesPlaceholder": "Vorgangstypen auswählen",
+            "issueTypesAriaLabel": "Anforderungs-Vorgangstypen",
+            "previewHeading": "Auswirkung dieser Änderung",
+            "becomingRequirements": "{count, plural, one {{count} Vorgang wird zu einer Anforderung} other {{count} Vorgänge werden zu Anforderungen}}",
+            "stoppingRequirements": "{count, plural, one {{count} Vorgang wird keine Anforderung mehr sein} other {{count} Vorgänge werden keine Anforderungen mehr sein}}",
+            "detachedCallout": "{count, plural, one {{count} davon ist vom Tracker getrennt oder wurde lokal bearbeitet und verliert seinen Anforderungsstatus} other {{count} davon sind vom Tracker getrennt oder wurden lokal bearbeitet und verlieren ihren Anforderungsstatus}}",
+            "reversibilityNote": "Durch erneutes Hinzufügen eines Typs wird die Klassifizierung wiederhergestellt. Es wird nichts gelöscht.",
+            "noChanges": "Keine Klassifizierungsänderungen anzuwenden.",
+            "settingsSaved": "Anforderungstyp-Einstellungen gespeichert",
+            "saveError": "Anforderungstyp-Einstellungen konnten nicht gespeichert werden"
           }
         },
         "integrationAssigned": "Integration erfolgreich zugewiesen",
@@ -2107,6 +2125,13 @@
           "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow",
           "systemDisabledTitle": "Der Überprüfungsworkflow ist systemweit deaktiviert.",
           "systemDisabledDescription": "Die Einstellungen Ihres Projekts werden gespeichert, aber es wird nichts gesperrt, bis ein Systemadministrator die Funktion unter Administration → Workflows aktiviert."
+        },
+        "requirements": {
+          "label": "Anforderungen aktivieren",
+          "description": "Fügt diesem Projekt einen Anforderungsbereich hinzu, um Hierarchien dessen aufzubauen, was das System tun soll, und Testfälle zur Abdeckung mit ihnen zu verknüpfen. Aktivieren Sie dies, wenn Sie hier ein aktuelles Anforderungsmodell pflegen; lassen Sie es deaktiviert, wenn Ihre Anforderungen ausschließlich in Ihrem Issue-Tracker verwaltet werden.",
+          "enabledToast": "Anforderungen für dieses Projekt aktiviert",
+          "disabledToast": "Anforderungen für dieses Projekt deaktiviert",
+          "saveError": "Die Anforderungseinstellung konnte nicht aktualisiert werden"
         },
         "flipJustification": {
           "label": "Begründung für die Ergebnisumkehr erforderlich",
@@ -6624,6 +6649,182 @@
       "errorDescription": "Die Autorisierung konnte nicht abgeschlossen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut."
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "Anforderungen suchen...",
+      "emptyTitle": "Noch keine Anforderungen",
+      "emptyDescription": "Erstellen Sie Ihre erste Anforderung, um mit dem Aufbau des Anforderungsbaums dieses Projekts zu beginnen.",
+      "loadFailed": "Anforderungen konnten nicht geladen werden.",
+      "addRoot": "Anforderung hinzufügen",
+      "addChild": "Unteranforderung hinzufügen",
+      "rename": "Umbenennen",
+      "delete": "Löschen",
+      "expandAll": "Alle erweitern",
+      "collapseAll": "Alle ausblenden",
+      "dropToRootHint": "Hier ablegen, um auf die oberste Ebene zu verschieben",
+      "moveSuccess": "Anforderung verschoben.",
+      "moveFailed": "Anforderung konnte nicht verschoben werden.",
+      "moveRejected": "Diese Verschiebung wurde abgelehnt:",
+      "dragDisabled": "Diese Anforderung kann derzeit nicht verschoben werden."
+    },
+    "list": {
+      "columnName": "Name",
+      "columnStatus": "Status",
+      "columnSource": "Quelle",
+      "expandRow": "{name} erweitern",
+      "collapseRow": "{name} einklappen",
+      "filterAllStatuses": "Alle Status",
+      "dragLockedSynced": "Synchronisierte Anforderungen spiegeln die Hierarchie des Trackers wider. Trennen Sie die Verknüpfung, um sie zu verschieben."
+    },
+    "detail": {
+      "selectPrompt": "Wählen Sie eine Anforderung aus, um deren Details anzuzeigen.",
+      "documentation": "Dokumentation",
+      "documentationEmpty": "Es wurde keine Dokumentation bereitgestellt",
+      "documentationPlaceholder": "Anforderungsdokumentation eingeben...",
+      "lockedHint": "Dieses Feld wird vom verbundenen Tracker verwaltet und kann hier nicht bearbeitet werden.",
+      "saveSuccess": "Anforderung gespeichert.",
+      "saveFailed": "Anforderung konnte nicht gespeichert werden."
+    },
+    "provenance": {
+      "nativeLabel": "Manuell",
+      "syncedLabel": "Synchronisiert",
+      "detachedLabel": "Getrennt",
+      "nativeTooltip": "Direkt in TestPlanIt erstellt.",
+      "syncedTooltip": "Synchronisiert vom verbundenen Tracker. Gesperrte Felder können hier nicht bearbeitet werden.",
+      "detachedTooltip": "Vom verbundenen Tracker getrennt. Jetzt vollständig bearbeitbar, wie eine manuell erstellte Anforderung.",
+      "openInTracker": "Öffnen in {provider}",
+      "detach": "Trennen",
+      "detachDialogTitle": "Diese Anforderung trennen?",
+      "detachDialogDescription": "Durch das Trennen wird diese Anforderung in TestPlanIt vollständig bearbeitbar und die Verknüpfung zum verbundenen Tracker wird aufgehoben. Dies kann nicht rückgängig gemacht werden — eine erneute Verknüpfung mit dem Tracker wird derzeit noch nicht unterstützt.",
+      "detachConfirm": "Trennen",
+      "detachSuccess": "Anforderung getrennt.",
+      "detachFailed": "Anforderung konnte nicht getrennt werden."
+    },
+    "create": {
+      "dialogTitle": "Anforderung erstellen",
+      "dialogDescription": "Fügen Sie dem Anforderungsbaum dieses Projekts eine neue Anforderung hinzu.",
+      "nameLabel": "Name",
+      "namePlaceholder": "Geben Sie einen Anforderungsnamen ein...",
+      "parentLabel": "Übergeordnet",
+      "parentNone": "Kein übergeordnetes Element (oberste Ebene)",
+      "submit": "Anforderung erstellen",
+      "submitHint": "Drücken Sie die Eingabetaste zum Erstellen",
+      "success": "Anforderung erstellt.",
+      "failed": "Anforderung konnte nicht erstellt werden."
+    },
+    "edit": {
+      "dialogTitle": "Anforderung bearbeiten",
+      "submit": "Änderungen speichern",
+      "success": "Anforderung aktualisiert.",
+      "failed": "Anforderung konnte nicht aktualisiert werden.",
+      "lockedTooltip": "Diese Anforderung wird vom verbundenen Tracker synchronisiert. Trennen Sie sie, um sie umzubenennen."
+    },
+    "delete": {
+      "dialogTitle": "Anforderung löschen",
+      "confirmNoChildren": "Sind Sie sicher, dass Sie diese Anforderung löschen möchten? Diese Aktion kann rückgängig gemacht werden.",
+      "confirmWithChildren": "Diese Anforderung hat {count, plural, one {{count} untergeordnetes Element} other {{count} untergeordnete Elemente}}, die ebenfalls gelöscht werden. Diese Aktion kann rückgängig gemacht werden.",
+      "submit": "Löschen",
+      "success": "Anforderung gelöscht.",
+      "failed": "Anforderung konnte nicht gelöscht werden.",
+      "undo": "Rückgängig machen",
+      "undoSuccess": "Anforderung wiederhergestellt.",
+      "undoFailed": "Anforderung konnte nicht wiederhergestellt werden."
+    },
+    "attachments": {
+      "title": "Anhänge",
+      "empty": "Keine Anhänge",
+      "uploadSuccess": "Anhang hochgeladen.",
+      "uploadFailed": "Anhang konnte nicht hochgeladen werden.",
+      "removeSuccess": "Anhang entfernt.",
+      "removeFailed": "Anhang konnte nicht entfernt werden."
+    },
+    "linkedCases": {
+      "title": "Verknüpfte Testfälle",
+      "empty": "Keine verknüpften Testfälle.",
+      "addLink": "Link hinzufügen",
+      "addLinkDialogTitle": "Testfälle verknüpfen",
+      "searchPlaceholder": "Testfälle suchen...",
+      "linkSuccess": "Testfall verknüpft.",
+      "linkFailed": "Testfall konnte nicht verknüpft werden.",
+      "unlinkConfirm": "Sind Sie sicher, dass Sie die Verknüpfung mit diesem Testfall aufheben möchten?",
+      "unlinkSuccess": "Verknüpfung mit Testfall aufgehoben.",
+      "unlinkFailed": "Verknüpfung mit Testfall konnte nicht aufgehoben werden.",
+      "columnCase": "Testfall",
+      "columnProject": "Projekt"
+    },
+    "linkedRequirements": {
+      "title": "Verknüpfte Anforderungen",
+      "empty": "Keine verknüpften Anforderungen.",
+      "addLink": "Link hinzufügen",
+      "addLinkDialogTitle": "Anforderungen verknüpfen",
+      "searchPlaceholder": "Anforderungen suchen...",
+      "linkSuccess": "Anforderung verknüpft.",
+      "linkFailed": "Anforderung konnte nicht verknüpft werden.",
+      "unlinkConfirm": "Sind Sie sicher, dass Sie die Verknüpfung mit dieser Anforderung aufheben möchten?",
+      "unlinkSuccess": "Verknüpfung mit Anforderung aufgehoben.",
+      "unlinkFailed": "Verknüpfung mit Anforderung konnte nicht aufgehoben werden."
+    },
+    "suspect": {
+      "badgeLabel": "Verdächtig",
+      "tooltipCaseSide": "Diese Anforderung wurde nach dem letzten Durchlauf dieses Falls aktualisiert.",
+      "tooltipRequirementSide": "Der letzte Durchlauf dieses Falls ist älter als die letzte Aktualisierung dieser Anforderung.",
+      "dismissConfirm": "Diese Verdachtsmarkierung verwerfen? Eine neuere Bearbeitung der Anforderung wird sie erneut markieren.",
+      "dismissAction": "Markierung verwerfen",
+      "dismissSuccess": "Verdachtsmarkierung verworfen.",
+      "dismissFailed": "Verdachtsmarkierung konnte nicht verworfen werden."
+    },
+    "references": {
+      "title": "{count, plural, =0 {Referenzen} =1 {{count} Referenz} other {{count} Referenzen}}",
+      "empty": "Noch keine Referenzen.",
+      "emptyHint": "Fügen Sie Tickets hinzu, die diese Anforderung geprägt haben.",
+      "addReference": "Referenz hinzufügen",
+      "addDialogTitle": "Referenz hinzufügen",
+      "searchPlaceholder": "Probleme suchen...",
+      "createDialogLabel": "Referenzen",
+      "attachSuccess": "Referenz hinzugefügt.",
+      "attachFailed": "Referenz konnte nicht hinzugefügt werden.",
+      "removeConfirm": "Sind Sie sicher, dass Sie diese Referenz entfernen möchten?",
+      "removeSuccess": "Referenz entfernt.",
+      "removeFailed": "Referenz konnte nicht entfernt werden.",
+      "columnReference": "Referenz",
+      "columnStatus": "Status"
+    },
+    "coverage": {
+      "title": "Abdeckung",
+      "uncovered": "Nicht abgedeckt",
+      "uncoveredTooltip": "Es sind keine Testfälle mit dieser Anforderung oder einer ihrer untergeordneten Anforderungen verknüpft.",
+      "statusPassed": "Bestanden",
+      "statusFailed": "Fehlgeschlagen",
+      "statusNotRun": "Nicht ausgeführt",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "Bestanden: {passed} · Fehlgeschlagen: {failed} · In Bearbeitung: {inProgress} · Nicht ausgeführt: {notRun}",
+      "showOnlyUncovered": "Nur nicht abgedeckte anzeigen",
+      "showOnlyUncoveredUnavailable": "Abdeckungsdaten sind derzeit nicht verfügbar.",
+      "loadFailed": "Abdeckung konnte nicht geladen werden.",
+      "retry": "Wiederholen",
+      "panelTitle": "Abdeckende Testfälle",
+      "panelDescription": "Jeder Testfall, der zur Abdeckung dieser Anforderung zählt — direkt verknüpfte Fälle sowie Fälle, die mit einer untergeordneten Anforderung verknüpft sind. Um Verknüpfungen hinzuzufügen oder zu entfernen, verwenden Sie „Verknüpfte Testfälle“.",
+      "panelEmpty": "Noch keine Testfälle decken diese Anforderung ab.",
+      "columnCase": "Testfall",
+      "columnResult": "Ergebnis",
+      "columnExecutedAt": "Ausgeführt am",
+      "columnProject": "Projekt",
+      "inherited": "Geerbt",
+      "inheritedTooltip": "Mit einer untergeordneten Anforderung verknüpft, nicht direkt mit dieser.",
+      "notRunCell": "Nicht ausgeführt",
+      "crossProjectCount": "{count, plural, one {Auch abgedeckt durch einen Fall in # weiterem Projekt} other {Auch abgedeckt durch Fälle in # weiteren Projekten}}"
+    },
+    "export": {
+      "menuLabel": "Rückverfolgbarkeit exportieren",
+      "exportFailed": "Rückverfolgbarkeit konnte nicht exportiert werden.",
+      "pdfEnglishOnlyHint": "PDF-Exporte werden nur auf Englisch erstellt.",
+      "csvOnReportsHint": "Für einen CSV-Export führen Sie den Bericht „Anforderungsrückverfolgbarkeit“ aus."
+    },
+    "disabled": {
+      "title": "Anforderungen sind nicht aktiviert",
+      "description": "Dieses Projekt hat die Anforderungsfunktion nicht aktiviert. Bitten Sie einen Projektadministrator, sie in den Projekteinstellungen zu aktivieren, um mit dem Aufbau von Anforderungsbäumen zu beginnen."
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "Alle Ausgaben durchsuchen und verwalten.",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## Sitzungen\nExplorative Testsitzungen – zeitlich begrenzte, unskriptierte Tests, die als Notizen und Ergebnisse über aktive und abgeschlossene Status hinweg erfasst werden.",
     "projectTags": "## Tags\nTags kennzeichnen und gruppieren die Testfälle, Sitzungen und Testläufe dieses Projekts, sodass zusammengehörige Arbeiten leicht zu finden sind.",
     "projectIssues": "## Issues\nIssues aus den verbundenen Trackern dieses Projekts, verknüpft mit den Testfällen, Testläufen und Sitzungen, in denen sie gefunden oder referenziert wurden.",
+    "projectRequirements": "## Anforderungen\nDie Anforderungen des Projekts in einer Hierarchie — nativ in TestPlanIt erstellt oder von einem verbundenen Tracker synchronisiert — mit verknüpften Testfällen und einer über den Baum aggregierten Abdeckung.",
     "projectReports": "## Berichte\nBerichte fassen die Tests dieses Projekts – Testläufe, Sitzungen und Ergebnisse – als Diagramme und Tabellen zusammen, die Sie filtern und exportieren können.",
     "projectAuditLogs": "## Audit-Protokolle\nDas Prüfprotokoll der in diesem Projekt durchgeführten Aktionen – wer was wann geändert hat – zur Überwachung von Sicherheit und Compliance.",
     "projectIntegrations": "## Issue-Integrationen\nVerbinden Sie dieses Projekt mit einem Issue-Tracker, damit seine Testfälle, Testläufe und Sitzungen mit externen Issues und Meilensteinen verknüpft und synchronisiert werden können.",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "Automatisierungskandidaten",
           "description": "Rangliste der manuellen Testfälle, die als Nächstes automatisiert werden sollen, basierend auf Fallinhalt, benutzerdefinierten Feldern und dem Kontext verknüpfter Vorgänge."
+        },
+        "requirementCoverageGaps": {
+          "label": "Anforderungsabdeckungslücken",
+          "description": "Listet alle Anforderungen ohne verknüpfte Testfälle auf, damit Lücken sichtbar werden, ohne den Baum öffnen zu müssen"
+        },
+        "requirementTraceability": {
+          "label": "Anforderungsverfolgbarkeit",
+          "description": "Jede Anforderung gepaart mit ihren verknüpften Testfällen und deren letztem Ausführungsergebnis"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "Anzahl der ungetesteten Testfälle",
           "testCoverageVsExecution": "Testabdeckung vs. Ausführungsstatus"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "Anforderung",
+        "path": "Pfad",
+        "testCase": "Testfall",
+        "result": "Ergebnis",
+        "executedAt": "Ausgeführt am",
+        "project": "Projekt",
+        "linkedCases": "Verknüpfte Fälle",
+        "uncovered": "Nicht abgedeckt",
+        "notRun": "Nicht ausgeführt",
+        "noData": "Für diesen Bericht sind keine Anforderungsdaten verfügbar.",
+        "noGaps": "Keine Abdeckungslücken gefunden — jede Anforderung hat mindestens einen verknüpften Testfall."
       },
       "crossProjectReportTypes": {
         "testExecution": {

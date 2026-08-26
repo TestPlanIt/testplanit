@@ -1,7 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -130,7 +138,9 @@ export default function RequirementsWorkspace({
   ).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
-      select: { requirementsEnabled: true },
+      // name/iconUrl feed the header's CardDescription -- the same query
+      // that already gates the page, widened rather than duplicated.
+      select: { requirementsEnabled: true, name: true, iconUrl: true },
     },
     { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
   );
@@ -152,10 +162,15 @@ export default function RequirementsWorkspace({
   return (
     <main>
       <Card>
-        <CardHeader id="requirements-page-header" className="w-full">
+        <CardHeader
+          id="requirements-page-header"
+          data-testid="requirements-page-header"
+          className="w-full"
+        >
           <div className="flex items-center justify-between gap-2">
             <SectionHeader className="flex items-center gap-2">
               <CardTitle>{t("common.fields.requirements")}</CardTitle>
+              <HelpPopover helpKey="projectRequirements" />
             </SectionHeader>
             {requirementsEnabled && !isGateResolving && (
               <div className="flex items-center gap-2">
@@ -199,6 +214,12 @@ export default function RequirementsWorkspace({
               </div>
             )}
           </div>
+          <CardDescription>
+            <span className="flex items-center gap-2">
+              <ProjectIcon iconUrl={project?.iconUrl} />
+              {project?.name}
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isGateResolving ? (

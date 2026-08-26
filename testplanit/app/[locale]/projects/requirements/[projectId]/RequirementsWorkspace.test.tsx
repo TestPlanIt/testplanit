@@ -121,7 +121,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         data:
           projectFlags.isPending === true
             ? undefined
-            : { requirementsEnabled: projectFlags.requirementsEnabled },
+            : {
+                requirementsEnabled: projectFlags.requirementsEnabled,
+                name: "Mock Project",
+                iconUrl: null,
+              },
         // Only present when a test opts in -- see the hoisted default above.
         ...(projectFlags.isPending !== undefined
           ? { isPending: projectFlags.isPending }
@@ -132,6 +136,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 }));
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
+
+// A stub so the header assertion pins WHICH help key renders without
+// dragging react-markdown + Radix Popover into this suite.
+vi.mock("@/components/ui/help-popover", () => ({
+  HelpPopover: ({ helpKey }: { helpKey: string }) => (
+    <div data-testid="mock-help-popover" data-help-key={helpKey} />
+  ),
+}));
 
 vi.mock("~/hooks/pdf/useExportRequirementTraceabilityPdf", () => ({
   useExportRequirementTraceabilityPdf: mockUseExportPdf,
@@ -405,6 +417,18 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
 
       const lastProps = capturedDetailPanelProps.at(-1);
       expect(lastProps.onRequestDelete).toBeUndefined();
+    });
+  });
+
+  describe("page header convention", () => {
+    it("carries the help popover and the project name below the title, like every other page header", () => {
+      render(<RequirementsWorkspace projectId="42" />);
+
+      const help = screen.getByTestId("mock-help-popover");
+      expect(help.getAttribute("data-help-key")).toBe("projectRequirements");
+      expect(
+        screen.getByTestId("requirements-page-header").textContent
+      ).toContain("Mock Project");
     });
   });
 

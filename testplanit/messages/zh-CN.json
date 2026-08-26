@@ -371,6 +371,7 @@
       "issues": "问题",
       "internalIssues": "内部问题",
       "externalIssues": "{provider} 问题",
+      "requirements": "需求",
       "data": "数据",
       "note": "笔记",
       "externalId": "外部标识",
@@ -709,6 +710,7 @@
       "userProfile": "用户个人资料",
       "users": "用户",
       "issues": "问题",
+      "requirements": "需求",
       "tags": "标签",
       "tagDetails": "标签详情",
       "aiModels": "人工智能模型",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "扫描这些已连接的项目以查找新的里程碑",
             "settingsSaved": "里程碑同步设置已保存",
             "saveError": "保存里程碑同步设置失败"
+          },
+          "requirementsConfig": {
+            "title": "需求类型",
+            "description": "选择哪些跟踪器问题类型算作需求。现有问题将被重新分类以匹配。",
+            "enableLabel": "启用需求分类",
+            "issueTypesLabel": "问题类型",
+            "issueTypesPlaceholder": "选择问题类型",
+            "issueTypesAriaLabel": "需求问题类型",
+            "previewHeading": "此更改的影响",
+            "becomingRequirements": "{count, plural, other {{count} 个问题将成为需求}}",
+            "stoppingRequirements": "{count, plural, other {{count} 个问题将不再是需求}}",
+            "detachedCallout": "{count, plural, other {其中 {count} 个已与跟踪器分离或在本地被编辑，将失去其需求状态}}",
+            "reversibilityNote": "重新添加类型可恢复分类。不会删除任何内容。",
+            "noChanges": "没有要应用的分类更改。",
+            "settingsSaved": "需求类型设置已保存",
+            "saveError": "保存需求类型设置失败"
           }
         },
         "integrationAssigned": "集成任务已成功分配",
@@ -2107,6 +2125,13 @@
           "saveError": "更新审核工作流程设置失败",
           "systemDisabledTitle": "全系统审核工作流程已关闭。",
           "systemDisabledDescription": "您的项目偏好设置已保存，但只有在系统管理员在“管理”→“工作流”下启用该功能后，才会启用任何功能。"
+        },
+        "requirements": {
+          "label": "启用需求",
+          "description": "为此项目添加需求区域，用于构建系统应实现功能的层级结构，并将测试用例与之关联以实现覆盖。如果您在此维护当前状态的需求模型，请启用此选项；如果您的需求完全存放在问题跟踪器中，请保持关闭。",
+          "enabledToast": "此项目已启用需求",
+          "disabledToast": "此项目的需求已禁用",
+          "saveError": "无法更新需求设置"
         },
         "flipJustification": {
           "label": "需要对结果反转做出解释",
@@ -6624,6 +6649,182 @@
       "errorDescription": "无法完成授权。请关闭此窗口并重试。"
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "搜索需求……",
+      "emptyTitle": "暂无需求",
+      "emptyDescription": "创建您的第一个需求，开始构建该项目的需求树。",
+      "loadFailed": "需求加载失败。",
+      "addRoot": "添加需求",
+      "addChild": "添加子需求",
+      "rename": "重命名",
+      "delete": "删除",
+      "expandAll": "全部展开",
+      "collapseAll": "全部收起",
+      "dropToRootHint": "拖放到此处以移动到顶层",
+      "moveSuccess": "需求已移动。",
+      "moveFailed": "移动需求失败。",
+      "moveRejected": "此移动操作被拒绝：",
+      "dragDisabled": "此需求当前无法移动。"
+    },
+    "list": {
+      "columnName": "名称",
+      "columnStatus": "状态",
+      "columnSource": "来源",
+      "expandRow": "展开 {name}",
+      "collapseRow": "收起 {name}",
+      "filterAllStatuses": "所有状态",
+      "dragLockedSynced": "已同步的需求会镜像跟踪工具的层次结构。请分离以移动它。"
+    },
+    "detail": {
+      "selectPrompt": "选择一个需求以查看其详细信息。",
+      "documentation": "文档",
+      "documentationEmpty": "未提供任何文档",
+      "documentationPlaceholder": "输入需求文档……",
+      "lockedHint": "此字段由连接的跟踪工具管理，无法在此处编辑。",
+      "saveSuccess": "需求已保存。",
+      "saveFailed": "保存需求失败。"
+    },
+    "provenance": {
+      "nativeLabel": "手动",
+      "syncedLabel": "已同步",
+      "detachedLabel": "已分离",
+      "nativeTooltip": "直接在 TestPlanIt 中创建。",
+      "syncedTooltip": "从连接的跟踪工具同步而来。锁定字段无法在此处编辑。",
+      "detachedTooltip": "已从连接的跟踪工具分离。现在完全可编辑，如同手动创建的需求。",
+      "openInTracker": "在 {provider} 中打开",
+      "detach": "分离",
+      "detachDialogTitle": "分离此需求？",
+      "detachDialogDescription": "分离会使此需求在 TestPlanIt 中完全可编辑，并断开与连接的跟踪工具的链接。此操作无法撤销——目前尚不支持重新附加到跟踪工具。",
+      "detachConfirm": "分离",
+      "detachSuccess": "需求已分离。",
+      "detachFailed": "分离需求失败。"
+    },
+    "create": {
+      "dialogTitle": "创建需求",
+      "dialogDescription": "向该项目的需求树添加新需求。",
+      "nameLabel": "名称",
+      "namePlaceholder": "输入需求名称……",
+      "parentLabel": "父级",
+      "parentNone": "无父级（顶层）",
+      "submit": "创建需求",
+      "submitHint": "按 Enter 键创建",
+      "success": "需求已创建。",
+      "failed": "创建需求失败。"
+    },
+    "edit": {
+      "dialogTitle": "编辑需求",
+      "submit": "保存更改",
+      "success": "需求已更新。",
+      "failed": "更新需求失败。",
+      "lockedTooltip": "此需求已从连接的跟踪工具同步而来。请将其分离以重命名。"
+    },
+    "delete": {
+      "dialogTitle": "删除需求",
+      "confirmNoChildren": "您确定要删除此需求吗？此操作可以撤销。",
+      "confirmWithChildren": "此需求有 {count, plural, other {{count} 个子项}} 也将被删除。此操作可以撤销。",
+      "submit": "删除",
+      "success": "需求已删除。",
+      "failed": "删除需求失败。",
+      "undo": "撤销",
+      "undoSuccess": "需求已恢复。",
+      "undoFailed": "恢复需求失败。"
+    },
+    "attachments": {
+      "title": "附件",
+      "empty": "无附件",
+      "uploadSuccess": "附件已上传。",
+      "uploadFailed": "上传附件失败。",
+      "removeSuccess": "附件已移除。",
+      "removeFailed": "移除附件失败。"
+    },
+    "linkedCases": {
+      "title": "关联测试用例",
+      "empty": "没有关联的测试用例。",
+      "addLink": "添加链接",
+      "addLinkDialogTitle": "关联测试用例",
+      "searchPlaceholder": "搜索测试用例……",
+      "linkSuccess": "测试用例已关联。",
+      "linkFailed": "关联测试用例失败。",
+      "unlinkConfirm": "您确定要取消关联此测试用例吗？",
+      "unlinkSuccess": "测试用例已取消关联。",
+      "unlinkFailed": "取消关联测试用例失败。",
+      "columnCase": "测试用例",
+      "columnProject": "项目"
+    },
+    "linkedRequirements": {
+      "title": "关联需求",
+      "empty": "没有关联的需求。",
+      "addLink": "添加链接",
+      "addLinkDialogTitle": "关联需求",
+      "searchPlaceholder": "搜索需求……",
+      "linkSuccess": "需求已关联。",
+      "linkFailed": "关联需求失败。",
+      "unlinkConfirm": "您确定要取消关联此需求吗？",
+      "unlinkSuccess": "需求已取消关联。",
+      "unlinkFailed": "取消关联需求失败。"
+    },
+    "suspect": {
+      "badgeLabel": "可疑",
+      "tooltipCaseSide": "此需求在该用例最后一次运行之后已更新。",
+      "tooltipRequirementSide": "该用例的最后一次运行早于此需求的最后一次更新。",
+      "dismissConfirm": "关闭此可疑标记？对该需求的更新将重新标记它。",
+      "dismissAction": "关闭标记",
+      "dismissSuccess": "可疑标记已关闭。",
+      "dismissFailed": "关闭可疑标记失败。"
+    },
+    "references": {
+      "title": "{count, plural, =0 {References} =1 {{count} Reference} other {{count} References}}",
+      "empty": "暂无引用。",
+      "emptyHint": "附加影响此需求的工单。",
+      "addReference": "添加引用",
+      "addDialogTitle": "添加引用",
+      "searchPlaceholder": "搜索问题……",
+      "createDialogLabel": "引用",
+      "attachSuccess": "引用已附加。",
+      "attachFailed": "附加引用失败。",
+      "removeConfirm": "您确定要移除此引用吗？",
+      "removeSuccess": "引用已移除。",
+      "removeFailed": "移除引用失败。",
+      "columnReference": "引用",
+      "columnStatus": "状态"
+    },
+    "coverage": {
+      "title": "覆盖率",
+      "uncovered": "未覆盖",
+      "uncoveredTooltip": "没有测试用例关联到此需求或其任何后代。",
+      "statusPassed": "通过",
+      "statusFailed": "失败",
+      "statusNotRun": "未运行",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "通过：{passed} · 失败：{failed} · 进行中：{inProgress} · 未运行：{notRun}",
+      "showOnlyUncovered": "仅显示未覆盖项",
+      "showOnlyUncoveredUnavailable": "覆盖率数据当前不可用。",
+      "loadFailed": "覆盖率加载失败。",
+      "retry": "重试",
+      "panelTitle": "覆盖测试用例",
+      "panelDescription": "计入此需求覆盖率的所有测试用例——直接关联到此需求的用例，以及关联到其下任何需求的用例。要添加或移除链接，请使用关联测试用例。",
+      "panelEmpty": "尚无测试用例覆盖此需求。",
+      "columnCase": "测试用例",
+      "columnResult": "结果",
+      "columnExecutedAt": "执行于",
+      "columnProject": "项目",
+      "inherited": "继承",
+      "inheritedTooltip": "关联到此需求的某个后代，而非直接关联到它。",
+      "notRunCell": "未运行",
+      "crossProjectCount": "{count, plural, other {还被其他 # 个项目中的用例覆盖}}"
+    },
+    "export": {
+      "menuLabel": "导出可追溯性",
+      "exportFailed": "导出可追溯性失败。",
+      "pdfEnglishOnlyHint": "PDF 导出仅以英文生成。",
+      "csvOnReportsHint": "如需 CSV 导出，请运行需求可追溯性报告。"
+    },
+    "disabled": {
+      "title": "需求功能未启用",
+      "description": "该项目尚未启用需求功能。请让项目管理员在项目设置中启用它，以开始构建需求树。"
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "浏览和管理所有问题。",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## 会话\n探索性测试会话——限时、无脚本的测试，以笔记和结果的形式记录，涵盖进行中和已完成状态。",
     "projectTags": "## 标签\n标签用于标记和分组此项目的测试用例、会话和运行，方便查找相关工作。",
     "projectIssues": "## 问题\n来自此项目所连接的跟踪系统的问题，与发现或引用它们的测试用例、运行和会话相关联。",
+    "projectRequirements": "## 需求\n项目的需求以层次结构呈现——在 TestPlanIt 中原生创建或从连接的跟踪工具同步——并通过整个树汇总关联的测试用例和覆盖率。",
     "projectReports": "## 报告\n报告以图表和表格的形式汇总此项目的测试情况——测试运行、会话和结果，您可以对其进行筛选和导出。",
     "projectAuditLogs": "## 审计日志\n此项目中执行操作的审计跟踪——谁在何时更改了什么——用于安全性和合规性跟踪。",
     "projectIntegrations": "## 问题集成\n将此项目连接到问题跟踪系统，以便其测试用例、运行和会话可以与外部问题和里程碑关联并同步。",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "自动化候选人",
           "description": "根据案例内容、自定义字段和关联问题上下文，对接下来需要自动化的手动测试用例进行排名。"
+        },
+        "requirementCoverageGaps": {
+          "label": "需求覆盖缺口",
+          "description": "列出所有未关联测试用例的需求，无需展开树结构即可查看缺口"
+        },
+        "requirementTraceability": {
+          "label": "需求可追溯性",
+          "description": "每个需求及其关联的测试用例和最新执行结果"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "未测试用例数量",
           "testCoverageVsExecution": "测试覆盖率与执行状态"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "需求",
+        "path": "路径",
+        "testCase": "测试用例",
+        "result": "结果",
+        "executedAt": "执行于",
+        "project": "项目",
+        "linkedCases": "关联用例",
+        "uncovered": "未覆盖",
+        "notRun": "未运行",
+        "noData": "本报告暂无可用需求数据。",
+        "noGaps": "未发现覆盖缺口 — 每个需求至少关联一个测试用例。"
       },
       "crossProjectReportTypes": {
         "testExecution": {

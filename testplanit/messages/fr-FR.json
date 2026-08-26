@@ -371,6 +371,7 @@
       "issues": "Problèmes",
       "internalIssues": "Problèmes internes",
       "externalIssues": "{provider} Problèmes",
+      "requirements": "Exigences",
       "data": "Données",
       "note": "Note",
       "externalId": "ID externe",
@@ -709,6 +710,7 @@
       "userProfile": "Profil utilisateur",
       "users": "Utilisateurs",
       "issues": "Problèmes",
+      "requirements": "Exigences",
       "tags": "Étiquettes",
       "tagDetails": "Détails de l'étiquette",
       "aiModels": "Modèles d'IA",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "Analyser ces projets connectés pour détecter de nouvelles étapes",
             "settingsSaved": "Paramètres de synchronisation des étapes enregistrés",
             "saveError": "Impossible d'enregistrer les paramètres de synchronisation des étapes"
+          },
+          "requirementsConfig": {
+            "title": "Types d'exigences",
+            "description": "Choisissez les types de problèmes du système de suivi qui comptent comme des exigences. Les problèmes existants sont reclassés en conséquence.",
+            "enableLabel": "Activer la classification des exigences",
+            "issueTypesLabel": "Types de problèmes",
+            "issueTypesPlaceholder": "Sélectionner les types de problèmes",
+            "issueTypesAriaLabel": "Types de problèmes d'exigence",
+            "previewHeading": "Impact de cette modification",
+            "becomingRequirements": "{count, plural, one {{count} problème deviendra une exigence} other {{count} problèmes deviendront des exigences}}",
+            "stoppingRequirements": "{count, plural, one {{count} problème cessera d'être une exigence} other {{count} problèmes cesseront d'être des exigences}}",
+            "detachedCallout": "{count, plural, one {{count} d'entre eux est détaché du système de suivi ou a été modifié localement et perdra son statut d'exigence} other {{count} d'entre eux sont détachés du système de suivi ou ont été modifiés localement et perdront leur statut d'exigence}}",
+            "reversibilityNote": "Rajouter un type restaure la classification. Rien n'est supprimé.",
+            "noChanges": "Aucune modification de classification à appliquer.",
+            "settingsSaved": "Paramètres du type d'exigence enregistrés",
+            "saveError": "Échec de l'enregistrement des paramètres du type d'exigence"
           }
         },
         "integrationAssigned": "Intégration attribuée avec succès",
@@ -2107,6 +2125,13 @@
           "saveError": "Échec de la mise à jour des paramètres du flux de travail de révision",
           "systemDisabledTitle": "Le flux de travail de révision est interrompu à l'échelle du système.",
           "systemDisabledDescription": "La préférence de votre projet est enregistrée, mais rien ne sera bloqué tant qu'un administrateur système n'aura pas activé la fonctionnalité sous Administration → Flux de travail."
+        },
+        "requirements": {
+          "label": "Activer les exigences",
+          "description": "Ajoute une zone Exigences à ce projet pour construire des hiérarchies de ce que le système doit faire, et pour lier des cas de test afin d'en assurer la couverture. Activez cette option si vous maintenez ici un modèle d'exigences à jour ; laissez-la désactivée si vos exigences se trouvent entièrement dans votre système de suivi de problèmes.",
+          "enabledToast": "Exigences activées pour ce projet",
+          "disabledToast": "Exigences désactivées pour ce projet",
+          "saveError": "Impossible de mettre à jour le paramètre des exigences"
         },
         "flipJustification": {
           "label": "Exiger une justification pour tout changement de résultat",
@@ -6624,6 +6649,182 @@
       "errorDescription": "L'autorisation n'a pas pu être terminée. Fermez cette fenêtre et réessayez."
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "Rechercher des exigences...",
+      "emptyTitle": "Aucune exigence pour l'instant",
+      "emptyDescription": "Créez votre première exigence pour commencer à construire l'arborescence des exigences de ce projet.",
+      "loadFailed": "Échec du chargement des exigences.",
+      "addRoot": "Ajouter une exigence",
+      "addChild": "Ajouter une exigence enfant",
+      "rename": "Renommer",
+      "delete": "Supprimer",
+      "expandAll": "Développer tout",
+      "collapseAll": "Réduire tout",
+      "dropToRootHint": "Déposez ici pour déplacer au niveau supérieur",
+      "moveSuccess": "Exigence déplacée.",
+      "moveFailed": "Échec du déplacement de l'exigence.",
+      "moveRejected": "Ce déplacement a été rejeté :",
+      "dragDisabled": "Cette exigence ne peut pas être déplacée pour le moment."
+    },
+    "list": {
+      "columnName": "Nom",
+      "columnStatus": "Statut",
+      "columnSource": "Source",
+      "expandRow": "Développer {name}",
+      "collapseRow": "Réduire {name}",
+      "filterAllStatuses": "Tous les statuts",
+      "dragLockedSynced": "Les exigences synchronisées reflètent la hiérarchie du système de suivi. Détachez-la pour la déplacer."
+    },
+    "detail": {
+      "selectPrompt": "Sélectionnez une exigence pour afficher ses détails.",
+      "documentation": "Documentation",
+      "documentationEmpty": "Aucune documentation fournie",
+      "documentationPlaceholder": "Saisir la documentation de l'exigence...",
+      "lockedHint": "Ce champ est géré par le système de suivi connecté et ne peut pas être modifié ici.",
+      "saveSuccess": "Exigence enregistrée.",
+      "saveFailed": "Échec de l'enregistrement de l'exigence."
+    },
+    "provenance": {
+      "nativeLabel": "Manuel",
+      "syncedLabel": "Synchronisé",
+      "detachedLabel": "Détaché",
+      "nativeTooltip": "Créée directement dans TestPlanIt.",
+      "syncedTooltip": "Synchronisée depuis le système de suivi connecté. Les champs verrouillés ne peuvent pas être modifiés ici.",
+      "detachedTooltip": "Détachée du système de suivi connecté. Désormais entièrement modifiable, comme une exigence créée manuellement.",
+      "openInTracker": "Ouvrir dans {provider}",
+      "detach": "Détacher",
+      "detachDialogTitle": "Détacher cette exigence ?",
+      "detachDialogDescription": "Le détachement rend cette exigence entièrement modifiable dans TestPlanIt et rompt son lien avec le système de suivi connecté. Cette action est irréversible — le rattachement au système de suivi n'est pas encore pris en charge.",
+      "detachConfirm": "Détacher",
+      "detachSuccess": "Exigence détachée.",
+      "detachFailed": "Échec du détachement de l'exigence."
+    },
+    "create": {
+      "dialogTitle": "Créer une exigence",
+      "dialogDescription": "Ajoutez une nouvelle exigence à l'arborescence des exigences de ce projet.",
+      "nameLabel": "Nom",
+      "namePlaceholder": "Saisissez un nom d'exigence...",
+      "parentLabel": "Parent",
+      "parentNone": "Aucun parent (niveau supérieur)",
+      "submit": "Créer une exigence",
+      "submitHint": "Appuyez sur Entrée pour créer",
+      "success": "Exigence créée.",
+      "failed": "Échec de la création de l'exigence."
+    },
+    "edit": {
+      "dialogTitle": "Modifier l'exigence",
+      "submit": "Enregistrer les modifications",
+      "success": "Exigence mise à jour.",
+      "failed": "Échec de la mise à jour de l'exigence.",
+      "lockedTooltip": "Cette exigence est synchronisée depuis le système de suivi connecté. Détachez-la pour la renommer."
+    },
+    "delete": {
+      "dialogTitle": "Supprimer l'exigence",
+      "confirmNoChildren": "Êtes-vous sûr de vouloir supprimer cette exigence ? Cette action peut être annulée.",
+      "confirmWithChildren": "Cette exigence comporte {count, plural, one {{count} descendant} other {{count} descendants}} qui seront également supprimés. Cette action peut être annulée.",
+      "submit": "Supprimer",
+      "success": "Exigence supprimée.",
+      "failed": "Échec de la suppression de l'exigence.",
+      "undo": "Annuler",
+      "undoSuccess": "Exigence restaurée.",
+      "undoFailed": "Échec de la restauration de l'exigence."
+    },
+    "attachments": {
+      "title": "Pièces jointes",
+      "empty": "Aucune pièce jointe",
+      "uploadSuccess": "Pièce jointe téléchargée.",
+      "uploadFailed": "Échec du téléchargement de la pièce jointe.",
+      "removeSuccess": "Pièce jointe supprimée.",
+      "removeFailed": "Échec de la suppression de la pièce jointe."
+    },
+    "linkedCases": {
+      "title": "Cas de test liés",
+      "empty": "Aucun cas de test lié.",
+      "addLink": "Ajouter un lien",
+      "addLinkDialogTitle": "Lier des cas de test",
+      "searchPlaceholder": "Rechercher des cas de test...",
+      "linkSuccess": "Cas de test lié.",
+      "linkFailed": "Échec de la liaison du cas de test.",
+      "unlinkConfirm": "Êtes-vous sûr de vouloir dissocier ce cas de test ?",
+      "unlinkSuccess": "Cas de test dissocié.",
+      "unlinkFailed": "Échec de la dissociation du cas de test.",
+      "columnCase": "Cas de test",
+      "columnProject": "Projet"
+    },
+    "linkedRequirements": {
+      "title": "Exigences liées",
+      "empty": "Aucune exigence liée.",
+      "addLink": "Ajouter un lien",
+      "addLinkDialogTitle": "Lier des exigences",
+      "searchPlaceholder": "Rechercher des exigences...",
+      "linkSuccess": "Exigence liée.",
+      "linkFailed": "Échec de la liaison de l'exigence.",
+      "unlinkConfirm": "Êtes-vous sûr de vouloir dissocier cette exigence ?",
+      "unlinkSuccess": "Exigence dissociée.",
+      "unlinkFailed": "Échec de la dissociation de l'exigence."
+    },
+    "suspect": {
+      "badgeLabel": "Suspect",
+      "tooltipCaseSide": "Cette exigence a été mise à jour après la dernière exécution de ce cas.",
+      "tooltipRequirementSide": "La dernière exécution de ce cas est antérieure à la dernière mise à jour de cette exigence.",
+      "dismissConfirm": "Rejeter ce signalement suspect ? Une nouvelle modification de l'exigence le signalera à nouveau.",
+      "dismissAction": "Rejeter le signalement",
+      "dismissSuccess": "Signalement suspect rejeté.",
+      "dismissFailed": "Échec du rejet du signalement suspect."
+    },
+    "references": {
+      "title": "{count, plural, =0 {Références} =1 {{count} Référence} other {{count} Références}}",
+      "empty": "Aucune référence pour le moment.",
+      "emptyHint": "Associez les tickets qui ont façonné cette exigence.",
+      "addReference": "Ajouter une référence",
+      "addDialogTitle": "Ajouter une référence",
+      "searchPlaceholder": "Rechercher des problèmes...",
+      "createDialogLabel": "Références",
+      "attachSuccess": "Référence associée.",
+      "attachFailed": "Échec de l'association de la référence.",
+      "removeConfirm": "Êtes-vous sûr de vouloir supprimer cette référence ?",
+      "removeSuccess": "Référence supprimée.",
+      "removeFailed": "Échec de la suppression de la référence.",
+      "columnReference": "Référence",
+      "columnStatus": "Statut"
+    },
+    "coverage": {
+      "title": "Couverture",
+      "uncovered": "Non couvert",
+      "uncoveredTooltip": "Aucun cas de test n'est lié à cette exigence ou à l'un de ses descendants.",
+      "statusPassed": "Réussi",
+      "statusFailed": "Échoué",
+      "statusNotRun": "Non exécuté",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "Réussi : {passed} · Échoué : {failed} · En cours : {inProgress} · Non exécuté : {notRun}",
+      "showOnlyUncovered": "Afficher uniquement les éléments non couverts",
+      "showOnlyUncoveredUnavailable": "Les données de couverture ne sont pas disponibles pour le moment.",
+      "loadFailed": "Échec du chargement de la couverture.",
+      "retry": "Réessayer",
+      "panelTitle": "Cas de test couvrants",
+      "panelDescription": "Tous les cas de test comptabilisés dans la couverture de cette exigence — les cas liés directement à celle-ci ainsi que les cas liés à toute exigence qui en dépend. Pour ajouter ou supprimer des liens, utilisez Cas de test liés.",
+      "panelEmpty": "Aucun cas de test ne couvre encore cette exigence.",
+      "columnCase": "Cas de test",
+      "columnResult": "Résultat",
+      "columnExecutedAt": "Exécuté à",
+      "columnProject": "Projet",
+      "inherited": "Hérité",
+      "inheritedTooltip": "Lié à un descendant de cette exigence, et non directement à celle-ci.",
+      "notRunCell": "Non exécuté",
+      "crossProjectCount": "{count, plural, one {Également couvert par un cas dans # autre projet} other {Également couvert par des cas dans # autres projets}}"
+    },
+    "export": {
+      "menuLabel": "Exporter la traçabilité",
+      "exportFailed": "Échec de l'exportation de la traçabilité.",
+      "pdfEnglishOnlyHint": "Les exports PDF sont générés uniquement en anglais.",
+      "csvOnReportsHint": "Pour un export CSV, exécutez le rapport de traçabilité des exigences."
+    },
+    "disabled": {
+      "title": "Les exigences ne sont pas activées",
+      "description": "Ce projet n'a pas activé la fonctionnalité des exigences. Demandez à un administrateur de projet de l'activer dans les paramètres du projet pour commencer à construire des arborescences d'exigences."
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "Consultez et gérez tous les problèmes.",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## Sessions\nLes sessions de tests exploratoires — des tests limités dans le temps et non scriptés, capturés sous forme de notes et de résultats à travers les états actifs et terminés.",
     "projectTags": "## Balises\nLes balises étiquettent et regroupent les cas de test, sessions et exécutions de ce projet afin de faciliter la recherche des travaux associés.",
     "projectIssues": "## Problèmes\nLes problèmes provenant des trackers connectés à ce projet, liés aux cas de test, exécutions et sessions où ils ont été trouvés ou référencés.",
+    "projectRequirements": "## Exigences\nLes exigences du projet organisées en hiérarchie — créées nativement dans TestPlanIt ou synchronisées depuis un système de suivi connecté — avec des cas de test liés et une couverture agrégée à travers l'arborescence.",
     "projectReports": "## Rapports\nLes rapports résument les tests de ce projet — exécutions, sessions et résultats — sous forme de graphiques et de tableaux que vous pouvez filtrer et exporter.",
     "projectAuditLogs": "## Journaux d'audit\nL'historique d'audit des actions effectuées dans ce projet — qui a modifié quoi et quand — pour le suivi de la sécurité et de la conformité.",
     "projectIntegrations": "## Intégrations de suivi des problèmes\nConnectez ce projet à un système de suivi des problèmes afin que ses cas de test, exécutions et sessions puissent être liés et synchronisés avec des problèmes et des étapes externes.",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "Candidats en automatisation",
           "description": "Liste classée des cas de test manuels à automatiser ensuite, en fonction du contenu du cas, des champs personnalisés et du contexte des tickets liés."
+        },
+        "requirementCoverageGaps": {
+          "label": "Lacunes de couverture des exigences",
+          "description": "Lister chaque exigence sans aucun cas de test lié, afin que les lacunes soient visibles sans avoir à ouvrir l'arborescence"
+        },
+        "requirementTraceability": {
+          "label": "Traçabilité des exigences",
+          "description": "Chaque exigence associée à ses cas de test liés et à leur dernier résultat d'exécution"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "Nombre de cas de test non testés",
           "testCoverageVsExecution": "Couverture des tests vs état d'exécution"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "Exigence",
+        "path": "Chemin",
+        "testCase": "Cas de test",
+        "result": "Résultat",
+        "executedAt": "Exécuté à",
+        "project": "Projet",
+        "linkedCases": "Cas liés",
+        "uncovered": "Non couvert",
+        "notRun": "Non exécuté",
+        "noData": "Aucune donnée d'exigence disponible pour ce rapport.",
+        "noGaps": "Aucune lacune de couverture trouvée — chaque exigence a au moins un cas de test lié."
       },
       "crossProjectReportTypes": {
         "testExecution": {

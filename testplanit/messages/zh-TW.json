@@ -371,6 +371,7 @@
       "issues": "問題",
       "internalIssues": "內部問題",
       "externalIssues": "{provider} 問題",
+      "requirements": "需求",
       "data": "數據",
       "note": "筆記",
       "externalId": "外部標識",
@@ -709,6 +710,7 @@
       "userProfile": "用戶個人資料",
       "users": "使用者",
       "issues": "問題",
+      "requirements": "需求",
       "tags": "標籤",
       "tagDetails": "標籤詳情",
       "aiModels": "人工智慧模型",
@@ -1511,6 +1513,22 @@
             "autoTrackProjectsLabel": "掃描這些已連結的專案以尋找新的里程碑",
             "settingsSaved": "里程碑同步設定已儲存",
             "saveError": "儲存里程碑同步設定失敗"
+          },
+          "requirementsConfig": {
+            "title": "需求類型",
+            "description": "選擇哪些追蹤器問題類型計為需求。現有問題將重新分類以符合設定。",
+            "enableLabel": "啟用需求分類",
+            "issueTypesLabel": "問題類型",
+            "issueTypesPlaceholder": "選擇問題類型",
+            "issueTypesAriaLabel": "需求問題類型",
+            "previewHeading": "此變更的影響",
+            "becomingRequirements": "{count, plural, other {{count} 個問題將成為需求}}",
+            "stoppingRequirements": "{count, plural, other {{count} 個問題將不再是需求}}",
+            "detachedCallout": "{count, plural, other {其中 {count} 個已與追蹤器分離或在本機編輯，將失去其需求狀態}}",
+            "reversibilityNote": "重新加入類型將恢復分類。不會刪除任何內容。",
+            "noChanges": "沒有可套用的分類變更。",
+            "settingsSaved": "已儲存需求類型設定",
+            "saveError": "儲存需求類型設定失敗"
           }
         },
         "integrationAssigned": "整合任務已成功分配",
@@ -2107,6 +2125,13 @@
           "saveError": "更新審核工作流程設定失敗",
           "systemDisabledTitle": "全系統審核工作流程已關閉。",
           "systemDisabledDescription": "您的專案偏好設定已儲存，但只有在系統管理員在「管理」→「工作流程」下啟用功能後，才會啟用任何功能。"
+        },
+        "requirements": {
+          "label": "啟用需求",
+          "description": "為此項目新增需求區域，用於建立系統應執行事項的階層結構，並將測試案例連結至這些需求以進行涵蓋範圍追蹤。如果您在此維護目前狀態的需求模型，請開啟此功能；如果您的需求完全存放在問題追蹤器中，則請保持關閉。",
+          "enabledToast": "此項目已啟用需求",
+          "disabledToast": "此項目已停用需求",
+          "saveError": "無法更新需求設定"
         },
         "flipJustification": {
           "label": "需要對結果反轉做出解釋",
@@ -2754,7 +2779,7 @@
       "mentionedComments": {
         "title": "評論中提到",
         "description": "在提及你的評論中",
-        "noComments": "目前還沒有人提到過你。",
+        "noComments": "目前還沒有人在評論中提到你。",
         "comment": "評論",
         "showingResults": "顯示 {start} - {end} 共 {total}"
       },
@@ -6624,6 +6649,182 @@
       "errorDescription": "無法完成授權。請關閉此視窗並重試。"
     }
   },
+  "requirements": {
+    "tree": {
+      "searchPlaceholder": "搜尋需求……",
+      "emptyTitle": "尚無需求",
+      "emptyDescription": "建立第一個需求，開始建立此專案的需求樹。",
+      "loadFailed": "需求載入失敗。",
+      "addRoot": "新增需求",
+      "addChild": "新增子需求",
+      "rename": "重新命名",
+      "delete": "刪除",
+      "expandAll": "全部展開",
+      "collapseAll": "全部收起",
+      "dropToRootHint": "拖放至此以移至頂層",
+      "moveSuccess": "需求已移動。",
+      "moveFailed": "移動需求失敗。",
+      "moveRejected": "此移動已被拒絕：",
+      "dragDisabled": "此需求目前無法移動。"
+    },
+    "list": {
+      "columnName": "名稱",
+      "columnStatus": "狀態",
+      "columnSource": "來源",
+      "expandRow": "展開 {name}",
+      "collapseRow": "收起 {name}",
+      "filterAllStatuses": "所有狀態",
+      "dragLockedSynced": "已同步的需求會反映追蹤系統的階層結構。請先分離才能移動。"
+    },
+    "detail": {
+      "selectPrompt": "選擇一個需求以檢視其詳細資訊。",
+      "documentation": "文件",
+      "documentationEmpty": "未提供任何文件",
+      "documentationPlaceholder": "輸入需求文件……",
+      "lockedHint": "此欄位由已連結的追蹤系統管理，無法在此編輯。",
+      "saveSuccess": "需求已儲存。",
+      "saveFailed": "儲存需求失敗。"
+    },
+    "provenance": {
+      "nativeLabel": "手動",
+      "syncedLabel": "已同步",
+      "detachedLabel": "已分離",
+      "nativeTooltip": "直接在 TestPlanIt 中建立。",
+      "syncedTooltip": "從已連結的追蹤系統同步。鎖定的欄位無法在此編輯。",
+      "detachedTooltip": "已從已連結的追蹤系統分離。現在完全可編輯，如同手動建立的需求。",
+      "openInTracker": "開啟方式 {provider}",
+      "detach": "分離",
+      "detachDialogTitle": "分離此需求？",
+      "detachDialogDescription": "分離後，此需求將在 TestPlanIt 中完全可編輯，並中斷與已連結追蹤系統的連結。此操作無法復原 — 目前尚不支援重新連結至追蹤系統。",
+      "detachConfirm": "分離",
+      "detachSuccess": "需求已分離。",
+      "detachFailed": "分離需求失敗。"
+    },
+    "create": {
+      "dialogTitle": "建立需求",
+      "dialogDescription": "新增需求至此專案的需求樹。",
+      "nameLabel": "名稱",
+      "namePlaceholder": "輸入需求名稱……",
+      "parentLabel": "父項",
+      "parentNone": "無父項（頂層）",
+      "submit": "建立需求",
+      "submitHint": "按 Enter 建立",
+      "success": "需求已建立。",
+      "failed": "建立需求失敗。"
+    },
+    "edit": {
+      "dialogTitle": "編輯需求",
+      "submit": "儲存變更",
+      "success": "需求已更新。",
+      "failed": "更新需求失敗。",
+      "lockedTooltip": "此需求從已連結的追蹤系統同步。請先分離才能重新命名。"
+    },
+    "delete": {
+      "dialogTitle": "刪除需求",
+      "confirmNoChildren": "您確定要刪除此需求嗎？此操作可以復原。",
+      "confirmWithChildren": "此需求有 {count, plural, other {{count} 個子項目}}，也將一併刪除。此操作可以復原。",
+      "submit": "刪除",
+      "success": "需求已刪除。",
+      "failed": "刪除需求失敗。",
+      "undo": "撤銷",
+      "undoSuccess": "需求已還原。",
+      "undoFailed": "還原需求失敗。"
+    },
+    "attachments": {
+      "title": "附件",
+      "empty": "無附件",
+      "uploadSuccess": "附件已上傳。",
+      "uploadFailed": "上傳附件失敗。",
+      "removeSuccess": "附件已移除。",
+      "removeFailed": "移除附件失敗。"
+    },
+    "linkedCases": {
+      "title": "關聯測試用例",
+      "empty": "沒有關聯的測試用例。",
+      "addLink": "添加連結",
+      "addLinkDialogTitle": "關聯測試用例",
+      "searchPlaceholder": "搜尋測試用例……",
+      "linkSuccess": "測試用例已連結。",
+      "linkFailed": "連結測試用例失敗。",
+      "unlinkConfirm": "您確定要取消連結此測試用例嗎？",
+      "unlinkSuccess": "測試用例已取消連結。",
+      "unlinkFailed": "取消連結測試用例失敗。",
+      "columnCase": "測試用例",
+      "columnProject": "專案"
+    },
+    "linkedRequirements": {
+      "title": "關聯需求",
+      "empty": "沒有關聯的需求。",
+      "addLink": "添加連結",
+      "addLinkDialogTitle": "關聯需求",
+      "searchPlaceholder": "搜尋需求……",
+      "linkSuccess": "需求已連結。",
+      "linkFailed": "連結需求失敗。",
+      "unlinkConfirm": "您確定要取消連結此需求嗎？",
+      "unlinkSuccess": "需求已取消連結。",
+      "unlinkFailed": "取消連結需求失敗。"
+    },
+    "suspect": {
+      "badgeLabel": "可疑",
+      "tooltipCaseSide": "此需求在此測試用例最後一次執行之後已被更新。",
+      "tooltipRequirementSide": "此測試用例的最後一次執行早於此需求的最後一次更新。",
+      "dismissConfirm": "要關閉此可疑標記嗎？若需求有更新的編輯，將會重新標記。",
+      "dismissAction": "關閉標記",
+      "dismissSuccess": "可疑標記已關閉。",
+      "dismissFailed": "關閉可疑標記失敗。"
+    },
+    "references": {
+      "title": "{count, plural, =0 {參照} =1 {{count} 個參照} other {{count} 個參照}}",
+      "empty": "尚無參照。",
+      "emptyHint": "附加影響此需求的工單。",
+      "addReference": "新增參照",
+      "addDialogTitle": "新增參照",
+      "searchPlaceholder": "搜尋問題……",
+      "createDialogLabel": "參照",
+      "attachSuccess": "參照已附加。",
+      "attachFailed": "附加參照失敗。",
+      "removeConfirm": "您確定要移除此參照嗎？",
+      "removeSuccess": "參照已移除。",
+      "removeFailed": "移除參照失敗。",
+      "columnReference": "參照",
+      "columnStatus": "狀態"
+    },
+    "coverage": {
+      "title": "涵蓋範圍",
+      "uncovered": "未涵蓋",
+      "uncoveredTooltip": "此需求及其所有子項均未連結任何測試用例。",
+      "statusPassed": "通過",
+      "statusFailed": "失敗",
+      "statusNotRun": "未執行",
+      "countLabel": "{passed}/{total}",
+      "breakdownTooltip": "通過：{passed} · 失敗：{failed} · 進行中：{inProgress} · 未執行：{notRun}",
+      "showOnlyUncovered": "僅顯示未涵蓋",
+      "showOnlyUncoveredUnavailable": "目前無法取得涵蓋範圍資料。",
+      "loadFailed": "涵蓋範圍載入失敗。",
+      "retry": "重試",
+      "panelTitle": "涵蓋此需求的測試用例",
+      "panelDescription": "計入此需求涵蓋範圍的每個測試用例 — 直接連結至此需求的用例，加上連結至其下任何需求的用例。若要新增或移除連結，請使用「關聯測試用例」。",
+      "panelEmpty": "目前尚無測試用例涵蓋此需求。",
+      "columnCase": "測試用例",
+      "columnResult": "結果",
+      "columnExecutedAt": "執行於",
+      "columnProject": "專案",
+      "inherited": "繼承",
+      "inheritedTooltip": "連結至此需求的子項，而非直接連結至此需求。",
+      "notRunCell": "未執行",
+      "crossProjectCount": "{count, plural, other {也涵蓋於其他 # 個專案的測試用例中}}"
+    },
+    "export": {
+      "menuLabel": "匯出可追溯性",
+      "exportFailed": "匯出可追溯性失敗。",
+      "pdfEnglishOnlyHint": "PDF 匯出僅以英文產生。",
+      "csvOnReportsHint": "如需 CSV 匯出，請執行「需求可追溯性」報表。"
+    },
+    "disabled": {
+      "title": "需求功能未啟用",
+      "description": "此專案尚未啟用需求功能。請要求專案管理員在專案設定中啟用此功能，以開始建立需求樹。"
+    }
+  },
   "Pages": {
     "Issues": {
       "description": "瀏覽和管理所有問題。",
@@ -6725,6 +6926,7 @@
     "projectSessions": "## 會話\n探索性測試會話——限時、無腳本的測試，以備註和結果的形式記錄，涵蓋進行中與已完成的狀態。",
     "projectTags": "## 標籤\n標籤用於標記和分組此專案的測試案例、會話及測試運行，方便尋找相關工作。",
     "projectIssues": "## 問題\n來自此專案已連接追蹤系統的問題，並與發現或參照這些問題的測試案例、測試運行及會話建立連結。",
+    "projectRequirements": "## 需求\n專案的需求以階層結構呈現 — 可原生於 TestPlanIt 中建立，或從已連結的追蹤系統同步 — 並透過整個樹狀結構彙總關聯的測試用例與涵蓋範圍。",
     "projectReports": "## 報告\n報告以圖表和表格的形式彙總此專案的測試情況——包括測試運行、會話及結果，您可以篩選並匯出。",
     "projectAuditLogs": "## 稽核記錄\n此專案中執行動作的稽核記錄——記錄誰在何時變更了什麼——用於安全性與合規性追蹤。",
     "projectIntegrations": "## 問題整合\n將此專案連接至問題追蹤系統，讓其測試案例、測試運行及會話能夠與外部問題及里程碑建立連結並同步。",
@@ -7579,6 +7781,14 @@
         "automationCandidates": {
           "label": "自動化候選人",
           "description": "根據案例內容、自訂欄位和關聯問題上下文，對接下來需要自動化的手動測試案例進行排名。"
+        },
+        "requirementCoverageGaps": {
+          "label": "需求覆蓋缺口",
+          "description": "列出所有沒有關聯測試用例的需求，讓缺口無需展開樹狀結構即可一目了然"
+        },
+        "requirementTraceability": {
+          "label": "需求追溯",
+          "description": "每項需求皆與其關聯的測試用例及最新執行結果配對顯示"
         }
       },
       "flakyTests": {
@@ -7810,6 +8020,19 @@
           "untestedTestCases": "未測試用例數量",
           "testCoverageVsExecution": "測試覆蓋率與執行狀態"
         }
+      },
+      "requirementCoverage": {
+        "requirement": "需求",
+        "path": "路徑",
+        "testCase": "測試用例",
+        "result": "結果",
+        "executedAt": "執行於",
+        "project": "專案",
+        "linkedCases": "已關聯的測試用例",
+        "uncovered": "未涵蓋",
+        "notRun": "未執行",
+        "noData": "此報告暫無可用的需求資料。",
+        "noGaps": "未發現覆蓋缺口 — 每項需求皆至少有一個關聯的測試用例。"
       },
       "crossProjectReportTypes": {
         "testExecution": {
