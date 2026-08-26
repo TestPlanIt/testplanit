@@ -587,19 +587,65 @@ describe("RequirementDetailPanel", () => {
     expect(Object.values(nativeMap).every((v) => v === false)).toBe(true);
   });
 
-  it("does not render a Title field for a native requirement -- the header already shows that string", () => {
+  it("hides the Title field in display mode for a native requirement but offers it for editing", () => {
     setRequirement(nativeRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
 
+    // Display mode: the header already shows the name -- no repeated field.
     expect(
       screen.queryByTestId("requirement-field-title")
     ).not.toBeInTheDocument();
 
-    // The predicate is not edit-mode-scoped -- it must stay absent there too.
+    // Edit mode: the panel is an editing surface, so the name must be
+    // editable here -- hiding the field left rename reachable only through
+    // the list's inline rename.
     fireEvent.click(screen.getByTestId("requirement-detail-edit"));
-    expect(
-      screen.queryByTestId("requirement-field-title")
-    ).not.toBeInTheDocument();
+    const titleField = screen.getByTestId(
+      "requirement-field-title"
+    ) as HTMLInputElement;
+    expect(titleField).toBeInTheDocument();
+    expect(titleField.disabled).toBe(false);
+  });
+
+  it("renames a native requirement from the panel, writing name and title together", async () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.change(screen.getByTestId("requirement-field-title"), {
+      target: { value: "  Req Renamed  " },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalled();
+    });
+    // The same write CreateRequirementDialog.tsx and the list's inline
+    // rename perform: on a row whose name and title are one string, both
+    // columns carry the same trimmed value.
+    const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+    expect(payload.name).toBe("Req Renamed");
+    expect(payload.title).toBe("Req Renamed");
+  });
+
+  it("keeps a detached requirement's tracker key intact when its distinct title is edited", async () => {
+    setRequirement(detachedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.change(screen.getByTestId("requirement-field-title"), {
+      target: { value: "Adjusted title" },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalled();
+    });
+    // A detached row's `name` is still the tracker key its badge cites;
+    // only its distinct title is the user's to edit here.
+    const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+    expect(payload.title).toBe("Adjusted title");
+    expect(payload).not.toHaveProperty("name");
   });
 
   it("still renders the locked Title field on a synced requirement whose title differs from its key", () => {

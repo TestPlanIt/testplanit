@@ -266,14 +266,16 @@ export default function RequirementDetailPanel({
 
   // A native requirement has `name === title` by construction -- both
   // creation paths write the same trimmed string (see issueDisplayText.ts's
-  // own note), so its Title field would just be the header's own text
-  // repeated in a disabled box. A synced requirement whose tracker summary
-  // genuinely differs from its key still renders the field, locked. This
-  // gates the rendered set only -- `title` is still written on create and
-  // rename for parity; nothing about what the row STORES changes here.
-  const showTitleField = Boolean(
+  // own note), so in DISPLAY mode its Title field would just be the
+  // header's own text repeated in a plain box, and it stays hidden there.
+  // Edit mode is different: the header is not an input, so the field is
+  // the panel's only rename affordance and must render whenever the row is
+  // editable. A synced requirement whose tracker summary genuinely differs
+  // from its key renders the field in both modes, locked while synced.
+  const hasDistinctTitle = Boolean(
     requirement && hasDistinctIssueTitle(requirement)
   );
+  const showTitleField = hasDistinctTitle || (isEditMode && !locked);
 
   useEffect(() => {
     if (!requirement) return;
@@ -375,16 +377,23 @@ export default function RequirementDetailPanel({
       ) {
         updateData.note = ensureTipTapJSON(data.note);
       }
-      // An empty title makes `hasDistinctIssueTitle` false, which removes
-      // the Title field from this panel and leaves no way back through it,
-      // so a blank title is treated the way the list's in-place rename
+      // A blank title is treated the way the list's in-place rename
       // already treats one -- a silent no-op rather than a write. The
       // silence is deliberate and matches the rename path, so no new
-      // message is introduced here.
+      // message is introduced here. On a row whose name and title are one
+      // string (native, or detached without a distinct tracker summary),
+      // this field IS the rename affordance, so it writes both columns
+      // with the same trimmed value -- exactly what CreateRequirementDialog
+      // and the list's rename commit write. A row with a genuinely
+      // distinct title keeps its `name` (the tracker key its badge and
+      // header cite) untouched.
       if (!locked) {
         if (dirtyFields.title) {
           const trimmedTitle = data.title.trim();
-          if (trimmedTitle) updateData.title = trimmedTitle;
+          if (trimmedTitle) {
+            updateData.title = trimmedTitle;
+            if (!hasDistinctTitle) updateData.name = trimmedTitle;
+          }
         }
         if (dirtyFields.status) updateData.status = data.status || null;
         if (dirtyFields.priority) updateData.priority = data.priority || null;
