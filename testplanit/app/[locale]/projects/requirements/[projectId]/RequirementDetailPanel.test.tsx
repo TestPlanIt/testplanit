@@ -7,6 +7,7 @@ import {
   within,
 } from "@testing-library/react";
 import React from "react";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
@@ -36,24 +37,16 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
   };
 });
 
-vi.mock("next-auth/react", () => ({
-  // preferences (25-19) -- AttachmentsDisplay -> DateFormatter reads
-  // session.user.preferences.{dateFormat,timeFormat,timezone} directly and
-  // throws inside date-fns' format() on an undefined format string. Same
-  // shape components/AttachmentsDisplay.test.tsx's own mock already uses.
-  useSession: () => ({
-    data: {
-      user: {
-        id: "user-1",
-        preferences: {
-          dateFormat: "MM/dd/yyyy",
-          timeFormat: "HH:mm",
-          timezone: "Etc/UTC",
-        },
-      },
-    },
-  }),
-}));
+// A spy, not a static return, so one test can withhold the session
+// entirely (no signed-in user) without disturbing every other test's
+// default. AttachmentsDisplay -> DateFormatter reads
+// session.user.preferences.{dateFormat,timeFormat,timezone} directly and
+// throws inside date-fns' format() on an undefined format string -- the
+// default installed in beforeEach below must keep that shape byte-for-byte
+// (same shape components/AttachmentsDisplay.test.tsx's own mock already
+// uses).
+const { mockUseSession } = vi.hoisted(() => ({ mockUseSession: vi.fn() }));
+vi.mock("next-auth/react", () => ({ useSession: mockUseSession }));
 
 vi.mock("~/lib/navigation", () => ({
   Link: ({ children, href, ...props }: any) => (
@@ -115,6 +108,9 @@ vi.mock("@/components/AttachmentsCarousel", () => ({
 
 // Stand-in for the file picker: a button that hands a fixed File to
 // onFileSelect, mirroring the tiptap-note-simulate-edit convention below.
+// The second button mirrors the real component's cumulative-set contract --
+// onFileSelect reports the whole selected set in one call, never a delta --
+// so staging two files at once is a single call carrying both.
 vi.mock("@/components/UploadAttachments", () => ({
   default: ({ onFileSelect, disabled }: any) => (
     <div data-testid="requirement-attachments-upload">
@@ -129,6 +125,19 @@ vi.mock("@/components/UploadAttachments", () => ({
         }
       >
         simulate select
+      </button>
+      <button
+        type="button"
+        data-testid="requirement-attachments-upload-simulate-select-two"
+        disabled={disabled}
+        onClick={() =>
+          onFileSelect([
+            new File(["contents"], "spec.pdf", { type: "application/pdf" }),
+            new File(["contents"], "design.png", { type: "image/png" }),
+          ])
+        }
+      >
+        simulate select two
       </button>
     </div>
   ),
@@ -383,6 +392,20 @@ function getFieldDisabledMap(): Record<string, boolean> {
 describe("RequirementDetailPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The default, signed-in session -- must keep `preferences` byte-for-byte
+    // (see the mock's own comment above for why).
+    mockUseSession.mockReturnValue({
+      data: {
+        user: {
+          id: "user-1",
+          preferences: {
+            dateFormat: "MM/dd/yyyy",
+            timeFormat: "HH:mm",
+            timezone: "Etc/UTC",
+          },
+        },
+      },
+    });
     mockUpdateMutateAsync.mockResolvedValue({});
     mockAttachmentsFindMany.mockReturnValue({ data: [], isLoading: false });
     mockCreateAttachmentMutateAsync.mockResolvedValue({ id: 501 });
@@ -947,6 +970,110 @@ describe("RequirementDetailPanel", () => {
     expect(
       within(section).getByText("common.status.pendingDelete")
     ).toBeInTheDocument();
+  });
+
+  // A retry after a partial upload failure must upload each file exactly
+  // once, and an unresolved session must never reach object storage at all.
+  describe("upload safety", () => {
+    it("keeps only the failed file staged after a partial upload failure", async () => {
+      setRequirement(lockedRequirement);
+      renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+      fireEvent.click(
+        screen.getByTestId("requirement-attachments-upload-simulate-select-two")
+      );
+
+      mockFetchSignedUrl.mockImplementation(async (file: File) => {
+        if (file.name === "design.png") {
+          throw new Error("storage unavailable");
+        }
+        return "https://storage.example.com/spec.pdf";
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("uploadFailed");
+      });
+
+      expect(mockCreateAttachmentMutateAsync).toHaveBeenCalledTimes(1);
+      expect(mockCreateAttachmentMutateAsync.mock.calls[0][0].data.name).toBe(
+        "spec.pdf"
+      );
+      // Still in edit mode -- a failed upload must not exit edit mode.
+      expect(
+        screen.getByTestId("requirement-detail-cancel")
+      ).toBeInTheDocument();
+    });
+
+    it("does not re-upload a file that already succeeded when the save is retried", async () => {
+      setRequirement(lockedRequirement);
+      renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+      fireEvent.click(
+        screen.getByTestId("requirement-attachments-upload-simulate-select-two")
+      );
+
+      mockFetchSignedUrl.mockImplementation(async (file: File) => {
+        if (file.name === "design.png") {
+          throw new Error("storage unavailable");
+        }
+        return "https://storage.example.com/spec.pdf";
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("uploadFailed");
+      });
+      expect(mockCreateAttachmentMutateAsync).toHaveBeenCalledTimes(1);
+
+      // The retry: design.png now succeeds too.
+      mockFetchSignedUrl.mockResolvedValue(
+        "https://storage.example.com/design.png"
+      );
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(mockCreateAttachmentMutateAsync).toHaveBeenCalledTimes(2);
+      });
+      const specUploads = mockCreateAttachmentMutateAsync.mock.calls.filter(
+        (call) => call[0].data.name === "spec.pdf"
+      );
+      // The whole finding: at HEAD this is 2, because the retry re-uploads
+      // the file that already succeeded.
+      expect(specUploads).toHaveLength(1);
+    });
+
+    it("refuses to upload when the session has no user", async () => {
+      mockUseSession.mockReturnValue({ data: null });
+      setRequirement(lockedRequirement);
+      mockAttachmentsFindMany.mockReturnValue({ data: [], isLoading: false });
+      renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+      fireEvent.click(
+        screen.getByTestId("requirement-attachments-upload-simulate-select")
+      );
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("uploadFailed");
+      });
+
+      expect(mockFetchSignedUrl).not.toHaveBeenCalled();
+      expect(mockCreateAttachmentMutateAsync).not.toHaveBeenCalled();
+      expect(
+        screen.getByTestId("requirement-detail-cancel")
+      ).toBeInTheDocument();
+      // The sharpest form of the finding: no call ever carries a path
+      // ending in the literal string "undefined".
+      for (const call of mockFetchSignedUrl.mock.calls) {
+        expect(String(call[2])).not.toContain("undefined");
+      }
+    });
   });
 
   // A row clicked mid-edit must never let the previous row's staged

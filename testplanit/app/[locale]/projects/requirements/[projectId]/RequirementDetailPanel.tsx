@@ -409,38 +409,57 @@ export default function RequirementDetailPanel({
 
       if (stagedFiles.length > 0) {
         const userId = session?.user?.id;
-        try {
-          await Promise.all(
-            stagedFiles.map(async (file) => {
-              const fileUrl = await fetchSignedUrl(
-                file,
-                `/api/get-attachment-url/`,
-                `${projectId}/${userId}`
-              );
-              await createAttachment({
-                data: {
-                  issue: { connect: { id: requirement.id } },
-                  url: fileUrl,
-                  name: file.name,
-                  note: "",
-                  mimeType: file.type,
-                  size: BigInt(file.size),
-                  createdBy: { connect: { id: userId } },
-                },
-              });
-            })
+        // `fetchSignedUrl` performs the upload to object storage itself --
+        // this guard must run before the FIRST call to it, or an unresolved
+        // session still writes a real object under a path ending in
+        // `undefined` and only fails afterward, at the row insert.
+        if (!userId) {
+          console.error(
+            "Refusing to upload a requirement attachment without a signed-in user"
           );
-        } catch (uploadError) {
-          // A failure at object storage is a different thing to a user
-          // staring at a spinner than a failure at the row update -- its
-          // own message, and its own early return so the staged files stay
-          // staged and the panel stays in edit mode (same contract as the
-          // outer catch below), without ALSO surfacing the generic
-          // saveFailed toast.
+          toast.error(tAttachments("uploadFailed"));
+          return;
+        }
+
+        const results = await Promise.allSettled(
+          stagedFiles.map(async (file) => {
+            const fileUrl = await fetchSignedUrl(
+              file,
+              `/api/get-attachment-url/`,
+              `${projectId}/${userId}`
+            );
+            await createAttachment({
+              data: {
+                issue: { connect: { id: requirement.id } },
+                url: fileUrl,
+                name: file.name,
+                note: "",
+                mimeType: file.type,
+                size: BigInt(file.size),
+                createdBy: { connect: { id: userId } },
+              },
+            });
+          })
+        );
+        const failed = stagedFiles.filter(
+          (_, index) => results[index].status === "rejected"
+        );
+        if (failed.length > 0) {
           console.error(
             "Failed to upload requirement attachment:",
-            uploadError
+            (
+              results.find(
+                (r) => r.status === "rejected"
+              ) as PromiseRejectedResult
+            ).reason
           );
+          // Only the files that actually failed stay staged -- a retry
+          // must not re-upload a file that already landed. The edits/deletes
+          // block above is idempotent by construction (isDeleted: true, a
+          // name/note rewrite to the same values), so it is deliberately
+          // re-applied in full on a retry rather than consumed mid-save;
+          // only this upload half needs to narrow itself down.
+          setStagedFiles(failed);
           toast.error(tAttachments("uploadFailed"));
           return;
         }
