@@ -95,9 +95,25 @@ See [Milestones](../milestones.md) and [Milestone Details](../milestone-details.
 Enabling or changing milestone sync settings, running **Sync now**, and **Import from Jira** all require **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../../permissions-guide.md).
 :::
 
+## Requirement Types
+
+For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, and MantisBT), a **Requirement Types** section appears on the active integration's settings. It chooses which tracker issue types count as requirements in this project:
+
+- **Enable requirement classification** — turns classification on; the **Issue types** picker stays disabled until it is.
+- **Issue types** — a multi-select of the issue types across all of this integration's linked external projects (for example Epic, Story, or a custom Requirement type).
+
+Before you save, an **Impact of this change** preview shows how many existing issues will become requirements or stop being requirements, plus a callout for detached or locally edited rows that would lose their requirement status. Nothing is applied until **Save**; saving also reclassifies existing issues to match. Removing a type is reversible — re-adding it restores the classification, and nothing is deleted.
+
+Classified requirements appear on the project's [Requirements](../requirements.md) page once the feature is enabled for the project under [Advanced settings](advanced.md) — see [Enabling Requirements](../requirements.md#enabling-requirements) for the full two-step setup.
+
+:::info
+Changing requirement type settings requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../../permissions-guide.md).
+:::
+
 ## Related pages
 
 - [Issue Integrations (Administration)](../../integrations.md) — create and authorize integrations globally.
 - [Webhooks](../../webhooks.md) — receive issue updates and push events for this project, including [milestone sync events](../../webhooks.md#milestone-sync-events-versionsprint) (version/sprint) for projects with synced Milestones.
 - [Advanced settings](advanced.md) — optionally require a linked issue when recording a failure.
 - [Milestones](../milestones.md) and [Milestone Details](../milestone-details.md) — where synced milestones appear once milestone sync is enabled here.
+- [Requirements](../requirements.md) — where classified requirements appear once the feature is enabled for the project.

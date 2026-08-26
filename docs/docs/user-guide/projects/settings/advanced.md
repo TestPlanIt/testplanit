@@ -1,7 +1,7 @@
 ---
 sidebar_label: 'Advanced'
 title: 'Advanced (Project Settings)'
-description: Per-project toggles for review gating, result governance, draft-case handling, composition locking, and the result edit window
+description: Per-project toggles for review gating, requirements, result governance, draft-case handling, composition locking, and the result edit window
 ---
 
 # Advanced
@@ -38,6 +38,12 @@ When enabled, transitions into workflow states that require review are gated by 
 :::info
 If the review feature is turned off system-wide (under **Administration → Workflows**), this project preference is saved but nothing is gated until an administrator enables the feature globally. A warning appears when that's the case.
 :::
+
+### Enable requirements
+
+When enabled, a **Requirements** area is added to the project for building a tree of what the system should do and linking test cases to requirements for coverage. Off by default.
+
+This toggle alone shows an empty tree you can author in directly; tracker-synced requirements additionally need requirement types classified on the [Issue Integrations](integrations.md#requirement-types) page. See [Requirements](../requirements.md#enabling-requirements) for the full two-step enablement.
 
 ### Require justification on result flip
 

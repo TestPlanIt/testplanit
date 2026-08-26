@@ -21,6 +21,8 @@ Pre-built reports have fixed configurations and don't require dimension or metri
 | [Flaky Tests](./flaky-tests.md) | Test cases whose pass/fail outcomes flip across recent runs, with the flip count and timeline. |
 | [Issue Test Coverage](./issue-test-coverage.md) | Coverage of external issues (Jira, GitHub, Azure DevOps, GitLab, Gitea/Forgejo) by linked test cases. |
 | [Iteration Matrix](./iteration-matrix.md) | A 2D grid of parameterized test case results across configurations. |
+| [Requirement Coverage Gaps](../requirements-traceability.md#reports) | Every requirement with zero linked test cases, so coverage gaps are visible without opening the requirements tree. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
+| [Requirement Traceability](../requirements-traceability.md#reports) | Every requirement paired with its linked test cases and their latest execution result. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
 | [Test Case Health](./test-case-health.md) | Per-case health score combining staleness, execution frequency, and pass-rate pattern. |
 
 ## Custom Reports
