@@ -13,8 +13,9 @@
         "packages:test": "pnpm --filter \"@testplanit/*\" test"
     },
     "devDependencies": {
-        "@changesets/changelog-github": "^0.7.0",
-        "@changesets/cli": "^2.31.0",
+        "@changesets/changelog-github": "^1.0.0",
+        "@changesets/cli": "^3.0.1",
+        "prettier": "^3.8.4",
         "vite": "^8.1.0"
     }
 }

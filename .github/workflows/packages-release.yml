@@ -93,15 +93,16 @@ jobs:
           # Must stay a single command: the changesets action tokenizes this
           # input rather than running it through a shell, so a multi-line block
           # or shell operators do NOT work here.
-          publish: node .github/scripts/packages-publish.mjs
-          version: pnpm changeset version
-          title: 'chore(packages): version packages'
-          commit: 'chore(packages): version packages'
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # No NPM_TOKEN — publishing authenticates via OIDC trusted publishing
-          # (id-token: write above + the trusted publisher configured on npm).
+          publish-script: node .github/scripts/packages-publish.mjs
+          version-script: pnpm changeset version
+          pr-title: 'chore(packages): version packages'
+          commit-message: 'chore(packages): version packages'
+          create-github-releases: true
+          # The action ignores the GITHUB_TOKEN env var; the token must arrive
+          # through this input. No NPM_TOKEN anywhere — publishing authenticates
+          # via OIDC trusted publishing (id-token: write above + the trusted
+          # publisher configured on npm).
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Summary
         if: steps.changesets.outputs.published == 'true'
@@ -110,4 +111,4 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The following packages were published:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -r '.[] | "- \(.name)@\(.version)"' >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.changesets.outputs.published-packages }}' | jq -r '.[] | "- \(.name)@\(.version)"' >> $GITHUB_STEP_SUMMARY
