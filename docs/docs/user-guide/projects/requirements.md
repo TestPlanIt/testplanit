@@ -68,7 +68,7 @@ Column headers sort the list; the default order is by name.
 Each row's actions menu offers:
 
 * **Add Child Requirement** — opens the Create Requirement dialog with this row preset as the parent.
-* **Rename** — renames the requirement in place. Disabled on a synced requirement: *"This requirement is synced from the connected tracker. Detach it to rename."*
+* **Edit** — selects the requirement and opens it in the detail panel's edit mode, where every editable field is available. On a synced requirement the tracker-owned fields stay locked, but the documentation and attachments remain editable.
 * **Delete** — opens the delete confirmation (see [Deleting requirements](#deleting-requirements)).
 
 :::info Permissions Required
