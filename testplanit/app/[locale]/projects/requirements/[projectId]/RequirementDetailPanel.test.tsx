@@ -1,5 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -201,6 +207,15 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // render without crashing (empty list, matching every fixture below).
     requirementIssueReference: {
       useFindMany: mockRequirementIssueReferenceFindMany,
+    },
+    // useIssueColors() (hooks/useIssueColors.ts) calls this directly -- it
+    // is not otherwise part of this file's fixture surface. Without it,
+    // mounting IssueStatusDisplay/IssuePriorityDisplay in display mode
+    // (25-17) crashes every test in this file. An empty `data` array is
+    // enough: getStatusStyle/getPriorityStyle fall back to their default
+    // styles and the badge still renders its text.
+    color: {
+      useFindMany: () => ({ data: [], isLoading: false }),
     },
   }),
 }));
@@ -467,6 +482,78 @@ describe("RequirementDetailPanel", () => {
     ) as HTMLInputElement;
     expect(titleField).toBeInTheDocument();
     expect(titleField.disabled).toBe(true);
+  });
+
+  it("renders the requirement's type icon in the detail header", () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+
+    const header = screen.getByTestId("requirement-detail-header");
+    // No `issueTypeName`/`issueTypeIconUrl` on this fixture -- IssueTypeIcon
+    // falls back to its default Lucide icon, labelled "Issue icon". The
+    // point of this test is that SOME type icon renders in the header at
+    // all, matching the list rows (RequirementsListColumns.tsx) -- not
+    // which specific icon a given issue type maps to (that mapping is
+    // IssueTypeIcon's own concern).
+    expect(within(header).getByLabelText("Issue icon")).toBeInTheDocument();
+  });
+
+  it("renders Status and Priority as badges in display mode, not as disabled inputs", () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+
+    // Assert on rendered text, not a class name -- colour is
+    // useIssueColors' business and is stubbed to an empty color list here.
+    expect(screen.getByTestId("requirement-display-status")).toHaveTextContent(
+      "open"
+    );
+    expect(
+      screen.getByTestId("requirement-display-priority")
+    ).toHaveTextContent("medium");
+    // Presence of the display testids alone would pass with both renderings
+    // stacked -- the edit-mode Inputs must be genuinely absent.
+    expect(
+      screen.queryByTestId("requirement-field-status")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requirement-field-priority")
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders Status and Priority as editable inputs in edit mode", () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    // The inverse of the display-mode assertion above -- pins the claim in
+    // both directions rather than only proving one mode.
+    expect(screen.getByTestId("requirement-field-status")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirement-field-priority")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requirement-display-status")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("requirement-display-priority")
+    ).not.toBeInTheDocument();
+  });
+
+  it("orders the edit-mode actions Save then Cancel", () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const saveButton = screen.getByTestId("requirement-detail-save");
+    const cancelButton = screen.getByTestId("requirement-detail-cancel");
+
+    // Document ORDER, not merely presence -- a test that only asserts both
+    // exist would pass with them swapped (mirrors the coverage-panel
+    // ordering test's own convention below).
+    expect(
+      saveButton.compareDocumentPosition(cancelButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it("saves the note through the ZenStack issue update hook, not a bespoke route", async () => {

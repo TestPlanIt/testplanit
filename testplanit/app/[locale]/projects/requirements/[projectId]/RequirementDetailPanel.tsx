@@ -1,10 +1,13 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { CircleSlash2, Save, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
@@ -35,6 +38,7 @@ import {
   formatIssueDisplayText,
   hasDistinctIssueTitle,
 } from "~/utils/issueDisplayText";
+import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
 import { RequirementAttachments } from "./RequirementAttachments";
 import { RequirementCoveragePanel } from "./RequirementCoveragePanel";
@@ -59,25 +63,69 @@ interface RequirementDetailFormData {
 
 /**
  * The editable scalar fields this panel exposes. Deliberately drawn as data
- * (name + label key) rather than one JSX block per field, so the per-field
- * disabled state below reads as a single `LOCKED_ISSUE_FIELDS.includes(name)`
- * membership check instead of a hardcoded per-field condition -- a future
- * field added to that constant only needs a row here, not a new branch.
- * `name` (Issue.name, the tree's own display label) is intentionally absent:
- * it is never locked and renaming is 25-11's surface, not this panel's.
+ * (name + label key + display renderer) rather than one JSX block per field,
+ * so the per-field disabled state below reads as a single
+ * `LOCKED_ISSUE_FIELDS.includes(name)` membership check instead of a
+ * hardcoded per-field condition -- a future field added to that constant
+ * only needs a row here, not a new branch. `name` (Issue.name, the tree's
+ * own display label) is intentionally absent: it is never locked and
+ * renaming is 25-11's surface, not this panel's.
+ *
+ * `renderDisplay` is what display mode shows in place of the (always
+ * disabled-looking) `Input` -- the same badges the list columns render for
+ * status/priority (`RequirementsListColumns.tsx`), so the two surfaces can
+ * never disagree about how a value looks.
  */
 const SCALAR_FIELDS: ReadonlyArray<{
   name: "title" | "status" | "priority";
   labelKey: string;
+  renderDisplay: (row: RequirementRow) => React.ReactNode;
 }> = [
-  { name: "title", labelKey: "fields.title" },
-  { name: "status", labelKey: "actions.status" },
-  { name: "priority", labelKey: "fields.priority" },
+  {
+    name: "title",
+    labelKey: "fields.title",
+    renderDisplay: (row) => (
+      <div data-testid="requirement-display-title" className="text-sm">
+        {row.title}
+      </div>
+    ),
+  },
+  {
+    name: "status",
+    labelKey: "actions.status",
+    renderDisplay: (row) => (
+      <div data-testid="requirement-display-status">
+        {/* Same `externalStatus ?? status` fallback as the list column
+            (`RequirementsListColumns.tsx`) -- the two surfaces cannot
+            disagree about which string is authoritative on a synced row. */}
+        <IssueStatusDisplay
+          status={row.externalStatus ?? row.status ?? null}
+          className="capitalize"
+        />
+      </div>
+    ),
+  },
+  {
+    name: "priority",
+    labelKey: "fields.priority",
+    renderDisplay: (row) => (
+      <div data-testid="requirement-display-priority">
+        <IssuePriorityDisplay priority={row.priority} />
+      </div>
+    ),
+  },
 ];
 
 type RequirementRow = Pick<
   Issue,
-  "id" | "name" | "title" | "status" | "priority" | "note"
+  | "id"
+  | "name"
+  | "title"
+  | "status"
+  | "priority"
+  | "note"
+  | "externalStatus"
+  | "issueTypeName"
 > &
   RequirementProvenanceBadgeRow;
 
@@ -246,6 +294,19 @@ export default function RequirementDetailPanel({
     return null;
   }
 
+  // The repository-case details view's own edit/cancel/save idiom
+  // (TestCaseDetailsView.tsx's non-compact shape) -- icon + label, `me-2` on
+  // the icon, never a `gap-*` class on the Button itself.
+  const renderActionButtonContent = (
+    Icon: React.ComponentType<{ className?: string }>,
+    label: string
+  ) => (
+    <div className="flex items-center">
+      <Icon className="w-5 h-5 me-2" />
+      <div>{label}</div>
+    </div>
+  );
+
   return (
     <div
       data-testid="requirement-detail-panel"
@@ -257,10 +318,21 @@ export default function RequirementDetailPanel({
       >
         {/* Same "KEY: Title" convention as the tree and every other
             issue-backed surface — the bare tracker key says nothing about
-            what the requirement is. */}
-        <h2 className="text-lg font-semibold">
-          {formatIssueDisplayText(requirement)}
-        </h2>
+            what the requirement is. `min-w-0` + `truncate` on the heading
+            (and `flex-auto`, never `flex-1` -- this repo's recorded trap:
+            `flex-1`'s zero basis disables every sibling's shrink weight) so
+            a long tracker summary shrinks instead of pushing the badge and
+            the action buttons off the panel. */}
+        <div className="flex min-w-0 items-center gap-2">
+          <IssueTypeIcon
+            issueTypeName={requirement.issueTypeName}
+            iconUrl={requirement.issueTypeIconUrl}
+            className="h-4 w-4 shrink-0"
+          />
+          <h2 className="min-w-0 flex-auto truncate text-lg font-semibold">
+            {formatIssueDisplayText(requirement)}
+          </h2>
+        </div>
         <div className="flex items-center gap-2">
           <RequirementProvenanceBadge
             requirement={requirement}
@@ -274,10 +346,27 @@ export default function RequirementDetailPanel({
               data-testid="requirement-detail-edit"
               onClick={() => setIsEditMode(true)}
             >
-              {tCommon("actions.edit")}
+              {renderActionButtonContent(SquarePen, tCommon("actions.edit"))}
             </Button>
           ) : (
             <>
+              {/* Save precedes Cancel -- the repository-case details view's
+                  own order (TestCaseDetailsView.tsx). */}
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                data-testid="requirement-detail-save"
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isSubmitting || !isDirty}
+              >
+                {renderActionButtonContent(
+                  Save,
+                  isSubmitting
+                    ? tCommon("actions.saving")
+                    : tCommon("actions.save")
+                )}
+              </Button>
               <Button
                 type="button"
                 variant="outline"
@@ -286,18 +375,7 @@ export default function RequirementDetailPanel({
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("cancel")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                data-testid="requirement-detail-save"
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={isSubmitting || !isDirty}
-              >
-                {isSubmitting
-                  ? tCommon("actions.saving")
-                  : tCommon("actions.save")}
+                {renderActionButtonContent(CircleSlash2, tCommon("cancel"))}
               </Button>
             </>
           )}
@@ -308,7 +386,7 @@ export default function RequirementDetailPanel({
         <form className="flex flex-col gap-4">
           {SCALAR_FIELDS.filter(
             ({ name }) => name !== "title" || showTitleField
-          ).map(({ name, labelKey }) => {
+          ).map(({ name, labelKey, renderDisplay }) => {
             const isLockedField =
               locked &&
               (LOCKED_ISSUE_FIELDS as readonly string[]).includes(name);
@@ -321,6 +399,18 @@ export default function RequirementDetailPanel({
                 control={form.control}
                 name={name}
                 render={({ field }) => {
+                  // Display mode never reads `field` -- the badges/plain
+                  // text below render straight off the loaded `requirement`,
+                  // the same source the list columns read.
+                  if (!isEditMode) {
+                    return (
+                      <FormItem>
+                        <FormLabel>{tCommon(labelKey)}</FormLabel>
+                        {renderDisplay(requirement)}
+                      </FormItem>
+                    );
+                  }
+
                   const input = (
                     <FormControl>
                       <Input
