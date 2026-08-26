@@ -6,11 +6,9 @@
 // path (not the version-PR path) and the runner is ephemeral, so nothing is
 // committed and the packages stay non-private everywhere else.
 //
-// Two things get skipped, both to avoid `@changesets/cli` crashing. When
-// `changeset publish` tries to publish a version that is ALREADY on npm, the
-// `pnpm publish` "already published" error is not handled by changesets'
-// `isAlreadyPublishedError` (it reads `.includes` on `undefined` → throws), so
-// the whole publish aborts:
+// Two things get skipped, both so `changeset publish` never attempts a version
+// that is ALREADY on npm — its handling of pnpm's "already published" error has
+// aborted the whole publish in this workspace rather than skipping the package:
 //
 //   1. @testplanit/cli — released by its own `cli-semantic-release.yml`
 //      pipeline (via `@semantic-release/npm`, over OIDC) and always already on
@@ -74,7 +72,9 @@ for (const entry of readdirSync("packages", { withFileTypes: true })) {
   }
 }
 
-// Inherit stdio so `changeset publish`'s output still flows to the changesets
-// action (it parses the published packages and tags from it).
+// Inherit stdio so the publish logs reach the action output, and keep the
+// default env inheritance: the changesets action passes CHANGESETS_OUTPUT in
+// the environment and reads the published packages and tags from the ndjson
+// file the CLI writes there — not from stdout.
 const result = spawnSync("pnpm", ["changeset", "publish"], { stdio: "inherit" });
 process.exit(result.status ?? 1);
