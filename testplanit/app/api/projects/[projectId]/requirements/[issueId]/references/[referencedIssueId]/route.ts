@@ -18,9 +18,16 @@ import { authOptions } from "~/server/auth";
  * never disagree about who may edit references: 401 (no session) -> 400
  * (non-integer id anywhere in the path) -> 403 (resolveViewerProjectScope
  * excludes the requirement's project) -> 404 (requirement identity
- * pre-check) -> 200/500. No cross-project gate is needed on the referenced
- * issue for DELETE — removing a row discloses nothing the caller did not
- * already have.
+ * pre-check) -> 200/403/500. No cross-project gate is needed on the
+ * referenced issue for DELETE — removing a row discloses nothing the caller
+ * did not already have.
+ *
+ * The bulk-delete no-op idiom survives only for a genuinely absent pair: a
+ * `count: 0` whose join row still exists on `baseDb` means the enhanced
+ * client's policy filtered it out from under the caller, not that there was
+ * nothing to delete, so the gate order gains a terminal 403 for that case.
+ * The post-delete probe reads the join model only (`requirementIssueReference`)
+ * — the referenced `Issue` row is still never read or written here (D-15).
  */
 export async function DELETE(
   _request: NextRequest,
@@ -95,6 +102,20 @@ export async function DELETE(
     const result = await enhancedDb.requirementIssueReference.deleteMany({
       where: { requirementId: issueId, referencedIssueId },
     });
+
+    if (result.count === 0) {
+      // A count of 0 is ambiguous: the pair may genuinely not exist, or the
+      // enhanced client's policy may have filtered it out of the bulk
+      // delete. Probe baseDb (no policy plugin) for the join row directly
+      // -- if it's still there, the delete was denied, not a no-op.
+      const survivingRow = await baseDb.requirementIssueReference.findFirst({
+        where: { requirementId: issueId, referencedIssueId },
+        select: { requirementId: true },
+      });
+      if (survivingRow) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     return NextResponse.json({ deletedCount: result.count }, { status: 200 });
   } catch (error) {

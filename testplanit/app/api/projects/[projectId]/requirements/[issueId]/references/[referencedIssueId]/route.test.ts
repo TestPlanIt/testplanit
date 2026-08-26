@@ -22,6 +22,7 @@ vi.mock("~/lib/authContext", () => ({
 vi.mock("~/lib/db", () => ({
   baseDb: {
     issue: { findFirst: vi.fn() },
+    requirementIssueReference: { findFirst: vi.fn() },
   },
 }));
 
@@ -43,6 +44,8 @@ const mockedResolveScope = resolveViewerProjectScope as unknown as ReturnType<
 const mockedFindFirst = baseDb.issue.findFirst as unknown as ReturnType<
   typeof vi.fn
 >;
+const mockedReferenceFindFirst = baseDb.requirementIssueReference
+  .findFirst as unknown as ReturnType<typeof vi.fn>;
 const mockedGetEnhancedDb = getEnhancedDb as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -73,6 +76,9 @@ describe("DELETE /api/projects/[projectId]/requirements/[issueId]/references/[re
     });
     mockedResolveScope.mockResolvedValue([5]);
     mockedFindFirst.mockResolvedValue({ id: 10 });
+    // Default: the post-delete existence probe finds no surviving row, so
+    // the existing count-0 no-op test keeps its current meaning.
+    mockedReferenceFindFirst.mockResolvedValue(null);
     mockDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
     mockIssueMethods = {
       findFirst: vi.fn(),
@@ -135,13 +141,30 @@ describe("DELETE /api/projects/[projectId]/requirements/[issueId]/references/[re
     expect(mockIssueMethods.delete).not.toHaveBeenCalled();
   });
 
-  it("succeeds as a no-op when the pair does not exist", async () => {
+  it("still returns a 200 no-op when the pair genuinely does not exist", async () => {
     mockDeleteMany.mockResolvedValue({ count: 0 });
+    mockedReferenceFindFirst.mockResolvedValue(null);
 
     const res = await DELETE(makeRequest(), params());
 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ deletedCount: 0 });
+  });
+
+  it("returns 403 when the join row survives a policy-filtered delete", async () => {
+    mockDeleteMany.mockResolvedValue({ count: 0 });
+    mockedReferenceFindFirst.mockResolvedValue({
+      requirementId: 10,
+      referencedIssueId: 20,
+    });
+
+    const res = await DELETE(makeRequest(), params());
+
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body).toEqual({ error: "Forbidden" });
+    expect(mockIssueMethods.update).not.toHaveBeenCalled();
+    expect(mockIssueMethods.delete).not.toHaveBeenCalled();
   });
 });
