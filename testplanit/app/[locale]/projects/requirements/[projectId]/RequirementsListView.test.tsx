@@ -1135,12 +1135,11 @@ describe("RequirementsListView", () => {
     });
   });
 
-  // 25-18 gap closure (UAT gap 7): the detail panel's own route to this
-  // list's existing delete dialog. `openDeleteDialog` must reuse
-  // `handleRequestDelete` (not a second `setDeleteDialogState` call), so the
-  // panel path and the row-action path can never drift on the descendant
-  // count or the dialog's state shape.
-  describe("openDeleteDialog (panel-driven delete, 25-18 gap closure)", () => {
+  // The detail panel's own route to this list's existing delete dialog.
+  // `openDeleteDialog` must reuse `handleRequestDelete` (not a second
+  // `setDeleteDialogState` call), so the panel path and the row-action path
+  // can never drift on the descendant count or the dialog's state shape.
+  describe("openDeleteDialog (panel-driven delete)", () => {
     beforeEach(() => {
       useFindManyIssueMock.mockReturnValue({
         data: [

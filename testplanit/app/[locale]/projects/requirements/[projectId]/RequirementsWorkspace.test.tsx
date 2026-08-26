@@ -160,11 +160,12 @@ vi.mock("@/components/ui/tooltip", () => ({
 // The action bar's Add Requirement button (gap closure 26.2-16, UAT gap 13)
 // reaches the list's dialog through a ref -- the mock must be `forwardRef`
 // so passing `ref={listViewRef}` in the real component doesn't warn, and so
-// a test can assert the button actually drives `openCreateRoot`. 25-18 adds
-// `openDeleteDialog` to the same handle, and captures the props the real
-// list receives (`onSelectRequirement`) so a test can drive a selection --
-// the mock renders a plain button wired to it, since nothing else in this
-// file can trigger `setSelectedRequirementId` on the real workspace.
+// a test can assert the button actually drives `openCreateRoot`. The mock
+// also adds `openDeleteDialog` to the same handle, and captures the props
+// the real list receives (`onSelectRequirement`) so a test can drive a
+// selection -- the mock renders a plain button wired to it, since nothing
+// else in this file can trigger `setSelectedRequirementId` on the real
+// workspace.
 const mockOpenCreateRoot = vi.fn();
 const mockOpenDeleteDialog = vi.fn();
 vi.mock("./RequirementsListView", () => ({
@@ -188,7 +189,7 @@ vi.mock("./RequirementsListView", () => ({
 }));
 
 // Captures every render's props so a test can assert what the workspace
-// hands the panel (25-18: `onRequestDelete`), without needing the real
+// hands the panel (including `onRequestDelete`), without needing the real
 // panel's own heavy ZenStack surface.
 const capturedDetailPanelProps: any[] = [];
 vi.mock("./RequirementDetailPanel", () => ({
@@ -367,12 +368,11 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     );
   });
 
-  // 25-18 gap closure (25-UAT gap 7): a requirement could be deleted from
-  // the list's own row action, but not from the detail panel -- the
-  // operator's own words, "just like test cases". The panel holds no
+  // A requirement can be deleted from the detail panel, not only from the
+  // list's own row action -- "just like test cases". The panel holds no
   // delete logic of its own (no fetch, no mutation, no descendant count);
   // it opens the SAME dialog the row action opens, through this ref.
-  describe("delete handler wiring (25-18 gap closure)", () => {
+  describe("delete handler wiring", () => {
     it("hands the detail panel a delete handler that opens the list's delete dialog", () => {
       render(<RequirementsWorkspace projectId="42" />);
 

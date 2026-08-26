@@ -59,8 +59,8 @@ import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
 interface RequirementDetailPanelProps {
   projectId: string;
   requirementId: number;
-  /** Opens the list's own Delete Requirement dialog for this requirement
-   *  (25-18 gap closure, UAT gap 7: "just like test cases"). This panel
+  /** Opens the list's own Delete Requirement dialog for this requirement,
+   *  the same one its row action already offers. This panel
    *  holds no delete logic of its own -- no fetch, no mutation, no
    *  descendant count, no second dialog -- because the dialog needs a
    *  descendant count only the list's in-memory tree holds, and the list's
@@ -87,7 +87,7 @@ interface RequirementDetailFormData {
  * hardcoded per-field condition -- a future field added to that constant
  * only needs a row here, not a new branch. `name` (Issue.name, the tree's
  * own display label) is intentionally absent: it is never locked and
- * renaming is 25-11's surface, not this panel's.
+ * renaming is the list's own in-place rename surface, not this panel's.
  *
  * `renderDisplay` is what display mode shows in place of the (always
  * disabled-looking) `Input` -- the same badges the list columns render for
@@ -180,8 +180,8 @@ export default function RequirementDetailPanel({
   const t = useTranslations("requirements.detail");
   const tCommon = useTranslations("common");
   // Scoped separately from `t` (requirements.detail) -- the upload-failure
-  // message is the attachments section's own key, reused from the pre-25-19
-  // component rather than added new (25-19 hard rule: zero new i18n keys).
+  // message reuses the attachments section's own existing key rather than
+  // adding a new one.
   const tAttachments = useTranslations("requirements.attachments");
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -212,9 +212,9 @@ export default function RequirementDetailPanel({
   const { mutateAsync: updateRequirement } =
     useClientQueries(schema).issue.useUpdate();
 
-  // 25-19 gap closure: the attachment mutation hooks live HERE, not in
-  // RequirementAttachments.tsx -- that component only stages changes into
-  // `AttachmentChanges`; this panel is the sole place anything is written.
+  // The attachment mutation hooks live HERE, not in RequirementAttachments.tsx
+  // -- that component only stages changes into `AttachmentChanges`; this
+  // panel is the sole place anything is written.
   const { data: session } = useSession();
   const { mutateAsync: createAttachment } =
     useClientQueries(schema).attachments.useCreate();
@@ -302,8 +302,8 @@ export default function RequirementDetailPanel({
 
     if (freshSnapshot === lastSeededValuesRef.current) return;
 
-    // 25-UAT gap 1: re-seed on a genuine external change (a rename landing
-    // while this panel sits idle), but ONLY while the user is not holding a
+    // Re-seed on a genuine external change (a rename landing while this
+    // panel sits idle), but ONLY while the user is not holding a
     // pen -- mid-edit (isEditMode) or a dirty, unsaved form must never be
     // reset out from under them. Bailing on EITHER means both conditions
     // must be false before the reset below runs: dirty alone misses a user
@@ -321,7 +321,7 @@ export default function RequirementDetailPanel({
     if (requirement) {
       form.reset(buildResetValues(requirement));
     }
-    // 25-19: discard every staged attachment change. The counter bump is
+    // Discard every staged attachment change. The counter bump is
     // necessary, not decorative -- see the comment beside its declaration.
     setStagedFiles([]);
     setPendingAttachmentChanges({ edits: [], deletes: [] });
@@ -353,10 +353,10 @@ export default function RequirementDetailPanel({
       // canonical empty doc, so unconditionally sending it rewrote NULL ->
       // empty-doc on the first save of ANY field -- and `note` is a watched
       // column of the contentUpdatedAt trigger, so that phantom write armed
-      // the suspect flag on a priority-only save (COV-05 D-02, UAT
-      // Scenario 2).
+      // the content-change suspect flag on a save that touched only the
+      // priority.
       //
-      // 25-UAT gap 1: the three scalars below get the SAME discipline as
+      // The three scalars below get the SAME discipline as
       // `note` -- each is only sent when `dirtyFields` reports the user
       // actually touched it. An untouched field and "still holding the
       // value we loaded five minutes ago" are indistinguishable from the
@@ -397,7 +397,7 @@ export default function RequirementDetailPanel({
         });
       }
 
-      // 25-19: apply staged attachment changes -- edits, then deletes, then
+      // Apply staged attachment changes -- edits, then deletes, then
       // uploads -- OUTSIDE the guard above. An attachment-only change
       // legitimately leaves `updateData` empty (correct: nothing on the
       // Issue row changed), so it must never skip this block.
@@ -485,7 +485,7 @@ export default function RequirementDetailPanel({
       toast.error(t("saveFailed"));
       // Deliberately no `finally`-driven exit from edit mode and no
       // clearing of staged state here -- a failed save must keep exactly
-      // what the user staged (25-19 gap closure).
+      // what the user staged.
     } finally {
       setIsSubmitting(false);
     }
@@ -570,7 +570,7 @@ export default function RequirementDetailPanel({
                 size="sm"
                 data-testid="requirement-detail-save"
                 onClick={form.handleSubmit(onSubmit)}
-                // 25-19: an attachment-only change leaves the Issue row's
+                // An attachment-only change leaves the Issue row's
                 // own form clean (`isDirty` false) -- `isDirty` alone
                 // cannot see a staged file/edit/delete, so Save must also
                 // stay enabled when the only change is a staged attachment

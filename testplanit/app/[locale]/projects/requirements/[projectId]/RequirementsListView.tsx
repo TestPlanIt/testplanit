@@ -90,8 +90,8 @@ export interface RequirementsListViewHandle {
   openCreateRoot: () => void;
   /** Opens the Delete Requirement dialog for `issueId`, with the descendant
    *  count resolved from this list's own in-memory map -- the same number
-   *  the row action shows (25-18 gap closure: the detail panel's own route
-   *  to the same dialog the row action opens). No-ops when the id is not in
+   *  the row action shows. This is also the detail panel's own route to the
+   *  same dialog the row action opens. No-ops when the id is not in
    *  the current set. */
   openDeleteDialog: (issueId: number) => void;
 }
@@ -528,14 +528,14 @@ const RequirementsListView = forwardRef<
     [childrenMap]
   );
 
-  // The page action bar's Add Requirement button (gap closure 26.2-16, UAT
-  // gap 13) lives in `RequirementsWorkspace.tsx`, outside this component --
-  // it reaches this same dialog state through this ref instead of the
-  // dialog itself moving up a level. `openDeleteDialog` (25-18 gap closure)
-  // is the detail panel's equivalent route to the delete dialog -- it
-  // delegates to `handleRequestDelete` above rather than duplicating the
-  // `setDeleteDialogState` call, so the row action and the panel action can
-  // never drift on the next change to the dialog's state shape.
+  // The page action bar's Add Requirement button lives in
+  // `RequirementsWorkspace.tsx`, outside this component -- it reaches this
+  // same dialog state through this ref instead of the dialog itself moving
+  // up a level. `openDeleteDialog` is the detail panel's equivalent route to
+  // the delete dialog -- it delegates to `handleRequestDelete` above rather
+  // than duplicating the `setDeleteDialogState` call, so the row action and
+  // the panel action can never drift on the next change to the dialog's
+  // state shape.
   useImperativeHandle(
     ref,
     () => ({

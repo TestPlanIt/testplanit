@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, any>) =>
     params ? `${key}:${Object.values(params).join("·")}` : key,
-  // AttachmentsDisplay -> DateFormatter reads this directly (25-19); the
+  // AttachmentsDisplay -> DateFormatter reads this directly; the
   // mock above only covers useTranslations, so without this a real mount of
   // AttachmentsDisplay throws the moment it renders a "created" timestamp.
   useLocale: () => "en-US",
@@ -259,14 +259,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // useIssueColors() (hooks/useIssueColors.ts) calls this directly -- it
     // is not otherwise part of this file's fixture surface. Without it,
     // mounting IssueStatusDisplay/IssuePriorityDisplay in display mode
-    // (25-17) crashes every test in this file. An empty `data` array is
+    // crashes every test in this file. An empty `data` array is
     // enough: getStatusStyle/getPriorityStyle fall back to their default
     // styles and the badge still renders its text.
     color: {
       useFindMany: () => ({ data: [], isLoading: false }),
     },
     // AttachmentsDisplay -> UserNameCell (components/tables/UserNameCell.tsx)
-    // calls this directly to render a "Created By" cell (25-19). A falsy
+    // calls this directly to render a "Created By" cell. A falsy
     // user is safe -- UserNameCell returns null on it.
     user: {
       useFindFirst: () => ({ data: undefined }),
@@ -319,7 +319,7 @@ const detachedRequirement = {
 
 // PROV-03 parity fixture: title === name. `detachedRequirement` above
 // derives from `lockedRequirement` and so carries a title distinct from its
-// name -- fine for the tests that use it directly, but Task 1 (25-17) drops
+// name -- fine for the tests that use it directly, but the panel drops
 // `title` from the rendered field set whenever the title does not differ
 // from the name, so a "same shape" map comparison against `nativeRequirement`
 // (whose title also equals its name) needs a detached fixture that agrees.
@@ -328,8 +328,7 @@ const detachedRequirementSameTitle = {
   title: detachedRequirement.name,
 };
 
-// Shared existing-attachment fixture for the 25-19 attachments gap closure
-// tests below.
+// Shared existing-attachment fixture for the attachments tests below.
 const existingAttachment = {
   id: 501,
   issueId: 2,
@@ -375,7 +374,7 @@ function renderPanel(ui: React.ReactElement) {
 }
 
 // Only reports an entry for a field the panel actually rendered -- a native
-// requirement's Title field is gone entirely (Task 1, 25-17), so a map that
+// requirement's Title field is gone entirely, so a map that
 // assumed all three fields exist would throw before this even gets to
 // compare anything.
 function getFieldDisabledMap(): Record<string, boolean> {
@@ -764,11 +763,11 @@ describe("RequirementDetailPanel", () => {
   // of the contentUpdatedAt trigger, so the phantom write armed the suspect
   // flag on a save that never touched content (COV-05 D-02).
   //
-  // 25-18: this test now guards TWO vectors, not one -- the phantom note
-  // write above, AND the stale scalar write-back (25-UAT gap 1). Before
-  // 25-18 the payload unconditionally carried `title` and `status` too,
-  // even though the user only ever touched `priority`; the expected payload
-  // below is now `dirtyFields`-gated down to exactly what was typed.
+  // This test now guards TWO vectors, not one -- the phantom note
+  // write above, AND a stale scalar write-back: the payload used to
+  // unconditionally carry `title` and `status` too, even though the user
+  // only ever touched `priority`; the expected payload below is now
+  // `dirtyFields`-gated down to exactly what was typed.
   it("omits an unchanged note from a priority-only save payload", async () => {
     setRequirement(nativeRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
@@ -847,9 +846,6 @@ describe("RequirementDetailPanel", () => {
     expect(mockUpdateMutateAsync).not.toHaveBeenCalled();
   });
 
-  // RED (Task 1, Step 1): today RequirementAttachments renders its
-  // upload control and remove affordance unconditionally -- display mode is
-  // not view-only. Run this against HEAD before touching the component.
   it("renders attachments read-only in display mode", () => {
     setRequirement(lockedRequirement);
     mockAttachmentsFindMany.mockReturnValue({
@@ -949,11 +945,10 @@ describe("RequirementDetailPanel", () => {
     );
   });
 
-  // Rewritten for 25-19: the trigger moved from "pick a file in display
-  // mode" (immediate upload) to "pick a file in edit mode, then Save"
-  // (staged, applied on submit) -- every substantive HIER-06 assertion
-  // (fetchSignedUrl args, issue.connect, BigInt size, no legacy route)
-  // survives unchanged.
+  // The trigger is "pick a file in edit mode, then Save" (staged, applied
+  // on submit), not "pick a file in display mode" (immediate upload) --
+  // every substantive HIER-06 assertion (fetchSignedUrl args, issue.connect,
+  // BigInt size, no legacy route) is pinned below.
   it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
     setRequirement(lockedRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
@@ -1262,12 +1257,12 @@ describe("RequirementDetailPanel", () => {
     });
   });
 
-  // 25-18 gap closure (25-UAT gap 1): the form used to seed exactly once per
-  // requirementId and never again -- a rename made elsewhere (webhook,
-  // another tab, the tree's own inline rename) updated the header (it reads
-  // live query data) but left the form holding the value it loaded minutes
-  // ago, and Edit -> Save on that stale form silently reverted the rename.
-  describe("form freshness (25-18 gap closure)", () => {
+  // The form used to seed exactly once per requirementId and never again
+  // -- a rename made elsewhere (webhook, another tab, the tree's own inline
+  // rename) updated the header (it reads live query data) but left the form
+  // holding the value it loaded minutes ago, and Edit -> Save on that stale
+  // form silently reverted the rename.
+  describe("form freshness", () => {
     it("re-seeds the form when the requirement is renamed while the panel is idle", () => {
       setRequirement(lockedRequirement);
       const { rerenderWithProvider } = renderPanel(
@@ -1380,13 +1375,12 @@ describe("RequirementDetailPanel", () => {
     });
   });
 
-  // 25-18 gap closure (25-UAT gap 7): "a user cannot delete a req from the
-  // details view; they should be able to from there ... just like test
-  // cases." The panel owns no delete logic of its own -- it only ever
+  // A user can delete a requirement from the details view, just like test
+  // cases. The panel owns no delete logic of its own -- it only ever
   // calls the handed-in `onRequestDelete`, which is the workspace's own
   // route to the list's existing `DeleteRequirementModal` + descendant
   // count.
-  describe("delete affordance (25-18 gap closure)", () => {
+  describe("delete affordance", () => {
     it("offers a Delete action in edit mode when the viewer can delete", () => {
       setRequirement(nativeRequirement);
       const onRequestDelete = vi.fn();
