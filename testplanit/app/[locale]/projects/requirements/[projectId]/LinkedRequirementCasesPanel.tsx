@@ -95,7 +95,8 @@ export function LinkedRequirementCasesPanel({
   const t = useTranslations("requirements.linkedCases");
   const tSuspect = useTranslations("requirements.suspect");
   const tGlobal = useTranslations();
-  const { link, unlink, isMutating } = useRequirementCaseLinks();
+  const { link, unlink, isMutating, dismissSuspect, isDismissing } =
+    useRequirementCaseLinks();
   const queryClient = useQueryClient();
   const projectIdNumber = Number(projectId);
 
@@ -154,9 +155,6 @@ export function LinkedRequirementCasesPanel({
     }
     return map;
   }, [dismissals]);
-
-  const dismissSuspectFlag =
-    useClientQueries(schema).repositoryCaseIssue.useUpdate();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [openUnlinkId, setOpenUnlinkId] = useState<number | null>(null);
@@ -257,12 +255,13 @@ export function LinkedRequirementCasesPanel({
   // Deliberately does NOT call invalidateCoverageQueries -- that helper
   // exists for link/unlink, where the coverage numbers genuinely change; a
   // dismissal changes none. Refetch ONLY this panel's own dismissals query.
+  // WR-02 (27.1-05): posts through the shared hook's server-clock dismissal
+  // route rather than stamping `new Date()` in the browser -- the value it
+  // is compared against (contentUpdatedAt) is trigger-stamped, so only a
+  // server-clock timestamp on this side of the comparison can agree with it.
   const handleDismissSuspect = async (caseId: number) => {
     try {
-      await dismissSuspectFlag.mutateAsync({
-        where: { caseId_issueId: { caseId, issueId: requirementId } },
-        data: { suspectDismissedAt: new Date() },
-      });
+      await dismissSuspect(requirementId, caseId);
       toast.success(tSuspect("dismissSuccess"));
       setOpenDismissId(null);
       void refetchDismissals();
@@ -381,7 +380,7 @@ export function LinkedRequirementCasesPanel({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  disabled={dismissSuspectFlag.isPending}
+                                  disabled={isDismissing}
                                   data-testid={`requirement-linked-case-suspect-confirm-${row.id}`}
                                   onClick={() => handleDismissSuspect(row.id)}
                                 >

@@ -79,7 +79,8 @@ export function LinkedRequirementsPanel({
   const t = useTranslations("requirements.linkedRequirements");
   const tSuspect = useTranslations("requirements.suspect");
   const tGlobal = useTranslations();
-  const { link, unlink, isMutating } = useRequirementCaseLinks();
+  const { link, unlink, isMutating, dismissSuspect, isDismissing } =
+    useRequirementCaseLinks();
 
   const { data: linkedRequirements, refetch } = useClientQueries(
     schema
@@ -118,9 +119,6 @@ export function LinkedRequirementsPanel({
   // case (unlike the requirement-side panel, where each row is a different
   // case).
   const { data: caseLatestExecution } = useCaseLatestExecution(caseId);
-
-  const dismissSuspectFlag =
-    useClientQueries(schema).repositoryCaseIssue.useUpdate();
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [openUnlinkId, setOpenUnlinkId] = useState<number | null>(null);
@@ -214,13 +212,14 @@ export function LinkedRequirementsPanel({
   // dismissals query. Do NOT invalidate the requirement coverage rollup or
   // the covering-cases drill-down here; that would contradict this phase's
   // non-interference posture (COV-05's dismissal is data-shape-inert to
-  // coverage by design).
+  // coverage by design). WR-02 (27.1-05): posts through the shared hook's
+  // server-clock dismissal route rather than stamping `new Date()` in the
+  // browser -- the value it is compared against (contentUpdatedAt) is
+  // trigger-stamped, so only a server-clock timestamp on this side of the
+  // comparison can agree with it.
   const handleDismissSuspect = async (requirementId: number) => {
     try {
-      await dismissSuspectFlag.mutateAsync({
-        where: { caseId_issueId: { caseId, issueId: requirementId } },
-        data: { suspectDismissedAt: new Date() },
-      });
+      await dismissSuspect(requirementId, caseId);
       toast.success(tSuspect("dismissSuccess"));
       setOpenDismissId(null);
       void refetchDismissals();
@@ -338,7 +337,7 @@ export function LinkedRequirementsPanel({
                                 <Button
                                   type="button"
                                   variant="outline"
-                                  disabled={dismissSuspectFlag.isPending}
+                                  disabled={isDismissing}
                                   data-testid={`case-linked-requirement-suspect-confirm-${row.id}`}
                                   onClick={() => handleDismissSuspect(row.id)}
                                 >

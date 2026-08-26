@@ -574,39 +574,58 @@ describe("LinkedRequirementsPanel", () => {
       });
     });
 
-    it("dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair", async () => {
-      setLinkedRequirements([
-        {
-          id: 42,
-          name: "Login must support SSO",
-          isRequirement: true,
-          integrationId: null,
-          requirementDetachedAt: null,
-          projectId: 7,
-          contentUpdatedAt: "2026-01-10T00:00:00.000Z",
-        },
-      ]);
-      setLatestExecution("2026-01-01T00:00:00.000Z");
+    it("dismisses through a popover confirm and posts to the server-clock dismissal route on the caseId_issueId pair", async () => {
+      // WR-02 (27.1-05): a frozen, deliberately skewed system clock proves
+      // the request carries no client-supplied timestamp at all -- if the
+      // panel still stamped `new Date()` client-side, this date would leak
+      // into the request body and this test would have to assert AROUND it
+      // instead of asserting the body has exactly one key.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2020-01-01T00:00:00.000Z"));
+      try {
+        setLinkedRequirements([
+          {
+            id: 42,
+            name: "Login must support SSO",
+            isRequirement: true,
+            integrationId: null,
+            requirementDetachedAt: null,
+            projectId: 7,
+            contentUpdatedAt: "2026-01-10T00:00:00.000Z",
+          },
+        ]);
+        setLatestExecution("2026-01-01T00:00:00.000Z");
 
-      renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+        renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
 
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("case-linked-requirement-suspect-42")
-        ).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByTestId("case-linked-requirement-suspect-42"));
-      fireEvent.click(
-        screen.getByTestId("case-linked-requirement-suspect-confirm-42")
-      );
-
-      await waitFor(() => {
-        expect(mockDismissMutateAsync).toHaveBeenCalledWith({
-          where: { caseId_issueId: { caseId: 99, issueId: 42 } },
-          data: { suspectDismissedAt: expect.any(Date) },
+        await waitFor(() => {
+          expect(
+            screen.getByTestId("case-linked-requirement-suspect-42")
+          ).toBeInTheDocument();
         });
-      });
+
+        fireEvent.click(
+          screen.getByTestId("case-linked-requirement-suspect-42")
+        );
+        fireEvent.click(
+          screen.getByTestId("case-linked-requirement-suspect-confirm-42")
+        );
+
+        await waitFor(() => {
+          const dismissCall = (global.fetch as any).mock.calls.find(
+            ([url]: [string]) =>
+              url === "/api/repository-cases/99/suspect-dismissal"
+          );
+          expect(dismissCall).toBeDefined();
+          const body = JSON.parse(dismissCall[1].body);
+          expect(body).toEqual({ issueId: 42 });
+          expect(Object.keys(body)).toEqual(["issueId"]);
+        });
+
+        expect(mockDismissMutateAsync).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("does not invalidate the coverage queries when a flag is dismissed", async () => {
@@ -636,8 +655,16 @@ describe("LinkedRequirementsPanel", () => {
         screen.getByTestId("case-linked-requirement-suspect-confirm-42")
       );
 
+      // WR-02 (27.1-05): dismissal now posts through the server-clock route,
+      // not the ZenStack mutation -- wait on that fetch call rather than
+      // mockDismissMutateAsync, which the panel no longer calls.
       await waitFor(() => {
-        expect(mockDismissMutateAsync).toHaveBeenCalled();
+        expect(
+          (global.fetch as any).mock.calls.some(
+            ([url]: [string]) =>
+              url === "/api/repository-cases/99/suspect-dismissal"
+          )
+        ).toBe(true);
       });
 
       expect(mockInvalidateQueries).not.toHaveBeenCalled();

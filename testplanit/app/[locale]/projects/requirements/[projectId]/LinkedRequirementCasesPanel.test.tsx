@@ -792,50 +792,69 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
       });
     });
 
-    it("dismisses through a popover confirm and writes suspectDismissedAt on the caseId_issueId pair", async () => {
-      setLinkedCases([
-        {
-          id: 10,
-          name: "Login works",
-          source: "MANUAL",
-          isDeleted: false,
-          projectId: 7,
-          project: { name: "Current Project", iconUrl: null },
-        },
-      ]);
-      setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
-      setCoveringCases([
-        {
-          caseId: 10,
-          lastExecutedAt: "2026-01-01T00:00:00.000Z",
-          direct: true,
-        },
-      ]);
+    it("dismisses through a popover confirm and posts to the server-clock dismissal route on the caseId_issueId pair", async () => {
+      // WR-02 (27.1-05): a frozen, deliberately skewed system clock proves
+      // the request carries no client-supplied timestamp at all -- if the
+      // panel still stamped `new Date()` client-side, this date would leak
+      // into the request body and this test would have to assert AROUND it
+      // instead of asserting the body has exactly one key.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2020-01-01T00:00:00.000Z"));
+      try {
+        setLinkedCases([
+          {
+            id: 10,
+            name: "Login works",
+            source: "MANUAL",
+            isDeleted: false,
+            projectId: 7,
+            project: { name: "Current Project", iconUrl: null },
+          },
+        ]);
+        setRequirementContentUpdatedAt("2026-01-10T00:00:00.000Z");
+        setCoveringCases([
+          {
+            caseId: 10,
+            lastExecutedAt: "2026-01-01T00:00:00.000Z",
+            direct: true,
+          },
+        ]);
 
-      renderWithClient(
-        <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
-      );
+        renderWithClient(
+          <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+        );
 
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("requirement-linked-case-suspect-10")
-        ).toBeInTheDocument();
-      });
-
-      fireEvent.click(screen.getByTestId("requirement-linked-case-suspect-10"));
-      fireEvent.click(
-        screen.getByTestId("requirement-linked-case-suspect-confirm-10")
-      );
-
-      await waitFor(() => {
-        // The id order is the whole point of this assertion -- inverted
-        // relative to the case-side panel, since here `row.id` is the
-        // caseId and `requirementId` is the issueId.
-        expect(mockDismissMutateAsync).toHaveBeenCalledWith({
-          where: { caseId_issueId: { caseId: 10, issueId: 42 } },
-          data: { suspectDismissedAt: expect.any(Date) },
+        await waitFor(() => {
+          expect(
+            screen.getByTestId("requirement-linked-case-suspect-10")
+          ).toBeInTheDocument();
         });
-      });
+
+        fireEvent.click(
+          screen.getByTestId("requirement-linked-case-suspect-10")
+        );
+        fireEvent.click(
+          screen.getByTestId("requirement-linked-case-suspect-confirm-10")
+        );
+
+        await waitFor(() => {
+          // The id order is the whole point of this assertion -- inverted
+          // relative to the case-side panel, since here `row.id` is the
+          // caseId and `requirementId` is the issueId.
+          const dismissCall = (global.fetch as any).mock.calls.find(
+            ([url]: [string]) =>
+              url === "/api/repository-cases/10/suspect-dismissal"
+          );
+          expect(dismissCall).toBeDefined();
+          const body = JSON.parse(dismissCall[1].body);
+          expect(body).toEqual({ issueId: 42 });
+          expect(Object.keys(body)).toEqual(["issueId"]);
+        });
+
+        expect(mockDismissMutateAsync).not.toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("does not invalidate the coverage queries when a flag is dismissed", async () => {
@@ -873,8 +892,16 @@ describe("LinkedRequirementCasesPanel coverage query invalidation (F5/F9)", () =
         screen.getByTestId("requirement-linked-case-suspect-confirm-10")
       );
 
+      // WR-02 (27.1-05): dismissal now posts through the server-clock route,
+      // not the ZenStack mutation -- wait on that fetch call rather than
+      // mockDismissMutateAsync, which the panel no longer calls.
       await waitFor(() => {
-        expect(mockDismissMutateAsync).toHaveBeenCalled();
+        expect(
+          (global.fetch as any).mock.calls.some(
+            ([url]: [string]) =>
+              url === "/api/repository-cases/10/suspect-dismissal"
+          )
+        ).toBe(true);
       });
 
       const predicates = collectPredicates();
