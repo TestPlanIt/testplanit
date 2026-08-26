@@ -84,7 +84,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           # Wrapper for `pnpm changeset publish` that hides @testplanit/cli from
           # the publish (cli is released by its own cli-semantic-release.yml
