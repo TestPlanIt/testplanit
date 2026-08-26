@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "Žádné záznamy neodpovídají vybraným filtrům.",
         "showing": "{loaded} z {total} záznamů"
       },
-      "mentionedComments": {
-        "title": "Zmíněno v komentářích",
-        "description": "Komentáře, ve kterých jste zmíněni",
-        "noComments": "Zatím jste nebyli zmíněni v žádných komentářích.",
-        "comment": "Komentář",
-        "showingResults": "Zobrazeno {start} - {end} z {total}"
+      "myComments": {
+        "title": "Moje komentáře",
+        "description": "Komentáře, které jste napsali nebo ve kterých jste byli zmíněni",
+        "noComments": "Zatím jste nenapsali žádný komentář ani v žádném nebyli zmíněni.",
+        "noMatchingComments": "Žádné komentáře neodpovídají aktuálním filtrům.",
+        "searchPlaceholder": "Hledat komentáře",
+        "filterLabel": "Filtrovat komentáře",
+        "filterAll": "Všechny komentáře",
+        "filterMentioned": "Zmiňují mě",
+        "filterAuthored": "Napsané mnou",
+        "showing": "Zobrazeno {loaded} z {total} komentářů",
+        "matching": "{matched} odpovídajících · prohledáno {loaded} z {total} komentářů"
       },
       "twoFactor": {
         "enable": "Povolit 2FA",

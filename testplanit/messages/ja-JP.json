@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "選択したフィルターに一致するエントリーはありません。",
         "showing": "{total}件中{loaded}件のエントリー"
       },
-      "mentionedComments": {
-        "title": "コメントで言及",
-        "description": "あなたが言及されているコメント",
-        "noComments": "あなたはまだコメントで言及されていません。",
-        "comment": "コメント",
-        "showingResults": "{start} - {end} / {total}を表示"
+      "myComments": {
+        "title": "マイコメント",
+        "description": "あなたが書いた、またはあなたが言及されているコメント",
+        "noComments": "あなたはまだコメントを書いておらず、言及されてもいません。",
+        "noMatchingComments": "現在のフィルターに一致するコメントはありません。",
+        "searchPlaceholder": "コメントを検索",
+        "filterLabel": "コメントをフィルター",
+        "filterAll": "すべてのコメント",
+        "filterMentioned": "自分への言及",
+        "filterAuthored": "自分が書いたもの",
+        "showing": "{total}件中{loaded}件のコメントを表示中",
+        "matching": "{matched}件一致 ・ {total}件中{loaded}件のコメントを検索済み"
       },
       "twoFactor": {
         "enable": "2FAを有効にする",

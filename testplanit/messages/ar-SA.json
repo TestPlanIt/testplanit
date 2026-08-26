@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "لا توجد إدخالات تطابق عوامل التصفية المحددة.",
         "showing": "{loaded} من {total} إدخال"
       },
-      "mentionedComments": {
-        "title": "تمت الإشارة إليك في التعليقات",
-        "description": "التعليقات التي تمت الإشارة إليك فيها",
-        "noComments": "لم تتم الإشارة إليك في أي تعليقات بعد.",
-        "comment": "تعليق",
-        "showingResults": "عرض {start} - {end} من {total}"
+      "myComments": {
+        "title": "تعليقاتي",
+        "description": "التعليقات التي كتبتها أو التي تمت الإشارة إليك فيها",
+        "noComments": "لم تكتب أي تعليقات أو تتم الإشارة إليك في أي تعليقات بعد.",
+        "noMatchingComments": "لا توجد تعليقات تطابق عوامل التصفية الحالية.",
+        "searchPlaceholder": "البحث في التعليقات",
+        "filterLabel": "تصفية التعليقات",
+        "filterAll": "جميع التعليقات",
+        "filterMentioned": "الإشارة إليّ",
+        "filterAuthored": "كتبتها أنا",
+        "showing": "عرض {loaded} من {total} تعليق",
+        "matching": "{matched} مطابقة · تم البحث في {loaded} من {total} تعليق"
       },
       "twoFactor": {
         "enable": "تمكين المصادقة الثنائية (2FA)",

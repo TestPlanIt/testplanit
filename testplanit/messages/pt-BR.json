@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "Nenhuma entrada corresponde aos filtros selecionados.",
         "showing": "{loaded} de {total} entradas"
       },
-      "mentionedComments": {
-        "title": "Mencionado nos comentários",
-        "description": "Comentários onde você é mencionado(a)",
-        "noComments": "Você ainda não foi mencionado(a) em nenhum comentário.",
-        "comment": "Comentário",
-        "showingResults": "Exibindo {start} - {end} de {total}"
+      "myComments": {
+        "title": "Meus Comentários",
+        "description": "Comentários que você escreveu ou nos quais foi mencionado",
+        "noComments": "Você ainda não escreveu nem foi mencionado em nenhum comentário.",
+        "noMatchingComments": "Nenhum comentário corresponde aos filtros atuais.",
+        "searchPlaceholder": "Pesquisar comentários",
+        "filterLabel": "Filtrar comentários",
+        "filterAll": "Todos os Comentários",
+        "filterMentioned": "Me Mencionando",
+        "filterAuthored": "Escrito por Mim",
+        "showing": "Mostrando {loaded} de {total} comentários",
+        "matching": "{matched} correspondentes · pesquisados {loaded} de {total} comentários"
       },
       "twoFactor": {
         "enable": "Ative a autenticação de dois fatores (2FA).",

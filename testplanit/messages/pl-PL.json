@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "Żaden wpis nie spełnia wybranych filtrów.",
         "showing": "{loaded} z {total} wpisów"
       },
-      "mentionedComments": {
-        "title": "Wspomniano w komentarzach",
-        "description": "Komentarze, w których wspomniano o Tobie",
-        "noComments": "Nie wspomniano o Tobie jeszcze w żadnych komentarzach.",
-        "comment": "Komentarz",
-        "showingResults": "Wyświetlanie {start} - {end} z {total}"
+      "myComments": {
+        "title": "Moje komentarze",
+        "description": "Komentarze, które napisałeś lub w których zostałeś wspomniany",
+        "noComments": "Nie napisałeś jeszcze żadnych komentarzy ani nie zostałeś w żadnych wspomniany.",
+        "noMatchingComments": "Brak komentarzy spełniających bieżące filtry.",
+        "searchPlaceholder": "Szukaj komentarzy",
+        "filterLabel": "Filtruj komentarze",
+        "filterAll": "Wszystkie komentarze",
+        "filterMentioned": "Wspominające mnie",
+        "filterAuthored": "Napisane przeze mnie",
+        "showing": "Wyświetlanie {loaded} z {total} komentarzy",
+        "matching": "{matched} pasujących · przeszukano {loaded} z {total} komentarzy"
       },
       "twoFactor": {
         "enable": "Włącz 2FA",

@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "Không có mục nào khớp với các bộ lọc đã chọn.",
         "showing": "{loaded} trong số {total} mục"
       },
-      "mentionedComments": {
-        "title": "Được đề cập trong phần bình luận",
-        "description": "Những bình luận có nhắc đến bạn",
-        "noComments": "Bạn chưa được nhắc đến trong bất kỳ bình luận nào.",
-        "comment": "Bình luận",
-        "showingResults": "Hiển thị {start} - {end} trong số {total}"
+      "myComments": {
+        "title": "Bình luận của tôi",
+        "description": "Bình luận bạn đã viết hoặc được nhắc đến",
+        "noComments": "Bạn chưa viết hoặc được nhắc đến trong bất kỳ bình luận nào.",
+        "noMatchingComments": "Không có bình luận nào khớp với bộ lọc hiện tại.",
+        "searchPlaceholder": "Tìm kiếm bình luận",
+        "filterLabel": "Lọc bình luận",
+        "filterAll": "Tất cả bình luận",
+        "filterMentioned": "Nhắc đến tôi",
+        "filterAuthored": "Do tôi viết",
+        "showing": "Đang hiển thị {loaded} trong số {total} bình luận",
+        "matching": "{matched} khớp · đã tìm {loaded} trong số {total} bình luận"
       },
       "twoFactor": {
         "enable": "Kích hoạt xác thực hai yếu tố (2FA).",

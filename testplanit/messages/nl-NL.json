@@ -2751,12 +2751,18 @@
         "noMatchingEntries": "Geen items komen overeen met de geselecteerde filters.",
         "showing": "{loaded} van {total} items"
       },
-      "mentionedComments": {
-        "title": "Vermeld in de reacties",
-        "description": "Reacties waarin je genoemd wordt",
-        "noComments": "Je bent nog in geen enkele reactie genoemd.",
-        "comment": "Opmerking",
-        "showingResults": "Toont {start} - {end} van {total}"
+      "myComments": {
+        "title": "Mijn reacties",
+        "description": "Reacties die je hebt geschreven of waarin je genoemd wordt",
+        "noComments": "Je hebt nog geen reacties geschreven en bent nog in geen enkele reactie genoemd.",
+        "noMatchingComments": "Geen reacties komen overeen met de huidige filters.",
+        "searchPlaceholder": "Reacties zoeken",
+        "filterLabel": "Reacties filteren",
+        "filterAll": "Alle reacties",
+        "filterMentioned": "Waarin ik genoemd word",
+        "filterAuthored": "Door mij geschreven",
+        "showing": "{loaded} van {total} reacties weergegeven",
+        "matching": "{matched} overeenkomsten · {loaded} van {total} reacties doorzocht"
       },
       "twoFactor": {
         "enable": "Schakel 2FA in.",
