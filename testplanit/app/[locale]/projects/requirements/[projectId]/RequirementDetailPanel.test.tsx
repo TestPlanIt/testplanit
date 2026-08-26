@@ -808,6 +808,147 @@ describe("RequirementDetailPanel", () => {
     );
   });
 
+  // Rewritten for 25-19: the trigger moved from "pick a file in display
+  // mode" (immediate upload) to "pick a file in edit mode, then Save"
+  // (staged, applied on submit) -- every substantive HIER-06 assertion
+  // (fetchSignedUrl args, issue.connect, BigInt size, no legacy route)
+  // survives unchanged.
+  it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
+    setRequirement(lockedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.click(
+      screen.getByTestId("requirement-attachments-upload-simulate-select")
+    );
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockFetchSignedUrl).toHaveBeenCalledWith(
+        expect.any(File),
+        "/api/get-attachment-url/",
+        expect.stringContaining("7")
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockCreateAttachmentMutateAsync).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          issue: { connect: { id: 2 } },
+          url: "https://storage.example.com/spec.pdf",
+          name: "spec.pdf",
+          mimeType: "application/pdf",
+          size: expect.any(BigInt),
+          createdBy: { connect: { id: "user-1" } },
+        }),
+      });
+    });
+    const payload = mockCreateAttachmentMutateAsync.mock.calls[0][0].data;
+    expect(typeof payload.size).toBe("bigint");
+
+    // The zero-consumer legacy upload route must never be reached -- the
+    // signed-url path above is the entire upload mechanism.
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining("/api/upload-attachment"),
+      expect.anything()
+    );
+  });
+
+  it("enables Save when the only change is a staged attachment", () => {
+    setRequirement(lockedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const saveButton = screen.getByTestId(
+      "requirement-detail-save"
+    ) as HTMLButtonElement;
+    expect(saveButton.disabled).toBe(true); // nothing dirty, nothing staged
+
+    fireEvent.click(
+      screen.getByTestId("requirement-attachments-upload-simulate-select")
+    );
+    expect(saveButton.disabled).toBe(false);
+  });
+
+  it("applies a staged removal as a soft delete on save", async () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [existingAttachment],
+      isLoading: false,
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const section = screen.getByTestId("requirement-attachments");
+    fireEvent.click(within(section).getByText("common.actions.delete"));
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateAttachmentMutateAsync).toHaveBeenCalledWith({
+        where: { id: 501 },
+        data: { isDeleted: true },
+      });
+    });
+  });
+
+  it("discards staged attachment changes on cancel", () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [existingAttachment],
+      isLoading: false,
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const section = screen.getByTestId("requirement-attachments");
+    fireEvent.click(within(section).getByText("common.actions.delete"));
+    expect(
+      within(section).getByText("common.status.pendingDelete")
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("requirement-detail-cancel"));
+    expect(mockUpdateAttachmentMutateAsync).not.toHaveBeenCalled();
+
+    // Re-enter edit mode: asserting only that no write fired would pass
+    // even while a stale staged delete was still armed and would fire on
+    // the NEXT save -- this is the real bug the reset key prevents.
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+    const reenteredSection = screen.getByTestId("requirement-attachments");
+    expect(
+      within(reenteredSection).queryByText("common.status.pendingDelete")
+    ).not.toBeInTheDocument();
+    expect(
+      within(reenteredSection).getByText("existing-spec.pdf")
+    ).toBeInTheDocument();
+  });
+
+  it("keeps staged attachment changes when the save fails", async () => {
+    setRequirement(lockedRequirement);
+    mockAttachmentsFindMany.mockReturnValue({
+      data: [existingAttachment],
+      isLoading: false,
+    });
+    mockUpdateAttachmentMutateAsync.mockRejectedValueOnce(new Error("network"));
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const section = screen.getByTestId("requirement-attachments");
+    fireEvent.click(within(section).getByText("common.actions.delete"));
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateAttachmentMutateAsync).toHaveBeenCalled();
+    });
+
+    // Still in edit mode (Cancel button present) with the staged delete
+    // still visible -- a failed save must not exit edit mode or clear
+    // staged state.
+    expect(screen.getByTestId("requirement-detail-cancel")).toBeInTheDocument();
+    expect(
+      within(section).getByText("common.status.pendingDelete")
+    ).toBeInTheDocument();
+  });
+
   // 25-18 gap closure (25-UAT gap 1): the form used to seed exactly once per
   // requirementId and never again -- a rename made elsewhere (webhook,
   // another tab, the tree's own inline rename) updated the header (it reads

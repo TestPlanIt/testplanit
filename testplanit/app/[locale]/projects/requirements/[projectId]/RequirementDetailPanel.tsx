@@ -2,6 +2,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { CircleSlash2, Save, SquarePen, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,6 +34,7 @@ import {
 } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
 import {
@@ -176,6 +178,10 @@ export default function RequirementDetailPanel({
 }: RequirementDetailPanelProps) {
   const t = useTranslations("requirements.detail");
   const tCommon = useTranslations("common");
+  // Scoped separately from `t` (requirements.detail) -- the upload-failure
+  // message is the attachments section's own key, reused from the pre-25-19
+  // component rather than added new (25-19 hard rule: zero new i18n keys).
+  const tAttachments = useTranslations("requirements.attachments");
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // The id the form was last populated from -- tracking the id itself
@@ -205,13 +211,28 @@ export default function RequirementDetailPanel({
   const { mutateAsync: updateRequirement } =
     useClientQueries(schema).issue.useUpdate();
 
-  // 25-19 gap closure (Task 1): the panel now holds the staged attachment
-  // state RequirementAttachments.tsx reports through its two callbacks.
-  // Task 2 wires Save/Cancel to actually apply/discard it -- for now this
-  // is only fed, matching Task 1's own scope.
+  // 25-19 gap closure: the attachment mutation hooks live HERE, not in
+  // RequirementAttachments.tsx -- that component only stages changes into
+  // `AttachmentChanges`; this panel is the sole place anything is written.
+  const { data: session } = useSession();
+  const { mutateAsync: createAttachment } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachment } =
+    useClientQueries(schema).attachments.useUpdate();
   const [stagedFiles, setStagedFiles] = useState<File[]>([]);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
+  // Bumped on Cancel and after a successful Save to force
+  // RequirementAttachments to remount. AttachmentsDisplay's own pending
+  // state (pendingEdits/pendingDeletes) resets only when the `attachments`
+  // array identity it was handed changes (AttachmentsDisplay.tsx:93-98) --
+  // Cancel changes no data, so that array is identical and the child would
+  // otherwise keep showing (and re-report) stale staged deletes.
+  const [attachmentsResetKey, setAttachmentsResetKey] = useState(0);
+  const hasStagedAttachmentChanges =
+    stagedFiles.length > 0 ||
+    pendingAttachmentChanges.edits.length > 0 ||
+    pendingAttachmentChanges.deletes.length > 0;
 
   const form = useForm<RequirementDetailFormData>({
     defaultValues: {
@@ -289,6 +310,11 @@ export default function RequirementDetailPanel({
     if (requirement) {
       form.reset(buildResetValues(requirement));
     }
+    // 25-19: discard every staged attachment change. The counter bump is
+    // necessary, not decorative -- see the comment beside its declaration.
+    setStagedFiles([]);
+    setPendingAttachmentChanges({ edits: [], deletes: [] });
+    setAttachmentsResetKey((key) => key + 1);
   };
 
   // Re-seeds from the freshest `requirement` at the exact moment the user
@@ -350,11 +376,77 @@ export default function RequirementDetailPanel({
           data: updateData,
         });
       }
+
+      // 25-19: apply staged attachment changes -- edits, then deletes, then
+      // uploads -- OUTSIDE the guard above. An attachment-only change
+      // legitimately leaves `updateData` empty (correct: nothing on the
+      // Issue row changed), so it must never skip this block.
+      const editPromises = pendingAttachmentChanges.edits.map((edit) =>
+        updateAttachment({
+          where: { id: edit.id },
+          data: { name: edit.name, note: edit.note },
+        })
+      );
+      const deletePromises = pendingAttachmentChanges.deletes.map(
+        (attachmentId) =>
+          // Always soft-delete -- never a real delete of user data.
+          updateAttachment({
+            where: { id: attachmentId },
+            data: { isDeleted: true },
+          })
+      );
+      await Promise.all([...editPromises, ...deletePromises]);
+
+      if (stagedFiles.length > 0) {
+        const userId = session?.user?.id;
+        try {
+          await Promise.all(
+            stagedFiles.map(async (file) => {
+              const fileUrl = await fetchSignedUrl(
+                file,
+                `/api/get-attachment-url/`,
+                `${projectId}/${userId}`
+              );
+              await createAttachment({
+                data: {
+                  issue: { connect: { id: requirement.id } },
+                  url: fileUrl,
+                  name: file.name,
+                  note: "",
+                  mimeType: file.type,
+                  size: BigInt(file.size),
+                  createdBy: { connect: { id: userId } },
+                },
+              });
+            })
+          );
+        } catch (uploadError) {
+          // A failure at object storage is a different thing to a user
+          // staring at a spinner than a failure at the row update -- its
+          // own message, and its own early return so the staged files stay
+          // staged and the panel stays in edit mode (same contract as the
+          // outer catch below), without ALSO surfacing the generic
+          // saveFailed toast.
+          console.error(
+            "Failed to upload requirement attachment:",
+            uploadError
+          );
+          toast.error(tAttachments("uploadFailed"));
+          return;
+        }
+      }
+
       toast.success(t("saveSuccess"));
       setIsEditMode(false);
+      setStagedFiles([]);
+      setPendingAttachmentChanges({ edits: [], deletes: [] });
+      setAttachmentsResetKey((key) => key + 1);
     } catch (error) {
       console.error("Failed to update requirement:", error);
       toast.error(t("saveFailed"));
+      // Deliberately no `finally`-driven exit from edit mode and no
+      // clearing of staged state here -- a failed save must keep exactly
+      // what the user staged (25-19 gap closure).
     } finally {
       setIsSubmitting(false);
     }
@@ -439,7 +531,14 @@ export default function RequirementDetailPanel({
                 size="sm"
                 data-testid="requirement-detail-save"
                 onClick={form.handleSubmit(onSubmit)}
-                disabled={isSubmitting || !isDirty}
+                // 25-19: an attachment-only change leaves the Issue row's
+                // own form clean (`isDirty` false) -- `isDirty` alone
+                // cannot see a staged file/edit/delete, so Save must also
+                // stay enabled when the only change is a staged attachment
+                // change, or the whole feature is unreachable.
+                disabled={
+                  isSubmitting || (!isDirty && !hasStagedAttachmentChanges)
+                }
               >
                 {renderActionButtonContent(
                   Save,
@@ -579,6 +678,7 @@ export default function RequirementDetailPanel({
       </Form>
 
       <RequirementAttachments
+        key={attachmentsResetKey}
         projectId={projectId}
         requirementId={requirement.id}
         isEditMode={isEditMode}
