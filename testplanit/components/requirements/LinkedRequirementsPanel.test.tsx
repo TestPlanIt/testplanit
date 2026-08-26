@@ -282,6 +282,33 @@ describe("LinkedRequirementsPanel", () => {
     );
   });
 
+  // Operator UAT follow-up (2026-08-25): requirement rows use the
+  // requirements display convention (issue-type icon + "KEY: Title" via
+  // formatIssueDisplayText), not the case-style bare name -- a synced
+  // requirement's `name` is just the tracker key and was unreadable alone.
+  it('renders a synced requirement row as "KEY: Title"', () => {
+    setLinkedRequirements([
+      {
+        id: 44,
+        name: "ABT-1",
+        title: "Recurring Course Assignment",
+        externalUrl: "https://jira.example.com/browse/ABT-1",
+        issueTypeName: "Epic",
+        issueTypeIconUrl: null,
+        isRequirement: true,
+        integrationId: 9,
+        requirementDetachedAt: null,
+        projectId: 7,
+      },
+    ]);
+
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    expect(screen.getByTestId("linked-requirement-name-44")).toHaveTextContent(
+      "ABT-1: Recurring Course Assignment"
+    );
+  });
+
   it("scopes the add-link search to requirement-typed issues only", async () => {
     renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
 

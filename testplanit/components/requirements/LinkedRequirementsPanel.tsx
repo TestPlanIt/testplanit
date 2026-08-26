@@ -1,7 +1,7 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { AlertTriangle, Link2, ListChecks, Plus, X } from "lucide-react";
+import { AlertTriangle, Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +40,8 @@ import { useCaseLatestExecution } from "~/hooks/useCaseLatestExecution";
 import { useRequirementCaseLinks } from "~/hooks/useRequirementCaseLinks";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isLinkageSuspect } from "~/lib/services/suspectLinkage";
+import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
 
@@ -148,7 +150,17 @@ export function LinkedRequirementsPanel({
           ? { id: { notIn: Array.from(linkedRequirementIds) } }
           : {}),
         ...(projectId ? { projectId } : {}),
-        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+        // The rows render "KEY: Title", so the search must match either half
+        // -- name alone would miss a synced requirement's human-readable
+        // summary (its name is just the tracker key).
+        ...(query
+          ? {
+              OR: [
+                { name: { contains: query, mode: "insensitive" } },
+                { title: { contains: query, mode: "insensitive" } },
+              ],
+            }
+          : {}),
       };
       const params = {
         where,
@@ -272,13 +284,17 @@ export function LinkedRequirementsPanel({
                   <TableRow key={`${caseId}-${row.id}`}>
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-0">
-                        <ListChecks className="w-4 h-4 shrink-0 text-muted-foreground" />
+                        <IssueTypeIcon
+                          issueTypeName={row.issueTypeName}
+                          iconUrl={row.issueTypeIconUrl}
+                          className="h-4 w-4 shrink-0"
+                        />
                         <span
                           data-testid={`linked-requirement-name-${row.id}`}
                           className="truncate font-medium"
-                          title={row.name}
+                          title={formatIssueDisplayText(row)}
                         >
-                          {row.name}
+                          {formatIssueDisplayText(row)}
                         </span>
                         {isSuspect && (
                           // Gated on openDismissId, its own state -- never
@@ -453,8 +469,12 @@ function AddLinkedRequirementDialog({
           pageSize={10}
           renderOption={(option: Issue) => (
             <span className="flex items-center gap-2">
-              <ListChecks className="h-4 w-4 shrink-0" />
-              {option.name}
+              <IssueTypeIcon
+                issueTypeName={option.issueTypeName}
+                iconUrl={option.issueTypeIconUrl}
+                className="h-4 w-4 shrink-0"
+              />
+              {formatIssueDisplayText(option)}
             </span>
           )}
           getOptionValue={(option: Issue) => option.id}
@@ -468,12 +488,16 @@ function AddLinkedRequirementDialog({
             >
               {value ? (
                 <span className="flex items-center gap-1 overflow-hidden">
-                  <ListChecks className="h-4 w-4 shrink-0" />
+                  <IssueTypeIcon
+                    issueTypeName={value.issueTypeName}
+                    iconUrl={value.issueTypeIconUrl}
+                    className="h-4 w-4 shrink-0"
+                  />
                   <span
                     className="truncate whitespace-nowrap overflow-hidden"
                     style={{ maxWidth: 400 }}
                   >
-                    {value.name}
+                    {formatIssueDisplayText(value)}
                   </span>
                 </span>
               ) : (
