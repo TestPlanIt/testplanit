@@ -7,15 +7,20 @@ interface LinkUnlinkResponseBody {
   error?: string;
 }
 
-async function postLinkAction(
+// Generalised from the original link/unlink-only postLinkAction (WR-02,
+// 27.1-05) so dismissSuspect below can reuse the identical error-extraction
+// logic against a different body shape. The link/unlink call sites' request
+// bodies are unchanged by this generalisation -- `{ entityType: "testCase",
+// entityId: caseId }`, byte-identical to before.
+async function postJson(
   url: string,
-  caseId: number,
+  body: unknown,
   fallbackMessage: string
 ): Promise<void> {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entityType: "testCase", entityId: caseId }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     let message = fallbackMessage;
@@ -30,23 +35,25 @@ async function postLinkAction(
 }
 
 /**
- * The shared link/unlink contract for both directions of the requirement
- * <-> test case relationship: this panel's own LinkedRequirementCasesPanel
- * (the requirement surface) and the case-detail "Linked Requirements" panel
- * a later plan builds. Both directions post to the same, unmodified
- * `/api/issues/[issueId]/link` and `/unlink` routes -- the requirement's
- * `issueId` is ALWAYS the path parameter and the case id is ALWAYS
- * `entityId`, regardless of which surface initiated the call. Encoding that
- * direction once here is what stops the two panels from drifting apart or
- * getting the direction backwards.
+ * The shared link/unlink/dismiss contract for both directions of the
+ * requirement <-> test case relationship: this panel's own
+ * LinkedRequirementCasesPanel (the requirement surface) and the case-detail
+ * LinkedRequirementsPanel (the case surface). Both directions post to the
+ * same, unmodified `/api/issues/[issueId]/link` and `/unlink` routes -- the
+ * requirement's `issueId` is ALWAYS the path parameter and the case id is
+ * ALWAYS `entityId`, regardless of which surface initiated the call.
+ * `dismissSuspect` (WR-02, 27.1-05) keeps the identical argument order --
+ * requirement first, case second -- so the two surfaces cannot get the
+ * direction backwards there either.
  *
- * Deliberately no toasts here -- the two call sites use different i18n keys
+ * Deliberately no toasts here -- the call sites use different i18n keys
  * (`requirements.linkedCases.*` vs `requirements.linkedRequirements.*`), so
  * each panel surfaces its own success/error message around these calls.
  */
 export function useRequirementCaseLinks() {
   const queryClient = useQueryClient();
   const [isMutating, setIsMutating] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
 
   const invalidateLinkedQueries = useCallback(() => {
     // A predicate, not a key prefix -- ZenStack query keys need a predicate
@@ -67,9 +74,9 @@ export function useRequirementCaseLinks() {
     async (requirementId: number, caseId: number) => {
       setIsMutating(true);
       try {
-        await postLinkAction(
+        await postJson(
           `/api/issues/${requirementId}/link`,
-          caseId,
+          { entityType: "testCase", entityId: caseId },
           "Failed to link test case."
         );
         invalidateLinkedQueries();
@@ -84,9 +91,9 @@ export function useRequirementCaseLinks() {
     async (requirementId: number, caseId: number) => {
       setIsMutating(true);
       try {
-        await postLinkAction(
+        await postJson(
           `/api/issues/${requirementId}/unlink`,
-          caseId,
+          { entityType: "testCase", entityId: caseId },
           "Failed to unlink test case."
         );
         invalidateLinkedQueries();
@@ -97,5 +104,30 @@ export function useRequirementCaseLinks() {
     [invalidateLinkedQueries]
   );
 
-  return { link, unlink, isMutating };
+  // WR-02 (27.1-05): posts to the server-clock dismissal route rather than
+  // stamping `new Date()` in the browser -- see that route's own doc comment
+  // for why the clock family matters. Deliberately does NOT call
+  // invalidateLinkedQueries or either coverage invalidator: a dismissal is
+  // data-shape-inert to both the link/unlink caches and to coverage, exactly
+  // as both panels' own dismissal handlers already assume. Uses its own
+  // isDismissing flag, never isMutating -- the link/unlink buttons gate on
+  // isMutating and must stay independently enabled while a dismissal is in
+  // flight (and vice versa).
+  const dismissSuspect = useCallback(
+    async (requirementId: number, caseId: number) => {
+      setIsDismissing(true);
+      try {
+        await postJson(
+          `/api/repository-cases/${caseId}/suspect-dismissal`,
+          { issueId: requirementId },
+          "Failed to dismiss suspect flag."
+        );
+      } finally {
+        setIsDismissing(false);
+      }
+    },
+    []
+  );
+
+  return { link, unlink, isMutating, dismissSuspect, isDismissing };
 }
