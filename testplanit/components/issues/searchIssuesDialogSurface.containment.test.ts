@@ -173,3 +173,100 @@ describe("WR-01: SearchIssuesDialog consumer surface is a reviewed, closed set",
     }
   });
 });
+
+// The two dialog files WR-06 applies to: the shared SearchIssuesDialog and
+// its wholesale fork, requirement-reference-search-dialog.tsx.
+const DIALOG_FILES = [
+  "components/issues/search-issues-dialog.tsx",
+  "components/issues/requirement-reference-search-dialog.tsx",
+];
+
+interface WindowOpenCallSite {
+  file: string;
+  index: number;
+  argsText: string;
+  precedingText: string;
+}
+
+/**
+ * Every `window.open(` call site in a file, with enough argument text
+ * following the call (deeply nested JSX here runs ~40 columns of
+ * indentation per line, so a generous 300-character window is used
+ * rather than a bare 200) and ~400 characters of context preceding it --
+ * enough to see whether the call carries "noopener" and whether it sits
+ * inside a function literally named handleAuthenticate, without parsing
+ * the file as JS/TS.
+ */
+function findWindowOpenCallSites(file: string): WindowOpenCallSite[] {
+  const stripped = stripLineComments(readFileSync(file, "utf8"));
+  const needle = "window.open(";
+  const sites: WindowOpenCallSite[] = [];
+  let from = 0;
+  for (;;) {
+    const index = stripped.indexOf(needle, from);
+    if (index === -1) break;
+    sites.push({
+      file,
+      index,
+      argsText: stripped.slice(index, index + needle.length + 300),
+      precedingText: stripped.slice(Math.max(0, index - 400), index),
+    });
+    from = index + needle.length;
+  }
+  return sites;
+}
+
+describe("WR-06: tracker-URL window.open calls carry noopener,noreferrer", () => {
+  it("every window.open call in both dialog files carries noopener, except each file's own handleAuthenticate OAuth popup", () => {
+    const sites = DIALOG_FILES.flatMap(findWindowOpenCallSites);
+    const offenders = sites.filter(
+      (site) =>
+        !site.argsText.includes("noopener") &&
+        !site.precedingText.includes("handleAuthenticate")
+    );
+
+    if (offenders.length > 0) {
+      throw new Error(
+        "window.open call(s) missing noopener and not the documented " +
+          "handleAuthenticate OAuth exemption: " +
+          offenders.map((site) => `${site.file}@${site.index}`).join(", ")
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("the results-list tracker-URL open -- the one call site NOT inside handleAuthenticate -- carries noopener in each file", () => {
+    const sites = DIALOG_FILES.flatMap(findWindowOpenCallSites);
+    const resultsListSites = sites.filter(
+      (site) => !site.precedingText.includes("handleAuthenticate")
+    );
+
+    // Exactly one non-handleAuthenticate window.open per dialog file: the
+    // results-list "open in tracker" button.
+    expect(resultsListSites.length).toBe(DIALOG_FILES.length);
+    for (const file of DIALOG_FILES) {
+      const fileSites = resultsListSites.filter((site) => site.file === file);
+      expect(fileSites.length).toBe(1);
+    }
+    for (const site of resultsListSites) {
+      expect(site.argsText).toContain("noopener");
+    }
+  });
+
+  it("each dialog file's own handleAuthenticate OAuth popup is a documented exception and stays undisturbed", () => {
+    const sites = DIALOG_FILES.flatMap(findWindowOpenCallSites);
+    const authSites = sites.filter((site) =>
+      site.precedingText.includes("handleAuthenticate")
+    );
+
+    // One handleAuthenticate window.open per dialog file -- both post their
+    // completion back through window.opener via the shared
+    // /integrations/auth-complete landing page (lib/integrations/oauthPopup.ts);
+    // noopener would sever that channel in whichever file it was applied to.
+    expect(authSites.length).toBe(DIALOG_FILES.length);
+    for (const file of DIALOG_FILES) {
+      const fileAuthSites = authSites.filter((site) => site.file === file);
+      expect(fileAuthSites.length).toBe(1);
+    }
+  });
+});

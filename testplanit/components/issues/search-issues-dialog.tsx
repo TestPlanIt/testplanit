@@ -566,6 +566,10 @@ export function SearchIssuesDialog({
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
+    // WR-06: deliberately NOT hardened with noopener. This popup posts its
+    // completion back through window.opener (see
+    // lib/integrations/oauthPopup.ts / isIntegrationAuthCompleteMessage) --
+    // noopener would sever that channel and break re-search-after-authenticate.
     window.open(
       authUrl,
       "_blank",
@@ -958,11 +962,16 @@ export function SearchIssuesDialog({
                                   )}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    // WR-06: noopener,noreferrer -- unlike
+                                    // <a target="_blank">, window.open hands
+                                    // the opened page a live window.opener
+                                    // by default (reverse tab-nabbing).
                                     window.open(
                                       (issue as any).url ||
                                         issue.externalUrl ||
                                         "",
-                                      "_blank"
+                                      "_blank",
+                                      "noopener,noreferrer"
                                     );
                                   }}
                                 >

@@ -947,4 +947,55 @@ describe("SearchIssuesDialog", () => {
       expect(screen.getByRole("textbox")).toBeTruthy();
     });
   });
+
+  describe("WR-06: tracker-URL open does not leak window.opener", () => {
+    const activeIntegration = {
+      id: "pi-wr06",
+      integrationId: 43,
+      isActive: true,
+      config: {},
+      integration: { id: 43, name: "My Jira", provider: "JIRA" },
+    };
+
+    beforeEach(() => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [activeIntegration],
+      });
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          issues: [
+            {
+              id: "ext-1",
+              key: "TPI-1",
+              title: "Tracker issue",
+              status: "Open",
+              url: "https://tracker.example.com/browse/TPI-1",
+            },
+          ],
+        }),
+      });
+    });
+
+    it("opens a tracker URL without handing over an opener reference", async () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const searchInput = screen.getByRole("textbox");
+      fireEvent.change(searchInput, { target: { value: "tracker" } });
+
+      const openButton = await screen.findByTitle("openInExternalSystem");
+      fireEvent.click(openButton);
+
+      expect(openSpy).toHaveBeenCalledWith(
+        "https://tracker.example.com/browse/TPI-1",
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      openSpy.mockRestore();
+    });
+  });
 });
