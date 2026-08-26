@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { CircleSlash2, Save, SquarePen } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
@@ -201,7 +201,19 @@ export default function RequirementDetailPanel({
       note: JSON.stringify(emptyEditorContent),
     },
   });
-  const { isDirty } = form.formState;
+  // Both read during render (the react-hook-form subscription trap): a
+  // Proxy field is only tracked by `formState` if something reads it while
+  // rendering. Reading `dirtyFields` for the first time inside `onSubmit`
+  // would give a value nothing subscribed to.
+  const { isDirty, dirtyFields } = form.formState;
+
+  // What the form currently mirrors, as a value snapshot rather than the
+  // requirement object's own identity -- `optimisticUpdate: true` re-renders
+  // this component on every cache touch, most of which hand back a NEW
+  // object with the SAME field values. Resetting on every new identity
+  // would fight a typing user and could loop; comparing by value makes the
+  // re-seed fire only on a genuine external change.
+  const lastSeededValuesRef = useRef<string | null>(null);
 
   // PROV-03's single editability predicate: every disabled state below --
   // the three scalar fields -- traces back to this one boolean, derived
@@ -222,13 +234,35 @@ export default function RequirementDetailPanel({
   );
 
   useEffect(() => {
-    if (requirement && !isFormReady) {
-      form.reset(buildResetValues(requirement));
+    if (!requirement) return;
+    const freshValues = buildResetValues(requirement);
+    const freshSnapshot = JSON.stringify(freshValues);
+
+    if (!isFormReady) {
+      // First seed for this requirementId -- unchanged from before this
+      // plan: reset, record the loaded id, force display mode.
+      form.reset(freshValues);
+      lastSeededValuesRef.current = freshSnapshot;
       setLoadedRequirementId(requirementId);
       setIsEditMode(false);
+      return;
     }
+
+    if (freshSnapshot === lastSeededValuesRef.current) return;
+
+    // 25-UAT gap 1: re-seed on a genuine external change (a rename landing
+    // while this panel sits idle), but ONLY while the user is not holding a
+    // pen -- mid-edit (isEditMode) or a dirty, unsaved form must never be
+    // reset out from under them. Bailing on EITHER means both conditions
+    // must be false before the reset below runs: dirty alone misses a user
+    // who has opened Edit but not yet typed; edit-mode alone costs nothing
+    // extra to also check.
+    if (isEditMode || isDirty) return;
+
+    form.reset(freshValues);
+    lastSeededValuesRef.current = freshSnapshot;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requirement, requirementId, isFormReady]);
+  }, [requirement, requirementId, isFormReady, isEditMode, isDirty]);
 
   const handleCancel = () => {
     setIsEditMode(false);
@@ -237,30 +271,57 @@ export default function RequirementDetailPanel({
     }
   };
 
+  // Re-seeds from the freshest `requirement` at the exact moment the user
+  // asks to edit, updating the snapshot ref too. The idle re-seed above can
+  // legitimately stay inert for a moment (a stale render, a race with a
+  // refetch) -- this closes that window structurally, so "clicking Edit
+  // shows the old name" cannot happen rather than merely being unlikely.
+  const handleEdit = () => {
+    if (requirement) {
+      const freshValues = buildResetValues(requirement);
+      form.reset(freshValues);
+      lastSeededValuesRef.current = JSON.stringify(freshValues);
+    }
+    setIsEditMode(true);
+  };
+
   const onSubmit = async (data: RequirementDetailFormData) => {
     if (!requirement) return;
     setIsSubmitting(true);
     try {
       // `note` stays editable on locked rows (HIER-05/PROV-01, see the
       // comment beside the editor below) but is only SENT when it actually
-      // changed from the loaded value. A null note loads as the canonical
-      // empty doc, so unconditionally sending it rewrote NULL -> empty-doc
-      // on the first save of ANY field -- and `note` is a watched column of
-      // the contentUpdatedAt trigger, so that phantom write armed the
-      // suspect flag on a priority-only save (COV-05 D-02, UAT Scenario 2).
-      // The three scalar fields ARE in LOCKED_ISSUE_FIELDS, so on a locked
-      // row they are stripped from the payload client-side too --
-      // defense-in-depth alongside the schema's own field-level `@deny`,
-      // never a substitute for it (a stale/re-enabled control could still
-      // submit a locked field's unchanged value otherwise).
+      // changed from the loaded value AND react-hook-form itself reports it
+      // dirty (belt and braces -- both must agree). A null note loads as the
+      // canonical empty doc, so unconditionally sending it rewrote NULL ->
+      // empty-doc on the first save of ANY field -- and `note` is a watched
+      // column of the contentUpdatedAt trigger, so that phantom write armed
+      // the suspect flag on a priority-only save (COV-05 D-02, UAT
+      // Scenario 2).
+      //
+      // 25-UAT gap 1: the three scalars below get the SAME discipline as
+      // `note` -- each is only sent when `dirtyFields` reports the user
+      // actually touched it. An untouched field and "still holding the
+      // value we loaded five minutes ago" are indistinguishable from the
+      // form's own point of view, and on a row renamed elsewhere the loaded
+      // value is now wrong: sending it unconditionally is exactly the
+      // write-back that silently reverted a rename's title half. This is an
+      // ADDITIONAL narrowing on top of the `!locked` strip below, never a
+      // replacement for it -- the schema's field-level `@deny` remains the
+      // real enforcement; the three scalars are still in
+      // LOCKED_ISSUE_FIELDS, so a locked row strips them client-side too,
+      // defense-in-depth against a stale/re-enabled control.
       const updateData: Record<string, unknown> = {};
-      if (data.note !== buildResetValues(requirement).note) {
+      if (
+        dirtyFields.note &&
+        data.note !== buildResetValues(requirement).note
+      ) {
         updateData.note = JSON.parse(data.note);
       }
       if (!locked) {
-        updateData.title = data.title;
-        updateData.status = data.status || null;
-        updateData.priority = data.priority || null;
+        if (dirtyFields.title) updateData.title = data.title;
+        if (dirtyFields.status) updateData.status = data.status || null;
+        if (dirtyFields.priority) updateData.priority = data.priority || null;
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -344,7 +405,7 @@ export default function RequirementDetailPanel({
               variant="outline"
               size="sm"
               data-testid="requirement-detail-edit"
-              onClick={() => setIsEditMode(true)}
+              onClick={handleEdit}
             >
               {renderActionButtonContent(SquarePen, tCommon("actions.edit"))}
             </Button>

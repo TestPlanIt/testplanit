@@ -288,9 +288,22 @@ function renderPanel(ui: React.ReactElement) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(
+  const utils = render(
     <QueryClientProvider client={client}>{ui}</QueryClientProvider>
   );
+  return {
+    ...utils,
+    // The plain `rerender` RTL hands back re-renders under a NEW element
+    // tree unless that tree is wrapped in the SAME QueryClientProvider
+    // instance -- this keeps the client (and so the mocked hook's identity)
+    // stable across a re-render, which is what makes "the row changed
+    // underneath us" (mockUseFindFirst.mockReturnValue + rerender)
+    // observable at all.
+    rerenderWithProvider: (nextUi: React.ReactElement) =>
+      utils.rerender(
+        <QueryClientProvider client={client}>{nextUi}</QueryClientProvider>
+      ),
+  };
 }
 
 // Only reports an entry for a field the panel actually rendered -- a native
@@ -604,6 +617,12 @@ describe("RequirementDetailPanel", () => {
   // sending it rewrote NULL -> empty-doc -- and `note` is a watched column
   // of the contentUpdatedAt trigger, so the phantom write armed the suspect
   // flag on a save that never touched content (COV-05 D-02).
+  //
+  // 25-18: this test now guards TWO vectors, not one -- the phantom note
+  // write above, AND the stale scalar write-back (25-UAT gap 1). Before
+  // 25-18 the payload unconditionally carried `title` and `status` too,
+  // even though the user only ever touched `priority`; the expected payload
+  // below is now `dirtyFields`-gated down to exactly what was typed.
   it("omits an unchanged note from a priority-only save payload", async () => {
     setRequirement(nativeRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
@@ -618,14 +637,14 @@ describe("RequirementDetailPanel", () => {
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
-          title: "Req Native",
-          status: "open",
           priority: "high",
         },
       });
     });
     const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
     expect("note" in payload).toBe(false);
+    expect("title" in payload).toBe(false);
+    expect("status" in payload).toBe(false);
   });
 
   it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
@@ -700,6 +719,124 @@ describe("RequirementDetailPanel", () => {
         where: { id: 501 },
         data: { isDeleted: true },
       });
+    });
+  });
+
+  // 25-18 gap closure (25-UAT gap 1): the form used to seed exactly once per
+  // requirementId and never again -- a rename made elsewhere (webhook,
+  // another tab, the tree's own inline rename) updated the header (it reads
+  // live query data) but left the form holding the value it loaded minutes
+  // ago, and Edit -> Save on that stale form silently reverted the rename.
+  describe("form freshness (25-18 gap closure)", () => {
+    it("re-seeds the form when the requirement is renamed while the panel is idle", () => {
+      setRequirement(lockedRequirement);
+      const { rerenderWithProvider } = renderPanel(
+        <RequirementDetailPanel projectId="7" requirementId={2} />
+      );
+
+      expect(screen.getByTestId("requirement-display-title")).toHaveTextContent(
+        "Req Synced Title"
+      );
+
+      setRequirement({ ...lockedRequirement, title: "Renamed By Tracker" });
+      rerenderWithProvider(
+        <RequirementDetailPanel projectId="7" requirementId={2} />
+      );
+
+      // The header ("KEY: Title") already read live query data before this
+      // plan -- this is not the broken half, but pinning it here proves the
+      // fixture actually re-rendered with the new row.
+      expect(screen.getByTestId("requirement-detail-header")).toHaveTextContent(
+        "Req Synced: Renamed By Tracker"
+      );
+      expect(screen.getByTestId("requirement-display-title")).toHaveTextContent(
+        "Renamed By Tracker"
+      );
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      expect(
+        (screen.getByTestId("requirement-field-title") as HTMLInputElement)
+          .value
+      ).toBe("Renamed By Tracker");
+    });
+
+    it("re-seeds a native requirement's status without touching the row's other fields", () => {
+      setRequirement(nativeRequirement);
+      const { rerenderWithProvider } = renderPanel(
+        <RequirementDetailPanel projectId="7" requirementId={1} />
+      );
+
+      setRequirement({ ...nativeRequirement, status: "closed" });
+      rerenderWithProvider(
+        <RequirementDetailPanel projectId="7" requirementId={1} />
+      );
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      expect(
+        (screen.getByTestId("requirement-field-status") as HTMLInputElement)
+          .value
+      ).toBe("closed");
+    });
+
+    // This one passes against HEAD -- it is a guard against the FIX (an
+    // unconditional reset), not against the bug. It is what stops a future
+    // "simplification" of the re-seed effect from turning it into a plain
+    // `form.reset` on every data change.
+    it("does not reset the form while the user is editing", () => {
+      setRequirement(nativeRequirement);
+      const { rerenderWithProvider } = renderPanel(
+        <RequirementDetailPanel projectId="7" requirementId={1} />
+      );
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+      fireEvent.change(screen.getByTestId("requirement-field-priority"), {
+        target: { value: "urgent-typed-value" },
+      });
+
+      // `status`, not `name` -- `buildResetValues` never reads `name`, so a
+      // row change that only touches `name` would leave the form's own
+      // snapshot unchanged and pass this assertion for the wrong reason
+      // (nothing to re-seed FROM), not because the in-flight-edit guard
+      // did its job.
+      setRequirement({ ...nativeRequirement, status: "closed" });
+      rerenderWithProvider(
+        <RequirementDetailPanel projectId="7" requirementId={1} />
+      );
+
+      expect(
+        (screen.getByTestId("requirement-field-priority") as HTMLInputElement)
+          .value
+      ).toBe("urgent-typed-value");
+    });
+
+    // The dangerous half of the gap: an external rename landing WHILE the
+    // user is mid-edit must not resurrect itself on save. The re-seed is
+    // correctly inert here (edit mode) -- it is the dirty-gated payload,
+    // not the re-seed, that must stop the stale title from going out.
+    it("never writes an untouched title back after an external rename", async () => {
+      setRequirement(detachedRequirement);
+      const { rerenderWithProvider } = renderPanel(
+        <RequirementDetailPanel projectId="7" requirementId={3} />
+      );
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+      setRequirement({ ...detachedRequirement, title: "Renamed Elsewhere" });
+      rerenderWithProvider(
+        <RequirementDetailPanel projectId="7" requirementId={3} />
+      );
+
+      fireEvent.change(screen.getByTestId("requirement-field-priority"), {
+        target: { value: "high" },
+      });
+      fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+      await waitFor(() => {
+        expect(mockUpdateMutateAsync).toHaveBeenCalled();
+      });
+      const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+      expect(payload).toEqual({ priority: "high" });
+      expect("title" in payload).toBe(false);
     });
   });
 });
