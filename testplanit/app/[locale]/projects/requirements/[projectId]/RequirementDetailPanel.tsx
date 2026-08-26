@@ -179,26 +179,34 @@ export default function RequirementDetailPanel({
     if (!requirement) return;
     setIsSubmitting(true);
     try {
-      // `note` is never in LOCKED_ISSUE_FIELDS, so it is always sent -- that
-      // is the entire point of HIER-05/PROV-01 (see the comment beside the
-      // editor below). The three scalar fields ARE in that list, so on a
-      // locked row they are stripped from the payload client-side too --
+      // `note` stays editable on locked rows (HIER-05/PROV-01, see the
+      // comment beside the editor below) but is only SENT when it actually
+      // changed from the loaded value. A null note loads as the canonical
+      // empty doc, so unconditionally sending it rewrote NULL -> empty-doc
+      // on the first save of ANY field -- and `note` is a watched column of
+      // the contentUpdatedAt trigger, so that phantom write armed the
+      // suspect flag on a priority-only save (COV-05 D-02, UAT Scenario 2).
+      // The three scalar fields ARE in LOCKED_ISSUE_FIELDS, so on a locked
+      // row they are stripped from the payload client-side too --
       // defense-in-depth alongside the schema's own field-level `@deny`,
       // never a substitute for it (a stale/re-enabled control could still
       // submit a locked field's unchanged value otherwise).
-      const updateData: Record<string, unknown> = {
-        note: JSON.parse(data.note),
-      };
+      const updateData: Record<string, unknown> = {};
+      if (data.note !== buildResetValues(requirement).note) {
+        updateData.note = JSON.parse(data.note);
+      }
       if (!locked) {
         updateData.title = data.title;
         updateData.status = data.status || null;
         updateData.priority = data.priority || null;
       }
 
-      await updateRequirement({
-        where: { id: requirement.id },
-        data: updateData,
-      });
+      if (Object.keys(updateData).length > 0) {
+        await updateRequirement({
+          where: { id: requirement.id },
+          data: updateData,
+        });
+      }
       toast.success(t("saveSuccess"));
       setIsEditMode(false);
     } catch (error) {

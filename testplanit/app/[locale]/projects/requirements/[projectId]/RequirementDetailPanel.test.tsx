@@ -460,6 +460,36 @@ describe("RequirementDetailPanel", () => {
     );
   });
 
+  // UAT Scenario 2 regression (2026-08-25): a priority-only save on a
+  // null-note requirement must NOT include `note` in the payload. The form
+  // loads a null note as the canonical empty doc, so unconditionally
+  // sending it rewrote NULL -> empty-doc -- and `note` is a watched column
+  // of the contentUpdatedAt trigger, so the phantom write armed the suspect
+  // flag on a save that never touched content (COV-05 D-02).
+  it("omits an unchanged note from a priority-only save payload", async () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.change(screen.getByTestId("requirement-field-priority"), {
+      target: { value: "high" },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          title: "Req Native Title",
+          status: "open",
+          priority: "high",
+        },
+      });
+    });
+    const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+    expect("note" in payload).toBe(false);
+  });
+
   it("uploads an attachment through the signed-url path and creates an Attachments row with issueId", async () => {
     setRequirement(lockedRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
