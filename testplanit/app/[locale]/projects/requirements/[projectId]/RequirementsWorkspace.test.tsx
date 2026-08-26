@@ -183,6 +183,13 @@ vi.mock("./RequirementsListView", () => ({
         >
           select
         </button>
+        <button
+          type="button"
+          data-testid="mock-request-edit"
+          onClick={() => props.onRequestEdit?.(1)}
+        >
+          edit
+        </button>
       </div>
     );
   }),
@@ -398,6 +405,28 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
 
       const lastProps = capturedDetailPanelProps.at(-1);
       expect(lastProps.onRequestDelete).toBeUndefined();
+    });
+  });
+
+  describe("row-menu Edit request", () => {
+    it("selects the row and hands the panel a tokened edit request", () => {
+      render(<RequirementsWorkspace projectId="42" />);
+
+      fireEvent.click(screen.getByTestId("mock-request-edit"));
+
+      const lastProps = capturedDetailPanelProps.at(-1);
+      expect(lastProps.requirementId).toBe(1);
+      expect(lastProps.editRequest).toEqual({ id: 1, token: 1 });
+    });
+
+    it("bumps the token on every request so the panel can re-enter edit mode after a cancel", () => {
+      render(<RequirementsWorkspace projectId="42" />);
+
+      fireEvent.click(screen.getByTestId("mock-request-edit"));
+      fireEvent.click(screen.getByTestId("mock-request-edit"));
+
+      const lastProps = capturedDetailPanelProps.at(-1);
+      expect(lastProps.editRequest).toEqual({ id: 1, token: 2 });
     });
   });
 });

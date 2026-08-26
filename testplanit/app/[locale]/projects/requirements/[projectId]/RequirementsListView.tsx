@@ -39,7 +39,6 @@ import {
   invalidateRequirementCoverage,
   useRequirementCoverage,
 } from "~/hooks/useRequirementCoverage";
-import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { ItemTypes } from "~/types/dndTypes";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
@@ -74,6 +73,11 @@ interface RequirementDragItem {
 
 interface RequirementsListViewProps extends RequirementSelection {
   projectId: string;
+  /** Asks the workspace to open this requirement in the detail panel's
+   *  edit mode -- the row menu's Edit action. Optional: absent (a caller
+   *  without the workspace's panel, e.g. a test harness), the menu item
+   *  still renders but the request is a no-op. */
+  onRequestEdit?: (issueId: number) => void;
 }
 
 /**
@@ -142,7 +146,7 @@ const RequirementsListView = forwardRef<
   RequirementsListViewHandle,
   RequirementsListViewProps
 >(function RequirementsListView(
-  { projectId, selectedRequirementId, onSelectRequirement },
+  { projectId, selectedRequirementId, onSelectRequirement, onRequestEdit },
   ref
 ) {
   const t = useTranslations();
@@ -162,9 +166,6 @@ const RequirementsListView = forwardRef<
   const [expandedByIssueId, setExpandedByIssueId] = useState<
     Record<number, boolean>
   >({});
-  const [editingRequirementId, setEditingRequirementId] = useState<
-    number | null
-  >(null);
   const [createDialogState, setCreateDialogState] = useState<{
     open: boolean;
     parentId: number | null;
@@ -272,8 +273,6 @@ const RequirementsListView = forwardRef<
   const invalidateCoverage = useCallback(() => {
     invalidateRequirementCoverage(queryClient, Number(projectId));
   }, [queryClient, projectId]);
-
-  const updateRequirement = useClientQueries(schema).issue.useUpdate();
 
   const [requirements, setRequirements] = useState<Issue[]>([]);
 
@@ -449,49 +448,17 @@ const RequirementsListView = forwardRef<
     []
   );
 
-  // In-place rename, re-checking `isRequirementLocked` here too (defense in
-  // depth alongside the row menu's own gate and the schema's field-level
-  // deny rule) and no-opping on a blank or unchanged name rather than
-  // writing.
-  const handleRenameCommit = useCallback(
-    async (issueId: number, nextName: string) => {
-      const trimmed = nextName.trim();
-      if (!trimmed) {
-        setEditingRequirementId(null);
-        return;
-      }
-      const requirement = requirementMap.get(issueId);
-      if (!requirement || isRequirementLocked(requirement)) {
-        setEditingRequirementId(null);
-        return;
-      }
-      if (trimmed === requirement.name) {
-        setEditingRequirementId(null);
-        return;
-      }
-      try {
-        await updateRequirement.mutateAsync({
-          where: { id: issueId },
-          data: { name: trimmed, title: trimmed },
-        });
-        toast.success(t("requirements.edit.success"));
-        void refetchRequirements();
-      } catch (error) {
-        console.error("Failed to rename requirement:", error);
-        toast.error(t("requirements.edit.failed"));
-      }
-      setEditingRequirementId(null);
+  // The row menu's Edit routes to the detail panel's edit mode (operator
+  // decision 2026-08-26, replacing the old inline rename): the panel is the
+  // single editing surface, and its own save path already carries the
+  // rename discipline this view used to hold -- trim, blank no-op,
+  // name+title written together, locked rows refused.
+  const handleRequestEdit = useCallback(
+    (requirement: RequirementRow) => {
+      onRequestEdit?.(requirement.id);
     },
-    [requirementMap, updateRequirement, t, refetchRequirements]
+    [onRequestEdit]
   );
-
-  const handleRenameCancel = useCallback(() => {
-    setEditingRequirementId(null);
-  }, []);
-
-  const handleRequestRename = useCallback((requirement: RequirementRow) => {
-    setEditingRequirementId(requirement.id);
-  }, []);
 
   const handleToggleExpand = useCallback((issueId: number) => {
     setExpandedByIssueId((prev) => ({ ...prev, [issueId]: !prev[issueId] }));
@@ -744,13 +711,10 @@ const RequirementsListView = forwardRef<
     coverage,
     descendantIdsByRequirementId,
     expandedByIssueId,
-    editingRequirementId,
     onToggleExpand: handleToggleExpand,
     onSelectRequirement: handleSelectRequirement,
-    onRenameCommit: handleRenameCommit,
-    onRenameCancel: handleRenameCancel,
     onAddChild: handleAddChild,
-    onRequestRename: handleRequestRename,
+    onRequestEdit: handleRequestEdit,
     onRequestDelete: handleRequestDelete,
     onDetached: handleDetached,
     markDragActive,

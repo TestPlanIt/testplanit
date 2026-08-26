@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDrag } from "react-dnd";
 // UAT gap 4 reversed Phase 26's decision to keep this column on its own
 // standalone coverage badge -- the operator ruled the Coverage column must
@@ -37,7 +37,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -129,13 +128,14 @@ interface UseRequirementsListColumnsArgs {
    */
   descendantIdsByRequirementId?: Map<number, number[]>;
   expandedByIssueId: Record<number, boolean>;
-  editingRequirementId: number | null;
   onToggleExpand: (issueId: number) => void;
   onSelectRequirement: (issueId: number) => void;
-  onRenameCommit: (issueId: number, nextName: string) => void;
-  onRenameCancel: () => void;
   onAddChild: (requirement: RequirementRow) => void;
-  onRequestRename: (requirement: RequirementRow) => void;
+  /** Opens the requirement in the detail panel's edit mode. The list holds
+   *  no inline editor of its own -- the panel is the single editing
+   *  surface, so its own field gating (lock tooltips, note, attachments)
+   *  applies uniformly no matter where an edit starts. */
+  onRequestEdit: (requirement: RequirementRow) => void;
   onRequestDelete: (requirement: RequirementRow) => void;
   onDetached: () => void;
   /**
@@ -166,13 +166,10 @@ export function useRequirementsListColumns({
   // `descendantIdsByRequirementId` is intentionally NOT destructured here --
   // see its own doc comment on `UseRequirementsListColumnsArgs` above.
   expandedByIssueId,
-  editingRequirementId,
   onToggleExpand,
   onSelectRequirement,
-  onRenameCommit,
-  onRenameCancel,
   onAddChild,
-  onRequestRename,
+  onRequestEdit,
   onRequestDelete,
   onDetached,
   markDragActive,
@@ -218,11 +215,8 @@ export function useRequirementsListColumns({
             isFiltering={isFiltering}
             normalizedFilter={normalizedFilter}
             isExpanded={expandedByIssueId[row.original.id] === true}
-            isEditing={editingRequirementId === row.original.id}
             onToggleExpand={onToggleExpand}
             onSelectRequirement={onSelectRequirement}
-            onRenameCommit={onRenameCommit}
-            onRenameCancel={onRenameCancel}
             markDragActive={markDragActive}
             clearDragActive={clearDragActive}
           />
@@ -493,7 +487,7 @@ export function useRequirementsListColumns({
             <RequirementRowActionsMenu
               requirement={row.original}
               onAddChild={onAddChild}
-              onRequestRename={onRequestRename}
+              onRequestEdit={onRequestEdit}
               onRequestDelete={onRequestDelete}
             />
           </div>
@@ -518,13 +512,10 @@ export function useRequirementsListColumns({
     normalizedFilter,
     coverage,
     expandedByIssueId,
-    editingRequirementId,
     onToggleExpand,
     onSelectRequirement,
-    onRenameCommit,
-    onRenameCancel,
     onAddChild,
-    onRequestRename,
+    onRequestEdit,
     onRequestDelete,
     onDetached,
     markDragActive,
@@ -854,11 +845,8 @@ interface RequirementNameCellProps {
   isFiltering: boolean;
   normalizedFilter: string;
   isExpanded: boolean;
-  isEditing: boolean;
   onToggleExpand: (issueId: number) => void;
   onSelectRequirement: (issueId: number) => void;
-  onRenameCommit: (issueId: number, nextName: string) => void;
-  onRenameCancel: () => void;
   /** See `UseRequirementsListColumnsArgs`'s doc comment -- plain DOM
    *  mutation, never a state setter. */
   markDragActive: (draggedId: number) => void;
@@ -879,11 +867,8 @@ function RequirementNameCell({
   isFiltering,
   normalizedFilter,
   isExpanded,
-  isEditing,
   onToggleExpand,
   onSelectRequirement,
-  onRenameCommit,
-  onRenameCancel,
   markDragActive,
   clearDragActive,
 }: RequirementNameCellProps) {
@@ -993,88 +978,28 @@ function RequirementNameCell({
       ) : (
         <span className="h-5 w-5 shrink-0" aria-hidden="true" />
       )}
-      {isEditing ? (
-        <RequirementRenameInput
-          defaultValue={requirement.name}
-          onCommit={(value) => onRenameCommit(requirement.id, value)}
-          onCancel={onRenameCancel}
-          testId={`requirement-rename-input-${requirement.id}`}
+      <IssueTypeIcon
+        issueTypeName={requirement.issueTypeName}
+        iconUrl={requirement.issueTypeIconUrl}
+        className="h-4 w-4 shrink-0"
+      />
+      {/* `flex-auto`, never `flex-1` -- this repo's recorded trap:
+          `flex-1`'s zero basis disables every sibling's shrink weight. */}
+      <span className="min-w-0 flex-auto truncate text-sm" title={label}>
+        <HighlightedMatch
+          text={label}
+          query={normalizedFilter}
+          testId="requirement-filter-match"
         />
-      ) : (
-        <>
-          <IssueTypeIcon
-            issueTypeName={requirement.issueTypeName}
-            iconUrl={requirement.issueTypeIconUrl}
-            className="h-4 w-4 shrink-0"
-          />
-          {/* `flex-auto`, never `flex-1` -- this repo's recorded trap:
-              `flex-1`'s zero basis disables every sibling's shrink weight. */}
-          <span className="min-w-0 flex-auto truncate text-sm" title={label}>
-            <HighlightedMatch
-              text={label}
-              query={normalizedFilter}
-              testId="requirement-filter-match"
-            />
-          </span>
-        </>
-      )}
+      </span>
     </div>
-  );
-}
-
-interface RequirementRenameInputProps {
-  defaultValue: string;
-  onCommit: (value: string) => void;
-  onCancel: () => void;
-  testId: string;
-}
-
-/**
- * Ported from the earlier react-arborist tree component's own
- * `RequirementRenameInput`, decoupled from react-arborist's `NodeApi`.
- */
-function RequirementRenameInput({
-  defaultValue,
-  onCommit,
-  onCancel,
-  testId,
-}: RequirementRenameInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-    inputRef.current?.select();
-  }, []);
-
-  return (
-    <Input
-      ref={inputRef}
-      defaultValue={defaultValue}
-      className="ms-1 h-6 flex-1 text-sm"
-      onClick={(e) => e.stopPropagation()}
-      onBlur={() => onCancel()}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.key === "Escape") {
-          onCancel();
-        } else if (e.key === "Enter") {
-          const value = e.currentTarget.value.trim();
-          if (value) {
-            onCommit(value);
-          } else {
-            onCancel();
-          }
-        }
-      }}
-      data-testid={testId}
-    />
   );
 }
 
 interface RequirementRowActionsMenuProps {
   requirement: RequirementRow;
   onAddChild: (requirement: RequirementRow) => void;
-  onRequestRename: (requirement: RequirementRow) => void;
+  onRequestEdit: (requirement: RequirementRow) => void;
   onRequestDelete: (requirement: RequirementRow) => void;
 }
 
@@ -1087,11 +1012,10 @@ interface RequirementRowActionsMenuProps {
 function RequirementRowActionsMenu({
   requirement,
   onAddChild,
-  onRequestRename,
+  onRequestEdit,
   onRequestDelete,
 }: RequirementRowActionsMenuProps) {
   const t = useTranslations();
-  const locked = isRequirementLocked(requirement);
 
   return (
     <DropdownMenu>
@@ -1117,36 +1041,19 @@ function RequirementRowActionsMenu({
             {t("requirements.tree.addChild")}
           </div>
         </DropdownMenuItem>
-        {locked ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem
-                  disabled
-                  data-testid={`requirement-action-rename-${requirement.id}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <SquarePenIcon className="h-4 w-4" />
-                    {t("requirements.tree.rename")}
-                  </div>
-                </DropdownMenuItem>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              {t("requirements.edit.lockedTooltip")}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <DropdownMenuItem
-            onClick={() => onRequestRename(requirement)}
-            data-testid={`requirement-action-rename-${requirement.id}`}
-          >
-            <div className="flex items-center gap-2">
-              <SquarePenIcon className="h-4 w-4" />
-              {t("requirements.tree.rename")}
-            </div>
-          </DropdownMenuItem>
-        )}
+        {/* Enabled on locked rows too, exactly like the detail panel's own
+            Edit button: edit mode is still meaningful there (documentation
+            and attachments stay editable; the locked scalars explain
+            themselves with their own tooltips). */}
+        <DropdownMenuItem
+          onClick={() => onRequestEdit(requirement)}
+          data-testid={`requirement-action-edit-${requirement.id}`}
+        >
+          <div className="flex items-center gap-2">
+            <SquarePenIcon className="h-4 w-4" />
+            {t("common.actions.edit")}
+          </div>
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => onRequestDelete(requirement)}
           className="text-destructive"

@@ -230,10 +230,8 @@ type ColumnsArgs = Parameters<typeof useRequirementsListColumns>[0];
 
 const onToggleExpand = vi.fn();
 const onSelectRequirement = vi.fn();
-const onRenameCommit = vi.fn();
-const onRenameCancel = vi.fn();
 const onAddChild = vi.fn();
-const onRequestRename = vi.fn();
+const onRequestEdit = vi.fn();
 const onRequestDelete = vi.fn();
 const onDetached = vi.fn();
 const markDragActive = vi.fn();
@@ -248,13 +246,10 @@ function baseArgs(overrides: Partial<ColumnsArgs> = {}): ColumnsArgs {
     normalizedFilter: "",
     coverage: undefined,
     expandedByIssueId: {},
-    editingRequirementId: null,
     onToggleExpand,
     onSelectRequirement,
-    onRenameCommit,
-    onRenameCancel,
     onAddChild,
-    onRequestRename,
+    onRequestEdit,
     onRequestDelete,
     onDetached,
     markDragActive,
@@ -320,10 +315,8 @@ function renderColumnCell(
 beforeEach(() => {
   onToggleExpand.mockReset();
   onSelectRequirement.mockReset();
-  onRenameCommit.mockReset();
-  onRenameCancel.mockReset();
   onAddChild.mockReset();
-  onRequestRename.mockReset();
+  onRequestEdit.mockReset();
   onRequestDelete.mockReset();
   onDetached.mockReset();
   markDragActive.mockReset();
@@ -1112,46 +1105,6 @@ describe("RequirementNameCell", () => {
     expect(onSelectRequirement).toHaveBeenCalledWith(8);
   });
 
-  it("renders the rename input for the row being edited", () => {
-    renderNameCell(makeRow({ id: 9, name: "Login flow" }), {
-      editingRequirementId: 9,
-    });
-    expect(
-      screen.getByTestId("requirement-rename-input-9")
-    ).toBeInTheDocument();
-  });
-
-  it("commits a trimmed, non-blank value on Enter", () => {
-    renderNameCell(makeRow({ id: 10, name: "Login flow" }), {
-      editingRequirementId: 10,
-    });
-    const input = screen.getByTestId("requirement-rename-input-10");
-    fireEvent.change(input, { target: { value: "  New name  " } });
-    fireEvent.keyDown(input, { key: "Enter" });
-    expect(onRenameCommit).toHaveBeenCalledWith(10, "New name");
-    expect(onRenameCancel).not.toHaveBeenCalled();
-  });
-
-  it("cancels rather than commits on Enter with only whitespace", () => {
-    renderNameCell(makeRow({ id: 11, name: "Login flow" }), {
-      editingRequirementId: 11,
-    });
-    const input = screen.getByTestId("requirement-rename-input-11");
-    fireEvent.change(input, { target: { value: "   " } });
-    fireEvent.keyDown(input, { key: "Enter" });
-    expect(onRenameCancel).toHaveBeenCalled();
-    expect(onRenameCommit).not.toHaveBeenCalled();
-  });
-
-  it("cancels on Escape", () => {
-    renderNameCell(makeRow({ id: 12, name: "Login flow" }), {
-      editingRequirementId: 12,
-    });
-    const input = screen.getByTestId("requirement-rename-input-12");
-    fireEvent.keyDown(input, { key: "Escape" });
-    expect(onRenameCancel).toHaveBeenCalled();
-  });
-
   it("disallows dragging when the viewer cannot edit", () => {
     renderNameCell(makeRow({ id: 13 }), {
       canAddEdit: false,
@@ -1297,35 +1250,37 @@ describe("RequirementRowActionsMenu", () => {
       screen.getByTestId("requirement-action-add-child-17")
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("requirement-action-rename-17")
+      screen.getByTestId("requirement-action-edit-17")
     ).toBeInTheDocument();
     expect(
       screen.getByTestId("requirement-action-delete-17")
     ).toBeInTheDocument();
   });
 
-  it("disables the rename item for a locked (synced, not-detached) requirement", () => {
-    renderActionsCell(
-      makeRow({
-        id: 18,
-        integrationId: 9,
-        requirementDetachedAt: null,
-        isRequirement: true,
-      })
-    );
+  it("keeps the Edit item enabled for a locked (synced, not-detached) requirement", () => {
+    // Edit mode is still meaningful on a locked row -- documentation and
+    // attachments stay editable there, exactly like the panel's own Edit
+    // button, which has never been lock-gated.
+    const row = makeRow({
+      id: 18,
+      integrationId: 9,
+      requirementDetachedAt: null,
+      isRequirement: true,
+    });
+    renderActionsCell(row);
     openMenu(screen.getByTestId("requirement-actions-trigger-18"));
-    expect(screen.getByTestId("requirement-action-rename-18")).toHaveAttribute(
-      "aria-disabled",
-      "true"
-    );
+    const item = screen.getByTestId("requirement-action-edit-18");
+    expect(item).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(item);
+    expect(onRequestEdit).toHaveBeenCalledWith(row);
   });
 
-  it("enables the rename item for a native requirement", () => {
-    renderActionsCell(makeRow({ id: 19, integrationId: null }));
+  it("fires onRequestEdit for a native requirement", () => {
+    const row = makeRow({ id: 19, integrationId: null });
+    renderActionsCell(row);
     openMenu(screen.getByTestId("requirement-actions-trigger-19"));
-    expect(
-      screen.getByTestId("requirement-action-rename-19")
-    ).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(screen.getByTestId("requirement-action-edit-19"));
+    expect(onRequestEdit).toHaveBeenCalledWith(row);
   });
 });
 

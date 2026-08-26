@@ -25,7 +25,7 @@ import {
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useExportRequirementTraceabilityPdf } from "~/hooks/pdf/useExportRequirementTraceabilityPdf";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -74,6 +74,18 @@ export default function RequirementsWorkspace({
   const [selectedRequirementId, setSelectedRequirementId] = useState<
     number | null
   >(null);
+  // The row menu's Edit action: select the row AND ask the panel to open in
+  // edit mode. A monotonically increasing token (never a bare id) so the
+  // panel can tell a NEW request for the already-selected row from the one
+  // it has already consumed -- edit, cancel, edit again must work.
+  const [editRequest, setEditRequest] = useState<{
+    id: number;
+    token: number;
+  } | null>(null);
+  const handleRequestEdit = useCallback((issueId: number) => {
+    setSelectedRequirementId(issueId);
+    setEditRequest((prev) => ({ id: issueId, token: (prev?.token ?? 0) + 1 }));
+  }, []);
   // The Add Requirement button below (gap closure 26.2-16, UAT gap 13)
   // reaches the list's own Create Requirement dialog state through this
   // ref -- see `RequirementsListViewHandle`'s doc comment.
@@ -242,6 +254,7 @@ export default function RequirementsWorkspace({
                         projectId={projectId}
                         selectedRequirementId={selectedRequirementId}
                         onSelectRequirement={setSelectedRequirementId}
+                        onRequestEdit={handleRequestEdit}
                       />
                     </SimpleDndProvider>
                   </div>
@@ -296,6 +309,7 @@ export default function RequirementsWorkspace({
                                 )
                             : undefined
                         }
+                        editRequest={editRequest}
                       />
                     )}
                   </div>

@@ -69,6 +69,14 @@ interface RequirementDetailPanelProps {
    *  ever disagreeing about what a delete does. Undefined hides the Delete
    *  affordance entirely (a non-admin viewer, or no row selected yet). */
   onRequestDelete?: () => void;
+  /** The workspace's "open this requirement in edit mode" request -- the
+   *  row menu's Edit action. The token is monotonically increasing so a new
+   *  request for the already-selected row is distinguishable from one this
+   *  panel has already consumed (edit, cancel, edit again must work). The
+   *  panel enters edit mode only once the named row's form has seeded --
+   *  the first-seed branch forces display mode on a selection change, and
+   *  this must land after it, never against the previous row's form. */
+  editRequest?: { id: number; token: number } | null;
 }
 
 interface RequirementDetailFormData {
@@ -176,6 +184,7 @@ export default function RequirementDetailPanel({
   projectId,
   requirementId,
   onRequestDelete,
+  editRequest,
 }: RequirementDetailPanelProps) {
   const t = useTranslations("requirements.detail");
   const tCommon = useTranslations("common");
@@ -343,6 +352,22 @@ export default function RequirementDetailPanel({
     }
     setIsEditMode(true);
   };
+
+  // Consume the workspace's editRequest (see the prop's doc comment): at
+  // most once per token, and only after the named row's form has seeded, so
+  // it can never race the first-seed branch's forced display mode or open
+  // edit mode against the previous row's values.
+  const consumedEditTokenRef = useRef(0);
+  useEffect(() => {
+    if (!editRequest) return;
+    if (editRequest.token === consumedEditTokenRef.current) return;
+    if (!isFormReady || loadedRequirementId !== editRequest.id) return;
+    consumedEditTokenRef.current = editRequest.token;
+    handleEdit();
+    // `handleEdit` is a plain function recreated per render; the token ref
+    // above makes this effect idempotent, so it is deliberately not a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editRequest, isFormReady, loadedRequirementId]);
 
   const onSubmit = async (data: RequirementDetailFormData) => {
     if (!requirement) return;

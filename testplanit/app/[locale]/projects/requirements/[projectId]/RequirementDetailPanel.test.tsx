@@ -648,6 +648,34 @@ describe("RequirementDetailPanel", () => {
     expect(payload).not.toHaveProperty("name");
   });
 
+  it("opens edit mode from a workspace edit request, once per token", () => {
+    setRequirement(nativeRequirement);
+    const { rerenderWithProvider } = renderPanel(
+      <RequirementDetailPanel
+        projectId="7"
+        requirementId={1}
+        editRequest={{ id: 1, token: 1 }}
+      />
+    );
+    // Consumed after the named row's form seeds.
+    expect(screen.getByTestId("requirement-detail-save")).toBeInTheDocument();
+
+    // Cancel returns to display mode; the already-consumed token must not
+    // re-open edit mode on the next render.
+    fireEvent.click(screen.getByTestId("requirement-detail-cancel"));
+    expect(screen.getByTestId("requirement-detail-edit")).toBeInTheDocument();
+
+    // A NEW token for the same row re-enters edit mode.
+    rerenderWithProvider(
+      <RequirementDetailPanel
+        projectId="7"
+        requirementId={1}
+        editRequest={{ id: 1, token: 2 }}
+      />
+    );
+    expect(screen.getByTestId("requirement-detail-save")).toBeInTheDocument();
+  });
+
   it("still renders the locked Title field on a synced requirement whose title differs from its key", () => {
     setRequirement(lockedRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
