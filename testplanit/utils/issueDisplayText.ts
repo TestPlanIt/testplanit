@@ -12,13 +12,28 @@
  * requirements surface uses the identical convention rather than a second
  * copy that can drift.
  */
+/**
+ * True when a row has a second string worth showing beyond its own name --
+ * a Title field gated on this has nothing to add that the header (which
+ * already renders `formatIssueDisplayText`) is not already showing.
+ */
+export function hasDistinctIssueTitle(issue: {
+  name: string;
+  title?: string | null;
+  externalUrl?: string | null;
+}): boolean {
+  const { name, title, externalUrl } = issue;
+  return Boolean(externalUrl && title && title !== name);
+}
+
 export function formatIssueDisplayText(issue: {
   name: string;
   title?: string | null;
   externalUrl?: string | null;
 }): string {
-  const { name, title, externalUrl } = issue;
-  return externalUrl && title && title !== name ? `${name}: ${title}` : name;
+  return hasDistinctIssueTitle(issue)
+    ? `${issue.name}: ${issue.title}`
+    : issue.name;
 }
 
 /**

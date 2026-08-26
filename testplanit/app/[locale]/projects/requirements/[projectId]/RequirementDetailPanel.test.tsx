@@ -215,7 +215,11 @@ const sampleDoc = {
 const nativeRequirement = {
   id: 1,
   name: "Req Native",
-  title: "Req Native Title",
+  // Equal to `name` -- what CreateRequirementDialog.tsx and
+  // RequirementsListView.tsx:469 actually write for a native requirement.
+  // A fixture whose native row carries a distinct title tests a state the
+  // product cannot produce.
+  title: "Req Native",
   status: "open",
   priority: "medium",
   note: null,
@@ -244,6 +248,17 @@ const detachedRequirement = {
   requirementDetachedAt: new Date().toISOString(),
 };
 
+// PROV-03 parity fixture: title === name. `detachedRequirement` above
+// derives from `lockedRequirement` and so carries a title distinct from its
+// name -- fine for the tests that use it directly, but Task 1 (25-17) drops
+// `title` from the rendered field set whenever the title does not differ
+// from the name, so a "same shape" map comparison against `nativeRequirement`
+// (whose title also equals its name) needs a detached fixture that agrees.
+const detachedRequirementSameTitle = {
+  ...detachedRequirement,
+  title: detachedRequirement.name,
+};
+
 function setRequirement(row: any) {
   mockUseFindFirst.mockReturnValue({ data: row, isLoading: false });
 }
@@ -263,16 +278,19 @@ function renderPanel(ui: React.ReactElement) {
   );
 }
 
+// Only reports an entry for a field the panel actually rendered -- a native
+// requirement's Title field is gone entirely (Task 1, 25-17), so a map that
+// assumed all three fields exist would throw before this even gets to
+// compare anything.
 function getFieldDisabledMap(): Record<string, boolean> {
-  return {
-    title: (screen.getByTestId("requirement-field-title") as HTMLInputElement)
-      .disabled,
-    status: (screen.getByTestId("requirement-field-status") as HTMLInputElement)
-      .disabled,
-    priority: (
-      screen.getByTestId("requirement-field-priority") as HTMLInputElement
-    ).disabled,
-  };
+  const map: Record<string, boolean> = {};
+  for (const name of ["title", "status", "priority"] as const) {
+    const el = screen.queryByTestId(`requirement-field-${name}`);
+    if (el) {
+      map[name] = (el as HTMLInputElement).disabled;
+    }
+  }
+  return map;
 }
 
 describe("RequirementDetailPanel", () => {
@@ -397,7 +415,13 @@ describe("RequirementDetailPanel", () => {
   });
 
   it("enables the same fields on a native requirement, identically to a detached one", () => {
-    setRequirement(detachedRequirement);
+    // Uses `detachedRequirementSameTitle`, not the plain `detachedRequirement`
+    // above -- that fixture's title genuinely differs from its name (it
+    // derives from `lockedRequirement`), which would give its map an extra
+    // `title` key `nativeRequirement`'s map does not have. Both fixtures
+    // compared here have title === name, so both maps are {status, priority}
+    // and this stays a like-with-like comparison.
+    setRequirement(detachedRequirementSameTitle);
     const { unmount } = renderPanel(
       <RequirementDetailPanel projectId="7" requirementId={3} />
     );
@@ -416,6 +440,33 @@ describe("RequirementDetailPanel", () => {
     // logic would still fail this comparison if the maps diverged in shape.
     expect(nativeMap).toEqual(detachedMap);
     expect(Object.values(nativeMap).every((v) => v === false)).toBe(true);
+  });
+
+  it("does not render a Title field for a native requirement -- the header already shows that string", () => {
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+
+    expect(
+      screen.queryByTestId("requirement-field-title")
+    ).not.toBeInTheDocument();
+
+    // The predicate is not edit-mode-scoped -- it must stay absent there too.
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+    expect(
+      screen.queryByTestId("requirement-field-title")
+    ).not.toBeInTheDocument();
+  });
+
+  it("still renders the locked Title field on a synced requirement whose title differs from its key", () => {
+    setRequirement(lockedRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    const titleField = screen.getByTestId(
+      "requirement-field-title"
+    ) as HTMLInputElement;
+    expect(titleField).toBeInTheDocument();
+    expect(titleField.disabled).toBe(true);
   });
 
   it("saves the note through the ZenStack issue update hook, not a bespoke route", async () => {
@@ -480,7 +531,7 @@ describe("RequirementDetailPanel", () => {
       expect(mockUpdateMutateAsync).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
-          title: "Req Native Title",
+          title: "Req Native",
           status: "open",
           priority: "high",
         },

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatIssueDisplayText,
   formatRequirementCellText,
+  hasDistinctIssueTitle,
 } from "./issueDisplayText";
 
 describe("formatIssueDisplayText", () => {
@@ -33,6 +34,48 @@ describe("formatIssueDisplayText", () => {
         externalUrl: "https://tracker.example.com/ADM-1",
       })
     ).toBe("ADM-1");
+  });
+});
+
+describe("hasDistinctIssueTitle", () => {
+  it("is true for a distinct title with an externalUrl", () => {
+    expect(
+      hasDistinctIssueTitle({
+        name: "ADM-3176",
+        title: "Designer-Driven Deployment Pipeline",
+        externalUrl: "https://tracker.example.com/ADM-3176",
+      })
+    ).toBe(true);
+  });
+
+  it("is false when title equals name", () => {
+    expect(
+      hasDistinctIssueTitle({
+        name: "ADM-1",
+        title: "ADM-1",
+        externalUrl: "https://tracker.example.com/ADM-1",
+      })
+    ).toBe(false);
+  });
+
+  it("is false when there is no title", () => {
+    expect(
+      hasDistinctIssueTitle({
+        name: "ADM-1",
+        title: null,
+        externalUrl: "https://tracker.example.com/ADM-1",
+      })
+    ).toBe(false);
+  });
+
+  it("is false when the title is distinct but there is no externalUrl", () => {
+    expect(
+      hasDistinctIssueTitle({
+        name: "New Requirement",
+        title: "Something else entirely",
+        externalUrl: null,
+      })
+    ).toBe(false);
   });
 });
 

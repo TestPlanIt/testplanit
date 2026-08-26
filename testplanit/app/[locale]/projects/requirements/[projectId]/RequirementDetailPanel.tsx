@@ -31,7 +31,10 @@ import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
-import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import {
+  formatIssueDisplayText,
+  hasDistinctIssueTitle,
+} from "~/utils/issueDisplayText";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
 import { RequirementAttachments } from "./RequirementAttachments";
 import { RequirementCoveragePanel } from "./RequirementCoveragePanel";
@@ -158,6 +161,17 @@ export default function RequirementDetailPanel({
   // RequirementsListView.tsx already use. The rich-text section
   // deliberately never reads it (see the comment beside its own `readOnly`).
   const locked = isRequirementLocked(requirement ?? null);
+
+  // A native requirement has `name === title` by construction -- both
+  // creation paths write the same trimmed string (see issueDisplayText.ts's
+  // own note), so its Title field would just be the header's own text
+  // repeated in a disabled box. A synced requirement whose tracker summary
+  // genuinely differs from its key still renders the field, locked. This
+  // gates the rendered set only -- `title` is still written on create and
+  // rename for parity; nothing about what the row STORES changes here.
+  const showTitleField = Boolean(
+    requirement && hasDistinctIssueTitle(requirement)
+  );
 
   useEffect(() => {
     if (requirement && !isFormReady) {
@@ -292,7 +306,9 @@ export default function RequirementDetailPanel({
 
       <Form {...form}>
         <form className="flex flex-col gap-4">
-          {SCALAR_FIELDS.map(({ name, labelKey }) => {
+          {SCALAR_FIELDS.filter(
+            ({ name }) => name !== "title" || showTitleField
+          ).map(({ name, labelKey }) => {
             const isLockedField =
               locked &&
               (LOCKED_ISSUE_FIELDS as readonly string[]).includes(name);
