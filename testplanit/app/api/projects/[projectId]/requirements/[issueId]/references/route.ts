@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
-import { userHasAreaPermission } from "~/lib/services/areaPermission";
+import {
+  permissionsForArea,
+  resolveEffectiveProjectAccess,
+} from "~/lib/services/areaPermission";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import {
@@ -11,7 +14,7 @@ import {
   isUniqueConstraintError,
 } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
-import { ApplicationArea } from "~/zenstack/models";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 import { z } from "zod/v4";
 
 // The external-pick shape a manual traceability reference can carry —
@@ -164,20 +167,47 @@ export async function POST(
 
     // Write authorization runs before either branch and before any side
     // effect -- baseDb carries no policy plugin, so the enhanced-client join
-    // create below is the FINAL enforcement, not the first. The model
-    // policy's own 'create' allow (schema.zmodel:1708-1728) is this same
-    // TestCaseRepository/canAddEdit ladder PLUS the project creator, so the
-    // creator clause below is required: omitting it would make this
-    // pre-gate narrower than the policy it fronts and 403 a caller the
-    // policy allows. The pre-gate being slightly broader than the policy
-    // (the ladder also grants PROJECTADMIN project-wide) is intentional and
-    // safe -- the enhanced-client create is still the final enforcement.
-    const mayEdit = await userHasAreaPermission(
+    // create below is the FINAL enforcement, not the first. This pre-gate
+    // must stay EXACTLY as wide as the RequirementIssueReference create
+    // policy (schema.zmodel:1708-1728) -- never narrower (a false 403 for a
+    // caller the policy allows) and never wider on the write path (a
+    // shell/join write for a caller the policy will refuse). 27.1-REVIEW.md's
+    // WR-01 found the previous ladder-precedence-only pre-gate diverged in
+    // both directions: it 403'd a caller whose own role is literally named
+    // "Project Admin" (the policy's role.name == 'Project Admin' clause,
+    // schema.zmodel:1711, needs no canAddEdit bit), and it admitted a
+    // non-assigned system PROJECTADMIN whom the policy denies (the policy's
+    // PROJECTADMIN clause, schema.zmodel:1715, additionally requires
+    // assignedUsers?[user.id == auth().id]) -- reproducing CR-01's
+    // write-before-authorization shape for that population. The two clauses
+    // below close both gaps: the Project-Admin-named-role check, and an
+    // assignment-gated PROJECTADMIN check in place of the old unconditional
+    // isSystemProjectAdmin short-circuit.
+    const access = await resolveEffectiveProjectAccess(
       session.user.id,
-      projectId,
-      ApplicationArea.TestCaseRepository,
-      "canAddEdit"
+      projectId
     );
+    const roleGrant = permissionsForArea(
+      access.effectiveRole,
+      ApplicationArea.TestCaseRepository
+    );
+    const isProjectAdminNamedRole =
+      access.userAccessType === ProjectAccessType.SPECIFIC_ROLE &&
+      access.effectiveRole?.name === "Project Admin";
+    let mayEdit = roleGrant.canAddEdit || isProjectAdminNamedRole;
+    if (!mayEdit) {
+      if (access.isSystemAdmin) {
+        // ADMIN passes every model policy unconditionally
+        // (schema.zmodel:1730).
+        mayEdit = true;
+      } else if (access.isSystemProjectAdmin && !access.accessDenied) {
+        const assignment = await baseDb.projectAssignment.findUnique({
+          where: { userId_projectId: { userId: session.user.id, projectId } },
+          select: { userId: true },
+        });
+        mayEdit = assignment !== null;
+      }
+    }
     if (!mayEdit) {
       const project = await baseDb.projects.findUnique({
         where: { id: projectId },

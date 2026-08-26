@@ -25,6 +25,7 @@ vi.mock("~/lib/db", () => ({
     issue: { findFirst: vi.fn() },
     projectIntegration: { findFirst: vi.fn() },
     projects: { findUnique: vi.fn() },
+    projectAssignment: { findUnique: vi.fn() },
   },
 }));
 
@@ -36,9 +37,11 @@ vi.mock("~/lib/services/linkedIssueUpsert", () => ({
   upsertLinkedIssueShell: vi.fn(),
 }));
 
-vi.mock("~/lib/services/areaPermission", () => ({
-  userHasAreaPermission: vi.fn(),
-}));
+vi.mock("~/lib/services/areaPermission", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/areaPermission")>();
+  return { ...actual, resolveEffectiveProjectAccess: vi.fn() };
+});
 
 vi.mock("~/lib/utils/errors", () => ({
   isUniqueConstraintError: vi.fn(),
@@ -49,12 +52,13 @@ import { getServerSession } from "next-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
-import { userHasAreaPermission } from "~/lib/services/areaPermission";
+import { resolveEffectiveProjectAccess } from "~/lib/services/areaPermission";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import {
   isUniqueConstraintError,
   isAccessPolicyError,
 } from "~/lib/utils/errors";
+import { ApplicationArea, ProjectAccessType } from "~/zenstack/models";
 
 import { POST } from "./route";
 
@@ -69,14 +73,16 @@ const mockedProjectIntegrationFindFirst = baseDb.projectIntegration
   .findFirst as unknown as ReturnType<typeof vi.fn>;
 const mockedProjectsFindUnique = baseDb.projects
   .findUnique as unknown as ReturnType<typeof vi.fn>;
+const mockedProjectAssignmentFindUnique = baseDb.projectAssignment
+  .findUnique as unknown as ReturnType<typeof vi.fn>;
 const mockedGetEnhancedDb = getEnhancedDb as unknown as ReturnType<
   typeof vi.fn
 >;
 const mockedUpsertShell = upsertLinkedIssueShell as unknown as ReturnType<
   typeof vi.fn
 >;
-const mockedUserHasAreaPermission =
-  userHasAreaPermission as unknown as ReturnType<typeof vi.fn>;
+const mockedResolveEffectiveProjectAccess =
+  resolveEffectiveProjectAccess as unknown as ReturnType<typeof vi.fn>;
 const mockedIsUniqueConstraintError =
   isUniqueConstraintError as unknown as ReturnType<typeof vi.fn>;
 const mockedIsAccessPolicyError = isAccessPolicyError as unknown as ReturnType<
@@ -126,7 +132,28 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     });
     mockedProjectIntegrationFindFirst.mockResolvedValue({ integrationId: 42 });
     mockedProjectsFindUnique.mockResolvedValue({ createdBy: "someone-else" });
-    mockedUserHasAreaPermission.mockResolvedValue(true);
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: false,
+      accessDenied: false,
+      effectiveRole: {
+        id: 1,
+        name: "QA Engineer",
+        rolePermissions: [
+          {
+            area: ApplicationArea.TestCaseRepository,
+            canAddEdit: true,
+            canDelete: true,
+            canClose: true,
+          },
+        ],
+      },
+      userAccessType: ProjectAccessType.SPECIFIC_ROLE,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
+    mockedProjectAssignmentFindUnique.mockResolvedValue(null);
     mockedUpsertShell.mockResolvedValue({ id: 99 });
     mockCreate = vi.fn().mockResolvedValue({
       requirementId: 10,
@@ -221,7 +248,27 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
   });
 
   it("writes nothing and returns 403 when the caller lacks canAddEdit on an external pick", async () => {
-    mockedUserHasAreaPermission.mockResolvedValue(false);
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: false,
+      accessDenied: false,
+      effectiveRole: {
+        id: 2,
+        name: "Viewer",
+        rolePermissions: [
+          {
+            area: ApplicationArea.TestCaseRepository,
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
+      userAccessType: ProjectAccessType.SPECIFIC_ROLE,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
 
     const res = await POST(
       makeRequest("5", "10", {
@@ -237,7 +284,27 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
   });
 
   it("writes nothing and returns 403 when the caller lacks canAddEdit on an internal pick", async () => {
-    mockedUserHasAreaPermission.mockResolvedValue(false);
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: false,
+      accessDenied: false,
+      effectiveRole: {
+        id: 2,
+        name: "Viewer",
+        rolePermissions: [
+          {
+            area: ApplicationArea.TestCaseRepository,
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
+      userAccessType: ProjectAccessType.SPECIFIC_ROLE,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
 
     const res = await POST(
       makeRequest("5", "10", { internalIssueId: 20 }),
@@ -249,7 +316,27 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
   });
 
   it("allows a project creator who has no explicit canAddEdit grant", async () => {
-    mockedUserHasAreaPermission.mockResolvedValue(false);
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: false,
+      accessDenied: false,
+      effectiveRole: {
+        id: 2,
+        name: "Viewer",
+        rolePermissions: [
+          {
+            area: ApplicationArea.TestCaseRepository,
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
+      userAccessType: ProjectAccessType.SPECIFIC_ROLE,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
     mockedProjectsFindUnique.mockResolvedValue({ createdBy: "user-1" });
 
     const res = await POST(
@@ -460,5 +547,88 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body).toEqual({ error: "Forbidden" });
+  });
+
+  // (27.1-07, WR-01): the pre-gate must be exactly as wide as the
+  // RequirementIssueReference create policy (schema.zmodel:1708-1728), not
+  // merely narrower-or-wider. These two populations diverged under the
+  // previous ladder-precedence-only pre-gate (recorded RED, now GREEN).
+  it("allows a caller whose own project role is named 'Project Admin' even without the TestCaseRepository canAddEdit bit", async () => {
+    // The policy's role.name == 'Project Admin' clause (schema.zmodel:1711)
+    // passes with no rolePermissions check.
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: false,
+      accessDenied: false,
+      effectiveRole: { id: 3, name: "Project Admin", rolePermissions: [] },
+      userAccessType: ProjectAccessType.SPECIFIC_ROLE,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
+    // Isolate that the creator fallback is NOT why this caller should
+    // succeed.
+    mockedProjectsFindUnique.mockResolvedValue({ createdBy: "someone-else" });
+
+    const res = await POST(
+      makeRequest("5", "10", { internalIssueId: 20 }),
+      params()
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it("writes nothing and returns 403 for a non-assigned system PROJECTADMIN", async () => {
+    // The policy's PROJECTADMIN clause (schema.zmodel:1715) additionally
+    // requires assignedUsers?[user.id == auth().id].
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: true,
+      accessDenied: false,
+      effectiveRole: null,
+      userAccessType: null,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
+    mockedProjectAssignmentFindUnique.mockResolvedValue(null);
+
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: { externalId: "EXT-PA", key: "EXT-PA", title: "PA Title" },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockedUpsertShell).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockedProjectIntegrationFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("allows an assigned system PROJECTADMIN", async () => {
+    // No-false-403 guard on the new assignment check: the same resolution as
+    // the non-assigned-PROJECTADMIN test above, but with a surviving
+    // ProjectAssignment row.
+    mockedResolveEffectiveProjectAccess.mockResolvedValue({
+      isSystemAdmin: false,
+      isSystemProjectAdmin: true,
+      accessDenied: false,
+      effectiveRole: null,
+      userAccessType: null,
+      groupAccessType: null,
+      projectDefaultAccessType: null,
+      resolved: true,
+    });
+    mockedProjectAssignmentFindUnique.mockResolvedValue({ userId: "user-1" });
+
+    const res = await POST(
+      makeRequest("5", "10", { internalIssueId: 20 }),
+      params()
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockCreate).toHaveBeenCalled();
   });
 });
