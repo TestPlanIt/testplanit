@@ -323,6 +323,18 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/reports/report-builder',
                   ],
                 },
+                // Requirements category (linked label + traceability child)
+                {
+                  type: 'category',
+                  label: 'Requirements',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/requirements', // Link to the main requirements page
+                  },
+                  items: [
+                    'user-guide/projects/requirements-traceability', // Coverage, suspect flags, reports, export
+                  ],
+                },
                 'user-guide/projects/audit-log', // Project-scoped audit trail (ADMIN + assigned PROJECTADMIN)
               ],
             },

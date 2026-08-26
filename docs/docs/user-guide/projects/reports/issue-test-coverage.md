@@ -5,7 +5,7 @@ sidebar_position: 5
 
 # Issue Test Coverage
 
-Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azure DevOps, GitLab, Gitea/Forgejo). Track testing progress for issues and ensure critical items have adequate test coverage.
+Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azure DevOps, GitLab, Gitea/Forgejo). Track testing progress for issues and ensure critical items have adequate test coverage. Issues classified as requirements are excluded from this report — their coverage is reported by the [Requirement Coverage Gaps and Requirement Traceability](../requirements-traceability.md#reports) reports instead.
 
 ## What It Shows
 
