@@ -135,6 +135,7 @@ vi.mock(
   })
 );
 
+import { toast } from "sonner";
 import { LinkedRequirementCasesPanel } from "@/projects/requirements/[projectId]/LinkedRequirementCasesPanel";
 import { LinkedRequirementsPanel } from "./LinkedRequirementsPanel";
 
@@ -669,5 +670,239 @@ describe("LinkedRequirementsPanel", () => {
 
       expect(mockInvalidateQueries).not.toHaveBeenCalled();
     });
+  });
+});
+
+// WR-04 (27.1-05): the case-side link/unlink must invalidate the coverage
+// rollup and covering-cases drill-down its requirement-side twin already
+// invalidates (LinkedRequirementCasesPanel.tsx's own F5/F9 block above),
+// using a predicate that actually matches those keys -- not merely
+// "invalidateQueries was called with something". `useRequirementCaseLinks`'
+// own `invalidateLinkedQueries` predicate (JSON.stringify(key).includes(
+// "RepositoryCases" | "Issue")) is exercised here too (it is the real,
+// unmocked hook) but never matches either new key, so any predicate here
+// that DOES match had to come from this panel's own invalidation calls.
+describe("LinkedRequirementsPanel coverage query invalidation (WR-04)", () => {
+  // Self-contained setup -- this describe block is a sibling of, not nested
+  // inside, `describe("LinkedRequirementsPanel", ...)` above, so that
+  // block's own `beforeEach` is out of scope here and must not be relied on.
+  beforeEach(() => {
+    vi.clearAllMocks();
+    capturedFetchOptions = null;
+    capturedPick = null;
+    setLinkedRequirements([]);
+    setLinkedCases([]);
+    setDismissals([]);
+    setDismissMutation();
+    mockDismissMutateAsync.mockResolvedValue({});
+    mockIssueFindUnique.mockReturnValue({ data: undefined });
+    setLatestExecution(null);
+    global.fetch = vi.fn(async (url: string) => {
+      if (url.includes("/api/model/Issue/count")) {
+        return { ok: true, json: async () => ({ data: 0 }) } as Response;
+      }
+      if (url.includes("/api/model/Issue/findMany")) {
+        return { ok: true, json: async () => ({ data: [] }) } as Response;
+      }
+      if (url.includes("/latest-execution")) {
+        return {
+          ok: true,
+          json: async () => latestExecutionResponse,
+        } as Response;
+      }
+      if (url.includes("/link") || url.includes("/unlink")) {
+        return { ok: true, json: async () => ({ id: 1 }) } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    }) as any;
+  });
+
+  function collectPredicates() {
+    return mockInvalidateQueries.mock.calls
+      .map(([arg]) => arg?.predicate)
+      .filter(
+        (predicate): predicate is (query: { queryKey: unknown[] }) => boolean =>
+          typeof predicate === "function"
+      );
+  }
+
+  // The linked requirement's OWN projectId (11) deliberately differs from
+  // the panel's `projectId` prop (7, the case's project) -- pins down WHICH
+  // project id the invalidation uses. If the panel invalidated on its own
+  // `projectId` prop instead, these assertions would fail.
+  const REQUIREMENT_PROJECT_ID = 11;
+
+  it("invalidates the coverage rollup and the covering-cases drill-down after a link", async () => {
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    fireEvent.click(screen.getByTestId("case-linked-requirements-add"));
+    act(() => {
+      capturedPick!({
+        id: 42,
+        name: "Login must support SSO",
+        isRequirement: true,
+        integrationId: null,
+        requirementDetachedAt: null,
+        projectId: REQUIREMENT_PROJECT_ID,
+      });
+    });
+    fireEvent.click(screen.getByTestId("case-linked-requirements-submit"));
+
+    await waitFor(() => {
+      const linkCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url === "/api/issues/42/link"
+      );
+      expect(linkCall).toBeDefined();
+    });
+
+    const predicates = collectPredicates();
+    expect(predicates.length).toBeGreaterThan(0);
+
+    // Matches the linked requirement's OWN project's coverage rollup...
+    expect(
+      predicates.some((predicate) =>
+        predicate({
+          queryKey: ["requirementCoverage", REQUIREMENT_PROJECT_ID],
+        })
+      )
+    ).toBe(true);
+    // ...and that requirement's covering-cases drill-down...
+    expect(
+      predicates.some((predicate) =>
+        predicate({
+          queryKey: ["requirementCoveringCases", REQUIREMENT_PROJECT_ID, 42],
+        })
+      )
+    ).toBe(true);
+    // ...but not a different project's coverage rollup -- proves the
+    // predicate discriminates rather than matching anything handed to it.
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 999] })
+      )
+    ).toBe(false);
+  });
+
+  it("invalidates the coverage rollup and the covering-cases drill-down after an unlink", async () => {
+    setLinkedRequirements([
+      {
+        id: 55,
+        name: "Removable requirement",
+        isRequirement: true,
+        integrationId: null,
+        requirementDetachedAt: null,
+        projectId: REQUIREMENT_PROJECT_ID,
+      },
+    ]);
+
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    fireEvent.click(screen.getByTestId("case-linked-requirement-remove-55"));
+    fireEvent.click(
+      screen.getByTestId("case-linked-requirement-remove-confirm-55")
+    );
+
+    await waitFor(() => {
+      const unlinkCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url === "/api/issues/55/unlink"
+      );
+      expect(unlinkCall).toBeDefined();
+    });
+
+    const predicates = collectPredicates();
+    expect(predicates.length).toBeGreaterThan(0);
+
+    expect(
+      predicates.some((predicate) =>
+        predicate({
+          queryKey: ["requirementCoverage", REQUIREMENT_PROJECT_ID],
+        })
+      )
+    ).toBe(true);
+    expect(
+      predicates.some((predicate) =>
+        predicate({
+          queryKey: ["requirementCoveringCases", REQUIREMENT_PROJECT_ID, 55],
+        })
+      )
+    ).toBe(true);
+    expect(
+      predicates.some((predicate) =>
+        predicate({
+          queryKey: ["requirementCoveringCases", REQUIREMENT_PROJECT_ID, 999],
+        })
+      )
+    ).toBe(false);
+  });
+
+  it("does not invalidate coverage queries when the link request fails", async () => {
+    global.fetch = vi.fn(async (url: string) => {
+      if (url === "/api/issues/42/link") {
+        return {
+          ok: false,
+          json: async () => ({ error: "Failed to link test case." }),
+        } as Response;
+      }
+      return { ok: true, json: async () => ({ data: [] }) } as Response;
+    }) as any;
+
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    fireEvent.click(screen.getByTestId("case-linked-requirements-add"));
+    act(() => {
+      capturedPick!({
+        id: 42,
+        name: "Login must support SSO",
+        isRequirement: true,
+        integrationId: null,
+        requirementDetachedAt: null,
+        projectId: REQUIREMENT_PROJECT_ID,
+      });
+    });
+    fireEvent.click(screen.getByTestId("case-linked-requirements-submit"));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalled();
+    });
+
+    const predicates = collectPredicates();
+    expect(
+      predicates.some((predicate) =>
+        predicate({
+          queryKey: ["requirementCoverage", REQUIREMENT_PROJECT_ID],
+        })
+      )
+    ).toBe(false);
+  });
+
+  it("short-circuits without throwing when the linked requirement's projectId is null", async () => {
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    fireEvent.click(screen.getByTestId("case-linked-requirements-add"));
+    act(() => {
+      capturedPick!({
+        id: 42,
+        name: "Login must support SSO",
+        isRequirement: true,
+        integrationId: null,
+        requirementDetachedAt: null,
+        projectId: null,
+      });
+    });
+    fireEvent.click(screen.getByTestId("case-linked-requirements-submit"));
+
+    await waitFor(() => {
+      const linkCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url === "/api/issues/42/link"
+      );
+      expect(linkCall).toBeDefined();
+    });
+
+    const predicates = collectPredicates();
+    expect(
+      predicates.some((predicate) =>
+        predicate({ queryKey: ["requirementCoverage", 7] })
+      )
+    ).toBe(false);
   });
 });

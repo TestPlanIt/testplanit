@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { AlertTriangle, Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -38,6 +39,8 @@ import {
 import { RequirementProvenanceBadge } from "@/projects/requirements/[projectId]/RequirementProvenanceBadge";
 import { useCaseLatestExecution } from "~/hooks/useCaseLatestExecution";
 import { useRequirementCaseLinks } from "~/hooks/useRequirementCaseLinks";
+import { invalidateRequirementCoverage } from "~/hooks/useRequirementCoverage";
+import { invalidateRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isLinkageSuspect } from "~/lib/services/suspectLinkage";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
@@ -81,6 +84,7 @@ export function LinkedRequirementsPanel({
   const tGlobal = useTranslations();
   const { link, unlink, isMutating, dismissSuspect, isDismissing } =
     useRequirementCaseLinks();
+  const queryClient = useQueryClient();
 
   const { data: linkedRequirements, refetch } = useClientQueries(
     schema
@@ -185,6 +189,33 @@ export function LinkedRequirementsPanel({
     [linkedRequirementIds, projectId]
   );
 
+  // WR-04 (27.1-05): `useRequirementCaseLinks`' own `invalidateLinkedQueries`
+  // predicate only matches keys whose JSON contains "RepositoryCases" or
+  // "Issue" -- neither ["requirementCoverage", projectId] nor
+  // ["requirementCoveringCases", projectId, requirementId] does, so this
+  // panel -- the case-side surface where the user directly adds/removes the
+  // links coverage is computed FROM -- invalidates both explicitly, mirroring
+  // LinkedRequirementCasesPanel.tsx's identical helper. Takes the linked
+  // REQUIREMENT's own projectId, never this panel's `projectId` prop (the
+  // case's project) -- coverage is computed per requirement project, and a
+  // requirement's projectId is nullable, so a null value short-circuits
+  // rather than invalidating with `undefined`.
+  const invalidateCoverageQueries = useCallback(
+    (
+      requirementProjectId: number | null | undefined,
+      requirementId: number
+    ) => {
+      if (typeof requirementProjectId !== "number") return;
+      invalidateRequirementCoverage(queryClient, requirementProjectId);
+      invalidateRequirementCoveringCases(
+        queryClient,
+        requirementProjectId,
+        requirementId
+      );
+    },
+    [queryClient]
+  );
+
   const handleLink = async (selectedRequirement: Issue | null) => {
     if (!selectedRequirement) return;
     try {
@@ -192,6 +223,10 @@ export function LinkedRequirementsPanel({
       toast.success(t("linkSuccess"));
       setIsAddOpen(false);
       void refetch();
+      invalidateCoverageQueries(
+        selectedRequirement.projectId,
+        selectedRequirement.id
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("linkFailed"));
     }
@@ -203,6 +238,10 @@ export function LinkedRequirementsPanel({
       toast.success(t("unlinkSuccess"));
       setOpenUnlinkId(null);
       void refetch();
+      invalidateCoverageQueries(
+        rows.find((row) => row.id === requirementId)?.projectId,
+        requirementId
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("unlinkFailed"));
     }
