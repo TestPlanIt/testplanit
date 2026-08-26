@@ -40,6 +40,7 @@ import type { Issue } from "~/zenstack/models";
 import {
   formatIssueDisplayText,
   hasDistinctIssueTitle,
+  resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
@@ -108,11 +109,13 @@ const SCALAR_FIELDS: ReadonlyArray<{
     labelKey: "actions.status",
     renderDisplay: (row) => (
       <div data-testid="requirement-display-status">
-        {/* Same `externalStatus ?? status` fallback as the list column
-            (`RequirementsListColumns.tsx`) -- the two surfaces cannot
-            disagree about which string is authoritative on a synced row. */}
+        {/* `resolveRequirementDisplayStatus` (`utils/issueDisplayText.ts`) --
+            the same lock-aware precedence the list column reads through
+            (`RequirementsListColumns.tsx`) -- so the two surfaces still
+            cannot disagree about which string is authoritative, now on a
+            rule that also covers a detached row's own edited status. */}
         <IssueStatusDisplay
-          status={row.externalStatus ?? row.status ?? null}
+          status={resolveRequirementDisplayStatus(row)}
           className="capitalize"
         />
       </div>

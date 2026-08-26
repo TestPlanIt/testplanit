@@ -3,6 +3,7 @@ import {
   formatIssueDisplayText,
   formatRequirementCellText,
   hasDistinctIssueTitle,
+  resolveRequirementDisplayStatus,
 } from "./issueDisplayText";
 
 describe("formatIssueDisplayText", () => {
@@ -112,5 +113,83 @@ describe("formatRequirementCellText", () => {
 
   it("falls back to an empty string when the key is missing", () => {
     expect(formatRequirementCellText({ requirementTitle: null })).toBe("");
+  });
+});
+
+describe("resolveRequirementDisplayStatus", () => {
+  const lockedRow = {
+    isRequirement: true,
+    integrationId: 9,
+    requirementDetachedAt: null,
+  };
+  const detachedRow = {
+    isRequirement: true,
+    integrationId: 9,
+    requirementDetachedAt: new Date().toISOString(),
+  };
+  const nativeRow = {
+    isRequirement: true,
+    integrationId: null,
+    requirementDetachedAt: null,
+  };
+
+  it("prefers externalStatus on a locked row", () => {
+    expect(
+      resolveRequirementDisplayStatus({
+        ...lockedRow,
+        status: "Done",
+        externalStatus: "In Review",
+      })
+    ).toBe("In Review");
+  });
+
+  it("falls back to status on a locked row with a null externalStatus", () => {
+    expect(
+      resolveRequirementDisplayStatus({
+        ...lockedRow,
+        status: "Done",
+        externalStatus: null,
+      })
+    ).toBe("Done");
+  });
+
+  it("prefers status on a detached row", () => {
+    expect(
+      resolveRequirementDisplayStatus({
+        ...detachedRow,
+        status: "Done",
+        externalStatus: "In Review",
+      })
+    ).toBe("Done");
+  });
+
+  it("falls back to externalStatus on a detached row with a null status", () => {
+    expect(
+      resolveRequirementDisplayStatus({
+        ...detachedRow,
+        status: null,
+        externalStatus: "In Review",
+      })
+    ).toBe("In Review");
+  });
+
+  it("returns status for a native row", () => {
+    expect(
+      resolveRequirementDisplayStatus({
+        ...nativeRow,
+        status: "Done",
+        externalStatus: "In Review",
+      })
+    ).toBe("Done");
+  });
+
+  it("returns null when both columns are null", () => {
+    expect(
+      resolveRequirementDisplayStatus({
+        ...lockedRow,
+        status: null,
+        externalStatus: null,
+      })
+    ).toBe(null);
   });
 });

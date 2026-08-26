@@ -615,6 +615,34 @@ describe("RequirementDetailPanel", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows a locally edited status on a detached requirement instead of its stale tracker status", () => {
+    setRequirement({
+      ...detachedRequirement,
+      status: "Done",
+      externalStatus: "In Review",
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);
+
+    const statusDisplay = screen.getByTestId("requirement-display-status");
+    expect(within(statusDisplay).getByText("Done")).toBeInTheDocument();
+    expect(
+      within(statusDisplay).queryByText("In Review")
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps showing the tracker status on a synced, locked requirement", () => {
+    setRequirement({
+      ...lockedRequirement,
+      status: "Done",
+      externalStatus: "In Review",
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={2} />);
+
+    expect(screen.getByTestId("requirement-display-status")).toHaveTextContent(
+      "In Review"
+    );
+  });
+
   it("renders Status and Priority as editable inputs in edit mode", () => {
     setRequirement(nativeRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);

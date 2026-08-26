@@ -1,3 +1,5 @@
+import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
+
 /**
  * How this app writes the label for an issue-backed row.
  *
@@ -60,4 +62,38 @@ export function formatRequirementCellText(row: {
   return requirementTitle && requirementTitle !== key
     ? `${key}: ${requirementTitle}`
     : key;
+}
+
+/**
+ * Which of a requirement's two status columns the app shows, lock-aware.
+ *
+ * `Issue.status` is the column the editable Status field writes
+ * (`RequirementDetailPanel.tsx`'s `Input`, gated by `LOCKED_ISSUE_FIELDS`).
+ * `Issue.externalStatus` is the tracker's own value, written only by the
+ * sync path. While a requirement is locked (`isRequirementLocked`, imported
+ * rather than re-derived here), the tracker is the one source of truth and
+ * `status` cannot be edited anyway, so `externalStatus` wins. Detach is
+ * one-way and deliberately never clears `externalStatus` (the tracker
+ * reference is kept for provenance), so once a requirement is unlocked --
+ * detached or native -- the column the user can actually change has to win
+ * instead, or an edit saved through the now-writable Input would display as
+ * if it silently failed.
+ *
+ * This only matters once the two columns diverge. `SyncService.ts`'s
+ * `upsertIssueFromExternal` writes both `status` and `externalStatus` from
+ * the same `issueData.status` in the same object literal (its `issueFields`
+ * assignment), so a detached requirement nobody has edited yet still
+ * resolves to the identical string under either branch -- nothing visibly
+ * changes for it.
+ */
+export function resolveRequirementDisplayStatus(row: {
+  status?: string | null;
+  externalStatus?: string | null;
+  isRequirement?: boolean | null;
+  integrationId?: number | null;
+  requirementDetachedAt?: Date | string | null;
+}): string | null {
+  return isRequirementLocked(row)
+    ? (row.externalStatus ?? row.status ?? null)
+    : (row.status ?? row.externalStatus ?? null);
 }
