@@ -14,6 +14,7 @@ import {
   flattenRequirementRows,
   matchesRequirementCoverageFilter,
   matchesRequirementSourceFilter,
+  matchesRequirementStatusFilter,
   requirementCoverageSortValue,
   requirementSourceSortValue,
   type RequirementListFilters,
@@ -37,6 +38,7 @@ function makeRequirement(args: {
   parentId?: number | null;
   integrationId?: number | null;
   requirementDetachedAt?: Date | string | null;
+  isRequirement?: boolean;
   externalStatus?: string | null;
   status?: string | null;
   createdAt?: Date | string | null;
@@ -49,6 +51,13 @@ function makeRequirement(args: {
     parentId: args.parentId ?? null,
     integrationId: args.integrationId ?? null,
     requirementDetachedAt: args.requirementDetachedAt ?? null,
+    // Every row this domain's functions ever see is scoped to
+    // REQUIREMENT_SCOPE_WHERE (isRequirement: true) -- defaulting it here
+    // (rather than leaving it undefined) is what makes isRequirementLocked
+    // (resolveRequirementDisplayStatus's own gate) evaluate correctly for a
+    // fixture that sets integrationId, matching every real row this module
+    // ever operates on.
+    isRequirement: args.isRequirement ?? true,
     externalStatus: args.externalStatus ?? null,
     status: args.status ?? null,
     createdAt: args.createdAt ?? null,
@@ -474,6 +483,55 @@ describe("compareRequirements priority sort", () => {
 
     // Tied priorities never get reversed by `direction: "desc"` -- name
     // tie-break stays ascending ("A" before "B").
+    expect(desc.map((r) => r.id)).toEqual([1, 2]);
+  });
+});
+
+describe("compareRequirements status sort", () => {
+  it("orders a detached row by its own status against a locked row by its tracker status", () => {
+    const requirements = [
+      // Locked: resolves to externalStatus ("In Review").
+      makeRequirement({
+        id: 1,
+        name: "Locked Requirement",
+        integrationId: 9,
+        requirementDetachedAt: null,
+        status: "Blocked",
+        externalStatus: "In Review",
+      }),
+      // Detached: resolves to its own edited status ("Done"), NOT the
+      // stale "In Review" still stored in externalStatus.
+      makeRequirement({
+        id: 2,
+        name: "Detached Requirement",
+        integrationId: 9,
+        requirementDetachedAt: new Date(),
+        status: "Done",
+        externalStatus: "In Review",
+      }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    // "Done".localeCompare("In Review") < 0, so the detached row sorts
+    // first ascending -- this only holds if the comparator resolved each
+    // row's OWN displayed value rather than reading both through the same
+    // raw fallback (which would tie both rows at "In Review").
+    const asc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "status", direction: "asc" },
+      coverage: undefined,
+    });
+    expect(asc.map((r) => r.id)).toEqual([2, 1]);
+
+    const desc = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: {},
+      sortConfig: { column: "status", direction: "desc" },
+      coverage: undefined,
+    });
     expect(desc.map((r) => r.id)).toEqual([1, 2]);
   });
 });
@@ -1038,6 +1096,36 @@ describe("matchesRequirementSourceFilter", () => {
   });
 });
 
+describe("matchesRequirementStatusFilter", () => {
+  it("matches a detached row on its own locally edited status, not its stale tracker status", () => {
+    const detached = makeRequirement({
+      id: 1,
+      name: "D",
+      integrationId: 9,
+      requirementDetachedAt: new Date(),
+      status: "Done",
+      externalStatus: "In Review",
+    });
+
+    expect(matchesRequirementStatusFilter("Done", detached)).toBe(true);
+    expect(matchesRequirementStatusFilter("In Review", detached)).toBe(false);
+  });
+
+  it("matches a locked row on its tracker status", () => {
+    const locked = makeRequirement({
+      id: 2,
+      name: "L",
+      integrationId: 9,
+      requirementDetachedAt: null,
+      status: "Done",
+      externalStatus: "In Review",
+    });
+
+    expect(matchesRequirementStatusFilter("In Review", locked)).toBe(true);
+    expect(matchesRequirementStatusFilter("Done", locked)).toBe(false);
+  });
+});
+
 describe("collectCoverageStatusOptions", () => {
   it("unions statuses across requirements, summing counts per statusId, ordered by count descending", () => {
     const requirements = [
@@ -1097,6 +1185,31 @@ describe("collectRequirementStatusOptions", () => {
       "In Progress",
       "open",
     ]);
+  });
+
+  it("offers the locally edited status for a detached row and the tracker status for a locked one", () => {
+    const detached = makeRequirement({
+      id: 1,
+      name: "D",
+      integrationId: 9,
+      requirementDetachedAt: new Date(),
+      status: "Done",
+      externalStatus: "In Review",
+    });
+    const locked = makeRequirement({
+      id: 2,
+      name: "L",
+      integrationId: 5,
+      requirementDetachedAt: null,
+      status: "Blocked",
+      externalStatus: "In Review",
+    });
+
+    const options = collectRequirementStatusOptions([detached, locked]);
+
+    expect(options.filter((o) => o === "Done")).toHaveLength(1);
+    expect(options.filter((o) => o === "In Review")).toHaveLength(1);
+    expect(options).not.toContain("Blocked");
   });
 });
 

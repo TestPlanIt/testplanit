@@ -57,7 +57,10 @@ import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
 import { ItemTypes } from "~/types/dndTypes";
 import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { cn } from "~/utils";
-import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import {
+  formatIssueDisplayText,
+  resolveRequirementDisplayStatus,
+} from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { RequirementProvenanceBadge } from "./RequirementProvenanceBadge";
 import {
@@ -227,8 +230,13 @@ export function useRequirementsListColumns({
       },
       {
         id: "status",
-        // Byte-identical to MemberIssuesColumns.tsx's own status cell.
-        accessorFn: (row) => row.externalStatus ?? row.status ?? "",
+        // NOT byte-identical to MemberIssuesColumns.tsx's own status cell --
+        // a requirement can be detached from its tracker and then edited
+        // locally, a state MemberIssuesColumns has no concept of, so this
+        // column reads through the lock-aware
+        // `resolveRequirementDisplayStatus` (`utils/issueDisplayText.ts`)
+        // instead of an unconditional externalStatus-first fallback.
+        accessorFn: (row) => resolveRequirementDisplayStatus(row) ?? "",
         header: tColumnStatus,
         enableSorting: true,
         size: 120,
@@ -236,7 +244,7 @@ export function useRequirementsListColumns({
         maxSize: 200,
         cell: ({ row }) => (
           <IssueStatusDisplay
-            status={row.original.externalStatus ?? row.original.status ?? null}
+            status={resolveRequirementDisplayStatus(row.original)}
             className="capitalize"
           />
         ),

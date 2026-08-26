@@ -472,19 +472,47 @@ describe("useRequirementsListColumns -- column contract", () => {
     expect(absentValue).toBe(-1);
   });
 
-  it("status accessorFn prefers externalStatus over status and returns an empty string when both are null", () => {
+  it("status accessorFn resolves through the lock-aware precedence rule: externalStatus on a locked row, status on a detached one", () => {
     const { result } = renderHook(() => useRequirementsListColumns(baseArgs()));
     const accessorFn = (result.current.find((c) => c.id === "status") as any)
       .accessorFn;
 
+    // Locked (synced, non-detached): the tracker value wins.
     expect(
       accessorFn(
-        makeRow({ id: 1, externalStatus: "In Review", status: "open" })
+        makeRow({
+          id: 1,
+          integrationId: 9,
+          requirementDetachedAt: null,
+          externalStatus: "In Review",
+          status: "open",
+        })
       )
     ).toBe("In Review");
     expect(
-      accessorFn(makeRow({ id: 1, externalStatus: null, status: "open" }))
+      accessorFn(
+        makeRow({
+          id: 1,
+          integrationId: 9,
+          requirementDetachedAt: null,
+          externalStatus: null,
+          status: "open",
+        })
+      )
     ).toBe("open");
+    // Detached: the locally editable column wins, even though a stale
+    // externalStatus is still stored on the row.
+    expect(
+      accessorFn(
+        makeRow({
+          id: 2,
+          integrationId: 9,
+          requirementDetachedAt: new Date().toISOString(),
+          externalStatus: "In Review",
+          status: "Done",
+        })
+      )
+    ).toBe("Done");
     expect(
       accessorFn(makeRow({ id: 1, externalStatus: null, status: null }))
     ).toBe("");

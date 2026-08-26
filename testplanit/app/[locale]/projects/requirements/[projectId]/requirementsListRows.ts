@@ -4,7 +4,10 @@ import type {
   RequirementCoverageBreakdown,
   RequirementCoverageStatusCount,
 } from "~/lib/services/requirementCoverage";
-import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import {
+  formatIssueDisplayText,
+  resolveRequirementDisplayStatus,
+} from "~/utils/issueDisplayText";
 import type { Issue } from "~/zenstack/models";
 
 /**
@@ -154,8 +157,8 @@ export type RequirementSourceFilter = "" | "MANUAL" | "SYNCED" | "DETACHED";
 
 export interface RequirementListFilters {
   coverage: RequirementCoverageFilter;
-  /** Exact match against `externalStatus ?? status ?? ""`; `""` means every
-   *  status, never a literal empty-status match. */
+  /** Exact match against `resolveRequirementDisplayStatus`'s own lock-aware
+   *  value; `""` means every status, never a literal empty-status match. */
   status: string;
   source: RequirementSourceFilter;
 }
@@ -187,14 +190,15 @@ export function matchesRequirementCoverageFilter(
   return true;
 }
 
-/** Exact match against the same accessor the Status column sorts on
- *  (`compareRequirements`'s own "status" case below). */
+/** Exact match against the same lock-aware value the Status column sorts on
+ *  and displays (`resolveRequirementDisplayStatus`, `compareRequirements`'s
+ *  own "status" case below). */
 export function matchesRequirementStatusFilter(
   filter: string,
   requirement: Issue
 ): boolean {
   if (!filter) return true;
-  return (requirement.externalStatus ?? requirement.status ?? "") === filter;
+  return (resolveRequirementDisplayStatus(requirement) ?? "") === filter;
 }
 
 // Indexed by `requirementSourceSortValue`'s own 0/1/2 ranking (Native,
@@ -400,17 +404,18 @@ export function collectCoverageStatusOptions(
 }
 
 /**
- * The distinct non-empty `externalStatus ?? status` values present across
- * the loaded requirements, de-duplicated case-insensitively but preserving
- * the first-seen casing, sorted case-insensitively -- verbatim in shape to
- * the milestone comparator's own `issueTypes` collector (lines 313-325).
+ * The distinct non-empty `resolveRequirementDisplayStatus` values present
+ * across the loaded requirements, de-duplicated case-insensitively but
+ * preserving the first-seen casing, sorted case-insensitively -- verbatim in
+ * shape to the milestone comparator's own `issueTypes` collector (lines
+ * 313-325).
  */
 export function collectRequirementStatusOptions(
   requirements: Issue[]
 ): string[] {
   const seen = new Map<string, string>();
   requirements.forEach((requirement) => {
-    const value = requirement.externalStatus ?? requirement.status;
+    const value = resolveRequirementDisplayStatus(requirement);
     if (value && value.trim() !== "") {
       const lower = value.toLowerCase();
       if (!seen.has(lower)) seen.set(lower, value);
@@ -474,8 +479,8 @@ function compareRequirements(
   let primary: number;
   switch (sortConfig.column) {
     case "status": {
-      const aStatus = a.externalStatus ?? a.status ?? "";
-      const bStatus = b.externalStatus ?? b.status ?? "";
+      const aStatus = resolveRequirementDisplayStatus(a) ?? "";
+      const bStatus = resolveRequirementDisplayStatus(b) ?? "";
       primary = aStatus.localeCompare(bStatus);
       break;
     }
