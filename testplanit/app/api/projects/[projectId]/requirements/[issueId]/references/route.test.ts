@@ -24,6 +24,7 @@ vi.mock("~/lib/db", () => ({
   baseDb: {
     issue: { findFirst: vi.fn() },
     projectIntegration: { findFirst: vi.fn() },
+    projects: { findUnique: vi.fn() },
   },
 }));
 
@@ -35,6 +36,10 @@ vi.mock("~/lib/services/linkedIssueUpsert", () => ({
   upsertLinkedIssueShell: vi.fn(),
 }));
 
+vi.mock("~/lib/services/areaPermission", () => ({
+  userHasAreaPermission: vi.fn(),
+}));
+
 vi.mock("~/lib/utils/errors", () => ({
   isUniqueConstraintError: vi.fn(),
 }));
@@ -43,6 +48,7 @@ import { getServerSession } from "next-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
+import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 
@@ -57,12 +63,16 @@ const mockedFindFirst = baseDb.issue.findFirst as unknown as ReturnType<
 >;
 const mockedProjectIntegrationFindFirst = baseDb.projectIntegration
   .findFirst as unknown as ReturnType<typeof vi.fn>;
+const mockedProjectsFindUnique = baseDb.projects
+  .findUnique as unknown as ReturnType<typeof vi.fn>;
 const mockedGetEnhancedDb = getEnhancedDb as unknown as ReturnType<
   typeof vi.fn
 >;
 const mockedUpsertShell = upsertLinkedIssueShell as unknown as ReturnType<
   typeof vi.fn
 >;
+const mockedUserHasAreaPermission =
+  userHasAreaPermission as unknown as ReturnType<typeof vi.fn>;
 const mockedIsUniqueConstraintError =
   isUniqueConstraintError as unknown as ReturnType<typeof vi.fn>;
 
@@ -108,6 +118,8 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
       return null;
     });
     mockedProjectIntegrationFindFirst.mockResolvedValue({ integrationId: 42 });
+    mockedProjectsFindUnique.mockResolvedValue({ createdBy: "someone-else" });
+    mockedUserHasAreaPermission.mockResolvedValue(true);
     mockedUpsertShell.mockResolvedValue({ id: 99 });
     mockCreate = vi.fn().mockResolvedValue({
       requirementId: 10,
@@ -198,6 +210,65 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
 
     expect(res.status).toBe(404);
     expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing and returns 403 when the caller lacks canAddEdit on an external pick", async () => {
+    mockedUserHasAreaPermission.mockResolvedValue(false);
+
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: { externalId: "EXT-1", key: "EXT-1", title: "Title" },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockedUpsertShell).not.toHaveBeenCalled();
+    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockedProjectIntegrationFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("writes nothing and returns 403 when the caller lacks canAddEdit on an internal pick", async () => {
+    mockedUserHasAreaPermission.mockResolvedValue(false);
+
+    const res = await POST(
+      makeRequest("5", "10", { internalIssueId: 20 }),
+      params()
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it("allows a project creator who has no explicit canAddEdit grant", async () => {
+    mockedUserHasAreaPermission.mockResolvedValue(false);
+    mockedProjectsFindUnique.mockResolvedValue({ createdBy: "user-1" });
+
+    const res = await POST(
+      makeRequest("5", "10", { internalIssueId: 20 }),
+      params()
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockCreate).toHaveBeenCalled();
+  });
+
+  it("returns 400 for a self-external-pick before the shell upsert runs", async () => {
+    mockedFindFirst.mockImplementation(async ({ where }: any) => {
+      if (where.id === 10) return { id: 10 };
+      if (where.externalId === "SELF-1") return { id: 10 };
+      return null;
+    });
+
+    const res = await POST(
+      makeRequest("5", "10", {
+        external: { externalId: "SELF-1", key: "SELF-1", title: "Self" },
+      }),
+      params()
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedUpsertShell).not.toHaveBeenCalled();
   });
 
   it("creates the join row through the enhanced client for an internal pick", async () => {

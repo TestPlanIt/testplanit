@@ -3,10 +3,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
+import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
 import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
+import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
 
 // The external-pick shape a manual traceability reference can carry —
@@ -49,9 +51,10 @@ const referencesBodySchema = z
  * Gate order, fixed: 401 (no session) -> 400 (id parsing, body validation,
  * self-reference) -> 403 (resolveViewerProjectScope excludes projectId, or
  * excludes the referenced internal issue's own project) -> 404 (identity
- * pre-check) -> 200/500. Deliberately NOT gated on the requirement-lock
- * predicate (D-11): references are TestPlanIt-side annotations like
- * Issue.note and must work on a synced, locked requirement.
+ * pre-check) -> 403 (write permission) -> 400 (self-external-pick) ->
+ * 200/500. Deliberately NOT gated on the requirement-lock predicate (D-11):
+ * references are TestPlanIt-side annotations like Issue.note and must work
+ * on a synced, locked requirement.
  */
 export async function POST(
   request: NextRequest,
@@ -137,6 +140,32 @@ export async function POST(
       );
     }
 
+    // Write authorization runs before either branch and before any side
+    // effect -- baseDb carries no policy plugin, so the enhanced-client join
+    // create below is the FINAL enforcement, not the first. The model
+    // policy's own 'create' allow (schema.zmodel:1708-1728) is this same
+    // TestCaseRepository/canAddEdit ladder PLUS the project creator, so the
+    // creator clause below is required: omitting it would make this
+    // pre-gate narrower than the policy it fronts and 403 a caller the
+    // policy allows. The pre-gate being slightly broader than the policy
+    // (the ladder also grants PROJECTADMIN project-wide) is intentional and
+    // safe -- the enhanced-client create is still the final enforcement.
+    const mayEdit = await userHasAreaPermission(
+      session.user.id,
+      projectId,
+      ApplicationArea.TestCaseRepository,
+      "canAddEdit"
+    );
+    if (!mayEdit) {
+      const project = await baseDb.projects.findUnique({
+        where: { id: projectId },
+        select: { createdBy: true },
+      });
+      if (project?.createdBy !== session.user.id) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     let referencedIssueId: number;
 
     if (validatedData.internalIssueId !== undefined) {
@@ -180,6 +209,28 @@ export async function POST(
         );
       }
 
+      // Self-external-pick guard: resolve the dedup target BEFORE the
+      // upsert runs, so a client-supplied externalId that happens to match
+      // the requirement's own shell 400s with zero mutation, instead of the
+      // shell update landing first and only THEN tripping the model's
+      // @@deny('create', requirementId == referencedIssueId) as a 500 with
+      // the mutation already persisted (this is an identity lookup on the
+      // dedup key -- the file is already in
+      // issueRoleScope.containment.test.ts's EXEMPT_REQUIREMENT_SCOPED_FILES).
+      const dedupTarget = await baseDb.issue.findFirst({
+        where: {
+          externalId: external.externalId,
+          integrationId: activeIntegration.integrationId,
+        },
+        select: { id: true },
+      });
+      if (dedupTarget?.id === issueId) {
+        return NextResponse.json(
+          { error: "A requirement cannot reference itself" },
+          { status: 400 }
+        );
+      }
+
       const trackerFields = {
         name: external.key || external.externalId,
         title: external.title ?? external.key ?? external.externalId,
@@ -210,8 +261,9 @@ export async function POST(
 
     // Join write on the ENHANCED client — its own ZenStack policy (the
     // canAddEdit mirror, the self-reference @@deny, the unique-pair
-    // constraint) is the actual authorization decision, not a hand-rolled
-    // check (T-27-07-01).
+    // constraint) is the FINAL policy enforcement behind the explicit
+    // write-permission pre-gate above, not the first and only decision
+    // (T-27-07-01).
     try {
       const enhancedDb = await getEnhancedDb(session);
       const created = await enhancedDb.requirementIssueReference.create({
