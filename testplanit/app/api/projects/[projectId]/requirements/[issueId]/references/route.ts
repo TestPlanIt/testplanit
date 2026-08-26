@@ -6,7 +6,10 @@ import { baseDb } from "~/lib/db";
 import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
-import { isUniqueConstraintError } from "~/lib/utils/errors";
+import {
+  isAccessPolicyError,
+  isUniqueConstraintError,
+} from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { ApplicationArea } from "~/zenstack/models";
 import { z } from "zod/v4";
@@ -302,6 +305,17 @@ export async function POST(
       // row.
       if (isUniqueConstraintError(createError)) {
         return NextResponse.json({ created: false }, { status: 200 });
+      }
+      // A policy denial on the join create (not a unique violation) is the
+      // enhanced client's final enforcement rejecting the write — surface
+      // it as 403, not the generic 500 catch below. The model's own
+      // @@deny('create', requirementId == referencedIssueId) would also
+      // surface through this branch, but is unreachable here: both
+      // self-pick shapes are already rejected with a 400 before the write
+      // (the self-reference check above, and the self-external-pick dedup
+      // guard in the external branch).
+      if (isAccessPolicyError(createError)) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       throw createError;
     }

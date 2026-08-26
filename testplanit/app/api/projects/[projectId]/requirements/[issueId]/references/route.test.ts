@@ -42,6 +42,7 @@ vi.mock("~/lib/services/areaPermission", () => ({
 
 vi.mock("~/lib/utils/errors", () => ({
   isUniqueConstraintError: vi.fn(),
+  isAccessPolicyError: vi.fn(),
 }));
 
 import { getServerSession } from "next-auth";
@@ -50,7 +51,10 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { baseDb } from "~/lib/db";
 import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
-import { isUniqueConstraintError } from "~/lib/utils/errors";
+import {
+  isUniqueConstraintError,
+  isAccessPolicyError,
+} from "~/lib/utils/errors";
 
 import { POST } from "./route";
 
@@ -75,6 +79,9 @@ const mockedUserHasAreaPermission =
   userHasAreaPermission as unknown as ReturnType<typeof vi.fn>;
 const mockedIsUniqueConstraintError =
   isUniqueConstraintError as unknown as ReturnType<typeof vi.fn>;
+const mockedIsAccessPolicyError = isAccessPolicyError as unknown as ReturnType<
+  typeof vi.fn
+>;
 
 function makeRequest(
   projectId = "5",
@@ -130,6 +137,7 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
       requirementIssueReference: { create: mockCreate },
     });
     mockedIsUniqueConstraintError.mockReturnValue(false);
+    mockedIsAccessPolicyError.mockReturnValue(false);
   });
 
   it("returns 401 without a session", async () => {
@@ -437,5 +445,20 @@ describe("POST /api/projects/[projectId]/requirements/[issueId]/references", () 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ created: false });
+  });
+
+  it("returns 403 when the join create is denied by policy", async () => {
+    mockCreate.mockRejectedValue(new Error("denied"));
+    mockedIsUniqueConstraintError.mockReturnValue(false);
+    mockedIsAccessPolicyError.mockReturnValue(true);
+
+    const res = await POST(
+      makeRequest("5", "10", { internalIssueId: 20 }),
+      params()
+    );
+
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body).toEqual({ error: "Forbidden" });
   });
 });

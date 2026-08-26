@@ -5,6 +5,7 @@ import {
   isUniqueConstraintError,
   isNotFoundError,
   isForeignKeyError,
+  isAccessPolicyError,
   ReviewGateError,
   AlreadyPendingError,
   IneligibleReviewerError,
@@ -68,6 +69,22 @@ describe("errors helpers", () => {
       expect(isNotFoundError(value)).toBe(false);
       expect(isForeignKeyError(value)).toBe(false);
     }
+  });
+
+  it("detects access-policy denial errors", () => {
+    const err = new ORMError(
+      ORMErrorReason.REJECTED_BY_POLICY,
+      "denied by policy"
+    );
+    expect(isAccessPolicyError(err)).toBe(true);
+  });
+
+  it("rejects a not-found ORMError as an access-policy denial", () => {
+    expect(isAccessPolicyError(notFoundError())).toBe(false);
+  });
+
+  it("rejects a plain Error as an access-policy denial", () => {
+    expect(isAccessPolicyError(new Error("nope"))).toBe(false);
   });
 });
 
