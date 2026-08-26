@@ -461,7 +461,7 @@ describe("RequirementDetailPanel", () => {
     expect(JSON.parse(editor.getAttribute("data-content")!)).toEqual(sampleDoc);
   });
 
-  it("parses a legacy string note and a structured JSON note identically", () => {
+  it("parses a JSON-string note and a structured object note identically", () => {
     const legacyRow = {
       ...lockedRequirement,
       id: 4,
@@ -484,6 +484,42 @@ describe("RequirementDetailPanel", () => {
       .getAttribute("data-content");
 
     expect(JSON.parse(legacyContent!)).toEqual(JSON.parse(structuredContent!));
+  });
+
+  it("renders a requirement whose note is a plain non-JSON string", () => {
+    setRequirement({
+      ...lockedRequirement,
+      id: 6,
+      note: "Imported from the tracker",
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={6} />);
+
+    expect(screen.getByTestId("requirement-detail-panel")).toBeInTheDocument();
+    const content = screen
+      .getByTestId("tiptap-note")
+      .getAttribute("data-content");
+    expect(JSON.stringify(JSON.parse(content!))).toContain(
+      "Imported from the tracker"
+    );
+  });
+
+  it("saves an edited non-JSON note as a Tiptap document", async () => {
+    setRequirement({
+      ...lockedRequirement,
+      id: 6,
+      note: "Imported from the tracker",
+    });
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={6} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+    fireEvent.click(screen.getByTestId("tiptap-note-simulate-edit"));
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalled();
+    });
+    const payload = mockUpdateMutateAsync.mock.calls[0][0].data;
+    expect(payload.note.type).toBe("doc");
   });
 
   it("keeps the note editable on a synced, non-detached requirement", () => {

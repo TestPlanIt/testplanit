@@ -35,6 +35,10 @@ import {
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import {
+  ensureTipTapJSON,
+  serializeTipTapJSON,
+} from "~/utils/tiptapConversion";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
 import {
@@ -150,19 +154,13 @@ function buildResetValues(row: RequirementRow): RequirementDetailFormData {
     title: row.title ?? "",
     status: row.status ?? "",
     priority: row.priority ?? "",
-    // Legacy-string-vs-JSON parse guard, forked verbatim from
-    // Milestones.docs (app/[locale]/projects/milestones/[projectId]/[milestoneId]/page.tsx,
-    // its own initial-load reset): a `note` already stored as a JSON string
-    // is kept as-is, an object is re-stringified, and a null note becomes
-    // the canonical empty doc. Both original shapes round-trip through the
-    // same `JSON.parse` on render below, so a legacy string note and a
-    // structured JSON note render identically.
-    note:
-      typeof row.note === "string"
-        ? row.note
-        : row.note
-          ? JSON.stringify(row.note)
-          : JSON.stringify(emptyEditorContent),
+    // `Issue.note` is a `Json?` column that can legally hold a structured
+    // document, a JSON-stringified document, a bare string written by an
+    // API client, or null; the load path normalises all four to one
+    // serialized document exactly once, so every downstream reader -- the
+    // editor, the dirty comparison and the save payload -- sees a single
+    // shape.
+    note: serializeTipTapJSON(row.note),
   };
 }
 
@@ -375,7 +373,7 @@ export default function RequirementDetailPanel({
         dirtyFields.note &&
         data.note !== buildResetValues(requirement).note
       ) {
-        updateData.note = JSON.parse(data.note);
+        updateData.note = ensureTipTapJSON(data.note);
       }
       // An empty title makes `hasDistinctIssueTitle` false, which removes
       // the Title field from this panel and leaves no way back through it,
@@ -682,11 +680,7 @@ export default function RequirementDetailPanel({
                   <FormControl>
                     <TipTapEditor
                       key={`editing-note-${isEditMode}`}
-                      content={
-                        field.value
-                          ? JSON.parse(field.value)
-                          : emptyEditorContent
-                      }
+                      content={ensureTipTapJSON(field.value)}
                       onUpdate={(newContent) => {
                         if (isEditMode) {
                           field.onChange(JSON.stringify(newContent));
