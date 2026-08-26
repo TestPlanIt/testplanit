@@ -636,6 +636,8 @@ export function ManageExternalIssues({
         projectId={projectId}
         linkedIssueIds={linkedIssues.map((issue) => issue.key)}
         iterationContext={iterationContext}
+        // WR-01: onIssueSelected below only handles issue.isExternal.
+        allowInternalPicks={false}
         onIssueSelected={(issue) => {
           if (issue.isExternal) {
             void handleLinkIssue({

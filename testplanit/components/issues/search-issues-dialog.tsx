@@ -87,6 +87,16 @@ interface SearchIssuesDialogProps {
    */
   includeRequirements?: boolean;
   /**
+   * WR-01: consumers whose `onIssueSelected` cannot accept an internal
+   * pick (their handler only branches on `issue.isExternal`, with no
+   * else) set this `false`. That restores the pre-2f2f92bd6 behaviour,
+   * where internal search was unreachable while an integration was
+   * active, instead of leaving the "Internal Issues" chip reachable but
+   * silently dropping the selection. Defaults to `true` so every
+   * consumer that already handles both kinds is unaffected.
+   */
+  allowInternalPicks?: boolean;
+  /**
    * INT-05: when set, "Create New Issue" opens with the title +
    * description prefilled from the failed iteration's parameter values
    * and a deep link. The dialog fetches the prefill from
@@ -110,6 +120,7 @@ export function SearchIssuesDialog({
   onIssuesSelected,
   linkedIssueIds = [],
   includeRequirements = false,
+  allowInternalPicks = true,
   iterationContext,
 }: SearchIssuesDialogProps) {
   const t = useTranslations();
@@ -667,8 +678,10 @@ export function SearchIssuesDialog({
 
             {/* Source toggle: reachable internal search while an
                 integration is active. Hidden without an integration -- the
-                dialog is already internal-only then. */}
-            {activeIntegration && (
+                dialog is already internal-only then. WR-01: also hidden
+                when allowInternalPicks is false, for consumers whose
+                onIssueSelected cannot accept an internal pick. */}
+            {activeIntegration && allowInternalPicks && (
               <div className="flex flex-wrap gap-1 px-0">
                 <Badge
                   variant={searchExternal ? "outline" : "default"}

@@ -5858,6 +5858,8 @@ export function GenerateTestCasesWizard({
         open={isSearchOpen}
         onOpenChange={setIsSearchOpen}
         projectId={projectId}
+        // WR-01: onIssueSelected below only handles issue.isExternal.
+        allowInternalPicks={false}
         onIssueSelected={(issue) => {
           if (issue.isExternal) {
             const selectedIssueData = {

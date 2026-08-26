@@ -913,4 +913,38 @@ describe("SearchIssuesDialog", () => {
       expect(screen.queryByTestId("create-issue-dialog")).toBeNull();
     });
   });
+
+  describe("WR-01: internal-pick capable consumers", () => {
+    const activeIntegration = {
+      id: "pi-wr01",
+      integrationId: 42,
+      isActive: true,
+      config: {},
+      integration: { id: 42, name: "My Jira", provider: "JIRA" },
+    };
+
+    beforeEach(() => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [activeIntegration],
+      });
+    });
+
+    it("renders the internal source chip when allowInternalPicks is omitted", () => {
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      expect(screen.getByTestId("issue-source-internal")).toBeTruthy();
+    });
+
+    it("renders neither source chip when allowInternalPicks is false", () => {
+      render(
+        <SearchIssuesDialog {...defaultProps} allowInternalPicks={false} />
+      );
+
+      expect(screen.queryByTestId("issue-source-internal")).toBeNull();
+      expect(screen.queryByTestId("issue-source-external")).toBeNull();
+      // Hides the toggle only — the dialog itself (and tracker-only search)
+      // still renders.
+      expect(screen.getByRole("textbox")).toBeTruthy();
+    });
+  });
 });
