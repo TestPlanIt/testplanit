@@ -1135,6 +1135,88 @@ describe("RequirementsListView", () => {
     });
   });
 
+  // 25-18 gap closure (UAT gap 7): the detail panel's own route to this
+  // list's existing delete dialog. `openDeleteDialog` must reuse
+  // `handleRequestDelete` (not a second `setDeleteDialogState` call), so the
+  // panel path and the row-action path can never drift on the descendant
+  // count or the dialog's state shape.
+  describe("openDeleteDialog (panel-driven delete, 25-18 gap closure)", () => {
+    beforeEach(() => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Parent Requirement" }),
+          makeRequirement({ id: 2, name: "Child A", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+    });
+
+    it("resolves the same descendant count as the row action, for the same id", () => {
+      // Row-action path: open through the row's own actions menu.
+      const { unmount } = renderView();
+      openMenu(screen.getByTestId("requirement-actions-trigger-1"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-1"));
+      const rowActionText = screen.getByTestId(
+        "delete-requirement-dialog"
+      ).textContent;
+      unmount();
+
+      // Panel path: open through the imperative handle, for the same id.
+      const listRef = React.createRef<RequirementsListViewHandle>();
+      renderView({ ref: listRef });
+      act(() => {
+        listRef.current?.openDeleteDialog(1);
+      });
+      const panelPathText = screen.getByTestId(
+        "delete-requirement-dialog"
+      ).textContent;
+
+      // Not merely "both greater than zero" -- the SAME text (which
+      // embeds the descendant count) proves the two entry points are
+      // pinned to one number, not two that happen to agree today.
+      expect(panelPathText).toBe(rowActionText);
+    });
+
+    it("clears the selection when the requirement deleted through openDeleteDialog is the selected one", async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ deletedIds: [1, 2] }),
+      }) as any;
+
+      const onSelectRequirement = vi.fn();
+      const listRef = React.createRef<RequirementsListViewHandle>();
+      renderView({
+        ref: listRef,
+        selectedRequirementId: 1,
+        onSelectRequirement,
+      });
+
+      act(() => {
+        listRef.current?.openDeleteDialog(1);
+      });
+      fireEvent.click(screen.getByTestId("delete-requirement-confirm"));
+
+      await waitFor(() =>
+        expect(onSelectRequirement).toHaveBeenCalledWith(null)
+      );
+    });
+
+    it("no-ops when the id is not present in this list's current requirement set", () => {
+      const listRef = React.createRef<RequirementsListViewHandle>();
+      renderView({ ref: listRef });
+
+      act(() => {
+        listRef.current?.openDeleteDialog(999);
+      });
+
+      expect(
+        screen.queryByTestId("delete-requirement-dialog")
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe("error state", () => {
     it("renders requirements-list-error (not a spinner) and retry calls refetch", () => {
       const refetch = vi.fn();

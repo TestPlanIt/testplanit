@@ -160,19 +160,42 @@ vi.mock("@/components/ui/tooltip", () => ({
 // The action bar's Add Requirement button (gap closure 26.2-16, UAT gap 13)
 // reaches the list's dialog through a ref -- the mock must be `forwardRef`
 // so passing `ref={listViewRef}` in the real component doesn't warn, and so
-// a test can assert the button actually drives `openCreateRoot`.
+// a test can assert the button actually drives `openCreateRoot`. 25-18 adds
+// `openDeleteDialog` to the same handle, and captures the props the real
+// list receives (`onSelectRequirement`) so a test can drive a selection --
+// the mock renders a plain button wired to it, since nothing else in this
+// file can trigger `setSelectedRequirementId` on the real workspace.
 const mockOpenCreateRoot = vi.fn();
+const mockOpenDeleteDialog = vi.fn();
 vi.mock("./RequirementsListView", () => ({
-  default: React.forwardRef(function MockRequirementsListView(_props, ref) {
+  default: React.forwardRef(function MockRequirementsListView(props: any, ref) {
     React.useImperativeHandle(ref, () => ({
       openCreateRoot: mockOpenCreateRoot,
+      openDeleteDialog: mockOpenDeleteDialog,
     }));
-    return <div data-testid="mock-requirements-list-view" />;
+    return (
+      <div data-testid="mock-requirements-list-view">
+        <button
+          type="button"
+          data-testid="mock-select-requirement"
+          onClick={() => props.onSelectRequirement(1)}
+        >
+          select
+        </button>
+      </div>
+    );
   }),
 }));
 
+// Captures every render's props so a test can assert what the workspace
+// hands the panel (25-18: `onRequestDelete`), without needing the real
+// panel's own heavy ZenStack surface.
+const capturedDetailPanelProps: any[] = [];
 vi.mock("./RequirementDetailPanel", () => ({
-  default: () => <div data-testid="mock-requirement-detail-panel" />,
+  default: (props: any) => {
+    capturedDetailPanelProps.push(props);
+    return <div data-testid="mock-requirement-detail-panel" />;
+  },
 }));
 
 import RequirementsWorkspace from "./RequirementsWorkspace";
@@ -211,6 +234,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
       isExporting: false,
       handleExport: vi.fn(),
     });
+    capturedDetailPanelProps.length = 0;
   });
 
   it("offers a traceability PDF export action in the workspace header", () => {
@@ -341,5 +365,39 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     expect(mockToastError).toHaveBeenCalledWith(
       "requirements.export.exportFailed"
     );
+  });
+
+  // 25-18 gap closure (25-UAT gap 7): a requirement could be deleted from
+  // the list's own row action, but not from the detail panel -- the
+  // operator's own words, "just like test cases". The panel holds no
+  // delete logic of its own (no fetch, no mutation, no descendant count);
+  // it opens the SAME dialog the row action opens, through this ref.
+  describe("delete handler wiring (25-18 gap closure)", () => {
+    it("hands the detail panel a delete handler that opens the list's delete dialog", () => {
+      render(<RequirementsWorkspace projectId="42" />);
+
+      fireEvent.click(screen.getByTestId("mock-select-requirement"));
+
+      expect(
+        screen.getByTestId("mock-requirement-detail-panel")
+      ).toBeInTheDocument();
+      const lastProps = capturedDetailPanelProps.at(-1);
+      expect(lastProps.requirementId).toBe(1);
+      expect(typeof lastProps.onRequestDelete).toBe("function");
+
+      lastProps.onRequestDelete();
+      expect(mockOpenDeleteDialog).toHaveBeenCalledWith(1);
+    });
+
+    it("does not hand the detail panel a delete handler for a non-admin viewer", () => {
+      mockIsProjectAdmin = false;
+
+      render(<RequirementsWorkspace projectId="42" />);
+
+      fireEvent.click(screen.getByTestId("mock-select-requirement"));
+
+      const lastProps = capturedDetailPanelProps.at(-1);
+      expect(lastProps.onRequestDelete).toBeUndefined();
+    });
   });
 });

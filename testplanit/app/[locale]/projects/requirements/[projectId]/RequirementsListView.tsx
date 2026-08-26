@@ -88,6 +88,12 @@ interface RequirementsListViewProps extends RequirementSelection {
 export interface RequirementsListViewHandle {
   /** Opens the Create Requirement dialog with parentId=null. */
   openCreateRoot: () => void;
+  /** Opens the Delete Requirement dialog for `issueId`, with the descendant
+   *  count resolved from this list's own in-memory map -- the same number
+   *  the row action shows (25-18 gap closure: the detail panel's own route
+   *  to the same dialog the row action opens). No-ops when the id is not in
+   *  the current set. */
+  openDeleteDialog: (issueId: number) => void;
 }
 
 // Gap closure 26.2-16 (UAT gap 9 rebuild): the attribute + row-lookup
@@ -499,24 +505,20 @@ const RequirementsListView = forwardRef<
     });
   }, []);
 
-  // The page action bar's Add Requirement button (gap closure 26.2-16, UAT
-  // gap 13) lives in `RequirementsWorkspace.tsx`, outside this component --
-  // it reaches this same dialog state through this ref instead of the
-  // dialog itself moving up a level.
-  useImperativeHandle(
-    ref,
-    () => ({
-      openCreateRoot: () => {
-        setCreateDialogState({ open: true, parentId: null, parentName: null });
-      },
-    }),
-    []
-  );
-
   // Computed once, at click time -- never recomputed reactively inside the
   // modal, so the number the user confirms against cannot drift mid-dialog.
+  //
+  // Declared ABOVE `useImperativeHandle` below (not after it, as it once
+  // was): the imperative factory's dependency array is evaluated at the
+  // call site, and a `handleRequestDelete` still in the temporal dead zone
+  // there throws a `ReferenceError` on first render.
+  // Typed as `{ id: number }` rather than the full `RequirementRow` -- only
+  // `.id` is ever read here, and this keeps both call sites structurally
+  // valid: the row action hands a flattened `RequirementRow` (which has
+  // `depth`/`hasChildren`), while `openDeleteDialog` below hands a plain
+  // `Issue` looked up from `requirementMap` (which does not).
   const handleRequestDelete = useCallback(
-    (requirement: RequirementRow) => {
+    (requirement: { id: number }) => {
       setDeleteDialogState({
         open: true,
         requirementId: requirement.id,
@@ -524,6 +526,33 @@ const RequirementsListView = forwardRef<
       });
     },
     [childrenMap]
+  );
+
+  // The page action bar's Add Requirement button (gap closure 26.2-16, UAT
+  // gap 13) lives in `RequirementsWorkspace.tsx`, outside this component --
+  // it reaches this same dialog state through this ref instead of the
+  // dialog itself moving up a level. `openDeleteDialog` (25-18 gap closure)
+  // is the detail panel's equivalent route to the delete dialog -- it
+  // delegates to `handleRequestDelete` above rather than duplicating the
+  // `setDeleteDialogState` call, so the row action and the panel action can
+  // never drift on the next change to the dialog's state shape.
+  useImperativeHandle(
+    ref,
+    () => ({
+      openCreateRoot: () => {
+        setCreateDialogState({ open: true, parentId: null, parentName: null });
+      },
+      openDeleteDialog: (issueId: number) => {
+        // The panel's selection and this list's filtered/loaded set are
+        // separate pieces of state -- a filtered-out or since-deleted
+        // selection is reachable today, so an unknown id no-ops rather than
+        // opening a dialog for a row this list can't find.
+        const requirement = requirementMap.get(issueId);
+        if (!requirement) return;
+        handleRequestDelete(requirement);
+      },
+    }),
+    [requirementMap, handleRequestDelete]
   );
 
   const handleDetached = useCallback(() => {

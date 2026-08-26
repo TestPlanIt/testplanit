@@ -277,6 +277,25 @@ export default function RequirementsWorkspace({
                       <RequirementDetailPanel
                         projectId={projectId}
                         requirementId={selectedRequirementId}
+                        // 25-18 gap closure (UAT gap 7): reaches the SAME
+                        // delete dialog + descendant count the row action
+                        // opens, through the list's own ref -- never a
+                        // second delete path. Gated on `canAddEdit` here,
+                        // not inside the panel: the row action menu that
+                        // carries Delete is itself rendered only under this
+                        // same flag (RequirementsListColumns.tsx), and this
+                        // workspace is the only place that already knows
+                        // it -- a second `useProjectPermissions` call
+                        // inside the panel would be a second owner of the
+                        // same answer.
+                        onRequestDelete={
+                          canAddEdit
+                            ? () =>
+                                listViewRef.current?.openDeleteDialog(
+                                  selectedRequirementId
+                                )
+                            : undefined
+                        }
                       />
                     )}
                   </div>

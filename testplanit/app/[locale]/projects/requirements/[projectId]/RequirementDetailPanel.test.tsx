@@ -839,6 +839,48 @@ describe("RequirementDetailPanel", () => {
       expect("title" in payload).toBe(false);
     });
   });
+
+  // 25-18 gap closure (25-UAT gap 7): "a user cannot delete a req from the
+  // details view; they should be able to from there ... just like test
+  // cases." The panel owns no delete logic of its own -- it only ever
+  // calls the handed-in `onRequestDelete`, which is the workspace's own
+  // route to the list's existing `DeleteRequirementModal` + descendant
+  // count.
+  describe("delete affordance (25-18 gap closure)", () => {
+    it("offers a Delete action in edit mode when the viewer can delete", () => {
+      setRequirement(nativeRequirement);
+      const onRequestDelete = vi.fn();
+      renderPanel(
+        <RequirementDetailPanel
+          projectId="7"
+          requirementId={1}
+          onRequestDelete={onRequestDelete}
+        />
+      );
+
+      expect(
+        screen.queryByTestId("requirement-detail-delete")
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+      const deleteButton = screen.getByTestId("requirement-detail-delete");
+      expect(deleteButton).toBeInTheDocument();
+      fireEvent.click(deleteButton);
+      expect(onRequestDelete).toHaveBeenCalledTimes(1);
+    });
+
+    it("renders no Delete action when onRequestDelete is absent (viewer cannot delete)", () => {
+      setRequirement(nativeRequirement);
+      renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+
+      fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+
+      expect(
+        screen.queryByTestId("requirement-detail-delete")
+      ).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe("RequirementDetailPanel (Phase 26 coverage additions)", () => {

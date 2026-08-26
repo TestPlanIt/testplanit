@@ -1,7 +1,7 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { CircleSlash2, Save, SquarePen } from "lucide-react";
+import { CircleSlash2, Save, SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -51,6 +51,16 @@ import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
 interface RequirementDetailPanelProps {
   projectId: string;
   requirementId: number;
+  /** Opens the list's own Delete Requirement dialog for this requirement
+   *  (25-18 gap closure, UAT gap 7: "just like test cases"). This panel
+   *  holds no delete logic of its own -- no fetch, no mutation, no
+   *  descendant count, no second dialog -- because the dialog needs a
+   *  descendant count only the list's in-memory tree holds, and the list's
+   *  own `onDeleted` already clears the selection off the server's own
+   *  `deletedIds`. Routing through it is what stops the two surfaces from
+   *  ever disagreeing about what a delete does. Undefined hides the Delete
+   *  affordance entirely (a non-admin viewer, or no row selected yet). */
+  onRequestDelete?: () => void;
 }
 
 interface RequirementDetailFormData {
@@ -161,6 +171,7 @@ function buildResetValues(row: RequirementRow): RequirementDetailFormData {
 export default function RequirementDetailPanel({
   projectId,
   requirementId,
+  onRequestDelete,
 }: RequirementDetailPanelProps) {
   const t = useTranslations("requirements.detail");
   const tCommon = useTranslations("common");
@@ -438,6 +449,18 @@ export default function RequirementDetailPanel({
               >
                 {renderActionButtonContent(CircleSlash2, tCommon("cancel"))}
               </Button>
+              {onRequestDelete && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  data-testid="requirement-detail-delete"
+                  onClick={onRequestDelete}
+                  disabled={isSubmitting}
+                >
+                  {renderActionButtonContent(Trash2, tCommon("actions.delete"))}
+                </Button>
+              )}
             </>
           )}
         </div>
