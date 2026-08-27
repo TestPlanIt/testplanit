@@ -284,6 +284,16 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   // mutation-proven RED and reverted) are what prove the predicate is
   // still there.
   "app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route.ts",
+  // 28-10's descendant-count route resolves the addressed requirement by id
+  // via baseDb.issue.findFirst before authorizing the subtree count -- an
+  // identity lookup, same reasoning as every other entry in this bucket.
+  // Like its Phase 25/26 siblings above, it ALSO spreads
+  // REQUIREMENT_SCOPE_WHERE and binds projectId, so the lookup is strictly
+  // more scoped than a bare identity lookup, not less. This entry records
+  // the reason; the route's own test (the 404 pre-check's `where` argument
+  // assertion, mutation-proven RED and reverted) is what proves the
+  // predicate is still there.
+  "app/api/projects/[projectId]/requirements/[issueId]/descendant-count/route.ts",
   // 27-07's manual-traceability-reference POST route resolves two rows by
   // id via baseDb.issue.findFirst before authorizing the attach: the
   // requirement's own identity pre-check (which ALSO spreads
@@ -724,5 +734,94 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
       );
     }
     expect(actual).toBeGreaterThanOrEqual(minimum);
+  });
+
+  // 28-10: `lib/services/requirementTree.ts` is this phase's other raw-SQL
+  // requirement reader, alongside `requirementCoverage.ts` above -- the same
+  // blind spot Phase 22 recorded as PROV-06's open raw-SQL residual (a
+  // tagged-template `sql` statement executed via `.execute(db.$qb)` is
+  // invisible to both grep patterns this gate greps with, since neither
+  // pattern matches a Kysely fragment call shape). This test is the
+  // reviewed-extension mechanism that closes that blind spot for this
+  // specific file, the way the two tests above already close it for
+  // `requirementCoverage.ts`.
+  it("the requirement tree service spells the shared role predicate in every statement it builds, and reads no Issue row through the ORM", () => {
+    const file = "lib/services/requirementTree.ts";
+    const content = readFileSync(file, "utf8");
+
+    // The stable marker for "how many query arms in this file read the
+    // Issue table": a literal `FROM "Issue"` (any alias -- this file joins
+    // the table under four different aliases: i, c, m, next, parent) is
+    // NOT the FROM clause any comment in this file quotes (verified by
+    // reading the file at this gate's construction), so a plain substring
+    // count cannot be inflated by prose the way the earlier
+    // ISSUE_ROLE_SCOPE_SQL_REQUIREMENT check in this file guards against
+    // for requirementCoverage.ts. Counting statements this way rather than
+    // `.execute(db.$qb)` call sites is deliberate: this file's OWN header
+    // comment uses the literal substring ".execute(db.$qb)" in prose,
+    // which would inflate that marker by one -- exactly the comment-text
+    // trap this gate's own header warns about.
+    const fromIssueOccurrences = countOccurrences(content, 'FROM "Issue"');
+    if (fromIssueOccurrences === 0) {
+      throw new Error(
+        `${file} contains no "FROM \\"Issue\\"" occurrences at all -- this ` +
+          "file's structure may have changed shape and this gate needs to " +
+          "be re-derived against the new text."
+      );
+    }
+
+    // The predicate this file is supposed to repeat once per FROM clause
+    // above: `AND <alias>."isRequirement" = true`, immediately following
+    // the alias that FROM clause introduced. A single shared regex catches
+    // every alias this file uses (i/c/m/next/parent) rather than four
+    // separate literal-substring checks, one per alias -- a fifth alias
+    // introduced by a future edit is still caught by this same pattern
+    // without this test needing an update. Deliberately excludes the CASE
+    // WHEN inside REQUIREMENT_DISPLAY_STATUS_CASE (`WHEN i."isRequirement"
+    // = true`, business logic for the requirement-lock check, not a
+    // project-scoping predicate) and this test's own doc-comment mentions,
+    // neither of which is preceded by "AND ".
+    const rolePredicateMatches =
+      content.match(/AND \w+\."isRequirement" = true/g) ?? [];
+
+    if (rolePredicateMatches.length < fromIssueOccurrences) {
+      throw new Error(
+        `${file} contains ${fromIssueOccurrences} "FROM \\"Issue\\"" ` +
+          `occurrence(s) but only ${rolePredicateMatches.length} occurrence(s) ` +
+          'of the "AND <alias>.\\"isRequirement\\" = true" role predicate ' +
+          "immediately scoping one. A count below the FROM-clause count means " +
+          "at least one query arm in this file reads the Issue table without " +
+          "the requirement-role predicate -- restore it, or update this " +
+          "threshold only after confirming by reading the file that a query " +
+          "arm was legitimately removed. A bare 'contains it once' assertion " +
+          "would pass a file where three of four queries dropped it; this " +
+          "count does not."
+      );
+    }
+    expect(rolePredicateMatches.length).toBeGreaterThanOrEqual(
+      fromIssueOccurrences
+    );
+
+    // The second half of Task 3's own behavior list: this file must never
+    // gain an ORM `issue.findMany`/`findFirst`/`count`/`groupBy` call.
+    // `requirementTree.ts` is not listed in ANY allowlist bucket above, so
+    // the FIRST test in this describe block ("every issue read call site is
+    // either scoped, opt-in, or exempt...") already fails the moment such a
+    // call appears anywhere in this file -- this assertion pins that
+    // absence directly, in the SAME test as the predicate-count check
+    // above, so a reviewer sees both halves of this file's containment
+    // proof in one place.
+    const ormReadMatches =
+      content.match(/\.issue\.(findMany|findFirst|count|groupBy)\(/g) ?? [];
+    if (ormReadMatches.length !== 0) {
+      throw new Error(
+        `${file} contains ${ormReadMatches.length} ORM Issue read call(s) ` +
+          "(issue.findMany/findFirst/count/groupBy). This file's own header " +
+          "states it performs RAW SQL ONLY, never a generated ZenStack hook " +
+          "and never an ORM Issue read -- remove the call, or move it to a " +
+          "file this gate's allowlist already reviews."
+      );
+    }
+    expect(ormReadMatches.length).toBe(0);
   });
 });
