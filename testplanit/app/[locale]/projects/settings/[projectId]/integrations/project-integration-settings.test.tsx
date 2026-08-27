@@ -306,11 +306,17 @@ describe("ProjectIntegrationSettings", () => {
 
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
-    expect(screen.getByText("Project A")).toBeTruthy();
-    expect(screen.getByText("Project B")).toBeTruthy();
-    expect(screen.getByText("Project C")).toBeTruthy();
+    // Scoped to the linked-projects list: the Requirement Types section in
+    // the same tree also names each project and its sync status, so an
+    // unscoped query matches twice.
+    const linkedProjects = within(
+      screen.getByTestId("linked-projects-section")
+    );
+    expect(linkedProjects.getByText("Project A")).toBeTruthy();
+    expect(linkedProjects.getByText("Project B")).toBeTruthy();
+    expect(linkedProjects.getByText("Project C")).toBeTruthy();
 
-    const badges = screen.getAllByTestId("badge");
+    const badges = linkedProjects.getAllByTestId("badge");
     const badgeTexts = badges.map((b) => b.textContent);
     expect(badgeTexts).toContain("PA");
     expect(badgeTexts).toContain("PB");
@@ -515,8 +521,11 @@ describe("ProjectIntegrationSettings", () => {
 
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
-    expect(screen.getByText("syncStatusSyncing")).toBeTruthy();
-    expect(screen.getByText("syncStatusCompleted")).toBeTruthy();
+    const linkedProjects = within(
+      screen.getByTestId("linked-projects-section")
+    );
+    expect(linkedProjects.getByText("syncStatusSyncing")).toBeTruthy();
+    expect(linkedProjects.getByText("syncStatusCompleted")).toBeTruthy();
   });
 
   // --- Test 13: handleAddProjects calls upsertIntegrationProject ---
