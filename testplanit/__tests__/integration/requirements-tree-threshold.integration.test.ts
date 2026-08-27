@@ -1,8 +1,8 @@
 // Wave 0 scaffold (phase 28-01) for the 499/500/501 classified-requirement
-// mode-boundary lane (SCALE-01/SCALE-02), converted by 28-08 and extended by
-// 28-13. This plan's own Task 2 adds one real test to this file -- the
-// roots-query EXPLAIN measurement the composite-index decision (28-RESEARCH
-// Open Question 3) rests on.
+// mode-boundary lane (SCALE-01/SCALE-02), converted by 28-08. This plan's
+// own Task 2 added one real test to this file earlier -- the roots-query
+// EXPLAIN measurement the composite-index decision (28-RESEARCH Open
+// Question 3) rests on, resolved no-index (see 28-01-SUMMARY.md).
 //
 // Run via (never against the default .env DATABASE_URL -- that resolves to
 // `ew`; always pass the scratch tpi_req20 URL explicitly):
@@ -12,9 +12,13 @@
 import { existsSync, mkdirSync, statSync, writeFileSync } from "fs";
 
 import { sql } from "kysely";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { createRawDbClient } from "~/lib/rawDbClient";
+import {
+  countProjectRequirements,
+  REQUIREMENT_LAZY_THRESHOLD,
+} from "~/lib/services/requirementTree";
 
 import {
   REQUIREMENT_SCALE_SIZES,
@@ -29,10 +33,78 @@ const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
 describeIntegration("requirements tree mode threshold (live DB)", () => {
-  it.todo("reports mode 'all' at 499 classified requirements");
-  it.todo("reports mode 'all' at exactly 500 classified requirements");
-  it.todo("reports mode 'lazy' at 501 classified requirements");
-  it.todo("counts only live, requirement-role rows toward the threshold");
+  const db = createRawDbClient();
+  const STAMP = `rtt-mode-${Date.now()}`;
+  let belowForest: SeededForest;
+  let atForest: SeededForest;
+  let aboveForest: SeededForest;
+
+  beforeAll(async () => {
+    // Refuse to run against anything but a scratch database, on this
+    // file's OWN connection -- same defense-in-depth reasoning as
+    // requirements-tree-lazy.integration.test.ts's own guard.
+    const [{ current_database: dbName }] = await db.$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
+    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+      throw new Error(
+        `refusing to run against database "${dbName}" -- this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+      );
+    }
+
+    belowForest = await seedRequirementForest({
+      size: REQUIREMENT_SCALE_SIZES.belowThreshold,
+      namePrefix: `${STAMP}-below`,
+    });
+    atForest = await seedRequirementForest({
+      size: REQUIREMENT_SCALE_SIZES.atThreshold,
+      namePrefix: `${STAMP}-at`,
+    });
+    aboveForest = await seedRequirementForest({
+      size: REQUIREMENT_SCALE_SIZES.aboveThreshold,
+      namePrefix: `${STAMP}-above`,
+    });
+  }, 120_000);
+
+  afterAll(async () => {
+    await tearDownRequirementForest(belowForest);
+    await tearDownRequirementForest(atForest);
+    await tearDownRequirementForest(aboveForest);
+    await db.$disconnect();
+  }, 120_000);
+
+  it("reports mode 'all' at 499 classified requirements", async () => {
+    const count = await countProjectRequirements(belowForest.projectId, db);
+    expect(count).toBe(REQUIREMENT_SCALE_SIZES.belowThreshold);
+    expect(count > REQUIREMENT_LAZY_THRESHOLD).toBe(false);
+  });
+
+  it("reports mode 'all' at exactly 500 classified requirements", async () => {
+    const count = await countProjectRequirements(atForest.projectId, db);
+    expect(count).toBe(REQUIREMENT_SCALE_SIZES.atThreshold);
+    expect(count).toBe(REQUIREMENT_LAZY_THRESHOLD);
+    // D-01's boundary is inclusive on the load-all side: exactly the
+    // threshold still loads all, only STRICTLY more than it goes lazy.
+    expect(count > REQUIREMENT_LAZY_THRESHOLD).toBe(false);
+  });
+
+  it("reports mode 'lazy' at 501 classified requirements", async () => {
+    const count = await countProjectRequirements(aboveForest.projectId, db);
+    expect(count).toBe(REQUIREMENT_SCALE_SIZES.aboveThreshold);
+    expect(count > REQUIREMENT_LAZY_THRESHOLD).toBe(true);
+  });
+
+  it("counts only live, requirement-role rows toward the threshold", async () => {
+    // seedRequirementForest seeds exactly one soft-deleted row and one
+    // non-requirement row alongside `size` live classified rows in EVERY
+    // forest -- the count must exclude both, or every cohort above would
+    // silently read two rows over its named size.
+    const count = await countProjectRequirements(belowForest.projectId, db);
+    expect(count).toBe(REQUIREMENT_SCALE_SIZES.belowThreshold);
+    expect(belowForest.allIds.length).toBe(
+      REQUIREMENT_SCALE_SIZES.belowThreshold + 2
+    );
+  });
 });
 
 interface ExplainRow {
