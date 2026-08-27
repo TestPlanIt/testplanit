@@ -1528,6 +1528,18 @@
             "detachedCallout": "{count, plural, one {{count} of those is detached from the tracker or was edited locally and will lose its requirement status} other {{count} of those are detached from the tracker or were edited locally and will lose their requirement status}}",
             "reversibilityNote": "Re-adding a type restores the classification. Nothing is deleted.",
             "noChanges": "No classification changes to apply.",
+            "importHeading": "Import from the tracker",
+            "importDescription": "Bring in every existing issue of the configured types from the linked tracker project.",
+            "importAction": "Import {name}",
+            "importOfferTitle": "Import matching issues?",
+            "importOfferBody": "~{count, plural, one {{count} issue} other {{count} issues}} of the selected types are in the tracker.",
+            "importOfferConfirm": "Import now",
+            "importOfferDecline": "Not now",
+            "importStarted": "Import started. Issues will appear as they're imported.",
+            "importFailed": "Couldn't start the import",
+            "importAlreadyRunning": "An import is already running for this tracker project",
+            "importNoTypes": "Select and save at least one issue type before importing",
+            "importCountUnavailable": "Couldn't determine how many issues are in the tracker",
             "settingsSaved": "Requirement type settings saved",
             "saveError": "Failed to save requirement type settings"
           }

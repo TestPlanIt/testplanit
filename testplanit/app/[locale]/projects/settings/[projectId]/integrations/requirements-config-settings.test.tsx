@@ -3,15 +3,19 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockUpdatePI, mockMappingsFindMany, mockIssueUseCount } = vi.hoisted(
-  () => {
-    return {
-      mockUpdatePI: vi.fn(),
-      mockMappingsFindMany: vi.fn(),
-      mockIssueUseCount: vi.fn(),
-    };
-  }
-);
+const {
+  mockUpdatePI,
+  mockMappingsFindMany,
+  mockIssueUseCount,
+  mockInvalidateQueries,
+} = vi.hoisted(() => {
+  return {
+    mockUpdatePI: vi.fn(),
+    mockMappingsFindMany: vi.fn(),
+    mockIssueUseCount: vi.fn(),
+    mockInvalidateQueries: vi.fn(),
+  };
+});
 
 // --- Mocks ---
 
@@ -30,7 +34,7 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
 }));
 
 vi.mock("sonner", () => ({
@@ -114,20 +118,45 @@ function makeProjectIntegration(config: Record<string, any> | null = null) {
 
 const originalFetch = global.fetch;
 
+/** Routes a mocked `global.fetch` by URL substring, matched in the order
+ *  given (first match wins) -- lets a single test express "the preview
+ *  route returns X, the trigger route returns Y" without a generic
+ *  catch-all masking a route this test forgot to stub. */
+function mockFetchRoutes(
+  routes: Array<[string, () => { status?: number; json?: any }]>
+) {
+  global.fetch = vi.fn((url: string) => {
+    const match = routes.find(([pattern]) => url.includes(pattern));
+    const result = match
+      ? match[1]()
+      : { status: 200, json: { issueTypes: [] } };
+    const status = result.status ?? 200;
+    return Promise.resolve({
+      ok: status >= 200 && status < 300,
+      status,
+      json: async () => result.json ?? {},
+    });
+  }) as any;
+}
+
+function makeMapping(overrides: Partial<Record<string, any>> = {}) {
+  return {
+    id: "map-1",
+    externalProjectId: "10050",
+    externalProjectKey: "ABT",
+    externalProjectName: "Abstract",
+    syncStatus: null,
+    syncError: null,
+    ...overrides,
+  };
+}
+
 describe("RequirementsConfigSettings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMappingsFindMany.mockReturnValue({
-      data: [
-        {
-          id: "map-1",
-          externalProjectId: "10050",
-          externalProjectKey: "ABT",
-          externalProjectName: "Abstract",
-        },
-      ],
-    });
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
     mockIssueUseCount.mockReturnValue({ data: 0 });
+    mockInvalidateQueries.mockResolvedValue(undefined);
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ issueTypes: [] }),
@@ -330,5 +359,261 @@ describe("RequirementsConfigSettings", () => {
     fireEvent.click(screen.getByTestId("mock-add-type"));
 
     expect(saveButton).toBeEnabled();
+  });
+});
+
+describe("RequirementsConfigSettings — typed import action and consent (#501/28-07)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIssueUseCount.mockReturnValue({ data: 0 });
+    mockInvalidateQueries.mockResolvedValue(undefined);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ issueTypes: [] }),
+    }) as any;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  const oneMappingConfig = {
+    requirements: {
+      enabled: true,
+      issueTypeIds: ["type-1"],
+      issueTypeNames: { "type-1": "Epic" },
+    },
+  };
+
+  it("renders an import action per active mapping, naming the tracker project", () => {
+    mockMappingsFindMany.mockReturnValue({
+      data: [
+        makeMapping({ id: "map-1", externalProjectName: "Abstract" }),
+        makeMapping({ id: "map-2", externalProjectName: "Concrete" }),
+      ],
+    });
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration(oneMappingConfig)}
+        integration={jiraIntegration}
+      />
+    );
+
+    expect(
+      screen.getByTestId("requirements-import-action-map-1")
+    ).toHaveTextContent("Abstract");
+    expect(
+      screen.getByTestId("requirements-import-action-map-2")
+    ).toHaveTextContent("Concrete");
+  });
+
+  it("fetches the tracker-side count and states it with the ~ convention, sourced from the preview response and never the local becomingCount", async () => {
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
+    // A deliberately DIFFERENT number from the preview's `matched` -- if the
+    // dialog ever renders this value instead, this test's own assertion on
+    // the exact preview count would fail.
+    mockIssueUseCount.mockReturnValue({ data: 999 });
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 10, hasMore: false, cap: 0 } }),
+      ],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration(oneMappingConfig)}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-import-action-map-1"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirements-import-offer-dialog")
+      ).toHaveTextContent(/"count":10/);
+    });
+    expect(
+      screen.getByTestId("requirements-import-offer-dialog")
+    ).not.toHaveTextContent("999");
+
+    const [url, options] = (global.fetch as any).mock.calls.at(-1);
+    expect(url).toContain("requirements-import/preview");
+    expect(JSON.parse(options.body)).toEqual({
+      projectId: 100,
+      integrationProjectId: "map-1",
+    });
+  });
+
+  it("confirming POSTs the trigger route with the clicked mapping's id and toasts that the import started", async () => {
+    const { toast } = await import("sonner");
+    mockMappingsFindMany.mockReturnValue({
+      data: [
+        makeMapping({ id: "map-1", externalProjectName: "Abstract" }),
+        makeMapping({ id: "map-2", externalProjectName: "Concrete" }),
+      ],
+    });
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 4, hasMore: false, cap: 0 } }),
+      ],
+      ["requirements-import", () => ({ json: { jobId: "job-1" } })],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration(oneMappingConfig)}
+        integration={jiraIntegration}
+      />
+    );
+
+    // Two-mapping fixture: click the SECOND mapping's action and confirm the
+    // trigger POST body carries THAT mapping's id, not the first's.
+    fireEvent.click(screen.getByTestId("requirements-import-action-map-2"));
+    await waitFor(() =>
+      screen.getByTestId("requirements-import-offer-confirm")
+    );
+    fireEvent.click(screen.getByTestId("requirements-import-offer-confirm"));
+
+    await waitFor(() => {
+      const triggerCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) =>
+          url.includes("requirements-import") && !url.includes("preview")
+      );
+      expect(triggerCall).toBeDefined();
+      expect(JSON.parse(triggerCall![1].body)).toEqual({
+        projectId: 100,
+        integrationProjectId: "map-2",
+      });
+    });
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it("declining closes the dialog and imports nothing", async () => {
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 4, hasMore: false, cap: 0 } }),
+      ],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration(oneMappingConfig)}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-import-action-map-1"));
+    await waitFor(() =>
+      screen.getByTestId("requirements-import-offer-confirm")
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /importOfferDecline/ }));
+
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId("requirements-import-offer-confirm")
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      (global.fetch as any).mock.calls.some(
+        ([url]: [string]) =>
+          url.includes("requirements-import") && !url.includes("preview")
+      )
+    ).toBe(false);
+  });
+
+  it("a config with no classified types is stated plainly instead of offering an import that would do nothing", async () => {
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: { enabled: true, issueTypeIds: [], issueTypeNames: {} },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-import-action-map-1"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirements-import-offer-dialog")
+      ).toHaveTextContent("importNoTypes");
+    });
+    expect(
+      screen.queryByTestId("requirements-import-offer-confirm")
+    ).not.toBeInTheDocument();
+    // No network round trip for a case decidable client-side.
+    expect(
+      (global.fetch as any).mock.calls.some(([url]: [string]) =>
+        url.includes("requirements-import/preview")
+      )
+    ).toBe(false);
+  });
+
+  it("a tracker count of zero is stated plainly, offering no confirm action", async () => {
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 0, hasMore: false, cap: 0 } }),
+      ],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration(oneMappingConfig)}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-import-action-map-1"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirements-import-offer-dialog")
+      ).toHaveTextContent(/"count":0/);
+    });
+    expect(
+      screen.queryByTestId("requirements-import-offer-confirm")
+    ).not.toBeInTheDocument();
+  });
+
+  it("a 409 from the trigger surfaces as already running, not a generic failure", async () => {
+    const { toast } = await import("sonner");
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 4, hasMore: false, cap: 0 } }),
+      ],
+      ["requirements-import", () => ({ status: 409, json: { error: "busy" } })],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration(oneMappingConfig)}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-import-action-map-1"));
+    await waitFor(() =>
+      screen.getByTestId("requirements-import-offer-confirm")
+    );
+    fireEvent.click(screen.getByTestId("requirements-import-offer-confirm"));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("importAlreadyRunning")
+      );
+    });
   });
 });
