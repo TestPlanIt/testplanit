@@ -253,3 +253,47 @@ export async function getRequirementRootsPage(
 
   return { rows: pageRows, nextCursor };
 }
+
+/**
+ * One node's live requirement children, in the same project, ordered the
+ * same way the roots window is. Unbounded and uncursored, deliberately: a
+ * page of a project's ROOTS can run into the thousands (a typed import
+ * commonly produces flat hierarchies -- D-03), but one node's DIRECT
+ * children are bounded by the tracker's own fan-out, which this phase
+ * accepts as a known limit (T-28-08-05) rather than paging speculatively.
+ * If a real project ever has a node with thousands of direct children this
+ * becomes a paging problem worth revisiting -- it is not one today.
+ *
+ * `"projectId"` is repeated on the child row itself, not inferred from
+ * `parentId` alone -- the same reasoning `requirementHasChildrenFragment`
+ * documents above: a parent in another project must return nothing, even
+ * when a row sharing its id as `parentId` exists (it cannot, in practice,
+ * since `assertSameProject` forbids a cross-project reparent -- but this
+ * query does not rely on that invariant holding elsewhere in the
+ * codebase).
+ *
+ * Reuses `REQUIREMENT_TREE_COLUMNS` and `requirementHasChildrenFragment`
+ * verbatim -- the same shared fragments the roots window composes -- so a
+ * future column addition to `RequirementTreeRow` cannot reach one query
+ * and miss the other.
+ */
+export async function getRequirementChildren(
+  args: { projectId: number; parentId: number },
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<RequirementTreeRow[]> {
+  const { projectId, parentId } = args;
+
+  const { rows } = await sql<RequirementTreeRow>`
+    SELECT
+      ${REQUIREMENT_TREE_COLUMNS},
+      ${requirementHasChildrenFragment(projectId)}
+    FROM "Issue" i
+    WHERE i."projectId" = ${projectId}
+      AND i."parentId" = ${parentId}
+      AND i."isRequirement" = true
+      AND i."isDeleted" = false
+    ORDER BY i.name, i.id
+  `.execute(db.$qb);
+
+  return rows;
+}

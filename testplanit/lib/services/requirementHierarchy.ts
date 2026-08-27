@@ -103,8 +103,13 @@ export async function getIssueSubtreeIds(
  * rows only and therefore has no edge across a non-requirement node
  * either; a requirement sitting under an unclassified parent is not a
  * descendant of anything that tree can render, before or after a delete.
+ *
+ * Exported (28-08, SCALE-02): the lazy tree's descendant-count route needs
+ * this exact id set's sibling count-only statement below
+ * (`getRequirementSubtreeCount`), and this function's own body is
+ * unchanged by the export — only its visibility.
  */
-async function getRequirementSubtreeIds(
+export async function getRequirementSubtreeIds(
   rootId: number,
   projectId: number,
   db: Pick<typeof baseDb, "$queryRaw"> = baseDb
@@ -123,6 +128,48 @@ async function getRequirementSubtreeIds(
     SELECT id FROM descendants
   `;
   return rows.map((row) => row.id);
+}
+
+/**
+ * Count-only sibling of `getRequirementSubtreeIds` (28-08, SCALE-02): the
+ * IDENTICAL `WITH RECURSIVE descendants` body above, with `SELECT
+ * COUNT(*)::int AS count` in place of `SELECT id` -- so the lazy tree's
+ * descendant-count surface (mirroring `DeleteFolderModal.tsx`'s shipped
+ * "count-only server round trip instead of an in-memory count" precedent)
+ * never has to enumerate a subtree's ids just to report how many there
+ * are. Cast to `::int` in SQL because Postgres's `COUNT(*)` is a `bigint`;
+ * uncast, the pg driver hands back a JS `BigInt` a caller would have to
+ * remember to coerce, and a naive `{count}` formatter would render wrong.
+ *
+ * Deliberately NOT folded behind a boolean flag on `getRequirementSubtreeIds`
+ * -- the two statements return different SELECT lists over the same CTE,
+ * and duplicating the small CTE body here (rather than threading a
+ * kysely-composed fragment through a raw `$queryRaw` tagged template, which
+ * cannot interpolate another tagged template's own text as SQL) matches
+ * this file's own established precedent: `getDeletedRequirementSubtreeIds`
+ * beside it is itself a near-duplicate of this CTE's live/deleted mirror,
+ * kept separate for the same "harder to read for no real code reuse"
+ * reasoning that function's own doc comment states.
+ */
+export async function getRequirementSubtreeCount(
+  rootId: number,
+  projectId: number,
+  db: Pick<typeof baseDb, "$queryRaw"> = baseDb
+): Promise<number> {
+  const rows: Array<{ count: number | bigint }> = await db.$queryRaw`
+    WITH RECURSIVE descendants AS (
+      SELECT id, 1 AS depth FROM "Issue"
+      WHERE "parentId" = ${rootId} AND "projectId" = ${projectId} AND "isDeleted" = false
+        AND "isRequirement" = true
+      UNION ALL
+      SELECT i.id, d.depth + 1 FROM "Issue" i
+      INNER JOIN descendants d ON i."parentId" = d.id
+      WHERE i."projectId" = ${projectId} AND i."isDeleted" = false AND d.depth < 100
+        AND i."isRequirement" = true
+    )
+    SELECT COUNT(*)::int AS count FROM descendants
+  `;
+  return Number(rows[0]?.count ?? 0);
 }
 
 /**

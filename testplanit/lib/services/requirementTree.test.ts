@@ -21,6 +21,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   countProjectRequirements,
+  getRequirementChildren,
   getRequirementRootsPage,
   REQUIREMENT_LAZY_THRESHOLD,
   type RequirementTreeRow,
@@ -136,6 +137,30 @@ describe("getRequirementRootsPage (unit, mocked $qb)", () => {
   });
 });
 
+describe("getRequirementChildren (unit, mocked $qb)", () => {
+  it("returns the mocked rows unmodified, each carrying its own hasChildren", async () => {
+    const rows = [
+      makeRow({ id: 10, name: "child-a", parentId: 1, hasChildren: false }),
+      makeRow({ id: 11, name: "child-b", parentId: 1, hasChildren: true }),
+    ];
+    const db = makeMockDb(rows);
+    const children = await getRequirementChildren(
+      { projectId: 1, parentId: 1 },
+      db as never
+    );
+    expect(children).toEqual(rows);
+  });
+
+  it("returns an empty array when the mocked executor reports no rows", async () => {
+    const db = makeMockDb([]);
+    const children = await getRequirementChildren(
+      { projectId: 1, parentId: 999 },
+      db as never
+    );
+    expect(children).toEqual([]);
+  });
+});
+
 // Strips comment-prefixed lines before the OFFSET/SELECT-star checks below --
 // this file's own prose (this doc comment included) legitimately explains
 // why OFFSET is avoided and why no column list uses `SELECT *`, which would
@@ -225,5 +250,38 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     expect(content).not.toMatch(
       /\.issue\.(findMany|findFirst|count|groupBy)\(/
     );
+  });
+
+  it("getRequirementChildren repeats projectId, parentId, the role predicate and isDeleted, with no cursor and no LIMIT", () => {
+    const childrenBody = extractFunctionBody(content, "getRequirementChildren");
+    expect(childrenBody).toContain('i."projectId" = ${projectId}');
+    expect(childrenBody).toContain('i."parentId" = ${parentId}');
+    expect(childrenBody).toContain('i."isRequirement" = true');
+    expect(childrenBody).toContain('i."isDeleted" = false');
+    expect(childrenBody).not.toMatch(/LIMIT/i);
+  });
+
+  it("the roots window and the children query share ONE column projection and ONE hasChildren fragment, never two copies", () => {
+    // REQUIREMENT_TREE_COLUMNS is declared exactly once (the shared
+    // fragment) and referenced by both queries via interpolation --
+    // asserting the DECLARATION count stays at 1 is what would catch a
+    // future edit that retyped the column list a second time instead of
+    // reusing this one.
+    const declarationCount = (
+      content.match(/const REQUIREMENT_TREE_COLUMNS = sql`/g) ?? []
+    ).length;
+    expect(declarationCount).toBe(1);
+    const usageCount = (content.match(/\$\{REQUIREMENT_TREE_COLUMNS\}/g) ?? [])
+      .length;
+    expect(usageCount).toBe(2);
+
+    const fragmentDeclarationCount = (
+      content.match(/function requirementHasChildrenFragment/g) ?? []
+    ).length;
+    expect(fragmentDeclarationCount).toBe(1);
+    const fragmentUsageCount = (
+      content.match(/\$\{requirementHasChildrenFragment\(projectId\)\}/g) ?? []
+    ).length;
+    expect(fragmentUsageCount).toBe(2);
   });
 });

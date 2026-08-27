@@ -9,9 +9,16 @@
 // Run via:
 //   cd testplanit && pnpm exec vitest run lib/services/requirementHierarchy.test.ts
 
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it, vi } from "vitest";
 
-import { assertNoCycle, assertSameProject } from "./requirementHierarchy";
+import {
+  assertNoCycle,
+  assertSameProject,
+  getRequirementSubtreeCount,
+  getRequirementSubtreeIds,
+} from "./requirementHierarchy";
 
 function makeDb(
   overrides: {
@@ -58,5 +65,41 @@ describe("requirementHierarchy guards (HIER-03, app layer)", () => {
       ],
     });
     await expect(assertSameProject(db, 7, 9)).rejects.toThrow(/project/i);
+  });
+});
+
+// Unit-lane proof for the two exports 28-08 added: getRequirementSubtreeIds
+// (newly exported, body untouched) and getRequirementSubtreeCount (new
+// count-only sibling, same CTE body). The live-DB half -- proving the count
+// actually agrees with the id list's length over a real recursive walk --
+// can only be proven against real Postgres; see
+// requirement-hierarchy.integration.test.ts and
+// requirements-tree-lazy.integration.test.ts for that half.
+describe("requirementTree count/ids exports (SCALE-02, unit)", () => {
+  it("getRequirementSubtreeIds is exported and callable directly (28-08)", async () => {
+    const db = makeDb({ queryRaw: [{ id: 42 }, { id: 43 }] });
+    const ids = await getRequirementSubtreeIds(1, 100, db as never);
+    expect(ids).toEqual([42, 43]);
+  });
+
+  it("getRequirementSubtreeCount returns a JS number, not a BigInt, even when the driver hands one back", async () => {
+    const db = makeDb({ queryRaw: [{ count: 7n }] });
+    const count = await getRequirementSubtreeCount(1, 100, db as never);
+    expect(count).toBe(7);
+    expect(typeof count).toBe("number");
+  });
+
+  it("getRequirementSubtreeCount returns 0 for a root with no live requirement descendants", async () => {
+    const db = makeDb({ queryRaw: [{ count: 0 }] });
+    const count = await getRequirementSubtreeCount(1, 100, db as never);
+    expect(count).toBe(0);
+  });
+
+  it("casts the count to ::int in source (structural) -- the driver would otherwise hand back a BigInt", () => {
+    const content = readFileSync(
+      "lib/services/requirementHierarchy.ts",
+      "utf8"
+    );
+    expect(content).toContain("COUNT(*)::int");
   });
 });
