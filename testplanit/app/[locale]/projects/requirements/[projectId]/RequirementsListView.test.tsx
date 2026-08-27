@@ -20,10 +20,20 @@ import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCov
 
 const { useFindManyIssueMock } = vi.hoisted(() => ({
   useFindManyIssueMock: vi.fn(
-    (_args?: {
-      where?: Record<string, unknown>;
-      orderBy?: unknown;
-    }): {
+    (
+      _args?: {
+        where?: Record<string, unknown>;
+        orderBy?: unknown;
+      },
+      // 28-13: the real call site's second argument now also carries
+      // `enabled` (the mode-gate) alongside `optimisticUpdate` -- typed here
+      // so tests can assert on it; this mock's own return value still
+      // ignores both arguments entirely, unchanged runtime behavior.
+      _options?: {
+        optimisticUpdate?: boolean;
+        enabled?: boolean;
+      }
+    ): {
       data: Record<string, unknown>[] | undefined;
       isLoading: boolean;
       error: unknown;
@@ -741,7 +751,17 @@ describe("RequirementsListView", () => {
         );
       });
 
-      await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+      // Not `toHaveBeenCalledTimes(1)`: `global.fetch` is also the transport
+      // `useRequirementsTree`'s own mode-count round trip uses (28-13), which
+      // now fires once on every mount regardless of this drop -- a call-count
+      // assertion here would be coupled to that unrelated request. The
+      // reparent endpoint's own call is what this test actually verifies.
+      await waitFor(() =>
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/projects/42/requirements/1/reparent",
+          expect.anything()
+        )
+      );
       expect(global.fetch).toHaveBeenCalledWith(
         "/api/projects/42/requirements/1/reparent",
         expect.objectContaining({
@@ -833,7 +853,14 @@ describe("RequirementsListView", () => {
         );
       });
 
-      expect(global.fetch).not.toHaveBeenCalled();
+      // Not a blanket "never called": `useRequirementsTree`'s own mode-count
+      // request (28-13) fires on every mount regardless of this drop -- what
+      // this guard actually proves is that the SELF-DROP never reaches the
+      // reparent endpoint.
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        "/api/projects/42/requirements/1/reparent",
+        expect.anything()
+      );
     });
 
     it("blank-area guard: a dragleave off the last row into the wrapper's empty strip issues no fetch", async () => {
@@ -850,7 +877,11 @@ describe("RequirementsListView", () => {
         );
       });
 
-      expect(global.fetch).not.toHaveBeenCalled();
+      // See the no-op guard test's own comment above.
+      expect(global.fetch).not.toHaveBeenCalledWith(
+        "/api/projects/42/requirements/1/reparent",
+        expect.anything()
+      );
       const { toast } = await import("sonner");
       expect(toast.success).not.toHaveBeenCalled();
       expect(toast.error).not.toHaveBeenCalled();
@@ -873,7 +904,16 @@ describe("RequirementsListView", () => {
         );
       });
 
-      await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+      // See the "success" reparent test's own comment above: `global.fetch`
+      // now also carries `useRequirementsTree`'s unrelated mode-count
+      // request (28-13), so this waits for the reparent call specifically
+      // rather than an absolute call count.
+      await waitFor(() =>
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/projects/42/requirements/1/reparent",
+          expect.anything()
+        )
+      );
       expect(global.fetch).toHaveBeenCalledWith(
         "/api/projects/42/requirements/1/reparent",
         expect.objectContaining({ body: JSON.stringify({ parentId: 7 }) })
@@ -1562,6 +1602,214 @@ describe("RequirementsListView", () => {
       });
       expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
       expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+    });
+  });
+
+  // 28-13: the server-decided mode fork. Per this file's own established
+  // convention (25-15's UAT ruling), `useRequirementsTree` itself is never
+  // mocked -- only `global.fetch`, so the hook's real fetch/merge/state
+  // logic runs against a routed fake transport.
+  describe("mode fork (28-13)", () => {
+    /** Routes a fake `fetch` by URL: the count round trip
+     *  (`?countOnly=1`), the roots-window page (a plain GET), and anything
+     *  else (reparent/create/delete/etc.) falls through to a bare `{ ok:
+     *  true }`, mirroring this file's own pre-existing default. */
+    function makeTreeFetchMock(options: {
+      mode: "all" | "lazy";
+      total: number;
+      rootsRows?: Array<Record<string, unknown>>;
+      countOk?: boolean;
+    }) {
+      return vi.fn((url: string, init?: RequestInit) => {
+        const method = init?.method ?? "GET";
+        if (typeof url === "string" && url.includes("/requirements/tree")) {
+          if (url.includes("countOnly=1")) {
+            if (options.countOk === false) {
+              return Promise.resolve({ ok: false, status: 500 });
+            }
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({
+                total: options.total,
+                threshold: 500,
+                mode: options.mode,
+              }),
+            });
+          }
+          if (method === "GET") {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({
+                total: options.total,
+                rows: options.rootsRows ?? [],
+                nextCursor: null,
+              }),
+            });
+          }
+        }
+        return Promise.resolve({ ok: true });
+      });
+    }
+
+    /** A `RequirementTreeRow` fixture (28-08's shape) -- the shape the
+     *  hook's roots-page response carries per row. */
+    function makeLazyRow(
+      overrides: Partial<Record<string, unknown>> & { id: number }
+    ) {
+      const name = overrides.name ?? `Lazy Requirement ${overrides.id}`;
+      return {
+        name,
+        title: name,
+        status: null,
+        externalStatus: null,
+        priority: null,
+        externalId: null,
+        externalKey: null,
+        externalUrl: null,
+        issueTypeId: null,
+        issueTypeName: null,
+        issueTypeIconUrl: null,
+        contentUpdatedAt: null,
+        createdAt: new Date().toISOString(),
+        projectId: 42,
+        integrationId: null,
+        parentId: null,
+        isRequirement: true,
+        requirementDetachedAt: null,
+        isDeleted: false,
+        hasChildren: false,
+        ...overrides,
+      };
+    }
+
+    it('mode: "all" -- the ZenStack load-all query is enabled and the roots-page route is never requested', async () => {
+      global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderView();
+
+      await waitFor(() => {
+        const lastCall = useFindManyIssueMock.mock.calls.at(-1)!;
+        expect(lastCall[1]).toMatchObject({ enabled: true });
+      });
+
+      const treeGetCalls = (global.fetch as any).mock.calls.filter(
+        ([url, init]: [string, RequestInit | undefined]) =>
+          typeof url === "string" &&
+          url.includes("/requirements/tree") &&
+          !url.includes("countOnly") &&
+          (init?.method ?? "GET") === "GET"
+      );
+      expect(treeGetCalls).toHaveLength(0);
+    });
+
+    it('mode: "lazy" -- the ZenStack load-all query is disabled and rows come from the roots-page route', async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      const lastCall = useFindManyIssueMock.mock.calls.at(-1)!;
+      expect(lastCall[1]).toMatchObject({ enabled: false });
+    });
+
+    it("mode: null (the count round trip is pending) shows the loading state, never an empty tree", () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: true,
+        error: null,
+        refetch: vi.fn(),
+      });
+      // Never resolves -- `mode` stays null for the life of this test.
+      global.fetch = vi.fn(() => new Promise(() => {})) as any;
+
+      renderView();
+
+      // `LoadingSpinner` itself has its own 500ms-delayed reveal (returns
+      // `null` before then), so asserting its spin icon this early would
+      // pass trivially in ANY not-yet-rendered state. What actually proves
+      // this gate chose the loading branch (rather than empty/error/table)
+      // is that none of the OTHER three render states mounted.
+      expect(
+        screen.queryByTestId("requirements-tree-empty")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("requirements-list-container")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("requirements-list-error")
+      ).not.toBeInTheDocument();
+    });
+
+    it("the load-all query's options carry optimisticUpdate and an enabled gate reflecting the resolved mode -- nothing else changed", async () => {
+      global.fetch = makeTreeFetchMock({ mode: "all", total: 1 }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        const lastCall = useFindManyIssueMock.mock.calls.at(-1)!;
+        expect(lastCall[1]).toEqual({ optimisticUpdate: true, enabled: true });
+        const [args] = lastCall;
+        expect((args as { where: unknown }).where).toEqual({
+          projectId: 42,
+          isDeleted: false,
+          isRequirement: true,
+        });
+      });
+    });
+
+    it("in lazy mode, the error-state retry button refreshes through the hook's own refetch, never the disabled ZenStack query's", async () => {
+      const zenRefetch = vi.fn();
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: zenRefetch,
+      });
+      let rootsPageCallCount = 0;
+      global.fetch = vi.fn((url: string) => {
+        if (typeof url === "string" && url.includes("countOnly=1")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ total: 600, threshold: 500, mode: "lazy" }),
+          });
+        }
+        if (typeof url === "string" && url.includes("/requirements/tree")) {
+          rootsPageCallCount += 1;
+          return Promise.resolve({ ok: false, status: 500 });
+        }
+        return Promise.resolve({ ok: true });
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirements-list-error")
+        ).toBeInTheDocument();
+      });
+
+      const callsBeforeRetry = rootsPageCallCount;
+      fireEvent.click(
+        screen.getByRole("button", { name: "search.errors.tryAgain" })
+      );
+
+      await waitFor(() =>
+        expect(rootsPageCallCount).toBeGreaterThan(callsBeforeRetry)
+      );
+      expect(zenRefetch).not.toHaveBeenCalled();
     });
   });
 });

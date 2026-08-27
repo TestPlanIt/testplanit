@@ -39,6 +39,10 @@ import {
   invalidateRequirementCoverage,
   useRequirementCoverage,
 } from "~/hooks/useRequirementCoverage";
+import {
+  useRequirementsTree,
+  type RequirementsTreeFilters,
+} from "~/hooks/useRequirementsTree";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { ItemTypes } from "~/types/dndTypes";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
@@ -55,7 +59,9 @@ import {
   collectRequirementStatusOptions,
   computeVisibleRequirementIds,
   countDescendants,
+  flattenLazyRequirementRows,
   flattenRequirementRows,
+  type LazyRequirementSourceRow,
   type RequirementCoverageFilter,
   type RequirementListFilters,
   type RequirementListSortConfig,
@@ -265,10 +271,48 @@ const RequirementsListView = forwardRef<
     Number(projectId)
   );
 
-  // Load-all query, byte-identical to the file this replaces. The spread
-  // (never an inlined scope predicate) is load-bearing: this file inherits
-  // the prior component's entry in issueRoleScope's own containment test
-  // allowlist.
+  // The server decides the mode (28-CONTEXT D-01): at or below the fixed
+  // threshold this component keeps its own verified load-all + full client
+  // tree; above it, rows come from this hook's roots-window/expand-on-demand
+  // surface instead. The threshold comparison itself is never written here --
+  // `mode` is read verbatim from the hook, which reads it verbatim from the
+  // server's own count round trip (`REQUIREMENT_LAZY_THRESHOLD` lives only in
+  // `lib/services/requirementTree.ts`'s route). This plan's own filters stay
+  // inert (28-14 wires the real search/coverage/status/source values through
+  // the hook; this fork is the data source and nothing else).
+  const treeFilters = useMemo<RequirementsTreeFilters>(
+    () => ({ search: "", coverage: "", status: "", source: "" }),
+    []
+  );
+  const {
+    mode,
+    total: lazyTotal,
+    rows: lazyTreeRows,
+    isLoading: lazyTreeLoading,
+    loadMoreError: lazyLoadMoreError,
+    fetchChildren,
+    refetch: refetchLazyTree,
+  } = useRequirementsTree({
+    projectId: Number(projectId),
+    filters: treeFilters,
+  });
+
+  // `mode === "lazy"` is the ONLY branch that changes which data source and
+  // which render pipeline are active. `mode === null` (the count round trip
+  // hasn't resolved yet) deliberately falls through to the SAME branch as
+  // `mode === "all"` below -- the load-all query's own `enabled: mode ===
+  // "all"` gate is what keeps it from firing a real request while `mode` is
+  // still null (so "neither source runs" holds in production, per this
+  // plan's own interface note), and the existing "no data has arrived yet"
+  // loading gate (driven by `allRequirements === undefined`) already renders
+  // exactly the loading state that null-mode window needs -- no second,
+  // separate `mode === null` branch is needed for rendering purposes.
+  const isLazy = mode === "lazy";
+
+  // Load-all query, byte-identical to the file this replaces plus exactly
+  // one addition: `enabled`. The spread (never an inlined scope predicate)
+  // is load-bearing: this file inherits the prior component's entry in
+  // issueRoleScope's own containment test allowlist.
   const {
     data: allRequirements,
     isLoading: requirementsLoading,
@@ -283,7 +327,7 @@ const RequirementsListView = forwardRef<
       },
       orderBy: { name: "asc" },
     },
-    { optimisticUpdate: true }
+    { optimisticUpdate: true, enabled: mode === "all" }
   );
 
   const { data: coverage, isError: coverageError } = useRequirementCoverage(
@@ -303,29 +347,61 @@ const RequirementsListView = forwardRef<
     invalidateRequirementCoverage(queryClient, Number(projectId));
   }, [queryClient, projectId]);
 
+  // One refresh function for every mutation call site (create/rename/
+  // reparent/delete), so a future call site can never pick the wrong
+  // source -- the mutation-ref-indirection pattern this codebase already
+  // uses for exactly this class of problem. Below the threshold this is the
+  // ZenStack query's own `refetch`; above it, it's the hook's `refetch`,
+  // which re-runs both the count round trip and the current row/match fetch.
+  const refreshRequirements = useCallback(() => {
+    if (isLazy) {
+      refetchLazyTree();
+    } else {
+      void refetchRequirements();
+    }
+  }, [isLazy, refetchLazyTree, refetchRequirements]);
+
   const [requirements, setRequirements] = useState<Issue[]>([]);
 
   useEffect(() => {
-    if (allRequirements) {
+    // Only the all-mode pipeline is ever fed from the ZenStack query's data --
+    // in lazy mode `requirements` stays `[]` and the lazy row source below
+    // (`lazyModeRows`) is what actually renders.
+    if (!isLazy && allRequirements) {
       setRequirements(allRequirements);
     }
-  }, [allRequirements]);
+  }, [isLazy, allRequirements]);
 
   useEffect(() => {
-    if (requirementsError) {
+    if (!isLazy && requirementsError) {
       toast.error(t("requirements.tree.loadFailed"));
     }
-  }, [requirementsError, t]);
+  }, [isLazy, requirementsError, t]);
 
-  // Delay showing the spinner to avoid a flash on fast loads.
-  const [showSpinner, setShowSpinner] = useState(false);
+  // The lazy path's own initial-load failure: `fetchChildren`'s and the
+  // count fetch's own errors have no dedicated surface of their own (28-11),
+  // but a failed FIRST roots page does set `loadMoreError` with nothing yet
+  // loaded -- the lazy-mode equivalent of "a genuine fetch failure", so it
+  // gets the same toast the all-mode path already has (reusing the existing
+  // key -- no new i18n string in this plan).
   useEffect(() => {
-    if (requirementsLoading) {
+    if (isLazy && lazyLoadMoreError && lazyTreeRows.length === 0) {
+      toast.error(t("requirements.tree.loadFailed"));
+    }
+  }, [isLazy, lazyLoadMoreError, lazyTreeRows.length, t]);
+
+  // Delay showing the spinner to avoid a flash on fast loads. Byte-identical
+  // to the all-mode-only version this replaces when `isLazy` is false (which
+  // it always is until `mode` has actually resolved to `"lazy"`).
+  const [showSpinner, setShowSpinner] = useState(false);
+  const isTreeBusy = isLazy ? lazyTreeLoading : requirementsLoading;
+  useEffect(() => {
+    if (isTreeBusy) {
       const timer = setTimeout(() => setShowSpinner(true), 200);
       return () => clearTimeout(timer);
     }
     setShowSpinner(false);
-  }, [requirementsLoading]);
+  }, [isTreeBusy]);
 
   const { requirementMap, childrenMap } = useMemo(
     () => buildRequirementMaps(requirements),
@@ -374,7 +450,7 @@ const RequirementsListView = forwardRef<
     [requirements]
   );
 
-  const rows = useMemo(
+  const allModeRows = useMemo(
     () =>
       flattenRequirementRows({
         childrenMap,
@@ -391,6 +467,31 @@ const RequirementsListView = forwardRef<
       coverage,
     ]
   );
+
+  // The lazy sibling (28-12): the hook's `RequirementTreeRow` carries every
+  // field this list's own renderer/columns/comparator ever read (28-08's own
+  // column-list derivation proved this by reading every consumer first
+  // before deciding the row shape), but omits several `Issue` columns
+  // (description, data, note, ...) nothing here touches. This one cast at
+  // this one boundary is the "narrow adapter", not a second row shape
+  // flowing into the same renderer -- `flattenLazyRequirementRows` (28-12)
+  // and every downstream column def keep working against the exact same
+  // `RequirementRow` shape `flattenRequirementRows` already produces below
+  // the threshold. `matchedIds: null` because this plan's own filters stay
+  // inert (see `treeFilters` above); 28-14 wires the server match set here.
+  const lazyModeRows = useMemo(
+    () =>
+      flattenLazyRequirementRows({
+        rows: lazyTreeRows as unknown as LazyRequirementSourceRow[],
+        expandedByIssueId,
+        sortConfig,
+        coverage,
+        matchedIds: null,
+      }),
+    [lazyTreeRows, expandedByIssueId, sortConfig, coverage]
+  );
+
+  const rows = isLazy ? lazyModeRows : allModeRows;
 
   // Publishes the selected requirement's position in `rows` -- the same
   // array the table renders, so stepping always lands on a row the user can
@@ -588,8 +689,8 @@ const RequirementsListView = forwardRef<
   );
 
   const handleDetached = useCallback(() => {
-    void refetchRequirements();
-  }, [refetchRequirements]);
+    refreshRequirements();
+  }, [refreshRequirements]);
 
   // The reparent gesture's server contract (D-04c: no optimistic accept --
   // the fetch is awaited before any UI state changes, no local array
@@ -631,11 +732,11 @@ const RequirementsListView = forwardRef<
           // Snap the array back to persisted truth. Coverage is
           // deliberately NOT invalidated on this branch -- a rejected move
           // never touched the rollup.
-          void refetchRequirements();
+          refreshRequirements();
           return;
         }
         toast.success(t("requirements.tree.moveSuccess"));
-        void refetchRequirements();
+        refreshRequirements();
         invalidateCoverage();
       } catch (error) {
         console.error("Failed to reparent requirement:", error);
@@ -648,7 +749,7 @@ const RequirementsListView = forwardRef<
       allRequirements,
       projectId,
       t,
-      refetchRequirements,
+      refreshRequirements,
       invalidateCoverage,
     ]
   );
@@ -866,7 +967,15 @@ const RequirementsListView = forwardRef<
   // spinner guard alone spun forever on a genuine fetch failure, because the
   // seeded array never resolves past its initial state once the fetch has
   // errored -- the error branch below must be checked first, independently).
-  if (requirementsError && !requirementsLoading) {
+  // Both modes reduce to the SAME expression the all-mode-only version used
+  // when `isLazy` is false, which it is until `mode` has actually resolved
+  // to `"lazy"` -- see `isLazy`'s own doc comment above for why `mode ===
+  // null` needs no separate branch here.
+  const hasLoadError = isLazy
+    ? lazyLoadMoreError && lazyTreeRows.length === 0 && !lazyTreeLoading
+    : Boolean(requirementsError) && !requirementsLoading;
+
+  if (hasLoadError) {
     return (
       <div
         className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center"
@@ -878,7 +987,7 @@ const RequirementsListView = forwardRef<
         <Button
           variant="outline"
           size="sm"
-          onClick={() => void refetchRequirements()}
+          onClick={() => refreshRequirements()}
         >
           {t("search.errors.tryAgain")}
         </Button>
@@ -886,7 +995,11 @@ const RequirementsListView = forwardRef<
     );
   }
 
-  if (showSpinner || (allRequirements === undefined && !requirementsError)) {
+  const noDataYet = isLazy
+    ? lazyTreeRows.length === 0 && lazyTreeLoading
+    : allRequirements === undefined && !requirementsError;
+
+  if (showSpinner || noDataYet) {
     return <LoadingSpinner />;
   }
 
@@ -894,7 +1007,7 @@ const RequirementsListView = forwardRef<
   // rendered from the same return so the create/delete dialogs below mount
   // exactly once regardless of which one is showing -- their own `open`
   // state gates visibility either way.
-  const isEmpty = requirements.length === 0;
+  const isEmpty = isLazy ? (lazyTotal ?? 0) === 0 : requirements.length === 0;
 
   return (
     <>
@@ -1189,7 +1302,7 @@ const RequirementsListView = forwardRef<
           setCreateDialogState((prev) => ({ ...prev, open: nextOpen }))
         }
         onCreated={(id) => {
-          void refetchRequirements();
+          refreshRequirements();
           onSelectRequirement(id);
           invalidateCoverage();
         }}
@@ -1204,7 +1317,7 @@ const RequirementsListView = forwardRef<
             setDeleteDialogState((prev) => ({ ...prev, open: nextOpen }))
           }
           onDeleted={(deletedIds) => {
-            void refetchRequirements();
+            refreshRequirements();
             invalidateCoverage();
             if (
               selectedRequirementId != null &&
