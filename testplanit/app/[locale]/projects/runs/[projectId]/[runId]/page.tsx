@@ -1378,7 +1378,7 @@ export default function TestRunPage() {
   // dedupes them into one request instead of two independent ACL-heavy
   // queries. See lib/services/testRunCaseDetail.ts.
   const { data: testcase, isLoading: isTestcaseLoading } = useTestRunCaseDetail(
-    selectedTestCaseId,
+    isJUnitRun ? null : selectedTestCaseId,
     Number(runId)
   );
 
@@ -1388,7 +1388,10 @@ export default function TestRunPage() {
     }
   }, [isTestcaseLoading, testcase]);
 
-  const sheetOpen = !!selectedTestCaseId;
+  // An automated run has no per-case result panel to open: its rows are JUnit
+  // attempts, not test run cases. A `selectedCase` deep link into one only
+  // highlights and scrolls to the row in the results table.
+  const sheetOpen = !!selectedTestCaseId && !isJUnitRun;
 
   // Calculate effectiveCanDelete *after* loading checks and testRunData is available
   const effectiveCanDelete = testRunData?.isCompleted
