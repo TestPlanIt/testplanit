@@ -982,12 +982,21 @@ export class SyncService {
 
   /**
    * Approximate how many issues a bulk import would pull, before writing
-   * anything. Asks the tracker for the recency-scoped result set (page of 1)
-   * and returns its reported `total`. For providers that push the recency
-   * window into their query (Jira/GitHub/Azure) this is the filtered count;
-   * for providers that can't, it's the project total (an over-estimate that
-   * the actual import then trims via the client-side cutoff) — surfaced as
-   * "approximate" in the UI.
+   * anything. Asks the tracker for a result set (page of 1) and returns its
+   * reported `total`. Two callers share this function:
+   *  - the recency preview (generic Import Issues dialog, D-06): passes
+   *    `updatedWithinDays`; the returned `cap` reflects the recency mode's
+   *    default/clamped cap and is meaningful to this caller.
+   *  - the typed, windowless count probe (D-07's import-consent prompt):
+   *    passes `issueTypeIds` and omits `updatedWithinDays` so no recency
+   *    window reaches the adapter at all; the returned `cap` is meaningless
+   *    here (paged-to-completion mode has no cap) and this caller is
+   *    expected to ignore it.
+   * For providers that push the recency window into their query (Jira/
+   * GitHub/Azure) `matched` is the filtered count; for providers that can't,
+   * it's the project (or type-scoped) total (an over-estimate that the
+   * actual import then trims via the client-side cutoff) — surfaced as
+   * "approximate" in the UI either way.
    */
   async previewProjectImport(
     integrationId: number,
@@ -1045,6 +1054,7 @@ export class SyncService {
       fullSync: true,
       limit: sampleLimit,
       offset: 0,
+      issueTypeIds: options.issueTypeIds,
     });
 
     const hasTotal = typeof total === "number" && Number.isFinite(total);

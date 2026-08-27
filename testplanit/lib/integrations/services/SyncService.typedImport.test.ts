@@ -350,3 +350,113 @@ describe("SyncService — performProjectImport pagedToCompletion mode (#501/28-0
     expect(result.cappedAt).toBe(result.imported);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Task 2 — the windowless, type-scoped count probe
+// ---------------------------------------------------------------------------
+describe("SyncService — previewProjectImport type-scoped windowless probe (#501/28-04)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIpFindUnique.mockResolvedValue(makeMapping());
+    mockIpUpdate.mockResolvedValue({});
+    mockIntegrationFindUnique.mockResolvedValue({ provider: "JIRA" });
+    mockProjectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+    mockIssueUpsert.mockResolvedValue({ id: 101 });
+  });
+
+  it("passes issueTypeIds to searchIssues and reports the type-scoped count", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      {
+        issues: [makeExtIssue({ id: "a" }), makeExtIssue({ id: "b" })],
+        total: 7,
+        hasMore: true,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001", "10002"],
+    });
+
+    expect(adapter.searchIssues).toHaveBeenCalledWith(
+      expect.objectContaining({ issueTypeIds: ["10001", "10002"] })
+    );
+    expect(result.matched).toBe(7);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it("passes no recency window to searchIssues when updatedWithinDays is omitted", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      { issues: [makeExtIssue({ id: "a" })], total: 1, hasMore: false },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001"],
+    });
+
+    expect(adapter.searchIssues).toHaveBeenCalledWith(
+      expect.objectContaining({ updatedWithinDays: undefined })
+    );
+  });
+
+  it("yields an honest at-least-N with hasMore true for a provider that can only report its page length", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      {
+        issues: Array.from({ length: PAGE_SIZE }, (_, i) =>
+          makeExtIssue({ id: `t${i}` })
+        ),
+        total: undefined,
+        hasMore: false,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001"],
+    });
+
+    expect(result.matched).toBe(PAGE_SIZE);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it("leaves the recency preview's searchIssues call arguments unchanged when issueTypeIds is omitted", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      {
+        issues: [makeExtIssue({ id: "a" }), makeExtIssue({ id: "b" })],
+        total: 42,
+        hasMore: true,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      updatedWithinDays: 90,
+      cap: 200,
+    });
+
+    expect(adapter.searchIssues).toHaveBeenCalledWith({
+      projectId: "TPI",
+      updatedWithinDays: 90,
+      fullSync: true,
+      limit: PAGE_SIZE,
+      offset: 0,
+      issueTypeIds: undefined,
+    });
+    expect(result.matched).toBe(42);
+    expect(result.hasMore).toBe(true);
+    expect(result.cap).toBe(200);
+  });
+});
