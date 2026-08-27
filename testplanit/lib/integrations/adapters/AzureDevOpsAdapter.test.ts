@@ -1395,6 +1395,78 @@ describe("AzureDevOpsAdapter", () => {
       expect(result.total).toBe(5);
     });
 
+    it("pages past the first window when more work items match than one page holds", async () => {
+      // Simulates the real WIQL server: it only ever returns up to `$top` ids
+      // regardless of how many match, and the workitems endpoint only ever
+      // returns the ids actually requested.
+      const totalMatching = 120;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("/_apis/wit/wiql")) {
+          const topMatch = url.match(/\$top=(\d+)/);
+          const top = topMatch ? parseInt(topMatch[1], 10) : 200;
+          const workItems = Array.from(
+            { length: Math.min(top, totalMatching) },
+            (_, i) => ({ id: i + 1 })
+          );
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ workItems }),
+          });
+        }
+        if (url.includes("/_apis/wit/workitems?ids=")) {
+          const idsParam = url.match(/ids=([\d,]+)/)?.[1] ?? "";
+          const ids = idsParam
+            .split(",")
+            .filter(Boolean)
+            .map((s) => parseInt(s, 10));
+          return Promise.resolve({
+            ok: true,
+            json: () =>
+              Promise.resolve({
+                value: ids.map((id) => ({ ...mockWorkItem, id })),
+              }),
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ value: [] }),
+        });
+      });
+
+      const page1 = await adapter.searchIssues({ limit: 50, offset: 0 });
+      expect(page1.issues).toHaveLength(50);
+      expect(page1.issues.map((i) => i.id)).toEqual(
+        Array.from({ length: 50 }, (_, i) => String(i + 1))
+      );
+      expect(page1.hasMore).toBe(true);
+      expect(page1.total).toBe(120);
+
+      const page2 = await adapter.searchIssues({ limit: 50, offset: 50 });
+      expect(page2.issues).toHaveLength(50);
+      expect(page2.issues.map((i) => i.id)).toEqual(
+        Array.from({ length: 50 }, (_, i) => String(i + 51))
+      );
+      expect(page2.hasMore).toBe(true);
+      expect(page2.total).toBe(120);
+
+      const page3 = await adapter.searchIssues({ limit: 50, offset: 100 });
+      expect(page3.issues).toHaveLength(20);
+      expect(page3.issues.map((i) => i.id)).toEqual(
+        Array.from({ length: 20 }, (_, i) => String(i + 101))
+      );
+      expect(page3.hasMore).toBe(false);
+      expect(page3.total).toBe(120);
+
+      // The WIQL id ceiling is fixed on every page, never options.limit (50).
+      const wiqlCalls = mockFetch.mock.calls.filter(
+        ([url]) => typeof url === "string" && url.includes("/_apis/wit/wiql")
+      );
+      expect(wiqlCalls).toHaveLength(3);
+      for (const [url] of wiqlCalls) {
+        expect(url).not.toContain("$top=50");
+      }
+    });
+
     it("should return empty results when no items found", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

@@ -15,6 +15,17 @@ import {
 const MAX_ATTACHMENT_DOWNLOAD_BYTES = 10 * 1024 * 1024;
 
 /**
+ * Azure DevOps' own documented WIQL query-results ceiling — "Work tracking,
+ * process, and project limits" (Microsoft Learn): query results are silently
+ * truncated at 20,000 items, with no error raised past that point. This
+ * bounds how many work-item ids a single WIQL call can return (the whole
+ * matching set the import orchestrator pages through) and must NOT be
+ * conflated with `options.limit`, which governs only how many of those ids
+ * one page hydrates via the follow-up workitems fetch below.
+ */
+const WIQL_MAX_IDS = 20000;
+
+/**
  * Azure DevOps integration adapter using Personal Access Token authentication
  */
 export class AzureDevOpsAdapter extends BaseAdapter {
@@ -374,7 +385,7 @@ export class AzureDevOpsAdapter extends BaseAdapter {
 
     const wiqlResponse = await this.makeRequest<any>(
       this.buildUrl(
-        `/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${options.limit || 200}`
+        `/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${WIQL_MAX_IDS}`
       ),
       {
         method: "POST",
