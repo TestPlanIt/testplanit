@@ -24,6 +24,7 @@ import {
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import type { CustomColumnMeta } from "@/components/tables/dataTableShared";
+import { useDebounce } from "@/components/Debounce";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,6 @@ import {
   buildRequirementMaps,
   collectCoverageStatusOptions,
   collectRequirementStatusOptions,
-  computeVisibleRequirementIds,
   countDescendants,
   flattenLazyRequirementRows,
   flattenRequirementRows,
@@ -68,6 +68,15 @@ import {
   type RequirementRow,
   type RequirementSourceFilter,
 } from "./requirementsListRows";
+
+// D-04 (28-14): filters and text search are server-side at every project
+// size now -- 300ms mirrors this codebase's own established search-debounce
+// convention (`hooks/useAsyncComboboxOptions.ts`'s `SEARCH_DEBOUNCE_MS`):
+// fast enough to feel responsive, long enough to collapse a fast typing
+// burst into exactly one request. Only the search AXIS is debounced; the
+// three Selects (Coverage/Status/Source) change rarely and submit
+// immediately, by design (T-28-14-01).
+const REQUIREMENTS_FILTER_DEBOUNCE_MS = 300;
 
 /** The exact shape plan 03's per-row `useDrag` produces (the name cell in
  * `RequirementsListColumns.tsx`). Both drop targets below read
@@ -277,21 +286,35 @@ const RequirementsListView = forwardRef<
   // surface instead. The threshold comparison itself is never written here --
   // `mode` is read verbatim from the hook, which reads it verbatim from the
   // server's own count round trip (`REQUIREMENT_LAZY_THRESHOLD` lives only in
-  // `lib/services/requirementTree.ts`'s route). This plan's own filters stay
-  // inert (28-14 wires the real search/coverage/status/source values through
-  // the hook; this fork is the data source and nothing else).
+  // `lib/services/requirementTree.ts`'s route). Filters and text search are
+  // server-side at every project size (28-14, D-04) -- only the search axis
+  // is debounced (`debouncedSearch` below); the three Selects submit the
+  // instant they change.
+  const debouncedSearch = useDebounce(
+    normalizedFilter,
+    REQUIREMENTS_FILTER_DEBOUNCE_MS
+  );
   const treeFilters = useMemo<RequirementsTreeFilters>(
-    () => ({ search: "", coverage: "", status: "", source: "" }),
-    []
+    () => ({
+      search: debouncedSearch,
+      coverage: filters.coverage,
+      status: filters.status,
+      source: filters.source,
+    }),
+    [debouncedSearch, filters.coverage, filters.status, filters.source]
   );
   const {
     mode,
-    total: lazyTotal,
+    total: projectTotal,
     rows: lazyTreeRows,
     isLoading: lazyTreeLoading,
     loadMoreError: lazyLoadMoreError,
     fetchChildren,
     refetch: refetchLazyTree,
+    isFiltering: treeIsFiltering,
+    matchedIds: treeMatchedIds,
+    ancestorIds: treeAncestorIds,
+    expandMatchedSubtrees,
   } = useRequirementsTree({
     projectId: Number(projectId),
     filters: treeFilters,
@@ -416,27 +439,57 @@ const RequirementsListView = forwardRef<
     [childrenMap]
   );
 
-  const visibleRequirementIds = useMemo(
-    () =>
-      computeVisibleRequirementIds({
-        requirements,
-        requirementMap,
-        childrenMap,
-        normalizedFilter,
-        filters,
-        coverage,
-        coverageError,
-      }),
-    [
-      requirements,
-      requirementMap,
-      childrenMap,
-      normalizedFilter,
-      filters,
-      coverage,
-      coverageError,
-    ]
-  );
+  // D-04 (28-14): the four-axis intersection + ancestor-retention walk this
+  // memo used to compute client-side (`computeVisibleRequirementIds`, still
+  // exported from `requirementsListRows.ts` -- 28-09's oracle and its own
+  // test suite are the semantics record, untouched) now runs on the SERVER
+  // (28-09's SQL, proven equivalent to the client function across all 16
+  // filter-axis combinations against real Postgres). This memo only
+  // ASSEMBLES the below-threshold ("all" mode) visible set from the hook's
+  // own `matchedIds`/`ancestorIds`, since this component still holds every
+  // row below the threshold and needs a `Set` to feed `flattenRequirementRows`
+  // exactly as before:
+  //
+  //   visible = matchedIds ∪ ancestorIds ∪ (expandMatchedSubtrees
+  //     ? descendants(matchedIds)
+  //     : ∅)
+  //
+  // The descendant walk stays client-side (via `childrenMap`) because the
+  // rows are already here -- this is what keeps the below-threshold
+  // presentation byte-identical to what shipped before this plan.
+  //
+  // Above the threshold this Set is never consulted for rendering (`rows`
+  // uses `lazyModeRows` instead, whose source is already pruned to
+  // matches+ancestors by the server) -- `expandMatchedSubtrees` there means
+  // something different: a matched row's OWN subtree stays browsable
+  // through expand-on-demand (28-13's wiring) rather than being
+  // auto-revealed, so a match's chevron keeps working under a filter without
+  // this component eagerly fetching every matched subtree at once.
+  const visibleRequirementIds = useMemo(() => {
+    if (!treeIsFiltering) return null;
+    const visible = new Set<number>();
+    treeMatchedIds?.forEach((id) => visible.add(id));
+    treeAncestorIds?.forEach((id) => visible.add(id));
+    if (expandMatchedSubtrees) {
+      const queue = Array.from(treeMatchedIds ?? []);
+      while (queue.length > 0) {
+        const parentId = queue.shift()!;
+        for (const child of childrenMap.get(parentId) ?? []) {
+          if (!visible.has(child.id)) {
+            visible.add(child.id);
+            queue.push(child.id);
+          }
+        }
+      }
+    }
+    return visible;
+  }, [
+    treeIsFiltering,
+    treeMatchedIds,
+    treeAncestorIds,
+    expandMatchedSubtrees,
+    childrenMap,
+  ]);
 
   // Option lists for the Coverage/Status Selects below -- both pure
   // collectors from the row module, recomputed only when their own inputs
@@ -477,8 +530,9 @@ const RequirementsListView = forwardRef<
   // flowing into the same renderer -- `flattenLazyRequirementRows` (28-12)
   // and every downstream column def keep working against the exact same
   // `RequirementRow` shape `flattenRequirementRows` already produces below
-  // the threshold. `matchedIds: null` because this plan's own filters stay
-  // inert (see `treeFilters` above); 28-14 wires the server match set here.
+  // the threshold. `matchedIds` is the server's own match set (28-14, D-04)
+  // -- `null` when no axis is active, so every row is in scope and no
+  // match/ancestor distinction applies (28-12's own `isMatch` convention).
   const lazyModeRows = useMemo(
     () =>
       flattenLazyRequirementRows({
@@ -486,9 +540,9 @@ const RequirementsListView = forwardRef<
         expandedByIssueId,
         sortConfig,
         coverage,
-        matchedIds: null,
+        matchedIds: treeMatchedIds,
       }),
-    [lazyTreeRows, expandedByIssueId, sortConfig, coverage]
+    [lazyTreeRows, expandedByIssueId, sortConfig, coverage, treeMatchedIds]
   );
 
   const rows = isLazy ? lazyModeRows : allModeRows;
@@ -582,13 +636,38 @@ const RequirementsListView = forwardRef<
     });
   }, [selectedRequirementId, requirementMap, isLazy, lazyRowsById]);
 
-  // While a filter (search text or the uncovered toggle) is active, force
-  // open every currently-visible parent -- otherwise a filtered-in
+  // While a filter (search text or a Coverage/Status/Source axis) is active,
+  // force open every currently-visible parent -- otherwise a filtered-in
   // descendant would never appear in the flattened array, since a row only
   // renders when its own parent's `expandedByIssueId` entry is true. Also a
-  // union-merge, same loop-safety as the effect above; a no-op (identity
-  // preserved) once nothing is filtering (`visibleRequirementIds` is null).
+  // union-merge, same loop-safety as the effect above.
+  //
+  // 28-14 DECISION: below the threshold, unchanged -- every id in
+  // `visibleRequirementIds` (matches AND ancestors) with children is forced
+  // open, exactly as before, since `expandMatchedSubtrees` already folded a
+  // match's descendants into that same Set when applicable (see the memo
+  // above). Above the threshold there is no complete `childrenMap` to walk,
+  // and a match's OWN subtree deliberately stays collapsed (browsable
+  // through expand-on-demand, not auto-revealed -- see the memo above) --
+  // only the ANCESTOR chain is force-opened here, using the loaded partial
+  // forest (`lazyRowsById`), which is exactly what makes a filtered match
+  // reachable without eagerly fetching every matched subtree at once. A
+  // no-op (identity preserved) once nothing is filtering.
   useEffect(() => {
+    if (isLazy) {
+      if (!treeAncestorIds || treeAncestorIds.size === 0) return;
+      setExpandedByIssueId((prev) => {
+        let next: Record<number, boolean> | null = null;
+        treeAncestorIds.forEach((issueId) => {
+          if (prev[issueId] === true) return;
+          if (!lazyRowsById.get(issueId)?.hasChildren) return;
+          next = next ?? { ...prev };
+          next[issueId] = true;
+        });
+        return next ?? prev;
+      });
+      return;
+    }
     if (!visibleRequirementIds) return;
     setExpandedByIssueId((prev) => {
       let next: Record<number, boolean> | null = null;
@@ -601,7 +680,13 @@ const RequirementsListView = forwardRef<
       });
       return next ?? prev;
     });
-  }, [visibleRequirementIds, childrenMap]);
+  }, [
+    isLazy,
+    treeAncestorIds,
+    lazyRowsById,
+    visibleRequirementIds,
+    childrenMap,
+  ]);
 
   // Written by every selection made from inside this list, before
   // delegating to the `onSelectRequirement` prop -- lets `scrollToRowId`
@@ -1056,7 +1141,9 @@ const RequirementsListView = forwardRef<
   // rendered from the same return so the create/delete dialogs below mount
   // exactly once regardless of which one is showing -- their own `open`
   // state gates visibility either way.
-  const isEmpty = isLazy ? (lazyTotal ?? 0) === 0 : requirements.length === 0;
+  const isEmpty = isLazy
+    ? (projectTotal ?? 0) === 0
+    : requirements.length === 0;
 
   return (
     <>
@@ -1302,7 +1389,12 @@ const RequirementsListView = forwardRef<
               scrollToRowId={scrollToRequirementId}
               getRowProps={getRowProps}
               emptyMessage={t("common.ui.search.noResultsFound")}
-              resetKey={`${normalizedFilter}|${filters.coverage}|${filters.status}|${filters.source}|${sortConfig.column}|${sortConfig.direction}`}
+              // `debouncedSearch` (not `normalizedFilter`) so this resets in
+              // the SAME render as the hook's own internal reset (keyed on
+              // the debounced `treeFilters.search`) -- keying on the instant
+              // value would reset the virtualizer a render ahead of the
+              // data on every keystroke, one frame apart from the hook.
+              resetKey={`${debouncedSearch}|${filters.coverage}|${filters.status}|${filters.source}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="requirements-list"
               rowTestIdPrefix="requirement-row"
             />

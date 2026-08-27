@@ -12,6 +12,10 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
+import {
+  buildRequirementMaps,
+  computeVisibleRequirementIds,
+} from "./requirementsListRows";
 
 // --- Hoisted mock scaffolding -------------------------------------------
 // Adapted from the earlier react-arborist tree component's own test file's
@@ -400,7 +404,18 @@ function makeTreeFetchMock(options: {
   rootsRows?: Array<Record<string, unknown>>;
   childrenByParentId?: Record<number, Array<Record<string, unknown>>>;
   countOk?: boolean;
+  /** A sequence of filter/match-endpoint (POST) pages, consumed one per
+   *  call (the last is reused if exhausted) -- 28-14's filtered fetch. */
+  matchPages?: Array<{
+    matchedTotal: number;
+    matchedIds: number[];
+    ancestorIds: number[];
+    rows?: Array<Record<string, unknown>>;
+    nextCursor?: unknown;
+    expandMatchedSubtrees?: boolean;
+  }>;
 }) {
+  let matchPageIndex = 0;
   return vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
     if (typeof url === "string" && url.includes("/requirements/tree")) {
@@ -427,6 +442,31 @@ function makeTreeFetchMock(options: {
           }),
         });
       }
+      if (method === "POST") {
+        const page = options.matchPages?.[
+          Math.min(matchPageIndex, options.matchPages.length - 1)
+        ] ?? {
+          matchedTotal: 0,
+          matchedIds: [],
+          ancestorIds: [],
+          rows: [],
+          nextCursor: null,
+          expandMatchedSubtrees: false,
+        };
+        matchPageIndex += 1;
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            total: options.total,
+            matchedTotal: page.matchedTotal,
+            matchedIds: page.matchedIds,
+            ancestorIds: page.ancestorIds,
+            rows: page.rows ?? [],
+            nextCursor: page.nextCursor ?? null,
+            expandMatchedSubtrees: page.expandMatchedSubtrees ?? false,
+          }),
+        });
+      }
       if (method === "GET") {
         return Promise.resolve({
           ok: true,
@@ -440,6 +480,100 @@ function makeTreeFetchMock(options: {
     }
     return Promise.resolve({ ok: true });
   });
+}
+
+/** 28-14: filters/search moved server-side (D-04) -- the pre-existing
+ *  "filters (gap closure 26.2-12)" fixtures below still assert the SAME
+ *  visible-row-set behavior, but that set now arrives through a (mocked)
+ *  server round trip rather than a purely local computation. This helper
+ *  reproduces the round trip by calling the UNTOUCHED oracle
+ *  (`computeVisibleRequirementIds`) against the SAME fixture data the test
+ *  already sets up, and reports its whole output as `matchedIds` (leaving
+ *  `ancestorIds` empty) -- below the threshold this component only ever
+ *  unions the two back together (`RequirementsListView.tsx`'s own
+ *  `visibleRequirementIds` memo), so which bucket an id lands in makes no
+ *  rendering difference here. This proves every pre-existing assertion's
+ *  INTENT (which rows end up visible) through the new architecture without
+ *  re-implementing the oracle's own intersection/ancestor logic a second
+ *  time in this file. */
+function makeLegacyFilterFetchMock(
+  requirements: Array<Record<string, any>>,
+  coverage: RequirementCoverageResponse | undefined,
+  coverageError = false
+) {
+  return vi.fn((url: string, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    if (typeof url === "string" && url.includes("/requirements/tree")) {
+      if (url.includes("countOnly=1")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            total: requirements.length,
+            threshold: 500,
+            mode: "all",
+          }),
+        });
+      }
+      if (method === "POST") {
+        const body = init?.body ? JSON.parse(String(init.body)) : {};
+        const normalizedSearch = String(body.search ?? "")
+          .trim()
+          .toLowerCase();
+        const { requirementMap, childrenMap } = buildRequirementMaps(
+          requirements as any
+        );
+        const visible = computeVisibleRequirementIds({
+          requirements: requirements as any,
+          requirementMap,
+          childrenMap,
+          normalizedFilter: normalizedSearch,
+          filters: {
+            coverage: body.coverage ?? "",
+            status: body.status ?? "",
+            source: body.source ?? "",
+          },
+          coverage,
+          coverageError,
+        });
+        const matchedIds = visible ? Array.from(visible) : [];
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            total: requirements.length,
+            matchedTotal: matchedIds.length,
+            matchedIds,
+            ancestorIds: [],
+            rows: [],
+            nextCursor: null,
+            expandMatchedSubtrees: false,
+          }),
+        });
+      }
+    }
+    return Promise.resolve({ ok: true });
+  });
+}
+
+/** 28-14: every filter/search request lands as a POST to the same tree
+ *  route the roots pager GETs -- these two helpers isolate just those calls
+ *  from whatever `global.fetch` mock a test installed, so a test can assert
+ *  on request COUNT (the debounce burst proof) or on the latest request's
+ *  BODY (which axis values were actually submitted) without re-deriving the
+ *  same filter each time. */
+function filterRequestCalls(): Array<[string, RequestInit | undefined]> {
+  return (global.fetch as any).mock.calls.filter(
+    ([url, init]: [string, RequestInit | undefined]) =>
+      typeof url === "string" &&
+      url.includes("/requirements/tree") &&
+      (init?.method ?? "GET") === "POST"
+  );
+}
+
+function lastFilterRequestBody(): Record<string, unknown> | null {
+  const calls = filterRequestCalls();
+  if (calls.length === 0) return null;
+  const [, init] = calls.at(-1)!;
+  return JSON.parse(String(init!.body));
 }
 
 function renderView(
@@ -1376,13 +1510,15 @@ describe("RequirementsListView", () => {
       expect(screen.getByTestId("requirements-tree-empty")).toBeInTheDocument();
     });
 
-    it("renders the table's noResultsFound message (not requirements-tree-empty) when a filter matches nothing", () => {
+    it("renders the table's noResultsFound message (not requirements-tree-empty) when a filter matches nothing", async () => {
+      const requirements = [makeRequirement({ id: 1, name: "Root A" })];
       useFindManyIssueMock.mockReturnValue({
-        data: [makeRequirement({ id: 1, name: "Root A" })],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
+      global.fetch = makeLegacyFilterFetchMock(requirements, undefined) as any;
 
       renderView();
 
@@ -1390,9 +1526,11 @@ describe("RequirementsListView", () => {
         target: { value: "no such requirement" },
       });
 
-      expect(
-        screen.getByText("common.ui.search.noResultsFound")
-      ).toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.getByText("common.ui.search.noResultsFound")
+        ).toBeInTheDocument();
+      });
       expect(
         screen.queryByTestId("requirements-tree-empty")
       ).not.toBeInTheDocument();
@@ -1401,34 +1539,37 @@ describe("RequirementsListView", () => {
 
   describe("filters (gap closure 26.2-12)", () => {
     it("Coverage = Uncovered leaves an uncovered leaf visible and its covered ancestor visible (ancestor retention)", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root" }),
+        makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
+        makeRequirement({ id: 3, name: "Covered Sibling", parentId: 1 }),
+      ];
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root" }),
-          makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
-          makeRequirement({ id: 3, name: "Covered Sibling", parentId: 1 }),
-        ],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
-      useRequirementCoverageMock.mockReturnValue({
-        data: makeCoverageResponse({
-          1: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 4,
-            linkedCaseCount: 4,
-          }),
-          2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
-          3: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 2,
-            linkedCaseCount: 2,
-          }),
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 4,
+          linkedCaseCount: 4,
         }),
+        2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        3: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 2,
+          linkedCaseCount: 2,
+        }),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: coverage,
         isError: false,
       });
+      global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
 
@@ -1446,43 +1587,42 @@ describe("RequirementsListView", () => {
     });
 
     it("Coverage = status:<id> shows only requirements whose breakdown carries that status with a non-zero count, plus ancestors", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root" }),
+        makeRequirement({ id: 2, name: "Failed Leaf", parentId: 1 }),
+        makeRequirement({ id: 3, name: "Blocked Leaf", parentId: 1 }),
+      ];
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root" }),
-          makeRequirement({ id: 2, name: "Failed Leaf", parentId: 1 }),
-          makeRequirement({ id: 3, name: "Blocked Leaf", parentId: 1 }),
-        ],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
-      useRequirementCoverageMock.mockReturnValue({
-        data: makeCoverageResponse({
-          1: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 4,
-            linkedCaseCount: 4,
-          }),
-          2: makeBreakdown({
-            status: "FAILED",
-            uncovered: false,
-            statuses: [
-              { statusId: 7, name: "Failed", color: "#f00", count: 2 },
-            ],
-            linkedCaseCount: 2,
-          }),
-          3: makeBreakdown({
-            status: "NOT_RUN",
-            uncovered: false,
-            statuses: [
-              { statusId: 8, name: "Blocked", color: "#999", count: 1 },
-            ],
-            linkedCaseCount: 1,
-          }),
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 4,
+          linkedCaseCount: 4,
         }),
+        2: makeBreakdown({
+          status: "FAILED",
+          uncovered: false,
+          statuses: [{ statusId: 7, name: "Failed", color: "#f00", count: 2 }],
+          linkedCaseCount: 2,
+        }),
+        3: makeBreakdown({
+          status: "NOT_RUN",
+          uncovered: false,
+          statuses: [{ statusId: 8, name: "Blocked", color: "#999", count: 1 }],
+          linkedCaseCount: 1,
+        }),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: coverage,
         isError: false,
       });
+      global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
 
@@ -1496,27 +1636,29 @@ describe("RequirementsListView", () => {
     });
 
     it("Source = Detached shows only detached requirements plus ancestors", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root" }),
+        makeRequirement({
+          id: 2,
+          name: "Detached Child",
+          parentId: 1,
+          integrationId: 5,
+          requirementDetachedAt: new Date(),
+        }),
+        makeRequirement({
+          id: 3,
+          name: "Synced Child",
+          parentId: 1,
+          integrationId: 5,
+        }),
+      ];
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root" }),
-          makeRequirement({
-            id: 2,
-            name: "Detached Child",
-            parentId: 1,
-            integrationId: 5,
-            requirementDetachedAt: new Date(),
-          }),
-          makeRequirement({
-            id: 3,
-            name: "Synced Child",
-            parentId: 1,
-            integrationId: 5,
-          }),
-        ],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
+      global.fetch = makeLegacyFilterFetchMock(requirements, undefined) as any;
 
       renderView();
 
@@ -1533,51 +1675,54 @@ describe("RequirementsListView", () => {
     });
 
     it("Coverage + Status intersect: a row matching only one of them is absent", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+        makeRequirement({
+          id: 2,
+          name: "Both Match",
+          parentId: 1,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 3,
+          name: "Status Only",
+          parentId: 1,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 4,
+          name: "Coverage Only",
+          parentId: 1,
+          externalStatus: "Closed",
+        }),
+      ];
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
-          makeRequirement({
-            id: 2,
-            name: "Both Match",
-            parentId: 1,
-            externalStatus: "Open",
-          }),
-          makeRequirement({
-            id: 3,
-            name: "Status Only",
-            parentId: 1,
-            externalStatus: "Open",
-          }),
-          makeRequirement({
-            id: 4,
-            name: "Coverage Only",
-            parentId: 1,
-            externalStatus: "Closed",
-          }),
-        ],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
-      useRequirementCoverageMock.mockReturnValue({
-        data: makeCoverageResponse({
-          1: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 1,
-            linkedCaseCount: 1,
-          }),
-          2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
-          3: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 1,
-            linkedCaseCount: 1,
-          }),
-          4: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 1,
+          linkedCaseCount: 1,
         }),
+        2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        3: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 1,
+          linkedCaseCount: 1,
+        }),
+        4: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: coverage,
         isError: false,
       });
+      global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
 
@@ -1596,22 +1741,23 @@ describe("RequirementsListView", () => {
     });
 
     it("with coverage unavailable, the Coverage Select is disabled and the other two still filter", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+        makeRequirement({
+          id: 2,
+          name: "Open Child",
+          parentId: 1,
+          externalStatus: "Open",
+        }),
+        makeRequirement({
+          id: 3,
+          name: "Closed Child",
+          parentId: 1,
+          externalStatus: "Closed",
+        }),
+      ];
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
-          makeRequirement({
-            id: 2,
-            name: "Open Child",
-            parentId: 1,
-            externalStatus: "Open",
-          }),
-          makeRequirement({
-            id: 3,
-            name: "Closed Child",
-            parentId: 1,
-            externalStatus: "Closed",
-          }),
-        ],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
@@ -1620,6 +1766,11 @@ describe("RequirementsListView", () => {
         data: undefined,
         isError: false,
       });
+      global.fetch = makeLegacyFilterFetchMock(
+        requirements,
+        undefined,
+        false
+      ) as any;
 
       renderView();
 
@@ -1635,34 +1786,37 @@ describe("RequirementsListView", () => {
     });
 
     it("clearing every filter restores the full unfiltered row set, including rows that were only present as retained ancestors", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root" }),
+        makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
+        makeRequirement({ id: 3, name: "Covered Sibling", parentId: 1 }),
+      ];
       useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root" }),
-          makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
-          makeRequirement({ id: 3, name: "Covered Sibling", parentId: 1 }),
-        ],
+        data: requirements,
         isLoading: false,
         error: null,
         refetch: vi.fn(),
       });
-      useRequirementCoverageMock.mockReturnValue({
-        data: makeCoverageResponse({
-          1: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 4,
-            linkedCaseCount: 4,
-          }),
-          2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
-          3: makeBreakdown({
-            status: "PASSED",
-            uncovered: false,
-            passed: 2,
-            linkedCaseCount: 2,
-          }),
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 4,
+          linkedCaseCount: 4,
         }),
+        2: makeBreakdown({ status: "UNCOVERED", uncovered: true }),
+        3: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 2,
+          linkedCaseCount: 2,
+        }),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: coverage,
         isError: false,
       });
+      global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
 
@@ -1686,6 +1840,312 @@ describe("RequirementsListView", () => {
       });
       expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
       expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+    });
+  });
+
+  // 28-14 Task 1 (D-04): filters and text search submit to the server at
+  // EVERY project size now -- `computeVisibleRequirementIds`'s call site is
+  // gone from the component (the function and its own tests are untouched,
+  // 28-09's oracle). Same convention as the mode-fork/expand-on-demand
+  // blocks below: `useRequirementsTree` runs for real against a routed fake
+  // `fetch`, never mocked itself.
+  describe("server-side filtering (28-14)", () => {
+    it("a burst of keystrokes in the search box produces exactly one filter request, after the debounce", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [501],
+            ancestorIds: [],
+            expandMatchedSubtrees: true,
+            rows: [makeLazyRow({ id: 501, name: "Findme Match" })],
+          },
+        ],
+      }) as any;
+
+      renderView();
+
+      // Mode resolves asynchronously (the count round trip); wait for the
+      // toolbar to actually mount before typing rather than racing it.
+      const input = await screen.findByTestId("requirements-filter-input");
+      fireEvent.change(input, { target: { value: "f" } });
+      fireEvent.change(input, { target: { value: "fi" } });
+      fireEvent.change(input, { target: { value: "fin" } });
+      fireEvent.change(input, { target: { value: "find" } });
+      fireEvent.change(input, { target: { value: "findme" } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      expect(filterRequestCalls()).toHaveLength(1);
+      expect(lastFilterRequestBody()?.search).toBe("findme");
+    });
+
+    it("each of Coverage, Status and Source submits to the server immediately on change (no debounce)", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+      ];
+      useFindManyIssueMock.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      const coverage = makeCoverageResponse({
+        1: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          passed: 1,
+          linkedCaseCount: 1,
+        }),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: coverage,
+        isError: false,
+      });
+      global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
+
+      renderView();
+
+      await selectFilterOption(
+        "requirements-coverage-filter",
+        "requirements.coverage.uncovered"
+      );
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.coverage).toBe("UNCOVERED");
+      });
+
+      await selectFilterOption("requirements-status-filter", "Open");
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.status).toBe("Open");
+      });
+
+      await selectFilterOption(
+        "requirements-source-filter",
+        "requirements.provenance.nativeLabel"
+      );
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.source).toBe("MANUAL");
+      });
+    });
+
+    it("below the threshold, a text-only filter renders matches + ancestors + descendants -- exactly the set captured before this plan", async () => {
+      // Captured BEFORE this plan, by reasoning directly about
+      // `computeVisibleRequirementIds`'s own documented semantics for this
+      // exact fixture (id 2 matches "findme"; id 1 is its ancestor; id 3 is
+      // its descendant; id 4 is an unrelated sibling): with only the text
+      // axis active, the combined match set is {2}, the ancestor walk adds
+      // {1}, and -- because NO non-text axis is active -- the descendant BFS
+      // adds {3}. Id 4 is never matched, never an ancestor, never a
+      // descendant of the match, so it must stay absent. This literal,
+      // {1, 2, 3} vs. NOT 4, is the assertion below -- not re-derived from
+      // the new implementation.
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root" }),
+        makeRequirement({ id: 2, name: "Findme Match", parentId: 1 }),
+        makeRequirement({ id: 3, name: "Descendant", parentId: 2 }),
+        makeRequirement({ id: 4, name: "Other", parentId: 1 }),
+      ];
+      useFindManyIssueMock.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      global.fetch = makeTreeFetchMock({
+        mode: "all",
+        total: 4,
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [2],
+            ancestorIds: [1],
+            expandMatchedSubtrees: true,
+          },
+        ],
+      }) as any;
+
+      renderView();
+
+      fireEvent.change(screen.getByTestId("requirements-filter-input"), {
+        target: { value: "findme" },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(screen.getByTestId("requirement-row-3")).toBeInTheDocument();
+      expect(screen.queryByTestId("requirement-row-4")).not.toBeInTheDocument();
+    });
+
+    it("above the threshold, a matched row under a filter still expands and fetches its children", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [501],
+            ancestorIds: [],
+            expandMatchedSubtrees: true,
+            rows: [
+              makeLazyRow({
+                id: 501,
+                name: "Findme Match",
+                hasChildren: true,
+              }),
+            ],
+          },
+        ],
+        childrenByParentId: {
+          501: [makeLazyRow({ id: 502, name: "Findme Child", parentId: 501 })],
+        },
+      }) as any;
+
+      renderView();
+
+      fireEvent.change(await screen.findByTestId("requirements-filter-input"), {
+        target: { value: "findme" },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+    });
+
+    it("clearing the search axis returns to the unfiltered roots list, not a stale match set", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Root A" }),
+          makeLazyRow({ id: 502, name: "Root B" }),
+        ],
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [501],
+            ancestorIds: [],
+            expandMatchedSubtrees: true,
+            rows: [makeLazyRow({ id: 501, name: "Root A" })],
+          },
+        ],
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+
+      fireEvent.change(screen.getByTestId("requirements-filter-input"), {
+        target: { value: "root a" },
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-row-502")
+        ).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirements-filter-clear"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+    });
+
+    it("a coverage rollup outage disables the Coverage select but the Source axis still filters, tree intact", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Root A" })],
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [501],
+            ancestorIds: [],
+            expandMatchedSubtrees: false,
+            rows: [
+              makeLazyRow({
+                id: 501,
+                name: "Root A",
+                integrationId: 5,
+                requirementDetachedAt: new Date().toISOString(),
+              }),
+            ],
+          },
+        ],
+      }) as any;
+      useRequirementCoverageMock.mockReturnValue({
+        data: undefined,
+        isError: true,
+      });
+
+      renderView();
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
+
+      await selectFilterOption(
+        "requirements-source-filter",
+        "requirements.provenance.detachedLabel"
+      );
+
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.source).toBe("DETACHED");
+      });
+      expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+    });
+
+    it("every filter control keeps its existing test id and disabled rule", () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      renderView();
+
+      expect(
+        screen.getByTestId("requirements-coverage-filter")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirements-status-filter")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirements-source-filter")
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId("requirements-filter-input")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("requirements-filter-clear")
+      ).not.toBeInTheDocument();
+
+      fireEvent.change(screen.getByTestId("requirements-filter-input"), {
+        target: { value: "x" },
+      });
+      expect(
+        screen.getByTestId("requirements-filter-clear")
+      ).toBeInTheDocument();
+
+      // Coverage unavailable (default mock: `data: undefined, isError:
+      // false`) is the same disabled rule the pre-existing "with coverage
+      // unavailable" test proves in "all" mode -- unaffected by this plan.
+      expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
     });
   });
 
