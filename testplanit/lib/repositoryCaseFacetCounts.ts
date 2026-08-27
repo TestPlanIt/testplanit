@@ -424,6 +424,20 @@ function nonNegative(value: number): number {
   return value > 0 ? value : 0;
 }
 
+/**
+ * Rows -> the number of distinct CASES they cover. Every dynamic-field facet
+ * counts cases, never CaseFieldValues rows: nothing enforces one row per
+ * (testCaseId, fieldId), and duplicates made a row-wise `hasValue` overshoot
+ * the case total, so the derived "None" row collapsed to 0 while the `none`
+ * filter — a case-level `caseFieldValues: { none: ... }` where — still
+ * returned those cases.
+ */
+export function distinctCaseCount(
+  rows: readonly { testCaseId: number }[]
+): number {
+  return new Set(rows.map((row) => row.testCaseId)).size;
+}
+
 function sumValues(values: Iterable<number>): number {
   let total = 0;
   for (const value of values) total += value;
@@ -1208,27 +1222,31 @@ export async function computeRepositoryCaseFacetCounts(
           testCaseId: { in: ids },
           value: { not: DbNull },
         },
-        select: { value: true },
+        select: { testCaseId: true, value: true },
       });
-      const optionCountMap = new Map<number, number>();
+      // Per-CASE option tally. A case counts once per option any of its rows
+      // selects — the same `caseFieldValues: { some: ... }` semantics the
+      // where-compiler filters by.
+      const optionCaseIds = new Map<number, Set<number>>();
+      const addOptionCase = (optionId: unknown, testCaseId: number) => {
+        if (typeof optionId !== "number") return;
+        const cases = optionCaseIds.get(optionId) ?? new Set<number>();
+        cases.add(testCaseId);
+        optionCaseIds.set(optionId, cases);
+      };
       // Per-CASE has-value tally. It is not the sum of the option counts: a
       // Multi-Select case contributes to several options but is one case.
-      let withValueCount = 0;
+      const withValueCaseIds = new Set<number>();
       for (const fv of fieldValues) {
         if (fv.value === null || fv.value === undefined) continue;
         if (Array.isArray(fv.value)) {
-          if (fv.value.length > 0) withValueCount++;
+          if (fv.value.length > 0) withValueCaseIds.add(fv.testCaseId);
           for (const optionId of fv.value) {
-            if (typeof optionId === "number") {
-              optionCountMap.set(
-                optionId,
-                (optionCountMap.get(optionId) ?? 0) + 1
-              );
-            }
+            addOptionCase(optionId, fv.testCaseId);
           }
         } else if (typeof fv.value === "number") {
-          withValueCount++;
-          optionCountMap.set(fv.value, (optionCountMap.get(fv.value) ?? 0) + 1);
+          withValueCaseIds.add(fv.testCaseId);
+          addOptionCase(fv.value, fv.testCaseId);
         }
       }
       return [
@@ -1238,7 +1256,7 @@ export async function computeRepositoryCaseFacetCounts(
           fieldId,
           options: fieldInfo.options.map((opt) => ({
             ...opt,
-            count: optionCountMap.get(opt.id) ?? 0,
+            count: optionCaseIds.get(opt.id)?.size ?? 0,
           })),
           // Option fields emit the hasValue/noValue pair every other field
           // type already does, derived from the SAME self-excluded base the
@@ -1246,28 +1264,33 @@ export async function computeRepositoryCaseFacetCounts(
           // option sum from `totalCount` (a different, smaller base) and the
           // "None" row went negative.
           counts: {
-            hasValue: withValueCount,
-            noValue: nonNegative(total - withValueCount),
+            hasValue: withValueCaseIds.size,
+            noValue: nonNegative(total - withValueCaseIds.size),
           },
         },
       ];
     }
 
     if (fieldInfo.type === "Link") {
-      const linkCount = await db.caseFieldValues.count({
+      const linkRows = await db.caseFieldValues.findMany({
         where: {
           fieldId,
           testCaseId: { in: ids },
           value: { not: DbNull },
           AND: [{ value: { not: "" } }],
         },
+        select: { testCaseId: true },
       });
+      const linkCount = distinctCaseCount(linkRows);
       return [
         fieldInfo.displayName,
         {
           type: fieldInfo.type,
           fieldId,
-          counts: { hasValue: linkCount, noValue: total - linkCount },
+          counts: {
+            hasValue: linkCount,
+            noValue: nonNegative(total - linkCount),
+          },
         },
       ];
     }
@@ -1285,26 +1308,31 @@ export async function computeRepositoryCaseFacetCounts(
           fieldId,
           counts: {
             hasValue: withStepsCount,
-            noValue: total - withStepsCount,
+            noValue: nonNegative(total - withStepsCount),
           },
         },
       ];
     }
 
     if (fieldInfo.type === "Checkbox") {
-      const checkedCount = await db.caseFieldValues.count({
+      const checkedRows = await db.caseFieldValues.findMany({
         where: {
           fieldId,
           testCaseId: { in: ids },
           value: { equals: true },
         },
+        select: { testCaseId: true },
       });
+      const checkedCount = distinctCaseCount(checkedRows);
       return [
         fieldInfo.displayName,
         {
           type: fieldInfo.type,
           fieldId,
-          counts: { hasValue: checkedCount, noValue: total - checkedCount },
+          counts: {
+            hasValue: checkedCount,
+            noValue: nonNegative(total - checkedCount),
+          },
         },
       ];
     }
@@ -1316,9 +1344,10 @@ export async function computeRepositoryCaseFacetCounts(
           testCaseId: { in: ids },
           value: { not: DbNull },
         },
-        select: { value: true },
+        select: { testCaseId: true, value: true },
       });
-      const valueCounts = new Map<number, number>();
+      const valueCaseIds = new Map<number, Set<number>>();
+      const withValueCaseIds = new Set<number>();
       for (const fv of fieldValues) {
         if (fv.value === null || fv.value === undefined) continue;
         const numValue =
@@ -1326,10 +1355,13 @@ export async function computeRepositoryCaseFacetCounts(
             ? fv.value
             : parseFloat(fv.value as string);
         if (!isNaN(numValue)) {
-          valueCounts.set(numValue, (valueCounts.get(numValue) ?? 0) + 1);
+          const cases = valueCaseIds.get(numValue) ?? new Set<number>();
+          cases.add(fv.testCaseId);
+          valueCaseIds.set(numValue, cases);
+          withValueCaseIds.add(fv.testCaseId);
         }
       }
-      const sortedValues = [...valueCounts.keys()].sort((a, b) => a - b);
+      const sortedValues = [...valueCaseIds.keys()].sort((a, b) => a - b);
       return [
         fieldInfo.displayName,
         {
@@ -1338,11 +1370,11 @@ export async function computeRepositoryCaseFacetCounts(
           options: sortedValues.map((value) => ({
             id: value,
             name: value.toString(),
-            count: valueCounts.get(value) ?? 0,
+            count: valueCaseIds.get(value)?.size ?? 0,
           })) as DynamicFieldFacet["options"],
           counts: {
-            hasValue: fieldValues.length,
-            noValue: total - fieldValues.length,
+            hasValue: withValueCaseIds.size,
+            noValue: nonNegative(total - withValueCaseIds.size),
           },
         },
       ];
@@ -1355,19 +1387,24 @@ export async function computeRepositoryCaseFacetCounts(
           testCaseId: { in: ids },
           value: { not: DbNull },
         },
-        select: { value: true },
+        select: { testCaseId: true, value: true },
       });
-      const withDateCount = fieldValues.filter((fv) => {
-        if (fv.value === null || fv.value === undefined) return false;
-        if (typeof fv.value === "string") return fv.value.trim() !== "";
-        return true;
-      }).length;
+      const withDateCount = distinctCaseCount(
+        fieldValues.filter((fv) => {
+          if (fv.value === null || fv.value === undefined) return false;
+          if (typeof fv.value === "string") return fv.value.trim() !== "";
+          return true;
+        })
+      );
       return [
         fieldInfo.displayName,
         {
           type: fieldInfo.type,
           fieldId,
-          counts: { hasValue: withDateCount, noValue: total - withDateCount },
+          counts: {
+            hasValue: withDateCount,
+            noValue: nonNegative(total - withDateCount),
+          },
         },
       ];
     }
@@ -1379,18 +1416,21 @@ export async function computeRepositoryCaseFacetCounts(
           testCaseId: { in: ids },
           value: { not: DbNull },
         },
-        select: { value: true },
+        select: { testCaseId: true, value: true },
       });
-      let withTextCount = 0;
+      const withTextCaseIds = new Set<number>();
       for (const fv of fieldValues) {
-        if (!isTiptapEmpty(fv.value)) withTextCount++;
+        if (!isTiptapEmpty(fv.value)) withTextCaseIds.add(fv.testCaseId);
       }
       return [
         fieldInfo.displayName,
         {
           type: fieldInfo.type,
           fieldId,
-          counts: { hasValue: withTextCount, noValue: total - withTextCount },
+          counts: {
+            hasValue: withTextCaseIds.size,
+            noValue: nonNegative(total - withTextCaseIds.size),
+          },
         },
       ];
     }
