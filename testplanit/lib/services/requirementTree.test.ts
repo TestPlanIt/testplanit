@@ -720,8 +720,22 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     expect(code).not.toMatch(/OFFSET/i);
   });
 
-  it("never selects *", () => {
-    expect(code).not.toMatch(/SELECT\s+\*/i);
+  it("never selects * directly off the Issue table -- the heavy description/data/externalData/note blobs this phase exists to avoid paging", () => {
+    // `SELECT * FROM matches` / `SELECT * FROM counted` in
+    // resolveRequirementMatches's own windowed-count CTEs are exempt: both
+    // are THIS FILE's own already-narrow projections (REQUIREMENT_TREE_COLUMNS
+    // plus hasChildren/matchedTotal), never the raw "Issue" table, so no
+    // heavy blob column can reach them regardless of a `SELECT *` there.
+    expect(code).not.toMatch(/SELECT\s+\*\s+FROM\s+"Issue"/i);
+  });
+
+  it("the only two `SELECT *` occurrences are resolveRequirementMatches' own matches/counted CTEs, never a table read", () => {
+    const starCount = (code.match(/SELECT\s+\*/gi) ?? []).length;
+    expect(starCount).toBe(2);
+    expect(code).toContain(
+      'SELECT *, COUNT(*) OVER ()::int AS "matchedTotal" FROM matches'
+    );
+    expect(code).toContain("SELECT * FROM counted");
   });
 
   it("requests limit + 1 rows in the roots window, one query instead of a separate count", () => {

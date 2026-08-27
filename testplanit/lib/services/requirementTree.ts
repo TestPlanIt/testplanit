@@ -632,24 +632,41 @@ export async function resolveRequirementMatches(
     );
   }
 
+  // The cursor restriction is applied OUTSIDE the `matches` CTE, never
+  // folded into the same WHERE clause `COUNT(*) OVER ()` counts over --
+  // a real-Postgres bug this file's own live-DB suite caught: with the
+  // cursor predicate in the SAME WHERE clause, `matchedTotal` reported only
+  // the REMAINING rows past the cursor (10 total, then 7 on page 2, one
+  // page's worth fewer each time), not the true total across every page. A
+  // mocked unit test cannot catch this -- it never runs the two clauses
+  // through a real query planner, only returns whatever rows a test hands
+  // it back verbatim. `matches` computes the axis intersection once;
+  // `counted` windows `COUNT(*) OVER ()` over that WHOLE set BEFORE any
+  // cursor trimming; the outer SELECT applies the cursor and the page
+  // LIMIT last, against `counted`'s own (already-computed) matchedTotal.
   const cursorFragment = cursor
-    ? sql`AND (i.name, i.id) > (${cursor.name}, ${cursor.id})`
+    ? sql`WHERE (name, id) > (${cursor.name}, ${cursor.id})`
     : sql``;
 
   const { rows } = await sql<
     RequirementTreeRow & { matchedTotal: number | bigint }
   >`
-    SELECT
-      ${REQUIREMENT_TREE_COLUMNS},
-      ${requirementHasChildrenFragment(projectId)},
-      COUNT(*) OVER ()::int AS "matchedTotal"
-    FROM "Issue" i
-    WHERE i."projectId" = ${projectId}
-      AND i."isRequirement" = true
-      AND i."isDeleted" = false
-      AND (${andAll(axisFragments)})
-      ${cursorFragment}
-    ORDER BY i.name, i.id
+    WITH matches AS (
+      SELECT
+        ${REQUIREMENT_TREE_COLUMNS},
+        ${requirementHasChildrenFragment(projectId)}
+      FROM "Issue" i
+      WHERE i."projectId" = ${projectId}
+        AND i."isRequirement" = true
+        AND i."isDeleted" = false
+        AND (${andAll(axisFragments)})
+    ),
+    counted AS (
+      SELECT *, COUNT(*) OVER ()::int AS "matchedTotal" FROM matches
+    )
+    SELECT * FROM counted
+    ${cursorFragment}
+    ORDER BY name, id
     LIMIT ${limit + 1}
   `.execute(db.$qb);
 
