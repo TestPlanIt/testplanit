@@ -33,18 +33,24 @@ import {
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { RequirementDetailsPanel } from "@/components/requirements/RequirementDetailsPanel";
 import { useExportRequirementTraceabilityPdf } from "~/hooks/pdf/useExportRequirementTraceabilityPdf";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+// `usePathname` comes from the i18n wrapper, never `next/navigation`: the
+// raw hook returns the locale-prefixed path, which the wrapper's own
+// `router.replace` would then prefix a second time.
+import { usePathname, useRouter } from "~/lib/navigation";
 import { schema } from "~/zenstack/schema";
-import RequirementDetailPanel from "./RequirementDetailPanel";
 // Imported under an alias: the structural drag-drop-nesting guard in
 // `RequirementsWorkspace.test.tsx` does a raw text search for the literal
 // JSX tag `<RequirementsListView` in this file, and `useRef<Requirements
 // ListViewHandle>` would otherwise collide with that search as a false
 // match (the generic's `<` immediately precedes the same prefix).
 import RequirementsListView, {
+  type RequirementNav,
   type RequirementsListViewHandle as ListViewHandle,
 } from "./RequirementsListView";
 
@@ -79,9 +85,76 @@ export default function RequirementsWorkspace({
   const t = useTranslations();
   const locale = useLocale();
   const { data: sessionAuth } = useSession();
-  const [selectedRequirementId, setSelectedRequirementId] = useState<
-    number | null
-  >(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // --- Single owner for this component's URL writes ------------------------
+  // App Router navigations are async, so two `router.replace` calls composed
+  // from separate `window.location.search` reads each see the pre-write URL
+  // and the second silently drops the first's param. Every writer here goes
+  // through this helper, which composes from the freshest search string it
+  // knows: the value it last wrote, until the router commits it and
+  // window.location catches up. Ported from `ProjectRepository.tsx`, which
+  // documents the same hazard -- this page carries a search box and three
+  // filters that are candidates for the URL next.
+  const pendingUrlWriteRef = useRef<{ from: string; to: string } | null>(null);
+  const replaceUrlParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const currentSearch = window.location.search;
+      const pending = pendingUrlWriteRef.current;
+      const baseSearch =
+        pending && pending.from === currentSearch ? pending.to : currentSearch;
+      const query = new URLSearchParams(baseSearch);
+      const before = query.toString();
+      mutate(query);
+      const after = query.toString();
+      if (before === after) return;
+      pendingUrlWriteRef.current = {
+        from: currentSearch,
+        to: after ? `?${after}` : "",
+      };
+      router.replace(after ? `${pathname}?${after}` : pathname, {
+        scroll: false,
+      });
+    },
+    [router, pathname]
+  );
+
+  // Retire the overlay once the router has committed, so a later
+  // back-navigation onto the same URL cannot replay the write.
+  useEffect(() => {
+    const pending = pendingUrlWriteRef.current;
+    if (pending && window.location.search !== pending.from) {
+      pendingUrlWriteRef.current = null;
+    }
+  }, [searchParams]);
+
+  // Selection lives in the URL, not in state: a requirement is now
+  // addressable, so it survives a reload and can be pasted into a ticket.
+  const requirementParam = searchParams.get("requirement");
+  const parsedRequirementId = requirementParam ? Number(requirementParam) : NaN;
+  const selectedRequirementId = Number.isFinite(parsedRequirementId)
+    ? parsedRequirementId
+    : null;
+
+  const goToRequirement = useCallback(
+    (issueId: number | null) => {
+      replaceUrlParams((p) => {
+        if (issueId == null) {
+          p.delete("requirement");
+        } else {
+          p.set("requirement", String(issueId));
+        }
+      });
+    },
+    [replaceUrlParams]
+  );
+  const closeDetails = useCallback(
+    () => goToRequirement(null),
+    [goToRequirement]
+  );
+
   // The row menu's Edit action: select the row AND ask the panel to open in
   // edit mode. A monotonically increasing token (never a bare id) so the
   // panel can tell a NEW request for the already-selected row from the one
@@ -90,10 +163,29 @@ export default function RequirementsWorkspace({
     id: number;
     token: number;
   } | null>(null);
-  const handleRequestEdit = useCallback((issueId: number) => {
-    setSelectedRequirementId(issueId);
-    setEditRequest((prev) => ({ id: issueId, token: (prev?.token ?? 0) + 1 }));
-  }, []);
+  const handleRequestEdit = useCallback(
+    (issueId: number) => {
+      goToRequirement(issueId);
+      setEditRequest((prev) => ({ id: issueId, token: (prev?.token ?? 0) + 1 }));
+    },
+    [goToRequirement]
+  );
+
+  // Prev/next over the list's own visible row order, published by
+  // `RequirementsListView` because that is what knows the post-search,
+  // post-filter, post-collapse order. Mirrors `Cases.tsx` -> `caseNav`.
+  const [requirementNav, setRequirementNav] = useState<RequirementNav | null>(
+    null
+  );
+
+  // Full-width details, mirroring ProjectRepository's own three-part
+  // mechanism: an explicit toggle, a responsive takeover under 1200px, and
+  // the guard that neither applies with nothing selected.
+  const [detailsFullWidth, setDetailsFullWidth] = useState(false);
+  const [isNarrowForDetails, setIsNarrowForDetails] = useState(false);
+  const collapsedBeforeFullWidthRef = useRef<boolean | null>(null);
+  const effectiveFullWidth =
+    selectedRequirementId != null && (detailsFullWidth || isNarrowForDetails);
   // The Add Requirement button below (gap closure 26.2-16, UAT gap 13)
   // reaches the list's own Create Requirement dialog state through this
   // ref -- see `RequirementsListViewHandle`'s doc comment.
@@ -115,6 +207,75 @@ export default function RequirementsWorkspace({
     }
     setIsTreeCollapsed(!isTreeCollapsed);
   };
+
+  const toggleDetailsFullWidth = useCallback(
+    () => setDetailsFullWidth((v) => !v),
+    []
+  );
+
+  // Same 1200px plain-resize-listener rule ProjectRepository uses -- not a
+  // ResizeObserver, which watches an element rather than the viewport this
+  // takeover is about.
+  useEffect(() => {
+    const measure = () => setIsNarrowForDetails(window.innerWidth < 1200);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  // Read the persisted preference in an effect, NEVER a useState
+  // initializer: server and first client render must agree, and reading
+  // storage during initialization is exactly the hydration mismatch that
+  // rule exists to prevent. `hydratedFullWidthRef` then gates the write-back
+  // so this initial read cannot be clobbered by the write effect firing
+  // first with its default `false`.
+  const hydratedFullWidthRef = useRef(false);
+  useEffect(() => {
+    try {
+      setDetailsFullWidth(
+        window.localStorage.getItem("requirements-details-fullwidth") === "1"
+      );
+    } catch {
+      /* ignore private-mode / quota */
+    }
+    hydratedFullWidthRef.current = true;
+  }, []);
+  useEffect(() => {
+    if (!hydratedFullWidthRef.current) return;
+    try {
+      window.localStorage.setItem(
+        "requirements-details-fullwidth",
+        detailsFullWidth ? "1" : "0"
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [detailsFullWidth]);
+
+  // Full-width collapses the tree pane (which on this page IS the list) and
+  // restores it on exit -- but only if the user had it open, so entering
+  // and leaving full width never silently re-opens a tree they collapsed
+  // themselves. collapse()/expand() preserve the dragged split ratio.
+  useEffect(() => {
+    const panel = treePanelRef.current;
+    if (!panel) return;
+    if (effectiveFullWidth) {
+      if (collapsedBeforeFullWidthRef.current === null) {
+        collapsedBeforeFullWidthRef.current = panel.isCollapsed();
+      }
+      if (!panel.isCollapsed()) {
+        panel.collapse();
+        setIsTreeCollapsed(true);
+      }
+    } else {
+      if (collapsedBeforeFullWidthRef.current === false && panel.isCollapsed()) {
+        panel.expand();
+        setIsTreeCollapsed(false);
+      }
+      collapsedBeforeFullWidthRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveFullWidth]);
   // Same field `RequirementsListView.tsx` reads for its own reparent/
   // delete/detach gate -- mirrored here so the action bar's Add
   // Requirement button is gated identically to the toolbar button it
@@ -274,8 +435,9 @@ export default function RequirementsWorkspace({
                         ref={listViewRef}
                         projectId={projectId}
                         selectedRequirementId={selectedRequirementId}
-                        onSelectRequirement={setSelectedRequirementId}
+                        onSelectRequirement={goToRequirement}
                         onRequestEdit={handleRequestEdit}
+                        onRequirementNavChange={setRequirementNav}
                       />
                     </SimpleDndProvider>
                   </div>
@@ -299,18 +461,38 @@ export default function RequirementsWorkspace({
                   minSize={0}
                   className="p-0 m-0 min-w-[220px]"
                 >
+                  {/* No `overflow-y-auto` here: the details panel is a
+                      full-height flex column that scrolls its own body, so a
+                      second scroll container on the wrapper would unstick its
+                      toolbar. Matches `repository-details-pane`, which wraps
+                      CaseDetailsPanel the same way. */}
                   <div
                     data-testid="requirements-detail-pane"
-                    className="h-full overflow-y-auto"
+                    className="h-full"
                   >
                     {selectedRequirementId === null ? (
                       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
                         {t("requirements.detail.selectPrompt")}
                       </div>
                     ) : (
-                      <RequirementDetailPanel
+                      <RequirementDetailsPanel
                         projectId={projectId}
                         requirementId={selectedRequirementId}
+                        fullWidth={effectiveFullWidth}
+                        onToggleFullWidth={toggleDetailsFullWidth}
+                        onClose={closeDetails}
+                        onPrev={() =>
+                          requirementNav?.prevId != null &&
+                          goToRequirement(requirementNav.prevId)
+                        }
+                        onNext={() =>
+                          requirementNav?.nextId != null &&
+                          goToRequirement(requirementNav.nextId)
+                        }
+                        hasPrev={!!requirementNav?.hasPrev}
+                        hasNext={!!requirementNav?.hasNext}
+                        position={requirementNav?.position ?? null}
+                        total={requirementNav?.total ?? 0}
                         // Reaches the SAME delete dialog + descendant count
                         // the row action opens, through the list's own ref
                         // -- never a

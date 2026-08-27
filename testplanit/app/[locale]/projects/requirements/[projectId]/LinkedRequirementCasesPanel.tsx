@@ -279,7 +279,12 @@ export function LinkedRequirementCasesPanel({
       <CardHeader className="flex flex-row items-center justify-between p-4">
         <CardTitle className="flex items-center gap-2">
           <Link2 className="w-5 h-5" />
-          {t("title")}
+          {/* Direct links only -- the same set the table below lists, which
+              is deliberately narrower than the covering-case superset the
+              panel above totals. The key's own `=0` branch falls back to
+              the bare title while the query is still in flight or the
+              requirement genuinely has no links. */}
+          {t("titleWithCount", { count: rows.length })}
         </CardTitle>
         <Button
           type="button"
@@ -397,14 +402,22 @@ export function LinkedRequirementCasesPanel({
                           decision 2026-08-25) -- same convention as
                           `RequirementCoveragePanel`'s Project column. */}
                       {row.project?.name && (
-                        <ProjectNameDisplay
-                          projectName={row.project.name}
-                          projectId={row.projectId}
-                          iconUrl={row.project.iconUrl}
-                          showLink
-                          fitContainer
-                          className="text-xs text-muted-foreground"
-                        />
+                        // Auto-layout table: no column width bounds this
+                        // cell, so `fitContainer`'s `max-w-full` resolves
+                        // against content and a long project name widens the
+                        // table instead of truncating. The cap is that bound;
+                        // the full name stays reachable via the display's own
+                        // tooltip.
+                        <div className="max-w-[180px]">
+                          <ProjectNameDisplay
+                            projectName={row.project.name}
+                            projectId={row.projectId}
+                            iconUrl={row.project.iconUrl}
+                            showLink
+                            fitContainer
+                            className="text-xs text-muted-foreground"
+                          />
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="w-[60px] text-end">

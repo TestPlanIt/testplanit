@@ -761,6 +761,7 @@
       "deletedUser": "Người dùng đã bị xóa",
       "restrictedField": "Trường hạn chế",
       "backToTestCase": "Quay lại trường hợp kiểm thử",
+      "backToRequirements": "Quay lại Yêu cầu",
       "selectDeselectAllApprove": "Chọn hoặc bỏ chọn phê duyệt cho tất cả các khu vực liên quan.",
       "selectDeselectAllReadSensitive": "Chọn hoặc bỏ chọn chế độ đọc cho tất cả các khu vực liên quan."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Chọn một yêu cầu để xem chi tiết.",
+      "previousRequirement": "Yêu cầu trước đó",
+      "nextRequirement": "Yêu cầu tiếp theo",
+      "breadcrumbLabel": "Phân cấp yêu cầu",
+      "notFound": "Không tìm thấy yêu cầu nào",
       "documentation": "Tài liệu",
       "documentationEmpty": "Không có tài liệu nào được cung cấp",
       "documentationPlaceholder": "Nhập tài liệu yêu cầu...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Các trường hợp kiểm thử được liên kết",
+      "titleWithCount": "{count, plural, =0 {Trường hợp kiểm thử liên kết} =1 {# Trường hợp kiểm thử liên kết} other {# Trường hợp kiểm thử liên kết}}",
       "empty": "Không có trường hợp kiểm thử nào được liên kết.",
       "addLink": "Thêm liên kết",
       "addLinkDialogTitle": "Liên kết trường hợp kiểm thử",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Không thể tải độ phủ.",
       "retry": "Thử lại",
       "panelTitle": "Các trường hợp kiểm thử bao phủ",
+      "panelTitleWithCount": "{count, plural, =0 {Bao phủ trường hợp kiểm thử} =1 {Bao phủ # trường hợp kiểm thử} other {Bao phủ # trường hợp kiểm thử}}",
       "panelDescription": "Mọi trường hợp kiểm thử được tính vào độ phủ của yêu cầu này — bao gồm các trường hợp được liên kết trực tiếp với nó cùng với các trường hợp được liên kết với bất kỳ yêu cầu con nào bên dưới nó. Để thêm hoặc xóa liên kết, hãy sử dụng mục Trường hợp kiểm thử được liên kết.",
       "panelEmpty": "Chưa có trường hợp kiểm thử nào bao phủ yêu cầu này.",
       "columnCase": "Trường hợp kiểm thử",
-      "columnResult": "Kết quả",
+      "columnResult": "Kết quả gần nhất",
+      "resultRunLink": "Xem lượt kiểm thử mà kết quả này đến từ đó",
       "columnExecutedAt": "Thời điểm thực thi",
       "columnProject": "Dự án",
       "inherited": "Được kế thừa",
       "inheritedTooltip": "Được liên kết với một mục con của yêu cầu này, không phải trực tiếp với nó.",
-      "notRunCell": "Chưa chạy",
-      "crossProjectCount": "{count, plural, other {Cũng được bao phủ bởi các trường hợp kiểm thử trong # dự án khác}}"
+      "notRunCell": "Chưa chạy"
     },
     "export": {
       "menuLabel": "Xuất khả năng truy xuất nguồn gốc",

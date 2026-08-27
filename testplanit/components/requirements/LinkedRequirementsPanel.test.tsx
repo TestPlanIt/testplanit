@@ -13,6 +13,22 @@ vi.mock("next-intl", () => ({
     namespace ? `${namespace}.${key}` : key,
 }));
 
+// `~/lib/navigation`'s `Link` is next-intl's shared-navigation Link: it calls
+// the REAL `useLocale()` and throws "No intl context found" without a
+// provider, whatever `next-intl` itself is mocked to. The requirement detail
+// panel and breadcrumb render it, so it needs the same plain-anchor stub
+// `RequirementsListColumns.test.tsx` and `RequirementCoveragePanel.test.tsx`
+// already use for this primitive.
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/projects/requirements/42",
+  Link: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));

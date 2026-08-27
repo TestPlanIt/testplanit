@@ -10,7 +10,7 @@ Once test cases are [linked to requirements](./requirements.md#linking-test-case
 
 ## Coverage
 
-A requirement's covering cases are the test cases linked to it directly plus the cases linked to any requirement beneath it — coverage always rolls up through the subtree, so a parent is covered by its children's cases. Cases from other projects count too, and are reported separately as a **+N** count alongside the project's own.
+A requirement's covering cases are the test cases linked to it directly plus the cases linked to any requirement beneath it — coverage always rolls up through the subtree, so a parent is covered by its children's cases. Cases from other projects count too: the requirements list reports them separately as a **+N** count alongside the project's own, while the **Covering Test Cases** panel lists every one of them as a row naming the project it belongs to.
 
 Each covering case contributes its single most recent execution result, across all test runs. From those results the requirement gets one coverage state:
 
@@ -30,7 +30,7 @@ The requirements list's **Coverage** column renders each requirement's rollup as
 Two surfaces drill into the covering-case set:
 
 * The list's **Covering Test Cases** column — click a count to see the cases behind it.
-* The **Covering Test Cases** panel in the requirement's detail panel — every case counted toward the requirement's coverage, with each case's latest result, execution time, and project.
+* The **Covering Test Cases** panel in the requirement's detail panel — every case counted toward the requirement's coverage, with each case's **Latest Result**, **Executed At** time, and project. Clicking a latest result opens the test run it was recorded in, with that case selected.
 
 In both, a case linked to a descendant rather than to the requirement itself carries an **Inherited** badge: *"Linked to a descendant of this requirement, not directly to it."* The drill-down is read-only — to add or remove links, use the **Linked Test Cases** panel.
 

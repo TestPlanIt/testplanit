@@ -349,6 +349,7 @@ function makeCoveringCase(
     lastStatusIsSuccess: null,
     lastStatusIsFailure: null,
     lastExecutedAt: null,
+    lastTestRunId: null,
     direct: true,
     ...overrides,
   };

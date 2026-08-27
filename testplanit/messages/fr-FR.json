@@ -761,6 +761,7 @@
       "deletedUser": "Utilisateur supprimé",
       "restrictedField": "Champ restreint",
       "backToTestCase": "Retour au cas de test",
+      "backToRequirements": "Retour aux exigences",
       "selectDeselectAllApprove": "Sélectionnez ou désélectionnez « Approuver » pour toutes les zones concernées.",
       "selectDeselectAllReadSensitive": "Sélectionnez ou désélectionnez l'option « Lecture sensible » pour toutes les zones concernées."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Sélectionnez une exigence pour afficher ses détails.",
+      "previousRequirement": "Exigence précédente",
+      "nextRequirement": "Exigence suivante",
+      "breadcrumbLabel": "Hiérarchie des exigences",
+      "notFound": "Aucune exigence trouvée",
       "documentation": "Documentation",
       "documentationEmpty": "Aucune documentation fournie",
       "documentationPlaceholder": "Saisir la documentation de l'exigence...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Cas de test liés",
+      "titleWithCount": "{count, plural, =0 {Cas de test liés} =1 {# Cas de test lié} other {# Cas de test liés}}",
       "empty": "Aucun cas de test lié.",
       "addLink": "Ajouter un lien",
       "addLinkDialogTitle": "Lier des cas de test",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Échec du chargement de la couverture.",
       "retry": "Réessayer",
       "panelTitle": "Cas de test couvrants",
+      "panelTitleWithCount": "{count, plural, =0 {Cas de test couvrants} =1 {# cas de test couvrant} other {# cas de test couvrants}}",
       "panelDescription": "Tous les cas de test comptabilisés dans la couverture de cette exigence — les cas liés directement à celle-ci ainsi que les cas liés à toute exigence qui en dépend. Pour ajouter ou supprimer des liens, utilisez Cas de test liés.",
       "panelEmpty": "Aucun cas de test ne couvre encore cette exigence.",
       "columnCase": "Cas de test",
-      "columnResult": "Résultat",
+      "columnResult": "Dernier résultat",
+      "resultRunLink": "Voir l'exécution de test dont provient ce résultat",
       "columnExecutedAt": "Exécuté à",
       "columnProject": "Projet",
       "inherited": "Hérité",
       "inheritedTooltip": "Lié à un descendant de cette exigence, et non directement à celle-ci.",
-      "notRunCell": "Non exécuté",
-      "crossProjectCount": "{count, plural, one {Également couvert par un cas dans # autre projet} other {Également couvert par des cas dans # autres projets}}"
+      "notRunCell": "Non exécuté"
     },
     "export": {
       "menuLabel": "Exporter la traçabilité",

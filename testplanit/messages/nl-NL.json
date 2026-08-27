@@ -761,6 +761,7 @@
       "deletedUser": "Verwijderde gebruiker",
       "restrictedField": "Beperkt veld",
       "backToTestCase": "Terug naar testcase",
+      "backToRequirements": "Terug naar vereisten",
       "selectDeselectAllApprove": "Selecteer of deselecteer 'goedkeuren' voor alle relevante gebieden.",
       "selectDeselectAllReadSensitive": "Selecteer of deselecteer leesgevoeligheid voor alle relevante gebieden."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Selecteer een vereiste om de details te bekijken.",
+      "previousRequirement": "Vorige vereiste",
+      "nextRequirement": "Volgende vereiste",
+      "breadcrumbLabel": "Vereistehiërarchie",
+      "notFound": "Geen vereiste gevonden",
       "documentation": "Documentatie",
       "documentationEmpty": "Geen documentatie verstrekt",
       "documentationPlaceholder": "Voer vereistedocumentatie in...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Gekoppelde testcases",
+      "titleWithCount": "{count, plural, =0 {Gekoppelde testgevallen} =1 {# gekoppeld testgeval} other {# gekoppelde testgevallen}}",
       "empty": "Geen gekoppelde testcases.",
       "addLink": "Link toevoegen",
       "addLinkDialogTitle": "Testcases koppelen",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Het laden van de dekking is mislukt.",
       "retry": "Opnieuw proberen",
       "panelTitle": "Dekkende testcases",
+      "panelTitleWithCount": "{count, plural, =0 {Dekkende testgevallen} =1 {# dekkend testgeval} other {# dekkende testgevallen}}",
       "panelDescription": "Elke testcase die meetelt voor de dekking van deze vereiste — testcases die er rechtstreeks aan zijn gekoppeld plus testcases die zijn gekoppeld aan een onderliggende vereiste. Gebruik Gekoppelde testcases om links toe te voegen of te verwijderen.",
       "panelEmpty": "Er zijn nog geen testcases die deze vereiste dekken.",
       "columnCase": "Testgeval",
-      "columnResult": "Resultaat",
+      "columnResult": "Laatste resultaat",
+      "resultRunLink": "Bekijk de testrun waar dit resultaat vandaan komt",
       "columnExecutedAt": "Uitgevoerd op",
       "columnProject": "Project",
       "inherited": "Overgeërfd",
       "inheritedTooltip": "Gekoppeld aan een onderliggend item van deze vereiste, niet rechtstreeks eraan.",
-      "notRunCell": "Niet uitgevoerd",
-      "crossProjectCount": "{count, plural, one {Ook gedekt door een testcase in # ander project} other {Ook gedekt door testcases in # andere projecten}}"
+      "notRunCell": "Niet uitgevoerd"
     },
     "export": {
       "menuLabel": "Traceerbaarheid exporteren",

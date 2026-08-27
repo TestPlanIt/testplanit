@@ -761,6 +761,7 @@
       "deletedUser": "削除されたユーザー",
       "restrictedField": "制限付きフィールド",
       "backToTestCase": "テストケースに戻る",
+      "backToRequirements": "要件に戻る",
       "selectDeselectAllApprove": "関連するすべての領域について承認を選択または選択解除します。",
       "selectDeselectAllReadSensitive": "関連するすべての領域について、読み取り専用を選択または選択解除します。"
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "要件を選択すると詳細が表示されます。",
+      "previousRequirement": "前の要件",
+      "nextRequirement": "次の要件",
+      "breadcrumbLabel": "要件階層",
+      "notFound": "要件が見つかりません",
       "documentation": "ドキュメント",
       "documentationEmpty": "ドキュメントは提供されていません",
       "documentationPlaceholder": "要件のドキュメントを入力してください…",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "リンクされたテストケース",
+      "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
       "empty": "リンクされたテストケースはありません。",
       "addLink": "リンクを追加",
       "addLinkDialogTitle": "テストケースをリンク",
@@ -6803,16 +6809,17 @@
       "loadFailed": "カバレッジの読み込みに失敗しました。",
       "retry": "再試行",
       "panelTitle": "カバーしているテストケース",
+      "panelTitleWithCount": "{count, plural, =0 {Covering Test Cases} =1 {Covering # Test Case} other {Covering # Test Cases}}",
       "panelDescription": "この要件のカバレッジに含まれるすべてのテストケースです。直接リンクされたケースと、その下位の要件にリンクされたケースが含まれます。リンクの追加や削除は、「リンクされたテストケース」から行ってください。",
       "panelEmpty": "この要件をカバーするテストケースはまだありません。",
       "columnCase": "テストケース",
-      "columnResult": "結果",
+      "columnResult": "最新の結果",
+      "resultRunLink": "この結果の元となったテスト実行を表示",
       "columnExecutedAt": "実行日時",
       "columnProject": "プロジェクト",
       "inherited": "継承",
       "inheritedTooltip": "この要件に直接ではなく、その子要素にリンクされています。",
-      "notRunCell": "未実行",
-      "crossProjectCount": "{count, plural, other {他の#件のプロジェクトのケースでもカバーされています}}"
+      "notRunCell": "未実行"
     },
     "export": {
       "menuLabel": "トレーサビリティをエクスポート",

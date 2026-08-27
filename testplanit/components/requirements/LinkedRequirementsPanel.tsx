@@ -41,6 +41,7 @@ import { useCaseLatestExecution } from "~/hooks/useCaseLatestExecution";
 import { useRequirementCaseLinks } from "~/hooks/useRequirementCaseLinks";
 import { invalidateRequirementCoverage } from "~/hooks/useRequirementCoverage";
 import { invalidateRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
+import { Link } from "~/lib/navigation";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { isLinkageSuspect } from "~/lib/services/suspectLinkage";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
@@ -327,13 +328,18 @@ export function LinkedRequirementsPanel({
                           iconUrl={row.issueTypeIconUrl}
                           className="h-4 w-4 shrink-0"
                         />
-                        <span
+                        {/* The project-less permalink, not a project-scoped
+                            URL: a linked requirement need not live in the
+                            project whose page this panel is rendered on, and
+                            the resolver already owns that lookup. */}
+                        <Link
+                          href={`/requirement/${row.id}`}
                           data-testid={`linked-requirement-name-${row.id}`}
-                          className="truncate font-medium"
+                          className="truncate font-medium hover:underline"
                           title={formatIssueDisplayText(row)}
                         >
                           {formatIssueDisplayText(row)}
-                        </span>
+                        </Link>
                         {isSuspect && (
                           // Gated on openDismissId, its own state -- never
                           // openUnlinkId, which gates the unrelated remove

@@ -761,6 +761,7 @@
       "deletedUser": "Usunięty użytkownik",
       "restrictedField": "Pole ograniczone",
       "backToTestCase": "Powrót do przypadku testowego",
+      "backToRequirements": "Powrót do wymagań",
       "selectDeselectAllApprove": "Zaznacz lub odznacz opcję zatwierdzenia dla wszystkich odpowiednich obszarów",
       "selectDeselectAllReadSensitive": "Zaznacz lub odznacz opcję „Odczyt wrażliwy” dla wszystkich odpowiednich obszarów"
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Wybierz wymaganie, aby zobaczyć jego szczegóły.",
+      "previousRequirement": "Poprzednie wymaganie",
+      "nextRequirement": "Następne wymaganie",
+      "breadcrumbLabel": "Hierarchia wymagań",
+      "notFound": "Nie znaleziono wymagania",
       "documentation": "Dokumentacja",
       "documentationEmpty": "Brak dokumentacji",
       "documentationPlaceholder": "Wprowadź dokumentację wymagania...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Powiązane przypadki testowe",
+      "titleWithCount": "{count, plural, =0 {Powiązane przypadki testowe} =1 {# powiązany przypadek testowy} few {# powiązane przypadki testowe} many {# powiązanych przypadków testowych} other {# powiązanego przypadku testowego}}",
       "empty": "Brak powiązanych przypadków testowych.",
       "addLink": "Dodaj link",
       "addLinkDialogTitle": "Połącz przypadki testowe",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Nie udało się załadować danych o pokryciu.",
       "retry": "Spróbuj ponownie",
       "panelTitle": "Przypadki testowe obejmujące",
+      "panelTitleWithCount": "{count, plural, =0 {Obejmujące przypadki testowe} =1 {Obejmuje # przypadek testowy} few {Obejmuje # przypadki testowe} many {Obejmuje # przypadków testowych} other {Obejmuje # przypadku testowego}}",
       "panelDescription": "Każdy przypadek testowy liczony do pokrycia tego wymagania — przypadki powiązane z nim bezpośrednio oraz przypadki powiązane z jakimkolwiek wymaganiem znajdującym się poniżej niego. Aby dodać lub usunąć powiązania, użyj opcji Powiązane przypadki testowe.",
       "panelEmpty": "Żaden przypadek testowy jeszcze nie obejmuje tego wymagania.",
       "columnCase": "Przypadek testowy",
-      "columnResult": "Wynik",
+      "columnResult": "Najnowszy wynik",
+      "resultRunLink": "Wyświetl przebieg testu, z którego pochodzi ten wynik",
       "columnExecutedAt": "Wykonano w",
       "columnProject": "Projekt",
       "inherited": "Odziedziczone",
       "inheritedTooltip": "Powiązane z elementem podrzędnym tego wymagania, nie bezpośrednio z nim.",
-      "notRunCell": "Nie uruchomiono",
-      "crossProjectCount": "{count, plural, one {Również objęte przypadkiem w # innym projekcie} few {Również objęte przypadkami w # innych projektach} many {Również objęte przypadkami w # innych projektach} other {Również objęte przypadkami w # innych projektach}}"
+      "notRunCell": "Nie uruchomiono"
     },
     "export": {
       "menuLabel": "Eksportuj śledzenie wymagań",

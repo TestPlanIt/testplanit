@@ -761,6 +761,7 @@
       "deletedUser": "Usuário excluído",
       "restrictedField": "Campo restrito",
       "backToTestCase": "Voltar ao caso de teste",
+      "backToRequirements": "Voltar para Requisitos",
       "selectDeselectAllApprove": "Selecione ou desmarque \"Aprovar\" para todas as áreas relevantes.",
       "selectDeselectAllReadSensitive": "Selecione ou desmarque a opção \"Leitura sensível\" para todas as áreas relevantes."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Selecione um requisito para ver seus detalhes.",
+      "previousRequirement": "Requisito anterior",
+      "nextRequirement": "Próximo requisito",
+      "breadcrumbLabel": "Hierarquia de requisitos",
+      "notFound": "Nenhum requisito encontrado",
       "documentation": "Documentação",
       "documentationEmpty": "Nenhuma documentação foi fornecida",
       "documentationPlaceholder": "Insira a documentação do requisito...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Casos de teste vinculados",
+      "titleWithCount": "{count, plural, =0 {Casos de Teste Vinculados} =1 {# Caso de Teste Vinculado} other {# Casos de Teste Vinculados}}",
       "empty": "Não há casos de teste vinculados.",
       "addLink": "Adicionar link",
       "addLinkDialogTitle": "Vincular casos de teste",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Falha ao carregar a cobertura.",
       "retry": "Tentar novamente",
       "panelTitle": "Casos de teste de cobertura",
+      "panelTitleWithCount": "{count, plural, =0 {Casos de Teste de Cobertura} =1 {# Caso de Teste de Cobertura} other {# Casos de Teste de Cobertura}}",
       "panelDescription": "Todos os casos de teste contabilizados na cobertura deste requisito — casos vinculados diretamente a ele, além de casos vinculados a qualquer requisito abaixo dele. Para adicionar ou remover vínculos, use Casos de teste vinculados.",
       "panelEmpty": "Ainda nenhum caso de teste cobre este requisito.",
       "columnCase": "Caso de teste",
-      "columnResult": "Resultado",
+      "columnResult": "Último Resultado",
+      "resultRunLink": "Visualizar a execução de teste de onde este resultado veio",
       "columnExecutedAt": "Executado em",
       "columnProject": "Projeto",
       "inherited": "Herdado",
       "inheritedTooltip": "Vinculado a um descendente deste requisito, não diretamente a ele.",
-      "notRunCell": "Não executado",
-      "crossProjectCount": "{count, plural, one {Também coberto por um caso em # outro projeto} other {Também coberto por casos em # outros projetos}}"
+      "notRunCell": "Não executado"
     },
     "export": {
       "menuLabel": "Exportar rastreabilidade",

@@ -1,6 +1,7 @@
 "use client";
 
 import { ListChecks } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -29,11 +30,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  coverageFor,
-  useRequirementCoverage,
-} from "~/hooks/useRequirementCoverage";
 import { useRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
+import { Link } from "~/lib/navigation";
 
 interface RequirementCoveragePanelProps {
   projectId: string;
@@ -61,51 +59,36 @@ export function RequirementCoveragePanel({
 }: RequirementCoveragePanelProps) {
   const t = useTranslations("requirements.coverage");
 
+  // "Executed At" is an instant, so it renders date AND time in the viewer's
+  // preferred formats and zone -- the same session-preference recipe the
+  // requirements list's own "Created At" column uses; "PPp" is the
+  // no-preference datetime fallback.
+  const { data: session } = useSession();
+  const preferredDateTimeFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : "PPp";
+  const preferredTimezone = session?.user?.preferences?.timezone || undefined;
+
   const { data, isLoading, isError, refetch } = useRequirementCoveringCases(
     Number(projectId),
     requirementId
   );
-
-  // Free read -- the tree above this panel already fetches project-wide
-  // coverage through this exact hook, whose stable
-  // `["requirementCoverage", projectId]` query key plus `staleTime: 30000`
-  // means this call shares that one cache entry rather than firing a
-  // second request. This is the situation `useMilestoneSummary.ts:4-10`
-  // documents `staleTime` for.
-  const { data: coverageData } = useRequirementCoverage(Number(projectId));
-  const breakdown = coverageFor(coverageData, requirementId);
-  const crossProjectCaseCount = breakdown?.crossProjectCaseCount ?? 0;
 
   const rows = data?.cases ?? [];
 
   return (
     <Card shadow="none" data-testid="requirement-coverage">
       <CardHeader className="p-4">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2">
-            <ListChecks className="w-5 h-5" />
-            {t("panelTitle")}
-          </CardTitle>
-          {/* Keeps the two counts unblended, per the Milestones precedent
-              (`OtherProjectCasesTotal`): nothing renders at <= 0, otherwise
-              an outlined affordance, so the project-scoped rows above never
-              read as though they already included another project's. */}
-          {crossProjectCaseCount > 0 && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="outline"
-                  data-testid="requirement-coverage-cross-project-count"
-                >
-                  {`+${crossProjectCaseCount}`}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                {t("crossProjectCount", { count: crossProjectCaseCount })}
-              </TooltipContent>
-            </Tooltip>
-          )}
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <ListChecks className="w-5 h-5" />
+          {/* Counts every row listed below, which is the whole covering set
+              -- cases in other projects included, each naming its own
+              project in the Project column. Nothing is summarized away, so
+              no second count rides alongside this one. The key's own `=0`
+              branch falls back to the bare title, which is what a
+              still-loading, failed, or genuinely empty panel wants. */}
+          {t("panelTitleWithCount", { count: rows.length })}
+        </CardTitle>
         <CardDescription>{t("panelDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="p-0">
@@ -146,8 +129,20 @@ export function RequirementCoveragePanel({
             <TableHeader>
               <TableRow>
                 <TableHead>{t("columnCase")}</TableHead>
+                {/* Reuses the badge's own `inherited` key rather than minting
+                    a second key holding the same word. Kept adjacent to the
+                    case name, where the flag used to sit, so the association
+                    survives the move out of that cell. */}
+                <TableHead className="w-[100px] text-center">
+                  {t("inherited")}
+                </TableHead>
                 <TableHead>{t("columnResult")}</TableHead>
-                <TableHead>{t("columnExecutedAt")}</TableHead>
+                {/* Date AND time now, so the column needs room for both --
+                    paired with `whitespace-nowrap` on the cell below, which
+                    keeps the value on one line instead of wrapping. */}
+                <TableHead className="w-[180px]">
+                  {t("columnExecutedAt")}
+                </TableHead>
                 <TableHead>{t("columnProject")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -164,53 +159,98 @@ export function RequirementCoveragePanel({
                     data-testid={`requirement-covering-case-${row.caseId}`}
                   >
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {/* The case's OWN project, never the requirement's
-                            -- a cross-project case must link into its own
-                            repository. */}
-                        <TestCaseNameDisplay
-                          testCase={{ id: row.caseId, name: row.caseName }}
-                          projectId={row.projectId}
-                          className="font-medium"
-                        />
-                        {!row.direct && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Badge
-                                variant="outline"
-                                data-testid={`requirement-covering-case-inherited-${row.caseId}`}
-                              >
-                                {t("inherited")}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t("inheritedTooltip")}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusDotDisplay
-                        name={row.lastStatusName ?? t("notRunCell")}
-                        color={row.lastStatusColor ?? undefined}
+                      {/* The case's OWN project, never the requirement's
+                          -- a cross-project case must link into its own
+                          repository. */}
+                      <TestCaseNameDisplay
+                        testCase={{ id: row.caseId, name: row.caseName }}
+                        projectId={row.projectId}
+                        className="font-medium"
                       />
                     </TableCell>
+                    <TableCell className="w-[120px] text-center">
+                      {/* A direct row gets the same em dash the Executed At
+                          column uses for "nothing to show here", rather than
+                          a blank cell that reads as missing data or a
+                          "Direct" badge competing with this one for
+                          attention. */}
+                      {row.direct ? (
+                        "—"
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Badge
+                              variant="outline"
+                              data-testid={`requirement-covering-case-inherited-${row.caseId}`}
+                            >
+                              {t("inherited")}
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("inheritedTooltip")}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TableCell>
                     <TableCell>
+                      {/* Links to the run this exact result was recorded
+                          against, the same destination (and `selectedCase`
+                          param) the repository list's own Latest Results
+                          squares use. The run id rides along on the row from
+                          the shared latest-result fragment, so the link can
+                          never point at a different execution than the status
+                          beside it. A never-executed case has no run to open,
+                          and renders the bare status. */}
+                      {row.lastTestRunId ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link
+                              href={`/projects/runs/${row.projectId}/${row.lastTestRunId}?selectedCase=${row.caseId}`}
+                              className="inline-flex hover:underline"
+                              data-testid={`requirement-covering-case-run-link-${row.caseId}`}
+                            >
+                              <StatusDotDisplay
+                                name={row.lastStatusName ?? t("notRunCell")}
+                                color={row.lastStatusColor ?? undefined}
+                              />
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>{t("resultRunLink")}</TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <StatusDotDisplay
+                          name={row.lastStatusName ?? t("notRunCell")}
+                          color={row.lastStatusColor ?? undefined}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell className="w-[180px] whitespace-nowrap">
                       {row.lastExecutedAt ? (
-                        <DateFormatter date={row.lastExecutedAt} />
+                        <DateFormatter
+                          date={row.lastExecutedAt}
+                          formatString={preferredDateTimeFormat}
+                          timezone={preferredTimezone}
+                        />
                       ) : (
                         "—"
                       )}
                     </TableCell>
                     <TableCell>
-                      <ProjectNameDisplay
-                        projectName={row.projectName}
-                        projectId={row.projectId}
-                        showLink
-                        fitContainer
-                        className="text-xs text-muted-foreground"
-                      />
+                      {/* Auto-layout table: no column width bounds this
+                          cell, so `fitContainer`'s `max-w-full` resolves
+                          against content and a long project name widens the
+                          table instead of truncating. The cap is that bound;
+                          the full name stays reachable via the display's own
+                          tooltip. */}
+                      <div className="max-w-[180px]">
+                        <ProjectNameDisplay
+                          projectName={row.projectName}
+                          projectId={row.projectId}
+                          showLink
+                          fitContainer
+                          className="text-xs text-muted-foreground"
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

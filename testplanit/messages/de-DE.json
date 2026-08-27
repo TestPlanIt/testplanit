@@ -761,6 +761,7 @@
       "deletedUser": "Gelöschter Benutzer",
       "restrictedField": "Eingeschränktes Feld",
       "backToTestCase": "Zurück zum Testfall",
+      "backToRequirements": "Zurück zu Anforderungen",
       "selectDeselectAllApprove": "Wählen Sie die Genehmigung für alle relevanten Bereiche aus oder heben Sie die Auswahl auf.",
       "selectDeselectAllReadSensitive": "Aktivieren oder deaktivieren Sie die Option „Lesensibel“ für alle relevanten Bereiche."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Wählen Sie eine Anforderung aus, um deren Details anzuzeigen.",
+      "previousRequirement": "Vorherige Anforderung",
+      "nextRequirement": "Nächste Anforderung",
+      "breadcrumbLabel": "Anforderungshierarchie",
+      "notFound": "Keine Anforderung gefunden",
       "documentation": "Dokumentation",
       "documentationEmpty": "Es wurde keine Dokumentation bereitgestellt",
       "documentationPlaceholder": "Anforderungsdokumentation eingeben...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Verknüpfte Testfälle",
+      "titleWithCount": "{count, plural, =0 {Verknüpfte Testfälle} =1 {# verknüpfter Testfall} other {# verknüpfte Testfälle}}",
       "empty": "Keine verknüpften Testfälle.",
       "addLink": "Link hinzufügen",
       "addLinkDialogTitle": "Testfälle verknüpfen",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Abdeckung konnte nicht geladen werden.",
       "retry": "Wiederholen",
       "panelTitle": "Abdeckende Testfälle",
+      "panelTitleWithCount": "{count, plural, =0 {Abdeckende Testfälle} =1 {# abdeckender Testfall} other {# abdeckende Testfälle}}",
       "panelDescription": "Jeder Testfall, der zur Abdeckung dieser Anforderung zählt — direkt verknüpfte Fälle sowie Fälle, die mit einer untergeordneten Anforderung verknüpft sind. Um Verknüpfungen hinzuzufügen oder zu entfernen, verwenden Sie „Verknüpfte Testfälle“.",
       "panelEmpty": "Noch keine Testfälle decken diese Anforderung ab.",
       "columnCase": "Testfall",
-      "columnResult": "Ergebnis",
+      "columnResult": "Neuestes Ergebnis",
+      "resultRunLink": "Den Testlauf anzeigen, aus dem dieses Ergebnis stammt",
       "columnExecutedAt": "Ausgeführt am",
       "columnProject": "Projekt",
       "inherited": "Geerbt",
       "inheritedTooltip": "Mit einer untergeordneten Anforderung verknüpft, nicht direkt mit dieser.",
-      "notRunCell": "Nicht ausgeführt",
-      "crossProjectCount": "{count, plural, one {Auch abgedeckt durch einen Fall in # weiterem Projekt} other {Auch abgedeckt durch Fälle in # weiteren Projekten}}"
+      "notRunCell": "Nicht ausgeführt"
     },
     "export": {
       "menuLabel": "Rückverfolgbarkeit exportieren",

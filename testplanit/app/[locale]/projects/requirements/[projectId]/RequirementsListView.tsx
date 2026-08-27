@@ -78,6 +78,29 @@ interface RequirementsListViewProps extends RequirementSelection {
    *  without the workspace's panel, e.g. a test harness), the menu item
    *  still renders but the request is a no-op. */
   onRequestEdit?: (issueId: number) => void;
+  /** Publishes the detail panel's prev/next position over the CURRENTLY
+   *  VISIBLE row order. Lifted rather than read through the imperative
+   *  handle because the stepper has to re-render when the row set changes
+   *  (a search, a filter, a collapse), and an imperative read cannot
+   *  announce that. Mirrors `Cases.tsx`'s own `onCaseNavChange`. */
+  onRequirementNavChange?: (nav: RequirementNav | null) => void;
+}
+
+/**
+ * The detail panel's position within the list's own visible order. `null`
+ * position means "the selected requirement is not in the current row set"
+ * (filtered out, or inside a collapsed subtree) -- the panel hides the whole
+ * stepper in that case rather than inventing a position, exactly as
+ * `CaseDetailsPanel` does. Owned here because this view, not the workspace,
+ * is what knows the post-search/post-filter/post-collapse order.
+ */
+export interface RequirementNav {
+  position: number | null;
+  total: number;
+  prevId: number | null;
+  nextId: number | null;
+  hasPrev: boolean;
+  hasNext: boolean;
 }
 
 /**
@@ -146,7 +169,13 @@ const RequirementsListView = forwardRef<
   RequirementsListViewHandle,
   RequirementsListViewProps
 >(function RequirementsListView(
-  { projectId, selectedRequirementId, onSelectRequirement, onRequestEdit },
+  {
+    projectId,
+    selectedRequirementId,
+    onSelectRequirement,
+    onRequestEdit,
+    onRequirementNavChange,
+  },
   ref
 ) {
   const t = useTranslations();
@@ -362,6 +391,42 @@ const RequirementsListView = forwardRef<
       coverage,
     ]
   );
+
+  // Publishes the selected requirement's position in `rows` -- the same
+  // array the table renders, so stepping always lands on a row the user can
+  // actually see. Recomputed whenever the row set changes (search, filter,
+  // collapse, sort) or the selection moves. An id that is not in `rows`
+  // yields a null position, which is the panel's signal to hide the stepper
+  // rather than guess.
+  useEffect(() => {
+    if (!onRequirementNavChange) return;
+    if (selectedRequirementId == null) {
+      onRequirementNavChange(null);
+      return;
+    }
+    const index = rows.findIndex((row) => row.id === selectedRequirementId);
+    if (index === -1) {
+      onRequirementNavChange({
+        position: null,
+        total: rows.length,
+        prevId: null,
+        nextId: null,
+        hasPrev: false,
+        hasNext: false,
+      });
+      return;
+    }
+    const prevId = index > 0 ? rows[index - 1].id : null;
+    const nextId = index < rows.length - 1 ? rows[index + 1].id : null;
+    onRequirementNavChange({
+      position: index + 1,
+      total: rows.length,
+      prevId,
+      nextId,
+      hasPrev: prevId != null,
+      hasNext: nextId != null,
+    });
+  }, [rows, selectedRequirementId, onRequirementNavChange]);
 
   // Auto-expand ancestors of the selected requirement so a selection made
   // elsewhere is always reachable. Runs every time the selection changes

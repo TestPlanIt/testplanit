@@ -1,7 +1,7 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { CircleSlash2, Save, SquarePen, Trash2 } from "lucide-react";
+import { ArrowLeft, CircleSlash2, Save, SquarePen, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -33,6 +33,7 @@ import {
   LOCKED_ISSUE_FIELDS,
 } from "~/lib/services/linkedIssueUpsert";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { Link } from "~/lib/navigation";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import {
@@ -77,6 +78,13 @@ interface RequirementDetailPanelProps {
    *  the first-seed branch forces display mode on a selection change, and
    *  this must land after it, never against the previous row's form. */
   editRequest?: { id: number; token: number } | null;
+  /** Renders a back arrow inline with the title, pointing here. Supplied
+   *  only by the standalone requirement route -- inside the workspace the
+   *  tree is already on screen, so there is nothing to go back to. The
+   *  route owns the destination rather than this panel composing one,
+   *  since only it knows whether the reader should land on the tree with
+   *  this requirement selected or somewhere else entirely. */
+  backHref?: string;
 }
 
 interface RequirementDetailFormData {
@@ -185,6 +193,7 @@ export default function RequirementDetailPanel({
   requirementId,
   onRequestDelete,
   editRequest,
+  backHref,
 }: RequirementDetailPanelProps) {
   const t = useTranslations("requirements.detail");
   const tCommon = useTranslations("common");
@@ -570,6 +579,28 @@ export default function RequirementDetailPanel({
             a long tracker summary shrinks instead of pushing the badge and
             the action buttons off the panel. */}
         <div className="flex min-w-0 items-center gap-2">
+          {/* Standalone-route only, exactly like TestCaseDetailsView's own
+              back arrow (which it gates on `!inSheet`): inside the panel
+              there is nothing to go "back" to, the tree is right there.
+              Rendered HERE rather than by the route so it sits inline with
+              the title instead of stranded on a line above it. `asChild`
+              renders one anchor carrying the button's styles -- nesting a
+              button inside the link would put a target inside a target and
+              leave the outer one all but unclickable (2.5.8 Target Size). */}
+          {backHref && (
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="shrink-0"
+              aria-label={tCommon("aria.backToRequirements")}
+              data-testid="requirement-detail-back"
+            >
+              <Link href={backHref}>
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+          )}
           <IssueTypeIcon
             issueTypeName={requirement.issueTypeName}
             iconUrl={requirement.issueTypeIconUrl}

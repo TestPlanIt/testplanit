@@ -761,6 +761,7 @@
       "deletedUser": "Silinmiş Kullanıcı",
       "restrictedField": "Kısıtlı Alan",
       "backToTestCase": "Test Durumuna Geri Dön",
+      "backToRequirements": "Gereksinimlere Geri Dön",
       "selectDeselectAllApprove": "İlgili tüm alanlar için onay seçeneğini işaretleyin veya işaretini kaldırın.",
       "selectDeselectAllReadSensitive": "İlgili tüm alanlar için \"okumaya duyarlı\" seçeneğini işaretleyin veya işaretini kaldırın."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Ayrıntılarını görüntülemek için bir gereksinim seçin.",
+      "previousRequirement": "Önceki gereksinim",
+      "nextRequirement": "Sonraki gereksinim",
+      "breadcrumbLabel": "Gereksinim hiyerarşisi",
+      "notFound": "Gereksinim bulunamadı",
       "documentation": "Dokümantasyon",
       "documentationEmpty": "Herhangi bir belge sunulmadı",
       "documentationPlaceholder": "Gereksinim belgelerini girin...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Bağlantılı Test Senaryoları",
+      "titleWithCount": "{count, plural, =0 {Bağlı Test Durumları} =1 {# Bağlı Test Durumu} other {# Bağlı Test Durumları}}",
       "empty": "Bağlantılı test senaryosu yok.",
       "addLink": "Bağlantı Ekle",
       "addLinkDialogTitle": "Test Senaryolarını Bağla",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Kapsam yüklenemedi.",
       "retry": "Tekrar Dene",
       "panelTitle": "Kapsayan Test Senaryoları",
+      "panelTitleWithCount": "{count, plural, =0 {Kapsayan Test Durumları} =1 {Kapsayan # Test Durumu} other {Kapsayan # Test Durumları}}",
       "panelDescription": "Bu gereksinimin kapsamına dahil edilen her test senaryosu — doğrudan bağlı olanlar ile altındaki herhangi bir gereksinime bağlı olanlar dahil. Bağlantı eklemek veya kaldırmak için Bağlantılı Test Senaryoları'nı kullanın.",
       "panelEmpty": "Henüz bu gereksinimi kapsayan test senaryosu yok.",
       "columnCase": "Test Senaryosu",
-      "columnResult": "Sonuç",
+      "columnResult": "Son Sonuç",
+      "resultRunLink": "Bu sonucun geldiği test koşusunu görüntüle",
       "columnExecutedAt": "Çalıştırma Tarihi",
       "columnProject": "Proje",
       "inherited": "Devralınan",
       "inheritedTooltip": "Doğrudan bu gereksinime değil, alt öğelerinden birine bağlı.",
-      "notRunCell": "Çalıştırılmadı",
-      "crossProjectCount": "{count, plural, one {Ayrıca # diğer projedeki bir senaryo tarafından da kapsanıyor} other {Ayrıca # diğer projedeki senaryolar tarafından da kapsanıyor}}"
+      "notRunCell": "Çalıştırılmadı"
     },
     "export": {
       "menuLabel": "İzlenebilirliği Dışa Aktar",

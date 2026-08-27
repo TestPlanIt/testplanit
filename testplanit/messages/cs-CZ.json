@@ -761,6 +761,7 @@
       "deletedUser": "Smazaný uživatel",
       "restrictedField": "Omezené pole",
       "backToTestCase": "Zpět na testovací případ",
+      "backToRequirements": "Zpět na požadavky",
       "selectDeselectAllApprove": "Vybrat nebo zrušit výběr schválení pro všechny relevantní oblasti",
       "selectDeselectAllReadSensitive": "Vybrat nebo zrušit výběr čtení citlivých pro všechny relevantní oblasti"
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Vyberte požadavek pro zobrazení podrobností.",
+      "previousRequirement": "Předchozí požadavek",
+      "nextRequirement": "Další požadavek",
+      "breadcrumbLabel": "Hierarchie požadavků",
+      "notFound": "Nenalezen žádný požadavek",
       "documentation": "Dokumentace",
       "documentationEmpty": "Není k dispozici žádná dokumentace",
       "documentationPlaceholder": "Zadejte dokumentaci požadavku...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Propojené testovací případy",
+      "titleWithCount": "{count, plural, =0 {Propojené testovací případy} =1 {# propojený testovací případ} few {# propojené testovací případy} many {# propojených testovacích případů} other {# propojených testovacích případů}}",
       "empty": "Žádné propojené testovací případy.",
       "addLink": "Přidat propojení",
       "addLinkDialogTitle": "Propojit testovací případy",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Nepodařilo se načíst pokrytí.",
       "retry": "Zkusit znovu",
       "panelTitle": "Pokrývající testovací případy",
+      "panelTitleWithCount": "{count, plural, =0 {Pokrývající testovací případy} =1 {Pokrývající # testovací případ} few {Pokrývající # testovací případy} many {Pokrývající # testovacích případů} other {Pokrývající # testovacích případů}}",
       "panelDescription": "Všechny testovací případy započítané do pokrytí tohoto požadavku – případy propojené přímo s ním i případy propojené s jakýmkoli podřízeným požadavkem. Pro přidání nebo odstranění propojení použijte Propojené testovací případy.",
       "panelEmpty": "Tento požadavek zatím nepokrývá žádný testovací případ.",
       "columnCase": "Testovací případ",
-      "columnResult": "Výsledek",
+      "columnResult": "Poslední výsledek",
+      "resultRunLink": "Zobrazit testovací běh, ze kterého tento výsledek pochází",
       "columnExecutedAt": "Datum provedení",
       "columnProject": "Projekt",
       "inherited": "Zděděné",
       "inheritedTooltip": "Propojeno s podřízeným požadavkem, nikoli přímo s tímto požadavkem.",
-      "notRunCell": "Neproběhlo",
-      "crossProjectCount": "{count, plural, one {Také pokryto případem v # dalším projektu} few {Také pokryto případy ve # dalších projektech} many {Také pokryto případy ve # dalších projektech} other {Také pokryto případy ve # dalších projektech}}"
+      "notRunCell": "Neproběhlo"
     },
     "export": {
       "menuLabel": "Exportovat sledovatelnost",

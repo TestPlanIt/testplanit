@@ -25,8 +25,13 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en-US",
 }));
 
+// Mutable so one test can prove the executed-at cell formats against the
+// viewer's own preferences rather than a hardcoded format; every other test
+// runs on the no-preference default the reset in `beforeEach` restores.
+const mockSession = vi.hoisted(() => ({ current: null as unknown }));
+
 vi.mock("next-auth/react", () => ({
-  useSession: () => ({ data: null }),
+  useSession: () => ({ data: mockSession.current }),
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -68,6 +73,7 @@ interface CoveringCaseFixture {
   lastStatusIsSuccess: boolean | null;
   lastStatusIsFailure: boolean | null;
   lastExecutedAt: string | null;
+  lastTestRunId: number | null;
   direct: boolean;
 }
 
@@ -111,12 +117,14 @@ const baseCase: CoveringCaseFixture = {
   lastStatusIsSuccess: true,
   lastStatusIsFailure: false,
   lastExecutedAt: "2026-01-01T00:00:00.000Z",
+  lastTestRunId: 55,
   direct: true,
 };
 
 describe("RequirementCoveragePanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSession.current = null;
   });
 
   it("lists every covering case with its latest result", async () => {
@@ -190,6 +198,7 @@ describe("RequirementCoveragePanel", () => {
           lastStatusIsSuccess: null,
           lastStatusIsFailure: null,
           lastExecutedAt: null,
+          lastTestRunId: null,
         },
       ],
     });
@@ -219,6 +228,137 @@ describe("RequirementCoveragePanel", () => {
     // not-run treatment's default gray -- never the same swatch.
     expect(failedDot!.style.backgroundColor).not.toBe(
       notRunDot!.style.backgroundColor
+    );
+  });
+
+  it("totals every listed case in its title, cross-project rows included", async () => {
+    stubFetch({
+      cases: [
+        { ...baseCase, caseId: 1 },
+        { ...baseCase, caseId: 2 },
+        // Another project's case is listed like any other, so it counts
+        // toward the title exactly like the two above.
+        { ...baseCase, caseId: 3, projectId: 9, projectName: "Other Project" },
+      ],
+    });
+
+    renderPanel();
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirement-covering-case-3")
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("requirement-coverage")).toHaveTextContent(
+      "panelTitleWithCount:3"
+    );
+  });
+
+  it("omits the count from its title while loading and when empty", async () => {
+    // Never resolves: the panel is still in flight, so it has no total to
+    // report and must not claim zero.
+    global.fetch = vi.fn(() => new Promise(() => {})) as any;
+    const { unmount } = renderPanel();
+    expect(screen.getByTestId("requirement-coverage")).toHaveTextContent(
+      "panelTitleWithCount:0"
+    );
+    unmount();
+
+    // Loaded and genuinely empty routes to the same `=0` branch.
+    stubFetch({ cases: [] });
+    renderPanel();
+    await waitFor(() => {
+      expect(screen.getByText("panelEmpty")).toBeInTheDocument();
+    });
+    expect(screen.getByTestId("requirement-coverage")).toHaveTextContent(
+      "panelTitleWithCount:0"
+    );
+  });
+
+  it("links a result to the run it was recorded against, and leaves a never-run case unlinked", async () => {
+    stubFetch({
+      cases: [
+        // A cross-project case, so the link is proven to use the CASE's own
+        // project rather than the requirement's -- a run lives in the same
+        // project as the case that produced the result.
+        {
+          ...baseCase,
+          caseId: 1,
+          projectId: 9,
+          lastTestRunId: 55,
+        },
+        {
+          ...baseCase,
+          caseId: 2,
+          lastStatusName: null,
+          lastExecutedAt: null,
+          lastTestRunId: null,
+        },
+      ],
+    });
+
+    renderPanel();
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirement-covering-case-2")
+      ).toBeInTheDocument();
+    });
+
+    // Same destination shape as the repository list's Latest Results squares,
+    // `selectedCase` included, so the run opens focused on this case.
+    expect(
+      screen.getByTestId("requirement-covering-case-run-link-1")
+    ).toHaveAttribute("href", "/projects/runs/9/55?selectedCase=1");
+
+    // A case that has never been executed has no run to open: the status
+    // still renders, but never as a link to a nonexistent run.
+    expect(
+      screen.queryByTestId("requirement-covering-case-run-link-2")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("requirement-covering-case-2")).toHaveTextContent(
+      "notRunCell"
+    );
+  });
+
+  it("renders executed-at in the viewer's preferred date and time format", async () => {
+    // Stored exactly as the schema's `DateFormat`/`TimeFormat` enums hold
+    // them -- `mapDateTimeFormatString` is what turns the pair into date-fns
+    // tokens, so a raw token string here would prove nothing about the real
+    // session shape.
+    mockSession.current = {
+      user: {
+        preferences: {
+          dateFormat: "DD_MM_YYYY_SLASH",
+          timeFormat: "HH_MM",
+          timezone: "Etc/UTC",
+        },
+      },
+    };
+    stubFetch({
+      cases: [
+        {
+          ...baseCase,
+          caseId: 1,
+          lastExecutedAt: "2026-01-02T15:04:00.000Z",
+        },
+      ],
+    });
+
+    renderPanel();
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirement-covering-case-1")
+      ).toBeInTheDocument();
+    });
+
+    // Day-first with a 24-hour time, per the preferences above -- never the
+    // formatter's own "MM-dd-yyyy" default, which would read "01-02-2026"
+    // and drop the time entirely.
+    expect(screen.getByTestId("requirement-covering-case-1")).toHaveTextContent(
+      "02/01/2026 15:04"
     );
   });
 
@@ -364,38 +504,34 @@ describe("RequirementCoveragePanel", () => {
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 
-  it("surfaces the cross-project case count when the rollup reports one", async () => {
+  it("summarizes no cases away: a cross-project case is a listed row, never a header count", async () => {
     stubFetch({
-      cases: [baseCase],
-      coverage: { "42": { crossProjectCaseCount: 2 } },
-    });
-
-    const { unmount } = renderPanel();
-
-    await waitFor(() => {
-      expect(
-        screen.getByTestId("requirement-coverage-cross-project-count")
-      ).toBeInTheDocument();
-    });
-    expect(
-      screen.getByTestId("requirement-coverage-cross-project-count")
-    ).toHaveTextContent("+2");
-    unmount();
-
-    stubFetch({
-      cases: [baseCase],
-      coverage: { "42": { crossProjectCaseCount: 0 } },
+      cases: [
+        baseCase,
+        { ...baseCase, caseId: 2, projectId: 9, projectName: "Other Project" },
+      ],
+      // The rollup still reports this total for the requirements list's own
+      // +N affordance; this panel deliberately ignores it, because every
+      // case it would stand for is already a row here.
+      coverage: { "42": { crossProjectCaseCount: 1 } },
     });
 
     renderPanel();
 
     await waitFor(() => {
       expect(
-        screen.getByTestId("requirement-covering-case-1")
+        screen.getByTestId("requirement-covering-case-2")
       ).toBeInTheDocument();
     });
+
     expect(
       screen.queryByTestId("requirement-coverage-cross-project-count")
     ).not.toBeInTheDocument();
+    // The other project's case is reachable as a row, with its own project
+    // named -- which is what makes the removed badge redundant rather than
+    // lost information.
+    expect(
+      screen.getByTestId("requirement-covering-case-2")
+    ).toHaveTextContent("Other Project");
   });
 });

@@ -761,6 +761,7 @@
       "deletedUser": "Deleted User",
       "restrictedField": "Restricted Field",
       "backToTestCase": "Back to Test Case",
+      "backToRequirements": "Back to Requirements",
       "selectDeselectAllApprove": "Select or deselect approve for all relevant areas",
       "selectDeselectAllReadSensitive": "Select or deselect read sensitive for all relevant areas"
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Select a requirement to view its details.",
+      "previousRequirement": "Previous requirement",
+      "nextRequirement": "Next requirement",
+      "breadcrumbLabel": "Requirement hierarchy",
+      "notFound": "No requirement found",
       "documentation": "Documentation",
       "documentationEmpty": "No documentation provided",
       "documentationPlaceholder": "Enter requirement documentation...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Linked Test Cases",
+      "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
       "empty": "No linked test cases.",
       "addLink": "Add Link",
       "addLinkDialogTitle": "Link Test Cases",
@@ -6803,16 +6809,17 @@
       "loadFailed": "Failed to load coverage.",
       "retry": "Retry",
       "panelTitle": "Covering Test Cases",
+      "panelTitleWithCount": "{count, plural, =0 {Covering Test Cases} =1 {Covering # Test Case} other {Covering # Test Cases}}",
       "panelDescription": "Every test case counted toward this requirement's coverage — cases linked to it directly plus cases linked to any requirement beneath it. To add or remove links, use Linked Test Cases.",
       "panelEmpty": "No test cases cover this requirement yet.",
       "columnCase": "Test Case",
-      "columnResult": "Result",
+      "columnResult": "Latest Result",
+      "resultRunLink": "View the test run this result came from",
       "columnExecutedAt": "Executed At",
       "columnProject": "Project",
       "inherited": "Inherited",
       "inheritedTooltip": "Linked to a descendant of this requirement, not directly to it.",
-      "notRunCell": "Not run",
-      "crossProjectCount": "{count, plural, one {Also covered by a case in # other project} other {Also covered by cases in # other projects}}"
+      "notRunCell": "Not run"
     },
     "export": {
       "menuLabel": "Export Traceability",

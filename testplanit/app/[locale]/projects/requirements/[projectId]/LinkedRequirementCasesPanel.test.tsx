@@ -9,8 +9,14 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (key: string) =>
-    namespace ? `${namespace}.${key}` : key,
+  // Params are appended so a count-bearing title is provable, not just its
+  // key -- the panel's only such call. Param-less keys render exactly as
+  // before, so every existing assertion in this file is untouched.
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const full = namespace ? `${namespace}.${key}` : key;
+      return params ? `${full}:${Object.values(params).join("·")}` : full;
+    },
 }));
 
 vi.mock("sonner", () => ({
@@ -255,6 +261,47 @@ describe("LinkedRequirementCasesPanel", () => {
     expect(screen.getByTestId("case-name-10")).toHaveTextContent("Login works");
     expect(screen.getByTestId("case-name-11")).toHaveTextContent(
       "Logout works"
+    );
+  });
+
+  it("totals the linked cases in its title, and omits the count when there are none", () => {
+    setLinkedCases([
+      {
+        id: 10,
+        name: "Login works",
+        source: "MANUAL",
+        isDeleted: false,
+        projectId: 7,
+        project: { name: "Current Project", iconUrl: null },
+      },
+      {
+        id: 11,
+        name: "Logout works",
+        source: "MANUAL",
+        isDeleted: false,
+        projectId: 7,
+        project: { name: "Current Project", iconUrl: null },
+      },
+    ]);
+
+    const { unmount } = renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
+
+    expect(screen.getByTestId("requirement-linked-cases")).toHaveTextContent(
+      "requirements.linkedCases.titleWithCount:2"
+    );
+    unmount();
+
+    // Zero routes to the key's own `=0` branch, which renders the bare
+    // title -- never "0 Linked Test Cases".
+    setLinkedCases([]);
+    renderWithClient(
+      <LinkedRequirementCasesPanel projectId="7" requirementId={42} />
+    );
+
+    expect(screen.getByTestId("requirement-linked-cases")).toHaveTextContent(
+      "requirements.linkedCases.titleWithCount:0"
     );
   });
 

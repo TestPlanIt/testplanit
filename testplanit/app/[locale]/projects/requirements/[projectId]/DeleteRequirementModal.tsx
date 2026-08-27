@@ -121,7 +121,15 @@ export function DeleteRequirementModal({
                 e.preventDefault();
                 void handleDelete();
               }}
-              className="bg-destructive text-destructive-foreground"
+              // `hover:` is load-bearing, not decoration: AlertDialogAction
+              // applies `buttonVariants()` -- the DEFAULT variant -- as its
+              // base, so overriding only the background and text leaves the
+              // default's `hover:bg-primary/90` in place. On hover the
+              // surface turned primary while the text stayed
+              // destructive-foreground, which in dark themes left the label
+              // unreadable. Same trio every other destructive
+              // AlertDialogAction in this repo carries.
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="delete-requirement-confirm"
             >
               {isSubmitting

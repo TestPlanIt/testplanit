@@ -103,6 +103,30 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en-US",
 }));
 
+// `~/lib/navigation`'s `Link` is next-intl's shared-navigation Link: it calls
+// the REAL `useLocale()` and throws "No intl context found" without a
+// provider, whatever `next-intl` itself is mocked to. The requirement detail
+// panel and breadcrumb render it, so it needs the same plain-anchor stub
+// `RequirementsListColumns.test.tsx` and `RequirementCoveragePanel.test.tsx`
+// already use for this primitive.
+// Selection moved into the URL (`?requirement=<id>`), so the panel renders
+// only when that param is present. Seeded here to the id the list stub
+// selects, which is what the pre-refactor `useState` selection gave these
+// tests for free.
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams("requirement=1"),
+}));
+
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/projects/requirements/42",
+  Link: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("next-auth/react", () => ({
   useSession: () => ({ data: { user: { name: "Test User" } } }),
 }));
@@ -211,8 +235,8 @@ vi.mock("./RequirementsListView", () => ({
 // hands the panel (including `onRequestDelete`), without needing the real
 // panel's own heavy ZenStack surface.
 const capturedDetailPanelProps: any[] = [];
-vi.mock("./RequirementDetailPanel", () => ({
-  default: (props: any) => {
+vi.mock("@/components/requirements/RequirementDetailsPanel", () => ({
+  RequirementDetailsPanel: (props: any) => {
     capturedDetailPanelProps.push(props);
     return <div data-testid="mock-requirement-detail-panel" />;
   },

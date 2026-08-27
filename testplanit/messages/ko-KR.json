@@ -761,6 +761,7 @@
       "deletedUser": "삭제된 사용자",
       "restrictedField": "제한된 필드",
       "backToTestCase": "테스트 케이스로 돌아가기",
+      "backToRequirements": "요구 사항으로 돌아가기",
       "selectDeselectAllApprove": "관련된 모든 영역에 대해 승인을 선택하거나 선택 해제하십시오.",
       "selectDeselectAllReadSensitive": "관련 영역 모두에 대해 읽기 민감도 설정을 선택하거나 선택 해제합니다."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "세부 정보를 보려면 요구 사항을 선택하세요.",
+      "previousRequirement": "이전 요구사항",
+      "nextRequirement": "다음 요구사항",
+      "breadcrumbLabel": "요구사항 계층 구조",
+      "notFound": "요구사항을 찾을 수 없습니다",
       "documentation": "문서",
       "documentationEmpty": "제공된 문서가 없습니다",
       "documentationPlaceholder": "요구 사항 문서를 입력하세요...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "연결된 테스트 케이스",
+      "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
       "empty": "연결된 테스트 케이스가 없습니다.",
       "addLink": "링크 추가",
       "addLinkDialogTitle": "테스트 케이스 연결",
@@ -6803,16 +6809,17 @@
       "loadFailed": "커버리지를 불러오는 데 실패했습니다.",
       "retry": "다시 시도",
       "panelTitle": "커버하는 테스트 케이스",
+      "panelTitleWithCount": "{count, plural, =0 {Covering Test Cases} =1 {Covering # Test Case} other {Covering # Test Cases}}",
       "panelDescription": "이 요구 사항의 커버리지에 포함되는 모든 테스트 케이스입니다. 직접 연결된 케이스뿐만 아니라 하위 요구 사항에 연결된 케이스도 포함됩니다. 링크를 추가하거나 삭제하려면 연결된 테스트 케이스를 사용하세요.",
       "panelEmpty": "아직 이 요구 사항을 커버하는 테스트 케이스가 없습니다.",
       "columnCase": "테스트 케이스",
-      "columnResult": "결과",
+      "columnResult": "최신 결과",
+      "resultRunLink": "이 결과가 나온 테스트 실행 보기",
       "columnExecutedAt": "실행 시각",
       "columnProject": "프로젝트",
       "inherited": "상속됨",
       "inheritedTooltip": "이 요구 사항이 아니라 하위 항목에 연결되어 있습니다.",
-      "notRunCell": "실행되지 않음",
-      "crossProjectCount": "{count, plural, other {다른 프로젝트 #개의 케이스에서도 커버됨}}"
+      "notRunCell": "실행되지 않음"
     },
     "export": {
       "menuLabel": "추적성 내보내기",

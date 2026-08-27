@@ -761,6 +761,7 @@
       "deletedUser": "已删除用户",
       "restrictedField": "受限字段",
       "backToTestCase": "返回测试用例",
+      "backToRequirements": "返回需求",
       "selectDeselectAllApprove": "选中或取消选中“批准”以确认所有相关区域",
       "selectDeselectAllReadSensitive": "选中或取消选中所有相关区域的“读取敏感信息”选项"
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "选择一个需求以查看其详细信息。",
+      "previousRequirement": "上一条需求",
+      "nextRequirement": "下一条需求",
+      "breadcrumbLabel": "需求层级",
+      "notFound": "未找到需求",
       "documentation": "文档",
       "documentationEmpty": "未提供任何文档",
       "documentationPlaceholder": "输入需求文档……",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "关联测试用例",
+      "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
       "empty": "没有关联的测试用例。",
       "addLink": "添加链接",
       "addLinkDialogTitle": "关联测试用例",
@@ -6803,16 +6809,17 @@
       "loadFailed": "覆盖率加载失败。",
       "retry": "重试",
       "panelTitle": "覆盖测试用例",
+      "panelTitleWithCount": "{count, plural, =0 {Covering Test Cases} =1 {Covering # Test Case} other {Covering # Test Cases}}",
       "panelDescription": "计入此需求覆盖率的所有测试用例——直接关联到此需求的用例，以及关联到其下任何需求的用例。要添加或移除链接，请使用关联测试用例。",
       "panelEmpty": "尚无测试用例覆盖此需求。",
       "columnCase": "测试用例",
-      "columnResult": "结果",
+      "columnResult": "最新结果",
+      "resultRunLink": "查看此结果所属的测试运行",
       "columnExecutedAt": "执行于",
       "columnProject": "项目",
       "inherited": "继承",
       "inheritedTooltip": "关联到此需求的某个后代，而非直接关联到它。",
-      "notRunCell": "未运行",
-      "crossProjectCount": "{count, plural, other {还被其他 # 个项目中的用例覆盖}}"
+      "notRunCell": "未运行"
     },
     "export": {
       "menuLabel": "导出可追溯性",

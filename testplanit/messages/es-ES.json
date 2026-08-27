@@ -761,6 +761,7 @@
       "deletedUser": "Usuario eliminado",
       "restrictedField": "Campo restringido",
       "backToTestCase": "Volver al caso de prueba",
+      "backToRequirements": "Volver a Requisitos",
       "selectDeselectAllApprove": "Seleccione o deseleccione la opción \"Aprobar\" para todas las áreas relevantes.",
       "selectDeselectAllReadSensitive": "Seleccione o deseleccione la opción de lectura confidencial para todas las áreas pertinentes."
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "Seleccione un requisito para ver sus detalles.",
+      "previousRequirement": "Requisito anterior",
+      "nextRequirement": "Requisito siguiente",
+      "breadcrumbLabel": "Jerarquía de requisitos",
+      "notFound": "No se encontró ningún requisito",
       "documentation": "Documentación",
       "documentationEmpty": "No se proporcionó documentación",
       "documentationPlaceholder": "Introduzca la documentación del requisito...",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "Casos de prueba vinculados",
+      "titleWithCount": "{count, plural, =0 {Casos de prueba vinculados} =1 {# caso de prueba vinculado} other {# casos de prueba vinculados}}",
       "empty": "No hay casos de prueba vinculados.",
       "addLink": "Agregar enlace",
       "addLinkDialogTitle": "Vincular casos de prueba",
@@ -6803,16 +6809,17 @@
       "loadFailed": "No se pudo cargar la cobertura.",
       "retry": "Reintentar",
       "panelTitle": "Casos de prueba de cobertura",
+      "panelTitleWithCount": "{count, plural, =0 {Casos de prueba de cobertura} =1 {Cobertura de # caso de prueba} other {Cobertura de # casos de prueba}}",
       "panelDescription": "Todos los casos de prueba contabilizados para la cobertura de este requisito: los vinculados directamente más los vinculados a cualquier requisito debajo de él. Para agregar o eliminar enlaces, use Casos de prueba vinculados.",
       "panelEmpty": "Aún ningún caso de prueba cubre este requisito.",
       "columnCase": "Caso de prueba",
-      "columnResult": "Resultado",
+      "columnResult": "Último resultado",
+      "resultRunLink": "Ver la ejecución de prueba de donde proviene este resultado",
       "columnExecutedAt": "Ejecutado en",
       "columnProject": "Proyecto",
       "inherited": "Heredado",
       "inheritedTooltip": "Vinculado a un descendiente de este requisito, no directamente a él.",
-      "notRunCell": "No ejecutado",
-      "crossProjectCount": "{count, plural, one {También cubierto por un caso en # otro proyecto} other {También cubierto por casos en # otros proyectos}}"
+      "notRunCell": "No ejecutado"
     },
     "export": {
       "menuLabel": "Exportar trazabilidad",

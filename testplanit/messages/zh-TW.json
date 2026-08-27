@@ -761,6 +761,7 @@
       "deletedUser": "已刪除用戶",
       "restrictedField": "受限字段",
       "backToTestCase": "返回測試用例",
+      "backToRequirements": "返回需求",
       "selectDeselectAllApprove": "選取或取消選取「核准」以確認所有相關區域",
       "selectDeselectAllReadSensitive": "選取或取消選取所有相關區域的「讀取敏感資訊」選項"
     },
@@ -6678,6 +6679,10 @@
     },
     "detail": {
       "selectPrompt": "選擇一個需求以檢視其詳細資訊。",
+      "previousRequirement": "上一個需求",
+      "nextRequirement": "下一個需求",
+      "breadcrumbLabel": "需求階層",
+      "notFound": "找不到需求",
       "documentation": "文件",
       "documentationEmpty": "未提供任何文件",
       "documentationPlaceholder": "輸入需求文件……",
@@ -6740,6 +6745,7 @@
     },
     "linkedCases": {
       "title": "關聯測試用例",
+      "titleWithCount": "{count, plural, =0 {已連結測試案例} =1 {# 個已連結測試案例} other {# 個已連結測試案例}}",
       "empty": "沒有關聯的測試用例。",
       "addLink": "添加連結",
       "addLinkDialogTitle": "關聯測試用例",
@@ -6803,16 +6809,17 @@
       "loadFailed": "涵蓋範圍載入失敗。",
       "retry": "重試",
       "panelTitle": "涵蓋此需求的測試用例",
+      "panelTitleWithCount": "{count, plural, =0 {涵蓋測試案例} =1 {涵蓋 # 個測試案例} other {涵蓋 # 個測試案例}}",
       "panelDescription": "計入此需求涵蓋範圍的每個測試用例 — 直接連結至此需求的用例，加上連結至其下任何需求的用例。若要新增或移除連結，請使用「關聯測試用例」。",
       "panelEmpty": "目前尚無測試用例涵蓋此需求。",
       "columnCase": "測試用例",
-      "columnResult": "結果",
+      "columnResult": "最新結果",
+      "resultRunLink": "檢視此結果所屬的測試執行",
       "columnExecutedAt": "執行於",
       "columnProject": "專案",
       "inherited": "繼承",
       "inheritedTooltip": "連結至此需求的子項，而非直接連結至此需求。",
-      "notRunCell": "未執行",
-      "crossProjectCount": "{count, plural, other {也涵蓋於其他 # 個專案的測試用例中}}"
+      "notRunCell": "未執行"
     },
     "export": {
       "menuLabel": "匯出可追溯性",
