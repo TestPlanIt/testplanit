@@ -494,6 +494,10 @@ export interface RequirementCoveringCase {
   lastStatusIsSuccess: boolean | null;
   lastStatusIsFailure: boolean | null;
   lastExecutedAt: string | null;
+  /** The run the latest result was recorded against, so a consumer can link
+   *  the status back to its source. Null only when the case has never been
+   *  executed — i.e. exactly when every other `last*` field is null too. */
+  lastTestRunId: number | null;
 }
 
 /** Row shape returned by the covering-case drill-down statement below,
@@ -509,6 +513,7 @@ interface RequirementCoveringCaseRow {
   is_success: boolean | null;
   is_failure: boolean | null;
   executed_at: Date | string | null;
+  test_run_id: number | bigint | null;
 }
 
 /**
@@ -576,7 +581,8 @@ export async function getRequirementCoveringCases(
       lr.status_color,
       lr.is_success,
       lr.is_failure,
-      lr.executed_at
+      lr.executed_at,
+      lr.test_run_id
     FROM closure cl
     JOIN "RepositoryCaseIssue" rci ON rci."issueId" = cl.node_id
     JOIN "RepositoryCases" rc
@@ -608,6 +614,10 @@ export async function getRequirementCoveringCases(
       lastExecutedAt: row.executed_at
         ? new Date(row.executed_at).toISOString()
         : null,
+      lastTestRunId:
+        row.test_run_id === null || row.test_run_id === undefined
+          ? null
+          : Number(row.test_run_id),
     };
     const existing = covering.get(requirementId);
     if (existing) {

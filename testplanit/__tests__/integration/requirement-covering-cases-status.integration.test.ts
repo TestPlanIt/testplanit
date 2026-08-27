@@ -465,6 +465,16 @@ describeIntegration(
       expect(latestEntry?.lastStatusIsSuccess).toBe(true);
       expect(latestEntry?.lastStatusIsFailure).toBe(false);
       expect(latestEntry?.lastExecutedAt).toBe(executedAtNew.toISOString());
+
+      // The run id must come from the SAME execution the status did. The two
+      // executions above are in two different runs, so a fragment that picked
+      // the run off the older row would still return a real, plausible id --
+      // and send the panel's link to the wrong run.
+      const newestExecution = latestExecutions.find(
+        (e) => e.executedAt?.getTime() === executedAtNew.getTime()
+      );
+      expect(newestExecution).toBeDefined();
+      expect(latestEntry?.lastTestRunId).toBe(newestExecution?.testRunId);
     });
 
     it("prefers the newest execution across runs and across manual and automated results", async () => {
@@ -521,6 +531,8 @@ describeIntegration(
       expect(neverEntry?.lastStatusIsSuccess).toBeNull();
       expect(neverEntry?.lastStatusIsFailure).toBeNull();
       expect(neverEntry?.lastExecutedAt).toBeNull();
+      // No execution means no run to link to.
+      expect(neverEntry?.lastTestRunId).toBeNull();
     });
 
     it("still agrees with the rollup linked-case count after the extension", async () => {

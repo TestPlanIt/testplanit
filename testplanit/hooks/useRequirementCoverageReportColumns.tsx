@@ -6,6 +6,7 @@ import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
+import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { formatRequirementCellText } from "~/utils/issueDisplayText";
 import { getDateFnsLocale } from "~/utils/locales";
@@ -107,10 +108,19 @@ export function useRequirementCoverageGapColumns(): ColumnDef<
         enableHiding: false,
         enableGrouping: false,
         header: () => <span>{t("requirement")}</span>,
+        // The requirement the report is ABOUT was the one thing in these
+        // tables you could not click through to, while every test case
+        // beside it linked out. Uses the project-less permalink so both
+        // column sets share one cell -- the gap report's hook takes no
+        // projectId, and the resolver already owns that lookup.
         cell: (info) => (
-          <span className="font-medium">
+          <Link
+            href={`/requirement/${info.row.original.requirementId}`}
+            className="font-medium hover:underline"
+            data-testid={`requirement-report-link-${info.row.original.requirementId}`}
+          >
             {formatRequirementCellText(info.row.original)}
-          </span>
+          </Link>
         ),
         enableSorting: true,
         size: REQUIREMENT_COLUMN_SIZE,
@@ -158,10 +168,19 @@ export function useRequirementTraceabilityColumns(
         enableHiding: false,
         enableGrouping: false,
         header: () => <span>{t("requirement")}</span>,
+        // The requirement the report is ABOUT was the one thing in these
+        // tables you could not click through to, while every test case
+        // beside it linked out. Uses the project-less permalink so both
+        // column sets share one cell -- the gap report's hook takes no
+        // projectId, and the resolver already owns that lookup.
         cell: (info) => (
-          <span className="font-medium">
+          <Link
+            href={`/requirement/${info.row.original.requirementId}`}
+            className="font-medium hover:underline"
+            data-testid={`requirement-report-link-${info.row.original.requirementId}`}
+          >
             {formatRequirementCellText(info.row.original)}
-          </span>
+          </Link>
         ),
         enableSorting: true,
         size: REQUIREMENT_COLUMN_SIZE,

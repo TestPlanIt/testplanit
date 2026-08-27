@@ -53,10 +53,14 @@ import { baseDb } from "~/lib/db";
  *   so it can define further CTEs before or after this one.
  * - `latest_results` is defined last, so a caller may reference it from
  *   CTEs defined after this fragment is interpolated.
- * - `latest_results`'s final projection is exactly these eight columns,
- *   in this order: `test_case_id`, `executed_at`, `status_id`,
- *   `status_name`, `status_color`, `is_success`, `is_failure`,
- *   `is_completed`.
+ * - `latest_results`'s final projection is exactly these nine columns,
+ *   in this order: `test_case_id`, `test_run_id`, `executed_at`,
+ *   `status_id`, `status_name`, `status_color`, `is_success`,
+ *   `is_failure`, `is_completed`.
+ * - `test_run_id` is the run the surviving execution was recorded against,
+ *   so a consumer can link a status straight back to its source run. Both
+ *   branches already join `TestRuns` to exclude deleted runs, so it is
+ *   never null on a row that exists.
  *
  * A zero-argument function rather than a module-level constant, so every
  * call site gets its own fragment instance and no shared builder object
@@ -68,6 +72,7 @@ latest_manual_results AS (
   -- Get the latest manual test result for each repository case
   SELECT DISTINCT ON (rc.id)
     rc.id as test_case_id,
+    tr.id as test_run_id,
     trr."executedAt" as executed_at,
     s.id as status_id,
     s.name as status_name,
@@ -90,6 +95,7 @@ latest_junit_results AS (
   -- Get the latest JUnit result for each repository case
   SELECT DISTINCT ON (rc.id)
     rc.id as test_case_id,
+    tr.id as test_run_id,
     jr."executedAt" as executed_at,
     COALESCE(s.id,
       CASE jr.type
@@ -127,6 +133,7 @@ latest_results AS (
   -- Combine and get the most recent result for each test case
   SELECT DISTINCT ON (test_case_id)
     test_case_id,
+    test_run_id,
     executed_at,
     status_id,
     status_name,

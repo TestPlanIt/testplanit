@@ -68,6 +68,7 @@ function coveringCase(
     lastStatusIsSuccess: true,
     lastStatusIsFailure: false,
     lastExecutedAt: "2026-08-01T00:00:00.000Z",
+    lastTestRunId: 55,
     ...overrides,
   };
 }

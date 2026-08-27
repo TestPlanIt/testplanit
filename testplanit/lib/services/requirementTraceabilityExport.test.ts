@@ -68,6 +68,7 @@ function coveringCase(
     lastStatusIsSuccess: null,
     lastStatusIsFailure: null,
     lastExecutedAt: null,
+    lastTestRunId: null,
     ...overrides,
   };
 }

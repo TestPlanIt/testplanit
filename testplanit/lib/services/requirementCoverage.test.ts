@@ -161,6 +161,7 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
         is_success: true,
         is_failure: false,
         executed_at: executedAt,
+        test_run_id: 55,
       },
     ]);
 
@@ -183,6 +184,9 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
       lastStatusIsSuccess: true,
       lastStatusIsFailure: false,
       lastExecutedAt: executedAt.toISOString(),
+      // Carried through so the panel can link this status back to the run it
+      // was recorded against.
+      lastTestRunId: 55,
     });
   });
 
@@ -200,6 +204,7 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
         is_success: null,
         is_failure: null,
         executed_at: null,
+        test_run_id: null,
       },
     ]);
 
@@ -223,6 +228,8 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
       lastStatusIsSuccess: null,
       lastStatusIsFailure: null,
       lastExecutedAt: null,
+      // No execution means no run to link to — null here, never a stray id.
+      lastTestRunId: null,
     });
   });
 
