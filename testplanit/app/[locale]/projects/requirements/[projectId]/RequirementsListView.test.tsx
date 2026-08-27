@@ -358,6 +358,90 @@ function makeCoverageResponse(
   return { projectId: 42, coverage };
 }
 
+/** A `RequirementTreeRow` fixture (28-08's shape) -- the shape both the
+ *  hook's roots-page and children-page responses carry per row. */
+function makeLazyRow(
+  overrides: Partial<Record<string, unknown>> & { id: number }
+) {
+  const name = overrides.name ?? `Lazy Requirement ${overrides.id}`;
+  return {
+    name,
+    title: name,
+    status: null,
+    externalStatus: null,
+    priority: null,
+    externalId: null,
+    externalKey: null,
+    externalUrl: null,
+    issueTypeId: null,
+    issueTypeName: null,
+    issueTypeIconUrl: null,
+    contentUpdatedAt: null,
+    createdAt: new Date().toISOString(),
+    projectId: 42,
+    integrationId: null,
+    parentId: null,
+    isRequirement: true,
+    requirementDetachedAt: null,
+    isDeleted: false,
+    hasChildren: false,
+    ...overrides,
+  };
+}
+
+/** Routes a fake `fetch` by URL: the count round trip (`?countOnly=1`),
+ *  the roots-window page (a plain GET to the tree route), a node's
+ *  children (`/tree/{id}/children`), and anything else (reparent/create/
+ *  delete/etc.) falls through to a bare `{ ok: true }`, mirroring this
+ *  file's own pre-existing default. */
+function makeTreeFetchMock(options: {
+  mode: "all" | "lazy";
+  total: number;
+  rootsRows?: Array<Record<string, unknown>>;
+  childrenByParentId?: Record<number, Array<Record<string, unknown>>>;
+  countOk?: boolean;
+}) {
+  return vi.fn((url: string, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    if (typeof url === "string" && url.includes("/requirements/tree")) {
+      if (url.includes("countOnly=1")) {
+        if (options.countOk === false) {
+          return Promise.resolve({ ok: false, status: 500 });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            total: options.total,
+            threshold: 500,
+            mode: options.mode,
+          }),
+        });
+      }
+      const childrenMatch = url.match(/\/tree\/(\d+)\/children/);
+      if (childrenMatch) {
+        const parentId = Number(childrenMatch[1]);
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            rows: options.childrenByParentId?.[parentId] ?? [],
+          }),
+        });
+      }
+      if (method === "GET") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            total: options.total,
+            rows: options.rootsRows ?? [],
+            nextCursor: null,
+          }),
+        });
+      }
+    }
+    return Promise.resolve({ ok: true });
+  });
+}
+
 function renderView(
   overrides: {
     selectedRequirementId?: number | null;
@@ -1610,78 +1694,6 @@ describe("RequirementsListView", () => {
   // mocked -- only `global.fetch`, so the hook's real fetch/merge/state
   // logic runs against a routed fake transport.
   describe("mode fork (28-13)", () => {
-    /** Routes a fake `fetch` by URL: the count round trip
-     *  (`?countOnly=1`), the roots-window page (a plain GET), and anything
-     *  else (reparent/create/delete/etc.) falls through to a bare `{ ok:
-     *  true }`, mirroring this file's own pre-existing default. */
-    function makeTreeFetchMock(options: {
-      mode: "all" | "lazy";
-      total: number;
-      rootsRows?: Array<Record<string, unknown>>;
-      countOk?: boolean;
-    }) {
-      return vi.fn((url: string, init?: RequestInit) => {
-        const method = init?.method ?? "GET";
-        if (typeof url === "string" && url.includes("/requirements/tree")) {
-          if (url.includes("countOnly=1")) {
-            if (options.countOk === false) {
-              return Promise.resolve({ ok: false, status: 500 });
-            }
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({
-                total: options.total,
-                threshold: 500,
-                mode: options.mode,
-              }),
-            });
-          }
-          if (method === "GET") {
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({
-                total: options.total,
-                rows: options.rootsRows ?? [],
-                nextCursor: null,
-              }),
-            });
-          }
-        }
-        return Promise.resolve({ ok: true });
-      });
-    }
-
-    /** A `RequirementTreeRow` fixture (28-08's shape) -- the shape the
-     *  hook's roots-page response carries per row. */
-    function makeLazyRow(
-      overrides: Partial<Record<string, unknown>> & { id: number }
-    ) {
-      const name = overrides.name ?? `Lazy Requirement ${overrides.id}`;
-      return {
-        name,
-        title: name,
-        status: null,
-        externalStatus: null,
-        priority: null,
-        externalId: null,
-        externalKey: null,
-        externalUrl: null,
-        issueTypeId: null,
-        issueTypeName: null,
-        issueTypeIconUrl: null,
-        contentUpdatedAt: null,
-        createdAt: new Date().toISOString(),
-        projectId: 42,
-        integrationId: null,
-        parentId: null,
-        isRequirement: true,
-        requirementDetachedAt: null,
-        isDeleted: false,
-        hasChildren: false,
-        ...overrides,
-      };
-    }
-
     it('mode: "all" -- the ZenStack load-all query is enabled and the roots-page route is never requested', async () => {
       global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
       useFindManyIssueMock.mockReturnValue({
@@ -1810,6 +1822,266 @@ describe("RequirementsListView", () => {
         expect(rootsPageCallCount).toBeGreaterThan(callsBeforeRetry)
       );
       expect(zenRefetch).not.toHaveBeenCalled();
+    });
+  });
+
+  // 28-13 Task 2: expand-on-demand, with the chevron correct before any
+  // click (D-02). Same convention as the mode-fork describe above --
+  // `useRequirementsTree` runs for real against a routed fake `fetch`.
+  describe("expand on demand (28-13)", () => {
+    it("a lazy root the server marked hasChildren renders a chevron before any children are loaded, and fetches nothing yet", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-chevron-501")
+        ).toBeInTheDocument();
+      });
+
+      const childrenCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/children")
+      );
+      expect(childrenCalls).toHaveLength(0);
+    });
+
+    it("expanding a lazy root fetches its children once and renders them beneath it", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+        childrenByParentId: {
+          501: [makeLazyRow({ id: 502, name: "Lazy Child", parentId: 501 })],
+        },
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-chevron-501")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+      const childrenCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/tree/501/children")
+      );
+      expect(childrenCalls).toHaveLength(1);
+    });
+
+    it("collapsing and re-expanding a lazy root does not refetch its children", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+        childrenByParentId: {
+          501: [makeLazyRow({ id: 502, name: "Lazy Child", parentId: 501 })],
+        },
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-chevron-501")
+        ).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-row-502")
+        ).not.toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      const childrenCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/tree/501/children")
+      );
+      expect(childrenCalls).toHaveLength(1);
+    });
+
+    it("a lazy leaf (hasChildren: false) renders no chevron and never fetches children", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 503, name: "Lazy Leaf", hasChildren: false }),
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-503")).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByTestId("requirement-chevron-503")
+      ).not.toBeInTheDocument();
+
+      const childrenCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/children")
+      );
+      expect(childrenCalls).toHaveLength(0);
+    });
+
+    it('in "all" mode, expanding a node never touches the tree data routes', () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Parent Requirement" }),
+          makeRequirement({ id: 2, name: "Child A", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderView();
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-1"));
+
+      expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+      const treeDataCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" &&
+          url.includes("/requirements/tree") &&
+          !url.includes("countOnly")
+      );
+      expect(treeDataCalls).toHaveLength(0);
+    });
+
+    // 28-13 DECISION (see the auto-expand-ancestors effect's own comment):
+    // an ancestor already present in the loaded partial forest is
+    // auto-expanded when the selection arrives from outside this list; an
+    // ancestor that isn't loaded yet is an accepted, documented gap rather
+    // than a fetch-on-demand chain walk.
+    it("auto-expands the selected requirement's already-loaded ancestor when the selection arrives from outside the list", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+        childrenByParentId: {
+          501: [
+            makeLazyRow({
+              id: 502,
+              name: "Lazy Child",
+              parentId: 501,
+              hasChildren: false,
+            }),
+          ],
+        },
+      }) as any;
+
+      const onSelectRequirement = vi.fn();
+      const { rerender } = render(
+        <RequirementsListView
+          projectId="42"
+          selectedRequirementId={null}
+          onSelectRequirement={onSelectRequirement}
+        />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-chevron-501")
+        ).toBeInTheDocument();
+      });
+      // Bring 502 into the loaded partial forest, then collapse its parent
+      // again -- this component's own chevron is the only route this test
+      // has to load a child, and collapsing afterward proves the SELECTION
+      // below (not the earlier click) is what re-reveals it.
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-row-502")
+        ).not.toBeInTheDocument();
+      });
+
+      rerender(
+        <RequirementsListView
+          projectId="42"
+          selectedRequirementId={502}
+          onSelectRequirement={onSelectRequirement}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+    });
+
+    it("a selection whose ancestor chain is not loaded is a documented no-op -- no crash, nothing force-expanded", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+      }) as any;
+
+      const onSelectRequirement = vi.fn();
+      const { rerender } = render(
+        <RequirementsListView
+          projectId="42"
+          selectedRequirementId={null}
+          onSelectRequirement={onSelectRequirement}
+        />
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirement-chevron-501")
+        ).toBeInTheDocument();
+      });
+
+      // 999 was never loaded -- its ancestor chain is unknown to this list.
+      expect(() =>
+        rerender(
+          <RequirementsListView
+            projectId="42"
+            selectedRequirementId={999}
+            onSelectRequirement={onSelectRequirement}
+          />
+        )
+      ).not.toThrow();
+
+      expect(screen.getByTestId("requirement-chevron-501")).toHaveAttribute(
+        "aria-label",
+        "requirements.list.expandRow:Lazy Root"
+      );
     });
   });
 });

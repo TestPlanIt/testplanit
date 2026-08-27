@@ -493,6 +493,17 @@ const RequirementsListView = forwardRef<
 
   const rows = isLazy ? lazyModeRows : allModeRows;
 
+  // A by-id lookup over the lazy hook's own loaded (partial) forest --
+  // `hasChildren` for the expand-on-demand gate below, and `parentId` for
+  // the ancestor walk two effects down. Deliberately NOT `requirementMap`
+  // (which stays empty in lazy mode, fed only by the all-mode ZenStack
+  // query): this is the lazy-mode-only counterpart, built from whatever is
+  // currently loaded rather than a complete tree.
+  const lazyRowsById = useMemo(
+    () => new Map(lazyTreeRows.map((row) => [row.id, row])),
+    [lazyTreeRows]
+  );
+
   // Publishes the selected requirement's position in `rows` -- the same
   // array the table renders, so stepping always lands on a row the user can
   // actually see. Recomputed whenever the row set changes (search, filter,
@@ -535,21 +546,41 @@ const RequirementsListView = forwardRef<
   // entries, so a user's own manual collapse is never undone by this
   // effect. Bails to the previous state object identity when nothing needs
   // adding, so this can never loop (T-26.2-12).
+  //
+  // 28-13 DECISION (T-28-13-04): below the threshold `requirementMap` holds
+  // every requirement, so this walk always reaches every ancestor -- byte-
+  // identical to the pre-lazy behavior. Above it, there is no complete
+  // parent map to consult; walking an ancestor chain of unknown length by
+  // fetching each link on demand would be new server/hook surface this plan
+  // does not add (that fetch primitive does not exist yet, and inventing
+  // one here would be exactly the kind of architectural addition this
+  // plan's own scope excludes). The chosen middle ground: walk whatever
+  // ancestors are ALREADY in the loaded partial forest (`lazyRowsById`) --
+  // free, since it costs no extra request, and strictly better than doing
+  // nothing. COST: a selection whose ancestor chain is not yet loaded
+  // (e.g. a deep link, or the detail panel's prev/next landing on a row
+  // outside the current window) stops climbing at the first unloaded
+  // parent and may not become visible without the user expanding/loading
+  // more themselves -- an accepted, documented gap, not a silent
+  // regression.
   useEffect(() => {
     if (selectedRequirementId == null) return;
+    const getParentId = isLazy
+      ? (id: number) => lazyRowsById.get(id)?.parentId ?? null
+      : (id: number) => requirementMap.get(id)?.parentId ?? null;
     setExpandedByIssueId((prev) => {
       let next: Record<number, boolean> | null = null;
-      let current = requirementMap.get(selectedRequirementId)?.parentId ?? null;
+      let current = getParentId(selectedRequirementId);
       while (current !== null) {
         if (prev[current] !== true) {
           next = next ?? { ...prev };
           next[current] = true;
         }
-        current = requirementMap.get(current)?.parentId ?? null;
+        current = getParentId(current);
       }
       return next ?? prev;
     });
-  }, [selectedRequirementId, requirementMap]);
+  }, [selectedRequirementId, requirementMap, isLazy, lazyRowsById]);
 
   // While a filter (search text or the uncovered toggle) is active, force
   // open every currently-visible parent -- otherwise a filtered-in
@@ -626,9 +657,27 @@ const RequirementsListView = forwardRef<
     [onRequestEdit]
   );
 
-  const handleToggleExpand = useCallback((issueId: number) => {
-    setExpandedByIssueId((prev) => ({ ...prev, [issueId]: !prev[issueId] }));
-  }, []);
+  // In lazy mode, expanding (never collapsing) a node whose children are
+  // not yet loaded fetches them once. `hasChildren` comes from the loaded
+  // row's own server-supplied flag (`lazyRowsById`, never re-derived from
+  // what's already merged in) -- D-02's whole point is that the chevron
+  // (and, by extension, whether an expand should fetch) is right BEFORE any
+  // click, not discovered by attempting one. The state flip stays
+  // synchronous so the chevron responds immediately; `fetchChildren` itself
+  // is a no-op if this node's children are already loaded or already
+  // in-flight (28-11's own contract), so a collapse/re-expand cycle never
+  // refetches -- this handler doesn't need to track that itself.
+  const handleToggleExpand = useCallback(
+    (issueId: number) => {
+      const wasExpanded = expandedByIssueId[issueId] === true;
+      setExpandedByIssueId((prev) => ({ ...prev, [issueId]: !prev[issueId] }));
+      if (!isLazy || wasExpanded) return;
+      if (lazyRowsById.get(issueId)?.hasChildren) {
+        void fetchChildren(issueId);
+      }
+    },
+    [isLazy, expandedByIssueId, lazyRowsById, fetchChildren]
+  );
 
   const handleAddChild = useCallback((requirement: RequirementRow) => {
     setCreateDialogState({
