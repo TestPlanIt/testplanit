@@ -73,6 +73,8 @@ Imported issues are created **in this project** and behave like any other linked
 Which filtering happens at the tracker depends on the provider. Jira, GitHub, and Azure DevOps apply the recency window in the tracker query; other providers fetch pages and apply the window afterward, so an import there may scan more issues before it reaches the cap. **Simple URL** integrations have no tracker API and do not offer import.
 :::
 
+This import brings in issues of any type, within a recency window and up to a cap. To import every issue of the project's configured requirement types instead — with no window and no cap — use the separate import action in [Requirement Types](#requirement-types).
+
 :::info
 Only system administrators and project administrators can import issues — the same audience that can manage the project's integrations.
 :::
@@ -103,6 +105,14 @@ For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, and Mant
 - **Issue types** — a multi-select of the issue types across all of this integration's linked external projects (for example Epic, Story, or a custom Requirement type).
 
 Before you save, an **Impact of this change** preview shows how many existing issues will become requirements or stop being requirements, plus a callout for detached or locally edited rows that would lose their requirement status. Nothing is applied until **Save**; saving also reclassifies existing issues to match. Removing a type is reversible — re-adding it restores the classification, and nothing is deleted.
+
+### Importing every classified issue
+
+Once at least one type is classified, each linked tracker project shows an **Import {name}** action inside this section. Unlike [bulk import](#importing-issues-in-bulk), it targets only the configured types and has no date window and no cap: confirming it imports every matching issue in the tracker, paged to completion.
+
+Before it starts, a dialog states roughly how many matching issues the tracker holds — for example *"~42 issues of the selected types are in the tracker."* The count is approximate for some trackers. Saving a configuration change that newly classifies a type offers this same import unprompted, so you don't have to remember to run it afterward.
+
+While an import runs, its progress shows alongside the linked tracker project in this section. A **Stop** action asks for confirmation and, once confirmed, stops the import: *"Stopping takes effect after the current page finishes importing. Issues already imported will stay."* Only one import can run per tracker project at a time.
 
 Classified requirements appear on the project's [Requirements](../requirements.md) page once the feature is enabled for the project under [Advanced settings](advanced.md) — see [Enabling Requirements](../requirements.md#enabling-requirements) for the full two-step setup.
 
