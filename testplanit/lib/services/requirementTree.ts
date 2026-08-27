@@ -454,15 +454,102 @@ function andAll(fragments: RawBuilder<unknown>[]): RawBuilder<unknown> {
   );
 }
 
+/** One row of the ancestor-closure walk (`resolveAncestorIds`). */
+interface AncestorRow {
+  id: number;
+}
+
 /**
- * 28-09 Task 2 adds the real implementation here: a `WITH RECURSIVE`
- * ancestor-closure walk seeded from the page's whole matched-id array
- * (generalized from `assertNoCycle`'s proven single-seed walk direction),
- * plus the row-hydration query `include: "rows"` needs. Task 1's own scope
- * is the three SQL axes, their intersection, and the counted/paged match
- * set below -- every match's ancestor chain is stubbed empty and
- * `include: "rows"` is not yet wired until that lands.
+ * The ancestor chain of a whole PAGE of matches, in one round trip --
+ * generalized from `assertNoCycle`'s proven walk direction
+ * (requirementHierarchy.ts:184-208: seed a row's own parentId, then
+ * re-join `i.id = a.id` to read THAT row's own parentId one level
+ * further up) from one seed id to the page's whole matched-id array at
+ * once, per 28-RESEARCH Q5's own warning that the naive self-join
+ * direction is easy to get backwards.
+ *
+ * Self-scoped at EVERY level, unlike `assertNoCycle` (which is
+ * deliberately role-agnostic, since a cycle in ANY issue kind must be
+ * caught): each row this walk emits must itself be a live, project-scoped
+ * requirement before it joins the chain, mirroring
+ * `getRequirementSubtreeIds`'s own "the row being emitted carries its own
+ * classification check" discipline rather than merely checking the seed
+ * row's classification. A match whose immediate parent is not itself a
+ * requirement-classified row (Jira sync writes `parentId` for every
+ * synced issue regardless of classification) stops there -- exactly where
+ * `computeVisibleRequirementIds`'s own `requirementMap.get(current)` walk
+ * stops too, since that map only ever holds classified rows.
+ *
+ * `depth < 100` caps the walk for the same reason every sibling CTE in
+ * this file family caps it: an unguarded recursive CTE over cyclic data
+ * hangs rather than erroring. The final `WHERE NOT (id = ANY(...))`
+ * excludes any id already present in `matchedIds` -- a match that is
+ * itself the parent of a different match must never come back as its own
+ * "ancestor" (`matchedIds`/`ancestorIds` must stay disjoint).
  */
+async function resolveAncestorIds(
+  projectId: number,
+  matchedIds: number[],
+  db: Pick<typeof baseDb, "$qb">
+): Promise<number[]> {
+  const { rows } = await sql<AncestorRow>`
+    WITH RECURSIVE ancestors AS (
+      SELECT parent.id, parent."parentId", 1 AS depth
+      FROM "Issue" m
+      JOIN "Issue" parent ON parent.id = m."parentId"
+      WHERE m.id = ANY(${matchedIds}::int[])
+        AND parent."projectId" = ${projectId}
+        AND parent."isRequirement" = true
+        AND parent."isDeleted" = false
+
+      UNION ALL
+
+      SELECT next.id, next."parentId", a.depth + 1
+      FROM "Issue" next
+      INNER JOIN ancestors a ON next.id = a."parentId"
+      WHERE next."projectId" = ${projectId}
+        AND next."isRequirement" = true
+        AND next."isDeleted" = false
+        AND a.depth < 100
+    )
+    SELECT DISTINCT id FROM ancestors WHERE NOT (id = ANY(${matchedIds}::int[]))
+  `.execute(db.$qb);
+  return rows.map((row) => row.id);
+}
+
+/**
+ * Hydrates the full `RequirementTreeRow` shape for a page's matches plus
+ * their ancestor chain -- reuses `REQUIREMENT_TREE_COLUMNS` and
+ * `requirementHasChildrenFragment` verbatim, the same shared fragments the
+ * roots window and the children query already compose, so a future column
+ * addition to `RequirementTreeRow` cannot reach one query and miss
+ * another. Skipped entirely when `include: "ids"` (`resolveRequirementMatches`
+ * never calls this function in that mode) -- the below-threshold caller
+ * already holds every row in memory and needs only the id sets.
+ */
+async function hydrateMatchAndAncestorRows(
+  projectId: number,
+  matchedIds: number[],
+  ancestorIds: number[],
+  db: Pick<typeof baseDb, "$qb">
+): Promise<RequirementTreeRow[]> {
+  const ids = [...matchedIds, ...ancestorIds];
+  if (ids.length === 0) return [];
+
+  const { rows } = await sql<RequirementTreeRow>`
+    SELECT
+      ${REQUIREMENT_TREE_COLUMNS},
+      ${requirementHasChildrenFragment(projectId)}
+    FROM "Issue" i
+    WHERE i.id = ANY(${ids}::int[])
+      AND i."projectId" = ${projectId}
+      AND i."isRequirement" = true
+      AND i."isDeleted" = false
+    ORDER BY i.name, i.id
+  `.execute(db.$qb);
+
+  return rows;
+}
 
 /**
  * Resolves the requirements list's four filter axes server-side
@@ -575,28 +662,35 @@ export async function resolveRequirementMatches(
   const matchedTotal = Number(rows[0]?.matchedTotal ?? 0);
   const matchedIds = pageRows.map((row) => row.id);
 
+  const ancestorIds =
+    matchedIds.length > 0
+      ? await resolveAncestorIds(projectId, matchedIds, db)
+      : [];
+
   // The direct translation of the oracle's own `nonTextAxisActive` flag
   // (requirementsListRows.ts:349-350), inverted: browsable-subtree
-  // expansion is allowed ONLY when text is the sole active axis. Pure
-  // JS over the already-computed axis flags -- no SQL needed, so this
-  // ships with Task 1's own axis/intersection work rather than waiting
-  // for Task 2's ancestor closure.
+  // expansion is allowed ONLY when text is the sole active axis.
   const expandMatchedSubtrees =
     !coverageAxisActive &&
     axes.status === "" &&
     axes.source === "" &&
     axes.search !== "";
 
-  // 28-09 Task 2 fills in the ancestor closure and `include: "rows"`
-  // hydration below -- this task's own scope is the axes, their
-  // intersection, and the counted/paged match set above.
-  void include;
+  const hydratedRows =
+    include === "rows"
+      ? await hydrateMatchAndAncestorRows(
+          projectId,
+          matchedIds,
+          ancestorIds,
+          db
+        )
+      : [];
 
   return {
     matchedTotal,
     matchedIds,
-    ancestorIds: [],
-    rows: [],
+    ancestorIds,
+    rows: hydratedRows,
     nextCursor,
     expandMatchedSubtrees,
   };

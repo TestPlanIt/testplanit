@@ -571,10 +571,57 @@ describe("resolveRequirementMatches -- expandMatchedSubtrees (unit, mocked $qb)"
   }
 });
 
-describe("resolveRequirementMatches -- include mode (unit, mocked $qb)", () => {
-  it("include: 'ids' returns an empty rows array (Task 1 scope: row hydration ships in Task 2)", async () => {
-    const rows = [makeMatchRow({ id: 1, name: "a" })];
-    const db = makeMockDb(rows);
+describe("resolveRequirementMatches -- the ancestor closure (unit, mocked $qb, sequenced)", () => {
+  it("never queries for ancestors when the match set is empty", async () => {
+    const { db, getCallCount } = makeCapturingMockDb([[]]);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "nomatch", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "rows",
+      },
+      db as never
+    );
+    expect(getCallCount()).toBe(1);
+    expect(result.ancestorIds).toEqual([]);
+    expect(result.rows).toEqual([]);
+  });
+
+  it("relays the ancestor query's returned ids into ancestorIds -- a match at depth 5 (5 rows) yields all 5", async () => {
+    const { db } = makeCapturingMockDb([
+      [makeMatchRow({ id: 100, name: "leaf" })],
+      [{ id: 5 }, { id: 4 }, { id: 3 }, { id: 2 }, { id: 1 }],
+    ]);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "leaf", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(result.matchedIds).toEqual([100]);
+    expect(new Set(result.ancestorIds)).toEqual(new Set([1, 2, 3, 4, 5]));
+    // Disjoint by construction here (SQL enforces it in production -- see
+    // this file's own structural test for the WHERE NOT (id = ANY(...))
+    // clause; a live-DB proof of the recursion's real depth/disjointness
+    // is 28-09 Task 3's own scope).
+    for (const id of result.ancestorIds) {
+      expect(result.matchedIds).not.toContain(id);
+    }
+  });
+});
+
+describe("resolveRequirementMatches -- include mode (unit, mocked $qb, sequenced)", () => {
+  it("include: 'ids' issues exactly two queries (match page + ancestor closure) and NEVER a third row-hydration query -- proven on the mock's call count, not merely that rows came back empty", async () => {
+    const { db, getCallCount } = makeCapturingMockDb([
+      [makeMatchRow({ id: 1, name: "a" })],
+      [{ id: 5 }],
+    ]);
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
@@ -585,7 +632,33 @@ describe("resolveRequirementMatches -- include mode (unit, mocked $qb)", () => {
       },
       db as never
     );
+    expect(getCallCount()).toBe(2);
+    expect(result.ancestorIds).toEqual([5]);
     expect(result.rows).toEqual([]);
+  });
+
+  it("include: 'rows' issues a third query to hydrate matched UNION ancestor rows", async () => {
+    const hydrated = [
+      makeMatchRow({ id: 1, name: "a" }),
+      makeMatchRow({ id: 5, name: "z" }),
+    ];
+    const { db, getCallCount } = makeCapturingMockDb([
+      [makeMatchRow({ id: 1, name: "a" })],
+      [{ id: 5 }],
+      hydrated,
+    ]);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "rows",
+      },
+      db as never
+    );
+    expect(getCallCount()).toBe(3);
+    expect(result.rows).toEqual(hydrated);
   });
 });
 
@@ -702,8 +775,9 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     const usageCount = (content.match(/\$\{REQUIREMENT_TREE_COLUMNS\}/g) ?? [])
       .length;
     // getRequirementRootsPage + getRequirementChildren + the
-    // resolveRequirementMatches match-page query (28-09 Task 1) -- 3, not 2.
-    expect(usageCount).toBe(3);
+    // resolveRequirementMatches match-page query (28-09 Task 1) +
+    // hydrateMatchAndAncestorRows (28-09 Task 2) -- 4, not 2.
+    expect(usageCount).toBe(4);
 
     const fragmentDeclarationCount = (
       content.match(/function requirementHasChildrenFragment/g) ?? []
@@ -712,7 +786,76 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     const fragmentUsageCount = (
       content.match(/\$\{requirementHasChildrenFragment\(projectId\)\}/g) ?? []
     ).length;
-    expect(fragmentUsageCount).toBe(3);
+    expect(fragmentUsageCount).toBe(4);
+  });
+});
+
+/** Slices `content` from `startMarker` up to (but not including) the next
+ *  occurrence of `endMarker` -- used below to scope a structural assertion
+ *  to ONE private helper's own body, the same anchor-slicing discipline
+ *  `extractFunctionBody` applies to exported functions. */
+function sliceBetween(
+  content: string,
+  startMarker: string,
+  endMarker: string | null
+): string {
+  const start = content.indexOf(startMarker);
+  if (start === -1) {
+    throw new Error(`sliceBetween: ${startMarker} not found`);
+  }
+  if (!endMarker) return content.slice(start);
+  const end = content.indexOf(endMarker, start + startMarker.length);
+  return end === -1 ? content.slice(start) : content.slice(start, end);
+}
+
+describe("resolveAncestorIds / hydrateMatchAndAncestorRows source shape (structural, mutation-provable)", () => {
+  const content = readFileSync(FILE_PATH, "utf8");
+  const ancestorBody = sliceBetween(
+    content,
+    "async function resolveAncestorIds",
+    "async function hydrateMatchAndAncestorRows"
+  );
+  const hydrateBody = sliceBetween(
+    content,
+    "async function hydrateMatchAndAncestorRows",
+    "export async function resolveRequirementMatches"
+  );
+
+  it("uses a WITH RECURSIVE ancestor walk", () => {
+    expect(ancestorBody).toMatch(/WITH RECURSIVE ancestors/);
+  });
+
+  it("caps the recursive arm at depth < 100, mirroring every sibling CTE in this file family", () => {
+    expect(ancestorBody).toContain("a.depth < 100");
+  });
+
+  it("the anchor arm scopes the immediate parent row by projectId, isRequirement, and isDeleted", () => {
+    expect(ancestorBody).toContain('parent."projectId" = ${projectId}');
+    expect(ancestorBody).toContain('parent."isRequirement" = true');
+    expect(ancestorBody).toContain('parent."isDeleted" = false');
+  });
+
+  it("the recursive arm ALSO scopes by projectId, isRequirement, and isDeleted -- a cross-project, non-requirement, or soft-deleted parent can never widen the walk", () => {
+    expect(ancestorBody).toContain('next."projectId" = ${projectId}');
+    expect(ancestorBody).toContain('next."isRequirement" = true');
+    expect(ancestorBody).toContain('next."isDeleted" = false');
+  });
+
+  it("excludes any id already in matchedIds from the final ancestor set -- matchedIds and ancestorIds must stay disjoint", () => {
+    expect(ancestorBody).toContain(
+      "WHERE NOT (id = ANY(${matchedIds}::int[]))"
+    );
+  });
+
+  it("hydrateMatchAndAncestorRows reuses the shared column projection and hasChildren fragment, never a retyped copy", () => {
+    expect(hydrateBody).toContain("${REQUIREMENT_TREE_COLUMNS}");
+    expect(hydrateBody).toContain(
+      "${requirementHasChildrenFragment(projectId)}"
+    );
+  });
+
+  it("skips the row query entirely when there are no ids to hydrate", () => {
+    expect(hydrateBody).toContain("if (ids.length === 0) return [];");
   });
 });
 
