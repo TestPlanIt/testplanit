@@ -1,23 +1,28 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RequirementSourceFilter } from "~/app/[locale]/projects/requirements/[projectId]/requirementsListRows";
 import type { RequirementCoverageFilter } from "~/lib/services/requirementCoverageFilter";
-import {
-  REQUIREMENT_LAZY_THRESHOLD,
-  type RequirementFilterFacets,
-  type RequirementRootsCursor,
-  type RequirementTreeRow,
+// TYPE-ONLY, and it must stay that way: `lib/services/requirementTree`
+// imports `~/lib/db` and builds raw Kysely SQL. A value import here pulls
+// the whole database layer into the client bundle, which Turbopack cannot
+// build -- it then emits no build-manifest for the requirements page and the
+// route 500s with an ENOENT that names the manifest rather than the cause.
+// Types are erased at compile time, so they cost nothing at runtime.
+import type {
+  RequirementFilterFacets,
+  RequirementRootsCursor,
+  RequirementTreeRow,
 } from "~/lib/services/requirementTree";
 
 /**
- * Re-exported so 28-13/28-14 (and this hook's own tests) can read the fixed
- * load-all/lazy boundary from the same module they already import for the
- * hook itself, without a second import of `lib/services/requirementTree`.
- * The comparison itself is NOT re-implemented here -- `mode` always arrives
- * from the server's own `?countOnly=1` response (`tree/route.ts`'s one
- * place that owns the `>`/`<=` boundary), so this hook and the server can
- * never disagree about which side of the threshold a project is on.
+ * The load-all/lazy boundary is deliberately NOT re-exported from here, and
+ * is not re-implemented here either: `mode` always arrives from the server's
+ * own `?countOnly=1` response (`tree/route.ts` owns the `>`/`<=` comparison
+ * in one place), so this hook and the server can never disagree about which
+ * side of the threshold a project is on. Server code and tests read the
+ * constant from `lib/services/requirementTree` directly — a client module
+ * cannot, because that module reaches the database layer (see the import
+ * note above).
  */
-export { REQUIREMENT_LAZY_THRESHOLD };
 
 // Page-size ceiling shared with the server's own clamp
 // (`tree/route.ts`'s `REQUIREMENTS_TREE_MAX_LIMIT`) -- requesting anything
