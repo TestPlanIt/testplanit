@@ -781,24 +781,39 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
     // = true`, business logic for the requirement-lock check, not a
     // project-scoping predicate) and this test's own doc-comment mentions,
     // neither of which is preceded by "AND ".
+    //
+    // 28-19: `getRequirementFilterFacets` is this file's first statement to
+    // spell the predicate via the shared raw-SQL mirror itself
+    // (`sql.raw(ISSUE_ROLE_SCOPE_SQL_REQUIREMENT)`, imported from
+    // `issueRoleScope.ts`) rather than restating the literal text inline --
+    // genuinely the SAME predicate at query-compile time (proven verbatim
+    // by this file's own kysely compiler tests), just spelled through the
+    // shared constant instead of retyped. A call-site count of that form is
+    // added to the literal-text count below so this gate still counts it
+    // as real scoping, not as a query arm that dropped the predicate.
     const rolePredicateMatches =
       content.match(/AND \w+\."isRequirement" = true/g) ?? [];
+    const rawMirrorCallSites =
+      content.match(/sql\.raw\(ISSUE_ROLE_SCOPE_SQL_REQUIREMENT\)/g) ?? [];
+    const totalRolePredicateCount =
+      rolePredicateMatches.length + rawMirrorCallSites.length;
 
-    if (rolePredicateMatches.length < fromIssueOccurrences) {
+    if (totalRolePredicateCount < fromIssueOccurrences) {
       throw new Error(
         `${file} contains ${fromIssueOccurrences} "FROM \\"Issue\\"" ` +
-          `occurrence(s) but only ${rolePredicateMatches.length} occurrence(s) ` +
-          'of the "AND <alias>.\\"isRequirement\\" = true" role predicate ' +
-          "immediately scoping one. A count below the FROM-clause count means " +
-          "at least one query arm in this file reads the Issue table without " +
-          "the requirement-role predicate -- restore it, or update this " +
-          "threshold only after confirming by reading the file that a query " +
-          "arm was legitimately removed. A bare 'contains it once' assertion " +
-          "would pass a file where three of four queries dropped it; this " +
-          "count does not."
+          `occurrence(s) but only ${totalRolePredicateCount} occurrence(s) ` +
+          '(inline "AND <alias>.\\"isRequirement\\" = true" text plus ' +
+          "sql.raw(ISSUE_ROLE_SCOPE_SQL_REQUIREMENT) call sites combined) " +
+          "of the role predicate scoping one. A count below the FROM-clause " +
+          "count means at least one query arm in this file reads the Issue " +
+          "table without the requirement-role predicate -- restore it, or " +
+          "update this threshold only after confirming by reading the file " +
+          "that a query arm was legitimately removed. A bare 'contains it " +
+          "once' assertion would pass a file where three of four queries " +
+          "dropped it; this count does not."
       );
     }
-    expect(rolePredicateMatches.length).toBeGreaterThanOrEqual(
+    expect(totalRolePredicateCount).toBeGreaterThanOrEqual(
       fromIssueOccurrences
     );
 

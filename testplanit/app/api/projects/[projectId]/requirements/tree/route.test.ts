@@ -15,6 +15,7 @@ vi.mock("~/lib/services/requirementCoverage", () => ({
 vi.mock("~/lib/services/requirementTree", () => ({
   REQUIREMENT_LAZY_THRESHOLD: 500,
   countProjectRequirements: vi.fn(),
+  getRequirementFilterFacets: vi.fn(),
   getRequirementRootsPage: vi.fn(),
   resolveRequirementMatches: vi.fn(),
 }));
@@ -25,6 +26,7 @@ import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 import {
   countProjectRequirements,
+  getRequirementFilterFacets,
   getRequirementRootsPage,
   resolveRequirementMatches,
 } from "~/lib/services/requirementTree";
@@ -41,6 +43,8 @@ const mockedGetCoverage = getRequirementCoverage as unknown as ReturnType<
 >;
 const mockedCountProjectRequirements =
   countProjectRequirements as unknown as ReturnType<typeof vi.fn>;
+const mockedGetRequirementFilterFacets =
+  getRequirementFilterFacets as unknown as ReturnType<typeof vi.fn>;
 const mockedGetRequirementRootsPage =
   getRequirementRootsPage as unknown as ReturnType<typeof vi.fn>;
 const mockedResolveRequirementMatches =
@@ -181,6 +185,58 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
 
     const body = await res.json();
     expect(body.mode).toBe("lazy");
+  });
+
+  it("?facetsOnly=1 returns the service's facets, scoped with the viewer's own resolved project scope", async () => {
+    mockedResolveScope.mockResolvedValue([5, 6]);
+    mockedGetRequirementFilterFacets.mockResolvedValue({
+      statuses: ["Blocked", "Open"],
+      coverageStatuses: [
+        { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
+      ],
+    });
+
+    const res = await GET(makeGetRequest("5", "?facetsOnly=1"), params("5"));
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({
+      statuses: ["Blocked", "Open"],
+      coverageStatuses: [
+        { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
+      ],
+    });
+    expect(mockedGetRequirementFilterFacets).toHaveBeenCalledWith({
+      projectId: 5,
+      coverageScope: { accessibleProjectIds: [5, 6] },
+    });
+    expect(mockedCountProjectRequirements).not.toHaveBeenCalled();
+    expect(mockedGetRequirementRootsPage).not.toHaveBeenCalled();
+  });
+
+  it("?facetsOnly=1 passes accessibleProjectIds: null through for an unrestricted (ADMIN) viewer, never an empty array", async () => {
+    mockedResolveScope.mockResolvedValue(null);
+    mockedGetRequirementFilterFacets.mockResolvedValue({
+      statuses: [],
+      coverageStatuses: [],
+    });
+
+    const res = await GET(makeGetRequest("5", "?facetsOnly=1"), params("5"));
+
+    expect(res.status).toBe(200);
+    expect(mockedGetRequirementFilterFacets).toHaveBeenCalledWith({
+      projectId: 5,
+      coverageScope: { accessibleProjectIds: null },
+    });
+  });
+
+  it("?facetsOnly=1 still 403s when the viewer's project scope excludes the requested project -- the gate runs before the branch", async () => {
+    mockedResolveScope.mockResolvedValue([6, 7]);
+
+    const res = await GET(makeGetRequest("5", "?facetsOnly=1"), params("5"));
+
+    expect(res.status).toBe(403);
+    expect(mockedGetRequirementFilterFacets).not.toHaveBeenCalled();
   });
 
   it("a roots page returns at most limit rows with a cursor", async () => {

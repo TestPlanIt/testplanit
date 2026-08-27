@@ -48,6 +48,12 @@
 import { sql, type RawBuilder } from "kysely";
 
 import { baseDb } from "~/lib/db";
+import { ISSUE_ROLE_SCOPE_SQL_REQUIREMENT } from "~/lib/services/issueRoleScope";
+import {
+  getRequirementCoverage,
+  type RequirementCoverageScope,
+  type RequirementCoverageStatusCount,
+} from "~/lib/services/requirementCoverage";
 
 /**
  * D-01's fixed load-all/lazy boundary: at or below this many live,
@@ -711,4 +717,122 @@ export async function resolveRequirementMatches(
     nextCursor,
     expandMatchedSubtrees,
   };
+}
+
+// ---------------------------------------------------------------------------
+// 28-19 (SCALE-02 gap closure): the requirements list's two dynamic filter
+// Selects (Status/Coverage) served server-side. `collectRequirementStatusOptions`/
+// `collectCoverageStatusOptions` (requirementsListRows.ts) both read the
+// all-mode-only in-memory `requirements` array, which lazy mode never
+// populates -- above the threshold both Selects rendered empty (defect A).
+// This is NOT a second specification: the status axis reuses
+// `REQUIREMENT_DISPLAY_STATUS_CASE` verbatim (the same expression
+// `resolveRequirementMatches` already uses for its own status axis, itself a
+// line-for-line translation of `resolveRequirementDisplayStatus`), and the
+// coverage axis reuses `getRequirementCoverage` -- the SAME whole-project
+// rollup `useRequirementCoverage`/the below-threshold collector both read --
+// rather than recomputing coverage in SQL.
+// ---------------------------------------------------------------------------
+
+/** The requirements list's two dynamic Selects' option source, computed
+ *  server-side. `statuses` matches `collectRequirementStatusOptions`'s own
+ *  output type (`string[]`, case-insensitively de-duplicated and sorted);
+ *  `coverageStatuses` matches `collectCoverageStatusOptions`'s own output
+ *  type (`RequirementCoverageStatusCount[]`, summed by statusId and sorted
+ *  by count descending) -- so the caller's Select props never change shape
+ *  by mode. */
+export interface RequirementFilterFacets {
+  statuses: string[];
+  coverageStatuses: RequirementCoverageStatusCount[];
+}
+
+/**
+ * The project's distinct requirement statuses (under the lock-aware
+ * display-status precedence) and its coverage states -- scoped, computed
+ * server-side (28-19, SCALE-02's fourth success criterion).
+ *
+ * Status: `SELECT DISTINCT` over `REQUIREMENT_DISPLAY_STATUS_CASE`, scoped by
+ * project, `ISSUE_ROLE_SCOPE_SQL_REQUIREMENT` (this constant's first real
+ * consumer -- every other role-scope predicate in this file was written
+ * inline before this module had a raw-SQL caller of the shared mirror), and
+ * `isDeleted = false`. De-duplicated case-insensitively (first-seen casing
+ * kept) and sorted case-insensitively in JS, mirroring
+ * `collectRequirementStatusOptions`'s own algorithm exactly so the two modes
+ * present the same order.
+ *
+ * Coverage: NOT recomputed in SQL. Calls `getRequirementCoverage` for the
+ * WHOLE project (no `rootIds`, matching the `/coverage` route's own
+ * deliberate whole-project scope) and aggregates its per-requirement
+ * `statuses[]` across every classified row, matching
+ * `collectCoverageStatusOptions`'s own reducer (sum counts per statusId,
+ * drop non-positive entries -- defensive, since the rollup's own producer
+ * already never emits one -- sort by count descending). A rollup failure
+ * degrades to an empty coverage facet (mirroring
+ * `collectCoverageStatusOptions`'s own `if (!coverage) return []` rule)
+ * rather than failing the whole facet response: the status facet, which
+ * needs no coverage data at all, must never go dark because the coverage
+ * rollup did.
+ */
+export async function getRequirementFilterFacets(
+  args: {
+    projectId: number;
+    coverageScope: RequirementCoverageScope;
+  },
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<RequirementFilterFacets> {
+  const { projectId, coverageScope } = args;
+
+  const { rows } = await sql<{ status: string | null }>`
+    SELECT DISTINCT (${REQUIREMENT_DISPLAY_STATUS_CASE}) AS status
+    FROM "Issue" i
+    WHERE i."projectId" = ${projectId}
+      ${sql.raw(ISSUE_ROLE_SCOPE_SQL_REQUIREMENT)}
+      AND i."isDeleted" = false
+  `.execute(db.$qb);
+
+  // Case-insensitive de-dupe, first-seen casing kept, sorted
+  // case-insensitively -- verbatim to `collectRequirementStatusOptions`'s
+  // own algorithm (requirementsListRows.ts), so the two modes present the
+  // same values in the same order.
+  const seenStatuses = new Map<string, string>();
+  rows.forEach((row) => {
+    const value = row.status;
+    if (value && value.trim() !== "") {
+      const lower = value.toLowerCase();
+      if (!seenStatuses.has(lower)) seenStatuses.set(lower, value);
+    }
+  });
+  const statuses = Array.from(seenStatuses.values()).sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase())
+  );
+
+  let coverageStatuses: RequirementCoverageStatusCount[] = [];
+  try {
+    const coverage = await getRequirementCoverage(
+      projectId,
+      coverageScope,
+      undefined,
+      db
+    );
+    const byStatus = new Map<number, RequirementCoverageStatusCount>();
+    for (const breakdown of coverage.values()) {
+      breakdown.statuses.forEach((entry) => {
+        if (entry.count <= 0) return;
+        const existing = byStatus.get(entry.statusId);
+        if (existing) {
+          existing.count += entry.count;
+        } else {
+          byStatus.set(entry.statusId, { ...entry });
+        }
+      });
+    }
+    coverageStatuses = Array.from(byStatus.values()).sort(
+      (a, b) => b.count - a.count
+    );
+  } catch (error) {
+    console.error("Requirement filter facets coverage rollup error:", error);
+    coverageStatuses = [];
+  }
+
+  return { statuses, coverageStatuses };
 }

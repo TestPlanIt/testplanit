@@ -9,6 +9,7 @@ import {
 } from "~/lib/services/requirementCoverageFilter";
 import {
   countProjectRequirements,
+  getRequirementFilterFacets,
   getRequirementRootsPage,
   REQUIREMENT_LAZY_THRESHOLD,
   resolveRequirementMatches,
@@ -119,6 +120,21 @@ export async function GET(
         threshold: REQUIREMENT_LAZY_THRESHOLD,
         mode,
       });
+    }
+
+    // 28-19 (gap closure): the requirements list's Status/Coverage Selects
+    // above the lazy threshold, since `collectRequirementStatusOptions`/
+    // `collectCoverageStatusOptions` (requirementsListRows.ts) both read the
+    // all-mode-only in-memory `requirements` array lazy mode never
+    // populates. `scope` is the SAME resolved value the 403 gate above
+    // already checked -- reused here as `getRequirementCoverage`'s own
+    // visibility-scope argument, never re-resolved.
+    if (searchParams.get("facetsOnly") === "1") {
+      const facets = await getRequirementFilterFacets({
+        projectId,
+        coverageScope: { accessibleProjectIds: scope },
+      });
+      return NextResponse.json(facets);
     }
 
     const limit = parseLimit(searchParams.get("limit"));

@@ -20,6 +20,7 @@ import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import {
   countProjectRequirements,
   getRequirementChildren,
+  getRequirementFilterFacets,
   getRequirementRootsPage,
   resolveRequirementMatches,
   type RequirementRootsCursor,
@@ -757,6 +758,204 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
         db
       );
       expect(page.matchedIds.length).toBeGreaterThan(0);
+    });
+  });
+
+  // 28-19 (gap closure): `getRequirementFilterFacets`'s status axis proof.
+  // Live Postgres, not the unit lane's mocked $qb, is what can actually
+  // prove the lock-aware precedence CASE expression picks the right column
+  // per row shape (native / synced-and-not-detached / detached) and that
+  // the project/role/soft-delete scoping predicates genuinely exclude the
+  // rows they claim to -- a mocked executor only ever returns canned rows
+  // regardless of what the compiled SQL text says.
+  describe("requirement filter facets (28-19)", () => {
+    let projectId: number;
+    let otherProjectId: number;
+    let adminUserId: string;
+    let integrationId: number;
+    const allIssueIds: number[] = [];
+    const otherProjectIssueIds: number[] = [];
+
+    const nativeStatus = `${STAMP}-facet-native-status`;
+    const syncedLocalHidden = `${STAMP}-facet-synced-local-hidden`;
+    const syncedExternalVisible = `${STAMP}-facet-synced-external-visible`;
+    const detachedLocalVisible = `${STAMP}-facet-detached-local-visible`;
+    const detachedExternalHidden = `${STAMP}-facet-detached-external-hidden`;
+    const deletedGhost = `${STAMP}-facet-deleted-ghost`;
+    const nonReqGhost = `${STAMP}-facet-nonreq-ghost`;
+    const otherProjectGhost = `${STAMP}-facet-other-project-ghost`;
+
+    beforeAll(async () => {
+      const [{ current_database: dbName }] = await db.$queryRaw<
+        Array<{ current_database: string }>
+      >`SELECT current_database()`;
+      if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+        throw new Error(
+          `refusing to run against database "${dbName}" -- this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+        );
+      }
+
+      const role = await db.roles.findFirst({
+        where: { isDefault: true, isDeleted: false },
+        select: { id: true },
+      });
+      if (!role) throw new Error("Test prerequisite: no default Roles row");
+
+      const admin = await db.user.create({
+        data: {
+          email: `${STAMP}-facets-admin@example.com`,
+          name: `Facets Admin ${STAMP}`,
+          authMethod: "INTERNAL",
+          access: "ADMIN",
+          accessSource: "MANUAL",
+          roleId: role.id,
+          password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+        },
+        select: { id: true },
+      });
+      adminUserId = admin.id;
+
+      const project = await db.projects.create({
+        data: { name: `${STAMP}-facets-project`, createdBy: adminUserId },
+        select: { id: true },
+      });
+      projectId = project.id;
+
+      const otherProject = await db.projects.create({
+        data: {
+          name: `${STAMP}-facets-other-project`,
+          createdBy: adminUserId,
+        },
+        select: { id: true },
+      });
+      otherProjectId = otherProject.id;
+
+      const integration = await db.integration.create({
+        data: {
+          name: `${STAMP}-facets-jira`,
+          provider: "JIRA",
+          authType: "OAUTH2",
+          status: "ACTIVE",
+          credentials: {},
+          settings: {},
+        },
+        select: { id: true },
+      });
+      integrationId = integration.id;
+
+      async function createNode(
+        name: string,
+        overrides: Record<string, unknown> = {}
+      ): Promise<number> {
+        const issue = await db.issue.create({
+          data: {
+            name: `${STAMP}-${name}`,
+            title: `${STAMP}-${name}`,
+            createdById: adminUserId,
+            projectId,
+            isRequirement: true,
+            status: "Open",
+            ...overrides,
+          },
+          select: { id: true },
+        });
+        allIssueIds.push(issue.id);
+        return issue.id;
+      }
+
+      await createNode("native", { status: nativeStatus });
+      // Synced, not detached -- locked (isRequirementLocked): the display
+      // status must resolve to externalStatus. The local `status` column
+      // is deliberately a DIFFERENT string so a query that read the wrong
+      // column would be caught, not merely one that read no column at all.
+      await createNode("synced", {
+        integrationId,
+        externalId: `${STAMP}-ext-synced`,
+        status: syncedLocalHidden,
+        externalStatus: syncedExternalVisible,
+      });
+      // Synced AND detached -- not locked: the display status must resolve
+      // to the LOCAL status column, never externalStatus.
+      await createNode("detached", {
+        integrationId,
+        externalId: `${STAMP}-ext-detached`,
+        requirementDetachedAt: new Date(),
+        status: detachedLocalVisible,
+        externalStatus: detachedExternalHidden,
+      });
+      await createNode("deleted", {
+        status: deletedGhost,
+        isDeleted: true,
+      });
+      await createNode("nonreq", {
+        status: nonReqGhost,
+        isRequirement: false,
+      });
+
+      const otherIssue = await db.issue.create({
+        data: {
+          name: `${STAMP}-other-project-row`,
+          title: `${STAMP}-other-project-row`,
+          createdById: adminUserId,
+          projectId: otherProjectId,
+          isRequirement: true,
+          status: otherProjectGhost,
+        },
+        select: { id: true },
+      });
+      otherProjectIssueIds.push(otherIssue.id);
+    });
+
+    afterAll(async () => {
+      await db.issue.deleteMany({
+        where: { id: { in: [...allIssueIds, ...otherProjectIssueIds] } },
+      });
+      await db.integration.delete({ where: { id: integrationId } });
+      await db.projects.delete({ where: { id: projectId } });
+      await db.projects.delete({ where: { id: otherProjectId } });
+      await db.user.delete({ where: { id: adminUserId } });
+
+      const remaining = await db.issue.count({
+        where: { id: { in: [...allIssueIds, ...otherProjectIssueIds] } },
+      });
+      if (remaining !== 0) {
+        throw new Error(
+          `requirement filter facets fixture: ${remaining} issue row(s) left behind`
+        );
+      }
+    });
+
+    it("returns the project's distinct statuses under the lock-aware display-status precedence -- a synced, non-detached row contributes its externalStatus; a detached row contributes its local status", async () => {
+      const facets = await getRequirementFilterFacets(
+        { projectId, coverageScope: { accessibleProjectIds: null } },
+        db
+      );
+
+      expect(facets.statuses).toContain(nativeStatus);
+      expect(facets.statuses).toContain(syncedExternalVisible);
+      expect(facets.statuses).not.toContain(syncedLocalHidden);
+      expect(facets.statuses).toContain(detachedLocalVisible);
+      expect(facets.statuses).not.toContain(detachedExternalHidden);
+    });
+
+    it("never contributes a status from a soft-deleted row, a non-requirement row, or another project's row", async () => {
+      const facets = await getRequirementFilterFacets(
+        { projectId, coverageScope: { accessibleProjectIds: null } },
+        db
+      );
+
+      expect(facets.statuses).not.toContain(deletedGhost);
+      expect(facets.statuses).not.toContain(nonReqGhost);
+      expect(facets.statuses).not.toContain(otherProjectGhost);
+    });
+
+    it("resolves an empty coverage facet against this fixture's uncovered rows, rather than throwing", async () => {
+      const facets = await getRequirementFilterFacets(
+        { projectId, coverageScope: { accessibleProjectIds: null } },
+        db
+      );
+
+      expect(facets.coverageStatuses).toEqual([]);
     });
   });
 });

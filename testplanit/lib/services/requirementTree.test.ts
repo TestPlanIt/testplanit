@@ -18,11 +18,22 @@
 import { readFileSync } from "node:fs";
 
 import { PostgresQueryCompiler } from "kysely";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// 28-19: `getRequirementFilterFacets`'s coverage axis calls
+// `getRequirementCoverage` (requirementCoverage.ts) rather than recomputing
+// coverage in SQL -- mocked here so this file's facet tests stay a true
+// unit lane (no live rollup query), the same isolation
+// `tree/route.test.ts` already applies to the identical import for its own
+// coverage-axis tests.
+vi.mock("~/lib/services/requirementCoverage", () => ({
+  getRequirementCoverage: vi.fn(),
+}));
 
 import {
   countProjectRequirements,
   getRequirementChildren,
+  getRequirementFilterFacets,
   getRequirementRootsPage,
   REQUIREMENT_LAZY_THRESHOLD,
   resolveRequirementMatches,
@@ -30,6 +41,11 @@ import {
   type RequirementTreeFilterAxes,
   type RequirementTreeRow,
 } from "./requirementTree";
+import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
+import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
+
+const mockedGetRequirementCoverage =
+  getRequirementCoverage as unknown as ReturnType<typeof vi.fn>;
 
 const FILE_PATH = "lib/services/requirementTree.ts";
 
@@ -662,6 +678,148 @@ describe("resolveRequirementMatches -- include mode (unit, mocked $qb, sequenced
   });
 });
 
+function makeBreakdown(
+  overrides: Partial<RequirementCoverageBreakdown> = {}
+): RequirementCoverageBreakdown {
+  return {
+    linkedCaseCount: 0,
+    crossProjectCaseCount: 0,
+    directCaseCount: 0,
+    directCrossProjectCaseCount: 0,
+    passed: 0,
+    failed: 0,
+    inProgress: 0,
+    notRun: 0,
+    statuses: [],
+    untested: 0,
+    uncovered: true,
+    status: "UNCOVERED",
+    ...overrides,
+  };
+}
+
+// 28-19 (gap closure): the requirements list's Status/Coverage Selects are
+// empty above the lazy threshold today (defect A) because
+// `collectRequirementStatusOptions`/`collectCoverageStatusOptions`
+// (requirementsListRows.ts) both read the all-mode-only in-memory
+// `requirements` array, which lazy mode never populates.
+// `getRequirementFilterFacets` is the server-side source those Selects fall
+// back to above the threshold.
+describe("getRequirementFilterFacets -- status axis (unit, mocked $qb + real compiler)", () => {
+  it("returns the project's distinct requirement statuses under the display-status precedence, de-duplicated case-insensitively (first-seen casing kept) and sorted case-insensitively", async () => {
+    mockedGetRequirementCoverage.mockResolvedValue(new Map());
+    const { db } = makeCapturingMockDb([
+      [
+        { status: "Open" },
+        { status: "open" },
+        { status: "Blocked" },
+        { status: null },
+      ],
+    ]);
+    const result = await getRequirementFilterFacets(
+      { projectId: 1, coverageScope: { accessibleProjectIds: null } },
+      db as never
+    );
+    // "open" (lowercase) never becomes a SECOND entry alongside "Open" --
+    // first-seen casing wins, exactly as collectRequirementStatusOptions's
+    // own Map-keyed-by-lowercase reducer behaves.
+    expect(result.statuses).toEqual(["Blocked", "Open"]);
+  });
+
+  it("the query is scoped by project, the shared role predicate, and isDeleted -- never a bare, unscoped read", async () => {
+    mockedGetRequirementCoverage.mockResolvedValue(new Map());
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await getRequirementFilterFacets(
+      { projectId: 42, coverageScope: { accessibleProjectIds: null } },
+      db as never
+    );
+    expect(captured[0].sql).toContain('i."projectId" = $1');
+    expect(captured[0].parameters).toContain(42);
+    expect(captured[0].sql).toContain('i."isRequirement" = true');
+    expect(captured[0].sql).toContain('i."isDeleted" = false');
+  });
+});
+
+describe("getRequirementFilterFacets -- coverage axis (unit, mocked getRequirementCoverage)", () => {
+  it("aggregates a per-requirement statuses[] breakdown across every classified requirement, summed by statusId, sorted by count descending -- matching collectCoverageStatusOptions's own output type", async () => {
+    mockedGetRequirementCoverage.mockResolvedValue(
+      new Map([
+        [
+          1,
+          makeBreakdown({
+            statuses: [
+              { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
+            ],
+          }),
+        ],
+        [
+          2,
+          makeBreakdown({
+            statuses: [
+              { statusId: 10, name: "Passed", color: "#0f0", count: 2 },
+              { statusId: 11, name: "Failed", color: "#f00", count: 9 },
+            ],
+          }),
+        ],
+      ])
+    );
+    const { db } = makeCapturingMockDb([[]]);
+    const result = await getRequirementFilterFacets(
+      { projectId: 1, coverageScope: { accessibleProjectIds: null } },
+      db as never
+    );
+    expect(result.coverageStatuses).toEqual([
+      { statusId: 11, name: "Failed", color: "#f00", count: 9 },
+      { statusId: 10, name: "Passed", color: "#0f0", count: 5 },
+    ]);
+  });
+
+  it("drops a non-positive count entry defensively, mirroring collectCoverageStatusOptions's own guard", async () => {
+    mockedGetRequirementCoverage.mockResolvedValue(
+      new Map([
+        [
+          1,
+          makeBreakdown({
+            statuses: [{ statusId: 10, name: "Passed", color: null, count: 0 }],
+          }),
+        ],
+      ])
+    );
+    const { db } = makeCapturingMockDb([[]]);
+    const result = await getRequirementFilterFacets(
+      { projectId: 1, coverageScope: { accessibleProjectIds: null } },
+      db as never
+    );
+    expect(result.coverageStatuses).toEqual([]);
+  });
+
+  it("degrades to an empty coverage facet when the rollup throws -- the status facet must never go dark because coverage did", async () => {
+    mockedGetRequirementCoverage.mockRejectedValue(new Error("rollup down"));
+    const { db } = makeCapturingMockDb([[{ status: "Open" }]]);
+    const result = await getRequirementFilterFacets(
+      { projectId: 1, coverageScope: { accessibleProjectIds: null } },
+      db as never
+    );
+    expect(result.statuses).toEqual(["Open"]);
+    expect(result.coverageStatuses).toEqual([]);
+  });
+
+  it("passes the caller-supplied coverageScope straight through to getRequirementCoverage, unmodified", async () => {
+    mockedGetRequirementCoverage.mockResolvedValue(new Map());
+    const { db } = makeCapturingMockDb([[]]);
+    await getRequirementFilterFacets(
+      { projectId: 7, coverageScope: { accessibleProjectIds: [7, 8] } },
+      db as never
+    );
+    expect(mockedGetRequirementCoverage).toHaveBeenCalledWith(
+      7,
+      { accessibleProjectIds: [7, 8] },
+      undefined,
+      expect.anything()
+    );
+  });
+});
+
 // Strips comment-prefixed lines before the OFFSET/SELECT-star checks below --
 // this file's own prose (this doc comment included) legitimately explains
 // why OFFSET is avoided and why no column list uses `SELECT *`, which would
@@ -908,5 +1066,36 @@ describe("resolveRequirementMatches source shape (structural, mutation-provable)
       end === -1 ? content.slice(start) : content.slice(start, end);
     expect(andAllBody).toContain("AND ${fragment}");
     expect(andAllBody).not.toMatch(/OR \$\{fragment\}/);
+  });
+});
+
+describe("getRequirementFilterFacets source shape (structural, mutation-provable)", () => {
+  const content = readFileSync(FILE_PATH, "utf8");
+  const facetsBody = extractFunctionBody(content, "getRequirementFilterFacets");
+
+  it("reuses REQUIREMENT_DISPLAY_STATUS_CASE verbatim rather than restating the lock-aware precedence a second time", () => {
+    expect(facetsBody).toContain("${REQUIREMENT_DISPLAY_STATUS_CASE}");
+  });
+
+  it("scopes the status query by project, the shared role-scope raw-SQL mirror, and isDeleted", () => {
+    expect(facetsBody).toContain('i."projectId" = ${projectId}');
+    expect(facetsBody).toContain("sql.raw(ISSUE_ROLE_SCOPE_SQL_REQUIREMENT)");
+    expect(facetsBody).toContain('i."isDeleted" = false');
+  });
+
+  it("imports ISSUE_ROLE_SCOPE_SQL_REQUIREMENT from the shared role-scope module, never a locally re-declared copy", () => {
+    expect(content).toContain(
+      'import { ISSUE_ROLE_SCOPE_SQL_REQUIREMENT } from "~/lib/services/issueRoleScope";'
+    );
+  });
+
+  it("derives the coverage facet from getRequirementCoverage's own rollup, never a second coverage SQL statement", () => {
+    expect(facetsBody).toContain("getRequirementCoverage(");
+    expect(facetsBody).not.toMatch(/WITH RECURSIVE/);
+  });
+
+  it("degrades the coverage facet to empty on a rollup failure without ever throwing out of the function", () => {
+    expect(facetsBody).toContain("} catch (error) {");
+    expect(facetsBody).toContain("coverageStatuses = [];");
   });
 });
