@@ -166,6 +166,15 @@ export class RedmineAdapter extends BaseAdapter {
       // Redmine's "contains" operator for text fields is the `~` value prefix.
       params.set("subject", `~${options.query}`);
     }
+    // Type-scoped import (SCALE-01) — tracker_id accepts a pipe-delimited
+    // list of global tracker ids (Redmine.org community wiki, MEDIUM
+    // confidence — not a first-party API reference page). If a live Redmine
+    // rejects this syntax, the orchestrator's client-side degraded filter
+    // (28-04) still yields a correct, merely wasteful, import.
+    // URLSearchParams encodes the "|" for us; no hand-escaping needed.
+    if (options.issueTypeIds?.length) {
+      params.set("tracker_id", options.issueTypeIds.join("|"));
+    }
 
     const resp = await this.makeRequest<{
       issues?: RedmineIssue[];

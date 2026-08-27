@@ -379,6 +379,22 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       );
     }
 
+    // Type-scoped import (SCALE-01) — ids here are work-item type NAMES,
+    // because getIssueTypes returns `{ id: type.name }` for Azure DevOps, not
+    // a numeric id. WIQL has no parameter binding, so strip any value
+    // containing a single quote, backslash or newline before quoting it —
+    // that's the only injection barrier available for this dialect.
+    if (options.issueTypeIds?.length) {
+      const safeTypes = options.issueTypeIds.filter(
+        (id) => !/['\\\n\r]/.test(id)
+      );
+      if (safeTypes.length > 0) {
+        conditions.push(
+          `[System.WorkItemType] IN (${safeTypes.map((t) => `'${t}'`).join(", ")})`
+        );
+      }
+    }
+
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
     const wiql = `SELECT [System.Id] FROM WorkItems ${whereClause} ORDER BY [System.CreatedDate] DESC`;

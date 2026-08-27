@@ -1379,6 +1379,59 @@ describe("AzureDevOpsAdapter", () => {
       expect(body.query).toContain("[System.ChangedDate] >= @Today - 180");
     });
 
+    it("scopes the WIQL to specific work item types via [System.WorkItemType] IN", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["User Story", "Epic"],
+      });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).toContain(
+        "[System.WorkItemType] IN ('User Story', 'Epic')"
+      );
+    });
+
+    it("produces today's exact WIQL when issueTypeIds is absent or empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+      await adapter.searchIssues({});
+      const wiqlCallAbsent = mockFetch.mock.calls[1];
+      const bodyAbsent = JSON.parse(wiqlCallAbsent[1].body);
+      expect(bodyAbsent.query).not.toContain("[System.WorkItemType]");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+      await adapter.searchIssues({ issueTypeIds: [] });
+      const wiqlCallEmpty = mockFetch.mock.calls[2];
+      const bodyEmpty = JSON.parse(wiqlCallEmpty[1].body);
+      expect(bodyEmpty.query).not.toContain("[System.WorkItemType]");
+      expect(bodyEmpty.query).toBe(bodyAbsent.query);
+    });
+
+    it("never lets a single-quote-bearing work item type name terminate the WIQL literal early", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["User Story' OR [System.TeamProject] <> ''"],
+      });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).not.toContain("OR [System.TeamProject] <> ''");
+    });
+
     it("should handle pagination", async () => {
       mockFetch
         .mockResolvedValueOnce({
