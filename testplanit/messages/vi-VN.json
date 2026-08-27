@@ -234,7 +234,9 @@
     "filters": {
       "all": "Tất cả",
       "allStatuses": "Tất cả trạng thái",
-      "allPriorities": "Tất cả các ưu tiên"
+      "allPriorities": "Tất cả các ưu tiên",
+      "allIssueTypes": "Tất cả loại sự cố",
+      "noIssueType": "Không có loại sự cố"
     },
     "fields": {
       "groupName": "Tên nhóm",
@@ -2762,7 +2764,7 @@
         "filterMentioned": "Nhắc đến tôi",
         "filterAuthored": "Do tôi viết",
         "showing": "Đang hiển thị {loaded} trong số {total} bình luận",
-        "matching": "{matched} khớp · đã tìm {loaded} trong số {total} bình luận"
+        "matching": "{matched} khớp · đã tìm kiếm {loaded} trong số {total} bình luận"
       },
       "twoFactor": {
         "enable": "Kích hoạt xác thực hai yếu tố (2FA).",

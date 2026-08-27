@@ -234,7 +234,9 @@
     "filters": {
       "all": "All",
       "allStatuses": "All Statuses",
-      "allPriorities": "All Priorities"
+      "allPriorities": "All Priorities",
+      "allIssueTypes": "All Issue Types",
+      "noIssueType": "No Issue Type"
     },
     "fields": {
       "groupName": "Group Name",

@@ -234,7 +234,9 @@
     "filters": {
       "all": "Vše",
       "allStatuses": "Všechny stavy",
-      "allPriorities": "Všechny priority"
+      "allPriorities": "Všechny priority",
+      "allIssueTypes": "Všechny typy problémů",
+      "noIssueType": "Bez typu problému"
     },
     "fields": {
       "groupName": "Název skupiny",
@@ -2754,7 +2756,7 @@
       "myComments": {
         "title": "Moje komentáře",
         "description": "Komentáře, které jste napsali nebo ve kterých jste byli zmíněni",
-        "noComments": "Zatím jste nenapsali žádný komentář ani v žádném nebyli zmíněni.",
+        "noComments": "Zatím jste nenapsali žádné komentáře ani v žádných nebyli zmíněni.",
         "noMatchingComments": "Žádné komentáře neodpovídají aktuálním filtrům.",
         "searchPlaceholder": "Hledat komentáře",
         "filterLabel": "Filtrovat komentáře",

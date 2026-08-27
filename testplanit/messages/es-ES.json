@@ -234,7 +234,9 @@
     "filters": {
       "all": "Todo",
       "allStatuses": "Todos los estados",
-      "allPriorities": "Todas las prioridades"
+      "allPriorities": "Todas las prioridades",
+      "allIssueTypes": "Todos los tipos de problema",
+      "noIssueType": "Sin tipo de problema"
     },
     "fields": {
       "groupName": "Nombre del grupo",
@@ -2753,7 +2755,7 @@
       },
       "myComments": {
         "title": "Mis comentarios",
-        "description": "Comentarios que escribiste o en los que fuiste mencionado",
+        "description": "Comentarios que escribiste o en los que se te mencionó",
         "noComments": "Aún no has escrito ni te han mencionado en ningún comentario.",
         "noMatchingComments": "Ningún comentario coincide con los filtros actuales.",
         "searchPlaceholder": "Buscar comentarios",
@@ -2762,7 +2764,7 @@
         "filterMentioned": "Que me mencionan",
         "filterAuthored": "Escritos por mí",
         "showing": "Mostrando {loaded} de {total} comentarios",
-        "matching": "{matched} coincidencias · buscados {loaded} de {total} comentarios"
+        "matching": "{matched} coincidencias · buscado {loaded} de {total} comentarios"
       },
       "twoFactor": {
         "enable": "Habilitar 2FA",

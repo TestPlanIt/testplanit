@@ -234,7 +234,9 @@
     "filters": {
       "all": "Alle",
       "allStatuses": "Alle statussen",
-      "allPriorities": "Alle prioriteiten"
+      "allPriorities": "Alle prioriteiten",
+      "allIssueTypes": "Alle probleemtypen",
+      "noIssueType": "Geen probleemtype"
     },
     "fields": {
       "groupName": "Groepsnaam",
@@ -2753,7 +2755,7 @@
       },
       "myComments": {
         "title": "Mijn reacties",
-        "description": "Reacties die je hebt geschreven of waarin je genoemd wordt",
+        "description": "Reacties die je hebt geschreven of waarin je bent genoemd",
         "noComments": "Je hebt nog geen reacties geschreven en bent nog in geen enkele reactie genoemd.",
         "noMatchingComments": "Geen reacties komen overeen met de huidige filters.",
         "searchPlaceholder": "Reacties zoeken",
@@ -2762,7 +2764,7 @@
         "filterMentioned": "Waarin ik genoemd word",
         "filterAuthored": "Door mij geschreven",
         "showing": "{loaded} van {total} reacties weergegeven",
-        "matching": "{matched} overeenkomsten · {loaded} van {total} reacties doorzocht"
+        "matching": "{matched} overeenkomend · {loaded} van {total} reacties doorzocht"
       },
       "twoFactor": {
         "enable": "Schakel 2FA in.",

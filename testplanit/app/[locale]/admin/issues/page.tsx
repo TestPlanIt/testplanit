@@ -5,9 +5,15 @@ import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIssueFilterOptions } from "~/hooks/useIssueFilterOptions";
+import {
+  issueFacetConditions,
+  type IssueFacetValue,
+} from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
+import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
@@ -36,6 +42,9 @@ function IssueList() {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [statusFilter, setStatusFilter] = useState<IssueFacetValue[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<IssueFacetValue[]>([]);
+  const [issueTypeFilter, setIssueTypeFilter] = useState<IssueFacetValue[]>([]);
   const locale = useLocale();
   const t = useTranslations("admin.issues");
   const tGlobal = useTranslations();
@@ -71,16 +80,38 @@ function IssueList() {
     };
   }, [debouncedSearchString]);
 
+  // Distinct status/priority/issue type values for the filter dropdowns.
+  const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    enabled: status === "authenticated",
+  });
+
   const issuesWhere = useMemo(() => {
     if (!session?.user) {
       return null;
     }
 
-    return {
-      isDeleted: false,
-      ...searchFilter,
-    };
-  }, [session?.user, searchFilter]);
+    const conditions: Array<Record<string, unknown>> = [{ isDeleted: false }];
+
+    if (searchFilter.OR) {
+      conditions.push(searchFilter);
+    }
+
+    conditions.push(
+      ...issueFacetConditions({
+        status: statusFilter,
+        priority: priorityFilter,
+        issueTypeName: issueTypeFilter,
+      })
+    );
+
+    return { AND: conditions };
+  }, [
+    session?.user,
+    searchFilter,
+    statusFilter,
+    priorityFilter,
+    issueTypeFilter,
+  ]);
 
   const orderBy = useMemo(() => {
     if (!sortConfig?.column) {
@@ -358,13 +389,26 @@ function IssueList() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+            <div className="flex flex-col grow w-full min-w-[250px]">
+              <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
                   key="issue-filter"
                   placeholder={t("filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
+                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
+                />
+                <IssueListFilters
+                  statuses={statuses}
+                  priorities={priorities}
+                  issueTypes={issueTypes}
+                  statusFilter={statusFilter}
+                  priorityFilter={priorityFilter}
+                  issueTypeFilter={issueTypeFilter}
+                  onStatusChange={setStatusFilter}
+                  onPriorityChange={setPriorityFilter}
+                  onIssueTypeChange={setIssueTypeFilter}
+                  testIdPrefix="admin-issues"
                 />
               </div>
             </div>
@@ -405,7 +449,7 @@ function IssueList() {
               hasMore={!!hasNextPage}
               onLoadMore={fetchNextPage}
               estimateSize={60}
-              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="admin-issues-table"
               rowTestIdPrefix="admin-issue-row"
             />

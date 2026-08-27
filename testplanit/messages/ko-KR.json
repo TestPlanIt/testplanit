@@ -234,7 +234,9 @@
     "filters": {
       "all": "전체",
       "allStatuses": "모든 상태",
-      "allPriorities": "모든 우선순위"
+      "allPriorities": "모든 우선순위",
+      "allIssueTypes": "모든 문제 유형",
+      "noIssueType": "문제 유형 없음"
     },
     "fields": {
       "groupName": "그룹 이름",
@@ -2753,7 +2755,7 @@
       },
       "myComments": {
         "title": "내 댓글",
-        "description": "작성했거나 언급된 댓글",
+        "description": "내가 작성했거나 언급된 댓글",
         "noComments": "아직 작성했거나 언급된 댓글이 없습니다.",
         "noMatchingComments": "현재 필터 조건에 맞는 댓글이 없습니다.",
         "searchPlaceholder": "댓글 검색",
@@ -2762,7 +2764,7 @@
         "filterMentioned": "나를 언급함",
         "filterAuthored": "내가 작성함",
         "showing": "{total}개 중 {loaded}개 댓글 표시 중",
-        "matching": "{matched}개 일치 · {total}개 중 {loaded}개 댓글 검색됨"
+        "matching": "{matched}개 일치 · {total}개 중 {loaded}개 검색됨"
       },
       "twoFactor": {
         "enable": "2단계 인증을 활성화하세요",

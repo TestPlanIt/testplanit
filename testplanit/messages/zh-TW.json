@@ -234,7 +234,9 @@
     "filters": {
       "all": "全部",
       "allStatuses": "所有狀態",
-      "allPriorities": "所有優先事項"
+      "allPriorities": "所有優先事項",
+      "allIssueTypes": "所有問題類型",
+      "noIssueType": "無問題類型"
     },
     "fields": {
       "groupName": "組名",
@@ -2754,15 +2756,15 @@
       "myComments": {
         "title": "我的評論",
         "description": "你撰寫或被提及的評論",
-        "noComments": "你尚未撰寫或被提及任何評論。",
+        "noComments": "你尚未撰寫任何評論,也還沒有人在評論中提到過你。",
         "noMatchingComments": "沒有符合目前篩選條件的評論。",
         "searchPlaceholder": "搜尋評論",
         "filterLabel": "篩選評論",
         "filterAll": "所有評論",
         "filterMentioned": "提及我的",
-        "filterAuthored": "我撰寫的",
+        "filterAuthored": "由我撰寫",
         "showing": "顯示 {total} 則評論中的 {loaded} 則",
-        "matching": "{matched} 則符合 · 已搜尋 {total} 則評論中的 {loaded} 則"
+        "matching": "{matched} 個相符 · 已搜尋 {total} 則評論中的 {loaded} 則"
       },
       "twoFactor": {
         "enable": "啟用雙重認證",

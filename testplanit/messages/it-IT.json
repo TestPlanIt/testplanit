@@ -234,7 +234,9 @@
     "filters": {
       "all": "Tutto",
       "allStatuses": "Tutti gli stati",
-      "allPriorities": "Tutte le priorità"
+      "allPriorities": "Tutte le priorità",
+      "allIssueTypes": "Tutti i tipi di problema",
+      "noIssueType": "Nessun tipo di problema"
     },
     "fields": {
       "groupName": "Nome del gruppo",
@@ -2753,7 +2755,7 @@
       },
       "myComments": {
         "title": "I miei commenti",
-        "description": "Commenti che hai scritto o in cui sei stato menzionato",
+        "description": "Commenti scritti da te o in cui sei menzionato",
         "noComments": "Non hai ancora scritto né sei stato menzionato in nessun commento.",
         "noMatchingComments": "Nessun commento corrisponde ai filtri correnti.",
         "searchPlaceholder": "Cerca commenti",

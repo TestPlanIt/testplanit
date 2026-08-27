@@ -234,7 +234,9 @@
     "filters": {
       "all": "Alle",
       "allStatuses": "Alle Status",
-      "allPriorities": "Alle Prioritäten"
+      "allPriorities": "Alle Prioritäten",
+      "allIssueTypes": "Alle Vorgangstypen",
+      "noIssueType": "Kein Vorgangstyp"
     },
     "fields": {
       "groupName": "Gruppenname",
@@ -2753,14 +2755,14 @@
       },
       "myComments": {
         "title": "Meine Kommentare",
-        "description": "Kommentare, die Sie verfasst haben oder in denen Sie erwähnt wurden",
-        "noComments": "Sie haben noch keine Kommentare verfasst oder wurden in keinem erwähnt.",
+        "description": "Kommentare, die Sie geschrieben haben oder in denen Sie erwähnt wurden",
+        "noComments": "Sie haben noch keine Kommentare geschrieben oder wurden in keinem erwähnt.",
         "noMatchingComments": "Keine Kommentare entsprechen den aktuellen Filtern.",
         "searchPlaceholder": "Kommentare suchen",
         "filterLabel": "Kommentare filtern",
         "filterAll": "Alle Kommentare",
         "filterMentioned": "Erwähnt mich",
-        "filterAuthored": "Von mir verfasst",
+        "filterAuthored": "Von mir geschrieben",
         "showing": "{loaded} von {total} Kommentaren werden angezeigt",
         "matching": "{matched} Treffer · {loaded} von {total} Kommentaren durchsucht"
       },

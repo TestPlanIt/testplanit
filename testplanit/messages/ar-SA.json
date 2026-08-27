@@ -234,7 +234,9 @@
     "filters": {
       "all": "الكل",
       "allStatuses": "جميع الحالات",
-      "allPriorities": "جميع الأولويات"
+      "allPriorities": "جميع الأولويات",
+      "allIssueTypes": "جميع أنواع المشكلات",
+      "noIssueType": "بدون نوع مشكلة"
     },
     "fields": {
       "groupName": "اسم المجموعة",
@@ -2753,13 +2755,13 @@
       },
       "myComments": {
         "title": "تعليقاتي",
-        "description": "التعليقات التي كتبتها أو التي تمت الإشارة إليك فيها",
-        "noComments": "لم تكتب أي تعليقات أو تتم الإشارة إليك في أي تعليقات بعد.",
+        "description": "التعليقات التي كتبتها أو تمت الإشارة إليك فيها",
+        "noComments": "لم تكتب أو تتم الإشارة إليك في أي تعليقات بعد.",
         "noMatchingComments": "لا توجد تعليقات تطابق عوامل التصفية الحالية.",
-        "searchPlaceholder": "البحث في التعليقات",
+        "searchPlaceholder": "بحث في التعليقات",
         "filterLabel": "تصفية التعليقات",
         "filterAll": "جميع التعليقات",
-        "filterMentioned": "الإشارة إليّ",
+        "filterMentioned": "تشير إليّ",
         "filterAuthored": "كتبتها أنا",
         "showing": "عرض {loaded} من {total} تعليق",
         "matching": "{matched} مطابقة · تم البحث في {loaded} من {total} تعليق"

@@ -234,7 +234,9 @@
     "filters": {
       "all": "全部",
       "allStatuses": "所有状态",
-      "allPriorities": "所有优先事项"
+      "allPriorities": "所有优先事项",
+      "allIssueTypes": "所有问题类型",
+      "noIssueType": "无问题类型"
     },
     "fields": {
       "groupName": "组名",
@@ -2754,12 +2756,12 @@
       "myComments": {
         "title": "我的评论",
         "description": "你撰写或被提及的评论",
-        "noComments": "你还没有撰写或被提及任何评论。",
+        "noComments": "你还没有撰写过任何评论，也没有在任何评论中被提及。",
         "noMatchingComments": "没有符合当前筛选条件的评论。",
         "searchPlaceholder": "搜索评论",
         "filterLabel": "筛选评论",
         "filterAll": "所有评论",
-        "filterMentioned": "提及我的",
+        "filterMentioned": "提及我",
         "filterAuthored": "我撰写的",
         "showing": "显示 {loaded} / {total} 条评论",
         "matching": "{matched} 条匹配 · 已搜索 {loaded} / {total} 条评论"

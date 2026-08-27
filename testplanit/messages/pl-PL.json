@@ -234,7 +234,9 @@
     "filters": {
       "all": "Wszystkie",
       "allStatuses": "Wszystkie statusy",
-      "allPriorities": "Wszystkie priorytety"
+      "allPriorities": "Wszystkie priorytety",
+      "allIssueTypes": "Wszystkie typy problemów",
+      "noIssueType": "Brak typu problemu"
     },
     "fields": {
       "groupName": "Nazwa grupy",
@@ -2753,13 +2755,13 @@
       },
       "myComments": {
         "title": "Moje komentarze",
-        "description": "Komentarze, które napisałeś lub w których zostałeś wspomniany",
-        "noComments": "Nie napisałeś jeszcze żadnych komentarzy ani nie zostałeś w żadnych wspomniany.",
+        "description": "Komentarze, które napisałeś lub w których wspomniano o Tobie",
+        "noComments": "Nie napisałeś jeszcze żadnych komentarzy ani nie wspomniano o Tobie w żadnym z nich.",
         "noMatchingComments": "Brak komentarzy spełniających bieżące filtry.",
-        "searchPlaceholder": "Szukaj komentarzy",
+        "searchPlaceholder": "Wyszukaj komentarze",
         "filterLabel": "Filtruj komentarze",
         "filterAll": "Wszystkie komentarze",
-        "filterMentioned": "Wspominające mnie",
+        "filterMentioned": "Wspominające o mnie",
         "filterAuthored": "Napisane przeze mnie",
         "showing": "Wyświetlanie {loaded} z {total} komentarzy",
         "matching": "{matched} pasujących · przeszukano {loaded} z {total} komentarzy"
