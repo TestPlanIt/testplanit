@@ -328,10 +328,37 @@ const IMPORT_PAGE_SIZE = 50;
  * (IMPORT_MAX_PAGES * IMPORT_PAGE_SIZE issues scanned at most).
  */
 const IMPORT_MAX_PAGES = 40;
+/**
+ * Page ceiling for the typed, paged-to-completion import mode (D-07: no
+ * recency window, no cap). TYPED_IMPORT_MAX_PAGES * IMPORT_PAGE_SIZE =
+ * 1,000,000 issues scanned at most — large enough that no real tracker's
+ * classified-issue set should ever hit it, so this functions purely as a
+ * runaway/rate-limit backstop (T-28-04-01), never a scope limit the way
+ * IMPORT_MAX_PAGES is for the recency-window mode below. IMPORT_MAX_PAGES
+ * itself stays untouched: the generic Import Issues dialog (D-06) keeps its
+ * existing, much smaller bound.
+ */
+const TYPED_IMPORT_MAX_PAGES = 20_000;
 
 export interface ProjectImportOptions {
   updatedWithinDays?: number;
   cap?: number;
+  /**
+   * Restrict the import to specific issue types. Threaded into every page's
+   * searchIssues call; adapters that can express it push it into their own
+   * query, and the orchestrator also re-applies the predicate to every
+   * returned page as a degraded fallback for adapters that can't (or
+   * silently don't). See performProjectImport's per-page loop.
+   */
+  issueTypeIds?: string[];
+  /**
+   * D-07: run this import paged to completion instead of the default
+   * recency-windowed/capped mode — no recency cutoff (even if
+   * updatedWithinDays is also passed), no imported-row cap, bounded only by
+   * TYPED_IMPORT_MAX_PAGES as a runaway guard. The generic Import Issues
+   * dialog never sets this; it is the typed-import trigger's mode alone.
+   */
+  pagedToCompletion?: boolean;
 }
 
 export interface ProjectImportResult {
@@ -1047,8 +1074,29 @@ export class SyncService {
   ): Promise<ProjectImportResult> {
     const db = serviceOptions.dbClient || defaultDb;
     const errors: string[] = [];
-    const cap = Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
-    const updatedWithinDays = options.updatedWithinDays;
+    // Single named local, read at every mode-aware touch-point below (cap,
+    // recency window, page bound, progress shape, cappedAt) — one predicate,
+    // several uses, so a future edit can't make some of them agree and one
+    // disagree.
+    const pagedToCompletion = options.pagedToCompletion === true;
+    const issueTypeIds = options.issueTypeIds;
+    // D-07: no ceiling in paged-to-completion mode — TYPED_IMPORT_MAX_PAGES
+    // bounds the walk instead (see touch-point 3 below). A concrete
+    // Number.MAX_SAFE_INTEGER keeps `cap` a real number so imported/cap
+    // arithmetic elsewhere in this function never has to special-case
+    // `undefined`; the progress branch below still avoids dividing by it.
+    const cap = pagedToCompletion
+      ? Number.MAX_SAFE_INTEGER
+      : Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
+    const maxPages = pagedToCompletion
+      ? TYPED_IMPORT_MAX_PAGES
+      : IMPORT_MAX_PAGES;
+    // D-07: paged-to-completion applies no recency window at all — neither
+    // pushed into the tracker query nor as the client-side fallback below —
+    // even if a caller also passed updatedWithinDays.
+    const updatedWithinDays = pagedToCompletion
+      ? undefined
+      : options.updatedWithinDays;
     const cutoffMs =
       updatedWithinDays && updatedWithinDays > 0
         ? Date.now() - updatedWithinDays * 86_400_000
@@ -1129,7 +1177,7 @@ export class SyncService {
       // both so each adapter uses whichever it understands.
       let pageToken: string | undefined;
 
-      while (imported < cap && page < IMPORT_MAX_PAGES && hasMore) {
+      while (imported < cap && page < maxPages && hasMore) {
         const result = await adapter.searchIssues({
           projectId: projectRef,
           updatedWithinDays,
@@ -1137,6 +1185,7 @@ export class SyncService {
           limit: IMPORT_PAGE_SIZE,
           offset,
           pageToken,
+          issueTypeIds,
         });
         hasMore = result.hasMore;
         offset += result.issues.length;
@@ -1159,6 +1208,25 @@ export class SyncService {
             cutoffMs !== null &&
             issueData.updatedAt instanceof Date &&
             issueData.updatedAt.getTime() < cutoffMs
+          ) {
+            skipped++;
+            continue;
+          }
+          // Degraded type filter: some adapters can't push issueTypeIds into
+          // their own query at all (MantisBT), or only partially (GitLab
+          // fans out one type per request but still can't guarantee a
+          // provider some day won't ignore the clause) — the orchestrator
+          // re-applies the predicate to every returned page regardless of
+          // what the adapter claims to have pushed, so a provider that
+          // silently ignores it narrows rather than leaks (T-28-04-02).
+          // Positioned after `result.issues.length === 0` has already been
+          // checked against the page's RAW length, so a page that filters
+          // down to zero here cannot end the run (see the objective).
+          if (
+            issueTypeIds &&
+            issueTypeIds.length > 0 &&
+            (!issueData.issueType ||
+              !issueTypeIds.includes(issueData.issueType.id))
           ) {
             skipped++;
             continue;
@@ -1186,12 +1254,26 @@ export class SyncService {
               });
             }
             if (job) {
-              await job.updateProgress({
-                current: imported,
-                total: cap,
-                percentage: Math.min(Math.round((imported / cap) * 100), 100),
-                message: `Importing ${mapping.externalProjectKey}: ${imported}/${cap}`,
-              });
+              // Paged-to-completion has no real ceiling to divide by — a
+              // fabricated cap would make percentage always ~0 and the
+              // message read "1234/9007199254740991". Report the running
+              // count alone; the settings UI polls syncStatus, not this
+              // payload (verified in project-integration-settings.tsx), so
+              // this shape change is safe.
+              if (pagedToCompletion) {
+                await job.updateProgress({
+                  current: imported,
+                  total: null,
+                  message: `Importing ${mapping.externalProjectKey}: ${imported} imported`,
+                });
+              } else {
+                await job.updateProgress({
+                  current: imported,
+                  total: cap,
+                  percentage: Math.min(Math.round((imported / cap) * 100), 100),
+                  message: `Importing ${mapping.externalProjectKey}: ${imported}/${cap}`,
+                });
+              }
             }
           } catch (error: any) {
             errors.push(
@@ -1304,7 +1386,21 @@ export class SyncService {
       errors.push(`Import failed: ${error.message}`);
     }
 
-    return { imported, matched, skipped, cappedAt: cap, reachedCap, errors };
+    // In paged-to-completion mode `cap` is Number.MAX_SAFE_INTEGER, an
+    // internal loop-bound sentinel, never a real ceiling — reporting it
+    // verbatim as `cappedAt` would look like a fabricated ceiling to a
+    // caller that doesn't know to check `reachedCap` first. Report the
+    // actual imported count instead: honest (it's not invented), and
+    // consistent with `reachedCap` always being false in this mode (a cap
+    // that large is, by construction, never reached).
+    return {
+      imported,
+      matched,
+      skipped,
+      cappedAt: pagedToCompletion ? imported : cap,
+      reachedCap,
+      errors,
+    };
   }
 
   /**
