@@ -15,6 +15,7 @@ import {
   effectiveRequirementTypeIds,
   readRequirementTypeConfig,
 } from "../requirementTypeConfig";
+import { SYNC_STATUS } from "../syncStatus";
 
 export interface SyncJobData {
   userId: string;
@@ -320,14 +321,15 @@ export interface SyncOptions {
  * than re-declaring their own copies of the vocabulary. `cancelRequested` is
  * an intermediate value written by a cancel request; `cancelled` is the
  * terminal state a paged-to-completion import lands in when it honors one.
+ *
+ * Declared in the pure `lib/integrations/syncStatus.ts` module (imported
+ * above) and re-exported here so this file's own consumers (routes, worker)
+ * keep their existing import path unchanged, while a "use client" settings
+ * component can import the vocabulary from the pure module directly instead
+ * of pulling this file's server-only dependencies (ioredis, bullmq, the raw
+ * DB client) into the browser bundle.
  */
-export const SYNC_STATUS = {
-  syncing: "syncing",
-  cancelRequested: "cancel-requested",
-  cancelled: "cancelled",
-  completed: "completed",
-  error: "error",
-} as const;
+export { SYNC_STATUS };
 
 /**
  * Bulk-import caps. The import pulls issues from a linked external project that

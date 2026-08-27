@@ -324,9 +324,22 @@ describe("RequirementsConfigSettings", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    // Located by URL rather than assumed to be the last call: a save that
+    // newly classifies a type (as this one does) also fires the 28-07
+    // offer-on-save preview probe on the same success path, so the PUT is
+    // no longer necessarily the LAST fetch call -- it is still the only
+    // call to this URL.
+    await waitFor(() =>
+      expect(
+        (global.fetch as any).mock.calls.some(([callUrl]: [string]) =>
+          callUrl.includes("requirements-config")
+        )
+      ).toBe(true)
+    );
 
-    const [url, options] = (global.fetch as any).mock.calls.at(-1);
+    const [url, options] = (global.fetch as any).mock.calls.find(
+      ([callUrl]: [string]) => callUrl.includes("requirements-config")
+    );
     expect(url).toContain("requirements-config");
     expect(options.method).toBe("PUT");
     const body = JSON.parse(options.body);
@@ -615,5 +628,260 @@ describe("RequirementsConfigSettings — typed import action and consent (#501/2
         expect.stringContaining("importAlreadyRunning")
       );
     });
+  });
+});
+
+describe("RequirementsConfigSettings — offer-on-save, progress polling, and stop (#501/28-07)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockMappingsFindMany.mockReturnValue({ data: [makeMapping()] });
+    mockIssueUseCount.mockReturnValue({ data: 0 });
+    mockInvalidateQueries.mockResolvedValue(undefined);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ issueTypes: [] }),
+    }) as any;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("a successful save with newly-added types offers the import, using the diff captured BEFORE the cache invalidation resolves (the ordering trap)", async () => {
+    // Simulates what a real (non-mocked) invalidateQueries eventually causes:
+    // `projectIntegration.config` re-reading as the newly-saved value, which
+    // would empty `diff.added` if the offer read it AFTER this resolves
+    // instead of capturing it before.
+    mockInvalidateQueries.mockImplementation(async () => {
+      rerender(
+        <RequirementsConfigSettings
+          projectIntegration={makeProjectIntegration({
+            requirements: {
+              enabled: true,
+              issueTypeIds: ["type-1", "type-new"],
+              issueTypeNames: { "type-1": "Epic", "type-new": "Story" },
+            },
+          })}
+          integration={jiraIntegration}
+        />
+      );
+    });
+    mockFetchRoutes([
+      [
+        "requirements-config",
+        () => ({ json: { classified: 1, declassified: 0 } }),
+      ],
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 7, hasMore: false, cap: 0 } }),
+      ],
+    ]);
+
+    const { rerender } = render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["type-1"],
+            issueTypeNames: { "type-1": "Epic" },
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("mock-add-type"));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirements-import-offer-dialog")
+      ).toHaveTextContent(/"count":7/);
+    });
+  });
+
+  it("a successful save with no newly-added types opens nothing", async () => {
+    mockFetchRoutes([
+      [
+        "requirements-config",
+        () => ({ json: { classified: 0, declassified: 1 } }),
+      ],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["type-1"],
+            issueTypeNames: { "type-1": "Epic" },
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    // A removal-only change: no type is newly added.
+    fireEvent.click(screen.getByTestId("mock-remove-first"));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    expect(
+      screen.queryByTestId("requirements-import-offer-dialog")
+    ).not.toBeInTheDocument();
+    expect(
+      (global.fetch as any).mock.calls.some(([url]: [string]) =>
+        url.includes("requirements-import/preview")
+      )
+    ).toBe(false);
+  });
+
+  it("a failed save opens nothing", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: "boom" }),
+    }) as any;
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["type-1"],
+            issueTypeNames: { "type-1": "Epic" },
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("mock-add-type"));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    expect(
+      screen.queryByTestId("requirements-import-offer-dialog")
+    ).not.toBeInTheDocument();
+  });
+
+  it("polls every 3 seconds while any mapping is syncing or cancel-requested, and stops polling otherwise", () => {
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["type-1"],
+            issueTypeNames: { "type-1": "Epic" },
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    const [, options] = mockMappingsFindMany.mock.calls.at(-1)!;
+    expect(
+      options.refetchInterval({ state: { data: [{ syncStatus: "syncing" }] } })
+    ).toBe(3000);
+    expect(
+      options.refetchInterval({
+        state: { data: [{ syncStatus: "cancel-requested" }] },
+      })
+    ).toBe(3000);
+    expect(
+      options.refetchInterval({
+        state: { data: [{ syncStatus: "completed" }] },
+      })
+    ).toBe(false);
+    expect(options.refetchInterval({ state: { data: [] } })).toBe(false);
+  });
+
+  it("a running mapping shows a running indicator and a stop control; a cancelled one renders distinctly from an error", () => {
+    mockMappingsFindMany.mockReturnValue({
+      data: [
+        makeMapping({ id: "map-1", syncStatus: "syncing" }),
+        makeMapping({
+          id: "map-2",
+          externalProjectName: "Concrete",
+          syncStatus: "cancelled",
+        }),
+        makeMapping({
+          id: "map-3",
+          externalProjectName: "Solid",
+          syncStatus: "error",
+          syncError: "Boom",
+        }),
+      ],
+    });
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["type-1"],
+            issueTypeNames: { "type-1": "Epic" },
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    expect(
+      screen.getByTestId("requirements-import-stop-map-1")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-import-row-map-2")
+    ).toHaveTextContent("importCancelled");
+    expect(
+      screen.getByTestId("requirements-import-row-map-2")
+    ).not.toHaveTextContent("syncStatusError");
+    expect(
+      screen.getByTestId("requirements-import-row-map-3")
+    ).toHaveTextContent("syncStatusError");
+  });
+
+  it("stopping asks for confirmation stating the one-page latency and keep-what-was-imported contract, then POSTs the cancel route", async () => {
+    const { toast } = await import("sonner");
+    mockMappingsFindMany.mockReturnValue({
+      data: [makeMapping({ id: "map-1", syncStatus: "syncing" })],
+    });
+    mockFetchRoutes([
+      ["requirements-import/cancel", () => ({ json: { success: true } })],
+    ]);
+
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["type-1"],
+            issueTypeNames: { "type-1": "Epic" },
+          },
+        })}
+        integration={jiraIntegration}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("requirements-import-stop-map-1"));
+
+    await waitFor(() => screen.getByTestId("requirements-import-stop-dialog"));
+    expect(
+      screen.getByTestId("requirements-import-stop-dialog")
+    ).toHaveTextContent("importStopConfirmBody");
+
+    fireEvent.click(screen.getByTestId("requirements-import-stop-confirm"));
+
+    await waitFor(() => {
+      const cancelCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url.includes("requirements-import/cancel")
+      );
+      expect(cancelCall).toBeDefined();
+      expect(JSON.parse(cancelCall![1].body)).toEqual({
+        projectId: 100,
+        integrationProjectId: "map-1",
+      });
+    });
+    expect(toast.success).toHaveBeenCalled();
   });
 });

@@ -13,11 +13,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Save } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SectionTitle, Text } from "@/components/ui/typography";
 import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
@@ -29,6 +35,7 @@ import {
   readRequirementTypeConfig,
   type RequirementTypeConfig,
 } from "~/lib/integrations/requirementTypeConfig";
+import { SYNC_STATUS } from "~/lib/integrations/syncStatus";
 
 interface RequirementsConfigSettingsProps {
   projectIntegration: ProjectIntegration;
@@ -118,7 +125,23 @@ export function RequirementsConfigSettings({
         syncError: true,
       },
     },
-    { enabled: isRequirementTypeCapable(integration.provider) }
+    {
+      enabled: isRequirementTypeCapable(integration.provider),
+      // Mirrors project-integration-settings.tsx's own poll predicate
+      // verbatim, extended to keep polling while a stop request is still in
+      // flight -- that is exactly when the user is watching hardest.
+      refetchInterval: (query: any) => {
+        const rows = query?.state?.data as
+          Array<{ syncStatus?: string | null }> | undefined;
+        return rows?.some(
+          (r) =>
+            r.syncStatus === SYNC_STATUS.syncing ||
+            r.syncStatus === SYNC_STATUS.cancelRequested
+        )
+          ? 3000
+          : false;
+      },
+    }
   ) as { data: RequirementImportMapping[] | undefined };
 
   const savedConfig = useMemo(
@@ -150,6 +173,10 @@ export function RequirementsConfigSettings({
     null
   );
   const [isImportStarting, setIsImportStarting] = useState(false);
+
+  // The stop-confirmation dialog targets one mapping id at a time.
+  const [stopMappingId, setStopMappingId] = useState<string | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
 
   // Re-seed whenever the saved config identity changes — a successful save
   // re-reads ProjectIntegration and this reflects the newly-saved state
@@ -373,12 +400,50 @@ export function RequirementsConfigSettings({
     [integration.id, projectIntegration.projectId, t]
   );
 
+  const handleConfirmStop = useCallback(async () => {
+    if (!stopMappingId) return;
+    setIsStopping(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/${integration.id}/requirements-import/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId: projectIntegration.projectId,
+            integrationProjectId: stopMappingId,
+          }),
+        }
+      );
+      if (res.status === 409) {
+        toast.error(t("requirementsConfig.importStopNotRunning"));
+        setStopMappingId(null);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(t("requirementsConfig.importFailed"));
+      }
+      toast.success(t("requirementsConfig.importStopRequested"));
+      setStopMappingId(null);
+    } catch (e: any) {
+      toast.error(e?.message || t("requirementsConfig.importFailed"));
+    } finally {
+      setIsStopping(false);
+    }
+  }, [integration.id, projectIntegration.projectId, stopMappingId, t]);
+
   if (!isRequirementTypeCapable(integration.provider)) {
     return null;
   }
 
   const handleSave = async () => {
     setIsSaving(true);
+    // Captured BEFORE the post-save cache invalidation: `diff` is derived
+    // from `savedConfig`, and the invalidation below causes `savedConfig` to
+    // re-read as the newly-saved value, at which point `diff.added` is
+    // already empty. Reading `diff.added` again after the invalidation
+    // would silently mean the offer never fires.
+    const addedTypesAtSaveTime = diff.added;
     try {
       const issueTypeIds = selected.map((issueType) => issueType.id);
       const issueTypeNames = Object.fromEntries(
@@ -409,6 +474,12 @@ export function RequirementsConfigSettings({
           query.queryKey[0] === "zenstack" &&
           query.queryKey[1] === "ProjectIntegration",
       });
+      // The offer-on-save: only when this save just newly classified a type
+      // (never on a removal-only save) and only when there is an active
+      // mapping to import into.
+      if (addedTypesAtSaveTime.length > 0 && (mappings?.length ?? 0) > 0) {
+        void openImportOffer(mappings![0]);
+      }
     } catch (error) {
       console.error("Failed to save requirements config:", error);
       toast.error(t("requirementsConfig.saveError"));
@@ -528,6 +599,12 @@ export function RequirementsConfigSettings({
             {mappings!.map((mapping) => {
               const name =
                 mapping.externalProjectName || mapping.externalProjectKey;
+              const isSyncing = mapping.syncStatus === SYNC_STATUS.syncing;
+              const isCancelRequested =
+                mapping.syncStatus === SYNC_STATUS.cancelRequested;
+              const isCancelled = mapping.syncStatus === SYNC_STATUS.cancelled;
+              const isError = mapping.syncStatus === SYNC_STATUS.error;
+              const isCompleted = mapping.syncStatus === SYNC_STATUS.completed;
 
               return (
                 <div
@@ -537,17 +614,60 @@ export function RequirementsConfigSettings({
                 >
                   <div className="flex items-center gap-2 min-h-[28px]">
                     <span className="text-sm">{name}</span>
+                    {isSyncing && (
+                      <Badge variant="secondary">
+                        {t("syncStatusSyncing")}
+                      </Badge>
+                    )}
+                    {isCancelRequested && (
+                      <Badge variant="secondary">
+                        {t("requirementsConfig.importStopRequested")}
+                      </Badge>
+                    )}
+                    {isCompleted && (
+                      <Badge className="bg-success text-success-foreground">
+                        {t("syncStatusCompleted")}
+                      </Badge>
+                    )}
+                    {isCancelled && (
+                      <Badge variant="outline">
+                        {t("requirementsConfig.importCancelled")}
+                      </Badge>
+                    )}
+                    {isError && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="destructive">
+                            {t("syncStatusError")}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>{mapping.syncError}</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void openImportOffer(mapping)}
-                      data-testid={`requirements-import-action-${mapping.id}`}
-                    >
-                      {t("requirementsConfig.importAction", { name })}
-                    </Button>
+                    {isSyncing ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setStopMappingId(mapping.id)}
+                        data-testid={`requirements-import-stop-${mapping.id}`}
+                      >
+                        {t("requirementsConfig.importStopAction")}
+                      </Button>
+                    ) : (
+                      !isCancelRequested && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void openImportOffer(mapping)}
+                          data-testid={`requirements-import-action-${mapping.id}`}
+                        >
+                          {t("requirementsConfig.importAction", { name })}
+                        </Button>
+                      )
+                    )}
                   </div>
                 </div>
               );
@@ -602,6 +722,44 @@ export function RequirementsConfigSettings({
                   {t("requirementsConfig.importOfferConfirm")}
                 </AlertDialogAction>
               )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={stopMappingId !== null}
+        onOpenChange={(open) => {
+          if (!open) setStopMappingId(null);
+        }}
+      >
+        <AlertDialogContent data-testid="requirements-import-stop-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("requirementsConfig.importStopConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("requirementsConfig.importStopConfirmBody")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              type="button"
+              onClick={() => setStopMappingId(null)}
+            >
+              {tGlobal("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              type="button"
+              disabled={isStopping}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmStop();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="requirements-import-stop-confirm"
+            >
+              {t("requirementsConfig.importStopAction")}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
