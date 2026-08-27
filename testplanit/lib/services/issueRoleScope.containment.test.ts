@@ -203,6 +203,16 @@ const SCOPED_FILES = [
   // (requirement rows plus the null-case gap row), not by source grep
   // alone.
   "lib/services/requirementTraceability.ts",
+  // The addressable-requirement routes and the breadcrumb's ancestor loader.
+  // All three spread REQUIREMENT_SCOPE_WHERE into their single issue read —
+  // verified by direct read of each: the project-scoped route also pins
+  // `projectId`, the short route resolves by id alone (the predicate is what
+  // stops a defect id, or another project's requirement, resolving through
+  // it), and the ancestors hook reads names/parents for path-building, the
+  // same shape and reasoning as requirementTraceability.ts above.
+  "app/[locale]/projects/requirements/[projectId]/[requirementId]/page.tsx",
+  "app/[locale]/requirement/[requirementId]/page.tsx",
+  "hooks/useRequirementAncestors.ts",
   // 27-09's LINK-03 reference picker forks components/issues/search-issues-dialog.tsx
   // wholesale (D-09/D-12) and inherits its exact DEFECT_SCOPE_WHERE /
   // includeRequirements toggle at the same query boundary, unchanged by the
