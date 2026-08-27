@@ -1,5 +1,9 @@
 import { coverageFor } from "~/hooks/useRequirementCoverage";
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
+import {
+  matchesRequirementCoverageFilter,
+  type RequirementCoverageFilter,
+} from "~/lib/services/requirementCoverageFilter";
 import type {
   RequirementCoverageBreakdown,
   RequirementCoverageStatusCount,
@@ -144,15 +148,21 @@ export function buildDescendantIdMap(
 }
 
 /**
+ * `RequirementCoverageFilter` and `matchesRequirementCoverageFilter` now
+ * live in `lib/services/requirementCoverageFilter.ts` (28-12) -- a pure,
+ * type-only-import module a route handler can share with the client
+ * without pulling React Query into a server bundle. Re-exported here
+ * verbatim so no existing importer of this file has to move.
+ *
  * "" means "not filtering on this axis" throughout, mirroring the milestone
  * comparator's own convention (`MemberIssuesTable.tsx`'s
  * `CoverageStateFilter`/`SourceFilter`). Coverage's non-empty states are the
  * requirements domain's own definitions (plan 10's chip, the shipped gap
  * report), NOT the milestone's "no completed outcome" --
- * `matchesRequirementCoverageFilter` says so explicitly below.
+ * `matchesRequirementCoverageFilter` says so explicitly in its own module.
  */
-export type RequirementCoverageFilter =
-  "" | "UNCOVERED" | "UNTESTED" | `status:${number}`;
+export { matchesRequirementCoverageFilter, type RequirementCoverageFilter };
+
 export type RequirementSourceFilter = "" | "MANUAL" | "SYNCED" | "DETACHED";
 
 export interface RequirementListFilters {
@@ -161,33 +171,6 @@ export interface RequirementListFilters {
    *  value; `""` means every status, never a literal empty-status match. */
   status: string;
   source: RequirementSourceFilter;
-}
-
-/**
- * The requirements domain's own coverage-state predicate -- deliberately NOT
- * `MemberIssuesTable.tsx`'s `matchesCoverageState`, even though the shape is
- * mirrored. `UNCOVERED` here is `breakdown.uncovered === true` (zero linked
- * cases anywhere in the subtree, the same boolean plan 10's `CoverageChip`
- * and the gap report both key on), not the milestone's "no completed
- * outcome" -- a requirement whose linked cases are all NOT_RUN is
- * "Untested" here, not "Uncovered". An absent breakdown matches only
- * `"UNCOVERED"`, mirroring the comparator.
- */
-export function matchesRequirementCoverageFilter(
-  filter: RequirementCoverageFilter,
-  breakdown: RequirementCoverageBreakdown | undefined
-): boolean {
-  if (!filter) return true;
-  if (!breakdown) return filter === "UNCOVERED";
-  if (filter === "UNCOVERED") return breakdown.uncovered === true;
-  if (filter === "UNTESTED") return (breakdown.untested ?? 0) > 0;
-  if (filter.startsWith("status:")) {
-    const statusId = Number(filter.slice("status:".length));
-    return (breakdown.statuses ?? []).some(
-      (entry) => entry.statusId === statusId && entry.count > 0
-    );
-  }
-  return true;
 }
 
 /** Exact match against the same lock-aware value the Status column sorts on
