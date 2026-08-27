@@ -15,7 +15,10 @@ This page displays a table listing issues, allowing you to quickly see which iss
 
 ### Filtering and Searching
 
-- **Search Bar:** Located above the table, you can type into the search bar to filter issues by their **Name**. The search is case-insensitive and updates the table dynamically as you type (with a small debounce delay).
+- **Search Bar:** Located above the table, you can type into the search bar to filter issues by their **Name**, **Title**, or **Description**. The search is case-insensitive and updates the table dynamically as you type (with a small debounce delay).
+- **Status, Priority, and Issue Type:** Three multi-select dropdowns sit beside the search bar, each listing the values currently in use. Selecting several values in one dropdown matches issues with any of them; selections in different dropdowns apply together. Leave a dropdown empty to include every value. Matching is case-insensitive, so values that differ only in capitalization are treated as one.
+- **No Issue Type:** The Issue Type dropdown also offers a **No Issue Type** entry when some issues have no type set. Issues only receive a type when they are synced from or created in an external tracker, and not every tracker supplies one, so this entry lets you still find the rest.
+- A dropdown is hidden when no issue in view has a value for that field.
 
 ### Loading More
 
