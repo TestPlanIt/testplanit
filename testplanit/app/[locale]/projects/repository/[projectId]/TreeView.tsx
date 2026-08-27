@@ -38,13 +38,15 @@ import {
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { NodeApi, Tree, TreeApi } from "react-arborist";
+import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
@@ -229,6 +231,31 @@ export const FolderChevron = React.memo(function FolderChevron({
     </TooltipProvider>
   );
 });
+
+/** Renders one folder row. Defined inside TreeView, so its identity changes on
+ *  every render. */
+type RenderFolderRow = (
+  props: NodeRendererProps<ArboristNode>
+) => React.ReactElement;
+
+const FolderRowRendererContext = createContext<RenderFolderRow>(() => {
+  throw new Error("FolderRow rendered outside of TreeView");
+});
+
+/** The component react-arborist is handed as its row renderer.
+ *
+ *  It has to be a fixed identity: react-arborist renders the renderer as a
+ *  component type, so a new function means a new type, and React remounts every
+ *  row. A remount mid-drag takes the dragged row's element out of the document,
+ *  and react-dnd ends any drag whose source element has gone — so a tree that
+ *  re-rendered while a folder was in hand dropped the drag before it could
+ *  land. This component never changes; the current render's renderer reaches it
+ *  through context and is called rather than rendered, which would put the
+ *  changing identity right back into the element type. */
+const FolderRow = (props: NodeRendererProps<ArboristNode>) => {
+  const renderFolderRow = useContext(FolderRowRendererContext);
+  return renderFolderRow(props);
+};
 
 const TreeView: React.FC<{
   onSelectFolder: (folderId: number | null) => void;
@@ -1737,36 +1764,38 @@ const TreeView: React.FC<{
             </div>
           </div>
         )}
-        <Tree
-          ref={treeRef}
-          data={treeData}
-          openByDefault={false}
-          initialOpenState={initialOpenState}
-          width="100%"
-          height={treeViewportHeight}
-          indent={24}
-          rowHeight={32}
-          overscanCount={8}
-          rowClassName="min-w-0!"
-          selection={selectedId || selectedFolderId?.toString() || undefined}
-          onSelect={handleSelect}
-          onToggle={async (id) => {
-            const folderId = Number(id);
-            if (!Number.isNaN(folderId) && treeRef.current?.isOpen(id)) {
-              await ensureFolderChildrenLoaded(folderId);
+        <FolderRowRendererContext.Provider value={Node}>
+          <Tree
+            ref={treeRef}
+            data={treeData}
+            openByDefault={false}
+            initialOpenState={initialOpenState}
+            width="100%"
+            height={treeViewportHeight}
+            indent={24}
+            rowHeight={32}
+            overscanCount={8}
+            rowClassName="min-w-0!"
+            selection={selectedId || selectedFolderId?.toString() || undefined}
+            onSelect={handleSelect}
+            onToggle={async (id) => {
+              const folderId = Number(id);
+              if (!Number.isNaN(folderId) && treeRef.current?.isOpen(id)) {
+                await ensureFolderChildrenLoaded(folderId);
+              }
+            }}
+            onMove={
+              canAddEdit && !filteredFolders && !isFiltering
+                ? handleMove
+                : undefined
             }
-          }}
-          onMove={
-            canAddEdit && !filteredFolders && !isFiltering
-              ? handleMove
-              : undefined
-          }
-          disableDrag={!canAddEdit || !!filteredFolders || isFiltering}
-          disableDrop={!canAddEdit || !!filteredFolders || isFiltering}
-          dndRootElement={dndRootElement || undefined}
-        >
-          {Node}
-        </Tree>
+            disableDrag={!canAddEdit || !!filteredFolders || isFiltering}
+            disableDrop={!canAddEdit || !!filteredFolders || isFiltering}
+            dndRootElement={dndRootElement || undefined}
+          >
+            {FolderRow}
+          </Tree>
+        </FolderRowRendererContext.Provider>
         {isFiltering && treeData.length === 0 && (
           <div
             className="px-2 py-4 text-center text-xs text-muted-foreground"

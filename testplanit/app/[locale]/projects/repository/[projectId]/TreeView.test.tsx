@@ -518,6 +518,45 @@ describe("TreeView", () => {
     expect(screen.queryByTestId("folder-tree-end")).not.toBeInTheDocument();
   });
 
+  it("keeps the same node renderer when a folder drag starts", () => {
+    // react-arborist renders the node renderer as a component type, so a new
+    // function identity remounts every row. Starting a folder drag re-renders
+    // the tree (the root drop zone appears), and a remount at that moment takes
+    // the dragged row's element out of the document — react-dnd then ends the
+    // drag, so no folder could be dropped onto another.
+    vi.mocked(useFindManyRepositoryFolders).mockReturnValue({
+      data: [
+        {
+          id: 8,
+          name: "Renderer Folder",
+          parentId: null,
+          order: 0,
+          projectId: 1,
+          isDeleted: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdById: "user-1",
+        },
+      ],
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
+    } as any);
+
+    const treeCalls = () => vi.mocked(Tree).mock.calls;
+    const lastRenderer = () =>
+      (treeCalls()[treeCalls().length - 1][0] as any).children;
+
+    const { rerender } = render(<TreeView {...defaultProps} />);
+    const rendererBeforeDrag = lastRenderer();
+
+    dragTargetMock.isDraggingFolder = true;
+    rerender(<TreeView {...defaultProps} />);
+
+    expect(screen.getByTestId("folder-tree-end")).toBeInTheDocument();
+    expect(lastRenderer()).toBe(rendererBeforeDrag);
+  });
+
   describe("virtualization", () => {
     const spawnFolders = (count: number) =>
       Array.from({ length: count }, (_, i) => ({
