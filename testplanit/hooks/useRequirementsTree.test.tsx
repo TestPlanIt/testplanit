@@ -89,8 +89,16 @@ function findPending(
   return pendingRequests.splice(idx, 1)[0];
 }
 
-function countPending(urlSubstring: string): number {
-  return pendingRequests.filter((r) => r.url.includes(urlSubstring)).length;
+function countPending(
+  urlSubstring: string,
+  opts?: { method?: string }
+): number {
+  return pendingRequests.filter((r) => {
+    const method = r.init?.method ?? "GET";
+    return (
+      r.url.includes(urlSubstring) && (!opts?.method || method === opts.method)
+    );
+  }).length;
 }
 
 function resolveJson(req: PendingRequest, data: unknown, status = 200) {
@@ -99,6 +107,10 @@ function resolveJson(req: PendingRequest, data: unknown, status = 200) {
     status,
     json: async () => data,
   } as unknown);
+}
+
+function parseBody(req: PendingRequest): any {
+  return JSON.parse(req.init!.body as string);
 }
 
 async function resolveCount(mode: "all" | "lazy", total: number) {
@@ -119,6 +131,34 @@ async function resolveRootsPage(
   await act(async () => {
     resolveJson(req, { total, rows, nextCursor });
   });
+}
+
+interface MatchPageFixture {
+  total?: number;
+  matchedTotal: number;
+  matchedIds: number[];
+  ancestorIds: number[];
+  rows?: RequirementTreeRow[];
+  nextCursor: { name: string; id: number } | null;
+  expandMatchedSubtrees?: boolean;
+}
+
+async function resolveFilterPage(fixture: MatchPageFixture) {
+  const req = await waitFor(() =>
+    findPending("/requirements/tree", { method: "POST" })
+  );
+  await act(async () => {
+    resolveJson(req, {
+      total: fixture.total ?? 600,
+      matchedTotal: fixture.matchedTotal,
+      matchedIds: fixture.matchedIds,
+      ancestorIds: fixture.ancestorIds,
+      rows: fixture.rows ?? [],
+      nextCursor: fixture.nextCursor,
+      expandMatchedSubtrees: fixture.expandMatchedSubtrees ?? false,
+    });
+  });
+  return req;
 }
 
 describe("useRequirementsTree", () => {
@@ -315,5 +355,217 @@ describe("useRequirementsTree", () => {
     expect(result.current.rows).toEqual([]);
     expect(result.current.hasMore).toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // --- Task 3: filter submission and the two counts SCALE-03 renders. ---
+
+  const ACTIVE_FILTERS = {
+    search: "widget",
+    coverage: "" as const,
+    status: "",
+    source: "" as const,
+  };
+
+  it("submits to the filter endpoint when any filter axis is active, and does not when none are active", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
+    );
+
+    await resolveCount("lazy", 600);
+    await resolveRootsPage([makeRow(1)], null);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(countPending("/requirements/tree", { method: "POST" })).toBe(0);
+  });
+
+  it("submits to the filter endpoint once a filter axis becomes active", async () => {
+    const { rerender } = renderHook(
+      ({ filters }: { filters: typeof INACTIVE_FILTERS }) =>
+        useRequirementsTree({ projectId: 1, filters }),
+      { initialProps: { filters: INACTIVE_FILTERS } }
+    );
+
+    await resolveCount("lazy", 600);
+    await resolveRootsPage([makeRow(1)], null);
+
+    rerender({ filters: ACTIVE_FILTERS });
+    const req = await waitFor(() =>
+      findPending("/requirements/tree", { method: "POST" })
+    );
+    expect(parseBody(req).search).toBe("widget");
+  });
+
+  it("requests include: 'rows' in lazy mode", async () => {
+    renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: ACTIVE_FILTERS })
+    );
+
+    await resolveCount("lazy", 600);
+    const req = await waitFor(() =>
+      findPending("/requirements/tree", { method: "POST" })
+    );
+    expect(parseBody(req).include).toBe("rows");
+  });
+
+  it("requests include: 'ids' in 'all' mode", async () => {
+    renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: ACTIVE_FILTERS })
+    );
+
+    await resolveCount("all", 10);
+    const req = await waitFor(() =>
+      findPending("/requirements/tree", { method: "POST" })
+    );
+    expect(parseBody(req).include).toBe("ids");
+  });
+
+  it("changing a filter resets paging and replaces the match set rather than appending to it", async () => {
+    const { result, rerender } = renderHook(
+      ({ filters }: { filters: typeof ACTIVE_FILTERS }) =>
+        useRequirementsTree({ projectId: 1, filters }),
+      { initialProps: { filters: ACTIVE_FILTERS } }
+    );
+
+    await resolveCount("lazy", 600);
+    await resolveFilterPage({
+      matchedTotal: 1,
+      matchedIds: [1],
+      ancestorIds: [],
+      rows: [makeRow(1)],
+      nextCursor: null,
+    });
+    await waitFor(() => expect(result.current.matchedIds?.size).toBe(1));
+    expect(result.current.matchedIds?.has(1)).toBe(true);
+
+    rerender({ filters: { ...ACTIVE_FILTERS, search: "gadget" } });
+    // The stale match set is cleared immediately on the filter change, before
+    // the new response arrives.
+    await waitFor(() => expect(result.current.matchedIds).toBeNull());
+
+    await resolveFilterPage({
+      matchedTotal: 1,
+      matchedIds: [2],
+      ancestorIds: [],
+      rows: [makeRow(2)],
+      nextCursor: null,
+    });
+    await waitFor(() => expect(result.current.matchedIds?.size).toBe(1));
+    expect(result.current.matchedIds?.has(2)).toBe(true);
+    expect(result.current.matchedIds?.has(1)).toBe(false);
+    expect(result.current.rows.map((row) => row.id)).toEqual([2]);
+  });
+
+  it("discards a response for a superseded filter", async () => {
+    const { result, rerender } = renderHook(
+      ({ filters }: { filters: typeof ACTIVE_FILTERS }) =>
+        useRequirementsTree({ projectId: 1, filters }),
+      { initialProps: { filters: ACTIVE_FILTERS } }
+    );
+
+    await resolveCount("lazy", 600);
+    const staleReq = await waitFor(() =>
+      findPending("/requirements/tree", { method: "POST" })
+    );
+    expect(parseBody(staleReq).search).toBe("widget");
+
+    // The filter changes WHILE the first request is still in flight.
+    rerender({ filters: { ...ACTIVE_FILTERS, search: "gadget" } });
+    const freshReq = await waitFor(() =>
+      findPending("/requirements/tree", { method: "POST" })
+    );
+    expect(parseBody(freshReq).search).toBe("gadget");
+
+    // Resolve the STALE request out of order -- it must never reach state.
+    await act(async () => {
+      resolveJson(staleReq, {
+        total: 600,
+        matchedTotal: 1,
+        matchedIds: [999],
+        ancestorIds: [],
+        rows: [makeRow(999)],
+        nextCursor: null,
+        expandMatchedSubtrees: false,
+      });
+    });
+    expect(result.current.matchedIds).toBeNull();
+
+    await act(async () => {
+      resolveJson(freshReq, {
+        total: 600,
+        matchedTotal: 1,
+        matchedIds: [2],
+        ancestorIds: [],
+        rows: [makeRow(2)],
+        nextCursor: null,
+        expandMatchedSubtrees: false,
+      });
+    });
+    await waitFor(() => expect(result.current.matchedIds?.size).toBe(1));
+    expect(result.current.matchedIds?.has(999)).toBe(false);
+    expect(result.current.matchedIds?.has(2)).toBe(true);
+  });
+
+  it("unfiltered: loadedCount is the loaded row count and matchedTotal is null", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
+    );
+
+    await resolveCount("lazy", 600);
+    await resolveRootsPage([makeRow(1), makeRow(2)], null);
+
+    await waitFor(() => expect(result.current.loadedCount).toBe(2));
+    expect(result.current.matchedTotal).toBeNull();
+  });
+
+  it("filtered paging arithmetic: loadedCount counts only matches, ancestors never inflate it, and paging appends without duplicating either", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: ACTIVE_FILTERS })
+    );
+
+    await resolveCount("lazy", 600);
+
+    const page1Matches = Array.from({ length: 10 }, (_, i) => makeRow(i + 1));
+    const page1Ancestors = [101, 102, 103, 104].map((id) => makeRow(id));
+    await resolveFilterPage({
+      matchedTotal: 20,
+      matchedIds: page1Matches.map((r) => r.id),
+      ancestorIds: [101, 102, 103, 104],
+      rows: [...page1Matches, ...page1Ancestors],
+      nextCursor: { name: "REQ-10", id: 10 },
+    });
+
+    await waitFor(() => expect(result.current.loadedCount).toBe(10));
+    expect(result.current.matchedTotal).toBe(20);
+    expect(result.current.rows).toHaveLength(14);
+    // Disjoint: no id is in both sets.
+    const overlap = [...(result.current.matchedIds ?? [])].filter((id) =>
+      result.current.ancestorIds?.has(id)
+    );
+    expect(overlap).toEqual([]);
+
+    act(() => {
+      result.current.onLoadMore();
+    });
+
+    const page2Matches = Array.from({ length: 10 }, (_, i) => makeRow(i + 11));
+    // Shares 103/104 with page 1's ancestors, plus one new ancestor (105).
+    const page2Ancestors = [103, 104, 105].map((id) => makeRow(id));
+    await resolveFilterPage({
+      matchedTotal: 20,
+      matchedIds: page2Matches.map((r) => r.id),
+      ancestorIds: [103, 104, 105],
+      rows: [...page2Matches, ...page2Ancestors],
+      nextCursor: null,
+    });
+
+    await waitFor(() => expect(result.current.loadedCount).toBe(20));
+    expect(result.current.matchedTotal).toBe(20);
+    expect(result.current.matchedIds?.size).toBe(20);
+    expect(result.current.ancestorIds?.size).toBe(5);
+    // 20 matches + (4 original ancestors + 1 new distinct ancestor) = 25,
+    // never double-counted for the shared 103/104.
+    expect(result.current.rows).toHaveLength(25);
+    const ids = result.current.rows.map((row) => row.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });
