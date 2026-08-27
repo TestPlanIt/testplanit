@@ -17,6 +17,7 @@
 
 import { readFileSync } from "node:fs";
 
+import { PostgresQueryCompiler } from "kysely";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -24,6 +25,9 @@ import {
   getRequirementChildren,
   getRequirementRootsPage,
   REQUIREMENT_LAZY_THRESHOLD,
+  resolveRequirementMatches,
+  type RequirementMatchPage,
+  type RequirementTreeFilterAxes,
   type RequirementTreeRow,
 } from "./requirementTree";
 
@@ -40,6 +44,92 @@ function makeMockDb(rows: unknown[]) {
     },
   };
 }
+
+/**
+ * A richer mock than `makeMockDb` above: it runs every compiled query
+ * through a REAL `PostgresQueryCompiler`, so `captured` ends up holding the
+ * actual `{ sql, parameters }` Postgres would receive -- not the stub
+ * pass-through `compileQuery: (n) => n` uses, which never turns the
+ * `RawNode` into real SQL text at all. This is what lets a test assert on
+ * the ACTUAL BOUND PARAMETER VALUE (T-28-09-01/02: the escaped search term,
+ * the coverage id array, ...) rather than merely on the row data a canned
+ * response returns, which would prove nothing about how the term reached
+ * the query. `resolveRequirementMatches` issues at most one query per call
+ * in this file's Task 1 scope (the ancestor-closure and row-hydration
+ * queries are still stubbed off -- see Task 2), so one queued response is
+ * enough for every test below; `getCallCount` still guards against a
+ * regression that silently starts issuing more.
+ */
+function makeCapturingMockDb(rowsSequence: unknown[][]) {
+  const compiler = new PostgresQueryCompiler();
+  const captured: Array<{ sql: string; parameters: readonly unknown[] }> = [];
+  let call = 0;
+  const db = {
+    $qb: {
+      getExecutor: () => ({
+        transformQuery: (n: unknown) => n,
+        compileQuery: (node: unknown) =>
+          compiler.compileQuery(
+            node as never,
+            { queryId: `q${call}` } as never
+          ),
+        executeQuery: async (compiled: {
+          sql: string;
+          parameters: readonly unknown[];
+        }) => {
+          captured.push({ sql: compiled.sql, parameters: compiled.parameters });
+          if (call >= rowsSequence.length) {
+            throw new Error(
+              `makeCapturingMockDb: unexpected query call #${call + 1} -- only ${rowsSequence.length} response(s) were configured`
+            );
+          }
+          const rows = rowsSequence[call];
+          call += 1;
+          return { rows };
+        },
+      }),
+    },
+  };
+  return { db, captured, getCallCount: () => call };
+}
+
+function makeMatchRow(
+  overrides: Partial<RequirementTreeRow> & {
+    matchedTotal?: number | bigint;
+  } = {}
+) {
+  return {
+    id: 1,
+    name: "a",
+    title: "a",
+    status: null,
+    externalStatus: null,
+    priority: null,
+    externalId: null,
+    externalKey: null,
+    externalUrl: null,
+    issueTypeId: null,
+    issueTypeName: null,
+    issueTypeIconUrl: null,
+    contentUpdatedAt: null,
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    projectId: 1,
+    integrationId: null,
+    parentId: null,
+    isRequirement: true,
+    requirementDetachedAt: null,
+    isDeleted: false,
+    hasChildren: false,
+    matchedTotal: 1,
+    ...overrides,
+  };
+}
+
+const NO_AXES: RequirementTreeFilterAxes = {
+  search: "",
+  status: "",
+  source: "",
+};
 
 function makeRow(overrides: Partial<RequirementTreeRow>): RequirementTreeRow {
   return {
@@ -161,6 +251,344 @@ describe("getRequirementChildren (unit, mocked $qb)", () => {
   });
 });
 
+describe("resolveRequirementMatches -- caller-error guard (unit, mocked $qb)", () => {
+  it("rejects a call with no active axis at all -- an unfiltered read is getRequirementRootsPage's job", async () => {
+    const { db } = makeCapturingMockDb([[]]);
+    await expect(
+      resolveRequirementMatches(
+        {
+          projectId: 1,
+          axes: NO_AXES,
+          coverageMatchIds: null,
+          limit: 50,
+          include: "ids",
+        },
+        db as never
+      )
+    ).rejects.toThrow(/at least one filter axis must be active/);
+  });
+
+  it("does NOT reject coverageMatchIds: [] as 'no active axis' -- a non-null empty array is still an ACTIVE axis that matches nothing", async () => {
+    const { db } = makeCapturingMockDb([[]]);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: NO_AXES,
+        coverageMatchIds: [],
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(result.matchedIds).toEqual([]);
+    expect(result.matchedTotal).toBe(0);
+  });
+});
+
+describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + real compiler)", () => {
+  it("builds an ILIKE predicate for the search axis, binding the term as a parameter (never interpolated)", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured).toHaveLength(1);
+    expect(captured[0].sql).toMatch(/ILIKE \$\d+/i);
+    expect(captured[0].parameters).toContain("%widget%");
+  });
+
+  it("escapes %, _, and a literal backslash in the search term before wrapping it, and binds the ESCAPED value", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "100% off_sale", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].parameters).toContain("%100\\% off\\_sale%");
+  });
+
+  it("escapes a literal backslash FIRST, so it cannot re-escape the %/_ substitutions that follow it", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "a\\b", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].parameters).toContain("%a\\\\b%");
+  });
+
+  it("a search term containing NO wildcard metacharacters round-trips unescaped except for the wrapping %", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "plainterm", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].parameters).toContain("%plainterm%");
+  });
+
+  it("builds the lock-aware status CASE predicate for the status axis, binding the filter value as a parameter", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "", status: "Open", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql).toMatch(/CASE/i);
+    expect(captured[0].sql).toContain('"externalStatus"');
+    expect(captured[0].parameters).toContain("Open");
+  });
+
+  it("builds the source CASE predicate for the source axis, binding the filter value as a parameter", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "", status: "", source: "DETACHED" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql).toMatch(/CASE/i);
+    expect(captured[0].sql).toContain("'MANUAL'");
+    expect(captured[0].parameters).toContain("DETACHED");
+  });
+
+  it("builds an `= ANY(...)` predicate for the coverage axis, binding the id array as a parameter", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: NO_AXES,
+        coverageMatchIds: [7, 8, 9],
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql).toMatch(/= ANY\(\$\d+::int\[\]\)/);
+    expect(captured[0].parameters).toContainEqual(
+      expect.arrayContaining([7, 8, 9])
+    );
+  });
+
+  it("an empty (non-null) coverageMatchIds array still emits the ANY() predicate, bound to an empty array -- never silently dropped", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: NO_AXES,
+        coverageMatchIds: [],
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql).toMatch(/= ANY\(\$\d+::int\[\]\)/);
+    expect(captured[0].parameters).toContainEqual([]);
+  });
+});
+
+describe("resolveRequirementMatches -- intersection, never union (unit, mocked $qb + real compiler)", () => {
+  it("ANDs two active axes together in the compiled SQL, never ORs them", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "Open", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql).toMatch(/ILIKE \$\d+\)?\s+AND\s+/i);
+    expect(captured[0].sql.toUpperCase()).not.toContain(" OR ");
+  });
+
+  it("ANDs all four axes together when every axis is active simultaneously", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "Open", source: "MANUAL" },
+        coverageMatchIds: [1, 2],
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    const andCount = (captured[0].sql.match(/\sAND\s/gi) ?? []).length;
+    // 3 base predicates (projectId/isRequirement/isDeleted) + 3 joins between
+    // the 4 axis fragments = well over the single join an OR-mutated build
+    // would still contain -- the precise count is asserted by the
+    // structural "andAll" test below; this behavioral test only pins that
+    // the word "OR" never appears when every axis is active at once.
+    expect(andCount).toBeGreaterThanOrEqual(3);
+    expect(captured[0].sql.toUpperCase()).not.toContain(" OR ");
+  });
+});
+
+describe("resolveRequirementMatches -- matchedTotal and paging (unit, mocked $qb)", () => {
+  it("computes matchedTotal from the SAME statement's COUNT(*) OVER () window, coercing a BigInt to a JS number", async () => {
+    const rows = [makeMatchRow({ id: 1, name: "a", matchedTotal: 250n })];
+    const db = makeMockDb(rows);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(result.matchedTotal).toBe(250);
+    expect(typeof result.matchedTotal).toBe("number");
+  });
+
+  it("drops the limit+1th row and derives nextCursor from the LAST KEPT row, not the dropped one", async () => {
+    const rows = [
+      makeMatchRow({ id: 1, name: "a", matchedTotal: 3 }),
+      makeMatchRow({ id: 2, name: "b", matchedTotal: 3 }),
+      makeMatchRow({ id: 3, name: "c", matchedTotal: 3 }),
+    ];
+    const db = makeMockDb(rows);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 2,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(result.matchedIds).toEqual([1, 2]);
+    expect(result.nextCursor).toEqual({ name: "b", id: 2 });
+  });
+
+  it("returns nextCursor: null and matchedTotal: 0 when the match set is empty", async () => {
+    const db = makeMockDb([]);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "nomatch", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(result.matchedIds).toEqual([]);
+    expect(result.matchedTotal).toBe(0);
+    expect(result.nextCursor).toBeNull();
+  });
+});
+
+describe("resolveRequirementMatches -- expandMatchedSubtrees (unit, mocked $qb)", () => {
+  const cases: Array<{
+    name: string;
+    axes: RequirementTreeFilterAxes;
+    coverageMatchIds: number[] | null;
+    expected: boolean;
+  }> = [
+    {
+      name: "text-only",
+      axes: { search: "widget", status: "", source: "" },
+      coverageMatchIds: null,
+      expected: true,
+    },
+    {
+      name: "text + status",
+      axes: { search: "widget", status: "Open", source: "" },
+      coverageMatchIds: null,
+      expected: false,
+    },
+    {
+      name: "text + source",
+      axes: { search: "widget", status: "", source: "MANUAL" },
+      coverageMatchIds: null,
+      expected: false,
+    },
+    {
+      name: "text + coverage",
+      axes: { search: "widget", status: "", source: "" },
+      coverageMatchIds: [1],
+      expected: false,
+    },
+    {
+      name: "status-only",
+      axes: { search: "", status: "Open", source: "" },
+      coverageMatchIds: null,
+      expected: false,
+    },
+    {
+      name: "coverage-only (empty array)",
+      axes: NO_AXES,
+      coverageMatchIds: [],
+      expected: false,
+    },
+  ];
+
+  for (const { name, axes, coverageMatchIds, expected } of cases) {
+    it(`is ${expected} for ${name}`, async () => {
+      const db = makeMockDb([]);
+      const result: RequirementMatchPage = await resolveRequirementMatches(
+        { projectId: 1, axes, coverageMatchIds, limit: 50, include: "ids" },
+        db as never
+      );
+      expect(result.expandMatchedSubtrees).toBe(expected);
+    });
+  }
+});
+
+describe("resolveRequirementMatches -- include mode (unit, mocked $qb)", () => {
+  it("include: 'ids' returns an empty rows array (Task 1 scope: row hydration ships in Task 2)", async () => {
+    const rows = [makeMatchRow({ id: 1, name: "a" })];
+    const db = makeMockDb(rows);
+    const result = await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: "", source: "" },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(result.rows).toEqual([]);
+  });
+});
+
 // Strips comment-prefixed lines before the OFFSET/SELECT-star checks below --
 // this file's own prose (this doc comment included) legitimately explains
 // why OFFSET is avoided and why no column list uses `SELECT *`, which would
@@ -273,7 +701,9 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     expect(declarationCount).toBe(1);
     const usageCount = (content.match(/\$\{REQUIREMENT_TREE_COLUMNS\}/g) ?? [])
       .length;
-    expect(usageCount).toBe(2);
+    // getRequirementRootsPage + getRequirementChildren + the
+    // resolveRequirementMatches match-page query (28-09 Task 1) -- 3, not 2.
+    expect(usageCount).toBe(3);
 
     const fragmentDeclarationCount = (
       content.match(/function requirementHasChildrenFragment/g) ?? []
@@ -282,6 +712,44 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     const fragmentUsageCount = (
       content.match(/\$\{requirementHasChildrenFragment\(projectId\)\}/g) ?? []
     ).length;
-    expect(fragmentUsageCount).toBe(2);
+    expect(fragmentUsageCount).toBe(3);
+  });
+});
+
+describe("resolveRequirementMatches source shape (structural, mutation-provable)", () => {
+  const content = readFileSync(FILE_PATH, "utf8");
+  const resolveBody = extractFunctionBody(content, "resolveRequirementMatches");
+
+  it("requests limit + 1 rows, one statement instead of a separate count query", () => {
+    expect(resolveBody).toContain("LIMIT ${limit + 1}");
+  });
+
+  it("the match query repeats projectId, the role predicate, and isDeleted", () => {
+    expect(resolveBody).toContain('i."projectId" = ${projectId}');
+    expect(resolveBody).toContain('i."isRequirement" = true');
+    expect(resolveBody).toContain('i."isDeleted" = false');
+  });
+
+  it("computes matchedTotal via a window function in the SAME statement as the page", () => {
+    expect(resolveBody).toMatch(/COUNT\(\*\)\s*OVER\s*\(\)/i);
+  });
+
+  it("rejects a call with no active axis via a literal `!== null` check on coverageMatchIds -- never a truthy/`.length` check that would also treat [] as inactive", () => {
+    expect(resolveBody).toContain("coverageMatchIds !== null");
+    expect(resolveBody).not.toMatch(/if\s*\(\s*coverageMatchIds\s*&&/);
+    expect(resolveBody).not.toMatch(/coverageMatchIds\?\.length/);
+  });
+
+  it("joins active axis fragments with the shared andAll helper, never inline string concatenation", () => {
+    expect(resolveBody).toContain("andAll(axisFragments)");
+  });
+
+  it("andAll joins fragments with AND, never OR -- the single intersection point this SQL has", () => {
+    const start = content.indexOf("function andAll");
+    const end = content.indexOf("async function resolveAncestorIds", start);
+    const andAllBody =
+      end === -1 ? content.slice(start) : content.slice(start, end);
+    expect(andAllBody).toContain("AND ${fragment}");
+    expect(andAllBody).not.toMatch(/OR \$\{fragment\}/);
   });
 });

@@ -45,7 +45,7 @@
 // the viewer's project scope before ever reaching these functions. A
 // caller that forgets this exposes another project's requirements to
 // whoever can reach the route.
-import { sql } from "kysely";
+import { sql, type RawBuilder } from "kysely";
 
 import { baseDb } from "~/lib/db";
 
@@ -296,4 +296,308 @@ export async function getRequirementChildren(
   `.execute(db.$qb);
 
   return rows;
+}
+
+// ---------------------------------------------------------------------------
+// 28-09 (SCALE-02, D-04/D-05): server-side filtering with a pruned-tree-plus-
+// ancestors response. `computeVisibleRequirementIds`
+// (app/[locale]/projects/requirements/[projectId]/requirementsListRows.ts:
+// 235-365) is this module's SPECIFICATION -- it is NOT edited by this phase
+// and must not be: it is the executable oracle the live-DB parity suite
+// checks this SQL against, and it keeps pinning the four axes' semantics in
+// TypeScript for a future reader even after 28-14 removes its call site.
+// ---------------------------------------------------------------------------
+
+/**
+ * The requirements list's four independently-activatable filter axes,
+ * server-side (28-CONTEXT D-04): `""` means "not filtering on this axis"
+ * for every string field here, mirroring `RequirementListFilters`'s own
+ * convention in `requirementsListRows.ts`. Coverage is NOT a field on this
+ * type -- it arrives as a separately pre-computed id list
+ * (`resolveRequirementMatches`'s own `coverageMatchIds` argument), because
+ * resolving it requires `getRequirementCoverage`'s whole-project rollup,
+ * which needs the CALLER's project scope, not this module's (this module
+ * still takes no session and performs no authorization -- see this file's
+ * own header).
+ */
+export interface RequirementTreeFilterAxes {
+  search: string;
+  status: string;
+  source: "" | "MANUAL" | "SYNCED" | "DETACHED";
+}
+
+/**
+ * One page of the requirements list's server-side filter/search result
+ * (28-CONTEXT D-04/D-05, SCALE-02): the matches themselves, their complete
+ * ancestor chains (so every match is reachable, never partially -- see
+ * `resolveAncestorIds` below), a same-statement total (so "x of y" can
+ * report the true match count across every page, not just this one), and a
+ * flag telling the caller whether a match's own subtree should stay
+ * browsable (D-05's text-only exception).
+ */
+export interface RequirementMatchPage {
+  matchedTotal: number;
+  matchedIds: number[];
+  ancestorIds: number[];
+  /** `matchedIds` rows plus `ancestorIds` rows when `include === "rows"`;
+   *  always `[]` when `include === "ids"` -- the below-threshold caller
+   *  already holds every row in memory and needs only the id sets. */
+  rows: RequirementTreeRow[];
+  nextCursor: RequirementRootsCursor | null;
+  expandMatchedSubtrees: boolean;
+}
+
+/**
+ * `.includes()` (`computeVisibleRequirementIds`'s own text-match check,
+ * `requirementsListRows.ts:249`, `requirement.name.toLowerCase().includes(
+ * normalizedFilter)`) has no wildcards; ILIKE's `%`/`_` do, and its default
+ * escape character is a bare backslash. Escaping `\` FIRST -- before `%`
+ * and `_` -- is what keeps a user-typed literal backslash from
+ * re-escaping the very characters the next two replacements introduce.
+ * Leaving these three characters live would let a search for e.g. `100%`
+ * match every row (T-28-09-02): a correctness regression from today's
+ * substring semantics, not merely a hardening measure.
+ */
+function escapeLikeTerm(term: string): string {
+  return term.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+/** Wraps an already-escaped term for a substring ILIKE match, mirroring
+ *  `.includes()`'s own unanchored-both-ends semantics. */
+function wrapLikeTerm(term: string): string {
+  return `%${escapeLikeTerm(term)}%`;
+}
+
+/**
+ * Line-for-line SQL translation of `resolveRequirementDisplayStatus`
+ * (utils/issueDisplayText.ts:89-99):
+ *
+ *   export function resolveRequirementDisplayStatus(row) {
+ *     return isRequirementLocked(row)
+ *       ? (row.externalStatus ?? row.status ?? null)
+ *       : (row.status ?? row.externalStatus ?? null);
+ *   }
+ *
+ * ...composed with `isRequirementLocked`
+ * (lib/services/linkedIssueUpsert.ts:46-53):
+ *
+ *   export function isRequirementLocked(row) {
+ *     if (!row) return false;
+ *     return (
+ *       row.isRequirement === true &&
+ *       row.integrationId != null &&
+ *       row.requirementDetachedAt == null
+ *     );
+ *   }
+ *
+ * `i."isRequirement" = true` is already guaranteed by every caller's own
+ * outer WHERE clause, but this CASE expression repeats it anyway so it
+ * reads as a complete, standalone translation of the lock predicate rather
+ * than one that silently depends on a WHERE clause the reader has to find
+ * elsewhere in the file. When this SQL and the TypeScript it mirrors
+ * drift, the person reading the SQL needs to see what it was supposed to
+ * match -- that is what the comment above is for.
+ */
+const REQUIREMENT_DISPLAY_STATUS_CASE = sql`
+  CASE
+    WHEN i."isRequirement" = true
+      AND i."integrationId" IS NOT NULL
+      AND i."requirementDetachedAt" IS NULL
+    THEN COALESCE(i."externalStatus", i.status)
+    ELSE COALESCE(i.status, i."externalStatus")
+  END
+`;
+
+/**
+ * SQL translation of `requirementSourceSortValue`
+ * (requirementsListRows.ts:451-455):
+ *
+ *   export function requirementSourceSortValue(requirement) {
+ *     if (requirement.integrationId == null) return 0;
+ *     if (requirement.requirementDetachedAt != null) return 1;
+ *     return 2;
+ *   }
+ *
+ * ...re-expressed as the three-way filter value
+ * `matchesRequirementSourceFilter` compares against
+ * (`SOURCE_FILTER_BY_RANK`, same file, lines 199-203) rather than that
+ * function's own 0/1/2 ranking: 0 -> "MANUAL", 1 -> "DETACHED",
+ * 2 -> "SYNCED".
+ */
+const REQUIREMENT_SOURCE_CASE = sql`
+  CASE
+    WHEN i."integrationId" IS NULL THEN 'MANUAL'
+    WHEN i."requirementDetachedAt" IS NOT NULL THEN 'DETACHED'
+    ELSE 'SYNCED'
+  END
+`;
+
+/**
+ * ANDs an array of SQL fragments together, left to right -- the adapters'
+ * own optional-clause-array idiom (28-RESEARCH Q1's own phrase for the
+ * pattern every `searchIssues` implementation already uses), translated to
+ * Kysely fragment composition: one place to add a fifth axis later, and
+ * each axis independently testable/removable without touching the others.
+ *
+ * Never joined with OR. `computeVisibleRequirementIds`'s own comment
+ * (requirementsListRows.ts:297-301) explains why a union would be wrong
+ * here -- it would surface a covered requirement the instant someone typed
+ * in the search box, the opposite of "show me the gaps" -- and this
+ * function is this SQL's ONE intersection point: the whole blast radius of
+ * "AND" silently becoming "OR" is the one line below, which is deliberate
+ * (see this file's own mutation-proof test for the consequence of
+ * flipping it).
+ */
+function andAll(fragments: RawBuilder<unknown>[]): RawBuilder<unknown> {
+  return fragments.reduce((acc, fragment, index) =>
+    index === 0 ? fragment : sql`${acc} AND ${fragment}`
+  );
+}
+
+/**
+ * 28-09 Task 2 adds the real implementation here: a `WITH RECURSIVE`
+ * ancestor-closure walk seeded from the page's whole matched-id array
+ * (generalized from `assertNoCycle`'s proven single-seed walk direction),
+ * plus the row-hydration query `include: "rows"` needs. Task 1's own scope
+ * is the three SQL axes, their intersection, and the counted/paged match
+ * set below -- every match's ancestor chain is stubbed empty and
+ * `include: "rows"` is not yet wired until that lands.
+ */
+
+/**
+ * Resolves the requirements list's four filter axes server-side
+ * (28-CONTEXT D-04), reproducing `computeVisibleRequirementIds`'s exact
+ * match/ancestor/descendant-flag semantics as a paged, counted match set
+ * with its ancestor chains:
+ *
+ * - Text, status and source are evaluated in SQL; coverage arrives
+ *   pre-computed as `coverageMatchIds` (an id list) -- see this function's
+ *   own argument doc below for why.
+ * - Active axes intersect (`andAll` above), never union.
+ * - `coverageMatchIds === null` means the axis is INACTIVE (unset, not yet
+ *   loaded, or errored) -- the oracle's own "degrades to inactive" rule,
+ *   so a coverage outage can never blank the other three axes' results. A
+ *   non-null EMPTY array is a fully active axis that matches nothing --
+ *   the two must never collapse into one behavior (T-28-09's own
+ *   empty-coverage-array distinction).
+ * - `matchedTotal` and the page come from ONE statement (`COUNT(*) OVER
+ *   ()`), never a second `COUNT` query that could disagree with the page
+ *   under concurrent writes.
+ * - The ancestor chain is resolved for the WHOLE PAGE's matched ids in one
+ *   additional round trip (`resolveAncestorIds`), never per-match.
+ * - Calling this with no active axis at all (every string axis empty AND
+ *   `coverageMatchIds === null`) is a caller error, not an unfiltered
+ *   read -- that read is `getRequirementRootsPage`'s job, and silently
+ *   falling back to it here would hide a caller bug that forgot to check
+ *   its own "is any filter active" condition before reaching for this
+ *   function.
+ */
+export async function resolveRequirementMatches(
+  args: {
+    projectId: number;
+    axes: RequirementTreeFilterAxes;
+    /**
+     * A pre-computed coverage match id list, or `null` when the axis is
+     * inactive. Computing coverage requires `getRequirementCoverage`'s
+     * whole-project rollup, which needs the CALLER's resolved project
+     * scope (`accessibleProjectIds`) -- this module still takes no
+     * session and performs no authorization, matching every sibling
+     * function in this file, so it cannot compute that rollup itself.
+     */
+    coverageMatchIds: number[] | null;
+    limit: number;
+    cursor?: RequirementRootsCursor | null;
+    include: "ids" | "rows";
+  },
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<RequirementMatchPage> {
+  const { projectId, axes, coverageMatchIds, limit, cursor, include } = args;
+
+  // `!== null`, deliberately never a truthy/`.length` check: a non-null
+  // empty array is still an ACTIVE axis (see this function's own doc
+  // comment above) -- a mutation to a truthy check is exactly what this
+  // file's structural test guards against.
+  const coverageAxisActive = coverageMatchIds !== null;
+
+  const axisFragments: RawBuilder<unknown>[] = [];
+  if (axes.search !== "") {
+    // Bound to a local first (rather than interpolating the property
+    // access directly) so the parameter this template binds is
+    // unambiguously the escaped/wrapped VALUE, never raw user input.
+    const likeTerm = wrapLikeTerm(axes.search);
+    axisFragments.push(sql`i.name ILIKE ${likeTerm}`);
+  }
+  if (axes.status !== "") {
+    axisFragments.push(
+      sql`(${REQUIREMENT_DISPLAY_STATUS_CASE}) = ${axes.status}`
+    );
+  }
+  if (axes.source !== "") {
+    axisFragments.push(sql`(${REQUIREMENT_SOURCE_CASE}) = ${axes.source}`);
+  }
+  if (coverageAxisActive) {
+    axisFragments.push(sql`i.id = ANY(${coverageMatchIds}::int[])`);
+  }
+
+  if (axisFragments.length === 0) {
+    throw new Error(
+      "resolveRequirementMatches: at least one filter axis must be active -- an unfiltered read is getRequirementRootsPage's job"
+    );
+  }
+
+  const cursorFragment = cursor
+    ? sql`AND (i.name, i.id) > (${cursor.name}, ${cursor.id})`
+    : sql``;
+
+  const { rows } = await sql<
+    RequirementTreeRow & { matchedTotal: number | bigint }
+  >`
+    SELECT
+      ${REQUIREMENT_TREE_COLUMNS},
+      ${requirementHasChildrenFragment(projectId)},
+      COUNT(*) OVER ()::int AS "matchedTotal"
+    FROM "Issue" i
+    WHERE i."projectId" = ${projectId}
+      AND i."isRequirement" = true
+      AND i."isDeleted" = false
+      AND (${andAll(axisFragments)})
+      ${cursorFragment}
+    ORDER BY i.name, i.id
+    LIMIT ${limit + 1}
+  `.execute(db.$qb);
+
+  const hasMore = rows.length > limit;
+  const pageRows = hasMore ? rows.slice(0, limit) : rows;
+  const lastRow = pageRows[pageRows.length - 1];
+  const nextCursor: RequirementRootsCursor | null =
+    hasMore && lastRow ? { name: lastRow.name, id: lastRow.id } : null;
+
+  const matchedTotal = Number(rows[0]?.matchedTotal ?? 0);
+  const matchedIds = pageRows.map((row) => row.id);
+
+  // The direct translation of the oracle's own `nonTextAxisActive` flag
+  // (requirementsListRows.ts:349-350), inverted: browsable-subtree
+  // expansion is allowed ONLY when text is the sole active axis. Pure
+  // JS over the already-computed axis flags -- no SQL needed, so this
+  // ships with Task 1's own axis/intersection work rather than waiting
+  // for Task 2's ancestor closure.
+  const expandMatchedSubtrees =
+    !coverageAxisActive &&
+    axes.status === "" &&
+    axes.source === "" &&
+    axes.search !== "";
+
+  // 28-09 Task 2 fills in the ancestor closure and `include: "rows"`
+  // hydration below -- this task's own scope is the axes, their
+  // intersection, and the counted/paged match set above.
+  void include;
+
+  return {
+    matchedTotal,
+    matchedIds,
+    ancestorIds: [],
+    rows: [],
+    nextCursor,
+    expandMatchedSubtrees,
+  };
 }
