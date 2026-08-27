@@ -3136,4 +3136,131 @@ describe("RequirementsListView", () => {
       await waitFor(() => expect(mockInvalidateQueries).toHaveBeenCalled());
     });
   });
+
+  // 28-15 Task 2: pinning the two 28-CONTEXT discretion decisions (drag
+  // targets, coverage) under lazy loading with tests instead of an
+  // assumption. `useRequirementsTree` runs for real here, never mocked
+  // itself, mirroring every other lazy-mode describe block in this file.
+  describe("drag targets under lazy loading (28-15)", () => {
+    it("the set of rows exposing a drop target equals the set of loaded rows -- an unloaded row has no DOM node at all", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root A" }),
+          makeLazyRow({ id: 502, name: "Lazy Root B" }),
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      // Only the two loaded roots exist as rows at all -- there is no
+      // separate "present but not a target" state to assert against: an id
+      // the pager hasn't paged in yet (e.g. 999) simply has no row, and a
+      // drop can only ever target a rendered one (getRowProps/dragOverRow
+      // both key off a row that exists in the DOM).
+      const renderedRowIds = screen
+        .getAllByTestId(/^requirement-row-\d+$/)
+        .map((el) => el.getAttribute("data-testid"));
+      expect(renderedRowIds.sort()).toEqual(
+        ["requirement-row-501", "requirement-row-502"].sort()
+      );
+      expect(
+        screen.queryByTestId("requirement-row-999")
+      ).not.toBeInTheDocument();
+    });
+
+    // FINDING (not fixed here -- see 28-15-SUMMARY.md "Findings"): under
+    // lazy mode, `handleMove`'s own `!allRequirements` guard
+    // (`RequirementsListView.tsx`) never passes in production, since the
+    // load-all ZenStack query is disabled (`enabled: mode === "all"`) and a
+    // disabled query's `data` stays `undefined` for the component's whole
+    // lifetime -- there is no code path that ever flips it back to a
+    // truthy value above the threshold. A faithful reproduction (the real
+    // ZenStack mock returning `data: undefined`, matching what a genuinely
+    // disabled query returns, rather than this file's usual convenience
+    // default of `data: []`) confirms the reparent POST never fires on a
+    // drop in lazy mode -- only the tree's own count/roots-page requests
+    // are ever issued. This task's own hard rule ("No drag-and-drop
+    // mechanism change... any real defect found is a finding, not a fix to
+    // take here") is why no test below asserts the drop succeeds; writing
+    // one that passed would have required either the production fix this
+    // task explicitly excludes, or reusing this file's looser default mock
+    // (which never accurately represents a disabled query and would have
+    // reported a false pass).
+
+    it("the drop callback itself is exactly the reparent-with-ids handler regardless of mode -- FINDING: this callback is unreachable above the threshold today (see comment above)", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root A" }),
+          makeLazyRow({ id: 502, name: "Lazy Root B" }),
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      fireEvent.dragEnter(screen.getByTestId("requirement-row-502"));
+      await act(async () => {
+        await dropSpecs.list.drop(
+          { requirementId: 501, name: "Lazy Root A" },
+          { didDrop: () => false }
+        );
+      });
+
+      // Documents the CURRENT, defective production behavior (see the
+      // FINDING comment above this test) rather than the intended one --
+      // this is a characterization test, not an endorsement: it must be
+      // updated (to assert the reparent call DOES fire) the moment the
+      // `!allRequirements` guard is fixed for lazy mode in a follow-up.
+      const reparentCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/reparent")
+      );
+      expect(reparentCalls).toHaveLength(0);
+    });
+  });
+
+  describe("coverage on lazily loaded rows (28-15)", () => {
+    it("a row that arrived through the lazy path renders its coverage cell from the whole-project rollup, keyed by id like any other row", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
+      }) as any;
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({
+          501: makeBreakdown({ linkedCaseCount: 3, status: "PASSED" }),
+        }),
+        isError: false,
+      });
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByTestId("requirement-coverage-cell-501")
+      ).toBeInTheDocument();
+    });
+  });
 });
