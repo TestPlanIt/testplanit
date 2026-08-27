@@ -313,6 +313,23 @@ export interface SyncOptions {
 }
 
 /**
+ * The single source of truth for values written to `IntegrationProject.syncStatus`
+ * — a nullable free-form `String` column (schema.zmodel), not an enum. Every
+ * write site in this file uses these constants instead of a raw string
+ * literal, and the cancel route / settings UI import this same object rather
+ * than re-declaring their own copies of the vocabulary. `cancelRequested` is
+ * an intermediate value written by a cancel request; `cancelled` is the
+ * terminal state a paged-to-completion import lands in when it honors one.
+ */
+export const SYNC_STATUS = {
+  syncing: "syncing",
+  cancelRequested: "cancel-requested",
+  cancelled: "cancelled",
+  completed: "completed",
+  error: "error",
+} as const;
+
+/**
  * Bulk-import caps. The import pulls issues from a linked external project that
  * were updated within a recency window, up to a cap. IMPORT_MAX_CAP is the
  * absolute ceiling enforced server-side regardless of the requested cap, so a
@@ -368,6 +385,13 @@ export interface ProjectImportResult {
   cappedAt: number;
   reachedCap: boolean;
   errors: string[];
+  /**
+   * True only when a paged-to-completion import was stopped by a cancel
+   * request (or its mapping row disappearing mid-run) rather than running to
+   * natural completion. Never overloads `errors` with a pseudo-error — a
+   * cancelled run is a distinct, honest outcome, not a failure.
+   */
+  cancelled: boolean;
 }
 
 /**
@@ -737,7 +761,7 @@ export class SyncService {
             // Mark this project as syncing (D-08)
             await db.integrationProject.update({
               where: { id: integrationProject.id },
-              data: { syncStatus: "syncing" },
+              data: { syncStatus: SYNC_STATUS.syncing },
             });
 
             // Fetch all issues stored for this integration (filtered to this external project)
@@ -831,7 +855,7 @@ export class SyncService {
             await db.integrationProject.update({
               where: { id: integrationProject.id },
               data: {
-                syncStatus: "completed",
+                syncStatus: SYNC_STATUS.completed,
                 lastSyncAt: new Date(),
                 syncError: null,
               },
@@ -845,7 +869,7 @@ export class SyncService {
               await db.integrationProject.update({
                 where: { id: integrationProject.id },
                 data: {
-                  syncStatus: "error",
+                  syncStatus: SYNC_STATUS.error,
                   syncError: error.message,
                 },
               });
@@ -1116,6 +1140,12 @@ export class SyncService {
     let matched = 0;
     let skipped = 0;
     let reachedCap = false;
+    // Cooperative cancellation (T-28-05-01..05): set when the per-page check
+    // below (gated on pagedToCompletion) observes a cancel request or finds
+    // the mapping row gone. Read once after the loop closes to choose the
+    // terminal syncStatus write and to report ProjectImportResult.cancelled
+    // honestly — never inferred from anything else.
+    let cancelled = false;
 
     // PROV-04 / CONTEXT P3f: issues THIS run wrote whose tracker parent ref
     // was present but not yet resolvable (the parent hadn't been paged in
@@ -1152,7 +1182,7 @@ export class SyncService {
     // Mark syncing — same per-project badge the admin re-sync uses.
     await db.integrationProject.update({
       where: { id: integrationProjectId },
-      data: { syncStatus: "syncing", syncError: null },
+      data: { syncStatus: SYNC_STATUS.syncing, syncError: null },
     });
 
     try {
@@ -1297,6 +1327,28 @@ export class SyncService {
           break;
         }
 
+        // Cooperative cancellation check (T-28-05-01/02/05) — gated on
+        // pagedToCompletion so the shipped recency-window import (D-06's
+        // generic Import Issues dialog) gains no per-page database read at
+        // all. Runs once per page (up to 50 issues), selects only the one
+        // column that matters, and treats a disappeared mapping row the
+        // same as an explicit cancel request rather than reading `undefined`
+        // off a null result and silently importing into a mapping that no
+        // longer exists.
+        if (pagedToCompletion) {
+          const cancelCheck = await db.integrationProject.findUnique({
+            where: { id: integrationProjectId },
+            select: { syncStatus: true },
+          });
+          if (
+            !cancelCheck ||
+            cancelCheck.syncStatus === SYNC_STATUS.cancelRequested
+          ) {
+            cancelled = true;
+            break;
+          }
+        }
+
         // GC breather between pages, mirroring performSync.
         if (hasMore) {
           await new Promise((resolve) => setTimeout(resolve, 10));
@@ -1318,6 +1370,16 @@ export class SyncService {
       // publish here — parent linkage isn't part of the indexed document,
       // and the rows were already indexed/published moments ago when they
       // were written.
+      //
+      // T-28-05: this pass runs whether or not `cancelled` is true. A
+      // cancellation stops the loop from starting more pages — it does not
+      // undo anything already committed, and `deferredParents` only ever
+      // contains rows THIS run wrote before it stopped. Completing their
+      // hierarchy links is bounded by that already-fixed list (never a
+      // project-wide rescan), so skipping it on a cancelled run would leave
+      // rows this run itself wrote with unresolved parents for no benefit —
+      // the contract is "rows already imported stay imported," not "rows
+      // already imported stay half-linked."
       for (const entry of deferredParents) {
         // Reuses resolveSyncedParentId verbatim — the same resolver the
         // inline write above uses — so the conditional identifier-clause
@@ -1378,10 +1440,14 @@ export class SyncService {
         }
       }
 
+      // The cancelled terminal write copies the completed write's shape
+      // exactly (same where, same .update, plus lastSyncAt) and lands in the
+      // same place a normal completion would — only the status value
+      // differs, chosen once by the `cancelled` flag set above.
       await db.integrationProject.update({
         where: { id: integrationProjectId },
         data: {
-          syncStatus: "completed",
+          syncStatus: cancelled ? SYNC_STATUS.cancelled : SYNC_STATUS.completed,
           lastSyncAt: new Date(),
           syncError: null,
         },
@@ -1390,7 +1456,7 @@ export class SyncService {
       await db.integrationProject
         .update({
           where: { id: integrationProjectId },
-          data: { syncStatus: "error", syncError: error.message },
+          data: { syncStatus: SYNC_STATUS.error, syncError: error.message },
         })
         .catch(() => {});
       errors.push(`Import failed: ${error.message}`);
@@ -1410,6 +1476,7 @@ export class SyncService {
       cappedAt: pagedToCompletion ? imported : cap,
       reachedCap,
       errors,
+      cancelled,
     };
   }
 

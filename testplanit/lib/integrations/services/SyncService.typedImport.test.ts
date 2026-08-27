@@ -352,6 +352,119 @@ describe("SyncService — performProjectImport pagedToCompletion mode (#501/28-0
 });
 
 // ---------------------------------------------------------------------------
+// Task 1 (28-05) — cooperative cancellation of a running paged-to-completion
+// import. `mockIpFindUnique` is called once up front by every run (the
+// mapping resolution) — these tests queue additional resolved values for the
+// per-page cancel re-read that follows.
+// ---------------------------------------------------------------------------
+describe("SyncService — performProjectImport cooperative cancellation (#501/28-05)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIpFindUnique.mockResolvedValue(makeMapping());
+    mockIpUpdate.mockResolvedValue({});
+    mockIntegrationFindUnique.mockResolvedValue({ provider: "JIRA" });
+    mockProjectsFindUnique.mockResolvedValue({ createdBy: "creator-1" });
+    mockIssueUpsert.mockResolvedValue({ id: 101 });
+  });
+
+  it("stops between pages when a cancel is requested", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter(makeFullPages(5));
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    mockIpFindUnique
+      .mockResolvedValueOnce(makeMapping()) // initial mapping resolution
+      .mockResolvedValueOnce({ syncStatus: "syncing" }) // cancel check after page 1
+      .mockResolvedValueOnce({ syncStatus: "cancel-requested" }); // cancel check after page 2
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      pagedToCompletion: true,
+    });
+
+    expect(adapter.searchIssues).toHaveBeenCalledTimes(2);
+    expect(result.cancelled).toBe(true);
+  });
+
+  it("keeps the rows it already imported when cancelled", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter(makeFullPages(5));
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    mockIpFindUnique
+      .mockResolvedValueOnce(makeMapping())
+      .mockResolvedValueOnce({ syncStatus: "syncing" })
+      .mockResolvedValueOnce({ syncStatus: "cancel-requested" });
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      pagedToCompletion: true,
+    });
+
+    expect(result.imported).toBe(2 * PAGE_SIZE);
+    // Every imported row went through upsert (never a compensating delete —
+    // this mocked client exposes no delete method at all, so a rollback
+    // attempt would have thrown rather than silently no-opped).
+    expect(mockIssueUpsert).toHaveBeenCalledTimes(2 * PAGE_SIZE);
+  });
+
+  it("ends a cancelled run in a terminal cancelled state", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter(makeFullPages(5));
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    mockIpFindUnique
+      .mockResolvedValueOnce(makeMapping())
+      .mockResolvedValueOnce({ syncStatus: "syncing" })
+      .mockResolvedValueOnce({ syncStatus: "cancel-requested" });
+
+    await service.performProjectImport(1, "ip-1", { pagedToCompletion: true });
+
+    const lastCall =
+      mockIpUpdate.mock.calls[mockIpUpdate.mock.calls.length - 1];
+    expect(lastCall[0].data.syncStatus).toBe("cancelled");
+    expect(lastCall[0].data.syncStatus).not.toBe("error");
+  });
+
+  it("stops when the mapping row disappears mid-run", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter(makeFullPages(5));
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    mockIpFindUnique
+      .mockResolvedValueOnce(makeMapping()) // initial mapping resolution
+      .mockResolvedValueOnce(null); // mapping gone by the first per-page check
+
+    const result = await service.performProjectImport(1, "ip-1", {
+      pagedToCompletion: true,
+    });
+
+    expect(adapter.searchIssues).toHaveBeenCalledTimes(1);
+    expect(result.cancelled).toBe(true);
+  });
+
+  it("does not re-read the mapping per page in recency mode", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter(makeFullPages(3));
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    await service.performProjectImport(1, "ip-1", {});
+
+    // Only the initial mapping resolution — the recency-window mode must
+    // gain no per-page cancel re-read (T-28-05-02).
+    expect(mockIpFindUnique).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Task 2 — the windowless, type-scoped count probe
 // ---------------------------------------------------------------------------
 describe("SyncService — previewProjectImport type-scoped windowless probe (#501/28-04)", () => {
