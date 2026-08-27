@@ -313,10 +313,6 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
     let c3Id: number;
     let c4Id: number;
     let c5Id: number;
-    let sideAId: number;
-    let sideBId: number;
-    let sideCId: number;
-    let sideDId: number;
     let sideEId: number;
     let sideFId: number;
     const allIssueIds: number[] = [];
@@ -443,10 +439,10 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
       c4Id = await createNode("chain-4-widget", c3Id);
       c5Id = await createNode("chain-5-widget-target", c4Id);
 
-      sideAId = await createNode("side-widget-a", null);
-      sideBId = await createNode("side-gadget-b", null);
-      sideCId = await createNode("side-widget-c", null, { status: "Closed" });
-      sideDId = await createNode("side-widget-d", null, {
+      await createNode("side-widget-a", null);
+      await createNode("side-gadget-b", null);
+      await createNode("side-widget-c", null, { status: "Closed" });
+      await createNode("side-widget-d", null, {
         integrationId,
         externalId: `${STAMP}-ext-sideD`,
         externalStatus: "Open",

@@ -166,7 +166,10 @@ export default function RequirementsWorkspace({
   const handleRequestEdit = useCallback(
     (issueId: number) => {
       goToRequirement(issueId);
-      setEditRequest((prev) => ({ id: issueId, token: (prev?.token ?? 0) + 1 }));
+      setEditRequest((prev) => ({
+        id: issueId,
+        token: (prev?.token ?? 0) + 1,
+      }));
     },
     [goToRequirement]
   );
@@ -268,7 +271,10 @@ export default function RequirementsWorkspace({
         setIsTreeCollapsed(true);
       }
     } else {
-      if (collapsedBeforeFullWidthRef.current === false && panel.isCollapsed()) {
+      if (
+        collapsedBeforeFullWidthRef.current === false &&
+        panel.isCollapsed()
+      ) {
         panel.expand();
         setIsTreeCollapsed(false);
       }

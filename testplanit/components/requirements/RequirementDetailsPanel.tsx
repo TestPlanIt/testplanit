@@ -219,7 +219,9 @@ export function RequirementDetailsPanel({
                 </Button>
               </Link>
             </TooltipTrigger>
-            <TooltipContent>{t("repository.cases.openFullPage")}</TooltipContent>
+            <TooltipContent>
+              {t("repository.cases.openFullPage")}
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>

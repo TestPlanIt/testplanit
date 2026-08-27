@@ -530,8 +530,8 @@ describe("RequirementCoveragePanel", () => {
     // The other project's case is reachable as a row, with its own project
     // named -- which is what makes the removed badge redundant rather than
     // lost information.
-    expect(
-      screen.getByTestId("requirement-covering-case-2")
-    ).toHaveTextContent("Other Project");
+    expect(screen.getByTestId("requirement-covering-case-2")).toHaveTextContent(
+      "Other Project"
+    );
   });
 });

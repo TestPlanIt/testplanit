@@ -66,7 +66,10 @@ export default function RequirementPermalink() {
 
   if (projectId == null) {
     return (
-      <div className="text-muted-foreground" data-testid="requirement-not-found">
+      <div
+        className="text-muted-foreground"
+        data-testid="requirement-not-found"
+      >
         {t("requirements.detail.notFound")}
       </div>
     );

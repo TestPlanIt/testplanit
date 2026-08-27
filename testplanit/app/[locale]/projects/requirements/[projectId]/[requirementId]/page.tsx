@@ -114,7 +114,11 @@ export default function RequirementDetailsPage() {
   // below resolves to null and the not-found card flashes on the way out --
   // telling the user their own delete "wasn't found" at the exact moment it
   // succeeded.
-  if (isDeleting || isProjectFlagPending || (requirementsEnabled && isLoading)) {
+  if (
+    isDeleting ||
+    isProjectFlagPending ||
+    (requirementsEnabled && isLoading)
+  ) {
     return (
       <div className="flex justify-center p-8">
         <LoadingSpinner />
@@ -195,9 +199,7 @@ export default function RequirementDetailsPage() {
         // nothing with it, which for a parent requirement is a lie the
         // confirmation dialog exists to prevent.
         onRequestDelete={
-          canAddEdit && !isCountLoading
-            ? () => setDeleteOpen(true)
-            : undefined
+          canAddEdit && !isCountLoading ? () => setDeleteOpen(true) : undefined
         }
       />
       {canAddEdit && (
