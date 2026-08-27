@@ -108,7 +108,7 @@ Before you save, an **Impact of this change** preview shows how many existing is
 
 ### Importing every classified issue
 
-Once at least one type is classified, each linked tracker project shows an **Import {name}** action inside this section. Unlike [bulk import](#importing-issues-in-bulk), it targets only the configured types and has no date window and no cap: confirming it imports every matching issue in the tracker, paged to completion.
+Once at least one type is classified, each linked tracker project shows an **Import** action (labeled with the tracker project's name) inside this section. Unlike [bulk import](#importing-issues-in-bulk), it targets only the configured types and has no date window and no cap: confirming it imports every matching issue in the tracker, paged to completion.
 
 Before it starts, a dialog states roughly how many matching issues the tracker holds — for example *"~42 issues of the selected types are in the tracker."* The count is approximate for some trackers. Saving a configuration change that newly classifies a type offers this same import unprompted, so you don't have to remember to run it afterward.
 
