@@ -68,6 +68,16 @@ export interface IssueSearchOptions {
    * returned page as a client-side fallback. See SyncService.performProjectImport.
    */
   updatedWithinDays?: number;
+  /**
+   * Restrict a search/import to specific issue types. Values are whatever the
+   * provider's own getIssueTypes() returns as `id` — numeric type ids on Jira,
+   * work item type names on Azure DevOps, tracker ids on Redmine, the literal
+   * issue/incident strings on GitLab, category ids on MantisBT. Adapters that
+   * can express it push it into the tracker query; adapters that cannot ignore
+   * it, and the import orchestrator applies the same predicate to each returned
+   * page as a client-side fallback. See SyncService.performProjectImport.
+   */
+  issueTypeIds?: string[];
 }
 
 export interface IssueData {

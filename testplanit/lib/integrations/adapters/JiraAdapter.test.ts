@@ -1992,6 +1992,111 @@ describe("JiraAdapter", () => {
       const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
       expect(decodedUrl).toContain("updated >= -90d");
     });
+
+    it("scopes the JQL to specific issue types via issuetype in (...)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["10001", "10002"],
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).toContain('issuetype in ("10001", "10002")');
+    });
+
+    it("produces today's exact JQL when issueTypeIds is absent or empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({});
+
+      const searchCallAbsent = mockFetch.mock.calls[1];
+      const decodedUrlAbsent = decodeURIComponent(
+        searchCallAbsent[0].replace(/\+/g, " ")
+      );
+      expect(decodedUrlAbsent).toContain(
+        "jql=created >= -30d ORDER BY created DESC"
+      );
+      expect(decodedUrlAbsent).not.toContain("issuetype in");
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({ issueTypeIds: [] });
+
+      const searchCallEmpty = mockFetch.mock.calls[2];
+      const decodedUrlEmpty = decodeURIComponent(
+        searchCallEmpty[0].replace(/\+/g, " ")
+      );
+      expect(decodedUrlEmpty).toContain(
+        "jql=created >= -30d ORDER BY created DESC"
+      );
+      expect(decodedUrlEmpty).not.toContain("issuetype in");
+    });
+
+    it("never lets a hostile issue type id break out of the JQL issuetype clause", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ['10001") OR project = "X'],
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).not.toContain('OR project = "X');
+    });
+
+    it("drops only the hostile id from a mixed list, keeping the safe one quoted", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            issues: [],
+            total: 0,
+            startAt: 0,
+          }),
+      });
+
+      await adapter.searchIssues({
+        issueTypeIds: ["10001", '10002") OR project = "X'],
+      });
+
+      const searchCall = mockFetch.mock.calls[1];
+      const decodedUrl = decodeURIComponent(searchCall[0].replace(/\+/g, " "));
+      expect(decodedUrl).toContain('issuetype in ("10001")');
+      expect(decodedUrl).not.toContain('OR project = "X');
+    });
   });
 
   describe("getProjects", () => {

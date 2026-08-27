@@ -71,6 +71,17 @@ function sanitizeUpstreamErrorBody(body: string): string {
 }
 
 /**
+ * JQL has no parameter binding, so a stored issue-type id that reaches this
+ * point unsanitized could break out of the `issuetype in (...)` clause it's
+ * interpolated into. Drop any id containing a double quote, backslash, or
+ * newline before it's ever quoted into JQL — callers are not assumed to have
+ * already run `sanitizeRequirementTypeIds` (requirementTypeConfig.ts).
+ */
+function sanitizeJqlIssueTypeIds(ids: string[]): string[] {
+  return ids.filter((id) => !/["\\\n\r]/.test(id));
+}
+
+/**
  * Jira integration adapter implementing OAuth authentication
  */
 export class JiraAdapter extends BaseAdapter {
@@ -1612,6 +1623,19 @@ export class JiraAdapter extends BaseAdapter {
     // N days. Jira's relative-date syntax (`-Nd`) keeps the query bounded.
     if (options.updatedWithinDays && options.updatedWithinDays > 0) {
       jql.push(`updated >= -${Math.floor(options.updatedWithinDays)}d`);
+    }
+
+    // Type-scoped import (SCALE-01) — numeric type ids match getIssueTypes'
+    // own `id` shape. MEDIUM confidence: this numeric-id `issuetype in (...)`
+    // syntax is Atlassian-community-sourced, not an official doc page. If a
+    // live Jira instance rejects it, the fallback is resolving these ids to
+    // type NAMES via getIssueTypes and quoting those instead — see 28-RESEARCH
+    // Q1 and revisit here if 28-18's live-tracker UAT surfaces a rejection.
+    if (options.issueTypeIds?.length) {
+      const safeIds = sanitizeJqlIssueTypeIds(options.issueTypeIds);
+      if (safeIds.length > 0) {
+        jql.push(`issuetype in (${safeIds.map((id) => `"${id}"`).join(", ")})`);
+      }
     }
 
     // Ensure the query is always bounded - Jira rejects unbounded queries
