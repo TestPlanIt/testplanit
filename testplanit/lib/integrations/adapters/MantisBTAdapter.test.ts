@@ -259,6 +259,36 @@ describe("MantisBTAdapter", () => {
       expect(res.issues).toEqual([]);
       expect(res.hasMore).toBe(true);
     });
+
+    it("ignores issueTypeIds entirely — the request URL and returned issues are unchanged", async () => {
+      await authenticate();
+      const page = [
+        { id: 1, summary: "login bug" },
+        { id: 2, summary: "logout works" },
+      ];
+      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+
+      const withoutTypes = await adapter.searchIssues({
+        projectId: "3",
+        limit: 10,
+      });
+      const urlWithoutTypes = mockFetch.mock.calls[0][0];
+
+      mockFetch.mockClear();
+      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+
+      const withTypes = await adapter.searchIssues({
+        projectId: "3",
+        limit: 10,
+        issueTypeIds: ["10", "20"],
+      });
+      const urlWithTypes = mockFetch.mock.calls[0][0];
+
+      expect(urlWithTypes).toBe(urlWithoutTypes);
+      expect(withTypes.issues).toEqual(withoutTypes.issues);
+      expect(withTypes.total).toBe(withoutTypes.total);
+      expect(withTypes.hasMore).toBe(withoutTypes.hasMore);
+    });
   });
 
   describe("createIssue", () => {

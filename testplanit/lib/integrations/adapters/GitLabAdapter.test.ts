@@ -472,6 +472,85 @@ describe("GitLabAdapter", () => {
         name: "Incident",
       });
     });
+
+    it("issues exactly one request with no issue_type param when no types are selected", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockGitLabIssue]),
+      });
+
+      await adapter.searchIssues({});
+
+      // beforeEach's authenticate() call is calls[0]; exactly one search call follows.
+      expect(mockFetch.mock.calls).toHaveLength(2);
+      const url = mockFetch.mock.calls[1][0];
+      expect(url).not.toContain("issue_type");
+    });
+
+    it("issues exactly one request carrying issue_type=<value> when one type is selected", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([mockGitLabIssue]),
+      });
+
+      await adapter.searchIssues({ issueTypeIds: ["incident"] });
+
+      expect(mockFetch.mock.calls).toHaveLength(2);
+      const url = mockFetch.mock.calls[1][0];
+      expect(url).toContain("issue_type=incident");
+    });
+
+    it("fans out sequentially, one request per selected type, concatenated in selection order", async () => {
+      const issueResult = { ...mockGitLabIssue, iid: 1 };
+      const incidentResult = { ...mockGitLabIssue, iid: 2 };
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([issueResult]),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([incidentResult]),
+        });
+
+      const result = await adapter.searchIssues({
+        issueTypeIds: ["issue", "incident"],
+      });
+
+      // beforeEach's authenticate() = calls[0]; two sequential per-type calls follow.
+      expect(mockFetch.mock.calls).toHaveLength(3);
+      expect(mockFetch.mock.calls[1][0]).toContain("issue_type=issue");
+      expect(mockFetch.mock.calls[2][0]).toContain("issue_type=incident");
+      // Concatenated in selection order, not re-sorted.
+      expect(result.issues.map((i) => i.id)).toEqual(["1", "2"]);
+    });
+
+    it("reports hasMore true when ANY selected type's page reported more", async () => {
+      const fullPage = Array.from({ length: 2 }, (_, i) => ({
+        ...mockGitLabIssue,
+        iid: i + 1,
+      }));
+      const shortPage = [{ ...mockGitLabIssue, iid: 99 }];
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(fullPage),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(shortPage),
+        });
+
+      const result = await adapter.searchIssues({
+        limit: 2,
+        issueTypeIds: ["issue", "incident"],
+      });
+
+      // First type's page is full (length === limit) -> that type's hasMore
+      // is true; the second type's short page alone would be false. The
+      // combined result must still be true.
+      expect(result.hasMore).toBe(true);
+    });
   });
 
   describe("updateIssue", () => {

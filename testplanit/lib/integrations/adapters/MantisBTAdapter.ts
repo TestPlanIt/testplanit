@@ -170,6 +170,18 @@ export class MantisBTAdapter extends BaseAdapter {
       return { issues: [], total: 0, hasMore: false };
     }
 
+    // NOTE ON options.issueTypeIds (SCALE-01): deliberately NOT read here.
+    // MantisBT's REST API has no category/type filter parameter (MEDIUM/LOW
+    // confidence — forum-sourced, MantisBT's own official REST docs are thin
+    // on this) — its "issue types" are really project categories surfaced by
+    // getIssueTypes. Type-scoping for this provider is therefore applied by
+    // the import orchestrator against each returned page (28-04 owns it),
+    // never inside this method. Filtering here instead would let a page
+    // filter down to zero and trip SyncService's unconditional
+    // `if (result.issues.length === 0) break`, silently ending an import
+    // that still had thousands of matching issues behind it — the same trap
+    // this method's `hasMore` fix (28-02) already had to route around for
+    // the query-text filter below. That's why this stays a no-op.
     const pageSize = options.query ? Math.max(limit, 100) : limit;
     const page = options.offset ? Math.floor(options.offset / pageSize) + 1 : 1;
     const params = new URLSearchParams({

@@ -222,6 +222,38 @@ export class GitLabAdapter extends BaseAdapter {
     total: number;
     hasMore: boolean;
   }> {
+    // GitLab's `issue_type` filter accepts exactly ONE value, unlike Jira/ADO's
+    // IN-list syntax — see 28-RESEARCH Q1 (CITED, docs.gitlab.com/api/issues/).
+    // For >1 selected type we fetch each type sequentially (never in parallel:
+    // GitLab pagination doesn't compose across merged cursors from concurrent
+    // queries) and concatenate in selection order, letting the import
+    // orchestrator's own `seen` de-dup Set (SyncService.ts) merge the results
+    // the same way it already does for this adapter's degraded recency-window
+    // path. `[undefined]` (no selected types) preserves today's single request.
+    const types = options.issueTypeIds?.length
+      ? options.issueTypeIds
+      : [undefined];
+
+    let issues: IssueData[] = [];
+    let total = 0;
+    let hasMore = false;
+    for (const issueType of types) {
+      const page = await this.searchIssuesForType(options, issueType);
+      issues = issues.concat(page.issues);
+      total += page.total;
+      hasMore = hasMore || page.hasMore;
+    }
+    return { issues, total, hasMore };
+  }
+
+  /**
+   * The single-request body searchIssues fans out over — one call per
+   * selected issue type (or one call total when none are selected).
+   */
+  private async searchIssuesForType(
+    options: IssueSearchOptions,
+    issueType: string | undefined
+  ): Promise<{ issues: IssueData[]; total: number; hasMore: boolean }> {
     const projectPath = this.resolveProjectPath(options.projectId);
     const encoded = encodeURIComponent(projectPath);
     const params = new URLSearchParams({
@@ -251,6 +283,7 @@ export class GitLabAdapter extends BaseAdapter {
         params.set("state", "opened");
       }
     }
+    if (issueType) params.set("issue_type", issueType);
     // Use full-text search order when there's a query; otherwise updated order
     params.set("order_by", options.query ? "created_at" : "updated_at");
     params.set("sort", "desc");
