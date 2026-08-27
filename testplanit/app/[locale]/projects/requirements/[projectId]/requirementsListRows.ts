@@ -24,7 +24,16 @@ import type { Issue } from "~/zenstack/models";
  * mocking the drag-drop seam.
  */
 
-export type RequirementRow = Issue & { depth: number; hasChildren: boolean };
+export type RequirementRow = Issue & {
+  depth: number;
+  hasChildren: boolean;
+  /** Set only when a filter is active: `true` for a server-matched row,
+   *  `false` for an ancestor-context row shown solely to make a match
+   *  reachable. Left `undefined` when not filtering -- every row is simply
+   *  in scope and no match/ancestor distinction applies (28-12, read by
+   *  28-14's renderer). */
+  isMatch?: boolean;
+};
 
 export interface RequirementListSortConfig {
   column: string;
@@ -591,4 +600,126 @@ export function flattenRequirementRows({
   walk(null, 0);
 
   return rows;
+}
+
+/**
+ * The shape a lazily loaded row already carries per row, straight from the
+ * server (28-08's `RequirementTreeRow`): `hasChildren` is a server-computed
+ * fact here, never re-derived from `childrenMap` -- exactly 28-RESEARCH
+ * Pitfall 1, where a root whose children have not been fetched yet would
+ * otherwise answer `false`.
+ */
+export type LazyRequirementSourceRow = Issue & { hasChildren: boolean };
+
+export interface FlattenLazyRequirementRowsArgs {
+  /**
+   * Every row currently held in the client's partial forest -- some roots,
+   * some fetched children, plus (under an active filter) matches and their
+   * ancestor chain. Order does not matter: this function derives its own
+   * parent/child grouping from `parentId` and re-sorts every sibling group
+   * itself, the same as the full-data flatten above.
+   */
+  rows: LazyRequirementSourceRow[];
+  expandedByIssueId: Record<number, boolean>;
+  sortConfig: RequirementListSortConfig;
+  coverage: RequirementCoverageResponse | undefined;
+  /**
+   * The server's matched-id set under an active filter. `null`/`undefined`
+   * means "not filtering" -- every row is in scope and `isMatch` is left
+   * `undefined` rather than forced to `true` (see `RequirementRow.isMatch`).
+   */
+  matchedIds?: Set<number> | null;
+}
+
+/**
+ * The lazy-mode sibling of `flattenRequirementRows` above (28-12,
+ * SCALE-02): a SEPARATE function rather than a mode flag threaded through
+ * the one above, because the two answer a different question about "does
+ * this row have children" -- the full-data flatten can only ever ask the
+ * in-memory `childrenMap`, which is complete by construction; this one must
+ * trust a server-supplied flag instead, since the loaded set is, by
+ * definition, incomplete. A mode flag would need to branch on that question
+ * inside every part of the walk; two small functions sharing what genuinely
+ * IS shared -- the comparator (`compareRequirements`) and the `depth < 100`
+ * cap -- reads clearer than one function with two personalities.
+ *
+ * Partial-forest assembly rules (28-12 `<interfaces>`):
+ * - A row whose `parentId` is not itself present in the loaded set renders
+ *   at the top level of what is displayed, exactly like a true root -- it
+ *   is never dropped and never re-parented to some other loaded row.
+ * - A row is never emitted twice, however it was delivered (as a root, as a
+ *   fetched child, or as an ancestor of a match).
+ * - Ordering within a sibling group uses the SAME comparator the full-data
+ *   flatten uses.
+ * - The depth used for indentation is the row's depth WITHIN THE LOADED
+ *   FOREST, not its true depth in the tracker -- an intermediate ancestor
+ *   that has not been loaded would otherwise have to be fabricated as a
+ *   placeholder row, which is worse than an indentation level that is
+ *   sometimes shallower than the tracker's own hierarchy.
+ */
+export function flattenLazyRequirementRows({
+  rows,
+  expandedByIssueId,
+  sortConfig,
+  coverage,
+  matchedIds,
+}: FlattenLazyRequirementRowsArgs): RequirementRow[] {
+  const isFiltering = matchedIds != null;
+
+  const loadedIds = new Set<number>(rows.map((row) => row.id));
+
+  // Group by parent WITHIN the loaded set only -- a row whose parentId is
+  // not itself a loaded row's id renders at the top level (the orphan rule
+  // above), keyed the same as a true root (`null`).
+  const childrenByParent = new Map<number | null, LazyRequirementSourceRow[]>();
+  rows.forEach((row) => {
+    const parentKey =
+      row.parentId !== null && loadedIds.has(row.parentId)
+        ? row.parentId
+        : null;
+    if (!childrenByParent.has(parentKey)) childrenByParent.set(parentKey, []);
+    childrenByParent.get(parentKey)!.push(row);
+  });
+
+  const output: RequirementRow[] = [];
+  const emitted = new Set<number>();
+
+  // Depth cap mirroring `flattenRequirementRows`'s own guard (T-26.2-10 /
+  // T-28-12-03): a malformed or duplicated-parent loaded set cannot hang
+  // this walk either.
+  const walk = (parentKey: number | null, depth: number): void => {
+    if (!(depth < 100)) return;
+
+    const siblings = (childrenByParent.get(parentKey) ?? []).filter(
+      (row) => !emitted.has(row.id)
+    );
+
+    const sorted = [...siblings].sort((a, b) =>
+      compareRequirements(a, b, sortConfig, coverage)
+    );
+
+    for (const row of sorted) {
+      // Delivered more than once (e.g. once as a fetched child, again as
+      // an ancestor of a different match) -- emit it exactly once.
+      if (emitted.has(row.id)) continue;
+      emitted.add(row.id);
+
+      const isMatch = isFiltering ? matchedIds!.has(row.id) : undefined;
+
+      output.push({
+        ...row,
+        depth,
+        hasChildren: row.hasChildren,
+        ...(isMatch === undefined ? {} : { isMatch }),
+      } as RequirementRow);
+
+      if (row.hasChildren && expandedByIssueId[row.id] === true) {
+        walk(row.id, depth + 1);
+      }
+    }
+  };
+
+  walk(null, 0);
+
+  return output;
 }

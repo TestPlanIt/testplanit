@@ -1402,4 +1402,43 @@ describe("flattenRequirementRows", () => {
     expect(rows.length).toBeLessThanOrEqual(100);
     expect(rows.every((row) => row.depth < 100)).toBe(true);
   });
+
+  // 28-12 regression: this suite is 26.2's own proof that hierarchy
+  // survives sort and filter, and 28-12 is the first thing to touch
+  // `flattenRequirementRows` since. The expected shape below was captured
+  // by running this exact fixture against the pre-28-12 implementation --
+  // a full in-memory tree must produce byte-identical output after the
+  // lazy-mode sibling (`flattenLazyRequirementRows`) and the optional
+  // `isMatch` field were added alongside it.
+  it("28-12 regression: a whole tree in memory produces byte-identical output to the pre-lazy-mode implementation", () => {
+    const requirements = [
+      makeRequirement({ id: 1, name: "Alpha Root", parentId: null }),
+      makeRequirement({ id: 2, name: "Beta Child", parentId: 1 }),
+      makeRequirement({ id: 3, name: "Charlie Child", parentId: 1 }),
+      makeRequirement({ id: 5, name: "Delta Grandchild", parentId: 2 }),
+      makeRequirement({ id: 4, name: "Echo Root", parentId: null }),
+    ];
+    const { childrenMap } = buildRequirementMaps(requirements);
+
+    const rows = flattenRequirementRows({
+      childrenMap,
+      visibleRequirementIds: null,
+      expandedByIssueId: { 1: true, 2: true },
+      sortConfig: nameAsc,
+      coverage: undefined,
+    });
+
+    expect(rows.map((r) => r.id)).toEqual([1, 2, 5, 3, 4]);
+    expect(rows.map((r) => r.depth)).toEqual([0, 1, 2, 1, 0]);
+    expect(rows.map((r) => r.hasChildren)).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+    ]);
+    // The non-lazy path is unaffected by the new optional field: no row
+    // carries an `isMatch` key at all, not even `undefined` explicitly set.
+    rows.forEach((row) => expect("isMatch" in row).toBe(false));
+  });
 });
