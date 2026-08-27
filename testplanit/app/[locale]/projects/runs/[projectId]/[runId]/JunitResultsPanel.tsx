@@ -189,7 +189,9 @@ export default function JunitResultsPanel({
     [t, session, projectId, handleJunitResultAttachmentSelect]
   );
 
-  // Jump to the page holding the case selected via the URL param.
+  // Jump to the page holding the case deep-linked via the `selectedCase` param.
+  // An automated run opens no details sheet for it — the row is highlighted and
+  // scrolled to in place, so the page has to hold it first.
   useEffect(() => {
     if (
       selectedTestCaseId &&
@@ -267,6 +269,7 @@ export default function JunitResultsPanel({
           onSortChange={handleJunitSortChange}
           onSortColumn={onSortColumn}
           onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
+          selectedRowId={selectedTestCaseId}
           storageKey="run-junit-results"
         />
         {!isJUnitLoading && (!jUnitSuites || jUnitSuites.length === 0) && (
