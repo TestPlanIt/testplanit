@@ -312,9 +312,14 @@ const RequirementsListView = forwardRef<
     fetchChildren,
     refetch: refetchLazyTree,
     isFiltering: treeIsFiltering,
+    matchedTotal,
+    loadedCount: treeLoadedCount,
     matchedIds: treeMatchedIds,
     ancestorIds: treeAncestorIds,
     expandMatchedSubtrees,
+    hasMore: treeHasMore,
+    onLoadMore: treeOnLoadMore,
+    onRetryLoadMore: treeOnRetryLoadMore,
   } = useRequirementsTree({
     projectId: Number(projectId),
     filters: treeFilters,
@@ -1145,6 +1150,22 @@ const RequirementsListView = forwardRef<
     ? (projectTotal ?? 0) === 0
     : requirements.length === 0;
 
+  // SCALE-03 (D-08): the matched-aware `x`/`y` pair the toolbar renders
+  // verbatim, both sourced from the hook -- never re-derived from
+  // `rows.length`, which counts ancestors and expanded children too.
+  // Unfiltered: x = rows loaded, y = the project's classified total.
+  // Filtered: x = loaded matches, y = the server's match total -- ancestors
+  // are context, never counted (otherwise "Showing 24 of 20", the exact
+  // symptom this arithmetic exists to avoid). `treeLoadedCount` already
+  // carries this distinction for every mode (28-11's own contract:
+  // unfiltered lazy = roots loaded; unfiltered all = the project total,
+  // since this component already holds every row below the threshold;
+  // filtered, either mode = loaded matches).
+  const showingLoaded = treeLoadedCount;
+  const showingTotal = treeIsFiltering
+    ? (matchedTotal ?? 0)
+    : (projectTotal ?? 0);
+
   return (
     <>
       {isEmpty ? (
@@ -1219,6 +1240,20 @@ const RequirementsListView = forwardRef<
                 search input left and the whole filter set right
                 (operator UAT). */}
             <div className="flex flex-wrap items-center gap-2">
+              {/* SCALE-03/D-08: "Showing x of y" sits beside the filters,
+                  inside the SAME flex-wrap row so it never displaces the
+                  Selects at a narrow width -- it simply wraps to its own
+                  line alongside them, same as any other item in this row. */}
+              <span
+                className="shrink-0 whitespace-nowrap text-xs text-muted-foreground"
+                data-testid="requirements-list-showing"
+              >
+                {t("common.pagination.showing")}{" "}
+                {t("common.pagination.loadedOfTotal", {
+                  loaded: showingLoaded,
+                  total: showingTotal,
+                })}
+              </span>
               <Select
                 value={filters.coverage || "all"}
                 disabled={coverageFilterUnavailable}
@@ -1353,7 +1388,17 @@ const RequirementsListView = forwardRef<
               isLoading={requirementsLoading}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              hasMore={false}
+              // SCALE-02 (D-08): real infinite scroll, replacing the
+              // hardcoded literal -- the hook's own `hasMore`/`onLoadMore`/
+              // `loadedCount` already answer correctly for EVERY mode
+              // (always `false`/a no-op in "all" mode, per 28-11's own
+              // contract), so these are wired unconditionally rather than
+              // branched on `isLazy`.
+              hasMore={treeHasMore}
+              onLoadMore={treeOnLoadMore}
+              loadedCount={treeLoadedCount}
+              loadMoreError={lazyLoadMoreError}
+              onRetryLoadMore={treeOnRetryLoadMore}
               getRowId={(row) => String(row.id)}
               // 48 stays the estimate even with the two new case-count cells
               // (D-11b): the virtualizer measures every row's real height

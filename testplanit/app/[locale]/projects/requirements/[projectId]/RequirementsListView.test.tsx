@@ -174,32 +174,40 @@ vi.mock("~/hooks/useRequirementCoveringCases", () => ({
 
 // The real hook owns TanStack Virtual + an IntersectionObserver, neither of
 // which produce layout under jsdom -- replace with a pass-through that
-// renders every flattened row (DataTable.virtualized.test.tsx's own
-// convention, lines 7-42), so this suite exercises the REAL DataTable and
-// the REAL column defs rather than a stubbed table.
+// renders every flattened row and captures the latest `onLoadMore`/options
+// (DataTable.virtualized.test.tsx's own convention, lines 12-42), so a test
+// can simulate the sentinel firing by calling `lastOnLoadMore()` directly,
+// and this suite still exercises the REAL DataTable and the REAL column
+// defs rather than a stubbed table.
 const virtualizedHookMock = vi.hoisted(() => ({
   scrollToIndex: vi.fn(),
+  lastOnLoadMore: null as null | (() => void),
+  lastOpts: null as Record<string, unknown> | null,
 }));
 vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
   useVirtualizedInfiniteList: (opts: {
     count: number;
     onLoadMore: () => void;
-  }) => ({
-    scrollRef: () => {},
-    sentinelRef: { current: null },
-    virtualizer: { scrollToIndex: virtualizedHookMock.scrollToIndex },
-    virtualItems: Array.from({ length: opts.count }, (_, i) => ({
-      key: i,
-      index: i,
-      start: i * 48,
-      size: 48,
-      end: (i + 1) * 48,
-      lane: 0,
-    })),
-    totalSize: opts.count * 48,
-    measureElement: () => {},
-    maxHeight: null,
-  }),
+  }) => {
+    virtualizedHookMock.lastOnLoadMore = opts.onLoadMore;
+    virtualizedHookMock.lastOpts = opts as unknown as Record<string, unknown>;
+    return {
+      scrollRef: () => {},
+      sentinelRef: { current: null },
+      virtualizer: { scrollToIndex: virtualizedHookMock.scrollToIndex },
+      virtualItems: Array.from({ length: opts.count }, (_, i) => ({
+        key: i,
+        index: i,
+        start: i * 48,
+        size: 48,
+        end: (i + 1) * 48,
+        lane: 0,
+      })),
+      totalSize: opts.count * 48,
+      measureElement: () => {},
+      maxHeight: null,
+    };
+  },
 }));
 
 // IssueStatusDisplay's own useIssueColors() hook fetches Color rows through
@@ -402,6 +410,15 @@ function makeTreeFetchMock(options: {
   mode: "all" | "lazy";
   total: number;
   rootsRows?: Array<Record<string, unknown>>;
+  /** A sequence of roots-window pages, consumed one per GET (the last is
+   *  reused if a test calls `onLoadMore` beyond the queue's length) -- lets
+   *  a test prove `hasMore`/pagination/dedup across a real `onLoadMore`
+   *  round trip rather than a single static page. Takes precedence over
+   *  `rootsRows` when both are supplied. */
+  rootsPages?: Array<{
+    rows: Array<Record<string, unknown>>;
+    nextCursor?: unknown;
+  }>;
   childrenByParentId?: Record<number, Array<Record<string, unknown>>>;
   countOk?: boolean;
   /** A sequence of filter/match-endpoint (POST) pages, consumed one per
@@ -415,6 +432,7 @@ function makeTreeFetchMock(options: {
     expandMatchedSubtrees?: boolean;
   }>;
 }) {
+  let rootsPageIndex = 0;
   let matchPageIndex = 0;
   return vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
@@ -468,6 +486,21 @@ function makeTreeFetchMock(options: {
         });
       }
       if (method === "GET") {
+        if (options.rootsPages) {
+          const page =
+            options.rootsPages[
+              Math.min(rootsPageIndex, options.rootsPages.length - 1)
+            ];
+          rootsPageIndex += 1;
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              total: options.total,
+              rows: page.rows,
+              nextCursor: page.nextCursor ?? null,
+            }),
+          });
+        }
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -646,6 +679,8 @@ beforeEach(() => {
   dropCallCount.current = 0;
   dragSpecRef.current = null;
   capturedFetchOptionsList.length = 0;
+  virtualizedHookMock.lastOnLoadMore = null;
+  virtualizedHookMock.lastOpts = null;
   global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   useFindManyIssueMock.mockReturnValue({
     data: [],
@@ -2146,6 +2181,241 @@ describe("RequirementsListView", () => {
       // false`) is the same disabled rule the pre-existing "with coverage
       // unavailable" test proves in "all" mode -- unaffected by this plan.
       expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
+    });
+  });
+
+  // 28-14 Task 2 (SCALE-02/SCALE-03): the hardcoded `hasMore={false}`
+  // literal is gone -- the roots pager's real `hasMore`/`onLoadMore`/
+  // `loadedCount`/`loadMoreError`/`onRetryLoadMore` are wired at the
+  // `<DataTable virtualized>` call site, and the toolbar renders "Showing x
+  // of y" from the hook's own matched-aware counts. `virtualizedHookMock`
+  // captures the REAL `onLoadMore` the engine passes to
+  // `useVirtualizedInfiniteList` so a test can simulate the sentinel firing
+  // directly (DataTable.virtualized.test.tsx's own convention), since jsdom
+  // has no IntersectionObserver.
+  describe("infinite scroll + showing x of y (28-14)", () => {
+    it("hasMore is true while the roots cursor has more, and false once exhausted", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsPages: [
+          {
+            rows: [makeLazyRow({ id: 501, name: "Root A" })],
+            nextCursor: { name: "Root B", id: 502 },
+          },
+          {
+            rows: [makeLazyRow({ id: 502, name: "Root B" })],
+            nextCursor: null,
+          },
+        ],
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+      expect(virtualizedHookMock.lastOpts?.hasMore).toBe(true);
+
+      await act(async () => {
+        virtualizedHookMock.lastOnLoadMore?.();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+      expect(virtualizedHookMock.lastOpts?.hasMore).toBe(false);
+    });
+
+    it("the sentinel firing loads the next window and appends it, without duplicating a row", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsPages: [
+          {
+            rows: [makeLazyRow({ id: 501, name: "Root A" })],
+            nextCursor: { name: "Root B", id: 502 },
+          },
+          {
+            rows: [makeLazyRow({ id: 502, name: "Root B" })],
+            nextCursor: null,
+          },
+        ],
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        virtualizedHookMock.lastOnLoadMore?.();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+      expect(screen.getAllByTestId("requirement-row-501")).toHaveLength(1);
+      expect(screen.getAllByTestId("requirement-row-502")).toHaveLength(1);
+    });
+
+    it("a failed page sets the retry affordance and keeps the already-loaded rows; retrying recovers", async () => {
+      let rootsCallCount = 0;
+      global.fetch = vi.fn((url: string) => {
+        if (typeof url === "string" && url.includes("countOnly=1")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ total: 600, threshold: 500, mode: "lazy" }),
+          });
+        }
+        if (typeof url === "string" && url.includes("/requirements/tree")) {
+          rootsCallCount += 1;
+          if (rootsCallCount === 1) {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({
+                total: 600,
+                rows: [makeLazyRow({ id: 501, name: "Root A" })],
+                nextCursor: { name: "Root B", id: 502 },
+              }),
+            });
+          }
+          if (rootsCallCount === 2) {
+            return Promise.resolve({ ok: false, status: 500 });
+          }
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              total: 600,
+              rows: [makeLazyRow({ id: 502, name: "Root B" })],
+              nextCursor: null,
+            }),
+          });
+        }
+        return Promise.resolve({ ok: true });
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        virtualizedHookMock.lastOnLoadMore?.();
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirements-list-load-more-retry")
+        ).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("requirements-list-load-more-retry"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+      expect(
+        screen.queryByTestId("requirements-list-load-more-retry")
+      ).not.toBeInTheDocument();
+    });
+
+    it("unfiltered, the toolbar reads Showing {loaded} of {total} with the project's classified total", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Root A" }),
+          makeLazyRow({ id: 502, name: "Root B" }),
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId("requirements-list-showing").textContent).toBe(
+        "common.pagination.showing common.pagination.loadedOfTotal:2·600"
+      );
+    });
+
+    it("filtered, the toolbar reads the loaded match count and the server's match total -- never larger than the total", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        matchPages: [
+          {
+            matchedTotal: 25,
+            matchedIds: [501, 502, 503],
+            ancestorIds: [],
+            expandMatchedSubtrees: true,
+            rows: [
+              makeLazyRow({ id: 501, name: "Findme A" }),
+              makeLazyRow({ id: 502, name: "Findme B" }),
+              makeLazyRow({ id: 503, name: "Findme C" }),
+            ],
+          },
+        ],
+      }) as any;
+
+      renderView();
+
+      fireEvent.change(await screen.findByTestId("requirements-filter-input"), {
+        target: { value: "findme" },
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId("requirements-list-showing").textContent).toBe(
+        "common.pagination.showing common.pagination.loadedOfTotal:3·25"
+      );
+    });
+
+    it("below the threshold, the showing text still renders, with loaded equal to total when unfiltered", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root A" }),
+          makeRequirement({ id: 2, name: "Root B" }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("requirements-list-showing").textContent
+        ).toBe("common.pagination.showing common.pagination.loadedOfTotal:2·2");
+      });
+    });
+
+    it("the showing text sits inside the toolbar's own flex-wrap row, never displacing the filter controls", () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: [makeRequirement({ id: 1, name: "Root A" })],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      renderView();
+
+      const showing = screen.getByTestId("requirements-list-showing");
+      // Same flex-wrap ancestor as the Coverage/Status/Source Selects
+      // (D-08's "beside the filters", verified structurally -- jsdom has no
+      // layout engine to compute real wrapping at a narrow viewport width,
+      // so this proves the STRUCTURE that makes wrapping possible; the
+      // actual wrap behavior at a narrow width is a manual/UAT check).
+      const filterRow = showing.closest(".flex-wrap");
+      expect(filterRow).not.toBeNull();
+      expect(filterRow).toContainElement(
+        screen.getByTestId("requirements-coverage-filter")
+      );
     });
   });
 
