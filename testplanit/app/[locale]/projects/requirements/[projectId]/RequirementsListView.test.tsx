@@ -3332,26 +3332,17 @@ describe("RequirementsListView", () => {
       ).not.toBeInTheDocument();
     });
 
-    // FINDING (not fixed here -- see 28-15-SUMMARY.md "Findings"): under
-    // lazy mode, `handleMove`'s own `!allRequirements` guard
-    // (`RequirementsListView.tsx`) never passes in production, since the
-    // load-all ZenStack query is disabled (`enabled: mode === "all"`) and a
-    // disabled query's `data` stays `undefined` for the component's whole
-    // lifetime -- there is no code path that ever flips it back to a
-    // truthy value above the threshold. A faithful reproduction (the real
-    // ZenStack mock returning `data: undefined`, matching what a genuinely
-    // disabled query returns, rather than this file's usual convenience
-    // default of `data: []`) confirms the reparent POST never fires on a
-    // drop in lazy mode -- only the tree's own count/roots-page requests
-    // are ever issued. This task's own hard rule ("No drag-and-drop
-    // mechanism change... any real defect found is a finding, not a fix to
-    // take here") is why no test below asserts the drop succeeds; writing
-    // one that passed would have required either the production fix this
-    // task explicitly excludes, or reusing this file's looser default mock
-    // (which never accurately represents a disabled query and would have
-    // reported a false pass).
-
-    it("the drop callback itself is exactly the reparent-with-ids handler regardless of mode -- FINDING: this callback is unreachable above the threshold today (see comment above)", async () => {
+    // 28-19 (gap closure, defect B): the FINDING 28-15 recorded (and
+    // deliberately did not fix, per its own test-only scope) is fixed here.
+    // `handleMove`'s guard now derives readiness from the rows the list
+    // actually has (`hasLoadedRequirements`, keyed off `lazyRowsById` above
+    // the threshold) rather than the permanently-disabled load-all query's
+    // own `data`, which stayed `undefined` forever once `mode` resolved to
+    // `"lazy"` -- the exact defect this test used to characterize as
+    // "unreachable" is now proven fixed, using the SAME faithful mock
+    // (`data: undefined`, not this file's usual convenience default of
+    // `data: []`) that made the original defect visible in the first place.
+    it("reparents a requirement above the threshold", async () => {
       useFindManyIssueMock.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -3382,11 +3373,192 @@ describe("RequirementsListView", () => {
         );
       });
 
-      // Documents the CURRENT, defective production behavior (see the
-      // FINDING comment above this test) rather than the intended one --
-      // this is a characterization test, not an endorsement: it must be
-      // updated (to assert the reparent call DOES fire) the moment the
-      // `!allRequirements` guard is fixed for lazy mode in a follow-up.
+      await waitFor(() =>
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/projects/42/requirements/501/reparent",
+          expect.objectContaining({
+            method: "POST",
+            body: JSON.stringify({ parentId: 502 }),
+          })
+        )
+      );
+
+      const { toast } = await import("sonner");
+      await waitFor(() =>
+        expect(toast.success).toHaveBeenCalledWith(
+          "requirements.tree.moveSuccess"
+        )
+      );
+    });
+
+    it("a server rejection surfaces the same actionable toast above the threshold as it does below it", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      global.fetch = vi.fn((url: string, init?: RequestInit) => {
+        if (typeof url === "string" && url.includes("/reparent")) {
+          return Promise.resolve({
+            ok: false,
+            json: async () => ({ error: "cycle" }),
+          });
+        }
+        if (typeof url === "string" && url.includes("countOnly=1")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ total: 600, threshold: 500, mode: "lazy" }),
+          });
+        }
+        if (typeof url === "string" && url.includes("facetsOnly=1")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ statuses: [], coverageStatuses: [] }),
+          });
+        }
+        if (
+          typeof url === "string" &&
+          url.includes("/requirements/tree") &&
+          (init?.method ?? "GET") === "GET"
+        ) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              total: 600,
+              rows: [
+                makeLazyRow({ id: 501, name: "Lazy Root A" }),
+                makeLazyRow({ id: 502, name: "Lazy Root B" }),
+              ],
+              nextCursor: null,
+            }),
+          });
+        }
+        return Promise.resolve({ ok: true });
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      fireEvent.dragEnter(screen.getByTestId("requirement-row-502"));
+      await act(async () => {
+        await dropSpecs.list.drop(
+          { requirementId: 501, name: "Lazy Root A" },
+          { didDrop: () => false }
+        );
+      });
+
+      const { toast } = await import("sonner");
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "requirements.tree.moveRejected cycle"
+        )
+      );
+    });
+
+    it("drag stays unavailable while filtering, above the threshold too -- no reparent request fires", async () => {
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root A" }),
+          makeLazyRow({ id: 502, name: "Lazy Root B" }),
+        ],
+        // Both rows match "Lazy Root" -- unlike the reparent tests above,
+        // this test needs a SECOND rendered row to drop onto, so the
+        // filter term stays broad enough to keep both matched.
+        matchPages: [
+          {
+            matchedTotal: 2,
+            matchedIds: [501, 502],
+            ancestorIds: [],
+            rows: [
+              makeLazyRow({ id: 501, name: "Lazy Root A" }),
+              makeLazyRow({ id: 502, name: "Lazy Root B" }),
+            ],
+            nextCursor: null,
+          },
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByTestId("requirements-filter-input"), {
+        target: { value: "Lazy Root" },
+      });
+
+      await waitFor(() => {
+        const filterCalls = (global.fetch as any).mock.calls.filter(
+          ([url, init]: [string, RequestInit | undefined]) =>
+            typeof url === "string" &&
+            url.includes("/requirements/tree") &&
+            (init?.method ?? "GET") === "POST"
+        );
+        expect(filterCalls.length).toBeGreaterThan(0);
+      });
+
+      fireEvent.dragEnter(screen.getByTestId("requirement-row-502"));
+      await act(async () => {
+        await dropSpecs.list.drop(
+          { requirementId: 501, name: "Lazy Root A" },
+          { didDrop: () => false }
+        );
+      });
+
+      const reparentCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/reparent")
+      );
+      expect(reparentCalls).toHaveLength(0);
+    });
+
+    it("a viewer without edit rights cannot reparent above the threshold either -- no reparent request fires", async () => {
+      mockIsProjectAdmin = false;
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root A" }),
+          makeLazyRow({ id: 502, name: "Lazy Root B" }),
+        ],
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      fireEvent.dragEnter(screen.getByTestId("requirement-row-502"));
+      await act(async () => {
+        await dropSpecs.list.drop(
+          { requirementId: 501, name: "Lazy Root A" },
+          { didDrop: () => false }
+        );
+      });
+
       const reparentCalls = (global.fetch as any).mock.calls.filter(
         ([url]: [string]) =>
           typeof url === "string" && url.includes("/reparent")

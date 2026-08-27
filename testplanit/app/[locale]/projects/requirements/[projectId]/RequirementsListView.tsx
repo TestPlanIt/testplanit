@@ -880,6 +880,31 @@ const RequirementsListView = forwardRef<
     refreshRequirements();
   }, [refreshRequirements]);
 
+  // 28-19 (gap closure, defect B): a readiness signal true in BOTH modes,
+  // replacing the guard's old `!allRequirements` term below. That term was
+  // never load-bearing for correctness (see `handleMove`'s own comment: the
+  // server's cycle guard is the sole authority, there is no client-side
+  // pre-check and no local reorder) -- it was only ever a "has the data
+  // arrived yet" proxy, and it broke permanently above the threshold: once
+  // `mode` resolves to `"lazy"`, the load-all query stays `enabled: false`
+  // for the component's whole lifetime, so its `data` stays `undefined`
+  // forever (never a truthy `[]`) and the guard silently blocked every
+  // drop, with no request and no toast (28-15's own characterization).
+  //
+  // The replacement reads the rows the list ACTUALLY has, per mode. Below
+  // the threshold: has the load-all query returned an array at all (empty
+  // or not) rather than still being in flight -- `allRequirements` itself,
+  // unchanged, so the below-threshold path's guard behavior is untouched.
+  // Above it: has at least one row of the lazy hook's own loaded partial
+  // forest arrived (`lazyRowsById`, the SAME loaded set 28-15's drop-
+  // target-equals-loaded-rows test pins) -- every rendered drop target IS
+  // a loaded row, so if none has loaded there is no row a drop event could
+  // legitimately target in the first place; this is a readiness gate, not
+  // a correctness check.
+  const hasLoadedRequirements = isLazy
+    ? lazyRowsById.size > 0
+    : allRequirements !== undefined;
+
   // The reparent gesture's server contract (D-04c: no optimistic accept --
   // the fetch is awaited before any UI state changes, no local array
   // reorder is attempted, and no client-side cycle pre-check exists; the
@@ -892,7 +917,7 @@ const RequirementsListView = forwardRef<
       draggedId: number;
       parentId: number | null;
     }) => {
-      if (!canAddEdit || isFiltering || !allRequirements) return;
+      if (!canAddEdit || isFiltering || !hasLoadedRequirements) return;
       if (draggedId === parentId) return;
       try {
         const res = await fetch(
@@ -934,7 +959,7 @@ const RequirementsListView = forwardRef<
     [
       canAddEdit,
       isFiltering,
-      allRequirements,
+      hasLoadedRequirements,
       projectId,
       t,
       refreshRequirements,
