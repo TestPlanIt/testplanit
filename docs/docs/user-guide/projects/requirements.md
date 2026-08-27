@@ -63,6 +63,8 @@ Above the table:
 
 Column headers sort the list; the default order is by name.
 
+In a large project the list loads as you scroll: only the top of the tree loads initially, and further rows load automatically as you reach the bottom of what's loaded. A **Showing X of Y** count appears beside the filters — X is how many rows have loaded so far; Y is the project's total requirement count, or, while a filter is active, the total number of matches on the server rather than just the ones currently loaded. A requirement with children always shows its expand chevron, whether or not its children have loaded yet — expanding it fetches its children the first time, then remembers them for the rest of the session.
+
 ### Row actions
 
 Each row's actions menu offers:
@@ -114,6 +116,17 @@ A **Synced** requirement shows the tracker's status everywhere — in the list, 
 ### How synced requirements arrive
 
 Any tracker issue that reaches TestPlanIt — through issue sync, an inbound webhook, a bulk import, or being linked to a test artifact — is classified against the project's configured requirement types. Matching issues appear in the requirements tree; changing the classification later reclassifies existing issues to match. Subsequent syncs keep a synced requirement's tracker-owned fields and its position in the hierarchy up to date.
+
+To bring in every matching issue that already exists in the tracker — not just the ones that arrive through sync going forward — use the import action in the **Requirement Types** section of [Issue Integrations](./settings/integrations.md#requirement-types). Unlike a [bulk import](./settings/integrations.md#importing-issues-in-bulk), it has no date window and no cap: it imports every issue of the configured types, paged to completion. The import runs in the background, its progress shown alongside the tracker project in the Requirement Types section, and a project administrator can stop it at any time — stopping takes effect after the page currently being imported finishes, and the issues already imported stay.
+
+### Tracking a tracker issue that isn't a requirement type
+
+Requirement classification follows the project's configured requirement types exactly, with no per-issue override — a single Story in a project that only classifies Epics as requirements never becomes one on its own. To track an issue like that as a requirement:
+
+1. Create a native requirement — click **Add Requirement** (see [Creating Requirements](#creating-requirements)) and give it a name.
+2. Attach the tracker issue to it as a reference — open the requirement's detail panel and, in the **References** card, click **Add Reference** and search for the issue (see [References](./requirements-traceability.md#references)).
+
+The reference links out to the tracker issue for traceability; test-case coverage tracks through the native requirement, not the issue directly.
 
 ### Detaching a requirement
 
