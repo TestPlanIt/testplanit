@@ -411,9 +411,27 @@ export class GitLabAdapter extends BaseAdapter {
     return "reopen";
   }
 
+  /**
+   * GitLab CE/Free only ever sends "issue" or "incident" in `issue_type`;
+   * paid tiers (Premium/Ultimate) add task/objective/key_result, which this
+   * adapter's getIssueTypes does not enumerate. Fall back to the raw value
+   * itself as both id and name rather than mislabeling an unrecognized type.
+   */
+  private static readonly ISSUE_TYPE_LABELS: Record<string, string> = {
+    issue: "Issue",
+    incident: "Incident",
+  };
+
   private mapGitLabIssue(issue: any, projectPath: string): IssueData {
     const iid = issue.iid;
     const key = `${projectPath}#${iid}`;
+    // getIssueTypes returns the literal "issue"/"incident" strings as both
+    // id and name — issueType.id must match those exactly for classification
+    // to see it.
+    const rawType =
+      typeof issue.issue_type === "string" && issue.issue_type
+        ? issue.issue_type
+        : "issue";
     return {
       id: String(iid),
       key,
@@ -435,7 +453,10 @@ export class GitLabAdapter extends BaseAdapter {
             email: issue.author.email,
           }
         : undefined,
-      issueType: issue.issue_type ?? "issue",
+      issueType: {
+        id: rawType,
+        name: GitLabAdapter.ISSUE_TYPE_LABELS[rawType] ?? rawType,
+      },
       labels: Array.isArray(issue.labels) ? issue.labels : [],
       customFields: {
         _gitlab_project: projectPath,

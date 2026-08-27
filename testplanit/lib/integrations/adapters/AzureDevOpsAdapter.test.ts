@@ -519,6 +519,29 @@ describe("AzureDevOpsAdapter", () => {
       expect(result.customFields).not.toHaveProperty("System.State");
     });
 
+    it("maps the work item type so an imported work item can be classified", async () => {
+      const userStoryWorkItem = {
+        ...mockWorkItem,
+        fields: {
+          ...mockWorkItem.fields,
+          "System.WorkItemType": "User Story",
+        },
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(userStoryWorkItem),
+      });
+
+      const result = await adapter.getIssue("123");
+
+      expect(result.issueType).toEqual({
+        id: "User Story",
+        name: "User Story",
+      });
+      // System.WorkItemType is a first-class field now, not a custom one.
+      expect(result.customFields).not.toHaveProperty("System.WorkItemType");
+    });
+
     it("should handle work item without assignee", async () => {
       const workItemNoAssignee = {
         ...mockWorkItem,

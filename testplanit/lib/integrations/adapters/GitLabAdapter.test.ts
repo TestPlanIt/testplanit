@@ -252,7 +252,9 @@ describe("GitLabAdapter", () => {
       expect(result.key).toBe("testgroup/testrepo#42");
       expect(result.title).toBe("Test Issue");
       expect(result.status).toBe("opened");
-      expect(result.issueType).toBe("issue");
+      // issueType is an { id, name } pair matching getIssueTypes, not a bare
+      // string — see the AZDO/GitLab issueType mapper fix.
+      expect(result.issueType).toEqual({ id: "issue", name: "Issue" });
     });
 
     it("should include issue_type in payload when provided", async () => {
@@ -320,7 +322,9 @@ describe("GitLabAdapter", () => {
       });
 
       const result = await adapter.getIssue("testgroup/testrepo#42");
-      expect(result.issueType).toBe("incident");
+      // issueType is an { id, name } pair matching getIssueTypes, not a bare
+      // string — see the AZDO/GitLab issueType mapper fix.
+      expect(result.issueType).toEqual({ id: "incident", name: "Incident" });
     });
 
     it("should default issueType to 'issue' when field is absent", async () => {
@@ -331,7 +335,7 @@ describe("GitLabAdapter", () => {
       });
 
       const result = await adapter.getIssue("testgroup/testrepo#42");
-      expect(result.issueType).toBe("issue");
+      expect(result.issueType).toEqual({ id: "issue", name: "Issue" });
     });
   });
 
@@ -452,6 +456,21 @@ describe("GitLabAdapter", () => {
 
       const result = await adapter.searchIssues({});
       expect(result.issues).toEqual([]);
+    });
+
+    it("maps the issue type as an { id, name } pair, not a bare string", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([{ ...mockGitLabIssue, issue_type: "incident" }]),
+      });
+
+      const result = await adapter.searchIssues({});
+
+      expect(result.issues[0].issueType).toEqual({
+        id: "incident",
+        name: "Incident",
+      });
     });
   });
 

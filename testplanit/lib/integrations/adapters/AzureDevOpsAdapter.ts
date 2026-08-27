@@ -681,6 +681,10 @@ export class AzureDevOpsAdapter extends BaseAdapter {
 
   private mapAzureDevOpsWorkItem(workItem: any): IssueData {
     const fields = workItem.fields;
+    // getIssueTypes returns { id: type.name, name: type.name } — the work
+    // item type NAME is the id the Requirement Types picker stores, so
+    // issueType.id must be that same name, not some other identifier.
+    const workItemType = fields["System.WorkItemType"];
 
     return {
       id: workItem.id.toString(),
@@ -689,6 +693,10 @@ export class AzureDevOpsAdapter extends BaseAdapter {
       description: fields["System.Description"],
       status: fields["System.State"],
       priority: fields["Microsoft.VSTS.Common.Priority"]?.toString(),
+      issueType:
+        typeof workItemType === "string" && workItemType
+          ? { id: workItemType, name: workItemType }
+          : undefined,
       assignee: fields["System.AssignedTo"]
         ? {
             id:
