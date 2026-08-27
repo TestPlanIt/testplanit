@@ -227,6 +227,38 @@ describe("MantisBTAdapter", () => {
       expect(res.issues).toHaveLength(1);
       expect(res.issues[0].id).toBe("1");
     });
+
+    it("reports hasMore when the tracker returned a full page", async () => {
+      await authenticate();
+      const fullPage = Array.from({ length: 5 }, (_, i) => ({
+        id: i + 1,
+        summary: `issue ${i + 1}`,
+      }));
+      mockFetch.mockResolvedValueOnce(okJson({ issues: fullPage }));
+
+      const res = await adapter.searchIssues({ projectId: "3", limit: 5 });
+
+      expect(res.issues).toHaveLength(5);
+      expect(res.hasMore).toBe(true);
+    });
+
+    it("reports hasMore from the raw page even when the text filter empties it", async () => {
+      await authenticate();
+      const fullPage = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        summary: "unrelated issue",
+      }));
+      mockFetch.mockResolvedValueOnce(okJson({ issues: fullPage }));
+
+      const res = await adapter.searchIssues({
+        query: "login",
+        projectId: "3",
+        limit: 10,
+      });
+
+      expect(res.issues).toEqual([]);
+      expect(res.hasMore).toBe(true);
+    });
   });
 
   describe("createIssue", () => {

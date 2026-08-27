@@ -181,6 +181,7 @@ export class MantisBTAdapter extends BaseAdapter {
     const resp = await this.makeRequest<{ issues?: MantisIssue[] }>(
       `${this.apiBase}/issues?${params.toString()}`
     );
+    const rawCount = resp.issues?.length ?? 0;
     let issues = (resp.issues ?? []).map((i) => this.mapIssue(i));
 
     if (options.query) {
@@ -190,7 +191,13 @@ export class MantisBTAdapter extends BaseAdapter {
         .slice(0, limit);
     }
 
-    return { issues, total: issues.length, hasMore: false };
+    // Mantis' REST API reports no total, so `hasMore` is inferred from a
+    // full raw tracker page (rawCount >= pageSize), captured before the
+    // client-side text filter runs above — a full page that the filter
+    // happens to empty must still signal more pages exist. The import
+    // orchestrator's own empty-page break (SyncService.performProjectImport)
+    // is what actually terminates the walk once a short page arrives.
+    return { issues, total: issues.length, hasMore: rawCount >= pageSize };
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
