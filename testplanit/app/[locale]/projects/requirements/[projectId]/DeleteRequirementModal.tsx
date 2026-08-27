@@ -18,14 +18,34 @@ import { toast } from "sonner";
 interface DeleteRequirementModalProps {
   projectId: string;
   requirementId: number;
-  /** The subtree's descendant count (root excluded), computed by the caller
-   *  by walking the tree's own in-memory childrenMap -- not fetched. This
-   *  tree already holds every requirement in memory (load-all, plan 25-08),
-   *  so there is no lazy-load gap to bridge the way
-   *  `useFindManyRepositoryCasesByDescendants` bridges one for folders; a
-   *  second server round trip here would only invite the tree and this
-   *  modal to disagree about the count. */
-  descendantCount: number;
+  /** The subtree's descendant count (root excluded).
+   *
+   *  Below the fixed lazy-loading threshold (28-CONTEXT D-01), this is
+   *  computed by the caller by walking the tree's own in-memory
+   *  `childrenMap` -- not fetched, since this tree already holds every
+   *  requirement in memory (load-all, plan 25-08) and there is no
+   *  lazy-load gap to bridge.
+   *
+   *  Above the threshold that premise no longer holds: the tree is a
+   *  partial, roots-window forest (28-11/28-13), so walking `childrenMap`
+   *  for a root whose subtree hasn't been expanded under-reports --
+   *  typically as 0, the exact number that would let a user confirm
+   *  "delete this requirement" while the server soft-deletes an entire,
+   *  larger subtree underneath it. Above the threshold the caller instead
+   *  fetches a count-only server round trip (`useRequirementSubtreeCount`,
+   *  mirroring `useFindManyRepositoryCasesByDescendants`'s folder-side
+   *  precedent, `DeleteFolderModal.tsx`) and hands the RESOLVED number
+   *  here.
+   *
+   *  `null` means "the caller does not know yet" (the server round trip
+   *  is still in flight) -- rendered as a loading state, never as 0, and
+   *  the confirm action is disabled until a real number arrives. Either
+   *  way the count is computed once, at the moment the dialog opens (the
+   *  caller's `enabled` gate ties to `open`), and never re-derived while
+   *  the dialog stays open -- the same "cannot drift mid-dialog"
+   *  guarantee this prop always carried, just sourced differently
+   *  depending on scale. */
+  descendantCount: number | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Handed the server's own `deletedIds` (root + every descendant) so the
@@ -55,6 +75,7 @@ export function DeleteRequirementModal({
 }: DeleteRequirementModalProps) {
   const t = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isCountUnknown = descendantCount === null;
 
   const handleDelete = async () => {
     setIsSubmitting(true);
@@ -93,11 +114,13 @@ export function DeleteRequirementModal({
               {t("requirements.delete.dialogTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription className="overflow-hidden">
-              {descendantCount > 0
-                ? t("requirements.delete.confirmWithChildren", {
-                    count: descendantCount,
-                  })
-                : t("requirements.delete.confirmNoChildren")}
+              {isCountUnknown
+                ? t("common.loading")
+                : descendantCount > 0
+                  ? t("requirements.delete.confirmWithChildren", {
+                      count: descendantCount,
+                    })
+                  : t("requirements.delete.confirmNoChildren")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -109,7 +132,7 @@ export function DeleteRequirementModal({
             </AlertDialogCancel>
             <AlertDialogAction
               type="button"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isCountUnknown}
               onClick={(e) => {
                 // `AlertDialogAction` is Radix's `DialogPrimitive.Close` --
                 // it closes the (controlled) dialog on click by default,

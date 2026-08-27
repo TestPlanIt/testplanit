@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   act,
   fireEvent,
@@ -515,6 +516,38 @@ function makeTreeFetchMock(options: {
   });
 }
 
+/** 28-15: layers the delete dialog's descendant-count route
+ *  (`/requirements/{id}/descendant-count`) on top of `makeTreeFetchMock`'s
+ *  routing -- kept as its own wrapper (not folded into `makeTreeFetchMock`
+ *  itself) since only the delete-confirmation describe block below needs
+ *  it. `descendantCounts` maps a requirement id to the count the SERVER
+ *  reports for it; any id absent from the map reports 0, mirroring the
+ *  real route's shape (`{ count: number }`). */
+function makeTreeFetchMockWithDescendantCount(
+  options: Parameters<typeof makeTreeFetchMock>[0] & {
+    descendantCounts?: Record<number, number>;
+    descendantCountOk?: boolean;
+  }
+) {
+  const treeFetchMock = makeTreeFetchMock(options);
+  return vi.fn((url: string, init?: RequestInit) => {
+    const match =
+      typeof url === "string" &&
+      url.match(/\/requirements\/(\d+)\/descendant-count$/);
+    if (match) {
+      if (options.descendantCountOk === false) {
+        return Promise.resolve({ ok: false, status: 500 });
+      }
+      const id = Number(match[1]);
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ count: options.descendantCounts?.[id] ?? 0 }),
+      });
+    }
+    return treeFetchMock(url, init);
+  });
+}
+
 /** 28-14: filters/search moved server-side (D-04) -- the pre-existing
  *  "filters (gap closure 26.2-12)" fixtures below still assert the SAME
  *  visible-row-set behavior, but that set now arrives through a (mocked)
@@ -617,13 +650,23 @@ function renderView(
   } = {}
 ) {
   const onSelectRequirement = overrides.onSelectRequirement ?? vi.fn();
+  // 28-15: the delete dialog's lazy-mode descendant count now runs through
+  // the REAL `useRequirementSubtreeCount` (a real `useQuery`, per this
+  // file's own "mock fetch, not the hook" convention), which needs a real
+  // `QueryClient` in context -- a fresh one per render so no test's cached
+  // count leaks into the next.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const utils = render(
-    <RequirementsListView
-      ref={overrides.ref}
-      projectId="42"
-      selectedRequirementId={overrides.selectedRequirementId ?? null}
-      onSelectRequirement={onSelectRequirement}
-    />
+    <QueryClientProvider client={queryClient}>
+      <RequirementsListView
+        ref={overrides.ref}
+        projectId="42"
+        selectedRequirementId={overrides.selectedRequirementId ?? null}
+        onSelectRequirement={onSelectRequirement}
+      />
+    </QueryClientProvider>
   );
   return { onSelectRequirement, ...utils };
 }
@@ -849,21 +892,31 @@ describe("RequirementsListView", () => {
     it("keeps createdAt hidden across the permissions flip that appends the actions column after mount", () => {
       mockIsProjectAdmin = false;
       const onSelectRequirement = vi.fn();
+      // 28-15: real useQuery (useRequirementSubtreeCount) now runs
+      // unconditionally, needing a real QueryClient in context -- see
+      // renderView()'s own comment for why.
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
       const { rerender } = render(
-        <RequirementsListView
-          projectId="42"
-          selectedRequirementId={null}
-          onSelectRequirement={onSelectRequirement}
-        />
+        <QueryClientProvider client={queryClient}>
+          <RequirementsListView
+            projectId="42"
+            selectedRequirementId={null}
+            onSelectRequirement={onSelectRequirement}
+          />
+        </QueryClientProvider>
       );
 
       mockIsProjectAdmin = true;
       rerender(
-        <RequirementsListView
-          projectId="42"
-          selectedRequirementId={null}
-          onSelectRequirement={onSelectRequirement}
-        />
+        <QueryClientProvider client={queryClient}>
+          <RequirementsListView
+            projectId="42"
+            selectedRequirementId={null}
+            onSelectRequirement={onSelectRequirement}
+          />
+        </QueryClientProvider>
       );
 
       const table = screen.getByTestId("requirements-list");
@@ -2732,12 +2785,20 @@ describe("RequirementsListView", () => {
       }) as any;
 
       const onSelectRequirement = vi.fn();
+      // 28-15: real useQuery (useRequirementSubtreeCount) now runs
+      // unconditionally, needing a real QueryClient in context -- see
+      // renderView()'s own comment for why.
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
       const { rerender } = render(
-        <RequirementsListView
-          projectId="42"
-          selectedRequirementId={null}
-          onSelectRequirement={onSelectRequirement}
-        />
+        <QueryClientProvider client={queryClient}>
+          <RequirementsListView
+            projectId="42"
+            selectedRequirementId={null}
+            onSelectRequirement={onSelectRequirement}
+          />
+        </QueryClientProvider>
       );
 
       await waitFor(() => {
@@ -2761,11 +2822,13 @@ describe("RequirementsListView", () => {
       });
 
       rerender(
-        <RequirementsListView
-          projectId="42"
-          selectedRequirementId={502}
-          onSelectRequirement={onSelectRequirement}
-        />
+        <QueryClientProvider client={queryClient}>
+          <RequirementsListView
+            projectId="42"
+            selectedRequirementId={502}
+            onSelectRequirement={onSelectRequirement}
+          />
+        </QueryClientProvider>
       );
 
       await waitFor(() => {
@@ -2783,12 +2846,19 @@ describe("RequirementsListView", () => {
       }) as any;
 
       const onSelectRequirement = vi.fn();
+      // 28-15: see the previous test's own comment for why this needs a
+      // real QueryClient in context now.
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false } },
+      });
       const { rerender } = render(
-        <RequirementsListView
-          projectId="42"
-          selectedRequirementId={null}
-          onSelectRequirement={onSelectRequirement}
-        />
+        <QueryClientProvider client={queryClient}>
+          <RequirementsListView
+            projectId="42"
+            selectedRequirementId={null}
+            onSelectRequirement={onSelectRequirement}
+          />
+        </QueryClientProvider>
       );
 
       await waitFor(() => {
@@ -2800,11 +2870,13 @@ describe("RequirementsListView", () => {
       // 999 was never loaded -- its ancestor chain is unknown to this list.
       expect(() =>
         rerender(
-          <RequirementsListView
-            projectId="42"
-            selectedRequirementId={999}
-            onSelectRequirement={onSelectRequirement}
-          />
+          <QueryClientProvider client={queryClient}>
+            <RequirementsListView
+              projectId="42"
+              selectedRequirementId={999}
+              onSelectRequirement={onSelectRequirement}
+            />
+          </QueryClientProvider>
         )
       ).not.toThrow();
 
@@ -2812,6 +2884,256 @@ describe("RequirementsListView", () => {
         "aria-label",
         "requirements.list.expandRow:Lazy Root"
       );
+    });
+  });
+
+  // 28-15: the delete confirmation's descendant count under lazy mode.
+  // `useRequirementSubtreeCount` runs for real here (never mocked itself,
+  // per this file's own "mock fetch, not the hook" convention) -- only
+  // `global.fetch` is routed, via `makeTreeFetchMockWithDescendantCount`.
+  describe("delete confirmation descendant count (28-15)", () => {
+    it("lazy mode: opening the delete dialog for a root whose subtree hasn't loaded states the server's real descendant count, not zero", async () => {
+      global.fetch = makeTreeFetchMockWithDescendantCount({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+        descendantCounts: { 501: 42 },
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-501"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-501"));
+
+      // Today (pre-28-15), this reads `countDescendants(childrenMap, 501)`
+      // against an empty lazy-mode `childrenMap` -- 0, always, regardless of
+      // what the server actually holds. This assertion is the one that
+      // matters: the server's real count (42), not that undercount.
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-requirement-dialog")
+        ).toHaveTextContent("requirements.delete.confirmWithChildren:42");
+      });
+
+      const descendantCountCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/descendant-count")
+      );
+      expect(descendantCountCalls).toHaveLength(1);
+      expect(descendantCountCalls[0][0]).toBe(
+        "/api/projects/42/requirements/501/descendant-count"
+      );
+    });
+
+    it("below the threshold: the count comes from the in-memory tree, and no descendant-count request is ever made", async () => {
+      global.fetch = makeTreeFetchMockWithDescendantCount({
+        mode: "all",
+        total: 2,
+        // Deliberately a very different number from the true in-memory
+        // count (1) -- if this ever got requested and used, the assertion
+        // below would catch it immediately.
+        descendantCounts: { 1: 999 },
+      }) as any;
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root A" }),
+          makeRequirement({ id: 2, name: "Child A", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-1"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-1"));
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-requirement-dialog")
+        ).toHaveTextContent("requirements.delete.confirmWithChildren:1");
+      });
+
+      const descendantCountCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/descendant-count")
+      );
+      expect(descendantCountCalls).toHaveLength(0);
+    });
+
+    it("the dialog does not refetch its count while it stays open, even as unrelated state changes", async () => {
+      global.fetch = makeTreeFetchMockWithDescendantCount({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
+        descendantCounts: { 501: 42 },
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-501"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-501"));
+
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-requirement-dialog")
+        ).toHaveTextContent("requirements.delete.confirmWithChildren:42");
+      });
+
+      const countCallsAfterOpen = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/descendant-count")
+      ).length;
+      expect(countCallsAfterOpen).toBe(1);
+
+      // Unrelated activity while the dialog stays open (a filter keystroke,
+      // reaching the server for the TREE route only) -- proves the count
+      // isn't tied to every render, only to the dialog's own open lifetime.
+      const input = screen.getByTestId("requirements-filter-input");
+      fireEvent.change(input, { target: { value: "unrelated" } });
+
+      await waitFor(() => {
+        expect(filterRequestCalls().length).toBeGreaterThan(0);
+      });
+
+      const countCallsAfterTyping = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/descendant-count")
+      ).length;
+      expect(countCallsAfterTyping).toBe(1);
+    });
+
+    it("closing the dialog and reopening it for a different requirement fetches that requirement's own count", async () => {
+      global.fetch = makeTreeFetchMockWithDescendantCount({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root A" }),
+          makeLazyRow({ id: 502, name: "Lazy Root B" }),
+        ],
+        descendantCounts: { 501: 5, 502: 9 },
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-501"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-501"));
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-requirement-dialog")
+        ).toHaveTextContent("requirements.delete.confirmWithChildren:5");
+      });
+
+      fireEvent.click(screen.getByText("common.cancel"));
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("delete-requirement-dialog")
+        ).not.toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-502"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-502"));
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-requirement-dialog")
+        ).toHaveTextContent("requirements.delete.confirmWithChildren:9");
+      });
+
+      const descendantCountUrls = (global.fetch as any).mock.calls
+        .filter(
+          ([url]: [string]) =>
+            typeof url === "string" && url.includes("/descendant-count")
+        )
+        .map(([url]: [string]) => url);
+      expect(descendantCountUrls).toEqual([
+        "/api/projects/42/requirements/501/descendant-count",
+        "/api/projects/42/requirements/502/descendant-count",
+      ]);
+    });
+
+    it("the delete itself still POSTs the guarded delete-subtree route and consumes the server's deletedIds, in lazy mode too", async () => {
+      global.fetch = vi.fn((url: string, init?: RequestInit) => {
+        const method = init?.method ?? "GET";
+        if (typeof url === "string" && url.includes("/requirements/tree")) {
+          if (url.includes("countOnly=1")) {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({
+                total: 600,
+                threshold: 500,
+                mode: "lazy",
+              }),
+            });
+          }
+          if (method === "GET") {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({
+                total: 600,
+                rows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
+                nextCursor: null,
+              }),
+            });
+          }
+        }
+        if (typeof url === "string" && url.includes("/descendant-count")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ count: 3 }),
+          });
+        }
+        if (typeof url === "string" && url.includes("/delete-subtree")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ deletedIds: [501] }),
+          });
+        }
+        return Promise.resolve({ ok: true });
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-501"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-501"));
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("delete-requirement-dialog")
+        ).toHaveTextContent("requirements.delete.confirmWithChildren:3");
+      });
+
+      fireEvent.click(screen.getByTestId("delete-requirement-confirm"));
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/projects/42/requirements/501/delete-subtree",
+          { method: "POST" }
+        );
+      });
+      await waitFor(() => expect(mockInvalidateQueries).toHaveBeenCalled());
     });
   });
 });

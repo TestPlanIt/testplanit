@@ -37,6 +37,28 @@ describe("DeleteRequirementModal", () => {
     );
   });
 
+  it("shows a loading state and disables confirm while the descendant count is not yet known (28-15)", () => {
+    render(
+      <DeleteRequirementModal
+        projectId="7"
+        requirementId={5}
+        descendantCount={null}
+        open
+        onOpenChange={vi.fn()}
+      />
+    );
+
+    const dialog = screen.getByTestId("delete-requirement-dialog");
+    expect(dialog).not.toHaveTextContent(
+      "requirements.delete.confirmWithChildren"
+    );
+    expect(dialog).not.toHaveTextContent(
+      "requirements.delete.confirmNoChildren"
+    );
+    expect(dialog).toHaveTextContent("common.loading");
+    expect(screen.getByTestId("delete-requirement-confirm")).toBeDisabled();
+  });
+
   it("posts to the delete-subtree route rather than deleting client-side", async () => {
     render(
       <DeleteRequirementModal

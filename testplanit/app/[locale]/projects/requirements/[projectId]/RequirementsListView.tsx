@@ -40,6 +40,7 @@ import {
   invalidateRequirementCoverage,
   useRequirementCoverage,
 } from "~/hooks/useRequirementCoverage";
+import { useRequirementSubtreeCount } from "~/hooks/useRequirementSubtreeCount";
 import {
   useRequirementsTree,
   type RequirementsTreeFilters,
@@ -779,6 +780,12 @@ const RequirementsListView = forwardRef<
 
   // Computed once, at click time -- never recomputed reactively inside the
   // modal, so the number the user confirms against cannot drift mid-dialog.
+  // Below the threshold this IS the number the modal renders (28-CONTEXT's
+  // discretion note: the in-memory count stays there). Above the threshold
+  // `childrenMap` is a partial forest, so this walk under-reports (usually
+  // 0) for an unexpanded root -- `modalDescendantCount` below replaces it
+  // with the server round trip in that branch; this state field is simply
+  // unused input to that replacement in lazy mode, never rendered directly.
   //
   // Declared ABOVE `useImperativeHandle` below (not after it, as it once
   // was): the imperative factory's dependency array is evaluated at the
@@ -799,6 +806,34 @@ const RequirementsListView = forwardRef<
     },
     [childrenMap]
   );
+
+  // Lazy mode's server-sourced replacement for the in-memory walk above
+  // (28-15, T-28-15-01): `enabled` ties to the dialog's own `open` state, so
+  // the round trip fires once when a delete is requested and never refetches
+  // while the dialog stays open (the same query key persists for the whole
+  // open lifetime). Gated on `isLazy` too -- below the threshold this never
+  // fires at all, matching 28-CONTEXT's "no behavior change below 500".
+  const { count: lazySubtreeCount, isLoading: lazySubtreeCountLoading } =
+    useRequirementSubtreeCount({
+      projectId: Number(projectId),
+      requirementId: deleteDialogState.requirementId,
+      enabled: isLazy && deleteDialogState.open,
+    });
+
+  // The single value the modal actually renders. Below the threshold: the
+  // in-memory count computed above, unchanged. Above it, while the dialog is
+  // open: `null` until the server round trip resolves (never 0 -- the modal
+  // renders `null` as a loading state and disables its own confirm action
+  // rather than show a number that might undercount), then the resolved
+  // count. While the dialog is closed the value is moot (the modal itself
+  // unmounts/hides on `open={false}`); `0` is just an inert placeholder.
+  const modalDescendantCount = !isLazy
+    ? deleteDialogState.descendantCount
+    : !deleteDialogState.open
+      ? 0
+      : lazySubtreeCountLoading
+        ? null
+        : (lazySubtreeCount ?? 0);
 
   // The page action bar's Add Requirement button lives in
   // `RequirementsWorkspace.tsx`, outside this component -- it reaches this
@@ -1497,7 +1532,7 @@ const RequirementsListView = forwardRef<
         <DeleteRequirementModal
           projectId={projectId}
           requirementId={deleteDialogState.requirementId}
-          descendantCount={deleteDialogState.descendantCount}
+          descendantCount={modalDescendantCount}
           open={deleteDialogState.open}
           onOpenChange={(nextOpen) =>
             setDeleteDialogState((prev) => ({ ...prev, open: nextOpen }))
