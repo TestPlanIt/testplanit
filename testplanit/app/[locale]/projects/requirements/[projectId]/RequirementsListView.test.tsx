@@ -432,6 +432,17 @@ function makeTreeFetchMock(options: {
     nextCursor?: unknown;
     expandMatchedSubtrees?: boolean;
   }>;
+  /** 28-19: the facets GET's own fixture -- defaults to both lists empty
+   *  when a test doesn't care about facet content. Given its own case here
+   *  (not left to fall through to the roots-page branch below) because
+   *  that branch's response shape (`{ total, rows, nextCursor }`) has no
+   *  `statuses`/`coverageStatuses` keys at all -- falling through would
+   *  silently hand the component `undefined` for both, exactly the crash
+   *  this dedicated branch exists to prevent. */
+  facets?: {
+    statuses: string[];
+    coverageStatuses: Array<Record<string, unknown>>;
+  };
 }) {
   let rootsPageIndex = 0;
   let matchPageIndex = 0;
@@ -449,6 +460,13 @@ function makeTreeFetchMock(options: {
             threshold: 500,
             mode: options.mode,
           }),
+        });
+      }
+      if (url.includes("facetsOnly=1")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () =>
+            options.facets ?? { statuses: [], coverageStatuses: [] },
         });
       }
       const childrenMatch = url.match(/\/tree\/(\d+)\/children/);
@@ -2320,6 +2338,16 @@ describe("RequirementsListView", () => {
             json: async () => ({ total: 600, threshold: 500, mode: "lazy" }),
           });
         }
+        // 28-19's own facets GET must NOT consume one of the numbered
+        // rootsCallCount slots below -- it shares the same
+        // `/requirements/tree` path prefix as the roots-page GET this
+        // test's own call-count sequencing depends on.
+        if (typeof url === "string" && url.includes("facetsOnly=1")) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ statuses: [], coverageStatuses: [] }),
+          });
+        }
         if (typeof url === "string" && url.includes("/requirements/tree")) {
           rootsCallCount += 1;
           if (rootsCallCount === 1) {
@@ -2605,6 +2633,129 @@ describe("RequirementsListView", () => {
         expect(rootsPageCallCount).toBeGreaterThan(callsBeforeRetry)
       );
       expect(zenRefetch).not.toHaveBeenCalled();
+    });
+  });
+
+  // 28-19 (gap closure, defect A): the Status/Coverage Selects' option
+  // source forks by mode -- `collectRequirementStatusOptions`/
+  // `collectCoverageStatusOptions` both read the all-mode-only in-memory
+  // `requirements` array, which stays `[]` above the threshold, so both
+  // Selects rendered EMPTY above the threshold before this gap-closure
+  // plan. Above it, the two lists now come from the hook's own
+  // server-computed facets instead.
+  describe("filter options by mode (28-19)", () => {
+    it("offers the project's statuses above the threshold", async () => {
+      // The Coverage Select's OWN disabled gate reads the always-on
+      // rollup hook (`useRequirementCoverage`), independent of mode -- a
+      // truthy rollup here is what makes the Select interactive at all, so
+      // this test can prove its DYNAMIC entries come from the facets
+      // fetch rather than the rollup's own content.
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({}),
+        isError: false,
+      });
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
+        facets: {
+          statuses: ["Blocked", "Open"],
+          coverageStatuses: [
+            { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
+          ],
+        },
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("requirements-status-filter"));
+      });
+      expect(
+        await screen.findByRole("option", { name: "Open" })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Blocked" })
+      ).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("requirements-status-filter"));
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("requirements-coverage-filter"));
+      });
+      expect(
+        await screen.findByRole("option", { name: "Passed" })
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the in-memory options below the threshold, unchanged from what ships today", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", status: "Open" }),
+        makeRequirement({
+          id: 2,
+          name: "Child",
+          parentId: 1,
+          status: "Blocked",
+        }),
+      ];
+      useFindManyIssueMock.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      const coverage = makeCoverageResponse({
+        2: makeBreakdown({
+          status: "PASSED",
+          uncovered: false,
+          statuses: [{ statusId: 10, name: "Passed", color: "#0f0", count: 3 }],
+          linkedCaseCount: 3,
+        }),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: coverage,
+        isError: false,
+      });
+      global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("requirements-status-filter"));
+      });
+      expect(
+        await screen.findByRole("option", { name: "Open" })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Blocked" })
+      ).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("requirements-status-filter"));
+      });
+
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("requirements-coverage-filter"));
+      });
+      expect(
+        await screen.findByRole("option", { name: "Passed" })
+      ).toBeInTheDocument();
+
+      // Below the threshold, the facets fetch must never even fire --
+      // D-01's own "no behaviour change below 500" (28-19's own hard rule).
+      const facetsCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("facetsOnly=1")
+      );
+      expect(facetsCalls).toHaveLength(0);
     });
   });
 
@@ -3083,6 +3234,12 @@ describe("RequirementsListView", () => {
                 threshold: 500,
                 mode: "lazy",
               }),
+            });
+          }
+          if (url.includes("facetsOnly=1")) {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({ statuses: [], coverageStatuses: [] }),
             });
           }
           if (method === "GET") {

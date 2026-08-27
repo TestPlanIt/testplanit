@@ -321,6 +321,7 @@ const RequirementsListView = forwardRef<
     hasMore: treeHasMore,
     onLoadMore: treeOnLoadMore,
     onRetryLoadMore: treeOnRetryLoadMore,
+    facets: treeFacets,
   } = useRequirementsTree({
     projectId: Number(projectId),
     filters: treeFilters,
@@ -497,16 +498,29 @@ const RequirementsListView = forwardRef<
     childrenMap,
   ]);
 
-  // Option lists for the Coverage/Status Selects below -- both pure
-  // collectors from the row module, recomputed only when their own inputs
-  // change (gap closure 26.2-12).
+  // Option lists for the Coverage/Status Selects below (28-19 gap closure:
+  // defect A). Below the threshold, unchanged from what shipped in gap
+  // closure 26.2-12 -- both pure collectors reading the all-mode-only
+  // `requirements` array, recomputed only when their own inputs change.
+  // Above the threshold that array stays `[]` forever (it is fed only by
+  // the load-all query, disabled once `mode` resolves to "lazy"), so both
+  // collectors would produce an empty list forever -- the two Selects fork
+  // to the hook's own server-computed facets in that case instead, matching
+  // the collectors' own output type exactly so neither Select's props
+  // change shape by mode.
   const coverageStatusOptions = useMemo(
-    () => collectCoverageStatusOptions(requirements, coverage),
-    [requirements, coverage]
+    () =>
+      isLazy
+        ? treeFacets.coverageStatuses
+        : collectCoverageStatusOptions(requirements, coverage),
+    [isLazy, treeFacets, requirements, coverage]
   );
   const requirementStatusOptions = useMemo(
-    () => collectRequirementStatusOptions(requirements),
-    [requirements]
+    () =>
+      isLazy
+        ? treeFacets.statuses
+        : collectRequirementStatusOptions(requirements),
+    [isLazy, treeFacets, requirements]
   );
 
   const allModeRows = useMemo(

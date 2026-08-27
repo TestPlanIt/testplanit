@@ -3,6 +3,7 @@ import type { RequirementSourceFilter } from "~/app/[locale]/projects/requiremen
 import type { RequirementCoverageFilter } from "~/lib/services/requirementCoverageFilter";
 import {
   REQUIREMENT_LAZY_THRESHOLD,
+  type RequirementFilterFacets,
   type RequirementRootsCursor,
   type RequirementTreeRow,
 } from "~/lib/services/requirementTree";
@@ -63,6 +64,17 @@ export interface UseRequirementsTreeResult {
   /** Call after a create/rename/reparent/delete invalidates what the count,
    *  rows, or match sets should say. */
   refetch: () => void;
+  /**
+   * The Status/Coverage Selects' lazy-mode option source (28-19 gap
+   * closure): `collectRequirementStatusOptions`/`collectCoverageStatusOptions`
+   * (`requirementsListRows.ts`) both read the all-mode-only in-memory
+   * `requirements` array, which stays empty above the threshold -- this is
+   * the server-side facet source the caller falls back to in that case.
+   * Starts empty and fills in once the fetch below resolves; never fetched
+   * at all below the threshold (mode !== "lazy"), so the below-threshold
+   * path issues exactly the requests it issues today.
+   */
+  facets: RequirementFilterFacets;
 }
 
 interface RequirementTreeCountResponse {
@@ -85,6 +97,27 @@ interface RequirementMatchPageResponse {
   rows: RequirementTreeRow[];
   nextCursor: RequirementRootsCursor | null;
   expandMatchedSubtrees: boolean;
+}
+
+/** 28-19: starting/error-fallback value for `facets` -- never `undefined`,
+ *  so a caller never has to null-guard before rendering an option list. */
+const EMPTY_FACETS: RequirementFilterFacets = {
+  statuses: [],
+  coverageStatuses: [],
+};
+
+async function fetchFacets(
+  projectId: number
+): Promise<RequirementFilterFacets> {
+  const res = await fetch(
+    `/api/projects/${projectId}/requirements/tree?facetsOnly=1`
+  );
+  if (!res.ok) {
+    throw new Error(
+      `Failed to fetch requirements tree facets (status ${res.status})`
+    );
+  }
+  return res.json() as Promise<RequirementFilterFacets>;
 }
 
 async function fetchTreeCount(
@@ -235,6 +268,7 @@ export function useRequirementsTree({
   const [isLoading, setIsLoading] = useState(true);
   const [loadMoreError, setLoadMoreError] = useState(false);
   const [refetchNonce, setRefetchNonce] = useState(0);
+  const [facets, setFacets] = useState<RequirementFilterFacets>(EMPTY_FACETS);
 
   const rootsCursorRef = useRef<RequirementRootsCursor | null>(null);
   const matchCursorRef = useRef<RequirementRootsCursor | null>(null);
@@ -270,6 +304,36 @@ export function useRequirementsTree({
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, enabled, refetchNonce]);
+
+  // --- Facets (28-19 gap closure): the Status/Coverage Selects' lazy-mode
+  // option source. Gated on `mode === "lazy"` SPECIFICALLY -- never "all",
+  // never `null` -- so the below-threshold path issues exactly the requests
+  // it issues today (D-01's own "no behaviour change below 500"), and so
+  // this never fires while the count round trip is still deciding which
+  // mode applies at all. A sibling of the count round trip above, not a
+  // second lifecycle: same dependency shape (`refetchNonce` included, so a
+  // mutation's `refetch()` call also refreshes the option lists a create
+  // could have introduced a new status value for), but its own effect since
+  // it depends on `mode`, which the count effect itself sets. `facets`
+  // simply stays at its last-resolved value (empty on a first failure) on
+  // error -- no dedicated error slot in this plan's interface, mirroring
+  // the count round trip's own posture immediately above.
+  useEffect(() => {
+    if (!enabled || mode !== "lazy") return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await fetchFacets(projectId);
+        if (!cancelled) setFacets(data);
+      } catch {
+        // See doc comment above: facets simply keep their last-resolved
+        // value rather than surfacing a second, redundant error state.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, enabled, mode, refetchNonce]);
 
   // --- Roots pager (unfiltered lazy mode). ---
   const loadRootsPageAndApply = useCallback(
@@ -463,5 +527,6 @@ export function useRequirementsTree({
     onRetryLoadMore,
     fetchChildren,
     refetch,
+    facets,
   };
 }

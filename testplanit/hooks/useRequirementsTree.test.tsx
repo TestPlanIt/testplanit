@@ -125,8 +125,13 @@ async function resolveRootsPage(
   nextCursor: { name: string; id: number } | null,
   total = 600
 ) {
+  // "limit=" (never "countOnly=1" or "facetsOnly=1") is what actually
+  // distinguishes the roots-page GET from this hook's other two GETs on the
+  // SAME `/requirements/tree?` path (28-19 added the facets fetch as a
+  // sibling of the count round trip) -- a bare path-prefix match would
+  // grab whichever of the three the hook happened to issue first.
   const req = await waitFor(() =>
-    findPending("/requirements/tree?", { method: "GET" })
+    findPending("/requirements/tree?limit=", { method: "GET" })
   );
   await act(async () => {
     resolveJson(req, { total, rows, nextCursor });
@@ -354,6 +359,63 @@ describe("useRequirementsTree", () => {
 
     expect(result.current.rows).toEqual([]);
     expect(result.current.hasMore).toBe(false);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // --- 28-19 (gap closure): the Status/Coverage Selects' server-side
+  // facet source above the threshold -- see requirementTree.ts's own
+  // getRequirementFilterFacets for the server half. ---
+
+  it("fetches facets once mode resolves to lazy, and surfaces them on the return object", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
+    );
+
+    await resolveCount("lazy", 600);
+    const facetsReq = await waitFor(() => findPending("facetsOnly=1"));
+    await act(async () => {
+      resolveJson(facetsReq, {
+        statuses: ["Blocked", "Open"],
+        coverageStatuses: [
+          { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
+        ],
+      });
+    });
+    await resolveRootsPage([], null);
+
+    await waitFor(() =>
+      expect(result.current.facets.statuses).toEqual(["Blocked", "Open"])
+    );
+    expect(result.current.facets.coverageStatuses).toEqual([
+      { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
+    ]);
+  });
+
+  it("never fetches facets in 'all' mode -- facets stay at their empty starting value, and the below-threshold path issues exactly the ONE request it issues today", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
+    );
+
+    await resolveCount("all", 10);
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(countPending("facetsOnly=1")).toBe(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result.current.facets).toEqual({
+      statuses: [],
+      coverageStatuses: [],
+    });
+  });
+
+  it("does not fetch facets while mode is still null (the count round trip hasn't resolved yet)", async () => {
+    renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
+    );
+
+    // Only the count round trip's own request may be pending before mode
+    // resolves -- a facets request this early would mean the gate reads
+    // `mode !== null` instead of the required `mode === "lazy"`.
+    expect(countPending("facetsOnly=1")).toBe(0);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
