@@ -1021,15 +1021,29 @@ export class SyncService {
    * For providers that push the recency window into their query (Jira/
    * GitHub/Azure) `matched` is the filtered count; for providers that can't,
    * it's the project (or type-scoped) total (an over-estimate that the
-   * actual import then trims via the client-side cutoff) — surfaced as
-   * "approximate" in the UI either way.
+   * actual import then trims via the client-side cutoff).
+   *
+   * `exactness` (SCALE-01 gap-closure, #501/28-22) says how much to trust
+   * `matched`: "exact" when the tracker (via `adapter.countIssues`, or a
+   * self-reported `total`, or a sampled page that turned out to hold
+   * everything) gave a real answer; "floor" when no total exists and only a
+   * sampled page's length is known, with more confirmed to exist beyond it
+   * — never presented as a bare total. `adapter.countIssues` is preferred
+   * over the sampled-page fallback whenever the adapter implements it, both
+   * because it is more accurate (a real tracker-wide count, not one page)
+   * and because it costs a single request instead of one per sampled page.
    */
   async previewProjectImport(
     integrationId: number,
     integrationProjectId: string,
     options: ProjectImportOptions = {},
     serviceOptions: SyncServiceOptions = {}
-  ): Promise<{ matched: number; hasMore: boolean; cap: number }> {
+  ): Promise<{
+    matched: number;
+    hasMore: boolean;
+    cap: number;
+    exactness: "exact" | "floor" | "unknown";
+  }> {
     const db = serviceOptions.dbClient || defaultDb;
     const cap = Math.min(options.cap ?? IMPORT_DEFAULT_CAP, IMPORT_MAX_CAP);
 
@@ -1067,12 +1081,35 @@ export class SyncService {
     }
 
     const projectRef = resolveImportProjectRef(integration.provider, mapping);
-    // Fetch a real page rather than trusting a reported `total`: Jira Cloud's
-    // /search/jql endpoint no longer returns `total`, so `matched` falls back
-    // to the count of issues actually returned (an honest "at least N"), and
-    // `hasMore` is true when the tracker says so or the page came back full.
-    // Sample a full page (not capped) so the count still reflects matches that
-    // exceed a small cap — which is exactly when the over-cap notice matters.
+
+    // Ask the tracker for a real count where the adapter can answer that
+    // directly (SCALE-01 gap-closure, #501/28-22) — cheaper (one request)
+    // and more accurate than paging a sample to infer one. Adapters without
+    // a verified count mechanism simply don't implement `countIssues`.
+    if (typeof adapter.countIssues === "function") {
+      const counted = await adapter.countIssues({
+        projectId: projectRef,
+        issueTypeIds: options.issueTypeIds,
+        updatedWithinDays: options.updatedWithinDays,
+      });
+      return {
+        matched: counted.count,
+        hasMore: counted.count > cap,
+        cap,
+        exactness: counted.exactness,
+      };
+    }
+
+    // Fallback: fetch a real page rather than trusting a reported `total`.
+    // Jira Cloud's /search/jql endpoint no longer returns `total` — that gap
+    // is closed above via countIssues; this fallback remains for adapters
+    // that implement neither `total` nor `countIssues` (or when the adapter
+    // simply doesn't implement countIssues yet). `matched` falls back to the
+    // count of issues actually returned (an honest "at least N" when there's
+    // more beyond the page), and `hasMore` is true when the tracker says so
+    // or the page came back full. Sample a full page (not capped) so the
+    // count still reflects matches that exceed a small cap — which is
+    // exactly when the over-cap notice matters.
     const sampleLimit = IMPORT_PAGE_SIZE;
     const { issues, total, hasMore } = await adapter.searchIssues({
       projectId: projectRef,
@@ -1087,8 +1124,13 @@ export class SyncService {
     const matched = hasTotal && total >= issues.length ? total : issues.length;
     const more =
       hasMore || (hasTotal && total > matched) || issues.length >= sampleLimit;
+    // Honest exactness for the fallback path: a self-reported total, or a
+    // page that turned out to hold everything (no `more`), is exact; a
+    // sampled page with more confirmed beyond it is only a floor — never
+    // dressed as a bare total (must_haves.truths, 28-22-PLAN.md).
+    const exactness: "exact" | "floor" = hasTotal || !more ? "exact" : "floor";
 
-    return { matched, hasMore: more, cap };
+    return { matched, hasMore: more, cap, exactness };
   }
 
   /**

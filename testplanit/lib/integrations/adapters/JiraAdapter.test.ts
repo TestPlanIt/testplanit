@@ -2099,6 +2099,56 @@ describe("JiraAdapter", () => {
     });
   });
 
+  describe("countIssues (SCALE-01 gap-closure, #501/28-22)", () => {
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    it("uses the dedicated approximate-count endpoint on Cloud and reports it as exact", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ count: 302 }),
+      });
+
+      const result = await adapter.countIssues!({
+        projectId: "ADM",
+        issueTypeIds: ["10001", "10002"],
+      });
+
+      expect(result).toEqual({ count: 302, exactness: "exact" });
+
+      const countCall = mockFetch.mock.calls[1];
+      expect(countCall[0]).toContain("/rest/api/3/search/approximate-count");
+      expect(countCall[1].method).toBe("POST");
+      const body = JSON.parse(countCall[1].body);
+      expect(body.jql).toContain("project = ADM");
+      expect(body.jql).toContain('issuetype in ("10001", "10002")');
+    });
+
+    it("never fetches a page of issues just to answer a count", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ count: 302 }),
+      });
+
+      await adapter.countIssues!({ projectId: "ADM" });
+
+      // Exactly two calls total: the beforeEach auth call, then the count
+      // call — no /search or /search/jql request in between.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("getProjects", () => {
     beforeEach(async () => {
       mockFetch.mockResolvedValueOnce({
@@ -2778,6 +2828,36 @@ describe("JiraAdapter Data Center / Server", () => {
     expect(searchCall).toBeTruthy();
     expect(searchCall![0]).not.toContain("search/jql");
     expect(res.issues).toHaveLength(1);
+  });
+
+  it("countIssues reuses the classic /search's own exact total on Data Center (SCALE-01 gap-closure, #501/28-22)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ name: "alice" }),
+    });
+    await adapter.authenticate({
+      type: "api_key",
+      username: "alice",
+      password: "secret",
+      baseUrl: "https://jira.mycompany.domain",
+    });
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ issues: [dcIssue], total: 302, startAt: 0 }),
+    });
+
+    const result = await adapter.countIssues!({ projectId: "ADM" });
+
+    expect(result).toEqual({ count: 302, exactness: "exact" });
+    const countCall = mockFetch.mock.calls.find(
+      (c: any[]) =>
+        typeof c[0] === "string" && c[0].includes("/rest/api/2/search?")
+    );
+    expect(countCall).toBeTruthy();
+    expect(countCall![0]).toContain("maxResults=1");
+    expect(countCall![0]).not.toContain("approximate-count");
   });
 
   it("maps Data Center users by name (not accountId)", async () => {

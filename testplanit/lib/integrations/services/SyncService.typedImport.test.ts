@@ -572,4 +572,110 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
     expect(result.hasMore).toBe(true);
     expect(result.cap).toBe(200);
   });
+
+  // -------------------------------------------------------------------------
+  // Gap closure (#501/28-22) — the count probe asks the tracker for a real
+  // count instead of inferring one from a single sampled page. Found in live
+  // UAT: the consent prompt reported "~50" (IMPORT_PAGE_SIZE) for a mapping
+  // whose tracker held 302+ matching issues.
+  // -------------------------------------------------------------------------
+
+  it("reports the tracker's real count, not the page size, when the adapter can answer countIssues directly", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const searchIssues = vi.fn().mockResolvedValue({
+      // A full page with no total — the exact shape that used to produce
+      // "~50" regardless of how many issues the tracker actually holds.
+      issues: Array.from({ length: PAGE_SIZE }, (_, i) =>
+        makeExtIssue({ id: `s${i}` })
+      ),
+      total: undefined,
+      hasMore: true,
+    });
+    const countIssues = vi
+      .fn()
+      .mockResolvedValue({ count: 302, exactness: "exact" });
+    const adapter = {
+      searchIssues,
+      countIssues,
+      getCapabilities: vi.fn().mockReturnValue({ searchIssues: true }),
+    };
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001"],
+    });
+
+    expect(result.matched).toBe(302);
+    expect(result.exactness).toBe("exact");
+    // Cost proof (SUMMARY output requirement): once a real count mechanism
+    // exists, the probe never also pages a sample — one request, not two.
+    expect(searchIssues).not.toHaveBeenCalled();
+  });
+
+  it("marks a page-inferred count as a floor, not a bare total, when no countIssues exists and only a sampled page is available", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      {
+        issues: Array.from({ length: PAGE_SIZE }, (_, i) =>
+          makeExtIssue({ id: `f${i}` })
+        ),
+        total: undefined,
+        hasMore: false,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001"],
+    });
+
+    expect(result.matched).toBe(PAGE_SIZE);
+    expect(result.exactness).toBe("floor");
+  });
+
+  it("marks the count as exact when the adapter reports a real total", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      {
+        issues: [makeExtIssue({ id: "a" }), makeExtIssue({ id: "b" })],
+        total: 7,
+        hasMore: true,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001", "10002"],
+    });
+
+    expect(result.matched).toBe(7);
+    expect(result.exactness).toBe("exact");
+  });
+
+  it("marks the count as exact when a partial page means every match was already seen", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    const adapter = makeSearchAdapter([
+      {
+        issues: [makeExtIssue({ id: "only-one" })],
+        total: undefined,
+        hasMore: false,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["10001"],
+    });
+
+    expect(result.matched).toBe(1);
+    expect(result.exactness).toBe("exact");
+  });
 });

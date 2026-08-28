@@ -80,6 +80,39 @@ export interface IssueSearchOptions {
   issueTypeIds?: string[];
 }
 
+/**
+ * Scope inputs for a tracker-side count probe (SCALE-01 gap-closure,
+ * #501/28-22) — the same scope `searchIssues` takes, minus the
+ * sampling-only fields (query/status/assignee/labels/pageToken/limit/offset)
+ * a count has no use for.
+ */
+export interface IssueCountOptions {
+  projectId?: string;
+  issueTypeIds?: string[];
+  updatedWithinDays?: number;
+}
+
+/**
+ * The tracker's answer to "how many issues match this scope", plus how much
+ * to trust it. See SyncService.previewProjectImport (SCALE-01 gap-closure,
+ * #501/28-22) — this exists because inferring a "total" from one sampled
+ * page silently reported the page size as though it were the tracker's
+ * total (the operator's live-UAT finding: "~50" for a project holding 302+).
+ *   - "exact": the tracker's own definitive answer to this exact query
+ *     (Jira's total/approximate-count endpoints, Redmine's total_count, a
+ *     provider's own id-list length, or a sampled page that turned out to
+ *     hold everything there was) — safe to present with no qualifier.
+ *   - "floor": no tracker-reported total exists; the count is a real,
+ *     observed minimum — a sampled page came back full with more known to
+ *     follow. Present as "at least N", never as a bare total.
+ *   - "unknown": no mechanism (a dedicated count call or a usable fallback)
+ *     could determine any count at all.
+ */
+export interface IssueCountResult {
+  count: number;
+  exactness: "exact" | "floor" | "unknown";
+}
+
 export interface IssueData {
   id: string;
   key?: string;
@@ -243,6 +276,16 @@ export interface IssueAdapter {
      */
     nextPageToken?: string;
   }>;
+
+  /**
+   * Ask the tracker for how many issues match a scope, without fetching any
+   * of them or writing anything. Optional — adapters without a dedicated,
+   * verified count mechanism simply omit this method; previewProjectImport's
+   * existing searchIssues-derived fallback (a real sampled page plus an
+   * honest exact/floor derivation) covers them instead. See
+   * SyncService.previewProjectImport (SCALE-01 gap-closure, #501/28-22).
+   */
+  countIssues?(options: IssueCountOptions): Promise<IssueCountResult>;
 
   /**
    * Link an issue to a test case
