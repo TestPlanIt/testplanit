@@ -307,6 +307,7 @@ const RequirementsListView = forwardRef<
   const {
     mode,
     total: projectTotal,
+    rootTotal: projectRootTotal,
     rows: lazyTreeRows,
     isLoading: lazyTreeLoading,
     loadMoreError: lazyLoadMoreError,
@@ -1236,9 +1237,16 @@ const RequirementsListView = forwardRef<
   // since this component already holds every row below the threshold;
   // filtered, either mode = loaded matches).
   const showingLoaded = treeLoadedCount;
+  // Unfiltered, the denominator is the ROOT count, not every requirement:
+  // the roots window can only ever load top-level rows, so counting nested
+  // children here made a fully-loaded list read as stalled (operator UAT --
+  // "463 of 516 and nothing more loads", where 463 was every root and the
+  // other 53 were children behind an expand arrow). Below the threshold the
+  // whole tree is already in memory, so the project total is the honest
+  // denominator there and `projectRootTotal` is absent.
   const showingTotal = treeIsFiltering
     ? (matchedTotal ?? 0)
-    : (projectTotal ?? 0);
+    : (projectRootTotal ?? projectTotal ?? 0);
 
   return (
     <>

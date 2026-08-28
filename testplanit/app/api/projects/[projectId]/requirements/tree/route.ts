@@ -9,6 +9,7 @@ import {
 } from "~/lib/services/requirementCoverageFilter";
 import {
   countProjectRequirements,
+  countProjectRequirementRoots,
   getRequirementFilterFacets,
   getRequirementRootsPage,
   REQUIREMENT_LAZY_THRESHOLD,
@@ -109,7 +110,10 @@ export async function GET(
     const { searchParams } = request.nextUrl;
 
     if (searchParams.get("countOnly") === "1") {
-      const total = await countProjectRequirements(projectId);
+      const [total, rootTotal] = await Promise.all([
+        countProjectRequirements(projectId),
+        countProjectRequirementRoots(projectId),
+      ]);
       // The ONE place this comparison is written -- callers read `mode`
       // rather than re-deriving it from `total`/`threshold` themselves, so
       // a future change to the boundary's `>`/`<=` semantics cannot drift
@@ -117,6 +121,9 @@ export async function GET(
       const mode = total > REQUIREMENT_LAZY_THRESHOLD ? "lazy" : "all";
       return NextResponse.json({
         total,
+        // The roots-only denominator the list's unfiltered "x of y" uses --
+        // a nested child is never a row the roots window can load.
+        rootTotal,
         threshold: REQUIREMENT_LAZY_THRESHOLD,
         mode,
       });

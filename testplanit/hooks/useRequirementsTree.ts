@@ -84,6 +84,9 @@ export interface UseRequirementsTreeResult {
 
 interface RequirementTreeCountResponse {
   total: number;
+  /** Top-level requirements only — the denominator the unfiltered
+   *  "x of y" compares loaded root rows against. */
+  rootTotal?: number;
   threshold: number;
   mode: "all" | "lazy";
 }
@@ -257,6 +260,9 @@ export function useRequirementsTree({
 }: UseRequirementsTreeArgs): UseRequirementsTreeResult {
   const [mode, setMode] = useState<"all" | "lazy" | null>(null);
   const [total, setTotal] = useState<number | null>(null);
+  // Roots-only denominator for the unfiltered "x of y" -- see the route's
+  // own note: a nested child is never a row the roots window can load.
+  const [rootTotal, setRootTotal] = useState<number | null>(null);
 
   const [rowsMap, setRowsMap] = useState<Map<number, RequirementTreeRow>>(
     () => new Map()
@@ -295,12 +301,14 @@ export function useRequirementsTree({
     const generation = countGenerationRef.current;
     setMode(null);
     setTotal(null);
+    setRootTotal(null);
     void (async () => {
       try {
         const data = await fetchTreeCount(projectId);
         if (countGenerationRef.current !== generation) return;
         setMode(data.mode);
         setTotal(data.total);
+        setRootTotal(data.rootTotal ?? null);
       } catch {
         // No dedicated count-fetch error slot in this plan's interface --
         // `mode` simply never resolves, so the hook stays in its initial
@@ -518,6 +526,7 @@ export function useRequirementsTree({
   return {
     mode,
     total,
+    rootTotal,
     isFiltering,
     matchedTotal,
     loadedCount,

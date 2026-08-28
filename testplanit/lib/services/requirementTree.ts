@@ -201,6 +201,30 @@ export async function countProjectRequirements(
 }
 
 /**
+ * How many of a project's requirements sit at the TOP LEVEL. The list's
+ * unfiltered "Showing x of y" compares loaded root rows against this, not
+ * against every requirement: a nested child is not a row the roots window
+ * can ever load, so counting it in the denominator makes a fully-loaded
+ * list read as though it stalled (operator UAT — "I got to 463 of 516 and
+ * nothing more loads", where 463 WAS every root and the other 53 were
+ * children waiting behind an expand arrow).
+ */
+export async function countProjectRequirementRoots(
+  projectId: number,
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<number> {
+  const { rows } = await sql<{ count: number | bigint }>`
+    SELECT COUNT(*)::int AS count
+    FROM "Issue" i
+    WHERE i."projectId" = ${projectId}
+      AND i."isRequirement" = true
+      AND i."isDeleted" = false
+      AND i."parentId" IS NULL
+  `.execute(db.$qb);
+  return Number(rows[0]?.count ?? 0);
+}
+
+/**
  * One keyset-paginated window of a project's requirement ROOTS
  * (`parentId IS NULL`), ordered by `(name, id)` -- stable and gap-free
  * under concurrent writes because `id` breaks every tie `name` alone could

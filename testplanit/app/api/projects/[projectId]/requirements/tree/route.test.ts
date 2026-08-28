@@ -15,6 +15,7 @@ vi.mock("~/lib/services/requirementCoverage", () => ({
 vi.mock("~/lib/services/requirementTree", () => ({
   REQUIREMENT_LAZY_THRESHOLD: 500,
   countProjectRequirements: vi.fn(),
+  countProjectRequirementRoots: vi.fn(),
   getRequirementFilterFacets: vi.fn(),
   getRequirementRootsPage: vi.fn(),
   resolveRequirementMatches: vi.fn(),
@@ -26,6 +27,7 @@ import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 import {
   countProjectRequirements,
+  countProjectRequirementRoots,
   getRequirementFilterFacets,
   getRequirementRootsPage,
   resolveRequirementMatches,
@@ -43,6 +45,9 @@ const mockedGetCoverage = getRequirementCoverage as unknown as ReturnType<
 >;
 const mockedCountProjectRequirements =
   countProjectRequirements as unknown as ReturnType<typeof vi.fn>;
+const mockCountRoots = countProjectRequirementRoots as unknown as ReturnType<
+  typeof vi.fn
+>;
 const mockedGetRequirementFilterFacets =
   getRequirementFilterFacets as unknown as ReturnType<typeof vi.fn>;
 const mockedGetRequirementRootsPage =
@@ -169,17 +174,26 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
 
   it("?countOnly=1 returns the live count, the threshold and the mode it implies (all)", async () => {
     mockedCountProjectRequirements.mockResolvedValue(499);
+    mockCountRoots.mockResolvedValue(450);
 
     const res = await GET(makeGetRequest("5", "?countOnly=1"), params("5"));
 
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ total: 499, threshold: 500, mode: "all" });
+    // `rootTotal` is the unfiltered "x of y" denominator: only top-level
+    // rows are ever loaded by the roots window.
+    expect(body).toEqual({
+      total: 499,
+      rootTotal: 450,
+      threshold: 500,
+      mode: "all",
+    });
     expect(mockedGetRequirementRootsPage).not.toHaveBeenCalled();
   });
 
   it("?countOnly=1 reports mode 'lazy' once the live count exceeds the threshold", async () => {
     mockedCountProjectRequirements.mockResolvedValue(501);
+    mockCountRoots.mockResolvedValue(480);
 
     const res = await GET(makeGetRequest("5", "?countOnly=1"), params("5"));
 
