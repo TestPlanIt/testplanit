@@ -781,7 +781,7 @@ importers:
         specifier: ^4.5.1
         version: 4.5.1
       cheerio:
-        specifier: ^1.2.0
+        specifier: '>=1.0.0'
         version: 1.2.0
       class-variance-authority:
         specifier: ^0.7.1
@@ -814,7 +814,7 @@ importers:
         specifier: ^0.4.0
         version: 0.4.0
       dompurify:
-        specifier: ^3.4.14
+        specifier: ^3.4.11
         version: 3.4.14
       embla-carousel-react:
         specifier: ^8.6.0
@@ -838,7 +838,7 @@ importers:
         specifier: ^20.11.12
         version: 20.11.12
       hono:
-        specifier: ^4.13.5
+        specifier: '>=4.12.18'
         version: 4.13.5
       html-to-adf-converter:
         specifier: ^1.0.2
@@ -871,7 +871,7 @@ importers:
         specifier: ^0.29.5
         version: 0.29.5
       lodash:
-        specifier: ^4.18.1
+        specifier: '>=4.18.0'
         version: 4.18.1
       lowlight:
         specifier: ^3.3.0
@@ -910,7 +910,7 @@ importers:
         specifier: ^2.3.0
         version: 2.3.0(motion@13.1.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(next@16.3.3(@babel/core@8.0.1)(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(@types/node@26.4.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nodemailer:
-        specifier: ^9.0.6
+        specifier: '>=9.0.1'
         version: 9.0.6
       otplib:
         specifier: ^13.5.0
@@ -1051,13 +1051,13 @@ importers:
         specifier: ^1.6.1
         version: 1.6.1
       undici:
-        specifier: ^7.29.0
+        specifier: ^7.28.0
         version: 7.29.0
       use-debounce:
         specifier: ^10.1.1
         version: 10.1.1(react@19.2.8)
       uuid:
-        specifier: ^14.0.2
+        specifier: '>=14.0.0'
         version: 14.0.2
       vaul:
         specifier: ^1.1.2
@@ -1247,7 +1247,7 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
       esbuild:
-        specifier: ^0.28.2
+        specifier: '>=0.25.0'
         version: 0.28.2
       eslint:
         specifier: ^9.39.5
@@ -1286,7 +1286,7 @@ importers:
         specifier: ^7.0.4
         version: 7.0.4
       postcss:
-        specifier: ^8.5.26
+        specifier: ^8.5.10
         version: 8.5.26
       prettier:
         specifier: ^3.9.6
@@ -28200,7 +28200,7 @@ snapshots:
 
   axios@1.20.0:
     dependencies:
-      follow-redirects: 1.16.0(debug@4.4.3)
+      follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
