@@ -92,6 +92,7 @@ export function ImportIssuesDialog({
   initialIssueTypeNames,
 }: ImportIssuesDialogProps) {
   const t = useTranslations("projects.settings.integrations.integration");
+  const tCommon = useTranslations("common");
   const [days, setDays] = useState<number | null>(DEFAULT_DAYS);
   const [cap, setCap] = useState<number | null>(DEFAULT_CAP);
   const [selectedTypes, setSelectedTypes] = useState<IssueType[]>([]);
@@ -429,7 +430,10 @@ export function ImportIssuesDialog({
                 data-testid="import-issues-typed-start"
               >
                 {isPreviewing && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("importStart")}
+                {/* This button fetches the tracker count and reveals the
+                    confirm step -- it imports nothing, so it must not say
+                    "Import". The write happens on "Import now" below. */}
+                {tCommon("actions.next")}
               </Button>
             )
           ) : (
