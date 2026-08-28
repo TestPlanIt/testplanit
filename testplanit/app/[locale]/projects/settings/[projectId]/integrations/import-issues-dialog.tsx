@@ -407,7 +407,10 @@ export function ImportIssuesDialog({
                   onClick={() => setTypedPreview(null)}
                   disabled={isImporting}
                 >
-                  {t("requirementsConfig.importOfferDecline")}
+                  {/* Clears the count and returns to the options above --
+                      it does not dismiss the dialog, so it reads as Back
+                      rather than a decline. */}
+                  {tCommon("actions.back")}
                 </Button>
                 {(typedPreview.matched > 0 ||
                   typedPreview.exactness === "unknown") && (
