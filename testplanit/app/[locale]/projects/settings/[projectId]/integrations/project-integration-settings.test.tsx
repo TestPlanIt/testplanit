@@ -701,6 +701,64 @@ describe("ProjectIntegrationSettings", () => {
   });
 
   // --- Test 18 (#501/28-21): progress + stop live on the mapping's own row ---
+  it("carries the saved requirement types into the import dialog", async () => {
+    // The row's Import action must hand the dialog the types saved in
+    // Requirement Sync. Without them the dialog's own typed-path gate
+    // refuses with "select and save at least one issue type" even though
+    // they ARE saved -- which makes an uncapped requirement import
+    // unreachable from this entry point.
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "completed",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(
+      <ProjectIntegrationSettings
+        {...defaultProps}
+        projectIntegration={
+          {
+            ...defaultProps.projectIntegration,
+            config: {
+              requirements: {
+                enabled: true,
+                issueTypeIds: ["6", "7"],
+                issueTypeNames: { "6": "Epic", "7": "Story" },
+              },
+            },
+          } as any
+        }
+      />
+    );
+
+    fireEvent.click(
+      within(screen.getByTestId("linked-projects-section")).getByRole(
+        "button",
+        { name: "importIssues" }
+      )
+    );
+
+    expect(
+      await screen.findByTestId("import-configured-issue-types")
+    ).toHaveTextContent("Epic");
+    expect(
+      screen.getByTestId("import-configured-issue-types")
+    ).toHaveTextContent("Story");
+  });
+
   it("offers a stop control on a syncing linked project", () => {
     mockFindMany.mockReturnValue({
       data: [

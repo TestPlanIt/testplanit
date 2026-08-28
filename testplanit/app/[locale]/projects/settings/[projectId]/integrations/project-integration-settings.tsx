@@ -51,6 +51,7 @@ import { SYNC_STATUS } from "~/lib/integrations/syncStatus";
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
 import { ImportIssuesDialog } from "./import-issues-dialog";
 import { MilestoneSyncSettings } from "./milestone-sync-settings";
+import { readRequirementTypeConfig } from "~/lib/integrations/requirementTypeConfig";
 import { RequirementsConfigSettings } from "./requirements-config-settings";
 
 interface ProjectIntegrationSettingsProps {
@@ -114,6 +115,17 @@ export function ProjectIntegrationSettings({
   );
   const [config, _setConfig] = useState(
     (projectIntegration.config as Record<string, any>) || {}
+  );
+
+  // The requirement types saved in Requirement Sync. The import dialog's
+  // typed path gates on receiving these: without them it refuses with
+  // "select and save at least one issue type" even when they ARE saved,
+  // which makes an uncapped requirement import unreachable from this row.
+  // Read through the same shared reader that section uses, so the two
+  // entry points can never disagree about what is configured.
+  const savedRequirementConfig = useMemo(
+    () => readRequirementTypeConfig(projectIntegration.config),
+    [projectIntegration.config]
   );
   const [needsAuth, setNeedsAuth] = useState(false);
   const [showAddPanel, setShowAddPanel] = useState(false);
@@ -695,6 +707,10 @@ export function ProjectIntegrationSettings({
                               disabled={ip.syncStatus === SYNC_STATUS.syncing}
                               onClick={() =>
                                 setImportRequest({
+                                  initialIssueTypeIds:
+                                    savedRequirementConfig.issueTypeIds,
+                                  initialIssueTypeNames:
+                                    savedRequirementConfig.issueTypeNames,
                                   target: {
                                     id: ip.id,
                                     name: ip.externalProjectName,
