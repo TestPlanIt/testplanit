@@ -43,7 +43,7 @@ If the review feature is turned off system-wide (under **Administration → Work
 
 When enabled, a **Requirements** area is added to the project for building a tree of what the system should do and linking test cases to requirements for coverage. Off by default.
 
-This toggle alone shows an empty tree you can author in directly; tracker-synced requirements additionally need requirement types classified on the [Issue Integrations](integrations.md#requirement-types) page. See [Requirements](../requirements.md#enabling-requirements) for the full two-step enablement.
+This toggle alone shows an empty tree you can author in directly; tracker-synced requirements additionally need requirement types classified on the [Issue Integrations](integrations.md#requirement-sync) page. See [Requirements](../requirements.md#enabling-requirements) for the full two-step enablement.
 
 ### Require justification on result flip
 
