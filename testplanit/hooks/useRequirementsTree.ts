@@ -46,8 +46,13 @@ export interface UseRequirementsTreeArgs {
 export interface UseRequirementsTreeResult {
   /** `null` until the server's count round trip resolves. */
   mode: "all" | "lazy" | null;
-  /** The project's classified total -- unfiltered `y`. */
+  /** The project's classified total, nested children included. */
   total: number | null;
+  /** Top-level requirements only -- the unfiltered `y`. The roots window
+   *  can never load a nested child, so counting one in the denominator
+   *  makes a fully loaded list read as stalled. `null` below the threshold,
+   *  where the component already holds the whole tree. */
+  rootTotal: number | null;
   isFiltering: boolean;
   /** The server's match total under an active filter -- filtered `y`. */
   matchedTotal: number | null;
