@@ -1518,8 +1518,8 @@
             "saveError": "Failed to save milestone sync settings"
           },
           "requirementsConfig": {
-            "title": "Requirement Types",
-            "description": "Choose which tracker issue types count as requirements. Existing issues are reclassified to match.",
+            "title": "Requirement Sync",
+            "description": "Sync which tracker issue types count as requirements. Existing issues are reclassified to match.",
             "enableLabel": "Enable requirement classification",
             "issueTypesLabel": "Issue types",
             "issueTypesPlaceholder": "Select issue types",
@@ -1530,8 +1530,8 @@
             "detachedCallout": "{count, plural, one {{count} of those is detached from the tracker or was edited locally and will lose its requirement status} other {{count} of those are detached from the tracker or were edited locally and will lose their requirement status}}",
             "reversibilityNote": "Re-adding a type restores the classification. Nothing is deleted.",
             "noChanges": "No classification changes to apply.",
-            "importHeading": "Import from the tracker",
-            "importDescription": "Bring in every existing issue of the configured types from the linked tracker project.",
+            "importHeading": "Import progress",
+            "importDescription": "Track and stop an import started from the linked project's Import action above.",
             "importAction": "Import {name}",
             "importOfferTitle": "Import matching issues?",
             "importOfferBody": "~{count, plural, one {{count} issue} other {{count} issues}} of the selected types are in the tracker.",

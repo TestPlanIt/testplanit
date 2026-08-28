@@ -37,9 +37,20 @@ import {
 } from "~/lib/integrations/requirementTypeConfig";
 import { SYNC_STATUS } from "~/lib/integrations/syncStatus";
 
+/** The target/preselection shape the shared ImportIssuesDialog (28-20)
+ *  accepts -- opening it is now the caller's job, not this component's. */
+interface ImportRequest {
+  target: { id: string; name: string; key: string };
+  initialIssueTypeIds: string[];
+  initialIssueTypeNames: Record<string, string>;
+}
+
 interface RequirementsConfigSettingsProps {
   projectIntegration: ProjectIntegration;
   integration: Integration;
+  /** Opens the single, shared import dialog (28-20) -- this section no
+   *  longer owns its own per-mapping import buttons or consent dialog. */
+  onRequestImport: (request: ImportRequest) => void;
 }
 
 interface IssueType {
@@ -54,15 +65,6 @@ interface RequirementImportMapping {
   externalProjectName: string | null;
   syncStatus?: string | null;
   syncError?: string | null;
-}
-
-/** Per-mapping, keyed by `mapping.id` so two mappings' dialogs can never
- *  share state -- the same class of bug 25-20 closed on the requirement
- *  detail panel, where state outlived the thing it was about. */
-interface ImportOfferState {
-  preview: { matched: number; hasMore: boolean } | null;
-  isPreviewing: boolean;
-  error: string | null;
 }
 
 /**
@@ -97,6 +99,7 @@ function seedSelectedIssueTypes(config: RequirementTypeConfig): IssueType[] {
 export function RequirementsConfigSettings({
   projectIntegration,
   integration,
+  onRequestImport,
 }: RequirementsConfigSettingsProps) {
   const t = useTranslations("projects.settings.integrations.integration");
   const tGlobal = useTranslations();
@@ -159,20 +162,6 @@ export function RequirementsConfigSettings({
     seedSelectedIssueTypes(savedConfig)
   );
   const [isSaving, setIsSaving] = useState(false);
-
-  // The import offer/consent dialog, keyed by mapping id (see
-  // ImportOfferState's own comment). `openImportMappingId` is which
-  // mapping's dialog is currently visible; the state for every mapping ever
-  // opened this session lives in `importOffers` so a late-resolving fetch
-  // for a mapping the user has since closed can never leak into whichever
-  // mapping's dialog is open now.
-  const [importOffers, setImportOffers] = useState<
-    Record<string, ImportOfferState>
-  >({});
-  const [openImportMappingId, setOpenImportMappingId] = useState<string | null>(
-    null
-  );
-  const [isImportStarting, setIsImportStarting] = useState(false);
 
   // The stop-confirmation dialog targets one mapping id at a time.
   const [stopMappingId, setStopMappingId] = useState<string | null>(null);
@@ -280,126 +269,6 @@ export function RequirementsConfigSettings({
     { enabled: diff.removed.length > 0 }
   );
 
-  // The tracker-side count for the consent prompt -- deliberately NOT
-  // `becomingCount` (a local-database reclassification count computed
-  // above). That gap between "already in our DB" and "exists in the
-  // tracker" is precisely what this phase exists to close.
-  //
-  // NOTE: every hook below (useCallback) MUST stay above the
-  // `isRequirementTypeCapable` early return further down -- React's Rules of
-  // Hooks forbid calling a hook after a conditional return.
-  const openImportOffer = useCallback(
-    async (mapping: RequirementImportMapping) => {
-      setOpenImportMappingId(mapping.id);
-      const typeIds = effectiveRequirementTypeIds(savedConfig);
-      if (typeIds.length === 0) {
-        setImportOffers((prev) => ({
-          ...prev,
-          [mapping.id]: {
-            preview: null,
-            isPreviewing: false,
-            error: t("requirementsConfig.importNoTypes"),
-          },
-        }));
-        return;
-      }
-      setImportOffers((prev) => ({
-        ...prev,
-        [mapping.id]: { preview: null, isPreviewing: true, error: null },
-      }));
-      try {
-        const res = await fetch(
-          `/api/integrations/${integration.id}/requirements-import/preview`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              projectId: projectIntegration.projectId,
-              integrationProjectId: mapping.id,
-            }),
-          }
-        );
-        const data = await res.json().catch(() => null);
-        if (!res.ok) {
-          throw new Error(
-            data?.error || t("requirementsConfig.importCountUnavailable")
-          );
-        }
-        if (data?.enabled === false) {
-          setImportOffers((prev) => ({
-            ...prev,
-            [mapping.id]: {
-              preview: null,
-              isPreviewing: false,
-              error: t("requirementsConfig.importNoTypes"),
-            },
-          }));
-          return;
-        }
-        setImportOffers((prev) => ({
-          ...prev,
-          [mapping.id]: {
-            preview: {
-              matched: data?.matched ?? 0,
-              hasMore: Boolean(data?.hasMore),
-            },
-            isPreviewing: false,
-            error: null,
-          },
-        }));
-      } catch (e: any) {
-        setImportOffers((prev) => ({
-          ...prev,
-          [mapping.id]: {
-            preview: null,
-            isPreviewing: false,
-            error: e?.message || t("requirementsConfig.importCountUnavailable"),
-          },
-        }));
-      }
-    },
-    [integration.id, projectIntegration.projectId, savedConfig, t]
-  );
-
-  const closeImportOffer = useCallback(() => {
-    setOpenImportMappingId(null);
-  }, []);
-
-  const handleConfirmImport = useCallback(
-    async (mappingId: string) => {
-      setIsImportStarting(true);
-      try {
-        const res = await fetch(
-          `/api/integrations/${integration.id}/requirements-import`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              projectId: projectIntegration.projectId,
-              integrationProjectId: mappingId,
-            }),
-          }
-        );
-        if (res.status === 409) {
-          toast.error(t("requirementsConfig.importAlreadyRunning"));
-          setOpenImportMappingId(null);
-          return;
-        }
-        const data = await res.json().catch(() => null);
-        if (!res.ok) {
-          throw new Error(data?.error || t("requirementsConfig.importFailed"));
-        }
-        toast.success(t("requirementsConfig.importStarted"));
-        setOpenImportMappingId(null);
-      } catch (e: any) {
-        toast.error(e?.message || t("requirementsConfig.importFailed"));
-      } finally {
-        setIsImportStarting(false);
-      }
-    },
-    [integration.id, projectIntegration.projectId, t]
-  );
-
   const handleConfirmStop = useCallback(async () => {
     if (!stopMappingId) return;
     setIsStopping(true);
@@ -476,9 +345,19 @@ export function RequirementsConfigSettings({
       });
       // The offer-on-save: only when this save just newly classified a type
       // (never on a removal-only save) and only when there is an active
-      // mapping to import into.
+      // mapping to import into. Opens the single, shared import dialog
+      // (28-20) -- this section no longer manages its own consent flow.
       if (addedTypesAtSaveTime.length > 0 && (mappings?.length ?? 0) > 0) {
-        void openImportOffer(mappings![0]);
+        const mapping = mappings![0];
+        onRequestImport({
+          target: {
+            id: mapping.id,
+            name: mapping.externalProjectName || mapping.externalProjectKey,
+            key: mapping.externalProjectKey,
+          },
+          initialIssueTypeIds: issueTypeIds,
+          initialIssueTypeNames: issueTypeNames,
+        });
       }
     } catch (error) {
       console.error("Failed to save requirements config:", error);
@@ -647,7 +526,7 @@ export function RequirementsConfigSettings({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {isSyncing ? (
+                    {isSyncing && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -656,17 +535,6 @@ export function RequirementsConfigSettings({
                       >
                         {t("requirementsConfig.importStopAction")}
                       </Button>
-                    ) : (
-                      !isCancelRequested && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => void openImportOffer(mapping)}
-                          data-testid={`requirements-import-action-${mapping.id}`}
-                        >
-                          {t("requirementsConfig.importAction", { name })}
-                        </Button>
-                      )
                     )}
                   </div>
                 </div>
@@ -675,56 +543,6 @@ export function RequirementsConfigSettings({
           </div>
         </div>
       )}
-
-      <AlertDialog
-        open={openImportMappingId !== null}
-        onOpenChange={(open) => {
-          if (!open) closeImportOffer();
-        }}
-      >
-        <AlertDialogContent data-testid="requirements-import-offer-dialog">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("requirementsConfig.importOfferTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {(() => {
-                const offer = openImportMappingId
-                  ? importOffers[openImportMappingId]
-                  : undefined;
-                if (offer?.isPreviewing || !offer) {
-                  return tGlobal("common.loading");
-                }
-                if (offer.error) return offer.error;
-                return t("requirementsConfig.importOfferBody", {
-                  count: offer.preview?.matched ?? 0,
-                });
-              })()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel type="button" onClick={closeImportOffer}>
-              {t("requirementsConfig.importOfferDecline")}
-            </AlertDialogCancel>
-            {openImportMappingId &&
-              importOffers[openImportMappingId]?.preview &&
-              (importOffers[openImportMappingId]?.preview?.matched ?? 0) >
-                0 && (
-                <AlertDialogAction
-                  type="button"
-                  disabled={isImportStarting}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    void handleConfirmImport(openImportMappingId);
-                  }}
-                  data-testid="requirements-import-offer-confirm"
-                >
-                  {t("requirementsConfig.importOfferConfirm")}
-                </AlertDialogAction>
-              )}
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog
         open={stopMappingId !== null}

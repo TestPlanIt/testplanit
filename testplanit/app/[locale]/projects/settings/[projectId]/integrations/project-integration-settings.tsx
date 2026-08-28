@@ -113,10 +113,15 @@ export function ProjectIntegrationSettings({
     null
   );
   const [isAddingProjects, setIsAddingProjects] = useState(false);
-  const [importTarget, setImportTarget] = useState<{
-    id: string;
-    name: string;
-    key: string;
+  // The single, shared import dialog's request (28-20): which mapping, and
+  // -- only when opened from the Requirement Sync section -- its configured
+  // requirement types to preselect. Held as one object so opening from
+  // EITHER entry point always fully replaces any stale preselection from
+  // the other.
+  const [importRequest, setImportRequest] = useState<{
+    target: { id: string; name: string; key: string };
+    initialIssueTypeIds?: string[];
+    initialIssueTypeNames?: Record<string, string>;
   } | null>(null);
 
   const { mutateAsync: updateProjectIntegration } =
@@ -607,10 +612,12 @@ export function ProjectIntegrationSettings({
                               className="h-7 w-7 shrink-0"
                               disabled={ip.syncStatus === "syncing"}
                               onClick={() =>
-                                setImportTarget({
-                                  id: ip.id,
-                                  name: ip.externalProjectName,
-                                  key: ip.externalProjectKey,
+                                setImportRequest({
+                                  target: {
+                                    id: ip.id,
+                                    name: ip.externalProjectName,
+                                    key: ip.externalProjectKey,
+                                  },
                                 })
                               }
                               aria-label={t("integration.importIssues")}
@@ -840,18 +847,22 @@ export function ProjectIntegrationSettings({
         <RequirementsConfigSettings
           projectIntegration={projectIntegration}
           integration={integration}
+          onRequestImport={setImportRequest}
         />
 
         <ImportIssuesDialog
           integrationId={integration.id}
-          target={importTarget}
-          open={importTarget !== null}
+          projectId={projectIntegration.projectId}
+          target={importRequest?.target ?? null}
+          open={importRequest !== null}
           onOpenChange={(open) => {
-            if (!open) setImportTarget(null);
+            if (!open) setImportRequest(null);
           }}
           onStarted={() => {
             void refetchIntegrationProjects();
           }}
+          initialIssueTypeIds={importRequest?.initialIssueTypeIds}
+          initialIssueTypeNames={importRequest?.initialIssueTypeNames}
         />
       </CardContent>
     </Card>

@@ -663,4 +663,37 @@ describe("ProjectIntegrationSettings", () => {
     await waitFor(() => expect(mockUpdatePI).toHaveBeenCalled());
     await waitFor(() => expect(getSaveButton()).toBeDisabled());
   });
+
+  // --- Test 17 (#501/28-20): one import affordance per mapping, page-wide ---
+  it("offers exactly one import action per linked project", () => {
+    // A single linked mapping -- the Requirement Types section (mounted as
+    // a sibling here) renders the SAME mapping id, so this counts every
+    // import-triggering button for that one mapping across the WHOLE page,
+    // not scoped to either section.
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: null,
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    const importAffordances = screen.getAllByRole("button", {
+      name: /importIssues|importAction/,
+    });
+    expect(importAffordances.length).toBe(1);
+  });
 });
