@@ -171,6 +171,35 @@ describe("ImportIssuesDialog (#501/28-20 merged dialog)", () => {
     global.fetch = originalFetch;
   });
 
+  it("states the configured types rather than offering a choice the server ignores", () => {
+    // Neither import route reads a type list from the request body: the
+    // requirements path always scopes to the types saved in Requirement
+    // Sync. An editable selector here would claim a per-run choice that
+    // does not exist, so the dialog reports the scope instead.
+    mockFetchRoutes([]);
+
+    render(
+      <ImportIssuesDialog
+        integrationId={1}
+        projectId={100}
+        target={target}
+        open={true}
+        onOpenChange={vi.fn()}
+        onStarted={vi.fn()}
+        initialIssueTypeIds={["type-1", "type-2"]}
+        initialIssueTypeNames={{ "type-1": "Epic", "type-2": "Story" }}
+      />
+    );
+
+    expect(
+      screen.getByTestId("import-configured-issue-types").textContent
+    ).toContain("Epic");
+    expect(
+      screen.getByTestId("import-configured-issue-types").textContent
+    ).toContain("Story");
+    expect(screen.queryByTestId("multi-async-combobox")).toBeNull();
+  });
+
   it("imports every issue of the selected types when no limit is set", async () => {
     mockFetchRoutes([
       [

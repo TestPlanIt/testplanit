@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
   SelectContent,
@@ -21,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const DAY_WINDOW_OPTIONS = [30, 90, 180, 365] as const;
@@ -143,38 +142,6 @@ export function ImportIssuesDialog({
   const useTypedPath = days === null || cap === null;
 
   const issueTypeIds = selectedTypes.map((issueType) => issueType.id);
-
-  // Scoped to this one target project -- simpler than
-  // requirements-config-settings.tsx's union-across-mappings fetcher, since
-  // this dialog always addresses a single mapping.
-  const fetchIssueTypes = useCallback(
-    async (query: string, page: number, pageSize: number) => {
-      if (!target) return { results: [], total: 0 };
-      try {
-        const response = await fetch(
-          `/api/integrations/${integrationId}/issue-types?projectKey=${encodeURIComponent(target.key)}`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          const issueTypes: IssueType[] = data.issueTypes || [];
-          const filtered = query
-            ? issueTypes.filter((issueType) =>
-                issueType.name.toLowerCase().includes(query.toLowerCase())
-              )
-            : issueTypes;
-          const start = page * pageSize;
-          return {
-            results: filtered.slice(start, start + pageSize),
-            total: filtered.length,
-          };
-        }
-      } catch (e) {
-        console.error("Failed to fetch issue types:", e);
-      }
-      return { results: [], total: 0 };
-    },
-    [integrationId, target]
-  );
 
   const handlePreview = async () => {
     if (!target) return;
@@ -314,22 +281,25 @@ export function ImportIssuesDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">
-              {t("requirementsConfig.issueTypesLabel")}
-            </Label>
-            <MultiAsyncCombobox<IssueType>
-              value={selectedTypes}
-              onValueChange={setSelectedTypes}
-              fetchOptions={fetchIssueTypes}
-              renderOption={(issueType) => <span>{issueType.name}</span>}
-              getOptionValue={(issueType) => issueType.id}
-              getOptionLabel={(issueType) => issueType.name}
-              placeholder={t("requirementsConfig.issueTypesPlaceholder")}
-              ariaLabel={t("requirementsConfig.issueTypesAriaLabel")}
-              disabled={isPreviewing || isImporting}
-            />
-          </div>
+          {/* Stated, never chosen. Neither import route reads a type list
+              from the request: the requirements path always scopes to the
+              types saved in Requirement Sync, and the windowed path imports
+              every type. An editable control here would claim a per-run
+              choice the server does not offer, so this reports what the run
+              will actually cover instead. */}
+          {useTypedPath && selectedTypes.length > 0 ? (
+            <div className="space-y-1.5">
+              <Label className="text-sm text-muted-foreground">
+                {t("requirementsConfig.issueTypesLabel")}
+              </Label>
+              <p
+                className="text-sm"
+                data-testid="import-configured-issue-types"
+              >
+                {selectedTypes.map((issueType) => issueType.name).join(", ")}
+              </p>
+            </div>
+          ) : null}
 
           <div className="space-y-1.5">
             <Label htmlFor="import-recency">{t("importUpdatedWithin")}</Label>
