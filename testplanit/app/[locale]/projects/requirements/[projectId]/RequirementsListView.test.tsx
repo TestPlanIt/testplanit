@@ -2477,7 +2477,7 @@ describe("RequirementsListView", () => {
       });
     });
 
-    it("the showing text sits inside the toolbar's own flex-wrap row, never displacing the filter controls", () => {
+    it("the showing text shares its own row with the column picker, below the filters", () => {
       useFindManyIssueMock.mockReturnValue({
         data: [makeRequirement({ id: 1, name: "Root A" })],
         isLoading: false,
@@ -2487,14 +2487,15 @@ describe("RequirementsListView", () => {
       renderView();
 
       const showing = screen.getByTestId("requirements-list-showing");
-      // Same flex-wrap ancestor as the Coverage/Status/Source Selects
-      // (D-08's "beside the filters", verified structurally -- jsdom has no
-      // layout engine to compute real wrapping at a narrow viewport width,
-      // so this proves the STRUCTURE that makes wrapping possible; the
-      // actual wrap behavior at a narrow width is a manual/UAT check).
-      const filterRow = showing.closest(".flex-wrap");
-      expect(filterRow).not.toBeNull();
-      expect(filterRow).toContainElement(
+      // Operator UAT: the count moved out of the filter row onto a row of
+      // its own, sharing it with the column picker -- picker left, count
+      // right. Verified structurally; jsdom has no layout engine, so the
+      // visual justification itself is a UAT check.
+      const ownRow = showing.parentElement;
+      expect(ownRow).not.toBeNull();
+      expect(ownRow?.className).toContain("justify-between");
+      // The filter Selects are NOT in this row any more.
+      expect(ownRow).not.toContainElement(
         screen.getByTestId("requirements-coverage-filter")
       );
     });

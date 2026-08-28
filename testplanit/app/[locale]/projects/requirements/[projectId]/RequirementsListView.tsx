@@ -1314,20 +1314,6 @@ const RequirementsListView = forwardRef<
                 search input left and the whole filter set right
                 (operator UAT). */}
             <div className="flex flex-wrap items-center gap-2">
-              {/* SCALE-03/D-08: "Showing x of y" sits beside the filters,
-                  inside the SAME flex-wrap row so it never displaces the
-                  Selects at a narrow width -- it simply wraps to its own
-                  line alongside them, same as any other item in this row. */}
-              <span
-                className="shrink-0 whitespace-nowrap text-xs text-muted-foreground"
-                data-testid="requirements-list-showing"
-              >
-                {t("common.pagination.showing")}{" "}
-                {t("common.pagination.loadedOfTotal", {
-                  loaded: showingLoaded,
-                  total: showingTotal,
-                })}
-              </span>
               <Select
                 value={filters.coverage || "all"}
                 disabled={coverageFilterUnavailable}
@@ -1435,15 +1421,31 @@ const RequirementsListView = forwardRef<
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <ColumnSelection
-                key="requirements-list-column-selection"
-                storageKey={`requirements-list:${projectId}`}
-                columns={columns as CustomColumnDef<RequirementRow>[]}
-                columnMetadata={columnMetadata}
-                hideColumnRef={columnHideRef}
-                onVisibilityChange={handleColumnVisibilityChange}
-              />
             </div>
+          </div>
+          {/* Its own row beneath the filters (operator UAT): the column
+              picker on the left, the count on the right, and the count
+              rendered unconditionally so the reader never has to wonder
+              whether the list is showing everything. */}
+          <div className="flex items-center justify-between gap-2 py-2 px-1">
+            <ColumnSelection
+              key="requirements-list-column-selection"
+              storageKey={`requirements-list:${projectId}`}
+              columns={columns as CustomColumnDef<RequirementRow>[]}
+              columnMetadata={columnMetadata}
+              hideColumnRef={columnHideRef}
+              onVisibilityChange={handleColumnVisibilityChange}
+            />
+            <span
+              className="whitespace-nowrap text-xs text-muted-foreground"
+              data-testid="requirements-list-showing"
+            >
+              {t("common.pagination.showing")}{" "}
+              {t("common.pagination.loadedOfTotal", {
+                loaded: showingLoaded,
+                total: showingTotal,
+              })}
+            </span>
           </div>
           <div
             ref={(el) => {
