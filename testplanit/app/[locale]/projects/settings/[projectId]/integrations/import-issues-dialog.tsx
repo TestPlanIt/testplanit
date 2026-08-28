@@ -72,6 +72,13 @@ interface PreviewState {
 interface TypedPreviewState {
   matched: number;
   hasMore: boolean;
+  /** How much to trust `matched` (SCALE-01 gap-closure, #501/28-22):
+   *  "exact" -- the tracker's own definitive count; "floor" -- a real,
+   *  observed minimum with more confirmed to exist; "unknown" -- no
+   *  mechanism could determine a count at all. Defaults to "exact" when a
+   *  response omits the field (only possible from a stale fixture -- the
+   *  live routes always forward it). */
+  exactness: "exact" | "floor" | "unknown";
 }
 
 export function ImportIssuesDialog({
@@ -183,6 +190,10 @@ export function ImportIssuesDialog({
         setTypedPreview({
           matched: data?.matched ?? 0,
           hasMore: Boolean(data?.hasMore),
+          exactness:
+            data?.exactness === "floor" || data?.exactness === "unknown"
+              ? data.exactness
+              : "exact",
         });
       } else {
         const res = await fetch(
@@ -365,9 +376,15 @@ export function ImportIssuesDialog({
               data-testid="import-issues-typed-preview"
             >
               <p>
-                {t("requirementsConfig.importOfferBody", {
-                  count: typedPreview.matched,
-                })}
+                {typedPreview.exactness === "unknown"
+                  ? t("requirementsConfig.importOfferBodyUnknown")
+                  : typedPreview.exactness === "floor"
+                    ? t("requirementsConfig.importOfferBodyFloor", {
+                        count: typedPreview.matched,
+                      })
+                    : t("requirementsConfig.importOfferBodyExact", {
+                        count: typedPreview.matched,
+                      })}
               </p>
             </div>
           )}
@@ -391,7 +408,8 @@ export function ImportIssuesDialog({
                 >
                   {t("requirementsConfig.importOfferDecline")}
                 </Button>
-                {typedPreview.matched > 0 && (
+                {(typedPreview.matched > 0 ||
+                  typedPreview.exactness === "unknown") && (
                   <Button
                     onClick={handleImport}
                     disabled={isImporting}

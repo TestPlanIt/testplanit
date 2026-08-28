@@ -349,6 +349,84 @@ describe("ImportIssuesDialog (#501/28-20 merged dialog)", () => {
     ).toBe(false);
   });
 
+  // ---------------------------------------------------------------------
+  // Gap closure (#501/28-22) — the consent prompt must distinguish an
+  // exact count from an honest floor rather than dressing a page-size
+  // sample as a total.
+  // ---------------------------------------------------------------------
+
+  it("states an exact count when the tracker can count exactly", async () => {
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 150, hasMore: false, exactness: "exact" } }),
+      ],
+    ]);
+
+    render(
+      <ImportIssuesDialog
+        integrationId={1}
+        projectId={100}
+        target={target}
+        open={true}
+        onOpenChange={vi.fn()}
+        onStarted={vi.fn()}
+        initialIssueTypeIds={["type-1"]}
+        initialIssueTypeNames={{ "type-1": "Epic" }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("import-issues-typed-start"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("import-issues-typed-preview").textContent
+      ).toMatch(/^importOfferBodyExact:/);
+    });
+  });
+
+  it("states a floor rather than a total when the tracker cannot count exactly", async () => {
+    mockFetchRoutes([
+      [
+        "requirements-import/preview",
+        () => ({ json: { matched: 50, hasMore: true, exactness: "floor" } }),
+      ],
+    ]);
+
+    render(
+      <ImportIssuesDialog
+        integrationId={1}
+        projectId={100}
+        target={target}
+        open={true}
+        onOpenChange={vi.fn()}
+        onStarted={vi.fn()}
+        initialIssueTypeIds={["type-1"]}
+        initialIssueTypeNames={{ "type-1": "Epic" }}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId("import-issues-typed-start"));
+
+    await waitFor(() => {
+      const text = screen.getByTestId("import-issues-typed-preview")
+        .textContent as string;
+      expect(text).toMatch(/^importOfferBodyFloor:/);
+      // Never the exact-count wording -- a floor must never present as a
+      // bare total (must_haves.truths, 28-22-PLAN.md).
+      expect(text).not.toMatch(/^importOfferBodyExact:/);
+    });
+
+    // The gate is unmoved: a floor still requires explicit confirmation
+    // before any write happens.
+    expect(
+      (global.fetch as any).mock.calls.some(
+        ([url]: [string]) =>
+          url.includes("requirements-import") && !url.includes("preview")
+      )
+    ).toBe(false);
+  });
+
   it("selecting All history with no preselected types states the no-types message and never writes", async () => {
     render(
       <ImportIssuesDialog
