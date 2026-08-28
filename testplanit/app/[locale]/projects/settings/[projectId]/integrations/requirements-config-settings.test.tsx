@@ -430,11 +430,13 @@ describe("RequirementsConfigSettings — single import affordance via the shared
     expect(
       screen.queryByTestId("requirements-import-action-map-2")
     ).not.toBeInTheDocument();
-    // The mapping row still renders (progress/status), just without a
-    // button of its own.
+    // Progress/status for a mapping's import no longer renders in this
+    // section at all (#501/28-21) -- it lives on the mapping's own row in
+    // project-integration-settings.tsx now, beside the Import button that
+    // starts the run.
     expect(
-      screen.getByTestId("requirements-import-row-map-1")
-    ).toHaveTextContent("Abstract");
+      screen.queryByTestId("requirements-import-row-map-1")
+    ).not.toBeInTheDocument();
     // Nothing here triggers a preview round trip on its own anymore.
     expect(
       (global.fetch as any).mock.calls.some(([url]: [string]) =>
@@ -585,126 +587,9 @@ describe("RequirementsConfigSettings — offer-on-save, progress polling, and st
     expect(mockOnRequestImport).not.toHaveBeenCalled();
   });
 
-  it("polls every 3 seconds while any mapping is syncing or cancel-requested, and stops polling otherwise", () => {
-    render(
-      <RequirementsConfigSettings
-        projectIntegration={makeProjectIntegration({
-          requirements: {
-            enabled: true,
-            issueTypeIds: ["type-1"],
-            issueTypeNames: { "type-1": "Epic" },
-          },
-        })}
-        integration={jiraIntegration}
-        onRequestImport={mockOnRequestImport}
-      />
-    );
-
-    const [, options] = mockMappingsFindMany.mock.calls.at(-1)!;
-    expect(
-      options.refetchInterval({ state: { data: [{ syncStatus: "syncing" }] } })
-    ).toBe(3000);
-    expect(
-      options.refetchInterval({
-        state: { data: [{ syncStatus: "cancel-requested" }] },
-      })
-    ).toBe(3000);
-    expect(
-      options.refetchInterval({
-        state: { data: [{ syncStatus: "completed" }] },
-      })
-    ).toBe(false);
-    expect(options.refetchInterval({ state: { data: [] } })).toBe(false);
-  });
-
-  it("a running mapping shows a running indicator and a stop control; a cancelled one renders distinctly from an error", () => {
-    mockMappingsFindMany.mockReturnValue({
-      data: [
-        makeMapping({ id: "map-1", syncStatus: "syncing" }),
-        makeMapping({
-          id: "map-2",
-          externalProjectName: "Concrete",
-          syncStatus: "cancelled",
-        }),
-        makeMapping({
-          id: "map-3",
-          externalProjectName: "Solid",
-          syncStatus: "error",
-          syncError: "Boom",
-        }),
-      ],
-    });
-
-    render(
-      <RequirementsConfigSettings
-        projectIntegration={makeProjectIntegration({
-          requirements: {
-            enabled: true,
-            issueTypeIds: ["type-1"],
-            issueTypeNames: { "type-1": "Epic" },
-          },
-        })}
-        integration={jiraIntegration}
-        onRequestImport={mockOnRequestImport}
-      />
-    );
-
-    expect(
-      screen.getByTestId("requirements-import-stop-map-1")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("requirements-import-row-map-2")
-    ).toHaveTextContent("importCancelled");
-    expect(
-      screen.getByTestId("requirements-import-row-map-2")
-    ).not.toHaveTextContent("syncStatusError");
-    expect(
-      screen.getByTestId("requirements-import-row-map-3")
-    ).toHaveTextContent("syncStatusError");
-  });
-
-  it("stopping asks for confirmation stating the one-page latency and keep-what-was-imported contract, then POSTs the cancel route", async () => {
-    const { toast } = await import("sonner");
-    mockMappingsFindMany.mockReturnValue({
-      data: [makeMapping({ id: "map-1", syncStatus: "syncing" })],
-    });
-    mockFetchRoutes([
-      ["requirements-import/cancel", () => ({ json: { success: true } })],
-    ]);
-
-    render(
-      <RequirementsConfigSettings
-        projectIntegration={makeProjectIntegration({
-          requirements: {
-            enabled: true,
-            issueTypeIds: ["type-1"],
-            issueTypeNames: { "type-1": "Epic" },
-          },
-        })}
-        integration={jiraIntegration}
-        onRequestImport={mockOnRequestImport}
-      />
-    );
-
-    fireEvent.click(screen.getByTestId("requirements-import-stop-map-1"));
-
-    await waitFor(() => screen.getByTestId("requirements-import-stop-dialog"));
-    expect(
-      screen.getByTestId("requirements-import-stop-dialog")
-    ).toHaveTextContent("importStopConfirmBody");
-
-    fireEvent.click(screen.getByTestId("requirements-import-stop-confirm"));
-
-    await waitFor(() => {
-      const cancelCall = (global.fetch as any).mock.calls.find(
-        ([url]: [string]) => url.includes("requirements-import/cancel")
-      );
-      expect(cancelCall).toBeDefined();
-      expect(JSON.parse(cancelCall![1].body)).toEqual({
-        projectId: 100,
-        integrationProjectId: "map-1",
-      });
-    });
-    expect(toast.success).toHaveBeenCalled();
-  });
+  // Progress polling, the running/cancelled/error badge distinction, and the
+  // stop-confirmation flow moved to project-integration-settings.test.tsx
+  // (#501/28-21) along with the code -- this section's own `mappings` query
+  // no longer selects syncStatus/syncError or polls, since it no longer
+  // displays any of that.
 });

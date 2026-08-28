@@ -4,6 +4,16 @@ import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { WarningAlert } from "@/components/ui/warning-alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +46,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
+import { SYNC_STATUS } from "~/lib/integrations/syncStatus";
 
 import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
 import { ImportIssuesDialog } from "./import-issues-dialog";
@@ -124,6 +135,14 @@ export function ProjectIntegrationSettings({
     initialIssueTypeNames?: Record<string, string>;
   } | null>(null);
 
+  // The stop-confirmation dialog targets one mapping (IntegrationProject) id
+  // at a time -- moved here from requirements-config-settings.tsx (#501/28-21)
+  // so progress and its stop control live on the same row as the Import
+  // button that started the run, instead of a separate block that could only
+  // describe where that button was.
+  const [stopMappingId, setStopMappingId] = useState<string | null>(null);
+  const [isStopping, setIsStopping] = useState(false);
+
   const { mutateAsync: updateProjectIntegration } =
     useClientQueries(schema).projectIntegration.useUpdate();
 
@@ -141,11 +160,21 @@ export function ProjectIntegrationSettings({
     },
     {
       // While a row is mid-import (or re-sync) its syncStatus is "syncing";
-      // poll so the badge advances to completed/error without a manual reload.
+      // poll so the badge advances to completed/error without a manual
+      // reload. Extended to also poll while cancel-requested (#501/28-21) --
+      // a stop request lands in that intermediate state before the running
+      // import's own page loop honors it and moves the row to "cancelled",
+      // and that is exactly when the user is watching hardest.
       refetchInterval: (query: any) => {
         const rows = query?.state?.data as
           Array<{ syncStatus?: string | null }> | undefined;
-        return rows?.some((r) => r.syncStatus === "syncing") ? 3000 : false;
+        return rows?.some(
+          (r) =>
+            r.syncStatus === SYNC_STATUS.syncing ||
+            r.syncStatus === SYNC_STATUS.cancelRequested
+        )
+          ? 3000
+          : false;
       },
     }
   );
@@ -341,6 +370,44 @@ export function ProjectIntegrationSettings({
       toast.error(t("integration.saveSettingsError"));
     }
   };
+
+  // Requests cooperative cancellation of a running typed requirements import
+  // for one mapping (#501/28-21, moved from requirements-config-settings.tsx
+  // so the stop control lives on the same row as the Import button that
+  // started the run).
+  const handleConfirmStop = useCallback(async () => {
+    if (!stopMappingId) return;
+    setIsStopping(true);
+    try {
+      const res = await fetch(
+        `/api/integrations/${integration.id}/requirements-import/cancel`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId: projectIntegration.projectId,
+            integrationProjectId: stopMappingId,
+          }),
+        }
+      );
+      if (res.status === 409) {
+        toast.error(t("integration.requirementsConfig.importStopNotRunning"));
+        setStopMappingId(null);
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(t("integration.requirementsConfig.importFailed"));
+      }
+      toast.success(t("integration.requirementsConfig.importStopRequested"));
+      setStopMappingId(null);
+    } catch (e: any) {
+      toast.error(
+        e?.message || t("integration.requirementsConfig.importFailed")
+      );
+    } finally {
+      setIsStopping(false);
+    }
+  }, [integration.id, projectIntegration.projectId, stopMappingId, t]);
 
   const handleAddProjects = async () => {
     if (selectedNewProjects.length === 0) return;
@@ -544,6 +611,7 @@ export function ProjectIntegrationSettings({
                     <div
                       key={ip.id}
                       className="group rounded-md border px-3 py-2 space-y-2"
+                      data-testid={`requirements-import-row-${ip.id}`}
                     >
                       <div className="flex items-center gap-2 min-h-[36px]">
                         <span className="flex-1 text-sm font-medium">
@@ -554,17 +622,31 @@ export function ProjectIntegrationSettings({
                         </Badge>
 
                         {/* Sync status badge */}
-                        {ip.syncStatus === "syncing" && (
+                        {ip.syncStatus === SYNC_STATUS.syncing && (
                           <Badge variant="secondary">
                             {t("integration.syncStatusSyncing")}
                           </Badge>
                         )}
-                        {ip.syncStatus === "completed" && (
+                        {ip.syncStatus === SYNC_STATUS.cancelRequested && (
+                          <Badge variant="secondary">
+                            {t(
+                              "integration.requirementsConfig.importStopRequested"
+                            )}
+                          </Badge>
+                        )}
+                        {ip.syncStatus === SYNC_STATUS.completed && (
                           <Badge className="bg-success text-success-foreground">
                             {t("integration.syncStatusCompleted")}
                           </Badge>
                         )}
-                        {ip.syncStatus === "error" && (
+                        {ip.syncStatus === SYNC_STATUS.cancelled && (
+                          <Badge variant="outline">
+                            {t(
+                              "integration.requirementsConfig.importCancelled"
+                            )}
+                          </Badge>
+                        )}
+                        {ip.syncStatus === SYNC_STATUS.error && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Badge variant="destructive">
@@ -610,7 +692,7 @@ export function ProjectIntegrationSettings({
                               variant="outline"
                               size="icon"
                               className="h-7 w-7 shrink-0"
-                              disabled={ip.syncStatus === "syncing"}
+                              disabled={ip.syncStatus === SYNC_STATUS.syncing}
                               onClick={() =>
                                 setImportRequest({
                                   target: {
@@ -629,6 +711,22 @@ export function ProjectIntegrationSettings({
                             {t("integration.importIssues")}
                           </TooltipContent>
                         </Tooltip>
+
+                        {/* Stop button -- only while this mapping's import is
+                            actually running (#501/28-21) */}
+                        {ip.syncStatus === SYNC_STATUS.syncing && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => setStopMappingId(ip.id)}
+                            data-testid={`requirements-import-stop-${ip.id}`}
+                          >
+                            {t(
+                              "integration.requirementsConfig.importStopAction"
+                            )}
+                          </Button>
+                        )}
 
                         {/* Remove button */}
                         <Tooltip>
@@ -864,6 +962,44 @@ export function ProjectIntegrationSettings({
           initialIssueTypeIds={importRequest?.initialIssueTypeIds}
           initialIssueTypeNames={importRequest?.initialIssueTypeNames}
         />
+
+        <AlertDialog
+          open={stopMappingId !== null}
+          onOpenChange={(open) => {
+            if (!open) setStopMappingId(null);
+          }}
+        >
+          <AlertDialogContent data-testid="requirements-import-stop-dialog">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("integration.requirementsConfig.importStopConfirmTitle")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("integration.requirementsConfig.importStopConfirmBody")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                type="button"
+                onClick={() => setStopMappingId(null)}
+              >
+                {tGlobal("common.cancel")}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                type="button"
+                disabled={isStopping}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleConfirmStop();
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                data-testid="requirements-import-stop-confirm"
+              >
+                {t("integration.requirementsConfig.importStopAction")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

@@ -116,6 +116,9 @@ vi.mock("@/components/ui/button", () => ({
       {children}
     </button>
   ),
+  // Consumed by the real (unmocked) alert-dialog.tsx, which uses this to
+  // className its own Cancel/Action buttons.
+  buttonVariants: () => "",
 }));
 
 vi.mock("@/components/ui/badge", () => ({
@@ -695,5 +698,212 @@ describe("ProjectIntegrationSettings", () => {
       name: /importIssues|importAction/,
     });
     expect(importAffordances.length).toBe(1);
+  });
+
+  // --- Test 18 (#501/28-21): progress + stop live on the mapping's own row ---
+  it("offers a stop control on a syncing linked project", () => {
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "syncing",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-2",
+          externalProjectName: "Project B",
+          externalProjectKey: "PB",
+          externalProjectId: "ext-b",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "completed",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    // Scoped to the linked-projects row itself: the Requirement Sync section
+    // (mounted as a sibling here) no longer renders anything about a
+    // mapping's import progress at all (#501/28-21 moved it here), but
+    // scoping stays cheap insurance against future ambiguity.
+    const linkedProjects = within(
+      screen.getByTestId("linked-projects-section")
+    );
+    expect(
+      linkedProjects.getByTestId("requirements-import-stop-ip-1")
+    ).toBeInTheDocument();
+    expect(
+      linkedProjects.queryByTestId("requirements-import-stop-ip-2")
+    ).not.toBeInTheDocument();
+  });
+
+  // --- Test 19 (#501/28-21, moved from requirements-config-settings.test.tsx) ---
+  it("a cancelled mapping renders distinctly from an error, and a syncing one shows a stop control", () => {
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "syncing",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-2",
+          externalProjectName: "Project B",
+          externalProjectKey: "PB",
+          externalProjectId: "ext-b",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "cancelled",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+        {
+          id: "ip-3",
+          externalProjectName: "Project C",
+          externalProjectKey: "PC",
+          externalProjectId: "ext-c",
+          isDefault: false,
+          isActive: true,
+          syncStatus: "error",
+          syncError: "Boom",
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    expect(
+      screen.getByTestId("requirements-import-stop-ip-1")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-import-row-ip-2")
+    ).toHaveTextContent("importCancelled");
+    expect(
+      screen.getByTestId("requirements-import-row-ip-2")
+    ).not.toHaveTextContent("syncStatusError");
+    expect(
+      screen.getByTestId("requirements-import-row-ip-3")
+    ).toHaveTextContent("syncStatusError");
+  });
+
+  // --- Test 20 (#501/28-21, moved from requirements-config-settings.test.tsx) ---
+  it("stopping asks for confirmation stating the one-page latency and keep-what-was-imported contract, then POSTs the cancel route", async () => {
+    const { toast } = await import("sonner");
+    mockFindMany.mockReturnValue({
+      data: [
+        {
+          id: "ip-1",
+          externalProjectName: "Project A",
+          externalProjectKey: "PA",
+          externalProjectId: "ext-a",
+          isDefault: true,
+          isActive: true,
+          syncStatus: "syncing",
+          syncError: null,
+          defaultIssueType: null,
+          defaultIssueTypeName: null,
+          projectIntegrationId: "pi-1",
+        },
+      ],
+      isLoading: false,
+    });
+    global.fetch = vi.fn((url: string) => {
+      if (String(url).includes("requirements-import/cancel")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ success: true }),
+        });
+      }
+      if (String(url).includes("/auth/check")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ authenticated: true }),
+        });
+      }
+      return Promise.resolve({ ok: false, json: async () => ({}) });
+    }) as any;
+
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    fireEvent.click(screen.getByTestId("requirements-import-stop-ip-1"));
+
+    await waitFor(() => screen.getByTestId("requirements-import-stop-dialog"));
+    expect(
+      screen.getByTestId("requirements-import-stop-dialog")
+    ).toHaveTextContent("importStopConfirmBody");
+
+    fireEvent.click(screen.getByTestId("requirements-import-stop-confirm"));
+
+    await waitFor(() => {
+      const cancelCall = (global.fetch as any).mock.calls.find(
+        ([url]: [string]) => url.includes("requirements-import/cancel")
+      );
+      expect(cancelCall).toBeDefined();
+      expect(JSON.parse(cancelCall![1].body)).toEqual({
+        projectId: 1,
+        integrationProjectId: "ip-1",
+      });
+    });
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  // --- Test 21 (#501/28-21, moved from requirements-config-settings.test.tsx) ---
+  it("polls every 3 seconds while any linked project is syncing or cancel-requested, and stops polling otherwise", () => {
+    render(<ProjectIntegrationSettings {...defaultProps} />);
+
+    // integrationProject.useFindMany is called twice: once by this
+    // component's own linked-projects query (where.projectIntegrationId),
+    // and once by the sibling Requirement Sync section's internal mappings
+    // query (where.projectIntegration.integrationId) -- both share this same
+    // mocked hook. Locate this component's own call by its distinct where
+    // shape rather than assuming call order.
+    const call = mockFindMany.mock.calls.find(
+      (call: any[]) => call[0]?.where?.projectIntegrationId !== undefined
+    );
+    expect(call).toBeDefined();
+    const [, options] = call!;
+    expect(
+      options.refetchInterval({ state: { data: [{ syncStatus: "syncing" }] } })
+    ).toBe(3000);
+    expect(
+      options.refetchInterval({
+        state: { data: [{ syncStatus: "cancel-requested" }] },
+      })
+    ).toBe(3000);
+    expect(
+      options.refetchInterval({
+        state: { data: [{ syncStatus: "completed" }] },
+      })
+    ).toBe(false);
+    expect(options.refetchInterval({ state: { data: [] } })).toBe(false);
   });
 });
