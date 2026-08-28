@@ -49,6 +49,7 @@ import {
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { BulkEditModal } from "@/projects/repository/[projectId]/BulkEditModal";
 import {
+  ExternalLink as ExternalLinkIcon,
   Filter,
   Folder,
   Pencil,
@@ -58,7 +59,7 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getEntityIcon,
@@ -94,6 +95,12 @@ interface UnifiedSearchProps {
   // Callbacks
   onResultsChange?: (results: UnifiedSearchResult) => void;
   onResultClick?: (hit: SearchHit) => void;
+  /**
+   * Destination for a result. When it returns a URL the card renders as a
+   * link, so a plain click navigates and a modified click (command/ctrl,
+   * middle button) opens the result in a new tab or window.
+   */
+  getResultHref?: (hit: SearchHit) => string | null;
   renderResults?: (results: UnifiedSearchResult) => React.ReactNode;
 
   // Initial state
@@ -111,6 +118,7 @@ export function UnifiedSearch({
   placeholder,
   onResultsChange,
   onResultClick,
+  getResultHref,
   renderResults,
   initialQuery = "",
   initialFilters,
@@ -704,6 +712,7 @@ export function UnifiedSearch({
             >
               <SearchResultCard
                 hit={hit}
+                href={getResultHref?.(hit) ?? undefined}
                 onClick={() => onResultClick?.(hit)}
                 searchQuery={query}
                 isSelected={selectedCaseRows.has(Number(hit.id))}
@@ -1039,6 +1048,7 @@ export function UnifiedSearch({
               <SearchResultCard
                 key={`${hit.entityType}-${hit.id}`}
                 hit={hit}
+                href={getResultHref?.(hit) ?? undefined}
                 onClick={() => onResultClick?.(hit)}
                 searchQuery={query}
               />
@@ -1166,12 +1176,15 @@ export function UnifiedSearch({
 // Individual search result card component
 function SearchResultCard({
   hit,
+  href,
   onClick,
   searchQuery: _searchQuery,
   isSelected = false,
   onSelectToggle,
 }: {
   hit: SearchHit;
+  /** When set the whole card is an anchor pointing here. */
+  href?: string;
   onClick?: () => void;
   searchQuery?: string;
   isSelected?: boolean;
@@ -1662,7 +1675,7 @@ function SearchResultCard({
     }
   };
 
-  return (
+  const card = (
     <Card
       className={cn(
         "p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/50",
@@ -1670,13 +1683,15 @@ function SearchResultCard({
           "bg-destructive/10 border-destructive/20 hover:border-destructive/50",
         isSelected && "border-primary/50 bg-primary/5"
       )}
-      onClick={onClick}
+      onClick={href ? undefined : onClick}
     >
       <div className="flex items-start gap-3">
         {onSelectToggle && (
           <div
             className="mt-1"
             onClick={(e) => {
+              // Also suppress the surrounding anchor's navigation.
+              e.preventDefault();
               e.stopPropagation();
               onSelectToggle();
             }}
@@ -1744,14 +1759,39 @@ function SearchResultCard({
                 hit.source.name
               )}
             </h4>
-            <Badge variant="outline" className="ms-2 shrink-0">
-              {getEntityLabel(hit.entityType)}
-            </Badge>
-            {hit.source.isDeleted && (
-              <Badge variant="destructive" className="ms-2 shrink-0">
-                {t("common.status.deleted")}
+            <div className="flex shrink-0 items-start">
+              {href && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="ms-2 mt-0.5 text-muted-foreground hover:text-foreground"
+                      aria-label={t("autoTag.entityDetail.openInNewTab")}
+                      data-testid={`search-result-new-tab-${hit.entityType}-${hit.id}`}
+                      onClick={(e) => {
+                        // Keep the card's own in-place navigation from firing.
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(href, "_blank", "noopener,noreferrer");
+                      }}
+                    >
+                      <ExternalLinkIcon className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("autoTag.entityDetail.openInNewTab")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <Badge variant="outline" className="ms-2 shrink-0">
+                {getEntityLabel(hit.entityType)}
               </Badge>
-            )}
+              {hit.source.isDeleted && (
+                <Badge variant="destructive" className="ms-2 shrink-0">
+                  {t("common.status.deleted")}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {renderEntitySpecificInfo()}
@@ -1767,5 +1807,23 @@ function SearchResultCard({
         </div>
       </div>
     </Card>
+  );
+
+  if (!href) return card;
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-xl no-underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      data-testid={`search-result-link-${hit.entityType}-${hit.id}`}
+      onClick={(e) => {
+        // A modified click opens a new tab or window; leave the search UI
+        // untouched so the user keeps their place in the results.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        onClick?.();
+      }}
+    >
+      {card}
+    </Link>
   );
 }

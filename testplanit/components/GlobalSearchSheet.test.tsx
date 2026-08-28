@@ -4,11 +4,6 @@ import { fireEvent, render, screen } from "~/test/test-utils";
 import { SearchableEntityType } from "~/types/search";
 import { GlobalSearchSheet } from "./GlobalSearchSheet";
 
-// Stable mock refs via vi.hoisted()
-const { mockRouterPush } = vi.hoisted(() => ({
-  mockRouterPush: vi.fn(),
-}));
-
 // Mock next-intl
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key.split(".").pop() ?? key,
@@ -27,25 +22,21 @@ vi.mock("next-auth/react", () => ({
   useSession: () => mockSessionData.session,
 }));
 
-// Mock navigation
-vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({
-    push: mockRouterPush,
-  }),
-}));
-
-// Mock UnifiedSearch — renders a button that fires onResultClick with test data
+// Mock UnifiedSearch — renders every test hit as the card link would: an
+// anchor carrying the href the sheet derived, firing onResultClick on click.
 vi.mock("@/components/UnifiedSearch", () => ({
   UnifiedSearch: ({
     onResultClick,
+    getResultHref,
   }: {
     onResultClick?: (hit: any) => void;
+    getResultHref?: (hit: any) => string | null;
   }) => (
     <div data-testid="unified-search">
-      <button
-        data-testid="mock-result-repository-case"
-        onClick={() =>
-          onResultClick?.({
+      {[
+        {
+          testId: "mock-result-repository-case",
+          hit: {
             id: 5,
             entityType: SearchableEntityType.REPOSITORY_CASE,
             score: 1.0,
@@ -55,15 +46,11 @@ vi.mock("@/components/UnifiedSearch", () => ({
               projectId: 1,
               isDeleted: false,
             },
-          })
-        }
-      >
-        Click Repository Case
-      </button>
-      <button
-        data-testid="mock-result-test-run"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-test-run",
+          hit: {
             id: 10,
             entityType: SearchableEntityType.TEST_RUN,
             score: 1.0,
@@ -73,54 +60,38 @@ vi.mock("@/components/UnifiedSearch", () => ({
               projectId: 2,
               isDeleted: false,
             },
-          })
-        }
-      >
-        Click Test Run
-      </button>
-      <button
-        data-testid="mock-result-session"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-session",
+          hit: {
             id: 20,
             entityType: SearchableEntityType.SESSION,
             score: 1.0,
             source: { id: 20, name: "Session", projectId: 3, isDeleted: false },
-          })
-        }
-      >
-        Click Session
-      </button>
-      <button
-        data-testid="mock-result-project"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-project",
+          hit: {
             id: 30,
             entityType: SearchableEntityType.PROJECT,
             score: 1.0,
             source: { id: 30, name: "My Project", isDeleted: false },
-          })
-        }
-      >
-        Click Project
-      </button>
-      <button
-        data-testid="mock-result-issue"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-issue",
+          hit: {
             id: 40,
             entityType: SearchableEntityType.ISSUE,
             score: 1.0,
             source: { id: 40, name: "Bug", projectId: 5, isDeleted: false },
-          })
-        }
-      >
-        Click Issue
-      </button>
-      <button
-        data-testid="mock-result-milestone"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-milestone",
+          hit: {
             id: 50,
             entityType: SearchableEntityType.MILESTONE,
             score: 1.0,
@@ -130,15 +101,11 @@ vi.mock("@/components/UnifiedSearch", () => ({
               projectId: 6,
               isDeleted: false,
             },
-          })
-        }
-      >
-        Click Milestone
-      </button>
-      <button
-        data-testid="mock-result-shared-step"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-shared-step",
+          hit: {
             id: 60,
             entityType: SearchableEntityType.SHARED_STEP,
             score: 1.0,
@@ -148,15 +115,11 @@ vi.mock("@/components/UnifiedSearch", () => ({
               projectId: 7,
               isDeleted: false,
             },
-          })
-        }
-      >
-        Click Shared Step
-      </button>
-      <button
-        data-testid="mock-result-deleted-admin"
-        onClick={() =>
-          onResultClick?.({
+          },
+        },
+        {
+          testId: "mock-result-deleted-admin",
+          hit: {
             id: 99,
             entityType: SearchableEntityType.REPOSITORY_CASE,
             score: 1.0,
@@ -166,11 +129,22 @@ vi.mock("@/components/UnifiedSearch", () => ({
               projectId: 1,
               isDeleted: true,
             },
-          })
-        }
-      >
-        Click Deleted Item
-      </button>
+          },
+        },
+      ].map(({ testId, hit }) => (
+        <a
+          key={testId}
+          data-testid={testId}
+          href={getResultHref?.(hit) ?? undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            onResultClick?.(hit);
+          }}
+        >
+          {hit.source.name}
+        </a>
+      ))}
     </div>
   ),
 }));
@@ -288,81 +262,87 @@ describe("GlobalSearchSheet", () => {
     expect(screen.getByTestId("search-help-content")).toBeInTheDocument();
   });
 
-  it("navigates to repository case on result click", () => {
+  it("links to the repository case and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-repository-case"));
+    const result = screen.getByTestId("mock-result-repository-case");
+    expect(result).toHaveAttribute("href", "/projects/repository/1/5");
 
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/repository/1/5");
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to test run on result click", () => {
+  it("links to the test run and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-test-run"));
+    const result = screen.getByTestId("mock-result-test-run");
+    expect(result).toHaveAttribute("href", "/projects/runs/2/10");
 
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/runs/2/10");
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to session on result click", () => {
+  it("links to the session and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-session"));
+    const result = screen.getByTestId("mock-result-session");
+    expect(result).toHaveAttribute("href", "/projects/sessions/3/20");
 
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/sessions/3/20");
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to project overview on result click", () => {
+  it("links to the project overview and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-project"));
+    const result = screen.getByTestId("mock-result-project");
+    expect(result).toHaveAttribute("href", "/projects/overview/30");
 
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/overview/30");
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to issue with issueId query param on result click", () => {
+  it("links to the issue with issueId query param and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-issue"));
+    const result = screen.getByTestId("mock-result-issue");
+    expect(result).toHaveAttribute("href", "/projects/issues/5?issueId=40");
 
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      "/projects/issues/5?issueId=40"
-    );
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to milestone on result click", () => {
+  it("links to the milestone and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-milestone"));
+    const result = screen.getByTestId("mock-result-milestone");
+    expect(result).toHaveAttribute("href", "/projects/milestones/6/50");
 
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/milestones/6/50");
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to shared step with groupId query param on result click", () => {
+  it("links to the shared step with groupId query param and closes on click", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-shared-step"));
-
-    expect(mockRouterPush).toHaveBeenCalledWith(
+    const result = screen.getByTestId("mock-result-shared-step");
+    expect(result).toHaveAttribute(
+      "href",
       "/projects/shared-steps/7?groupId=60"
     );
+
+    fireEvent.click(result);
     expect(onClose).toHaveBeenCalled();
   });
 
-  it("navigates to admin trash for deleted items when admin user", () => {
+  it("links deleted items to admin trash for an admin user", () => {
     // The component calls: const { data: session } = useSession()
     // so useSession() must return { data: { user: { access: "ADMIN" } } }
     mockSessionData.session = {
@@ -370,25 +350,32 @@ describe("GlobalSearchSheet", () => {
         user: { id: "admin-1", name: "Admin User", access: "ADMIN" },
       },
     } as any;
-    const onClose = vi.fn();
-    render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
+    render(<GlobalSearchSheet {...defaultProps} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-deleted-admin"));
-
-    expect(mockRouterPush).toHaveBeenCalledWith("/admin/trash");
-    expect(onClose).toHaveBeenCalled();
+    expect(screen.getByTestId("mock-result-deleted-admin")).toHaveAttribute(
+      "href",
+      "/admin/trash"
+    );
   });
 
-  it("navigates normally for deleted items when non-admin user", () => {
+  it("links deleted items to the entity for a non-admin user", () => {
     // Session is already non-admin (MEMBER) from beforeEach
+    render(<GlobalSearchSheet {...defaultProps} />);
+
+    expect(screen.getByTestId("mock-result-deleted-admin")).toHaveAttribute(
+      "href",
+      "/projects/repository/1/99"
+    );
+  });
+
+  it("keeps the sheet open when a result is command-clicked", () => {
     const onClose = vi.fn();
     render(<GlobalSearchSheet isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByTestId("mock-result-deleted-admin"));
+    fireEvent.click(screen.getByTestId("mock-result-repository-case"), {
+      metaKey: true,
+    });
 
-    // Non-admin: should navigate to the entity URL, not admin/trash
-    expect(mockRouterPush).toHaveBeenCalledWith("/projects/repository/1/99");
-    expect(mockRouterPush).not.toHaveBeenCalledWith("/admin/trash");
-    expect(onClose).toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
