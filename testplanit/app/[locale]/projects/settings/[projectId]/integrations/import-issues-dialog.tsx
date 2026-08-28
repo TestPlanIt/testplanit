@@ -173,7 +173,7 @@ export function ImportIssuesDialog({
       }
       return { results: [], total: 0 };
     },
-    [integrationId, target?.key]
+    [integrationId, target]
   );
 
   const handlePreview = async () => {
