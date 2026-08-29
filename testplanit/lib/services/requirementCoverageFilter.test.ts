@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 
-import { matchesRequirementCoverageFilter } from "./requirementCoverageFilter";
+import {
+  matchesRequirementCoverageFilter,
+  matchesRequirementCoverageFilters,
+} from "./requirementCoverageFilter";
 
 // Established fixture shape for RequirementCoverageBreakdown, shared with
 // requirementsListRows.test.ts's identical factory -- the assertions below
@@ -28,6 +31,31 @@ function makeBreakdown(
     ...overrides,
   };
 }
+
+describe("matchesRequirementCoverageFilters (multi-select)", () => {
+  it("treats an empty selection as the inactive axis", () => {
+    expect(matchesRequirementCoverageFilters([], undefined)).toBe(true);
+    expect(matchesRequirementCoverageFilters([], makeBreakdown())).toBe(true);
+  });
+
+  it("unions its selections -- a breakdown matching ANY of them matches", () => {
+    const untested = makeBreakdown({ uncovered: false, untested: 2 });
+    expect(
+      matchesRequirementCoverageFilters(["UNCOVERED", "UNTESTED"], untested)
+    ).toBe(true);
+  });
+
+  it("still excludes a breakdown matching NONE of the selections", () => {
+    const passedOnly = makeBreakdown({
+      uncovered: false,
+      untested: 0,
+      statuses: [{ statusId: 5, name: "Passed", color: null, count: 1 }],
+    });
+    expect(
+      matchesRequirementCoverageFilters(["UNCOVERED", "UNTESTED"], passedOnly)
+    ).toBe(false);
+  });
+});
 
 describe("matchesRequirementCoverageFilter", () => {
   it("the empty filter matches everything, including an absent breakdown", () => {

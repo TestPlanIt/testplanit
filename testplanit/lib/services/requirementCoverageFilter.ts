@@ -57,3 +57,24 @@ export function matchesRequirementCoverageFilter(
   }
   return true;
 }
+
+/**
+ * The multi-select form of the axis: a row matches when it matches ANY
+ * selected coverage state. Within one axis the selections UNION -- picking
+ * "Uncovered" and "Untested" asks for requirements in either state, which is
+ * what a multi-select reads as. Axes still INTERSECT with one another; that
+ * rule lives in `computeVisibleRequirementIds` and its SQL translation, not
+ * here.
+ *
+ * `[]` is "not filtering on this axis", the array form of the `""` this
+ * module's singular predicate takes.
+ */
+export function matchesRequirementCoverageFilters(
+  filters: readonly RequirementCoverageFilter[],
+  breakdown: RequirementCoverageBreakdown | undefined
+): boolean {
+  if (filters.length === 0) return true;
+  return filters.some((filter) =>
+    matchesRequirementCoverageFilter(filter, breakdown)
+  );
+}

@@ -2,12 +2,11 @@ import { coverageFor } from "~/hooks/useRequirementCoverage";
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
 import {
   matchesRequirementCoverageFilter,
+  matchesRequirementCoverageFilters,
   type RequirementCoverageFilter,
 } from "~/lib/services/requirementCoverageFilter";
-import type {
-  RequirementCoverageBreakdown,
-  RequirementCoverageStatusCount,
-} from "~/lib/services/requirementCoverage";
+import { requirementCoverageSortValue } from "~/lib/services/requirementCoverageSort";
+import type { RequirementCoverageStatusCount } from "~/lib/services/requirementCoverage";
 import {
   formatIssueDisplayText,
   resolveRequirementDisplayStatus,
@@ -163,23 +162,40 @@ export function buildDescendantIdMap(
  * without pulling React Query into a server bundle. Re-exported here
  * verbatim so no existing importer of this file has to move.
  *
- * "" means "not filtering on this axis" throughout, mirroring the milestone
- * comparator's own convention (`MemberIssuesTable.tsx`'s
- * `CoverageStateFilter`/`SourceFilter`). Coverage's non-empty states are the
- * requirements domain's own definitions (plan 10's chip, the shipped gap
- * report), NOT the milestone's "no completed outcome" --
+ * `[]` means "not filtering on this axis" throughout -- the array form of
+ * the `""` the singular predicates still take. Coverage's non-empty states
+ * are the requirements domain's own definitions (plan 10's chip, the
+ * shipped gap report), NOT the milestone's "no completed outcome" --
  * `matchesRequirementCoverageFilter` says so explicitly in its own module.
  */
-export { matchesRequirementCoverageFilter, type RequirementCoverageFilter };
+export {
+  matchesRequirementCoverageFilter,
+  matchesRequirementCoverageFilters,
+  type RequirementCoverageFilter,
+};
 
+/** One selectable provenance value. The `""` member is the SINGULAR axis's
+ *  own "inactive" marker and is kept only for the per-value predicates
+ *  below; the filter state itself is an array, where `[]` says the same
+ *  thing without a sentinel string. */
 export type RequirementSourceFilter = "" | "MANUAL" | "SYNCED" | "DETACHED";
+export type RequirementSourceValue = Exclude<RequirementSourceFilter, "">;
 
+/**
+ * Every axis is MULTI-SELECT (three `MultiAsyncCombobox`es in
+ * `RequirementsListView.tsx`, following `JunitFilterBar.tsx`'s own facet
+ * shape). Within one axis the selections UNION; the axes still INTERSECT
+ * with each other -- see `computeVisibleRequirementIds` below, which is
+ * where that asymmetry is decided and explained.
+ */
 export interface RequirementListFilters {
-  coverage: RequirementCoverageFilter;
-  /** Exact match against `resolveRequirementDisplayStatus`'s own lock-aware
-   *  value; `""` means every status, never a literal empty-status match. */
-  status: string;
-  source: RequirementSourceFilter;
+  /** `[]` means every coverage state, never a literal empty-state match. */
+  coverage: RequirementCoverageFilter[];
+  /** Exact matches against `resolveRequirementDisplayStatus`'s own
+   *  lock-aware value; `[]` means every status, never a literal
+   *  empty-status match. */
+  status: string[];
+  source: RequirementSourceValue[];
 }
 
 /** Exact match against the same lock-aware value the Status column sorts on
@@ -193,10 +209,21 @@ export function matchesRequirementStatusFilter(
   return (resolveRequirementDisplayStatus(requirement) ?? "") === filter;
 }
 
+/** The multi-select form: a row matches when its display status is ANY of
+ *  the selected ones. `[]` is the inactive axis. */
+export function matchesRequirementStatusFilters(
+  filters: readonly string[],
+  requirement: Issue
+): boolean {
+  if (filters.length === 0) return true;
+  const resolved = resolveRequirementDisplayStatus(requirement) ?? "";
+  return filters.includes(resolved);
+}
+
 // Indexed by `requirementSourceSortValue`'s own 0/1/2 ranking (Native,
 // Detached, Synced) -- reusing that encoding rather than re-deriving the
 // provenance rules a second time.
-const SOURCE_FILTER_BY_RANK: readonly Exclude<RequirementSourceFilter, "">[] = [
+const SOURCE_FILTER_BY_RANK: readonly RequirementSourceValue[] = [
   "MANUAL",
   "DETACHED",
   "SYNCED",
@@ -209,6 +236,18 @@ export function matchesRequirementSourceFilter(
   if (!filter) return true;
   return (
     SOURCE_FILTER_BY_RANK[requirementSourceSortValue(requirement)] === filter
+  );
+}
+
+/** The multi-select form: a row matches when its provenance is ANY of the
+ *  selected ones. `[]` is the inactive axis. */
+export function matchesRequirementSourceFilters(
+  filters: readonly RequirementSourceValue[],
+  requirement: Issue
+): boolean {
+  if (filters.length === 0) return true;
+  return filters.includes(
+    SOURCE_FILTER_BY_RANK[requirementSourceSortValue(requirement)]
   );
 }
 
@@ -258,13 +297,13 @@ export function computeVisibleRequirementIds({
   // after the Coverage Select was set never hides the whole tree, and the
   // other three axes keep working regardless.
   const coverageAxisActive =
-    filters.coverage !== "" && coverage !== undefined && !coverageError;
+    filters.coverage.length > 0 && coverage !== undefined && !coverageError;
   let coverageMatchIds: Set<number> | null = null;
   if (coverageAxisActive) {
     coverageMatchIds = new Set<number>();
     requirements.forEach((requirement) => {
       if (
-        matchesRequirementCoverageFilter(
+        matchesRequirementCoverageFilters(
           filters.coverage,
           coverageFor(coverage, requirement.id)
         )
@@ -275,20 +314,20 @@ export function computeVisibleRequirementIds({
   }
 
   let statusMatchIds: Set<number> | null = null;
-  if (filters.status) {
+  if (filters.status.length > 0) {
     statusMatchIds = new Set<number>();
     requirements.forEach((requirement) => {
-      if (matchesRequirementStatusFilter(filters.status, requirement)) {
+      if (matchesRequirementStatusFilters(filters.status, requirement)) {
         statusMatchIds!.add(requirement.id);
       }
     });
   }
 
   let sourceMatchIds: Set<number> | null = null;
-  if (filters.source) {
+  if (filters.source.length > 0) {
     sourceMatchIds = new Set<number>();
     requirements.forEach((requirement) => {
-      if (matchesRequirementSourceFilter(filters.source, requirement)) {
+      if (matchesRequirementSourceFilters(filters.source, requirement)) {
         sourceMatchIds!.add(requirement.id);
       }
     });
@@ -347,7 +386,9 @@ export function computeVisibleRequirementIds({
   // per-row properties with no such inheritance, so a non-matching
   // descendant genuinely should stay hidden under those axes.
   const nonTextAxisActive =
-    coverageAxisActive || filters.status !== "" || filters.source !== "";
+    coverageAxisActive ||
+    filters.status.length > 0 ||
+    filters.source.length > 0;
   if (!nonTextAxisActive) {
     const queue = [...activeMatchIds];
     while (queue.length > 0) {
@@ -418,30 +459,17 @@ export function collectRequirementStatusOptions(
   );
 }
 
-// D-02a: this is NOT `CoverageChip.coverageSortValue`, even though the
-// coverage cell now renders through `CoverageChip` itself (D-03c/UAT gap 4).
-// `coverageSortValue` ranks by a sum of completed-outcome counts; this
-// function ranks by `RequirementCoverageBreakdown`'s own four-rung
-// precedence ladder (`STATUS_RANK` below), where any FAILED result anywhere
-// in the subtree outranks NOT_RUN regardless of how many cases passed. That
-// ladder is strictly richer than a sum and agrees with the chip by
-// construction: `status === "UNCOVERED"` is true exactly when
-// `linkedCaseCount === 0`, which is exactly the chip's `"no-linked-cases"`
-// gate — the same chip/filter/sort consistency rule `MemberIssuesTable.tsx`
-// states for itself.
-const STATUS_RANK: Record<RequirementCoverageBreakdown["status"], number> = {
-  UNCOVERED: 0,
-  FAILED: 1,
-  NOT_RUN: 2,
-  PASSED: 3,
-};
-
-export function requirementCoverageSortValue(
-  breakdown: RequirementCoverageBreakdown | undefined
-): number {
-  if (!breakdown) return -1;
-  return STATUS_RANK[breakdown.status] * 10_000 + breakdown.passed;
-}
+/**
+ * `requirementCoverageSortValue` now lives in
+ * `lib/services/requirementCoverageSort.ts` -- a pure, type-only-import
+ * module the tree route can share with the client, extracted for exactly
+ * the reason `requirementCoverageFilter.ts` was. The server-side sort
+ * (28-SORT) needs this ranking to order a page in SQL, and a route handler
+ * cannot import THIS file: it pulls in `~/hooks/useRequirementCoverage`,
+ * a React Query hook module. Re-exported verbatim so no existing importer
+ * of this file has to move.
+ */
+export { requirementCoverageSortValue };
 
 /**
  * Mirrors the three states `RequirementProvenanceBadge.tsx` renders, in

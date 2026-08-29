@@ -7,6 +7,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import React from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -264,6 +265,89 @@ vi.mock("@/components/ui/async-combobox", () => ({
   }) => {
     capturedFetchOptionsList.push(fetchOptions);
     return renderTrigger({ triggerLabel });
+  },
+}));
+
+// The three filter axes are `MultiAsyncCombobox`es (Radix Popover + cmdk).
+// Stubbed for the SAME reason -- and by the same convention -- as
+// AsyncCombobox immediately above: this file's subject is which options the
+// list OFFERS and which filter state a selection produces, not whether a
+// real popover opens in jsdom (the primitive has its own suite for that,
+// `components/ui/multi-async-combobox.test.tsx`). The stub keeps the parts
+// the tests actually assert against: a `role="combobox"` trigger carrying
+// `ariaLabel`/`disabled`, and `role="option"` rows -- rendered only while
+// open, toggled by the trigger and dismissed by Escape, so a test that
+// reads two axes' option lists in a row behaves like the real thing.
+vi.mock("@/components/ui/multi-async-combobox", () => ({
+  MultiAsyncCombobox: ({
+    value,
+    onValueChange,
+    fetchOptions,
+    getOptionValue,
+    getOptionLabel,
+    ariaLabel,
+    placeholder,
+    disabled,
+  }: any) => {
+    const [open, setOpen] = React.useState(false);
+    const [options, setOptions] = React.useState<any[]>([]);
+    React.useEffect(() => {
+      let cancelled = false;
+      void Promise.resolve(fetchOptions("", 0, 1000)).then((result: any) => {
+        if (cancelled) return;
+        setOptions(Array.isArray(result) ? result : (result?.results ?? []));
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [fetchOptions]);
+    const selectedValues = (value ?? []).map((v: any) =>
+      String(getOptionValue(v))
+    );
+    return (
+      <span
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+        }}
+      >
+        <button
+          type="button"
+          role="combobox"
+          aria-label={ariaLabel}
+          aria-expanded={open}
+          disabled={disabled}
+          onClick={() => setOpen((prev) => !prev)}
+        >
+          {selectedValues.length === 0
+            ? placeholder
+            : (value ?? []).map((v: any) => getOptionLabel(v)).join(", ")}
+        </button>
+        {open &&
+          options.map((option) => {
+            const optionValue = String(getOptionValue(option));
+            const isSelected = selectedValues.includes(optionValue);
+            return (
+              <button
+                key={optionValue}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() =>
+                  onValueChange(
+                    isSelected
+                      ? (value ?? []).filter(
+                          (v: any) => String(getOptionValue(v)) !== optionValue
+                        )
+                      : [...(value ?? []), option]
+                  )
+                }
+              >
+                {getOptionLabel(option)}
+              </button>
+            );
+          })}
+      </span>
+    );
   },
 }));
 
@@ -696,22 +780,49 @@ function openMenu(trigger: HTMLElement) {
   fireEvent.pointerUp(trigger, { button: 0, pointerId: 1 });
 }
 
-/** Opens a shadcn/Radix Select by its trigger's testid and clicks the named
- *  option (matched by accessible name/role, so a same-text badge elsewhere
- *  in the row -- e.g. a provenance badge -- can never collide: only the
- *  Select's own `role="option"` items are candidates). Mirrors
- *  BulkEditModal.test.tsx's own established real-Radix-Select pattern
- *  (`fireEvent.click` wrapped in `act`, relying on the `hasPointerCapture`/
- *  `scrollIntoView` polyfills installed in `beforeAll` above). */
-async function selectFilterOption(triggerTestId: string, optionName: string) {
-  const trigger = screen.getByTestId(triggerTestId);
+/** The `MultiAsyncCombobox` trigger inside one of the three filter
+ *  wrappers. The testid now sits on the wrapper (a disabled button fires no
+ *  pointer events, so the coverage tooltip has to live outside it), and the
+ *  trigger itself is the `role="combobox"` button within. */
+function filterTrigger(triggerTestId: string): HTMLElement {
+  return within(screen.getByTestId(triggerTestId)).getByRole("combobox");
+}
+
+/** Collapses one filter's option list if it is open. A multi-select stays
+ *  open across a selection (so several values can be picked in one visit),
+ *  so a test that reads a SECOND axis's option list has to close the first
+ *  -- otherwise both axes' `role="option"` rows are in the document at once
+ *  and a name query can match either. */
+async function closeFilterOptions(triggerTestId: string) {
+  const trigger = filterTrigger(triggerTestId);
+  if (trigger.getAttribute("aria-expanded") !== "true") return;
   await act(async () => {
     fireEvent.click(trigger);
   });
-  const option = await screen.findByRole("option", { name: optionName });
+}
+
+/** Opens one of the three multi-select filter comboboxes and toggles the
+ *  named option. Every axis is a `MultiAsyncCombobox` now, so this both
+ *  SELECTS and DESELECTS -- calling it twice with the same option clears
+ *  it, which is how "clear this filter" is expressed without an "All X"
+ *  sentinel row.
+ *
+ *  Matched by accessible name/role, so a same-text badge elsewhere in the
+ *  row -- e.g. a provenance badge -- can never collide: only cmdk's own
+ *  `role="option"` items are candidates. The name is matched as a substring
+ *  because the coverage rows append a count to their label. */
+async function selectFilterOption(triggerTestId: string, optionName: string) {
+  const trigger = filterTrigger(triggerTestId);
+  await act(async () => {
+    fireEvent.click(trigger);
+  });
+  const option = await screen.findByRole("option", {
+    name: new RegExp(optionName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+  });
   await act(async () => {
     fireEvent.click(option);
   });
+  await closeFilterOptions(triggerTestId);
 }
 
 /** The event sequence a pointer travelling off the last row into the
@@ -1880,7 +1991,7 @@ describe("RequirementsListView", () => {
 
       renderView();
 
-      expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
+      expect(filterTrigger("requirements-coverage-filter")).toBeDisabled();
 
       await selectFilterOption("requirements-status-filter", "Open");
 
@@ -1936,9 +2047,12 @@ describe("RequirementsListView", () => {
         ).not.toBeInTheDocument();
       });
 
+      // Multi-select: clearing the axis is DESELECTING the value that was
+      // chosen, not picking an "All coverage" sentinel row -- there is no
+      // such row any more, because an empty selection already means "all".
       await selectFilterOption(
         "requirements-coverage-filter",
-        "milestones.members.filterAllCoverage"
+        "requirements.coverage.uncovered"
       );
 
       await waitFor(() => {
@@ -1990,6 +2104,51 @@ describe("RequirementsListView", () => {
       expect(lastFilterRequestBody()?.search).toBe("findme");
     });
 
+    it("a second selection on the same axis ADDS to it rather than replacing it", async () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+        makeRequirement({
+          id: 2,
+          name: "Child",
+          parentId: 1,
+          externalStatus: "Blocked",
+        }),
+      ];
+      useFindManyIssueMock.mockReturnValue({
+        data: requirements,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+      useRequirementCoverageMock.mockReturnValue({
+        data: makeCoverageResponse({}),
+        isError: false,
+      });
+      global.fetch = makeLegacyFilterFetchMock(
+        requirements,
+        makeCoverageResponse({})
+      ) as any;
+
+      renderView();
+
+      await selectFilterOption("requirements-status-filter", "Open");
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.status).toEqual(["Open"]);
+      });
+
+      await selectFilterOption("requirements-status-filter", "Blocked");
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.status).toEqual(["Open", "Blocked"]);
+      });
+
+      // ...and picking the same value again removes it -- the only way to
+      // clear an axis now that there is no "All statuses" sentinel row.
+      await selectFilterOption("requirements-status-filter", "Open");
+      await waitFor(() => {
+        expect(lastFilterRequestBody()?.status).toEqual(["Blocked"]);
+      });
+    });
+
     it("each of Coverage, Status and Source submits to the server immediately on change (no debounce)", async () => {
       const requirements = [
         makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
@@ -2021,12 +2180,12 @@ describe("RequirementsListView", () => {
         "requirements.coverage.uncovered"
       );
       await waitFor(() => {
-        expect(lastFilterRequestBody()?.coverage).toBe("UNCOVERED");
+        expect(lastFilterRequestBody()?.coverage).toEqual(["UNCOVERED"]);
       });
 
       await selectFilterOption("requirements-status-filter", "Open");
       await waitFor(() => {
-        expect(lastFilterRequestBody()?.status).toBe("Open");
+        expect(lastFilterRequestBody()?.status).toEqual(["Open"]);
       });
 
       await selectFilterOption(
@@ -2034,7 +2193,7 @@ describe("RequirementsListView", () => {
         "requirements.provenance.nativeLabel"
       );
       await waitFor(() => {
-        expect(lastFilterRequestBody()?.source).toBe("MANUAL");
+        expect(lastFilterRequestBody()?.source).toEqual(["MANUAL"]);
       });
     });
 
@@ -2129,6 +2288,57 @@ describe("RequirementsListView", () => {
       });
     });
 
+    it("above the threshold, a filter change collapses expanded rows -- an expanded row must never survive the reset with its children silently dropped", async () => {
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Root A", hasChildren: true }),
+        ],
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [501],
+            ancestorIds: [],
+            expandMatchedSubtrees: true,
+            rows: [makeLazyRow({ id: 501, name: "Root A", hasChildren: true })],
+          },
+        ],
+        childrenByParentId: {
+          501: [makeLazyRow({ id: 502, name: "Child of A", parentId: 501 })],
+        },
+      }) as any;
+
+      renderView();
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-501"));
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-502")).toBeInTheDocument();
+      });
+
+      // The hook drops every loaded row (children included) on a filter
+      // change, and nothing refetches them -- so the row must come back
+      // COLLAPSED, not open-and-empty.
+      fireEvent.change(screen.getByTestId("requirements-filter-input"), {
+        target: { value: "root a" },
+      });
+
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("requirement-row-502")
+        ).not.toBeInTheDocument();
+      });
+      expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      // The chevron names the action it OFFERS, so "expandRow" is the
+      // collapsed state -- the row is genuinely closed, not open-and-empty.
+      expect(
+        screen.getByTestId("requirement-chevron-501").getAttribute("aria-label")
+      ).toContain("requirements.list.expandRow");
+    });
+
     it("clearing the search axis returns to the unfiltered roots list, not a stale match set", async () => {
       global.fetch = makeTreeFetchMock({
         mode: "lazy",
@@ -2203,7 +2413,7 @@ describe("RequirementsListView", () => {
       await waitFor(() => {
         expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
       });
-      expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
+      expect(filterTrigger("requirements-coverage-filter")).toBeDisabled();
 
       await selectFilterOption(
         "requirements-source-filter",
@@ -2211,7 +2421,7 @@ describe("RequirementsListView", () => {
       );
 
       await waitFor(() => {
-        expect(lastFilterRequestBody()?.source).toBe("DETACHED");
+        expect(lastFilterRequestBody()?.source).toEqual(["DETACHED"]);
       });
       expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
     });
@@ -2251,7 +2461,7 @@ describe("RequirementsListView", () => {
       // Coverage unavailable (default mock: `data: undefined, isError:
       // false`) is the same disabled rule the pre-existing "with coverage
       // unavailable" test proves in "all" mode -- unaffected by this plan.
-      expect(screen.getByTestId("requirements-coverage-filter")).toBeDisabled();
+      expect(filterTrigger("requirements-coverage-filter")).toBeDisabled();
     });
   });
 
@@ -2674,7 +2884,7 @@ describe("RequirementsListView", () => {
       });
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId("requirements-status-filter"));
+        fireEvent.click(filterTrigger("requirements-status-filter"));
       });
       expect(
         await screen.findByRole("option", { name: "Open" })
@@ -2682,15 +2892,13 @@ describe("RequirementsListView", () => {
       expect(
         screen.getByRole("option", { name: "Blocked" })
       ).toBeInTheDocument();
-      await act(async () => {
-        fireEvent.click(screen.getByTestId("requirements-status-filter"));
-      });
+      await closeFilterOptions("requirements-status-filter");
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId("requirements-coverage-filter"));
+        fireEvent.click(filterTrigger("requirements-coverage-filter"));
       });
       expect(
-        await screen.findByRole("option", { name: "Passed" })
+        await screen.findByRole("option", { name: /Passed/ })
       ).toBeInTheDocument();
     });
 
@@ -2731,7 +2939,7 @@ describe("RequirementsListView", () => {
       });
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId("requirements-status-filter"));
+        fireEvent.click(filterTrigger("requirements-status-filter"));
       });
       expect(
         await screen.findByRole("option", { name: "Open" })
@@ -2739,15 +2947,13 @@ describe("RequirementsListView", () => {
       expect(
         screen.getByRole("option", { name: "Blocked" })
       ).toBeInTheDocument();
-      await act(async () => {
-        fireEvent.click(screen.getByTestId("requirements-status-filter"));
-      });
+      await closeFilterOptions("requirements-status-filter");
 
       await act(async () => {
-        fireEvent.click(screen.getByTestId("requirements-coverage-filter"));
+        fireEvent.click(filterTrigger("requirements-coverage-filter"));
       });
       expect(
-        await screen.findByRole("option", { name: "Passed" })
+        await screen.findByRole("option", { name: /Passed/ })
       ).toBeInTheDocument();
 
       // Below the threshold, the facets fetch must never even fire --

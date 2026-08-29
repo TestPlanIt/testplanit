@@ -21,12 +21,12 @@ import {
   type RequirementListSortConfig,
 } from "./requirementsListRows";
 
-// "" on every axis -- the baseline every test below starts from and spreads
+// `[]` on every axis -- the baseline every test below starts from and spreads
 // over to activate exactly the one or two axes it's proving.
 const noFilters: RequirementListFilters = {
-  coverage: "",
-  status: "",
-  source: "",
+  coverage: [],
+  status: [],
+  source: [],
 };
 
 // Local fixture factory -- deliberately not a full ZenStack model object,
@@ -596,7 +596,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "",
-      filters: { ...noFilters, coverage: "UNCOVERED" },
+      filters: { ...noFilters, coverage: ["UNCOVERED"] },
       coverage: makeCoverageResponse(coverageEntries),
       coverageError: false,
     });
@@ -627,7 +627,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "",
-      filters: { ...noFilters, coverage: "UNCOVERED" },
+      filters: { ...noFilters, coverage: ["UNCOVERED"] },
       coverage,
       coverageError: false,
     });
@@ -658,7 +658,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "login",
-      filters: { ...noFilters, coverage: "UNCOVERED" },
+      filters: { ...noFilters, coverage: ["UNCOVERED"] },
       coverage,
       coverageError: false,
     });
@@ -700,7 +700,7 @@ describe("computeVisibleRequirementIds", () => {
       requirementMap,
       childrenMap,
       normalizedFilter: "login",
-      filters: { ...noFilters, coverage: "UNCOVERED" },
+      filters: { ...noFilters, coverage: ["UNCOVERED"] },
       coverage,
       coverageError: false,
     });
@@ -772,7 +772,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { ...noFilters, coverage: "UNCOVERED" },
+        filters: { ...noFilters, coverage: ["UNCOVERED"] },
         coverage,
         coverageError: false,
       });
@@ -805,7 +805,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { ...noFilters, status: "Open" },
+        filters: { ...noFilters, status: ["Open"] },
         coverage: undefined,
         coverageError: false,
       });
@@ -839,7 +839,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { ...noFilters, source: "DETACHED" },
+        filters: { ...noFilters, source: ["DETACHED"] },
         coverage: undefined,
         coverageError: false,
       });
@@ -889,7 +889,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { coverage: "UNCOVERED", status: "", source: "MANUAL" },
+        filters: { coverage: ["UNCOVERED"], status: [], source: ["MANUAL"] },
         coverage,
         coverageError: false,
       });
@@ -929,7 +929,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { coverage: "", status: "Open", source: "" },
+        filters: { coverage: [], status: ["Open"], source: [] },
         coverage: undefined,
         coverageError: false,
       });
@@ -961,13 +961,101 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { coverage: "", status: "", source: "MANUAL" },
+        filters: { coverage: [], status: [], source: ["MANUAL"] },
         coverage: undefined,
         coverageError: false,
       });
 
       expect(visible!.has(1)).toBe(true);
       expect(visible!.has(2)).toBe(false);
+    });
+  });
+
+  // Every axis is multi-select. The rule these two prove is the asymmetry
+  // the whole filter bar rests on: values WITHIN one axis union, axes
+  // INTERSECT with each other. Getting either half backwards is silent --
+  // a union across axes looks like "the filter widened", an intersection
+  // within one axis matches nothing at all.
+  describe("multi-select axes: union within, intersection across", () => {
+    it("two selected statuses admit rows matching EITHER, not only rows matching both (which no row could)", () => {
+      const requirements = [
+        makeRequirement({ id: 1, name: "Root", externalStatus: "Open" }),
+        makeRequirement({
+          id: 2,
+          name: "Blocked One",
+          parentId: 1,
+          externalStatus: "Blocked",
+        }),
+        makeRequirement({
+          id: 3,
+          name: "Closed One",
+          parentId: 1,
+          externalStatus: "Closed",
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: { coverage: [], status: ["Open", "Blocked"], source: [] },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible!.has(1)).toBe(true);
+      expect(visible!.has(2)).toBe(true);
+      expect(visible!.has(3)).toBe(false);
+    });
+
+    it("a multi-valued status axis still INTERSECTS with a multi-valued source axis", () => {
+      const requirements = [
+        // Open + native: matches both axes.
+        makeRequirement({
+          id: 1,
+          name: "Open Native",
+          externalStatus: "Open",
+          integrationId: null,
+        }),
+        // Blocked + synced: matches status, fails source.
+        makeRequirement({
+          id: 2,
+          name: "Blocked Synced",
+          externalStatus: "Blocked",
+          integrationId: 5,
+        }),
+        // Closed + detached: matches source, fails status.
+        makeRequirement({
+          id: 3,
+          name: "Closed Detached",
+          externalStatus: "Closed",
+          integrationId: 5,
+          requirementDetachedAt: new Date(),
+        }),
+      ];
+      const { requirementMap, childrenMap } =
+        buildRequirementMaps(requirements);
+
+      const visible = computeVisibleRequirementIds({
+        requirements,
+        requirementMap,
+        childrenMap,
+        normalizedFilter: "",
+        filters: {
+          coverage: [],
+          status: ["Open", "Blocked"],
+          source: ["MANUAL", "DETACHED"],
+        },
+        coverage: undefined,
+        coverageError: false,
+      });
+
+      expect(visible!.has(1)).toBe(true);
+      expect(visible!.has(2)).toBe(false);
+      expect(visible!.has(3)).toBe(false);
     });
   });
 
@@ -1001,7 +1089,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { coverage: "UNCOVERED", status: "Open", source: "" },
+        filters: { coverage: ["UNCOVERED"], status: ["Open"], source: [] },
         coverage: undefined,
         coverageError: false,
       });
@@ -1031,7 +1119,7 @@ describe("computeVisibleRequirementIds", () => {
         requirementMap,
         childrenMap,
         normalizedFilter: "",
-        filters: { coverage: "UNCOVERED", status: "Open", source: "" },
+        filters: { coverage: ["UNCOVERED"], status: ["Open"], source: [] },
         coverage,
         coverageError: true,
       });

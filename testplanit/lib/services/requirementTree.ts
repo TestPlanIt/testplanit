@@ -104,13 +104,82 @@ export interface RequirementTreeRow {
   hasChildren: boolean;
 }
 
-/** Keyset cursor for `getRequirementRootsPage`: the `(name, id)` of the
- *  last row a caller has already seen. `id` breaks every tie `name` alone
- *  could leave, so the tuple comparison below is a strict total order. */
+/**
+ * Keyset cursor for `getRequirementRootsPage`: the SORT VALUE and `id` of
+ * the last row a caller has already seen. `id` breaks every tie the sort
+ * value alone could leave, so the tuple comparison below is a strict total
+ * order whatever column is being sorted on.
+ *
+ * `value` is the ALREADY-NORMALIZED value the sort expression produced for
+ * that row -- never null, because every descriptor in
+ * `REQUIREMENT_SORT_DESCRIPTORS` coalesces its own expression (see that
+ * table's own doc). A caller never constructs one: it comes back from a
+ * previous page and is handed straight to the next call.
+ */
 export interface RequirementRootsCursor {
-  name: string;
+  value: string | number;
   id: number;
 }
+
+/**
+ * The list's sortable columns. Deliberately a closed union rather than a
+ * free string: this feeds an `ORDER BY` fragment, so an unrecognized value
+ * must fail at the route's schema rather than reach SQL.
+ *
+ * `linkedCases`/`coveringCases`/`coverage` are the three COVERAGE-DERIVED
+ * columns -- they have no Issue column of their own and are sorted through
+ * a caller-supplied value list (see `RequirementTreeSort.coverageValues`).
+ */
+export const REQUIREMENT_SORT_COLUMNS = [
+  "name",
+  "status",
+  "priority",
+  "source",
+  "createdAt",
+  "coverage",
+  "linkedCases",
+  "coveringCases",
+] as const;
+
+export type RequirementSortColumn = (typeof REQUIREMENT_SORT_COLUMNS)[number];
+
+/** The three columns whose values live in the coverage rollup rather than
+ *  on the Issue row, so a caller has to supply them. */
+export const COVERAGE_DERIVED_SORT_COLUMNS: readonly RequirementSortColumn[] = [
+  "coverage",
+  "linkedCases",
+  "coveringCases",
+];
+
+export interface RequirementTreeSort {
+  column: RequirementSortColumn;
+  direction: "asc" | "desc";
+  /**
+   * Per-requirement sort values for a COVERAGE-DERIVED column, as two
+   * parallel arrays (`unnest` joins them into a two-column relation
+   * server-side). Precomputed by the CALLER from `getRequirementCoverage`'s
+   * rollup, for the same reason `resolveRequirementMatches` takes
+   * `coverageMatchIds` rather than computing coverage itself: that rollup
+   * needs the caller's resolved project scope, and this module takes no
+   * session and performs no authorization (see this file's own header).
+   *
+   * Required for a coverage-derived column, ignored for every other one. A
+   * requirement absent from the arrays sorts as `-1` -- the same "no
+   * breakdown" sentinel `requirementCoverageSortValue` uses client-side.
+   */
+  coverageValues?: RequirementCoverageSortValues | null;
+}
+
+export interface RequirementCoverageSortValues {
+  ids: number[];
+  values: number[];
+}
+
+/** The list's default order, and the one every caller falls back to. */
+export const DEFAULT_REQUIREMENT_SORT: RequirementTreeSort = {
+  column: "name",
+  direction: "asc",
+};
 
 export interface RequirementRootsPage {
   rows: RequirementTreeRow[];
@@ -247,10 +316,12 @@ export async function getRequirementRootsPage(
     projectId: number;
     limit: number;
     cursor?: RequirementRootsCursor | null;
+    /** Defaults to name ascending — the order this window shipped with. */
+    sort?: RequirementTreeSort;
   },
   db: Pick<typeof baseDb, "$qb"> = baseDb
 ): Promise<RequirementRootsPage> {
-  const { projectId, limit, cursor } = args;
+  const { projectId, limit, cursor, sort = DEFAULT_REQUIREMENT_SORT } = args;
 
   // A real WHERE-clause fragment when a cursor is supplied, or a no-op
   // empty fragment on page one -- composed the same way
@@ -258,20 +329,22 @@ export async function getRequirementRootsPage(
   // optional `rootScope`, so a missing cursor never becomes a separate,
   // string-concatenated query branch.
   const cursorFragment = cursor
-    ? sql`AND (i.name, i.id) > (${cursor.name}, ${cursor.id})`
+    ? sql`AND ${requirementSortCursorFragment(sort, cursor)}`
     : sql``;
 
-  const { rows } = await sql<RequirementTreeRow>`
+  const { rows } = await sql<SortedRequirementRow>`
     SELECT
       ${REQUIREMENT_TREE_COLUMNS},
-      ${requirementHasChildrenFragment(projectId)}
+      ${requirementHasChildrenFragment(projectId)},
+      ${requirementSortKeyFragment(sort)}
     FROM "Issue" i
+    ${requirementSortJoinFragment(sort)}
     WHERE i."projectId" = ${projectId}
       AND i."isRequirement" = true
       AND i."isDeleted" = false
       AND i."parentId" IS NULL
       ${cursorFragment}
-    ORDER BY i.name, i.id
+    ${requirementSortOrderFragment(sort)}
     LIMIT ${limit + 1}
   `.execute(db.$qb);
 
@@ -279,9 +352,17 @@ export async function getRequirementRootsPage(
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
   const lastRow = pageRows[pageRows.length - 1];
   const nextCursor: RequirementRootsCursor | null =
-    hasMore && lastRow ? { name: lastRow.name, id: lastRow.id } : null;
+    hasMore && lastRow
+      ? { value: toCursorValue(lastRow.requirementSortKey), id: lastRow.id }
+      : null;
 
-  return { rows: pageRows, nextCursor };
+  // The sort key is a paging mechanism, not part of the row contract --
+  // stripped so `RequirementTreeRow` stays exactly what every consumer
+  // (and every serialized response) already expects.
+  return {
+    rows: pageRows.map(({ requirementSortKey: _key, ...row }) => row),
+    nextCursor,
+  };
 }
 
 /**
@@ -340,20 +421,22 @@ export async function getRequirementChildren(
 
 /**
  * The requirements list's four independently-activatable filter axes,
- * server-side (28-CONTEXT D-04): `""` means "not filtering on this axis"
- * for every string field here, mirroring `RequirementListFilters`'s own
- * convention in `requirementsListRows.ts`. Coverage is NOT a field on this
- * type -- it arrives as a separately pre-computed id list
- * (`resolveRequirementMatches`'s own `coverageMatchIds` argument), because
- * resolving it requires `getRequirementCoverage`'s whole-project rollup,
- * which needs the CALLER's project scope, not this module's (this module
- * still takes no session and performs no authorization -- see this file's
- * own header).
+ * server-side (28-CONTEXT D-04). Status and source are MULTI-SELECT, so
+ * `[]` means "not filtering on this axis" and a non-empty array UNIONs its
+ * own values -- mirroring `RequirementListFilters`'s own convention in
+ * `requirementsListRows.ts`, which this module's SQL is the translation of.
+ * `search` stays a single string ("" is inactive): it is one text box, not
+ * a facet list. Coverage is NOT a field on this type -- it arrives as a
+ * separately pre-computed id list (`resolveRequirementMatches`'s own
+ * `coverageMatchIds` argument), because resolving it requires
+ * `getRequirementCoverage`'s whole-project rollup, which needs the
+ * CALLER's project scope, not this module's (this module still takes no
+ * session and performs no authorization -- see this file's own header).
  */
 export interface RequirementTreeFilterAxes {
   search: string;
-  status: string;
-  source: "" | "MANUAL" | "SYNCED" | "DETACHED";
+  status: string[];
+  source: ("MANUAL" | "SYNCED" | "DETACHED")[];
 }
 
 /**
@@ -461,6 +544,242 @@ const REQUIREMENT_SOURCE_CASE = sql`
     ELSE 'SYNCED'
   END
 `;
+
+// ---------------------------------------------------------------------------
+// Server-side sorting (SCALE-02 follow-up). Sorting used to happen entirely
+// in the browser, over the rows already loaded -- which meant that above the
+// lazy threshold "sort by coverage descending" ordered the loaded WINDOW, not
+// the project. On a 4,727-root project the most-covered requirement simply
+// never appeared, because it sorted past the first page by NAME and had never
+// been fetched (operator report: "Coverage sorting doesn't seem to work").
+// Ordering therefore has to move into the same statement that pages the rows.
+// ---------------------------------------------------------------------------
+
+/**
+ * SQL translation of `formatIssueDisplayText` (utils/issueDisplayText.ts)
+ * composed with `hasDistinctIssueTitle`:
+ *
+ *   hasDistinctIssueTitle = Boolean(externalUrl && title && title !== name)
+ *   formatIssueDisplayText = hasDistinct ? `${name}: ${title}` : name
+ *
+ * The name column sorts on the DISPLAYED string, not on `i.name`, because
+ * that is what `compareRequirements`'s own `name` case compares and what the
+ * reader actually sees in the cell. `Boolean("")` is false in JS, so the
+ * empty-string checks below are part of the translation, not defensiveness.
+ */
+const REQUIREMENT_DISPLAY_TEXT_CASE = sql`
+  CASE
+    WHEN i."externalUrl" IS NOT NULL AND i."externalUrl" <> ''
+      AND i.title IS NOT NULL AND i.title <> ''
+      AND i.title <> i.name
+    THEN i.name || ': ' || i.title
+    ELSE i.name
+  END
+`;
+
+/**
+ * `requirementSourceSortValue`'s own 0/1/2 ranking (Native, Detached,
+ * Synced) in SQL -- the RANK, not the label, because the client comparator
+ * orders by that rank and 'DETACHED' < 'MANUAL' < 'SYNCED' alphabetically
+ * would disagree with it.
+ */
+const REQUIREMENT_SOURCE_RANK_CASE = sql`
+  CASE
+    WHEN i."integrationId" IS NULL THEN 0
+    WHEN i."requirementDetachedAt" IS NOT NULL THEN 1
+    ELSE 2
+  END
+`;
+
+/**
+ * One sortable column's ORDER BY expression plus the cast its keyset cursor
+ * needs.
+ *
+ * EVERY expression is total (never null). That is not cosmetic: the keyset
+ * predicate is a row comparison, and SQL row comparison against a NULL
+ * yields NULL rather than true/false, which would silently drop rows from
+ * page two onward. Coalescing at the descriptor means the cursor value a
+ * page hands back is always a real, comparable value, and the one rule
+ * below ("compare the tuple") holds for every column without per-column
+ * null branches.
+ *
+ * The coalesce targets match the client comparator's own null handling:
+ * `priority`/`status` compare as `""` there
+ * (`(a.priority ?? "").localeCompare(...)`), and an absent coverage
+ * breakdown is `-1` (`requirementCoverageSortValue`).
+ */
+interface RequirementSortDescriptor {
+  expr: RawBuilder<unknown>;
+  cast: "text" | "numeric" | "timestamptz";
+}
+
+function requirementSortDescriptor(
+  sort: RequirementTreeSort
+): RequirementSortDescriptor {
+  switch (sort.column) {
+    case "status":
+      return {
+        expr: sql`COALESCE(${REQUIREMENT_DISPLAY_STATUS_CASE}, '')`,
+        cast: "text",
+      };
+    case "priority":
+      return { expr: sql`COALESCE(i.priority, '')`, cast: "text" };
+    case "source":
+      return { expr: REQUIREMENT_SOURCE_RANK_CASE, cast: "numeric" };
+    case "createdAt":
+      return { expr: sql`i."createdAt"`, cast: "timestamptz" };
+    case "coverage":
+    case "linkedCases":
+    case "coveringCases": {
+      // Joined in as `req_sort_value` by `requirementSortJoinFragment`
+      // below; `-1` is the "no breakdown" sentinel, matching
+      // `requirementCoverageSortValue`'s own absent-breakdown return.
+      return {
+        expr: sql`COALESCE(req_sort.value, -1)`,
+        cast: "numeric",
+      };
+    }
+    case "name":
+    default:
+      return { expr: REQUIREMENT_DISPLAY_TEXT_CASE, cast: "text" };
+  }
+}
+
+/**
+ * The LEFT JOIN that supplies a coverage-derived column's per-requirement
+ * sort value, or an empty fragment for every other column.
+ *
+ * `unnest(ids, values)` turns the caller's two parallel arrays into a
+ * two-column relation in one bind, rather than a generated VALUES list
+ * whose length would change the statement text on every call (and so defeat
+ * the plan cache). LEFT, never INNER: a requirement missing from the rollup
+ * must still appear in the page, sorted at the `-1` sentinel, not vanish.
+ */
+function requirementSortJoinFragment(
+  sort: RequirementTreeSort
+): RawBuilder<unknown> {
+  if (!COVERAGE_DERIVED_SORT_COLUMNS.includes(sort.column)) return sql``;
+  const ids = sort.coverageValues?.ids ?? [];
+  const values = sort.coverageValues?.values ?? [];
+  return sql`
+    LEFT JOIN unnest(${ids}::int[], ${values}::double precision[])
+      AS req_sort(id, value) ON req_sort.id = i.id
+  `;
+}
+
+/**
+ * `ORDER BY <expr> <dir>, i.id <dir>`.
+ *
+ * `id` is part of the ORDER BY, not merely a tie-break in spirit: the
+ * keyset predicate below compares the `(expr, id)` TUPLE, and a tuple
+ * comparison is only a valid page boundary when the ordering matches it
+ * exactly. Both members carry the same direction for that reason -- an
+ * ascending `id` under a descending sort value would make the tuple
+ * comparison and the ordering disagree, and rows would be skipped.
+ *
+ * This deliberately differs from `compareRequirements`'s client-side
+ * tie-break (name then id, always ascending even under desc): that
+ * comparator sorts a small sibling group already in hand, where a stable
+ * tie order costs nothing. A keyset pager cannot use a tie-break that runs
+ * opposite to its own ordering.
+ */
+function requirementSortOrderFragment(
+  sort: RequirementTreeSort
+): RawBuilder<unknown> {
+  const { expr } = requirementSortDescriptor(sort);
+  return sort.direction === "desc"
+    ? sql`ORDER BY ${expr} DESC, i.id DESC`
+    : sql`ORDER BY ${expr} ASC, i.id ASC`;
+}
+
+/**
+ * The keyset predicate for a cursor, as a bare boolean expression (the
+ * caller supplies its own `AND`/`WHERE`). `>` for ascending, `<` for
+ * descending -- "everything after the row you last saw, in the direction
+ * this page is walking".
+ */
+function requirementSortCursorFragment(
+  sort: RequirementTreeSort,
+  cursor: RequirementRootsCursor
+): RawBuilder<unknown> {
+  const { expr } = requirementSortDescriptor(sort);
+  const value = boundCursorValue(sort, cursor);
+  return sort.direction === "desc"
+    ? sql`(${expr}, i.id) < (${value}, ${cursor.id})`
+    : sql`(${expr}, i.id) > (${value}, ${cursor.id})`;
+}
+
+/** The cursor's own value, bound and cast to the type its sort column
+ *  compares in. Shared by the two cursor fragments so a column's cast is
+ *  written once. */
+function boundCursorValue(
+  sort: RequirementTreeSort,
+  cursor: RequirementRootsCursor
+): RawBuilder<unknown> {
+  const { cast } = requirementSortDescriptor(sort);
+  if (cast === "numeric") {
+    return sql`${Number(cursor.value)}::double precision`;
+  }
+  if (cast === "timestamptz") {
+    return sql`${String(cursor.value)}::timestamptz`;
+  }
+  return sql`${String(cursor.value)}::text`;
+}
+
+/**
+ * The ORDER BY / keyset pair for a statement that reads the sort key back
+ * as an ALREADY-SELECTED column rather than re-evaluating its expression.
+ *
+ * `resolveRequirementMatches` needs this: its `i` alias lives inside the
+ * `matches` CTE, so the outer SELECT that applies the cursor and the page
+ * size cannot reference the expression at all -- only the key the CTE
+ * already projected. Same ordering, same comparison, one level up.
+ */
+function requirementSortKeyOrderFragment(
+  sort: RequirementTreeSort
+): RawBuilder<unknown> {
+  return sort.direction === "desc"
+    ? sql`ORDER BY "requirementSortKey" DESC, id DESC`
+    : sql`ORDER BY "requirementSortKey" ASC, id ASC`;
+}
+
+function requirementSortKeyCursorFragment(
+  sort: RequirementTreeSort,
+  cursor: RequirementRootsCursor
+): RawBuilder<unknown> {
+  const value = boundCursorValue(sort, cursor);
+  return sort.direction === "desc"
+    ? sql`("requirementSortKey", id) < (${value}, ${cursor.id})`
+    : sql`("requirementSortKey", id) > (${value}, ${cursor.id})`;
+}
+
+/**
+ * The sort value a page hands back as the next cursor. Selected as its own
+ * aliased column (`req_sort_key`) rather than re-derived in JS from the row:
+ * re-deriving would mean a SECOND implementation of every expression above,
+ * and the two would drift the moment one changed.
+ */
+function requirementSortKeyFragment(
+  sort: RequirementTreeSort
+): RawBuilder<unknown> {
+  const { expr } = requirementSortDescriptor(sort);
+  return sql`${expr} AS "requirementSortKey"`;
+}
+
+/** A row as it comes back from a sorted page, before the sort key is
+ *  stripped off for the caller. */
+type SortedRequirementRow = RequirementTreeRow & {
+  requirementSortKey: string | number | Date | null;
+};
+
+/** Normalizes the selected sort key into the cursor's own value type. A
+ *  timestamp arrives as a JS `Date` from the pg driver and has to go back
+ *  as an ISO string, which is what the `::timestamptz` cast above parses. */
+function toCursorValue(key: SortedRequirementRow["requirementSortKey"]) {
+  if (key instanceof Date) return key.toISOString();
+  if (typeof key === "number") return key;
+  return String(key ?? "");
+}
 
 /**
  * ANDs an array of SQL fragments together, left to right -- the adapters'
@@ -625,10 +944,20 @@ export async function resolveRequirementMatches(
     limit: number;
     cursor?: RequirementRootsCursor | null;
     include: "ids" | "rows";
+    /** Defaults to name ascending — the order this page shipped with. */
+    sort?: RequirementTreeSort;
   },
   db: Pick<typeof baseDb, "$qb"> = baseDb
 ): Promise<RequirementMatchPage> {
-  const { projectId, axes, coverageMatchIds, limit, cursor, include } = args;
+  const {
+    projectId,
+    axes,
+    coverageMatchIds,
+    limit,
+    cursor,
+    include,
+    sort = DEFAULT_REQUIREMENT_SORT,
+  } = args;
 
   // `!== null`, deliberately never a truthy/`.length` check: a non-null
   // empty array is still an ACTIVE axis (see this function's own doc
@@ -644,13 +973,23 @@ export async function resolveRequirementMatches(
     const likeTerm = wrapLikeTerm(axes.search);
     axisFragments.push(sql`i.name ILIKE ${likeTerm}`);
   }
-  if (axes.status !== "") {
+  // `= ANY(...::text[])` is the multi-select translation of
+  // `matchesRequirementStatusFilters`/`matchesRequirementSourceFilters`'s
+  // own `.includes()`: WITHIN one axis the selected values union, which is
+  // what a multi-select reads as. The axes still AND together through
+  // `andAll` below -- that asymmetry is the whole point and is spelled out
+  // in `andAll`'s own doc comment.
+  if (axes.status.length > 0) {
+    const statuses = axes.status;
     axisFragments.push(
-      sql`(${REQUIREMENT_DISPLAY_STATUS_CASE}) = ${axes.status}`
+      sql`(${REQUIREMENT_DISPLAY_STATUS_CASE}) = ANY(${statuses}::text[])`
     );
   }
-  if (axes.source !== "") {
-    axisFragments.push(sql`(${REQUIREMENT_SOURCE_CASE}) = ${axes.source}`);
+  if (axes.source.length > 0) {
+    const sources = axes.source;
+    axisFragments.push(
+      sql`(${REQUIREMENT_SOURCE_CASE}) = ANY(${sources}::text[])`
+    );
   }
   if (coverageAxisActive) {
     axisFragments.push(sql`i.id = ANY(${coverageMatchIds}::int[])`);
@@ -675,17 +1014,19 @@ export async function resolveRequirementMatches(
   // cursor trimming; the outer SELECT applies the cursor and the page
   // LIMIT last, against `counted`'s own (already-computed) matchedTotal.
   const cursorFragment = cursor
-    ? sql`WHERE (name, id) > (${cursor.name}, ${cursor.id})`
+    ? sql`WHERE ${requirementSortKeyCursorFragment(sort, cursor)}`
     : sql``;
 
   const { rows } = await sql<
-    RequirementTreeRow & { matchedTotal: number | bigint }
+    SortedRequirementRow & { matchedTotal: number | bigint }
   >`
     WITH matches AS (
       SELECT
         ${REQUIREMENT_TREE_COLUMNS},
-        ${requirementHasChildrenFragment(projectId)}
+        ${requirementHasChildrenFragment(projectId)},
+        ${requirementSortKeyFragment(sort)}
       FROM "Issue" i
+      ${requirementSortJoinFragment(sort)}
       WHERE i."projectId" = ${projectId}
         AND i."isRequirement" = true
         AND i."isDeleted" = false
@@ -696,7 +1037,7 @@ export async function resolveRequirementMatches(
     )
     SELECT * FROM counted
     ${cursorFragment}
-    ORDER BY name, id
+    ${requirementSortKeyOrderFragment(sort)}
     LIMIT ${limit + 1}
   `.execute(db.$qb);
 
@@ -704,7 +1045,9 @@ export async function resolveRequirementMatches(
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
   const lastRow = pageRows[pageRows.length - 1];
   const nextCursor: RequirementRootsCursor | null =
-    hasMore && lastRow ? { name: lastRow.name, id: lastRow.id } : null;
+    hasMore && lastRow
+      ? { value: toCursorValue(lastRow.requirementSortKey), id: lastRow.id }
+      : null;
 
   const matchedTotal = Number(rows[0]?.matchedTotal ?? 0);
   const matchedIds = pageRows.map((row) => row.id);
@@ -719,8 +1062,8 @@ export async function resolveRequirementMatches(
   // expansion is allowed ONLY when text is the sole active axis.
   const expandMatchedSubtrees =
     !coverageAxisActive &&
-    axes.status === "" &&
-    axes.source === "" &&
+    axes.status.length === 0 &&
+    axes.source.length === 0 &&
     axes.search !== "";
 
   const hydratedRows =

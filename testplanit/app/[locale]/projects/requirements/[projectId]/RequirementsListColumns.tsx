@@ -69,6 +69,53 @@ import {
 } from "./requirementsListRows";
 
 /**
+ * The name cell's fixed leading geometry, in px, in render order. Declared
+ * here rather than only as Tailwind classes because
+ * `requirementNestingGuideOffset` below has to place a guide the ENGINE
+ * paints (outside this cell, where the row's full height is reachable) at
+ * exactly the x these slots produce. One declaration, two readers — a slot
+ * that changes width moves the guide with it instead of silently leaving it
+ * behind.
+ *
+ * Keep in step with the JSX: `px-3` on the engine's cell, then
+ * `paddingInlineStart: depth * INDENT`, then the `h-4 w-4` drag handle, the
+ * `h-5 w-5` chevron, and the `gap-1` between every child.
+ */
+const NAME_CELL = {
+  /** The engine's own `px-3` on every cell. */
+  cellPaddingInline: 12,
+  indentPerDepth: 24,
+  dragHandle: 16,
+  chevron: 20,
+  /** The wrapper's `gap-1`. */
+  gap: 4,
+} as const;
+
+/**
+ * Where the full-height nesting guide belongs for a row, or `null` for a
+ * root. Handed to `<DataTable virtualized getRowNestingGuideOffset>`, which
+ * paints it as a sibling of the cell's content wrapper — the only place it
+ * can span the row's top and bottom borders, since that wrapper clips to the
+ * height of its own text.
+ *
+ * Lands just past the indent, the drag-handle slot and the chevron slot --
+ * in the gap column immediately after the chevron, one gap to the LEFT of
+ * the 4px slot the cell reserves (operator UAT: "nudge the bar a little to
+ * the left"). That reserved slot stays where it is, so nudging the rule
+ * moves only the rule: the type icon and the name keep their x.
+ */
+export function requirementNestingGuideOffset(depth: number): number | null {
+  if (depth <= 0) return null;
+  return (
+    NAME_CELL.cellPaddingInline +
+    depth * NAME_CELL.indentPerDepth +
+    NAME_CELL.dragHandle +
+    NAME_CELL.gap +
+    NAME_CELL.chevron
+  );
+}
+
+/**
  * The eight columns the tree-table renders through (D-03a, extended by UAT
  * gaps 5/6, plus D-17's Priority column). Deliberately NOT ported from
  * `MemberIssuesColumns.tsx`: no `select` (no bulk action on requirements), no
@@ -917,10 +964,17 @@ function RequirementNameCell({
         dragRef(el);
       }}
       className={cn(
-        "flex min-w-0 items-center gap-1 cursor-pointer",
+        // `relative` positions the nesting guide below. The guide spans this
+        // wrapper's height rather than the whole row: the engine wraps every
+        // cell's content in its own `flex-1 truncate` div, which sizes to the
+        // content, so a full-bleed rule would need a second shared-component
+        // change to earn ~20px of height it does not need.
+        "relative flex min-w-0 items-center gap-1 cursor-pointer",
         isDragging && "opacity-30"
       )}
-      style={{ paddingInlineStart: requirement.depth * 24 }}
+      style={{
+        paddingInlineStart: requirement.depth * NAME_CELL.indentPerDepth,
+      }}
       onClick={() => onSelectRequirement(requirement.id)}
       // Belt-and-braces (gap closure 26.2-16): a native `dragend` listener
       // alongside react-dnd's own `end()` above, so a drag whose `end()`
@@ -977,6 +1031,18 @@ function RequirementNameCell({
         </button>
       ) : (
         <span className="h-5 w-5 shrink-0" aria-hidden="true" />
+      )}
+      {/* Reserves the guide's own column so the type icon never sits under
+          it. The RULE itself is painted by the table engine
+          (`getRowNestingGuideOffset`), not here: it has to reach the row's
+          top and bottom borders, and every cell's content is wrapped in a
+          `flex-1 truncate` div that clips to the text's own height. */}
+      {requirement.depth > 0 && (
+        <span
+          aria-hidden="true"
+          data-testid={`requirement-nesting-guide-slot-${requirement.id}`}
+          className="w-1 shrink-0"
+        />
       )}
       <IssueTypeIcon
         issueTypeName={requirement.issueTypeName}

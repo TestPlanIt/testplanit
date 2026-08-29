@@ -4,18 +4,24 @@ import { z } from "zod/v4";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import {
-  matchesRequirementCoverageFilter,
+  matchesRequirementCoverageFilters,
   type RequirementCoverageFilter,
 } from "~/lib/services/requirementCoverageFilter";
+import { requirementCoverageSortValue } from "~/lib/services/requirementCoverageSort";
 import {
   countProjectRequirements,
   countProjectRequirementRoots,
+  COVERAGE_DERIVED_SORT_COLUMNS,
+  DEFAULT_REQUIREMENT_SORT,
   getRequirementFilterFacets,
   getRequirementRootsPage,
   REQUIREMENT_LAZY_THRESHOLD,
+  REQUIREMENT_SORT_COLUMNS,
   resolveRequirementMatches,
+  type RequirementCoverageSortValues,
   type RequirementRootsCursor,
   type RequirementTreeFilterAxes,
+  type RequirementTreeSort,
 } from "~/lib/services/requirementTree";
 import { authOptions } from "~/server/auth";
 
@@ -65,22 +71,97 @@ function parseLimit(raw: string | null): number | null {
  * exactly one half supplied (a client bug or a truncated query string) --
  * silently treating that as "no cursor" would restart the walk from page
  * one instead of failing loudly.
+ *
+ * `cursorValue` carries whatever the SORT COLUMN produced for the last row
+ * of the previous page, always as a string on the wire; the service casts
+ * it back to that column's own type. It is deliberately opaque here -- this
+ * route never interprets it, only relays it, so adding a sortable column
+ * cannot require a change in this function.
  */
 function parseRootsCursor(
   searchParams: URLSearchParams
 ): { ok: true; cursor: RequirementRootsCursor | null } | { ok: false } {
-  const cursorName = searchParams.get("cursorName");
+  const cursorValue = searchParams.get("cursorValue");
   const cursorId = searchParams.get("cursorId");
-  if (cursorName === null && cursorId === null) {
+  if (cursorValue === null && cursorId === null) {
     return { ok: true, cursor: null };
   }
-  if (cursorName === null || cursorId === null) {
+  if (cursorValue === null || cursorId === null) {
     return { ok: false };
   }
   if (!/^\d+$/.test(cursorId)) {
     return { ok: false };
   }
-  return { ok: true, cursor: { name: cursorName, id: Number(cursorId) } };
+  return { ok: true, cursor: { value: cursorValue, id: Number(cursorId) } };
+}
+
+/**
+ * The requested sort, or the list's default. An unrecognized column or
+ * direction is a 400 rather than a silent fallback: it reaches an `ORDER
+ * BY` fragment, and quietly sorting by something else would look like the
+ * sort simply not working -- the exact failure this whole change exists to
+ * remove.
+ */
+function parseSort(
+  searchParams: URLSearchParams
+): { ok: true; sort: RequirementTreeSort } | { ok: false } {
+  const column = searchParams.get("sortColumn");
+  const direction = searchParams.get("sortDirection");
+  if (column === null && direction === null) {
+    return { ok: true, sort: DEFAULT_REQUIREMENT_SORT };
+  }
+  const parsed = requirementSortSchema.safeParse({ column, direction });
+  if (!parsed.success) return { ok: false };
+  return { ok: true, sort: parsed.data };
+}
+
+const requirementSortSchema = z.object({
+  column: z.enum(REQUIREMENT_SORT_COLUMNS),
+  direction: z.enum(["asc", "desc"]),
+});
+
+/**
+ * The per-requirement sort values a COVERAGE-DERIVED sort column needs,
+ * read out of the same whole-project rollup the coverage FILTER already
+ * uses. Returns `null` for every other column, so an ordinary sort never
+ * pays for the rollup.
+ *
+ * The three value expressions mirror `compareRequirements`'s own coverage
+ * cases (requirementsListRows.ts) exactly:
+ *   coverage      -> requirementCoverageSortValue (STATUS_RANK ladder)
+ *   linkedCases   -> breakdown.directCaseCount
+ *   coveringCases -> breakdown.linkedCaseCount
+ * A rollup failure degrades to `null` (an unsorted-by-coverage page) rather
+ * than failing the request, matching the coverage axis's own
+ * outage-degrades-to-inactive rule below.
+ */
+async function resolveCoverageSortValues(
+  sort: RequirementTreeSort,
+  projectId: number,
+  scope: number[] | null
+): Promise<RequirementCoverageSortValues | null> {
+  if (!COVERAGE_DERIVED_SORT_COLUMNS.includes(sort.column)) return null;
+  try {
+    const rollup = await getRequirementCoverage(projectId, {
+      accessibleProjectIds: scope,
+    });
+    const ids: number[] = [];
+    const values: number[] = [];
+    for (const [requirementId, breakdown] of rollup) {
+      ids.push(requirementId);
+      values.push(
+        sort.column === "coverage"
+          ? requirementCoverageSortValue(breakdown)
+          : sort.column === "linkedCases"
+            ? (breakdown.directCaseCount ?? 0)
+            : (breakdown.linkedCaseCount ?? 0)
+      );
+    }
+    return { ids, values };
+  } catch (coverageError) {
+    console.error("Requirement coverage sort rollup error:", coverageError);
+    return null;
+  }
 }
 
 export async function GET(
@@ -154,12 +235,26 @@ export async function GET(
       return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });
     }
 
+    const sortResult = parseSort(searchParams);
+    if (!sortResult.ok) {
+      return NextResponse.json({ error: "Invalid sort" }, { status: 400 });
+    }
+    const sort: RequirementTreeSort = {
+      ...sortResult.sort,
+      coverageValues: await resolveCoverageSortValues(
+        sortResult.sort,
+        projectId,
+        scope
+      ),
+    };
+
     const [total, page] = await Promise.all([
       countProjectRequirements(projectId),
       getRequirementRootsPage({
         projectId,
         limit,
         cursor: cursorResult.cursor,
+        sort,
       }),
     ]);
 
@@ -178,24 +273,43 @@ export async function GET(
 }
 
 const requirementTreeCursorSchema = z.object({
-  name: z.string(),
+  // Opaque to this route: whatever the sort column produced for the last
+  // row of the previous page. A number arrives for a numeric sort column
+  // and a string for a text/timestamp one; the service casts it back.
+  value: z.union([z.string(), z.number()]),
   id: z.number().int(),
 });
 
-// `coverage`/`search`/`status` are validated as plain strings, not the
+// `coverage`/`status` entries are validated as plain strings, not the
 // exact `RequirementCoverageFilter`/status-id union -- an unrecognized
 // value degrades harmlessly through `matchesRequirementCoverageFilter`'s
 // own final `return true` branch (it becomes a no-op, matching
 // everything), never a security concern, so a stricter schema here would
 // buy nothing but a second place the same union has to be kept in sync.
+//
+// Status/source/coverage are ARRAYS: all three filters are multi-select
+// (`RequirementsListView.tsx`'s three `MultiAsyncCombobox`es). An empty
+// array is the inactive axis. `""` is deliberately not a member of the
+// source enum any more -- the sentinel it used to carry is now the empty
+// array itself, so a client that still sends `source: [""]` fails the
+// schema loudly instead of silently filtering on a provenance no row has.
 const requirementTreeFilterBodySchema = z.object({
   search: z.string().optional(),
-  status: z.string().optional(),
-  source: z.enum(["", "MANUAL", "SYNCED", "DETACHED"]).optional(),
-  coverage: z.string().optional(),
+  status: z.array(z.string()).optional(),
+  source: z.array(z.enum(["MANUAL", "SYNCED", "DETACHED"])).optional(),
+  coverage: z.array(z.string()).optional(),
   limit: z.number().int().positive(),
-  cursor: requirementTreeCursorSchema.optional(),
+  // `.nullish()`, not `.optional()`: the client sends an explicit
+  // `cursor: null` for page one of every filtered request, and zod's
+  // `.optional()` is `T | undefined` — it rejects null, which 400'd every
+  // search and filter in the browser.
+  cursor: requirementTreeCursorSchema.nullish(),
   include: z.enum(["ids", "rows"]),
+  // Same closed union and same default as the GET path's query params --
+  // the filtered page is paged by the same keyset and must be ordered the
+  // same way, or scrolling a filtered list would walk a different order
+  // than the one on screen.
+  sort: requirementSortSchema.nullish(),
 });
 
 export async function POST(
@@ -242,16 +356,27 @@ export async function POST(
 
     const {
       search = "",
-      status = "",
-      source = "",
-      coverage = "",
+      status = [],
+      source = [],
+      coverage = [],
       cursor = null,
       include,
+      sort: requestedSort,
     } = parsedBody.data;
     const limit = Math.min(parsedBody.data.limit, REQUIREMENTS_TREE_MAX_LIMIT);
 
+    const baseSort = requestedSort ?? DEFAULT_REQUIREMENT_SORT;
+    const sort: RequirementTreeSort = {
+      ...baseSort,
+      coverageValues: await resolveCoverageSortValues(
+        baseSort,
+        projectId,
+        scope
+      ),
+    };
+
     const axes: RequirementTreeFilterAxes = { search, status, source };
-    const coverageAxisActive = coverage !== "";
+    const coverageAxisActive = coverage.length > 0;
 
     // Non-null even when empty (28-09's own contract: an empty array is
     // "active and matched nothing", `null` is "inactive") -- computed only
@@ -267,8 +392,8 @@ export async function POST(
         coverageMatchIds = [];
         for (const [requirementId, breakdown] of rollup) {
           if (
-            matchesRequirementCoverageFilter(
-              coverage as RequirementCoverageFilter,
+            matchesRequirementCoverageFilters(
+              coverage as RequirementCoverageFilter[],
               breakdown
             )
           ) {
@@ -298,6 +423,7 @@ export async function POST(
         limit,
         cursor,
         include,
+        sort,
       });
     } catch (matchError) {
       // The ONE expected, documented failure mode this service throws for

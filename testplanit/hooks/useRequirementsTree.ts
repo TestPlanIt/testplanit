@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { RequirementSourceFilter } from "~/app/[locale]/projects/requirements/[projectId]/requirementsListRows";
+import type { RequirementSourceValue } from "~/app/[locale]/projects/requirements/[projectId]/requirementsListRows";
 import type { RequirementCoverageFilter } from "~/lib/services/requirementCoverageFilter";
 // TYPE-ONLY, and it must stay that way: `lib/services/requirementTree`
 // imports `~/lib/db` and builds raw Kysely SQL. A value import here pulls
@@ -10,6 +10,7 @@ import type { RequirementCoverageFilter } from "~/lib/services/requirementCovera
 import type {
   RequirementFilterFacets,
   RequirementRootsCursor,
+  RequirementSortColumn,
   RequirementTreeRow,
 } from "~/lib/services/requirementTree";
 
@@ -30,16 +31,61 @@ import type {
 // what the server will actually return.
 const REQUIREMENTS_TREE_PAGE_SIZE = 100;
 
+/**
+ * How many roots pages the deep-link reach-forward below may pull before it
+ * gives up — 10 pages, so a linked row within the project's first thousand
+ * top-level requirements is reached. Past that the wait stops being worth
+ * it, and a target that is NESTED rather than a root would otherwise walk
+ * the whole project without ever finding it.
+ */
+const LOCATE_MAX_PAGES = 10;
+
+/** The list's default order. Mirrors `DEFAULT_REQUIREMENT_SORT` in
+ *  `lib/services/requirementTree.ts`, restated here because a client module
+ *  cannot import a value from that file (see the import note above). */
+const DEFAULT_TREE_SORT: RequirementsTreeSort = {
+  column: "name",
+  direction: "asc",
+};
+
+/** Status, source and coverage are multi-select (`[]` = axis inactive);
+ *  `search` is the one text box, so it stays a single string. Mirrors
+ *  `RequirementListFilters` in `requirementsListRows.ts`. */
 export interface RequirementsTreeFilters {
   search: string;
-  coverage: RequirementCoverageFilter;
-  status: string;
-  source: RequirementSourceFilter;
+  coverage: RequirementCoverageFilter[];
+  status: string[];
+  source: RequirementSourceValue[];
+}
+
+/**
+ * The sort the SERVER applies to the paged surfaces (the roots window and
+ * the filtered match page). Above the lazy threshold only a window of the
+ * project is ever loaded, so a sort applied in the browser would order that
+ * window rather than the project -- "sort by coverage descending" would
+ * miss the most-covered requirement whenever it happened to sort past the
+ * first page by name (operator report). Ordering therefore travels with the
+ * request.
+ */
+export interface RequirementsTreeSort {
+  column: RequirementSortColumn;
+  direction: "asc" | "desc";
 }
 
 export interface UseRequirementsTreeArgs {
   projectId: number;
   filters: RequirementsTreeFilters;
+  sort?: RequirementsTreeSort;
+  /**
+   * A row the caller needs present in the loaded window — a deep-linked
+   * selection that arrived from outside this list. Above the threshold only
+   * the first roots page is fetched, so such a row may not be loaded at all;
+   * the hook pages forward until it lands (bounded — see
+   * `LOCATE_MAX_PAGES`). Pass `null` for a selection the user made INSIDE
+   * the list: that row is already on screen, and paging toward it would be
+   * pure waste.
+   */
+  locateId?: number | null;
   enabled?: boolean;
 }
 
@@ -149,13 +195,18 @@ async function fetchTreeCount(
 
 async function fetchRootsPage(
   projectId: number,
-  cursor: RequirementRootsCursor | null
+  cursor: RequirementRootsCursor | null,
+  sort: RequirementsTreeSort
 ): Promise<RequirementRootsPageResponse> {
   const params = new URLSearchParams({
     limit: String(REQUIREMENTS_TREE_PAGE_SIZE),
+    sortColumn: sort.column,
+    sortDirection: sort.direction,
   });
   if (cursor) {
-    params.set("cursorName", cursor.name);
+    // Stringified on the wire whatever its type; the server casts it back
+    // to the sort column's own type (see `parseRootsCursor`).
+    params.set("cursorValue", String(cursor.value));
     params.set("cursorId", String(cursor.id));
   }
   const res = await fetch(
@@ -190,6 +241,7 @@ async function fetchMatches(
     filters: RequirementsTreeFilters;
     cursor: RequirementRootsCursor | null;
     include: "ids" | "rows";
+    sort: RequirementsTreeSort;
   }
 ): Promise<RequirementMatchPageResponse> {
   const res = await fetch(`/api/projects/${projectId}/requirements/tree`, {
@@ -203,6 +255,7 @@ async function fetchMatches(
       limit: REQUIREMENTS_TREE_PAGE_SIZE,
       cursor: args.cursor,
       include: args.include,
+      sort: args.sort,
     }),
   });
   if (!res.ok) {
@@ -261,6 +314,8 @@ function unionIdsInto(prev: Set<number> | null, ids: number[]): Set<number> {
 export function useRequirementsTree({
   projectId,
   filters,
+  sort = DEFAULT_TREE_SORT,
+  locateId = null,
   enabled = true,
 }: UseRequirementsTreeArgs): UseRequirementsTreeResult {
   const [mode, setMode] = useState<"all" | "lazy" | null>(null);
@@ -294,10 +349,30 @@ export function useRequirementsTree({
   const childrenLoadedRef = useRef<Set<number>>(new Set());
   const childrenInFlightRef = useRef<Set<number>>(new Set());
 
-  const isFiltering = Boolean(
-    filters.search || filters.status || filters.source || filters.coverage
-  );
-  const resetKey = `${projectId}|${filters.search}|${filters.status}|${filters.source}|${filters.coverage}`;
+  const isFiltering =
+    filters.search !== "" ||
+    filters.status.length > 0 ||
+    filters.source.length > 0 ||
+    filters.coverage.length > 0;
+  // Sorted before joining: the comboboxes append in CLICK order, so
+  // selecting A then B and B then A are the same filter but would produce
+  // two different keys -- and this key is what resets the pager and
+  // re-issues every fetch. Sorting makes the key a function of the SET, not
+  // of the order it was assembled in.
+  // The SORT is part of the reset key, not just the filters: ordering is
+  // applied server-side now, so changing a column or a direction invalidates
+  // every loaded page and the cursor walking them. Leaving it out would keep
+  // showing the previous order's rows and then page INTO the new order from
+  // the old order's cursor, interleaving two sorts in one list.
+  const resetKey = [
+    projectId,
+    filters.search,
+    [...filters.status].sort().join(","),
+    [...filters.source].sort().join(","),
+    [...filters.coverage].sort().join(","),
+    sort.column,
+    sort.direction,
+  ].join("|");
 
   // --- The count round trip: decides `mode`, project-scoped only. ---
   useEffect(() => {
@@ -357,7 +432,7 @@ export function useRequirementsTree({
   const loadRootsPageAndApply = useCallback(
     async (generation: number, cursor: RequirementRootsCursor | null) => {
       try {
-        const page = await fetchRootsPage(projectId, cursor);
+        const page = await fetchRootsPage(projectId, cursor, sort);
         if (fetchGenerationRef.current !== generation) return;
         setRowsMap((prev) => mergeRowsInto(prev, page.rows));
         setRootIdsLoaded((prev) => {
@@ -378,7 +453,7 @@ export function useRequirementsTree({
         pagingInFlightRef.current = false;
       }
     },
-    [projectId]
+    [projectId, sort]
   );
 
   // --- Filtered match pager (lazy: one window at a time; all: sweeps to
@@ -394,6 +469,7 @@ export function useRequirementsTree({
           filters,
           cursor,
           include: includeRows ? "rows" : "ids",
+          sort,
         });
         if (fetchGenerationRef.current !== generation) return;
 
@@ -423,7 +499,7 @@ export function useRequirementsTree({
         pagingInFlightRef.current = false;
       }
     },
-    [projectId, filters, mode]
+    [projectId, filters, mode, sort]
   );
 
   // --- Reset + kick off the row/match fetch whenever the project, the
@@ -467,6 +543,53 @@ export function useRequirementsTree({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey, mode, enabled, refetchNonce]);
+
+  // --- Deep-link reach-forward. ---
+  //
+  // A deep link names a row the roots window may not have fetched yet: above
+  // the threshold only the first page loads, so `?requirement=<root #299>`
+  // pointed at a row that was simply not in the row model, and the list's own
+  // scroll-into-view had nothing to scroll to (operator report). This pages
+  // forward until that row arrives.
+  //
+  // It CANNOT be cheaper than this. The rendered list is contiguous, so
+  // reaching row 299 means loading rows 0-299 whatever else is known about
+  // it -- asking the server for the row's rank first would cost an extra
+  // round trip and save none of these, which is why there is no rank
+  // endpoint. The cap is what bounds the cost, and it also covers the case
+  // this loop cannot satisfy at all: a NESTED target is never in the roots
+  // window, so it would otherwise page to the end of the project looking for
+  // a row that can only be revealed by expanding its parent.
+  const locateAttemptsRef = useRef(0);
+  useEffect(() => {
+    locateAttemptsRef.current = 0;
+  }, [locateId, resetKey]);
+  useEffect(() => {
+    if (!enabled || mode !== "lazy" || isFiltering) return;
+    if (locateId == null) return;
+    // Already loaded -- the caller's own scroll-into-view takes it from here.
+    if (rowsMap.has(locateId)) return;
+    if (!hasMore) return;
+    if (pagingInFlightRef.current) return;
+    if (locateAttemptsRef.current >= LOCATE_MAX_PAGES) return;
+    locateAttemptsRef.current += 1;
+    pagingInFlightRef.current = true;
+    // Each landed page grows `rowsMap`, which re-runs this effect and pulls
+    // the next one, so the walk is driven by state rather than by a loop
+    // that could outlive its own generation.
+    void loadRootsPageAndApply(
+      fetchGenerationRef.current,
+      rootsCursorRef.current
+    );
+  }, [
+    locateId,
+    rowsMap,
+    hasMore,
+    mode,
+    isFiltering,
+    enabled,
+    loadRootsPageAndApply,
+  ]);
 
   const onLoadMore = useCallback(() => {
     if (!hasMore) return;

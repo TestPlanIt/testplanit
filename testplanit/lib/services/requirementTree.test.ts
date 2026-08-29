@@ -112,9 +112,11 @@ function makeCapturingMockDb(rowsSequence: unknown[][]) {
 function makeMatchRow(
   overrides: Partial<RequirementTreeRow> & {
     matchedTotal?: number | bigint;
+    requirementSortKey?: unknown;
   } = {}
 ) {
   return {
+    requirementSortKey: overrides.name ?? "a",
     id: 1,
     name: "a",
     title: "a",
@@ -143,12 +145,20 @@ function makeMatchRow(
 
 const NO_AXES: RequirementTreeFilterAxes = {
   search: "",
-  status: "",
-  source: "",
+  status: [],
+  source: [],
 };
 
-function makeRow(overrides: Partial<RequirementTreeRow>): RequirementTreeRow {
+// The page queries also SELECT the sort key (`requirementSortKey`), which is
+// what the next cursor is derived from -- a mock row without one would make
+// every cursor assertion below prove nothing. Defaulted to the row's own
+// `name`, which is exactly what the default name sort's expression produces
+// for a row whose title is not distinct.
+function makeRow(
+  overrides: Partial<RequirementTreeRow> & { requirementSortKey?: unknown }
+): RequirementTreeRow {
   return {
+    requirementSortKey: overrides.name ?? "a",
     id: 1,
     name: "a",
     title: "a",
@@ -224,7 +234,7 @@ describe("getRequirementRootsPage (unit, mocked $qb)", () => {
     );
     expect(page.rows).toHaveLength(2);
     expect(page.rows.map((r) => r.id)).toEqual([1, 2]);
-    expect(page.nextCursor).toEqual({ name: "b", id: 2 });
+    expect(page.nextCursor).toEqual({ value: "b", id: 2 });
   });
 
   it("accepts a hostile cursor value without throwing (T-28-08-03) -- real injection immunity comes from parameterization, proven structurally below", async () => {
@@ -235,11 +245,20 @@ describe("getRequirementRootsPage (unit, mocked $qb)", () => {
         {
           projectId: 1,
           limit: 10,
-          cursor: { name: '\'); DROP TABLE "Issue"; --', id: 999 },
+          cursor: { value: '\'); DROP TABLE "Issue"; --', id: 999 },
         },
         db as never
       )
-    ).resolves.toEqual({ rows, nextCursor: null });
+    ).resolves.toEqual({
+      // The sort key is stripped from the rows a caller sees -- it is a
+      // paging mechanism, not part of `RequirementTreeRow`.
+      rows: rows.map((row) => {
+        const { requirementSortKey: _key, ...rest } =
+          row as RequirementTreeRow & Record<string, unknown>;
+        return rest;
+      }),
+      nextCursor: null,
+    });
   });
 });
 
@@ -307,7 +326,7 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -324,7 +343,7 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "100% off_sale", status: "", source: "" },
+        axes: { search: "100% off_sale", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -339,7 +358,7 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "a\\b", status: "", source: "" },
+        axes: { search: "a\\b", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -354,7 +373,7 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "plainterm", status: "", source: "" },
+        axes: { search: "plainterm", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -364,12 +383,92 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     expect(captured[0].parameters).toContain("%plainterm%");
   });
 
-  it("builds the lock-aware status CASE predicate for the status axis, binding the filter value as a parameter", async () => {
+  // Server-side sorting. The defect these guard against is specific: a sort
+  // applied only in the browser orders the loaded WINDOW, so on a project
+  // larger than one page the top of a "coverage descending" list is not the
+  // project's most-covered requirement, it is the most-covered of the first
+  // hundred rows sorted by name.
+  it("orders by the requested column and direction, with id carrying the SAME direction so the keyset tuple stays valid", async () => {
     const { db, captured } = makeCapturingMockDb([[]]);
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "", status: "Open", source: "" },
+        axes: { search: "widget", status: [], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+        sort: { column: "priority", direction: "desc" },
+      },
+      db as never
+    );
+    expect(captured[0].sql).toContain(
+      'ORDER BY "requirementSortKey" DESC, id DESC'
+    );
+  });
+
+  it("sorts a coverage-derived column through the caller's precomputed values, LEFT joined so a requirement missing from the rollup still appears", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: [], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+        sort: {
+          column: "coverage",
+          direction: "desc",
+          coverageValues: { ids: [7, 8], values: [30_001, 2] },
+        },
+      },
+      db as never
+    );
+    expect(captured[0].sql).toContain("LEFT JOIN unnest(");
+    expect(captured[0].sql).toContain("COALESCE(req_sort.value, -1)");
+    expect(captured[0].parameters).toContainEqual([7, 8]);
+    expect(captured[0].parameters).toContainEqual([30_001, 2]);
+  });
+
+  it("never joins the coverage value relation for a plain Issue column -- an ordinary sort must not pay for the rollup", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: [], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+        sort: { column: "status", direction: "asc" },
+      },
+      db as never
+    );
+    expect(captured[0].sql).not.toContain("LEFT JOIN unnest(");
+  });
+
+  it("binds a descending cursor with `<`, not `>` -- the page walks the direction it is ordered in", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: [], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+        sort: { column: "createdAt", direction: "desc" },
+        cursor: { value: "2026-01-01T00:00:00.000Z", id: 9 },
+      },
+      db as never
+    );
+    expect(captured[0].sql).toContain('("requirementSortKey", id) <');
+    expect(captured[0].parameters).toContain("2026-01-01T00:00:00.000Z");
+  });
+
+  it("builds the lock-aware status CASE predicate for the status axis, binding the selected values as one array parameter", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "", status: ["Open"], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -378,15 +477,32 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     );
     expect(captured[0].sql).toMatch(/CASE/i);
     expect(captured[0].sql).toContain('"externalStatus"');
-    expect(captured[0].parameters).toContain("Open");
+    expect(captured[0].sql).toMatch(/= ANY\(\$\d+::text\[\]\)/);
+    expect(captured[0].parameters).toContainEqual(["Open"]);
   });
 
-  it("builds the source CASE predicate for the source axis, binding the filter value as a parameter", async () => {
+  it("unions WITHIN the status axis -- several selected statuses become ONE `= ANY(...)`, never several ANDed equalities that could match nothing", async () => {
     const { db, captured } = makeCapturingMockDb([[]]);
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "", status: "", source: "DETACHED" },
+        axes: { search: "", status: ["Open", "Closed"], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql.match(/= ANY\(\$\d+::text\[\]\)/g)).toHaveLength(1);
+    expect(captured[0].parameters).toContainEqual(["Open", "Closed"]);
+  });
+
+  it("builds the source CASE predicate for the source axis, binding the selected values as one array parameter", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "", status: [], source: ["DETACHED"] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -395,7 +511,30 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     );
     expect(captured[0].sql).toMatch(/CASE/i);
     expect(captured[0].sql).toContain("'MANUAL'");
-    expect(captured[0].parameters).toContain("DETACHED");
+    expect(captured[0].sql).toMatch(/= ANY\(\$\d+::text\[\]\)/);
+    expect(captured[0].parameters).toContainEqual(["DETACHED"]);
+  });
+
+  it("still ANDs ACROSS axes when both are multi-valued -- two `= ANY(...)` predicates joined by AND, never one flattened list", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: {
+          search: "",
+          status: ["Open", "Closed"],
+          source: ["MANUAL", "SYNCED"],
+        },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+      },
+      db as never
+    );
+    expect(captured[0].sql.match(/= ANY\(\$\d+::text\[\]\)/g)).toHaveLength(2);
+    expect(captured[0].sql).toContain(" AND ");
+    expect(captured[0].parameters).toContainEqual(["Open", "Closed"]);
+    expect(captured[0].parameters).toContainEqual(["MANUAL", "SYNCED"]);
   });
 
   it("builds an `= ANY(...)` predicate for the coverage axis, binding the id array as a parameter", async () => {
@@ -439,7 +578,7 @@ describe("resolveRequirementMatches -- intersection, never union (unit, mocked $
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "Open", source: "" },
+        axes: { search: "widget", status: ["Open"], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -455,7 +594,7 @@ describe("resolveRequirementMatches -- intersection, never union (unit, mocked $
     await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "Open", source: "MANUAL" },
+        axes: { search: "widget", status: ["Open"], source: ["MANUAL"] },
         coverageMatchIds: [1, 2],
         limit: 50,
         include: "ids",
@@ -480,7 +619,7 @@ describe("resolveRequirementMatches -- matchedTotal and paging (unit, mocked $qb
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -501,7 +640,7 @@ describe("resolveRequirementMatches -- matchedTotal and paging (unit, mocked $qb
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
         limit: 2,
         include: "ids",
@@ -509,7 +648,7 @@ describe("resolveRequirementMatches -- matchedTotal and paging (unit, mocked $qb
       db as never
     );
     expect(result.matchedIds).toEqual([1, 2]);
-    expect(result.nextCursor).toEqual({ name: "b", id: 2 });
+    expect(result.nextCursor).toEqual({ value: "b", id: 2 });
   });
 
   it("returns nextCursor: null and matchedTotal: 0 when the match set is empty", async () => {
@@ -517,7 +656,7 @@ describe("resolveRequirementMatches -- matchedTotal and paging (unit, mocked $qb
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "nomatch", status: "", source: "" },
+        axes: { search: "nomatch", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -539,31 +678,31 @@ describe("resolveRequirementMatches -- expandMatchedSubtrees (unit, mocked $qb)"
   }> = [
     {
       name: "text-only",
-      axes: { search: "widget", status: "", source: "" },
+      axes: { search: "widget", status: [], source: [] },
       coverageMatchIds: null,
       expected: true,
     },
     {
       name: "text + status",
-      axes: { search: "widget", status: "Open", source: "" },
+      axes: { search: "widget", status: ["Open"], source: [] },
       coverageMatchIds: null,
       expected: false,
     },
     {
       name: "text + source",
-      axes: { search: "widget", status: "", source: "MANUAL" },
+      axes: { search: "widget", status: [], source: ["MANUAL"] },
       coverageMatchIds: null,
       expected: false,
     },
     {
       name: "text + coverage",
-      axes: { search: "widget", status: "", source: "" },
+      axes: { search: "widget", status: [], source: [] },
       coverageMatchIds: [1],
       expected: false,
     },
     {
       name: "status-only",
-      axes: { search: "", status: "Open", source: "" },
+      axes: { search: "", status: ["Open"], source: [] },
       coverageMatchIds: null,
       expected: false,
     },
@@ -593,7 +732,7 @@ describe("resolveRequirementMatches -- the ancestor closure (unit, mocked $qb, s
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "nomatch", status: "", source: "" },
+        axes: { search: "nomatch", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "rows",
@@ -613,7 +752,7 @@ describe("resolveRequirementMatches -- the ancestor closure (unit, mocked $qb, s
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "leaf", status: "", source: "" },
+        axes: { search: "leaf", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -641,7 +780,7 @@ describe("resolveRequirementMatches -- include mode (unit, mocked $qb, sequenced
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "ids",
@@ -666,7 +805,7 @@ describe("resolveRequirementMatches -- include mode (unit, mocked $qb, sequenced
     const result = await resolveRequirementMatches(
       {
         projectId: 1,
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
         limit: 50,
         include: "rows",
@@ -914,9 +1053,22 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
   });
 
   it("the cursor comparison is a keyset tuple, never OFFSET", () => {
+    // Now generalized over the SORT COLUMN rather than hardcoded to name:
+    // both the expression form (the roots window, which can evaluate the
+    // expression directly) and the projected-key form (the match page,
+    // whose `i` alias lives inside a CTE) compare a two-member tuple.
+    expect(content).toContain("(${expr}, i.id) > (${value}, ${cursor.id})");
+    expect(content).toContain("(${expr}, i.id) < (${value}, ${cursor.id})");
     expect(content).toContain(
-      "(i.name, i.id) > (${cursor.name}, ${cursor.id})"
+      '("requirementSortKey", id) > (${value}, ${cursor.id})'
     );
+    expect(content).toContain(
+      '("requirementSortKey", id) < (${value}, ${cursor.id})'
+    );
+    // `code` (comments stripped) rather than `content`: this file's own
+    // header explains at length why it uses KEYSET AND NEVER OFFSET, and
+    // asserting against the raw text would match that prose.
+    expect(code).not.toMatch(/\bOFFSET\b/);
   });
 
   it("no ORM issue.findMany/findFirst/count/groupBy read appears in this file", () => {

@@ -19,6 +19,22 @@ vi.mock("~/lib/services/requirementTree", () => ({
   getRequirementFilterFacets: vi.fn(),
   getRequirementRootsPage: vi.fn(),
   resolveRequirementMatches: vi.fn(),
+  // The sort CONSTANTS are real values, not stubs: the route builds its own
+  // zod schema out of `REQUIREMENT_SORT_COLUMNS`, so a stubbed-away column
+  // list would make every sort test assert against a schema the production
+  // route does not have.
+  REQUIREMENT_SORT_COLUMNS: [
+    "name",
+    "status",
+    "priority",
+    "source",
+    "createdAt",
+    "coverage",
+    "linkedCases",
+    "coveringCases",
+  ],
+  COVERAGE_DERIVED_SORT_COLUMNS: ["coverage", "linkedCases", "coveringCases"],
+  DEFAULT_REQUIREMENT_SORT: { column: "name", direction: "asc" },
 }));
 
 import { getServerSession } from "next-auth";
@@ -257,7 +273,7 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
     mockedCountProjectRequirements.mockResolvedValue(10);
     mockedGetRequirementRootsPage.mockResolvedValue({
       rows: [makeRow({ id: 1 }), makeRow({ id: 2 })],
-      nextCursor: { name: "REQ-002", id: 2 },
+      nextCursor: { value: "REQ-002", id: 2 },
     });
 
     const res = await GET(makeGetRequest("5", "?limit=2"), params("5"));
@@ -266,11 +282,12 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
     const body = await res.json();
     expect(body.total).toBe(10);
     expect(body.rows).toHaveLength(2);
-    expect(body.nextCursor).toEqual({ name: "REQ-002", id: 2 });
+    expect(body.nextCursor).toEqual({ value: "REQ-002", id: 2 });
     expect(mockedGetRequirementRootsPage).toHaveBeenCalledWith({
       projectId: 5,
       limit: 2,
       cursor: null,
+      sort: { column: "name", direction: "asc", coverageValues: null },
     });
   });
 
@@ -292,7 +309,7 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
 
   it("passes a fully-supplied cursor through to the service", async () => {
     const res = await GET(
-      makeGetRequest("5", "?limit=10&cursorName=REQ-001&cursorId=1"),
+      makeGetRequest("5", "?limit=10&cursorValue=REQ-001&cursorId=1"),
       params("5")
     );
 
@@ -300,13 +317,14 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
     expect(mockedGetRequirementRootsPage).toHaveBeenCalledWith({
       projectId: 5,
       limit: 10,
-      cursor: { name: "REQ-001", id: 1 },
+      cursor: { value: "REQ-001", id: 1 },
+      sort: { column: "name", direction: "asc", coverageValues: null },
     });
   });
 
-  it("rejects a cursor with only cursorName supplied", async () => {
+  it("rejects a cursor with only cursorValue supplied", async () => {
     const res = await GET(
-      makeGetRequest("5", "?limit=10&cursorName=REQ-001"),
+      makeGetRequest("5", "?limit=10&cursorValue=REQ-001"),
       params("5")
     );
 
@@ -326,7 +344,7 @@ describe("GET /api/projects/[projectId]/requirements/tree", () => {
 
   it("rejects a non-numeric cursorId", async () => {
     const res = await GET(
-      makeGetRequest("5", "?limit=10&cursorName=REQ-001&cursorId=abc"),
+      makeGetRequest("5", "?limit=10&cursorValue=REQ-001&cursorId=abc"),
       params("5")
     );
 
@@ -391,6 +409,35 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     expect(mockedResolveRequirementMatches).not.toHaveBeenCalled();
   });
 
+  it("accepts the explicit cursor: null the client sends on a first page", async () => {
+    // The hook posts `cursor: null` for page one of every filtered request.
+    // zod's `.optional()` is `T | undefined` and REJECTS null, so this body
+    // 400'd in the browser while every test here omitted `cursor` entirely
+    // and never noticed (operator UAT: search was completely broken).
+    mockedResolveRequirementMatches.mockResolvedValue({
+      matchedIds: [],
+      ancestorIds: [],
+      rows: [],
+      matchedTotal: 0,
+      nextCursor: null,
+    });
+
+    const res = await POST(
+      makePostRequest("5", {
+        search: "veracode",
+        status: [],
+        source: [],
+        coverage: [],
+        limit: 100,
+        cursor: null,
+        include: "rows",
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+  });
+
   it("returns 400 for a malformed body (limit missing)", async () => {
     const res = await POST(
       makePostRequest("5", { search: "x", include: "ids" }),
@@ -427,7 +474,7 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     expect(mockedResolveRequirementMatches).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: 5,
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
         limit: 10,
         cursor: null,
@@ -457,7 +504,7 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
 
     const res = await POST(
       makePostRequest("5", {
-        coverage: "UNCOVERED",
+        coverage: ["UNCOVERED"],
         limit: 10,
         include: "ids",
       }),
@@ -471,6 +518,170 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     expect(mockedResolveRequirementMatches).toHaveBeenCalledWith(
       expect.objectContaining({ coverageMatchIds: [1] })
     );
+  });
+
+  it("relays the requested sort to the service", async () => {
+    const res = await POST(
+      makePostRequest("5", {
+        search: "widget",
+        limit: 10,
+        include: "ids",
+        sort: { column: "priority", direction: "desc" },
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedResolveRequirementMatches).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sort: expect.objectContaining({
+          column: "priority",
+          direction: "desc",
+        }),
+      })
+    );
+  });
+
+  it("rejects an unknown sort column rather than silently falling back -- a sort that quietly orders by something else is the exact failure this is meant to remove", async () => {
+    const res = await POST(
+      makePostRequest("5", {
+        search: "widget",
+        limit: 10,
+        include: "ids",
+        sort: { column: "notAColumn", direction: "asc" },
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedResolveRequirementMatches).not.toHaveBeenCalled();
+  });
+
+  it("computes coverage sort values from the rollup for a coverage-derived sort column", async () => {
+    mockedGetCoverage.mockResolvedValue(
+      new Map([
+        [1, breakdown({ uncovered: true, status: "UNCOVERED" })],
+        [
+          2,
+          breakdown({
+            uncovered: false,
+            status: "PASSED",
+            linkedCaseCount: 3,
+            directCaseCount: 2,
+            passed: 3,
+          }),
+        ],
+      ])
+    );
+
+    const res = await POST(
+      makePostRequest("5", {
+        search: "widget",
+        limit: 10,
+        include: "ids",
+        sort: { column: "coverage", direction: "desc" },
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    const callArgs = mockedResolveRequirementMatches.mock.calls[0][0];
+    expect(callArgs.sort.coverageValues.ids).toEqual([1, 2]);
+    // STATUS_RANK: UNCOVERED = 0 -> 0; PASSED = 3 -> 3 * 10_000 + passed(3).
+    expect(callArgs.sort.coverageValues.values).toEqual([0, 30_003]);
+  });
+
+  it("never runs the coverage rollup for a plain Issue sort column", async () => {
+    const res = await POST(
+      makePostRequest("5", {
+        search: "widget",
+        limit: 10,
+        include: "ids",
+        sort: { column: "name", direction: "asc" },
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedGetCoverage).not.toHaveBeenCalled();
+    const callArgs = mockedResolveRequirementMatches.mock.calls[0][0];
+    expect(callArgs.sort.coverageValues).toBeNull();
+  });
+
+  it("passes a multi-valued status/source selection through as arrays", async () => {
+    const res = await POST(
+      makePostRequest("5", {
+        status: ["Open", "Blocked"],
+        source: ["MANUAL", "DETACHED"],
+        limit: 10,
+        include: "ids",
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedResolveRequirementMatches).toHaveBeenCalledWith(
+      expect.objectContaining({
+        axes: {
+          search: "",
+          status: ["Open", "Blocked"],
+          source: ["MANUAL", "DETACHED"],
+        },
+      })
+    );
+  });
+
+  it("unions WITHIN the coverage axis -- a requirement matching either selected state is included", async () => {
+    mockedGetCoverage.mockResolvedValue(
+      new Map([
+        [1, breakdown({ uncovered: true, status: "UNCOVERED" })],
+        [
+          2,
+          breakdown({
+            uncovered: false,
+            status: "NOT_RUN",
+            linkedCaseCount: 1,
+            untested: 1,
+          }),
+        ],
+        [
+          3,
+          breakdown({
+            uncovered: false,
+            status: "PASSED",
+            linkedCaseCount: 1,
+            passed: 1,
+          }),
+        ],
+      ])
+    );
+
+    const res = await POST(
+      makePostRequest("5", {
+        coverage: ["UNCOVERED", "UNTESTED"],
+        limit: 10,
+        include: "ids",
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    const callArgs = mockedResolveRequirementMatches.mock.calls[0][0];
+    expect(callArgs.coverageMatchIds).toEqual([1, 2]);
+  });
+
+  it('rejects the retired `source: ""` sentinel -- the inactive axis is the empty ARRAY now, and a client still sending the old shape must fail loudly', async () => {
+    const res = await POST(
+      makePostRequest("5", {
+        source: [""],
+        limit: 10,
+        include: "ids",
+      }),
+      params("5")
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedResolveRequirementMatches).not.toHaveBeenCalled();
   });
 
   it("passes a non-null EMPTY coverageMatchIds through when the coverage axis matches nothing", async () => {
@@ -490,7 +701,7 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
 
     const res = await POST(
       makePostRequest("5", {
-        coverage: "UNCOVERED",
+        coverage: ["UNCOVERED"],
         limit: 10,
         include: "ids",
       }),
@@ -509,7 +720,7 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     const res = await POST(
       makePostRequest("5", {
         search: "widget",
-        coverage: "UNCOVERED",
+        coverage: ["UNCOVERED"],
         limit: 10,
         include: "ids",
       }),
@@ -519,7 +730,7 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     expect(res.status).toBe(200);
     expect(mockedResolveRequirementMatches).toHaveBeenCalledWith(
       expect.objectContaining({
-        axes: { search: "widget", status: "", source: "" },
+        axes: { search: "widget", status: [], source: [] },
         coverageMatchIds: null,
       })
     );

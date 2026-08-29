@@ -28,13 +28,6 @@ import { useDebounce } from "@/components/Debounce";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   invalidateRequirementCoverage,
@@ -44,6 +37,7 @@ import { useRequirementSubtreeCount } from "~/hooks/useRequirementSubtreeCount";
 import {
   useRequirementsTree,
   type RequirementsTreeFilters,
+  type RequirementsTreeSort,
 } from "~/hooks/useRequirementsTree";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { ItemTypes } from "~/types/dndTypes";
@@ -52,7 +46,14 @@ import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { DeleteRequirementModal } from "./DeleteRequirementModal";
-import { useRequirementsListColumns } from "./RequirementsListColumns";
+import {
+  RequirementsFilterCombobox,
+  type RequirementFilterOption,
+} from "./RequirementsFilterCombobox";
+import {
+  requirementNestingGuideOffset,
+  useRequirementsListColumns,
+} from "./RequirementsListColumns";
 import type { RequirementSelection } from "./RequirementsWorkspace";
 import {
   buildDescendantIdMap,
@@ -67,7 +68,7 @@ import {
   type RequirementListFilters,
   type RequirementListSortConfig,
   type RequirementRow,
-  type RequirementSourceFilter,
+  type RequirementSourceValue,
 } from "./requirementsListRows";
 
 // D-04 (28-14): filters and text search are server-side at every project
@@ -200,11 +201,12 @@ const RequirementsListView = forwardRef<
   const [filterQuery, setFilterQuery] = useState("");
   // Gap closure 26.2-12 (UAT gap 7): the milestone table's own filter idiom
   // -- Coverage/Status/Source, intersecting -- replacing the single
-  // "uncovered" triangle toggle. "" on every axis means "not filtering".
+  // "uncovered" triangle toggle. Each axis is multi-select, so `[]` means
+  // "not filtering"; values WITHIN one axis union, the axes intersect.
   const [filters, setFilters] = useState<RequirementListFilters>({
-    coverage: "",
-    status: "",
-    source: "",
+    coverage: [],
+    status: [],
+    source: [],
   });
   // Default {} -- every requirement starts collapsed, matching today's
   // initial tree state.
@@ -304,6 +306,66 @@ const RequirementsListView = forwardRef<
     }),
     [debouncedSearch, filters.coverage, filters.status, filters.source]
   );
+  // The sort travels to the server, which decides WHICH rows land in the
+  // paged window. Client-side sorting stays exactly as it was and is not
+  // redundant: it orders the rows already in hand (including a node's
+  // expanded children, which are fetched complete and never paged), and for
+  // the same column and direction it reproduces the server's own order. What
+  // changes is that the window is now the project's top N by this sort
+  // rather than its top N by name -- the difference between "sort the 100
+  // rows I happen to have" and "sort the project".
+  //
+  // `sortConfig.column` is the DataTable column id, which is the same closed
+  // set the service's `REQUIREMENT_SORT_COLUMNS` accepts; an id outside it
+  // would be rejected by the route rather than silently ignored, so a new
+  // sortable column has to be added in both places deliberately.
+  // Written by every selection made from inside this list, before
+  // delegating to the `onSelectRequirement` prop -- lets `scrollToRowId`
+  // below distinguish "the user clicked a row in this list" (no re-center
+  // needed, they're already looking at it) from "the selection arrived from
+  // elsewhere" (deep link, another surface -- scroll it into view). State,
+  // not a ref, so this read is render-safe.
+  //
+  // TWO ids, not one, and that is the whole point. `selectedRequirementId`
+  // is owned by the workspace and round-trips through the URL
+  // (`?requirement=`), so it lands a commit LATER than this local state. A
+  // single `last === selected` test is therefore false for one render after
+  // every click -- `last` already holds the new id while `selected` still
+  // holds the old one -- and in that window this list told the engine to
+  // scroll to the PREVIOUS selection. After scrolling a few hundred rows
+  // that is a jump right out of view, with the newly clicked row nowhere on
+  // screen (operator repro: select, scroll ~100 rows, select again ->
+  // scrollTop 12136 -> 4448; selecting the very first row first sent it to
+  // 0). It read as intermittent only because the engine's own
+  // `scrolledToRef` fires once per id VALUE, so re-selecting after the same
+  // previous row was silently suppressed.
+  //
+  // Holding the previous list selection alongside the current one covers
+  // exactly that in-flight window: during it the stale `selected` is entry
+  // 0, once it settles it is entry 1, and both suppress the scroll. A
+  // selection that genuinely arrived from elsewhere is neither, so it still
+  // gets centred.
+  const [listSelectedIds, setListSelectedIds] = useState<
+    readonly (number | null)[]
+  >([null, null]);
+  const handleSelectRequirement = useCallback(
+    (issueId: number) => {
+      setListSelectedIds(([, previous]) => [previous, issueId]);
+      onSelectRequirement(issueId);
+    },
+    [onSelectRequirement]
+  );
+  const scrollToRequirementId = listSelectedIds.includes(selectedRequirementId)
+    ? null
+    : selectedRequirementId;
+
+  const treeSort = useMemo<RequirementsTreeSort>(
+    () => ({
+      column: sortConfig.column as RequirementsTreeSort["column"],
+      direction: sortConfig.direction,
+    }),
+    [sortConfig.column, sortConfig.direction]
+  );
   const {
     mode,
     total: projectTotal,
@@ -326,6 +388,14 @@ const RequirementsListView = forwardRef<
   } = useRequirementsTree({
     projectId: Number(projectId),
     filters: treeFilters,
+    sort: treeSort,
+    // The SAME value the table's own scroll-into-view keys on, and for the
+    // same reason: it is non-null only for a selection that arrived from
+    // outside this list. Such a row may sit past the loaded window, so the
+    // hook pages forward until it lands and the scroll then has something
+    // to aim at. A row the user clicked here is already loaded, and
+    // `scrollToRequirementId` is null for it, so nothing pages.
+    locateId: scrollToRequirementId,
   });
 
   // `mode === "lazy"` is the ONLY branch that changes which data source and
@@ -524,6 +594,40 @@ const RequirementsListView = forwardRef<
     [isLazy, treeFacets, requirements]
   );
 
+  // The three multi-select filters' option lists. Built here rather than
+  // inline in the JSX because `MultiAsyncCombobox` refetches whenever its
+  // `fetchOptions` identity changes, and `RequirementsFilterCombobox`
+  // derives that function from this array -- an array rebuilt on every
+  // render would reopen and refetch the dropdown continuously.
+  const coverageFilterOptions = useMemo<RequirementFilterOption[]>(
+    () => [
+      { value: "UNCOVERED", label: t("requirements.coverage.uncovered") },
+      { value: "UNTESTED", label: t("milestones.members.filterHasUntested") },
+      ...coverageStatusOptions.map((entry) => ({
+        value: `status:${entry.statusId}`,
+        label: entry.name,
+        count: entry.count,
+      })),
+    ],
+    [coverageStatusOptions, t]
+  );
+  const statusFilterOptions = useMemo<RequirementFilterOption[]>(
+    () =>
+      requirementStatusOptions.map((status) => ({
+        value: status,
+        label: status,
+      })),
+    [requirementStatusOptions]
+  );
+  const sourceFilterOptions = useMemo<RequirementFilterOption[]>(
+    () => [
+      { value: "MANUAL", label: t("requirements.provenance.nativeLabel") },
+      { value: "SYNCED", label: t("requirements.provenance.syncedLabel") },
+      { value: "DETACHED", label: t("requirements.provenance.detachedLabel") },
+    ],
+    [t]
+  );
+
   const allModeRows = useMemo(
     () =>
       flattenRequirementRows({
@@ -657,6 +761,42 @@ const RequirementsListView = forwardRef<
     });
   }, [selectedRequirementId, requirementMap, isLazy, lazyRowsById]);
 
+  // LAZY MODE ONLY: collapse everything when a filter axis changes.
+  //
+  // Above the threshold, a change to any axis makes `useRequirementsTree`
+  // drop every loaded row and every "children already fetched" marker, and
+  // children are only ever fetched by a chevron click (`handleToggleExpand`
+  // below). A row left expanded across that reset therefore renders OPEN
+  // WITH NOTHING UNDER IT -- its children were discarded and nothing will
+  // ask for them again. Collapsing is the honest resolution rather than
+  // refetching them: under an active filter a match's own subtree is
+  // deliberately not auto-revealed (see the force-open effect below), so
+  // re-fetching would put non-matching descendants back on screen, which is
+  // precisely what the filter was asked to remove.
+  //
+  // Below the threshold this must NOT happen: the whole `childrenMap` is in
+  // memory, is never wiped, and `visibleRequirementIds` already prunes it --
+  // expansions there survive a filter correctly today.
+  const lazyFilterResetKey = isLazy
+    ? [
+        treeFilters.search,
+        [...treeFilters.status].sort().join(","),
+        [...treeFilters.source].sort().join(","),
+        [...treeFilters.coverage].sort().join(","),
+      ].join("|")
+    : null;
+  const lastLazyFilterResetKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (lazyFilterResetKey === null) return;
+    const previousKey = lastLazyFilterResetKeyRef.current;
+    lastLazyFilterResetKeyRef.current = lazyFilterResetKey;
+    // First observation (the count round trip resolving to "lazy") is not a
+    // filter CHANGE -- collapsing there would undo the ancestor chain the
+    // selection effect above may already have opened for a deep link.
+    if (previousKey === null || previousKey === lazyFilterResetKey) return;
+    setExpandedByIssueId({});
+  }, [lazyFilterResetKey]);
+
   // While a filter (search text or a Coverage/Status/Source axis) is active,
   // force open every currently-visible parent -- otherwise a filtered-in
   // descendant would never appear in the flattened array, since a row only
@@ -708,27 +848,6 @@ const RequirementsListView = forwardRef<
     visibleRequirementIds,
     childrenMap,
   ]);
-
-  // Written by every selection made from inside this list, before
-  // delegating to the `onSelectRequirement` prop -- lets `scrollToRowId`
-  // below distinguish "the user clicked a row in this list" (no re-center
-  // needed, they're already looking at it) from "the selection arrived from
-  // elsewhere" (deep link, another surface -- scroll it into view). State,
-  // not a ref, so this read is render-safe.
-  const [lastSelectedFromList, setLastSelectedFromList] = useState<
-    number | null
-  >(null);
-  const handleSelectRequirement = useCallback(
-    (issueId: number) => {
-      setLastSelectedFromList(issueId);
-      onSelectRequirement(issueId);
-    },
-    [onSelectRequirement]
-  );
-  const scrollToRequirementId =
-    selectedRequirementId === lastSelectedFromList
-      ? null
-      : selectedRequirementId;
 
   const handleSortChange = useCallback((column: string) => {
     setSortConfig((prev) => ({
@@ -1322,113 +1441,45 @@ const RequirementsListView = forwardRef<
                 search input left and the whole filter set right
                 (operator UAT). */}
             <div className="flex flex-wrap items-center gap-2">
-              <Select
-                value={filters.coverage || "all"}
+              <RequirementsFilterCombobox
+                testId="requirements-coverage-filter"
+                label={t("milestones.members.filterAllCoverage")}
+                options={coverageFilterOptions}
+                selected={filters.coverage}
                 disabled={coverageFilterUnavailable}
-                onValueChange={(value) =>
+                title={
+                  coverageFilterUnavailable
+                    ? t("requirements.coverage.showOnlyUncoveredUnavailable")
+                    : undefined
+                }
+                onChange={(next) =>
                   setFilters((prev) => ({
                     ...prev,
-                    coverage: (value === "all"
-                      ? ""
-                      : value) as RequirementCoverageFilter,
+                    coverage: next as RequirementCoverageFilter[],
                   }))
                 }
-              >
-                <SelectTrigger
-                  className="w-[160px] shrink-0"
-                  data-testid="requirements-coverage-filter"
-                  title={
-                    coverageFilterUnavailable
-                      ? t("requirements.coverage.showOnlyUncoveredUnavailable")
-                      : undefined
-                  }
-                >
-                  <SelectValue
-                    placeholder={t("milestones.members.filterAllCoverage")}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {t("milestones.members.filterAllCoverage")}
-                  </SelectItem>
-                  <SelectItem value="UNCOVERED">
-                    {t("requirements.coverage.uncovered")}
-                  </SelectItem>
-                  <SelectItem value="UNTESTED">
-                    {t("milestones.members.filterHasUntested")}
-                  </SelectItem>
-                  {coverageStatusOptions.map((entry) => (
-                    <SelectItem
-                      key={`requirements-coverage-filter-status-${entry.statusId}`}
-                      value={`status:${entry.statusId}`}
-                    >
-                      {entry.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.status || "all"}
-                onValueChange={(value) =>
+              />
+              <RequirementsFilterCombobox
+                testId="requirements-status-filter"
+                label={t("requirements.list.filterAllStatuses")}
+                options={statusFilterOptions}
+                selected={filters.status}
+                onChange={(next) =>
+                  setFilters((prev) => ({ ...prev, status: next }))
+                }
+              />
+              <RequirementsFilterCombobox
+                testId="requirements-source-filter"
+                label={t("milestones.members.filterAllSources")}
+                options={sourceFilterOptions}
+                selected={filters.source}
+                onChange={(next) =>
                   setFilters((prev) => ({
                     ...prev,
-                    status: value === "all" ? "" : value,
+                    source: next as RequirementSourceValue[],
                   }))
                 }
-              >
-                <SelectTrigger
-                  className="w-[140px] shrink-0"
-                  data-testid="requirements-status-filter"
-                >
-                  <SelectValue
-                    placeholder={t("requirements.list.filterAllStatuses")}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {t("requirements.list.filterAllStatuses")}
-                  </SelectItem>
-                  {requirementStatusOptions.map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {status}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.source || "all"}
-                onValueChange={(value) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    source: (value === "all"
-                      ? ""
-                      : value) as RequirementSourceFilter,
-                  }))
-                }
-              >
-                <SelectTrigger
-                  className="w-[140px] shrink-0"
-                  data-testid="requirements-source-filter"
-                >
-                  <SelectValue
-                    placeholder={t("milestones.members.filterAllSources")}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    {t("milestones.members.filterAllSources")}
-                  </SelectItem>
-                  <SelectItem value="MANUAL">
-                    {t("requirements.provenance.nativeLabel")}
-                  </SelectItem>
-                  <SelectItem value="SYNCED">
-                    {t("requirements.provenance.syncedLabel")}
-                  </SelectItem>
-                  <SelectItem value="DETACHED">
-                    {t("requirements.provenance.detachedLabel")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              />
             </div>
           </div>
           {/* Its own row beneath the filters (operator UAT): the column
@@ -1517,13 +1568,30 @@ const RequirementsListView = forwardRef<
               highlightRowId={selectedRequirementId}
               scrollToRowId={scrollToRequirementId}
               getRowProps={getRowProps}
+              // This list flattens its own tree, so TanStack's `row.depth`
+              // is 0 on every row -- the engine reads the real depth from
+              // the row data instead, which is what makes a child row pick
+              // up the shared nested-row surface (tinted fill + softened
+              // dividers) every other nested table in the app already uses.
+              getRowNestingDepth={(row) =>
+                (row.original as RequirementRow).depth
+              }
+              // The guide itself is painted by the engine, not the name
+              // cell: it has to reach the row's top and bottom borders, and
+              // the engine wraps every cell's content in a `truncate` div
+              // that clips to the height of its own text.
+              getRowNestingGuideOffset={(row) =>
+                requirementNestingGuideOffset(
+                  (row.original as RequirementRow).depth
+                )
+              }
               emptyMessage={t("common.ui.search.noResultsFound")}
               // `debouncedSearch` (not `normalizedFilter`) so this resets in
               // the SAME render as the hook's own internal reset (keyed on
               // the debounced `treeFilters.search`) -- keying on the instant
               // value would reset the virtualizer a render ahead of the
               // data on every keystroke, one frame apart from the hook.
-              resetKey={`${debouncedSearch}|${filters.coverage}|${filters.status}|${filters.source}|${sortConfig.column}|${sortConfig.direction}`}
+              resetKey={`${debouncedSearch}|${[...filters.coverage].sort().join(",")}|${[...filters.status].sort().join(",")}|${[...filters.source].sort().join(",")}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="requirements-list"
               rowTestIdPrefix="requirement-row"
             />

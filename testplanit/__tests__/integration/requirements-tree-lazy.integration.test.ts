@@ -589,8 +589,8 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
       it(`matches computeVisibleRequirementIds for every filter-axis combination (${label})`, async () => {
         const axes: RequirementTreeFilterAxes = {
           search: combo.search ? "widget" : "",
-          status: combo.status ? "Open" : "",
-          source: combo.source ? "MANUAL" : "",
+          status: combo.status ? ["Open"] : [],
+          source: combo.source ? ["MANUAL"] : [],
         };
         const coverageMatchIds = coverageMatchIdsFor(combo.coverage);
         const anyAxisActive =
@@ -602,7 +602,7 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
           childrenMap,
           normalizedFilter: axes.search.toLowerCase(),
           filters: {
-            coverage: combo.coverage ? "UNCOVERED" : "",
+            coverage: combo.coverage ? ["UNCOVERED"] : [],
             status: axes.status,
             source: axes.source,
           },
@@ -651,6 +651,77 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
       });
     }
 
+    // The 16 combinations above each activate an axis with ONE value. This
+    // pair proves the multi-select semantics against the same oracle: the
+    // `= ANY(...)` translation must union within an axis and still AND
+    // across them. A `= ANY(...)` that quietly became an OR between axes,
+    // or an axis that kept only its last value, agrees with the oracle on
+    // every single-valued combination and disagrees only here.
+    const MULTI_VALUE_CASES: Array<{
+      label: string;
+      status: string[];
+      source: ("MANUAL" | "SYNCED" | "DETACHED")[];
+    }> = [
+      { label: "two statuses", status: ["Open", "Blocked"], source: [] },
+      {
+        label: "two statuses AND two sources",
+        status: ["Open", "Blocked"],
+        source: ["MANUAL", "DETACHED"],
+      },
+    ];
+
+    for (const testCase of MULTI_VALUE_CASES) {
+      it(`matches computeVisibleRequirementIds for a multi-valued selection (${testCase.label})`, async () => {
+        const axes: RequirementTreeFilterAxes = {
+          search: "",
+          status: testCase.status,
+          source: testCase.source,
+        };
+
+        const oracleVisible = computeVisibleRequirementIds({
+          requirements: allRequirements,
+          requirementMap,
+          childrenMap,
+          normalizedFilter: "",
+          filters: {
+            coverage: [],
+            status: testCase.status,
+            source: testCase.source,
+          },
+          coverage: coverageResponse,
+          coverageError: false,
+        });
+        expect(oracleVisible, testCase.label).not.toBeNull();
+
+        const page = await resolveRequirementMatches(
+          {
+            projectId,
+            axes,
+            coverageMatchIds: null,
+            limit: 100,
+            include: "ids",
+          },
+          db
+        );
+        const descendantIds = page.expandMatchedSubtrees
+          ? descendantsOf(page.matchedIds)
+          : [];
+        const serverVisible = new Set([
+          ...page.matchedIds,
+          ...page.ancestorIds,
+          ...descendantIds,
+        ]);
+
+        expect(serverVisible, `${testCase.label} disagreed`).toEqual(
+          new Set(oracleVisible)
+        );
+        // Guards against the oracle and the SQL agreeing because BOTH
+        // matched nothing -- a vacuous pass this fixture is rich enough to
+        // rule out (it carries Open, Blocked and Closed rows).
+        expect(page.matchedIds.length).toBeGreaterThan(0);
+      });
+    }
+
     it("returns each match's ancestor chain and never a partial chain", async () => {
       // "target" uniquely identifies c5 -- no other node's name contains
       // it -- isolating it as the SOLE match, so its whole 5-level
@@ -659,7 +730,7 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
       const page = await resolveRequirementMatches(
         {
           projectId,
-          axes: { search: "target", status: "", source: "" },
+          axes: { search: "target", status: [], source: [] },
           coverageMatchIds: null,
           limit: 100,
           include: "ids",
@@ -687,7 +758,7 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
       const page = await resolveRequirementMatches(
         {
           projectId,
-          axes: { search: "", status: "Open", source: "" },
+          axes: { search: "", status: ["Open"], source: [] },
           coverageMatchIds: null,
           limit: 100,
           include: "ids",
@@ -705,8 +776,8 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
     it("pages the match set to exhaustion with a stable matchedTotal, no row skipped or repeated", async () => {
       const axes: RequirementTreeFilterAxes = {
         search: "widget",
-        status: "",
-        source: "",
+        status: [],
+        source: [],
       };
       const seenIds: number[] = [];
       let cursor: RequirementRootsCursor | null = null;
@@ -746,7 +817,7 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
       const page = await resolveRequirementMatches(
         {
           projectId,
-          axes: { search: "widget", status: "", source: "" },
+          axes: { search: "widget", status: [], source: [] },
           coverageMatchIds: null,
           limit: 100,
           include: "ids",

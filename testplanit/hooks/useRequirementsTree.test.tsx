@@ -1,5 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { RequirementSourceValue } from "~/app/[locale]/projects/requirements/[projectId]/requirementsListRows";
+import type { RequirementCoverageFilter } from "~/lib/services/requirementCoverageFilter";
 import type { RequirementTreeRow } from "~/lib/services/requirementTree";
 import { useRequirementsTree } from "./useRequirementsTree";
 
@@ -12,9 +14,9 @@ import { useRequirementsTree } from "./useRequirementsTree";
 
 const INACTIVE_FILTERS = {
   search: "",
-  coverage: "" as const,
-  status: "",
-  source: "" as const,
+  coverage: [] as RequirementCoverageFilter[],
+  status: [] as string[],
+  source: [] as RequirementSourceValue[],
 };
 
 function makeRow(
@@ -122,7 +124,7 @@ async function resolveCount(mode: "all" | "lazy", total: number) {
 
 async function resolveRootsPage(
   rows: RequirementTreeRow[],
-  nextCursor: { name: string; id: number } | null,
+  nextCursor: { value: string; id: number } | null,
   total = 600
 ) {
   // "limit=" (never "countOnly=1" or "facetsOnly=1") is what actually
@@ -144,7 +146,7 @@ interface MatchPageFixture {
   matchedIds: number[];
   ancestorIds: number[];
   rows?: RequirementTreeRow[];
-  nextCursor: { name: string; id: number } | null;
+  nextCursor: { value: string; id: number } | null;
   expandMatchedSubtrees?: boolean;
 }
 
@@ -188,11 +190,56 @@ describe("useRequirementsTree", () => {
     );
 
     await resolveCount("lazy", 600);
-    await resolveRootsPage([makeRow(1), makeRow(2)], { name: "REQ-2", id: 2 });
+    await resolveRootsPage([makeRow(1), makeRow(2)], { value: "REQ-2", id: 2 });
 
     await waitFor(() => expect(result.current.rows).toHaveLength(2));
     expect(result.current.hasMore).toBe(true);
     expect(result.current.isLoading).toBe(false);
+  });
+
+  // Deep-link reach-forward. A linked row can sit past the first roots page,
+  // and the list's scroll-into-view has nothing to aim at until it is loaded.
+  it("pages forward until a locateId row lands, then stops", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({
+        projectId: 1,
+        filters: INACTIVE_FILTERS,
+        locateId: 3,
+      })
+    );
+
+    await resolveCount("lazy", 600);
+    // Page one does not contain row 3.
+    await resolveRootsPage([makeRow(1), makeRow(2)], { value: "REQ-2", id: 2 });
+    await waitFor(() => expect(result.current.rows).toHaveLength(2));
+
+    // ...so the hook asks for the next one without any user scroll.
+    const second = await waitFor(() =>
+      findPending("cursorValue=REQ-2&cursorId=2")
+    );
+    await act(async () => {
+      resolveJson(second, {
+        total: 600,
+        rows: [makeRow(3)],
+        nextCursor: { value: "REQ-3", id: 3 },
+      });
+    });
+
+    await waitFor(() => expect(result.current.rows).toHaveLength(3));
+    // Found: no further page is requested even though a cursor remains.
+    expect(countPending("cursorValue=REQ-3&cursorId=3")).toBe(0);
+  });
+
+  it("never pages forward when no locateId is given -- an in-list selection must not pull pages", async () => {
+    const { result } = renderHook(() =>
+      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
+    );
+
+    await resolveCount("lazy", 600);
+    await resolveRootsPage([makeRow(1), makeRow(2)], { value: "REQ-2", id: 2 });
+    await waitFor(() => expect(result.current.rows).toHaveLength(2));
+
+    expect(countPending("cursorValue=REQ-2&cursorId=2")).toBe(0);
   });
 
   it("appends the next window on onLoadMore -- every root appears exactly once across pages", async () => {
@@ -201,14 +248,16 @@ describe("useRequirementsTree", () => {
     );
 
     await resolveCount("lazy", 600);
-    await resolveRootsPage([makeRow(1), makeRow(2)], { name: "REQ-2", id: 2 });
+    await resolveRootsPage([makeRow(1), makeRow(2)], { value: "REQ-2", id: 2 });
     await waitFor(() => expect(result.current.rows).toHaveLength(2));
 
     act(() => {
       result.current.onLoadMore();
     });
 
-    const req = await waitFor(() => findPending("cursorName=REQ-2&cursorId=2"));
+    const req = await waitFor(() =>
+      findPending("cursorValue=REQ-2&cursorId=2")
+    );
     await act(async () => {
       resolveJson(req, { total: 600, rows: [makeRow(3)], nextCursor: null });
     });
@@ -226,7 +275,7 @@ describe("useRequirementsTree", () => {
     );
 
     await resolveCount("lazy", 600);
-    await resolveRootsPage([makeRow(1), makeRow(2)], { name: "REQ-2", id: 2 });
+    await resolveRootsPage([makeRow(1), makeRow(2)], { value: "REQ-2", id: 2 });
     await waitFor(() => expect(result.current.hasMore).toBe(true));
 
     const callsBefore = fetchMock.mock.calls.length;
@@ -245,7 +294,7 @@ describe("useRequirementsTree", () => {
 
     await resolveCount("lazy", 600);
     await resolveRootsPage([makeRow(1, { hasChildren: true }), makeRow(2)], {
-      name: "REQ-2",
+      value: "REQ-2",
       id: 2,
     });
     await waitFor(() => expect(result.current.rows).toHaveLength(2));
@@ -273,7 +322,7 @@ describe("useRequirementsTree", () => {
       result.current.onLoadMore();
     });
     const pagerReq = await waitFor(() =>
-      findPending("cursorName=REQ-2&cursorId=2")
+      findPending("cursorValue=REQ-2&cursorId=2")
     );
     await act(async () => {
       resolveJson(pagerReq, { total: 600, rows: [], nextCursor: null });
@@ -315,14 +364,14 @@ describe("useRequirementsTree", () => {
     );
 
     await resolveCount("lazy", 600);
-    await resolveRootsPage([makeRow(1), makeRow(2)], { name: "REQ-2", id: 2 });
+    await resolveRootsPage([makeRow(1), makeRow(2)], { value: "REQ-2", id: 2 });
     await waitFor(() => expect(result.current.rows).toHaveLength(2));
 
     act(() => {
       result.current.onLoadMore();
     });
     const failedReq = await waitFor(() =>
-      findPending("cursorName=REQ-2&cursorId=2")
+      findPending("cursorValue=REQ-2&cursorId=2")
     );
     await act(async () => {
       resolveJson(failedReq, { error: "boom" }, 500);
@@ -335,7 +384,7 @@ describe("useRequirementsTree", () => {
       result.current.onRetryLoadMore();
     });
     const retryReq = await waitFor(() =>
-      findPending("cursorName=REQ-2&cursorId=2")
+      findPending("cursorValue=REQ-2&cursorId=2")
     );
     await act(async () => {
       resolveJson(retryReq, {
@@ -423,9 +472,9 @@ describe("useRequirementsTree", () => {
 
   const ACTIVE_FILTERS = {
     search: "widget",
-    coverage: "" as const,
-    status: "",
-    source: "" as const,
+    coverage: [] as RequirementCoverageFilter[],
+    status: [] as string[],
+    source: [] as RequirementSourceValue[],
   };
 
   it("submits to the filter endpoint when any filter axis is active, and does not when none are active", async () => {
@@ -593,7 +642,7 @@ describe("useRequirementsTree", () => {
       matchedIds: page1Matches.map((r) => r.id),
       ancestorIds: [101, 102, 103, 104],
       rows: [...page1Matches, ...page1Ancestors],
-      nextCursor: { name: "REQ-10", id: 10 },
+      nextCursor: { value: "REQ-10", id: 10 },
     });
 
     await waitFor(() => expect(result.current.loadedCount).toBe(10));

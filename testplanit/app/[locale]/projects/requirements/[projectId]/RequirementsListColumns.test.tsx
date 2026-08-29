@@ -136,7 +136,10 @@ vi.mock("react-dnd", () => ({
 
 // Do NOT mock CoverageChip or RequirementProvenanceBadge --
 // their presence and their own test ids are part of what this file proves.
-import { useRequirementsListColumns } from "./RequirementsListColumns";
+import {
+  requirementNestingGuideOffset,
+  useRequirementsListColumns,
+} from "./RequirementsListColumns";
 
 const translations = {
   columnName: "Name",
@@ -1054,6 +1057,50 @@ describe("RequirementNameCell", () => {
     renderNameCell(makeRow({ id: 2, depth: 0 }));
     const wrapper = screen.getByTestId("requirement-name-cell-2");
     expect(wrapper.style.paddingInlineStart).toBe("0px");
+  });
+
+  // A child row must be distinguishable from a root by more than whitespace.
+  // The nested SURFACE and the guide RULE are both the table engine's to
+  // paint (`getRowNestingDepth` / `getRowNestingGuideOffset`); this cell only
+  // reserves the 4px column the rule sits in, so the type icon never ends up
+  // underneath it.
+  it("reserves the nesting guide's slot on a child row", () => {
+    renderNameCell(makeRow({ id: 7, depth: 2 }));
+    expect(
+      screen.getByTestId("requirement-nesting-guide-slot-7")
+    ).toBeInTheDocument();
+  });
+
+  it("reserves no nesting guide slot on a root row", () => {
+    renderNameCell(makeRow({ id: 8, depth: 0 }));
+    expect(
+      screen.queryByTestId("requirement-nesting-guide-slot-8")
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("requirementNestingGuideOffset", () => {
+  // The offset has to agree with the name cell's own layout, which lives in
+  // the same module -- this pins the arithmetic so a slot that changes width
+  // fails here rather than silently leaving the guide behind.
+  it("is null for a root row -- nothing to guide", () => {
+    expect(requirementNestingGuideOffset(0)).toBeNull();
+  });
+
+  it("clears the indent plus the drag and chevron slots, and grows one indent step per depth", () => {
+    // 12 (cell px-3) + 24 (indent) + 16 (drag) + 4 (gap) + 20 (chevron).
+    expect(requirementNestingGuideOffset(1)).toBe(76);
+    expect(requirementNestingGuideOffset(2)).toBe(100);
+    expect(
+      requirementNestingGuideOffset(3)! - requirementNestingGuideOffset(2)!
+    ).toBe(24);
+  });
+
+  it("sits one gap LEFT of the reserved slot, so the rule can move without moving the icon", () => {
+    // The cell reserves a 4px slot after a `gap-1`; the rule is painted one
+    // gap before it. Anything that made these equal would put the rule back
+    // under the icon's own spacing.
+    expect(requirementNestingGuideOffset(1)).toBeLessThan(80);
   });
 
   it("renders a chevron for a row with children", () => {
