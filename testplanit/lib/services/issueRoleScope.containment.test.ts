@@ -294,6 +294,16 @@ const EXEMPT_IDENTITY_LOOKUP_FILES = [
   // assertion, mutation-proven RED and reverted) is what proves the
   // predicate is still there.
   "app/api/projects/[projectId]/requirements/[issueId]/descendant-count/route.ts",
+  // The ancestors route resolves the addressed requirement by id via
+  // baseDb.issue.findFirst before returning its breadcrumb chain -- the same
+  // identity lookup its descendant-count sibling directly above performs,
+  // and it ALSO spreads REQUIREMENT_SCOPE_WHERE and binds projectId, so it
+  // is strictly more scoped than a bare identity lookup. The chain itself is
+  // built by `getRequirementAncestorChain`, raw SQL that carries the role
+  // and project predicates in its own recursive walk -- never through the
+  // ORM. This entry records the reason; the route's own test asserts the
+  // 404 pre-check's `where` argument still carries the predicate.
+  "app/api/projects/[projectId]/requirements/[issueId]/ancestors/route.ts",
   // 27-07's manual-traceability-reference POST route resolves two rows by
   // id via baseDb.issue.findFirst before authorizing the attach: the
   // requirement's own identity pre-check (which ALSO spreads
