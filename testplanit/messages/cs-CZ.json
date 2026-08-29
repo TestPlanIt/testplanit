@@ -1497,7 +1497,10 @@
           "importDescription": "Načtěte problémy z tohoto propojeného projektu do vašeho projektu. Existující problémy se nezdvojují a importované problémy zůstávají aktuální díky synchronizaci.",
           "importUpdatedWithin": "Aktualizováno během",
           "importLastDays": "Posledních {days} dní",
+          "importAllHistory": "Celá historie",
           "importMax": "Maximální počet k importu",
+          "importCapHint": "Nechte prázdné pro použití výchozí hodnoty {cap}.",
+          "importAllHistoryNoCapHint": "Celá historie importuje všechny odpovídající položky bez omezení.",
           "importPreview": "Náhled",
           "importPreviewResult": "~{count, plural, one {# problém odpovídá tomuto filtru} few {# problémy odpovídají tomuto filtru} many {# problému odpovídá tomuto filtru} other {# problémů odpovídá tomuto filtru}}. Importováno bude až {cap}.",
           "importOverCap": "To překračuje limit {cap}; importováno bude pouze {cap} nejnověji aktualizovaných.",
@@ -1518,20 +1521,35 @@
             "saveError": "Nepodařilo se uložit nastavení synchronizace milníků"
           },
           "requirementsConfig": {
-            "title": "Typy požadavků",
-            "description": "Vyberte, které typy úkolů ve trackeru se počítají jako požadavky. Stávající úkoly budou podle toho přeřazeny.",
+            "title": "Synchronizace požadavků",
+            "description": "Synchronizujte, které typy položek trackeru se počítají jako požadavky. Existující položky budou překlasifikovány podle nastavení.",
             "enableLabel": "Povolit klasifikaci požadavků",
-            "issueTypesLabel": "Typy úkolů",
-            "issueTypesPlaceholder": "Vyberte typy úkolů",
-            "issueTypesAriaLabel": "Typy úkolů pro požadavky",
+            "issueTypesLabel": "Typy položek",
+            "issueTypesPlaceholder": "Vyberte typy položek",
+            "issueTypesAriaLabel": "Typy položek požadavků",
             "previewHeading": "Dopad této změny",
-            "becomingRequirements": "{count, plural, one {{count} úkol se stane požadavkem} few {{count} úkoly se stanou požadavky} many {{count} úkolu se stane požadavky} other {{count} úkolů se stane požadavky}}",
-            "stoppingRequirements": "{count, plural, one {{count} úkol přestane být požadavkem} few {{count} úkoly přestanou být požadavky} many {{count} úkolu přestane být požadavky} other {{count} úkolů přestane být požadavky}}",
-            "detachedCallout": "{count, plural, one {{count} z nich je odpojen od trackeru nebo byl upraven lokálně a ztratí stav požadavku} few {{count} z nich jsou odpojeny od trackeru nebo byly upraveny lokálně a ztratí stav požadavku} many {{count} z nich je odpojeno od trackeru nebo bylo upraveno lokálně a ztratí stav požadavku} other {{count} z nich je odpojeno od trackeru nebo bylo upraveno lokálně a ztratí stav požadavku}}",
-            "reversibilityNote": "Opětovné přidání typu obnoví klasifikaci. Nic se nemaže.",
+            "becomingRequirements": "{count, plural, one {{count} položka se stane požadavkem} few {{count} položky se stanou požadavky} many {{count} položky se stanou požadavky} other {{count} položek se stane požadavky}}",
+            "stoppingRequirements": "{count, plural, one {{count} položka přestane být požadavkem} few {{count} položky přestanou být požadavky} many {{count} položky přestanou být požadavky} other {{count} položek přestane být požadavky}}",
+            "detachedCallout": "{count, plural, one {Z toho {count} je odpojena od trackeru nebo byla upravena lokálně a ztratí stav požadavku} few {Z toho {count} jsou odpojeny od trackeru nebo byly upraveny lokálně a ztratí stav požadavku} many {Z toho {count} jsou odpojeny od trackeru nebo byly upraveny lokálně a ztratí stav požadavku} other {Z toho {count} je odpojeno od trackeru nebo bylo upraveno lokálně a ztratí stav požadavku}}",
+            "reversibilityNote": "Opětovné přidání typu obnoví klasifikaci. Nic se nesmaže.",
             "noChanges": "Žádné změny klasifikace k použití.",
+            "importOfferBodyExact": "{count, plural, one {{count} položka vybraného typu je v trackeru.} few {{count} položky vybraných typů jsou v trackeru.} many {{count} položky vybraných typů jsou v trackeru.} other {{count} položek vybraných typů je v trackeru.}}",
+            "importOfferBodyFloor": "{count, plural, one {V trackeru je alespoň {count} položka vybraného typu} few {V trackeru jsou alespoň {count} položky vybraných typů} many {V trackeru jsou alespoň {count} položky vybraných typů} other {V trackeru je alespoň {count} položek vybraných typů}} — import není omezen na tento počet.",
+            "importOfferBodyUnknown": "Nelze přesně určit, kolik položek vybraných typů se nachází v trackeru. Import může stále proběhnout a přinese všechny shody.",
+            "importOfferConfirm": "Importovat nyní",
+            "importStarted": "Import byl zahájen. Položky se zobrazí, jak budou importovány.",
+            "importFailed": "Import se nepodařilo zahájit",
+            "importAlreadyRunning": "Pro tento projekt trackeru již probíhá import",
+            "importNoTypes": "Před importem vyberte a uložte alespoň jeden typ položky",
+            "importCountUnavailable": "Nelze určit, kolik položek se nachází v trackeru",
+            "importStopAction": "Zastavit",
+            "importStopConfirmTitle": "Zastavit tento import?",
+            "importStopConfirmBody": "Zastavení se projeví po dokončení importu aktuální stránky. Již importované položky zůstanou zachovány.",
+            "importStopRequested": "Zastavení bylo vyžádáno — import se zastaví po dokončení aktuální stránky.",
+            "importStopNotRunning": "Tento import již skončil nebo byl již zastaven.",
+            "importCancelled": "Import zrušen",
             "settingsSaved": "Nastavení typů požadavků bylo uloženo",
-            "saveError": "Nepodařilo se uložit nastavení typů požadavků"
+            "saveError": "Uložení nastavení typů požadavků se nezdařilo"
           }
         },
         "integrationAssigned": "Integrace byla úspěšně přiřazena",
@@ -2131,10 +2149,10 @@
         },
         "requirements": {
           "label": "Povolit požadavky",
-          "description": "Přidá do tohoto projektu oblast Požadavky pro vytváření hierarchií toho, co by měl systém dělat, a propojení testovacích případů s nimi pro zajištění pokrytí. Zapněte tuto možnost, pokud zde udržujete aktuální model požadavků; vypněte ji, pokud vaše požadavky existují výhradně ve vašem trackeru úkolů.",
+          "description": "Přidá do tohoto projektu oblast Požadavky pro vytváření hierarchií toho, co má systém dělat, a propojování testovacích případů s nimi pro pokrytí. Zapněte tuto možnost, pokud zde udržujete aktuální model požadavků; vypněte ji, pokud vaše požadavky žijí výhradně ve vašem trackeru.",
           "enabledToast": "Požadavky byly pro tento projekt povoleny",
           "disabledToast": "Požadavky byly pro tento projekt zakázány",
-          "saveError": "Nepodařilo se aktualizovat nastavení požadavků"
+          "saveError": "Nastavení požadavků se nepodařilo aktualizovat"
         },
         "flipJustification": {
           "label": "Vyžadovat zdůvodnění při obrácení výsledku",
@@ -6660,21 +6678,21 @@
   },
   "requirements": {
     "tree": {
-      "searchPlaceholder": "Vyhledat požadavky...",
+      "searchPlaceholder": "Hledat požadavky...",
       "emptyTitle": "Zatím žádné požadavky",
-      "emptyDescription": "Vytvořte první požadavek a začněte sestavovat strom požadavků tohoto projektu.",
+      "emptyDescription": "Vytvořte svůj první požadavek a začněte vytvářet strom požadavků tohoto projektu.",
       "loadFailed": "Nepodařilo se načíst požadavky.",
       "addRoot": "Přidat požadavek",
       "addChild": "Přidat podřízený požadavek",
       "rename": "Přejmenovat",
-      "delete": "Smazat",
+      "delete": "Odstranit",
       "expandAll": "Rozbalit vše",
       "collapseAll": "Sbalit vše",
-      "dropToRootHint": "Sem přesuňte pro přemístění na nejvyšší úroveň",
-      "moveSuccess": "Požadavek byl přesunut.",
-      "moveFailed": "Nepodařilo se přesunout požadavek.",
-      "moveRejected": "Tento přesun byl zamítnut:",
-      "dragDisabled": "Tento požadavek nyní nelze přesunout."
+      "dropToRootHint": "Přesuňte sem pro přemístění na nejvyšší úroveň",
+      "moveSuccess": "Požadavek přemístěn.",
+      "moveFailed": "Nepodařilo se přemístit požadavek.",
+      "moveRejected": "Tento přesun byl odmítnut:",
+      "dragDisabled": "Tento požadavek nyní nelze přemístit."
     },
     "list": {
       "columnName": "Název",
@@ -6683,19 +6701,19 @@
       "expandRow": "Rozbalit {name}",
       "collapseRow": "Sbalit {name}",
       "filterAllStatuses": "Všechny stavy",
-      "dragLockedSynced": "Synchronizované požadavky odpovídají hierarchii trackeru. Chcete-li je přesunout, odpojte je."
+      "dragLockedSynced": "Synchronizované požadavky odrážejí hierarchii trackeru. Chcete-li jej přesunout, odpojte jej."
     },
     "detail": {
-      "selectPrompt": "Vyberte požadavek pro zobrazení podrobností.",
+      "selectPrompt": "Vyberte požadavek pro zobrazení jeho podrobností.",
       "previousRequirement": "Předchozí požadavek",
       "nextRequirement": "Další požadavek",
       "breadcrumbLabel": "Hierarchie požadavků",
-      "notFound": "Nenalezen žádný požadavek",
+      "notFound": "Žádný požadavek nenalezen",
       "documentation": "Dokumentace",
-      "documentationEmpty": "Není k dispozici žádná dokumentace",
+      "documentationEmpty": "Nebyla poskytnuta žádná dokumentace",
       "documentationPlaceholder": "Zadejte dokumentaci požadavku...",
-      "lockedHint": "Toto pole je správcováno připojeným trackerem a nelze je zde upravovat.",
-      "saveSuccess": "Požadavek byl uložen.",
+      "lockedHint": "Toto pole je řízeno připojeným trackerem a nelze jej zde upravovat.",
+      "saveSuccess": "Požadavek uložen.",
       "saveFailed": "Nepodařilo se uložit požadavek."
     },
     "provenance": {
@@ -6703,14 +6721,14 @@
       "syncedLabel": "Synchronizováno",
       "detachedLabel": "Odpojeno",
       "nativeTooltip": "Vytvořeno přímo v TestPlanIt.",
-      "syncedTooltip": "Synchronizováno z připojeného trackeru. Uzamčená pole nelze zde upravovat.",
-      "detachedTooltip": "Odpojeno od připojeného trackeru. Nyní je plně editovatelné, jako manuálně vytvořený požadavek.",
+      "syncedTooltip": "Synchronizováno z připojeného trackeru. Uzamčená pole zde nelze upravovat.",
+      "detachedTooltip": "Odpojeno od připojeného trackeru. Nyní plně upravitelné, jako manuálně vytvořený požadavek.",
       "openInTracker": "Otevřít v {provider}",
       "detach": "Odpojit",
       "detachDialogTitle": "Odpojit tento požadavek?",
-      "detachDialogDescription": "Odpojení zajistí, že tento požadavek bude v TestPlanIt plně editovatelný, ale zruší jeho propojení s připojeným trackerem. Tuto akci nelze vrátit zpět – opětovné připojení k trackeru zatím není podporováno.",
+      "detachDialogDescription": "Odpojení umožní tento požadavek plně upravovat v TestPlanIt a zruší jeho propojení s připojeným trackerem. Tuto akci nelze vrátit zpět — opětovné připojení k trackeru zatím není podporováno.",
       "detachConfirm": "Odpojit",
-      "detachSuccess": "Požadavek byl odpojen.",
+      "detachSuccess": "Požadavek odpojen.",
       "detachFailed": "Nepodařilo se odpojit požadavek."
     },
     "create": {
@@ -6718,50 +6736,50 @@
       "dialogDescription": "Přidejte nový požadavek do stromu požadavků tohoto projektu.",
       "nameLabel": "Název",
       "namePlaceholder": "Zadejte název požadavku...",
-      "parentLabel": "Nadřazený požadavek",
-      "parentNone": "Bez nadřazeného požadavku (nejvyšší úroveň)",
+      "parentLabel": "Nadřazený",
+      "parentNone": "Bez nadřazeného (nejvyšší úroveň)",
       "submit": "Vytvořit požadavek",
       "submitHint": "Stiskněte Enter pro vytvoření",
-      "success": "Požadavek byl vytvořen.",
+      "success": "Požadavek vytvořen.",
       "failed": "Nepodařilo se vytvořit požadavek."
     },
     "edit": {
       "dialogTitle": "Upravit požadavek",
       "submit": "Uložit změny",
-      "success": "Požadavek byl aktualizován.",
+      "success": "Požadavek aktualizován.",
       "failed": "Nepodařilo se aktualizovat požadavek.",
       "lockedTooltip": "Tento požadavek je synchronizován z připojeného trackeru. Chcete-li jej přejmenovat, odpojte jej."
     },
     "delete": {
-      "dialogTitle": "Smazat požadavek",
-      "confirmNoChildren": "Opravdu chcete smazat tento požadavek? Tuto akci lze vrátit zpět.",
-      "confirmWithChildren": "Tento požadavek má {count, plural, one {# podřízený požadavek, který bude také smazán} few {# podřízené požadavky, které budou také smazány} many {# podřízeného požadavku, který bude také smazán} other {# podřízených požadavků, které budou také smazány}}. Tuto akci lze vrátit zpět.",
-      "submit": "Smazat",
-      "success": "Požadavek byl smazán.",
-      "failed": "Nepodařilo se smazat požadavek.",
+      "dialogTitle": "Odstranit požadavek",
+      "confirmNoChildren": "Opravdu chcete odstranit tento požadavek? Tuto akci lze vrátit.",
+      "confirmWithChildren": "Tento požadavek má {count, plural, one {{count} potomka, který bude také odstraněn} few {{count} potomky, kteří budou také odstraněni} many {{count} potomka, kteří budou také odstraněni} other {{count} potomků, kteří budou také odstraněni}}. Tuto akci lze vrátit.",
+      "submit": "Odstranit",
+      "success": "Požadavek odstraněn.",
+      "failed": "Nepodařilo se odstranit požadavek.",
       "undo": "Vrátit zpět",
-      "undoSuccess": "Požadavek byl obnoven.",
+      "undoSuccess": "Požadavek obnoven.",
       "undoFailed": "Nepodařilo se obnovit požadavek."
     },
     "attachments": {
       "title": "Přílohy",
       "empty": "Žádné přílohy",
-      "uploadSuccess": "Příloha byla nahrána.",
+      "uploadSuccess": "Příloha nahrána.",
       "uploadFailed": "Nepodařilo se nahrát přílohu.",
-      "removeSuccess": "Příloha byla odstraněna.",
+      "removeSuccess": "Příloha odstraněna.",
       "removeFailed": "Nepodařilo se odstranit přílohu."
     },
     "linkedCases": {
       "title": "Propojené testovací případy",
-      "titleWithCount": "{count, plural, =0 {Propojené testovací případy} =1 {# propojený testovací případ} few {# propojené testovací případy} many {# propojených testovacích případů} other {# propojených testovacích případů}}",
+      "titleWithCount": "{count, plural, =0 {Propojené testovací případy} =1 {# Propojený testovací případ} other {# Propojených testovacích případů}}",
       "empty": "Žádné propojené testovací případy.",
       "addLink": "Přidat propojení",
       "addLinkDialogTitle": "Propojit testovací případy",
-      "searchPlaceholder": "Vyhledat testovací případy...",
-      "linkSuccess": "Testovací případ byl propojen.",
+      "searchPlaceholder": "Hledat testovací případy...",
+      "linkSuccess": "Testovací případ propojen.",
       "linkFailed": "Nepodařilo se propojit testovací případ.",
       "unlinkConfirm": "Opravdu chcete zrušit propojení tohoto testovacího případu?",
-      "unlinkSuccess": "Propojení testovacího případu bylo zrušeno.",
+      "unlinkSuccess": "Propojení testovacího případu zrušeno.",
       "unlinkFailed": "Nepodařilo se zrušit propojení testovacího případu.",
       "columnCase": "Testovací případ",
       "columnProject": "Projekt"
@@ -6771,11 +6789,11 @@
       "empty": "Žádné propojené požadavky.",
       "addLink": "Přidat propojení",
       "addLinkDialogTitle": "Propojit požadavky",
-      "searchPlaceholder": "Vyhledat požadavky...",
-      "linkSuccess": "Požadavek byl propojen.",
+      "searchPlaceholder": "Hledat požadavky...",
+      "linkSuccess": "Požadavek propojen.",
       "linkFailed": "Nepodařilo se propojit požadavek.",
       "unlinkConfirm": "Opravdu chcete zrušit propojení tohoto požadavku?",
-      "unlinkSuccess": "Propojení požadavku bylo zrušeno.",
+      "unlinkSuccess": "Propojení požadavku zrušeno.",
       "unlinkFailed": "Nepodařilo se zrušit propojení požadavku."
     },
     "suspect": {
@@ -6784,7 +6802,7 @@
       "tooltipRequirementSide": "Poslední běh tohoto případu je starší než poslední aktualizace tohoto požadavku.",
       "dismissConfirm": "Zrušit tento příznak podezření? Novější úprava požadavku jej znovu označí.",
       "dismissAction": "Zrušit příznak",
-      "dismissSuccess": "Příznak podezření byl zrušen.",
+      "dismissSuccess": "Příznak podezření zrušen.",
       "dismissFailed": "Nepodařilo se zrušit příznak podezření."
     },
     "references": {
@@ -6793,12 +6811,12 @@
       "emptyHint": "Přiložte tikety, které tento požadavek ovlivnily.",
       "addReference": "Přidat odkaz",
       "addDialogTitle": "Přidat odkaz",
-      "searchPlaceholder": "Vyhledat úkoly...",
+      "searchPlaceholder": "Hledat úkoly...",
       "createDialogLabel": "Odkazy",
-      "attachSuccess": "Odkaz byl přiložen.",
+      "attachSuccess": "Odkaz přiložen.",
       "attachFailed": "Nepodařilo se přiložit odkaz.",
       "removeConfirm": "Opravdu chcete odstranit tento odkaz?",
-      "removeSuccess": "Odkaz byl odstraněn.",
+      "removeSuccess": "Odkaz odstraněn.",
       "removeFailed": "Nepodařilo se odstranit odkaz.",
       "columnReference": "Odkaz",
       "columnStatus": "Stav"
@@ -6806,24 +6824,24 @@
     "coverage": {
       "title": "Pokrytí",
       "uncovered": "Nepokryté",
-      "uncoveredTooltip": "K tomuto požadavku ani žádnému z jeho podřízených požadavků nejsou propojeny žádné testovací případy.",
+      "uncoveredTooltip": "K tomuto požadavku ani k žádnému z jeho podřízených požadavků nejsou propojeny žádné testovací případy.",
       "statusPassed": "Úspěšné",
       "statusFailed": "Neúspěšné",
       "statusNotRun": "Neproběhlo",
       "countLabel": "{passed}/{total}",
       "breakdownTooltip": "Úspěšné: {passed} · Neúspěšné: {failed} · Probíhá: {inProgress} · Neproběhlo: {notRun}",
       "showOnlyUncovered": "Zobrazit pouze nepokryté",
-      "showOnlyUncoveredUnavailable": "Data o pokrytí nejsou momentálně k dispozici.",
+      "showOnlyUncoveredUnavailable": "Data o pokrytí nejsou nyní k dispozici.",
       "loadFailed": "Nepodařilo se načíst pokrytí.",
       "retry": "Zkusit znovu",
       "panelTitle": "Pokrývající testovací případy",
-      "panelTitleWithCount": "{count, plural, =0 {Pokrývající testovací případy} =1 {Pokrývající # testovací případ} few {Pokrývající # testovací případy} many {Pokrývající # testovacích případů} other {Pokrývající # testovacích případů}}",
-      "panelDescription": "Všechny testovací případy započítané do pokrytí tohoto požadavku – případy propojené přímo s ním i případy propojené s jakýmkoli podřízeným požadavkem. Pro přidání nebo odstranění propojení použijte Propojené testovací případy.",
+      "panelTitleWithCount": "{count, plural, =0 {Pokrývající testovací případy} =1 {Pokrývající # testovací případ} other {Pokrývající # testovacích případů}}",
+      "panelDescription": "Všechny testovací případy započítané do pokrytí tohoto požadavku — případy propojené přímo s ním i případy propojené s libovolným podřízeným požadavkem. Chcete-li propojení přidat nebo odstranit, použijte Propojené testovací případy.",
       "panelEmpty": "Tento požadavek zatím nepokrývá žádný testovací případ.",
       "columnCase": "Testovací případ",
       "columnResult": "Poslední výsledek",
       "resultRunLink": "Zobrazit testovací běh, ze kterého tento výsledek pochází",
-      "columnExecutedAt": "Datum provedení",
+      "columnExecutedAt": "Provedeno",
       "columnProject": "Projekt",
       "inherited": "Zděděné",
       "inheritedTooltip": "Propojeno s podřízeným požadavkem, nikoli přímo s tímto požadavkem.",
@@ -6833,11 +6851,11 @@
       "menuLabel": "Exportovat sledovatelnost",
       "exportFailed": "Nepodařilo se exportovat sledovatelnost.",
       "pdfEnglishOnlyHint": "Exporty do PDF se generují pouze v angličtině.",
-      "csvOnReportsHint": "Pro export do CSV spusťte sestavu Sledovatelnost požadavků."
+      "csvOnReportsHint": "Pro export do CSV spusťte report Sledovatelnost požadavků."
     },
     "disabled": {
-      "title": "Požadavky nejsou povoleny",
-      "description": "Tento projekt nemá zapnutou funkci požadavků. Požádejte administrátora projektu, aby ji povolil v nastavení projektu, a začněte sestavovat stromy požadavků."
+      "title": "Požadavky nejsou aktivovány",
+      "description": "Tento projekt nemá aktivovanou funkci požadavků. Požádejte správce projektu, aby ji aktivoval v nastavení projektu, abyste mohli začít vytvářet stromy požadavků."
     }
   },
   "Pages": {
@@ -6941,7 +6959,7 @@
     "projectSessions": "## Relace\nRelace průzkumného testování — časově omezené, neskriptované testování zachycené jako poznámky a výsledky napříč aktivními a dokončenými stavy.",
     "projectTags": "## Štítky\nŠtítky označují a seskupují testovací případy, relace a běhy tohoto projektu, aby bylo snadné najít související práci.",
     "projectIssues": "## Úkoly\nÚkoly z propojených nástrojů pro sledování tohoto projektu, propojené s testovacími případy, běhy a relacemi, kde byly nalezeny nebo na ně bylo odkazováno.",
-    "projectRequirements": "## Požadavky\nPožadavky projektu uspořádané v hierarchii – vytvořené přímo v TestPlanIt nebo synchronizované z připojeného trackeru – s propojenými testovacími případy a pokrytím agregovaným v rámci celého stromu.",
+    "projectRequirements": "## Požadavky\nPožadavky projektu uspořádané do hierarchie — vytvořené přímo v TestPlanIt nebo synchronizované z připojeného trackeru — s propojenými testovacími případy a pokrytím agregovaným v rámci celého stromu.",
     "projectReports": "## Reporty\nReporty shrnují testování tohoto projektu — testovací běhy, relace a výsledky — ve formě grafů a tabulek, které lze filtrovat a exportovat.",
     "projectAuditLogs": "## Protokoly auditu\nStopa auditu akcí provedených v tomto projektu — kdo co a kdy změnil — pro sledování bezpečnosti a souladu s předpisy.",
     "projectIntegrations": "## Integrace úkolů\nPropojte tento projekt s nástrojem pro sledování úkolů, aby se jeho testovací případy, běhy a relace mohly propojovat a synchronizovat s externími úkoly a milníky.",
@@ -7799,11 +7817,11 @@
         },
         "requirementCoverageGaps": {
           "label": "Mezery v pokrytí požadavků",
-          "description": "Vypište všechny požadavky bez propojených testovacích případů, aby byly mezery vidět bez nutnosti otevírat strom"
+          "description": "Seznam všech požadavků bez propojených testovacích případů, aby byly mezery viditelné bez nutnosti otevírat strom"
         },
         "requirementTraceability": {
-          "label": "Trasovatelnost požadavků",
-          "description": "Každý požadavek doplněný o propojené testovací případy a jejich poslední výsledek provedení"
+          "label": "Sledovatelnost požadavků",
+          "description": "Každý požadavek spárovaný s propojenými testovacími případy a jejich posledním výsledkem provedení"
         }
       },
       "flakyTests": {

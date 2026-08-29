@@ -763,7 +763,7 @@
       "deletedUser": "Utente eliminato",
       "restrictedField": "Campo riservato",
       "backToTestCase": "Torna al caso di test",
-      "backToRequirements": "Torna ai Requisiti",
+      "backToRequirements": "Torna ai requisiti",
       "selectDeselectAllApprove": "Seleziona o deseleziona l'opzione \"approva\" per tutte le aree pertinenti.",
       "selectDeselectAllReadSensitive": "Seleziona o deseleziona \"Leggi sensibile\" per tutte le aree pertinenti"
     },
@@ -1497,7 +1497,10 @@
           "importDescription": "Recupera i problemi da questo progetto collegato nel tuo progetto. I problemi esistenti non vengono duplicati e quelli importati rimangono aggiornati tramite la sincronizzazione.",
           "importUpdatedWithin": "Aggiornato entro",
           "importLastDays": "Ultimi {days} giorni",
+          "importAllHistory": "Tutta la cronologia",
           "importMax": "Massimo da importare",
+          "importCapHint": "Lascia vuoto per utilizzare il valore predefinito di {cap}.",
+          "importAllHistoryNoCapHint": "Tutta la cronologia importa ogni problema corrispondente, senza limiti.",
           "importPreview": "Anteprima",
           "importPreviewResult": "~{count, plural, one {# problema corrisponde} other {# problemi corrispondono}} a questo filtro. Ne verranno importati fino a {cap}.",
           "importOverCap": "Questo supera il limite di {cap}; verranno importati solo i {cap} aggiornati più recentemente.",
@@ -1518,18 +1521,33 @@
             "saveError": "Impossibile salvare le impostazioni di sincronizzazione dei traguardi"
           },
           "requirementsConfig": {
-            "title": "Tipi di requisito",
-            "description": "Scegli quali tipi di problema del tracker contano come requisiti. I problemi esistenti verranno riclassificati di conseguenza.",
+            "title": "Sincronizzazione requisiti",
+            "description": "Sincronizza quali tipi di problema del tracker contano come requisiti. I problemi esistenti vengono riclassificati di conseguenza.",
             "enableLabel": "Abilita classificazione dei requisiti",
             "issueTypesLabel": "Tipi di problema",
-            "issueTypesPlaceholder": "Seleziona tipi di problema",
+            "issueTypesPlaceholder": "Seleziona i tipi di problema",
             "issueTypesAriaLabel": "Tipi di problema per i requisiti",
             "previewHeading": "Impatto di questa modifica",
             "becomingRequirements": "{count, plural, one {{count} problema diventerà un requisito} other {{count} problemi diventeranno requisiti}}",
             "stoppingRequirements": "{count, plural, one {{count} problema non sarà più un requisito} other {{count} problemi non saranno più requisiti}}",
-            "detachedCallout": "{count, plural, one {{count} di questi è scollegato dal tracker o è stato modificato localmente e perderà lo stato di requisito} other {{count} di questi sono scollegati dal tracker o sono stati modificati localmente e perderanno il loro stato di requisito}}",
+            "detachedCallout": "{count, plural, one {{count} di questi è separato dal tracker o è stato modificato localmente e perderà il suo stato di requisito} other {{count} di questi sono separati dal tracker o sono stati modificati localmente e perderanno il loro stato di requisito}}",
             "reversibilityNote": "Aggiungere nuovamente un tipo ripristina la classificazione. Nulla viene eliminato.",
             "noChanges": "Nessuna modifica di classificazione da applicare.",
+            "importOfferBodyExact": "{count, plural, one {{count} problema} other {{count} problemi}} dei tipi selezionati sono presenti nel tracker.",
+            "importOfferBodyFloor": "Almeno {count, plural, one {{count} problema} other {{count} problemi}} dei tipi selezionati sono presenti nel tracker — l'importazione non è limitata a questo numero.",
+            "importOfferBodyUnknown": "Non è stato possibile determinare esattamente quanti problemi dei tipi selezionati sono presenti nel tracker. L'importazione può comunque procedere e includerà tutte le corrispondenze.",
+            "importOfferConfirm": "Importa ora",
+            "importStarted": "Importazione avviata. I problemi appariranno man mano che vengono importati.",
+            "importFailed": "Impossibile avviare l'importazione",
+            "importAlreadyRunning": "È già in corso un'importazione per questo progetto del tracker",
+            "importNoTypes": "Seleziona e salva almeno un tipo di problema prima di importare",
+            "importCountUnavailable": "Non è stato possibile determinare quanti problemi sono presenti nel tracker",
+            "importStopAction": "Interrompi",
+            "importStopConfirmTitle": "Interrompere questa importazione?",
+            "importStopConfirmBody": "L'interruzione avrà effetto al termine dell'importazione della pagina corrente. I problemi già importati rimarranno.",
+            "importStopRequested": "Interruzione richiesta — l'importazione si interromperà al termine della pagina corrente.",
+            "importStopNotRunning": "Quell'importazione è già terminata o è già stata interrotta.",
+            "importCancelled": "Importazione annullata",
             "settingsSaved": "Impostazioni del tipo di requisito salvate",
             "saveError": "Impossibile salvare le impostazioni del tipo di requisito"
           }
@@ -2131,7 +2149,7 @@
         },
         "requirements": {
           "label": "Abilita requisiti",
-          "description": "Aggiunge un'area Requisiti a questo progetto per costruire gerarchie di ciò che il sistema dovrebbe fare, e collegare i casi di test ad essi per la copertura. Attiva questa opzione se qui mantieni un modello di requisiti allo stato attuale; lasciala disattivata se i tuoi requisiti risiedono interamente nel tuo tracker dei problemi.",
+          "description": "Aggiunge un'area Requisiti a questo progetto per costruire gerarchie di ciò che il sistema dovrebbe fare, e collegare i casi di test ad essi per la copertura. Attiva questa opzione se qui mantieni un modello di requisiti aggiornato; lasciala disattivata se i tuoi requisiti risiedono interamente nel tuo tracker dei problemi.",
           "enabledToast": "Requisiti abilitati per questo progetto",
           "disabledToast": "Requisiti disabilitati per questo progetto",
           "saveError": "Impossibile aggiornare l'impostazione dei requisiti"
@@ -6670,11 +6688,11 @@
       "delete": "Elimina",
       "expandAll": "Espandi tutto",
       "collapseAll": "Comprimi tutto",
-      "dropToRootHint": "Rilascia qui per spostare al livello principale",
+      "dropToRootHint": "Rilascia qui per spostare al livello superiore",
       "moveSuccess": "Requisito spostato.",
       "moveFailed": "Impossibile spostare il requisito.",
       "moveRejected": "Questo spostamento è stato rifiutato:",
-      "dragDisabled": "Questo requisito non può essere spostato al momento."
+      "dragDisabled": "Questo requisito non può essere spostato in questo momento."
     },
     "list": {
       "columnName": "Nome",
@@ -6694,7 +6712,7 @@
       "documentation": "Documentazione",
       "documentationEmpty": "Nessuna documentazione fornita",
       "documentationPlaceholder": "Inserisci la documentazione del requisito...",
-      "lockedHint": "Questo campo è gestito dal tracker collegato e non può essere modificato qui.",
+      "lockedHint": "Questo campo è gestito dal tracker connesso e non può essere modificato qui.",
       "saveSuccess": "Requisito salvato.",
       "saveFailed": "Impossibile salvare il requisito."
     },
@@ -6703,12 +6721,12 @@
       "syncedLabel": "Sincronizzato",
       "detachedLabel": "Scollegato",
       "nativeTooltip": "Creato direttamente in TestPlanIt.",
-      "syncedTooltip": "Sincronizzato dal tracker collegato. I campi bloccati non possono essere modificati qui.",
-      "detachedTooltip": "Scollegato dal tracker collegato. Ora completamente modificabile, come un requisito creato manualmente.",
+      "syncedTooltip": "Sincronizzato dal tracker connesso. I campi bloccati non possono essere modificati qui.",
+      "detachedTooltip": "Scollegato dal tracker connesso. Ora è completamente modificabile, come un requisito creato manualmente.",
       "openInTracker": "Apri in {provider}",
       "detach": "Scollega",
       "detachDialogTitle": "Scollegare questo requisito?",
-      "detachDialogDescription": "Scollegare rende questo requisito completamente modificabile in TestPlanIt e interrompe il collegamento con il tracker collegato. Questa azione non può essere annullata: il ricollegamento al tracker non è ancora supportato.",
+      "detachDialogDescription": "Lo scollegamento rende questo requisito completamente modificabile in TestPlanIt e interrompe il collegamento con il tracker connesso. Questa azione non può essere annullata: il ricollegamento al tracker non è ancora supportato.",
       "detachConfirm": "Scollega",
       "detachSuccess": "Requisito scollegato.",
       "detachFailed": "Impossibile scollegare il requisito."
@@ -6717,9 +6735,9 @@
       "dialogTitle": "Crea requisito",
       "dialogDescription": "Aggiungi un nuovo requisito all'albero dei requisiti di questo progetto.",
       "nameLabel": "Nome",
-      "namePlaceholder": "Inserisci il nome di un requisito...",
+      "namePlaceholder": "Inserisci il nome del requisito...",
       "parentLabel": "Genitore",
-      "parentNone": "Nessun genitore (livello principale)",
+      "parentNone": "Nessun genitore (livello superiore)",
       "submit": "Crea requisito",
       "submitHint": "Premi Invio per creare",
       "success": "Requisito creato.",
@@ -6730,7 +6748,7 @@
       "submit": "Salva le modifiche",
       "success": "Requisito aggiornato.",
       "failed": "Impossibile aggiornare il requisito.",
-      "lockedTooltip": "Questo requisito è sincronizzato dal tracker collegato. Scollegalo per rinominarlo."
+      "lockedTooltip": "Questo requisito è sincronizzato dal tracker connesso. Scollegalo per rinominarlo."
     },
     "delete": {
       "dialogTitle": "Elimina requisito",
@@ -6753,7 +6771,7 @@
     },
     "linkedCases": {
       "title": "Casi di test collegati",
-      "titleWithCount": "{count, plural, =0 {Casi di Test Collegati} =1 {# Caso di Test Collegato} other {# Casi di Test Collegati}}",
+      "titleWithCount": "{count, plural, =0 {Casi di test collegati} =1 {# Caso di test collegato} other {# Casi di test collegati}}",
       "empty": "Nessun caso di test collegato.",
       "addLink": "Aggiungi collegamento",
       "addLinkDialogTitle": "Collega casi di test",
@@ -6763,7 +6781,7 @@
       "unlinkConfirm": "Vuoi davvero scollegare questo caso di test?",
       "unlinkSuccess": "Caso di test scollegato.",
       "unlinkFailed": "Impossibile scollegare il caso di test.",
-      "columnCase": "Caso di prova",
+      "columnCase": "Caso di test",
       "columnProject": "Progetto"
     },
     "linkedRequirements": {
@@ -6806,38 +6824,38 @@
     "coverage": {
       "title": "Copertura",
       "uncovered": "Non coperto",
-      "uncoveredTooltip": "Nessun caso di test è collegato a questo requisito o a uno dei suoi discendenti.",
+      "uncoveredTooltip": "Nessun caso di test è collegato a questo requisito o a uno qualsiasi dei suoi discendenti.",
       "statusPassed": "Superato",
       "statusFailed": "Fallito",
       "statusNotRun": "Non eseguito",
-      "countLabel": "{passed}/{total} superati",
+      "countLabel": "{passed}/{total}",
       "breakdownTooltip": "Superati: {passed} · Falliti: {failed} · In corso: {inProgress} · Non eseguiti: {notRun}",
       "showOnlyUncovered": "Mostra solo non coperti",
       "showOnlyUncoveredUnavailable": "I dati sulla copertura non sono disponibili al momento.",
       "loadFailed": "Impossibile caricare la copertura.",
       "retry": "Riprova",
       "panelTitle": "Casi di test di copertura",
-      "panelTitleWithCount": "{count, plural, =0 {Casi di Test di Copertura} =1 {# Caso di Test di Copertura} other {# Casi di Test di Copertura}}",
-      "panelDescription": "Ogni caso di test conteggiato ai fini della copertura di questo requisito: i casi collegati direttamente più quelli collegati a qualsiasi requisito sottostante. Per aggiungere o rimuovere collegamenti, utilizza Casi di test collegati.",
+      "panelTitleWithCount": "{count, plural, =0 {Casi di test di copertura} =1 {# caso di test di copertura} other {# casi di test di copertura}}",
+      "panelDescription": "Ogni caso di test conteggiato ai fini della copertura di questo requisito, ovvero i casi collegati direttamente a esso più quelli collegati a qualsiasi requisito sottostante. Per aggiungere o rimuovere collegamenti, usa Casi di test collegati.",
       "panelEmpty": "Nessun caso di test copre ancora questo requisito.",
-      "columnCase": "Caso di prova",
-      "columnResult": "Ultimo Risultato",
-      "resultRunLink": "Visualizza il test run da cui proviene questo risultato",
+      "columnCase": "Caso di test",
+      "columnResult": "Ultimo risultato",
+      "resultRunLink": "Visualizza l'esecuzione di test da cui proviene questo risultato",
       "columnExecutedAt": "Eseguito il",
       "columnProject": "Progetto",
       "inherited": "Ereditato",
-      "inheritedTooltip": "Collegato a un discendente di questo requisito, non direttamente ad esso.",
+      "inheritedTooltip": "Collegato a un discendente di questo requisito, non direttamente a esso.",
       "notRunCell": "Non eseguito"
     },
     "export": {
       "menuLabel": "Esporta tracciabilità",
       "exportFailed": "Impossibile esportare la tracciabilità.",
-      "pdfEnglishOnlyHint": "Le esportazioni PDF vengono generate solo in inglese.",
-      "csvOnReportsHint": "Per un'esportazione CSV, esegui il report Tracciabilità dei requisiti."
+      "pdfEnglishOnlyHint": "Le esportazioni in PDF vengono generate solo in inglese.",
+      "csvOnReportsHint": "Per un'esportazione in CSV, esegui il report Tracciabilità dei requisiti."
     },
     "disabled": {
       "title": "I requisiti non sono abilitati",
-      "description": "Questo progetto non ha attivato la funzionalità dei requisiti. Chiedi a un amministratore del progetto di abilitarla nelle impostazioni del progetto per iniziare a costruire gli alberi dei requisiti."
+      "description": "Questo progetto non ha attivato la funzionalità dei requisiti. Chiedi a un amministratore del progetto di abilitarla nelle impostazioni del progetto per iniziare a costruire alberi dei requisiti."
     }
   },
   "Pages": {
@@ -6941,7 +6959,7 @@
     "projectSessions": "## Sessioni\nSessioni di test esplorativo: test a tempo limitato e non scritti, registrati come note e risultati negli stati attivi e completati.",
     "projectTags": "## Tag\nI tag etichettano e raggruppano i casi di test, le sessioni e le esecuzioni di questo progetto, in modo che il lavoro correlato sia facile da trovare.",
     "projectIssues": "## Problemi\nProblemi provenienti dai tracker collegati a questo progetto, collegati ai casi di test, alle esecuzioni e alle sessioni in cui sono stati individuati o referenziati.",
-    "projectRequirements": "## Requisiti\nI requisiti del progetto in una gerarchia — creati nativamente in TestPlanIt o sincronizzati da un tracker collegato — con casi di test collegati e copertura aggregata lungo l'albero.",
+    "projectRequirements": "## Requisiti\nI requisiti del progetto in una gerarchia — creati nativamente in TestPlanIt o sincronizzati da un tracker connesso — con i casi di test collegati e la copertura aggregata lungo l'albero.",
     "projectReports": "## Report\nI report riassumono i test di questo progetto, tra cui esecuzioni, sessioni e risultati, sotto forma di grafici e tabelle che puoi filtrare ed esportare.",
     "projectAuditLogs": "## Registri di controllo\nIl registro di controllo delle azioni eseguite in questo progetto, ovvero chi ha modificato cosa e quando, per il monitoraggio della sicurezza e della conformità.",
     "projectIntegrations": "## Integrazioni dei problemi\nCollega questo progetto a un tracker dei problemi in modo che i suoi casi di test, esecuzioni e sessioni possano collegarsi e sincronizzarsi con problemi e traguardi esterni.",
@@ -7799,11 +7817,11 @@
         },
         "requirementCoverageGaps": {
           "label": "Lacune di Copertura dei Requisiti",
-          "description": "Elenca ogni requisito senza casi di prova collegati, in modo che le lacune siano visibili senza dover aprire l'albero"
+          "description": "Elenca ogni requisito senza casi di prova collegati, così le lacune sono visibili senza dover aprire l'albero"
         },
         "requirementTraceability": {
           "label": "Tracciabilità dei Requisiti",
-          "description": "Ogni requisito abbinato ai relativi casi di prova collegati e al loro ultimo risultato di esecuzione"
+          "description": "Ogni requisito abbinato ai casi di prova collegati e al loro ultimo risultato di esecuzione"
         }
       },
       "flakyTests": {
@@ -8039,15 +8057,15 @@
       "requirementCoverage": {
         "requirement": "Requisito",
         "path": "Percorso",
-        "testCase": "Caso di prova",
+        "testCase": "Caso di Prova",
         "result": "Risultato",
         "executedAt": "Eseguito il",
         "project": "Progetto",
-        "linkedCases": "Casi collegati",
+        "linkedCases": "Casi Collegati",
         "uncovered": "Non coperto",
         "notRun": "Non eseguito",
         "noData": "Nessun dato sui requisiti disponibile per questo rapporto.",
-        "noGaps": "Nessuna lacuna di copertura trovata: ogni requisito ha almeno un caso di prova collegato."
+        "noGaps": "Nessuna lacuna di copertura trovata — ogni requisito ha almeno un caso di prova collegato."
       },
       "crossProjectReportTypes": {
         "testExecution": {

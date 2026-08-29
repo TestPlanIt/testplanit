@@ -40,31 +40,6 @@ const REQUIREMENTS_TREE_PAGE_SIZE = 100;
  */
 const LOCATE_MAX_PAGES = 10;
 
-/**
- * The ceiling on the below-threshold filtered sweep. That sweep is the one
- * pager with no user gesture between pages -- it recurses on the server's
- * cursor until it is exhausted -- so it needs a bound the scroll-driven
- * pagers get for free. At `REQUIREMENTS_TREE_PAGE_SIZE` rows a page this
- * covers 2,000 matches, well past the 500-row threshold that put the project
- * in this mode at all, so a real project can never reach it.
- */
-const ALL_MODE_MAX_SWEEP_PAGES = 20;
-
-/**
- * Whether a page handed back the very boundary it was given. A cursor that
- * does not advance means the next request returns the same page forever;
- * this surface has already produced that defect twice (a timestamp cursor
- * truncated to milliseconds), so the sweep asserts progress rather than
- * trusting it.
- */
-function isSameRootsCursor(
-  next: RequirementRootsCursor | null,
-  previous: RequirementRootsCursor | null
-): boolean {
-  if (next === null || previous === null) return false;
-  return next.id === previous.id && next.value === previous.value;
-}
-
 /** The list's default order. Mirrors `DEFAULT_REQUIREMENT_SORT` in
  *  `lib/services/requirementTree.ts`, restated here because a client module
  *  cannot import a value from that file (see the import note above). */
@@ -438,21 +413,17 @@ export function useRequirementsTree({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, enabled, refetchNonce]);
 
-  // --- Facets (28-19 gap closure): the Status/Coverage Selects' lazy-mode
-  // option source. Gated on `mode === "lazy"` SPECIFICALLY -- never "all",
-  // never `null` -- so the below-threshold path issues exactly the requests
-  // it issues today (D-01's own "no behaviour change below 500"), and so
-  // this never fires while the count round trip is still deciding which
-  // mode applies at all. A sibling of the count round trip above, not a
-  // second lifecycle: same dependency shape (`refetchNonce` included, so a
-  // mutation's `refetch()` call also refreshes the option lists a create
-  // could have introduced a new status value for), but its own effect since
-  // it depends on `mode`, which the count effect itself sets. `facets`
-  // simply stays at its last-resolved value (empty on a first failure) on
-  // error -- no dedicated error slot in this plan's interface, mirroring
-  // the count round trip's own posture immediately above.
+  // --- Facets: the Status/Coverage Selects' option source. The server is
+  // the only source now, at every project size -- the in-memory arrays the
+  // small-project path used to collect these from no longer exist. A
+  // sibling of the count round trip above, not a second lifecycle: same
+  // dependency shape (`refetchNonce` included, so a mutation's `refetch()`
+  // also refreshes the option lists a create could have introduced a new
+  // status value for). `facets` simply stays at its last-resolved value
+  // (empty on a first failure) on error -- no dedicated error slot,
+  // mirroring the count round trip's own posture immediately above.
   useEffect(() => {
-    if (!enabled || mode !== "lazy") return;
+    if (!enabled) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -466,9 +437,9 @@ export function useRequirementsTree({
     return () => {
       cancelled = true;
     };
-  }, [projectId, enabled, mode, refetchNonce]);
+  }, [projectId, enabled, refetchNonce]);
 
-  // --- Roots pager (unfiltered lazy mode). ---
+  // --- Roots pager (unfiltered). ---
   const loadRootsPageAndApply = useCallback(
     async (generation: number, cursor: RequirementRootsCursor | null) => {
       try {
@@ -508,10 +479,11 @@ export function useRequirementsTree({
   const runFilteredFetch = useCallback(
     async (
       generation: number,
-      cursor: RequirementRootsCursor | null,
-      sweptPages = 0
+      cursor: RequirementRootsCursor | null
     ): Promise<void> => {
-      const includeRows = mode === "lazy";
+      // Rows always, at every project size: the client no longer holds a
+      // separate in-memory copy to fall back on.
+      const includeRows = true;
       try {
         const page = await fetchMatches(projectId, {
           filters,
@@ -531,25 +503,7 @@ export function useRequirementsTree({
         matchCursorRef.current = page.nextCursor;
         setLoadMoreError(false);
 
-        // The below-threshold sweep runs to completion on its own, with no
-        // user gesture between pages, so it is bounded on BOTH the number of
-        // pages and cursor progress. A server that hands back the boundary
-        // it was given -- the exact shape of the two paging defects this
-        // surface has already produced -- would otherwise spin the tab in an
-        // unstoppable request loop, growing the stack with every turn.
-        // Stopping early leaves a short match set, which the toolbar's own
-        // "x of y" already makes visible; it never hangs the page.
-        if (
-          mode === "all" &&
-          page.nextCursor !== null &&
-          sweptPages + 1 < ALL_MODE_MAX_SWEEP_PAGES &&
-          !isSameRootsCursor(page.nextCursor, cursor)
-        ) {
-          await runFilteredFetch(generation, page.nextCursor, sweptPages + 1);
-          return;
-        }
-
-        setHasMore(mode === "lazy" && page.nextCursor !== null);
+        setHasMore(page.nextCursor !== null);
       } catch {
         if (fetchGenerationRef.current !== generation) return;
         setLoadMoreError(true);
@@ -593,24 +547,20 @@ export function useRequirementsTree({
     setLoadMoreError(false);
     setHasMore(false);
 
-    if (!enabled || mode === null) {
-      setIsLoading(Boolean(enabled));
+    if (!enabled) {
+      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
+    pagingInFlightRef.current = true;
     if (isFiltering) {
-      setIsLoading(true);
-      pagingInFlightRef.current = true;
       void runFilteredFetch(generation, null);
-    } else if (mode === "lazy") {
-      setIsLoading(true);
-      pagingInFlightRef.current = true;
-      void loadRootsPageAndApply(generation, null);
     } else {
-      setIsLoading(false);
+      void loadRootsPageAndApply(generation, null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetKey, mode, enabled, refetchNonce]);
+  }, [resetKey, enabled, refetchNonce]);
 
   // --- Deep-link reach-forward. ---
   //
@@ -715,9 +665,8 @@ export function useRequirementsTree({
 
   const loadedCount = useMemo(() => {
     if (isFiltering) return matchedIds?.size ?? 0;
-    if (mode === "all") return total ?? 0;
     return rootIdsLoaded.size;
-  }, [isFiltering, matchedIds, mode, total, rootIdsLoaded]);
+  }, [isFiltering, matchedIds, rootIdsLoaded]);
 
   return {
     mode,

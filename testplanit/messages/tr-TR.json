@@ -1497,7 +1497,10 @@
           "importDescription": "Bu bağlantılı projeden sorunları projenize aktarın. Mevcut sorunlar çoğaltılmaz ve içe aktarılan sorunlar senkronizasyon yoluyla güncel kalır.",
           "importUpdatedWithin": "Güncelleme aralığı",
           "importLastDays": "Son {days} gün",
+          "importAllHistory": "Tüm geçmiş",
           "importMax": "İçe aktarılacak maksimum sayı",
+          "importCapHint": "Varsayılan olan {cap} değerini kullanmak için boş bırakın.",
+          "importAllHistoryNoCapHint": "Tüm geçmiş, sınır olmaksızın eşleşen tüm sorunları içe aktarır.",
           "importPreview": "Önizleme",
           "importPreviewResult": "~{count, plural, one {# sorun} other {# sorun}} bu filtreyle eşleşiyor. En fazla {cap} tanesi içe aktarılacak.",
           "importOverCap": "Bu, {cap} sınırını aşıyor; yalnızca en son güncellenen {cap} tanesi içe aktarılacak.",
@@ -1518,18 +1521,33 @@
             "saveError": "Dönüm noktası senkronizasyon ayarları kaydedilemedi"
           },
           "requirementsConfig": {
-            "title": "Gereksinim Türleri",
-            "description": "Hangi izleyici sorun türlerinin gereksinim olarak sayılacağını seçin. Mevcut sorunlar buna uyacak şekilde yeniden sınıflandırılır.",
+            "title": "Gereksinim Senkronizasyonu",
+            "description": "Hangi izleyici sorun türlerinin gereksinim olarak sayılacağını senkronize edin. Mevcut sorunlar buna göre yeniden sınıflandırılır.",
             "enableLabel": "Gereksinim sınıflandırmasını etkinleştir",
             "issueTypesLabel": "Sorun türleri",
             "issueTypesPlaceholder": "Sorun türlerini seçin",
             "issueTypesAriaLabel": "Gereksinim sorun türleri",
             "previewHeading": "Bu değişikliğin etkisi",
             "becomingRequirements": "{count, plural, one {{count} sorun bir gereksinim haline gelecek} other {{count} sorun gereksinim haline gelecek}}",
-            "stoppingRequirements": "{count, plural, one {{count} sorun artık gereksinim olmaktan çıkacak} other {{count} sorun artık gereksinim olmaktan çıkacak}}",
+            "stoppingRequirements": "{count, plural, one {{count} sorun artık bir gereksinim olmayacak} other {{count} sorun artık gereksinim olmayacak}}",
             "detachedCallout": "{count, plural, one {Bunlardan {count} tanesi izleyiciden ayrılmış veya yerel olarak düzenlenmiş olup gereksinim durumunu kaybedecek} other {Bunlardan {count} tanesi izleyiciden ayrılmış veya yerel olarak düzenlenmiş olup gereksinim durumunu kaybedecek}}",
             "reversibilityNote": "Bir türü yeniden eklemek sınıflandırmayı geri yükler. Hiçbir şey silinmez.",
             "noChanges": "Uygulanacak sınıflandırma değişikliği yok.",
+            "importOfferBodyExact": "{count, plural, one {{count} sorun izleyicide bulunuyor.} other {{count} sorun izleyicide bulunuyor.}}",
+            "importOfferBodyFloor": "Seçilen türlerden en az {count, plural, one {{count} sorun} other {{count} sorun}} izleyicide bulunuyor — içe aktarma bu sayıyla sınırlı değildir.",
+            "importOfferBodyUnknown": "Seçilen türlerden izleyicide kaç sorun bulunduğu kesin olarak belirlenemedi. İçe aktarma işlemi yine de devam edebilir ve eşleşen tüm sorunları getirir.",
+            "importOfferConfirm": "Şimdi içe aktar",
+            "importStarted": "İçe aktarma başladı. Sorunlar içe aktarıldıkça görünecektir.",
+            "importFailed": "İçe aktarma başlatılamadı",
+            "importAlreadyRunning": "Bu izleyici projesi için zaten bir içe aktarma işlemi çalışıyor",
+            "importNoTypes": "İçe aktarmadan önce en az bir sorun türü seçip kaydedin",
+            "importCountUnavailable": "İzleyicide kaç sorun bulunduğu belirlenemedi",
+            "importStopAction": "Durdur",
+            "importStopConfirmTitle": "Bu içe aktarma işlemi durdurulsun mu?",
+            "importStopConfirmBody": "Durdurma, geçerli sayfanın içe aktarımı tamamlandıktan sonra etkili olur. Zaten içe aktarılmış sorunlar kalacaktır.",
+            "importStopRequested": "Durdurma talep edildi — içe aktarma işlemi geçerli sayfasından sonra duracak.",
+            "importStopNotRunning": "Bu içe aktarma işlemi zaten tamamlandı veya zaten durduruldu.",
+            "importCancelled": "İçe aktarma iptal edildi",
             "settingsSaved": "Gereksinim türü ayarları kaydedildi",
             "saveError": "Gereksinim türü ayarları kaydedilemedi"
           }
@@ -2131,7 +2149,7 @@
         },
         "requirements": {
           "label": "Gereksinimleri etkinleştir",
-          "description": "Bu projeye, sistemin ne yapması gerektiğine dair hiyerarşiler oluşturmak ve kapsam için test senaryolarını bunlarla ilişkilendirmek amacıyla bir Gereksinimler alanı ekler. Gereksinim modelinizi burada güncel tutuyorsanız bunu açın; gereksinimleriniz tamamen sorun izleyicinizde bulunuyorsa kapalı bırakın.",
+          "description": "Sistemin ne yapması gerektiğine dair hiyerarşiler oluşturmak ve kapsam için test senaryolarını bunlara bağlamak amacıyla bu projeye bir Gereksinimler alanı ekler. Güncel durum gereksinim modelinizi burada tutuyorsanız bunu etkinleştirin; gereksinimleriniz tamamen sorun izleyicinizde yaşıyorsa kapalı bırakın.",
           "enabledToast": "Bu proje için gereksinimler etkinleştirildi",
           "disabledToast": "Bu proje için gereksinimler devre dışı bırakıldı",
           "saveError": "Gereksinimler ayarı güncellenemedi"
@@ -6662,7 +6680,7 @@
     "tree": {
       "searchPlaceholder": "Gereksinimleri ara...",
       "emptyTitle": "Henüz gereksinim yok",
-      "emptyDescription": "Bu projenin gereksinim ağacını oluşturmaya başlamak için ilk gereksiminizi oluşturun.",
+      "emptyDescription": "Bu projenin gereksinim ağacını oluşturmaya başlamak için ilk gereksiniminizi oluşturun.",
       "loadFailed": "Gereksinimler yüklenemedi.",
       "addRoot": "Gereksinim Ekle",
       "addChild": "Alt Gereksinim Ekle",
@@ -6670,11 +6688,11 @@
       "delete": "Sil",
       "expandAll": "Tümünü Genişlet",
       "collapseAll": "Tümünü Daralt",
-      "dropToRootHint": "Üst düzeye taşımak için buraya bırakın",
+      "dropToRootHint": "Üst seviyeye taşımak için buraya bırakın",
       "moveSuccess": "Gereksinim taşındı.",
       "moveFailed": "Gereksinim taşınamadı.",
       "moveRejected": "Bu taşıma reddedildi:",
-      "dragDisabled": "Bu gereksinim şu anda taşınamaz."
+      "dragDisabled": "Bu gereksinim şu anda taşınamıyor."
     },
     "list": {
       "columnName": "Ad",
@@ -6683,7 +6701,7 @@
       "expandRow": "{name} öğesini genişlet",
       "collapseRow": "{name} öğesini daralt",
       "filterAllStatuses": "Tüm durumlar",
-      "dragLockedSynced": "Senkronize edilen gereksinimler izleyicinin hiyerarşisini yansıtır. Taşımak için ayırın."
+      "dragLockedSynced": "Senkronize edilen gereksinimler, izleyicinin hiyerarşisini yansıtır. Taşımak için bağlantıyı kesin."
     },
     "detail": {
       "selectPrompt": "Ayrıntılarını görüntülemek için bir gereksinim seçin.",
@@ -6704,22 +6722,22 @@
       "detachedLabel": "Ayrılmış",
       "nativeTooltip": "Doğrudan TestPlanIt içinde oluşturuldu.",
       "syncedTooltip": "Bağlı izleyiciden senkronize edildi. Kilitli alanlar burada düzenlenemez.",
-      "detachedTooltip": "Bağlı izleyiciden ayrıldı. Artık manuel olarak oluşturulmuş bir gereksinim gibi tamamen düzenlenebilir.",
+      "detachedTooltip": "Bağlı izleyiciden ayrıldı. Artık manuel olarak oluşturulan bir gereksinim gibi tamamen düzenlenebilir.",
       "openInTracker": "{provider} içinde aç",
-      "detach": "Ayır",
-      "detachDialogTitle": "Bu gereksinim ayrılsın mı?",
-      "detachDialogDescription": "Ayırma işlemi bu gereksinimi TestPlanIt içinde tamamen düzenlenebilir hale getirir ve bağlı izleyiciyle olan bağlantısını koparır. Bu işlem geri alınamaz — izleyiciye yeniden bağlanma henüz desteklenmemektedir.",
-      "detachConfirm": "Ayır",
-      "detachSuccess": "Gereksinim ayrıldı.",
-      "detachFailed": "Gereksinim ayrılamadı."
+      "detach": "Bağlantıyı Kes",
+      "detachDialogTitle": "Bu gereksinimin bağlantısı kesilsin mi?",
+      "detachDialogDescription": "Bağlantıyı kesmek, bu gereksinimi TestPlanIt içinde tamamen düzenlenebilir hale getirir ve bağlı izleyiciyle olan bağlantısını koparır. Bu işlem geri alınamaz — izleyiciye yeniden bağlanma henüz desteklenmiyor.",
+      "detachConfirm": "Bağlantıyı Kes",
+      "detachSuccess": "Gereksimin bağlantısı kesildi.",
+      "detachFailed": "Gereksinimin bağlantısı kesilemedi."
     },
     "create": {
       "dialogTitle": "Gereksinim Oluştur",
       "dialogDescription": "Bu projenin gereksinim ağacına yeni bir gereksinim ekleyin.",
       "nameLabel": "Ad",
       "namePlaceholder": "Bir gereksinim adı girin...",
-      "parentLabel": "Üst Öğe",
-      "parentNone": "Üst öğe yok (üst düzey)",
+      "parentLabel": "Üst",
+      "parentNone": "Üst öğe yok (en üst seviye)",
       "submit": "Gereksinim Oluştur",
       "submitHint": "Oluşturmak için Enter tuşuna basın",
       "success": "Gereksinim oluşturuldu.",
@@ -6730,12 +6748,12 @@
       "submit": "Değişiklikleri Kaydet",
       "success": "Gereksinim güncellendi.",
       "failed": "Gereksinim güncellenemedi.",
-      "lockedTooltip": "Bu gereksinim bağlı izleyiciden senkronize edilmiştir. Yeniden adlandırmak için ayırın."
+      "lockedTooltip": "Bu gereksinim bağlı izleyiciden senkronize edildi. Yeniden adlandırmak için bağlantısını kesin."
     },
     "delete": {
       "dialogTitle": "Gereksinimi Sil",
       "confirmNoChildren": "Bu gereksinimi silmek istediğinizden emin misiniz? Bu işlem geri alınabilir.",
-      "confirmWithChildren": "Bu gereksinimin, aynı zamanda silinecek olan {count, plural, one {{count} alt öğesi} other {{count} alt öğesi}} bulunuyor. Bu işlem geri alınabilir.",
+      "confirmWithChildren": "Bu gereksinimin, silinecek olan {count, plural, one {{count} alt öğesi} other {{count} alt öğesi}} bulunuyor. Bu işlem geri alınabilir.",
       "submit": "Sil",
       "success": "Gereksinim silindi.",
       "failed": "Gereksinim silinemedi.",
@@ -6753,7 +6771,7 @@
     },
     "linkedCases": {
       "title": "Bağlantılı Test Senaryoları",
-      "titleWithCount": "{count, plural, =0 {Bağlı Test Durumları} =1 {# Bağlı Test Durumu} other {# Bağlı Test Durumları}}",
+      "titleWithCount": "{count, plural, =0 {Bağlantılı Test Senaryoları} =1 {# Bağlantılı Test Senaryosu} other {# Bağlantılı Test Senaryosu}}",
       "empty": "Bağlantılı test senaryosu yok.",
       "addLink": "Bağlantı Ekle",
       "addLinkDialogTitle": "Test Senaryolarını Bağla",
@@ -6782,8 +6800,8 @@
       "badgeLabel": "Şüpheli",
       "tooltipCaseSide": "Bu gereksinim, bu senaryonun son çalıştırmasından sonra güncellendi.",
       "tooltipRequirementSide": "Bu senaryonun son çalıştırması, bu gereksinimin son güncellemesinden daha eski.",
-      "dismissConfirm": "Bu şüpheli işareti kaldırılsın mı? Gereksinimde yapılacak yeni bir düzenleme onu tekrar işaretleyecektir.",
-      "dismissAction": "İşareti Kaldır",
+      "dismissConfirm": "Bu şüpheli işareti kaldırılsın mı? Gereksinimde yapılacak daha yeni bir düzenleme onu yeniden işaretleyecektir.",
+      "dismissAction": "İşareti kaldır",
       "dismissSuccess": "Şüpheli işareti kaldırıldı.",
       "dismissFailed": "Şüpheli işareti kaldırılamadı."
     },
@@ -6810,23 +6828,23 @@
       "statusPassed": "Geçti",
       "statusFailed": "Başarısız",
       "statusNotRun": "Çalıştırılmadı",
-      "countLabel": "{passed}/{total}",
+      "countLabel": "{passed}/{total} geçti",
       "breakdownTooltip": "Geçti: {passed} · Başarısız: {failed} · Devam ediyor: {inProgress} · Çalıştırılmadı: {notRun}",
       "showOnlyUncovered": "Yalnızca kapsanmamışları göster",
       "showOnlyUncoveredUnavailable": "Kapsam verileri şu anda kullanılamıyor.",
       "loadFailed": "Kapsam yüklenemedi.",
-      "retry": "Tekrar Dene",
+      "retry": "Tekrar dene",
       "panelTitle": "Kapsayan Test Senaryoları",
-      "panelTitleWithCount": "{count, plural, =0 {Kapsayan Test Durumları} =1 {Kapsayan # Test Durumu} other {Kapsayan # Test Durumları}}",
-      "panelDescription": "Bu gereksinimin kapsamına dahil edilen her test senaryosu — doğrudan bağlı olanlar ile altındaki herhangi bir gereksinime bağlı olanlar dahil. Bağlantı eklemek veya kaldırmak için Bağlantılı Test Senaryoları'nı kullanın.",
+      "panelTitleWithCount": "{count, plural, =0 {Kapsayan Test Senaryoları} =1 {# Test Senaryosu Kapsıyor} other {# Test Senaryosu Kapsıyor}}",
+      "panelDescription": "Bu gereksinimin kapsamına dahil edilen her test senaryosu — doğrudan bağlı olan senaryolar ile altındaki herhangi bir gereksinime bağlı senaryolar. Bağlantı eklemek veya kaldırmak için Bağlantılı Test Senaryoları'nı kullanın.",
       "panelEmpty": "Henüz bu gereksinimi kapsayan test senaryosu yok.",
       "columnCase": "Test Senaryosu",
       "columnResult": "Son Sonuç",
-      "resultRunLink": "Bu sonucun geldiği test koşusunu görüntüle",
-      "columnExecutedAt": "Çalıştırma Tarihi",
+      "resultRunLink": "Bu sonucun geldiği test çalıştırmasını görüntüle",
+      "columnExecutedAt": "Çalıştırılma Zamanı",
       "columnProject": "Proje",
       "inherited": "Devralınan",
-      "inheritedTooltip": "Doğrudan bu gereksinime değil, alt öğelerinden birine bağlı.",
+      "inheritedTooltip": "Doğrudan bu gereksinime değil, bir alt öğesine bağlı.",
       "notRunCell": "Çalıştırılmadı"
     },
     "export": {
@@ -6837,7 +6855,7 @@
     },
     "disabled": {
       "title": "Gereksinimler Etkin Değil",
-      "description": "Bu proje gereksinimler özelliğini etkinleştirmemiş. Gereksinim ağaçları oluşturmaya başlamak için bir proje yöneticisinden bunu proje ayarlarından etkinleştirmesini isteyin."
+      "description": "Bu proje gereksinimler özelliğini etkinleştirmemiş. Gereksinim ağaçları oluşturmaya başlamak için bir proje yöneticisinden proje ayarlarında bu özelliği etkinleştirmesini isteyin."
     }
   },
   "Pages": {
@@ -6941,7 +6959,7 @@
     "projectSessions": "## Oturumlar\nKeşifsel test oturumları — zaman sınırlı, senaryosuz testlerin notlar ve sonuçlar olarak aktif ve tamamlanmış durumlar genelinde kaydedilmesi.",
     "projectTags": "## Etiketler\nEtiketler, ilgili çalışmaların kolayca bulunabilmesi için bu projenin test senaryolarını, oturumlarını ve çalıştırmalarını etiketler ve gruplandırır.",
     "projectIssues": "## Sorunlar\nBu projenin bağlı izleyicilerinden gelen ve bulundukları veya referans verildikleri test senaryolarına, çalıştırmalara ve oturumlara bağlanan sorunlar.",
-    "projectRequirements": "## Gereksinimler\nProjenin hiyerarşi içindeki gereksinimleri — TestPlanIt içinde doğrudan oluşturulmuş veya bağlı bir izleyiciden senkronize edilmiş — bağlantılı test senaryoları ve ağaç boyunca toplanan kapsam ile birlikte.",
+    "projectRequirements": "## Gereksinimler\nProjenin hiyerarşi içindeki gereksinimleri — doğrudan TestPlanIt içinde oluşturulmuş veya bağlı bir izleyiciden senkronize edilmiş — bağlantılı test senaryoları ve ağaç boyunca toplanan kapsam ile birlikte.",
     "projectReports": "## Raporlar\nRaporlar, bu projenin testlerini — test çalıştırmaları, oturumlar ve sonuçlar — filtreleyip dışa aktarabileceğiniz grafikler ve tablolar olarak özetler.",
     "projectAuditLogs": "## Denetim Kayıtları\nBu projede gerçekleştirilen eylemlerin denetim kaydı — kimin neyi ne zaman değiştirdiği — güvenlik ve uyumluluk takibi için.",
     "projectIntegrations": "## Sorun Entegrasyonları\nTest senaryolarının, çalıştırmalarının ve oturumlarının harici sorunlar ve kilometre taşlarıyla bağlantı kurabilmesi ve senkronize olabilmesi için bu projeyi bir sorun izleyiciye bağlayın.",
@@ -7798,12 +7816,12 @@
           "description": "Test senaryosu içeriğine, özel alanlara ve bağlantılı sorun bağlamına göre, hangi manuel test senaryolarının bir sonraki aşamada otomatikleştirileceğine dair sıralı liste."
         },
         "requirementCoverageGaps": {
-          "label": "Gereksinim Kapsam Boşlukları",
-          "description": "Bağlantılı test durumu bulunmayan tüm gereksinimleri listeler, böylece boşluklar ağacı açmadan görülebilir"
+          "label": "Gereksinim Kapsama Boşlukları",
+          "description": "Bağlantılı test durumu bulunmayan tüm gereksinimleri listeleyin, böylece ağacı açmadan boşluklar görülebilir"
         },
         "requirementTraceability": {
           "label": "Gereksinim İzlenebilirliği",
-          "description": "Her gereksinim, bağlantılı test durumları ve bunların en son çalıştırma sonucuyla eşleştirilir"
+          "description": "Her gereksinim, bağlantılı test durumları ve bunların en son yürütme sonucuyla eşleştirilir"
         }
       },
       "flakyTests": {
@@ -8041,13 +8059,13 @@
         "path": "Yol",
         "testCase": "Test Durumu",
         "result": "Sonuç",
-        "executedAt": "Çalıştırılma Zamanı",
+        "executedAt": "Çalıştırma Tarihi",
         "project": "Proje",
-        "linkedCases": "Bağlantılı Vakalar",
+        "linkedCases": "Bağlantılı Durumlar",
         "uncovered": "Kapsanmamış",
         "notRun": "Çalıştırılmadı",
         "noData": "Bu rapor için gereksinim verisi bulunmamaktadır.",
-        "noGaps": "Kapsam boşluğu bulunamadı — her gereksinimin en az bir bağlantılı test durumu var."
+        "noGaps": "Kapsama boşluğu bulunamadı — her gereksinimin en az bir bağlantılı test durumu var."
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -1497,7 +1497,10 @@
           "importDescription": "Pobierz problemy z tego powiązanego projektu do swojego projektu. Istniejące problemy nie są duplikowane, a zaimportowane problemy są aktualizowane poprzez synchronizację.",
           "importUpdatedWithin": "Zaktualizowano w ciągu",
           "importLastDays": "Ostatnie {days} dni",
+          "importAllHistory": "Cała historia",
           "importMax": "Maksymalna liczba do importu",
+          "importCapHint": "Pozostaw puste, aby użyć wartości domyślnej {cap}.",
+          "importAllHistoryNoCapHint": "Cała historia importuje każdy pasujący problem, bez limitu.",
           "importPreview": "Podgląd",
           "importPreviewResult": "~{count, plural, one {# problem} few {# problemy} many {# problemów} other {# problemu}} spełnia ten filtr. Zaimportowanych zostanie maksymalnie {cap}.",
           "importOverCap": "Przekracza to limit {cap}; zostanie zaimportowanych tylko {cap} najnowszych zaktualizowanych problemów.",
@@ -1518,19 +1521,34 @@
             "saveError": "Nie udało się zapisać ustawień synchronizacji kamieni milowych"
           },
           "requirementsConfig": {
-            "title": "Typy wymagań",
-            "description": "Wybierz, które typy zgłoszeń w systemie śledzenia mają być traktowane jako wymagania. Istniejące zgłoszenia zostaną odpowiednio przeklasyfikowane.",
+            "title": "Synchronizacja wymagań",
+            "description": "Zsynchronizuj, które typy problemów w trackerze liczą się jako wymagania. Istniejące problemy zostaną odpowiednio przeklasyfikowane.",
             "enableLabel": "Włącz klasyfikację wymagań",
-            "issueTypesLabel": "Typy zgłoszeń",
-            "issueTypesPlaceholder": "Wybierz typy zgłoszeń",
-            "issueTypesAriaLabel": "Typy zgłoszeń będące wymaganiami",
+            "issueTypesLabel": "Typy problemów",
+            "issueTypesPlaceholder": "Wybierz typy problemów",
+            "issueTypesAriaLabel": "Typy problemów będących wymaganiami",
             "previewHeading": "Wpływ tej zmiany",
-            "becomingRequirements": "{count, plural, one {{count} zgłoszenie stanie się wymaganiem} few {{count} zgłoszenia staną się wymaganiami} many {{count} zgłoszeń stanie się wymaganiami} other {{count} zgłoszenia stanie się wymaganiami}}",
-            "stoppingRequirements": "{count, plural, one {{count} zgłoszenie przestanie być wymaganiem} few {{count} zgłoszenia przestaną być wymaganiami} many {{count} zgłoszeń przestanie być wymaganiami} other {{count} zgłoszenia przestanie być wymaganiami}}",
-            "detachedCallout": "{count, plural, one {{count} z nich jest odłączone od systemu śledzenia lub zostało zmodyfikowane lokalnie i straci status wymagania} few {{count} z nich są odłączone od systemu śledzenia lub zostały zmodyfikowane lokalnie i stracą status wymagania} many {{count} z nich jest odłączonych od systemu śledzenia lub zostało zmodyfikowanych lokalnie i straci status wymagania} other {{count} z nich jest odłączonych od systemu śledzenia lub zostało zmodyfikowanych lokalnie i straci status wymagania}}",
+            "becomingRequirements": "{count, plural, one {{count} problem stanie się wymaganiem} few {{count} problemy staną się wymaganiami} many {{count} problemów stanie się wymaganiami} other {{count} problemu stanie się wymaganiem}}",
+            "stoppingRequirements": "{count, plural, one {{count} problem przestanie być wymaganiem} few {{count} problemy przestaną być wymaganiami} many {{count} problemów przestanie być wymaganiami} other {{count} problemu przestanie być wymaganiem}}",
+            "detachedCallout": "{count, plural, one {{count} z nich jest odłączony od trackera lub został edytowany lokalnie i utraci status wymagania} few {{count} z nich są odłączone od trackera lub zostały edytowane lokalnie i utracą status wymagania} many {{count} z nich jest odłączonych od trackera lub zostało edytowanych lokalnie i utraci status wymagania} other {{count} z nich jest odłączonego od trackera lub zostało edytowane lokalnie i utraci status wymagania}}",
             "reversibilityNote": "Ponowne dodanie typu przywraca klasyfikację. Nic nie zostaje usunięte.",
             "noChanges": "Brak zmian klasyfikacji do zastosowania.",
-            "settingsSaved": "Zapisano ustawienia typów wymagań",
+            "importOfferBodyExact": "{count, plural, one {{count} problem wybranych typów znajduje się w trackerze.} few {{count} problemy wybranych typów znajdują się w trackerze.} many {{count} problemów wybranych typów znajduje się w trackerze.} other {{count} problemu wybranych typów znajduje się w trackerze.}}",
+            "importOfferBodyFloor": "{count, plural, one {Co najmniej {count} problem wybranych typów znajduje się w trackerze — import nie jest ograniczony do tej liczby.} few {Co najmniej {count} problemy wybranych typów znajdują się w trackerze — import nie jest ograniczony do tej liczby.} many {Co najmniej {count} problemów wybranych typów znajduje się w trackerze — import nie jest ograniczony do tej liczby.} other {Co najmniej {count} problemu wybranych typów znajduje się w trackerze — import nie jest ograniczony do tej liczby.}}",
+            "importOfferBodyUnknown": "Nie udało się dokładnie określić, ile problemów wybranych typów znajduje się w trackerze. Import może mimo to zostać przeprowadzony i uwzględni wszystkie dopasowania.",
+            "importOfferConfirm": "Importuj teraz",
+            "importStarted": "Import rozpoczęty. Problemy będą się pojawiać w miarę importowania.",
+            "importFailed": "Nie udało się rozpocząć importu",
+            "importAlreadyRunning": "Import dla tego projektu trackera jest już uruchomiony",
+            "importNoTypes": "Wybierz i zapisz co najmniej jeden typ problemu przed importem",
+            "importCountUnavailable": "Nie udało się ustalić, ile problemów znajduje się w trackerze",
+            "importStopAction": "Zatrzymaj",
+            "importStopConfirmTitle": "Zatrzymać ten import?",
+            "importStopConfirmBody": "Zatrzymanie zacznie obowiązywać po zakończeniu importowania bieżącej strony. Już zaimportowane problemy pozostaną.",
+            "importStopRequested": "Zażądano zatrzymania — import zostanie zatrzymany po zakończeniu bieżącej strony.",
+            "importStopNotRunning": "Ten import już się zakończył lub został już zatrzymany.",
+            "importCancelled": "Import anulowany",
+            "settingsSaved": "Ustawienia typów wymagań zostały zapisane",
             "saveError": "Nie udało się zapisać ustawień typów wymagań"
           }
         },
@@ -2131,7 +2149,7 @@
         },
         "requirements": {
           "label": "Włącz wymagania",
-          "description": "Dodaje do tego projektu obszar Wymagania umożliwiający tworzenie hierarchii tego, co system powinien robić, oraz łączenie z nimi przypadków testowych w celu zapewnienia pokrycia. Włącz tę opcję, jeśli utrzymujesz tutaj aktualny model wymagań; pozostaw wyłączoną, jeśli Twoje wymagania znajdują się wyłącznie w systemie śledzenia zgłoszeń.",
+          "description": "Dodaje do tego projektu obszar Wymagania służący do budowania hierarchii tego, co system powinien robić, oraz łączenia z nimi przypadków testowych w celu zapewnienia pokrycia. Włącz tę opcję, jeśli utrzymujesz tutaj aktualny model wymagań; pozostaw wyłączoną, jeśli Twoje wymagania znajdują się wyłącznie w Twoim trackerze problemów.",
           "enabledToast": "Wymagania włączone dla tego projektu",
           "disabledToast": "Wymagania wyłączone dla tego projektu",
           "saveError": "Nie udało się zaktualizować ustawienia wymagań"
@@ -6660,12 +6678,12 @@
   },
   "requirements": {
     "tree": {
-      "searchPlaceholder": "Wyszukaj wymagania...",
+      "searchPlaceholder": "Szukaj wymagań...",
       "emptyTitle": "Brak wymagań",
       "emptyDescription": "Utwórz swoje pierwsze wymaganie, aby zacząć budować drzewo wymagań tego projektu.",
       "loadFailed": "Nie udało się załadować wymagań.",
       "addRoot": "Dodaj wymaganie",
-      "addChild": "Dodaj podrzędne wymaganie",
+      "addChild": "Dodaj wymaganie podrzędne",
       "rename": "Zmień nazwę",
       "delete": "Usuń",
       "expandAll": "Rozwiń wszystko",
@@ -6683,7 +6701,7 @@
       "expandRow": "Rozwiń {name}",
       "collapseRow": "Zwiń {name}",
       "filterAllStatuses": "Wszystkie statusy",
-      "dragLockedSynced": "Zsynchronizowane wymagania odzwierciedlają hierarchię systemu śledzenia. Odłącz, aby je przenieść."
+      "dragLockedSynced": "Zsynchronizowane wymagania odzwierciedlają hierarchię z trackera. Odłącz, aby je przenieść."
     },
     "detail": {
       "selectPrompt": "Wybierz wymaganie, aby zobaczyć jego szczegóły.",
@@ -6694,7 +6712,7 @@
       "documentation": "Dokumentacja",
       "documentationEmpty": "Brak dokumentacji",
       "documentationPlaceholder": "Wprowadź dokumentację wymagania...",
-      "lockedHint": "To pole jest zarządzane przez połączony system śledzenia i nie można go tutaj edytować.",
+      "lockedHint": "To pole jest zarządzane przez podłączony tracker i nie można go tutaj edytować.",
       "saveSuccess": "Wymaganie zapisane.",
       "saveFailed": "Nie udało się zapisać wymagania."
     },
@@ -6703,12 +6721,12 @@
       "syncedLabel": "Zsynchronizowane",
       "detachedLabel": "Odłączone",
       "nativeTooltip": "Utworzone bezpośrednio w TestPlanIt.",
-      "syncedTooltip": "Zsynchronizowane z połączonym systemem śledzenia. Zablokowanych pól nie można tutaj edytować.",
-      "detachedTooltip": "Odłączone od połączonego systemu śledzenia. Teraz w pełni edytowalne, jak wymaganie utworzone ręcznie.",
+      "syncedTooltip": "Zsynchronizowane z podłączonego trackera. Zablokowanych pól nie można tutaj edytować.",
+      "detachedTooltip": "Odłączone od podłączonego trackera. Teraz w pełni edytowalne, jak wymaganie utworzone ręcznie.",
       "openInTracker": "Otwórz w {provider}",
       "detach": "Odłącz",
       "detachDialogTitle": "Odłączyć to wymaganie?",
-      "detachDialogDescription": "Odłączenie sprawia, że to wymaganie staje się w pełni edytowalne w TestPlanIt i zrywa jego powiązanie z połączonym systemem śledzenia. Tej czynności nie można cofnąć — ponowne przyłączenie do systemu śledzenia nie jest jeszcze obsługiwane.",
+      "detachDialogDescription": "Odłączenie sprawia, że to wymaganie staje się w pełni edytowalne w TestPlanIt i zrywa jego połączenie z podłączonym trackerem. Tej czynności nie można odwrócić — ponowne podłączenie do trackera nie jest jeszcze wspierane.",
       "detachConfirm": "Odłącz",
       "detachSuccess": "Wymaganie odłączone.",
       "detachFailed": "Nie udało się odłączyć wymagania."
@@ -6730,16 +6748,16 @@
       "submit": "Zapisz zmiany",
       "success": "Wymaganie zaktualizowane.",
       "failed": "Nie udało się zaktualizować wymagania.",
-      "lockedTooltip": "To wymaganie jest zsynchronizowane z połączonym systemem śledzenia. Odłącz je, aby zmienić nazwę."
+      "lockedTooltip": "To wymaganie jest zsynchronizowane z podłączonego trackera. Odłącz je, aby zmienić nazwę."
     },
     "delete": {
       "dialogTitle": "Usuń wymaganie",
-      "confirmNoChildren": "Czy na pewno chcesz usunąć to wymaganie? Tę czynność można cofnąć.",
-      "confirmWithChildren": "To wymaganie ma {count, plural, one {{count} podrzędny element} few {{count} podrzędne elementy} many {{count} podrzędnych elementów} other {{count} podrzędnych elementów}}, które również zostaną usunięte. Tę czynność można cofnąć.",
+      "confirmNoChildren": "Czy na pewno chcesz usunąć to wymaganie? Tę czynność można odwrócić.",
+      "confirmWithChildren": "To wymaganie ma {count, plural, one {{count} element podrzędny} few {{count} elementy podrzędne} many {{count} elementów podrzędnych} other {{count} elementu podrzędnego}}, które również zostaną usunięte. Tę czynność można odwrócić.",
       "submit": "Usuń",
       "success": "Wymaganie usunięte.",
       "failed": "Nie udało się usunąć wymagania.",
-      "undo": "Cofnij",
+      "undo": "Anuluj",
       "undoSuccess": "Wymaganie przywrócone.",
       "undoFailed": "Nie udało się przywrócić wymagania."
     },
@@ -6753,11 +6771,11 @@
     },
     "linkedCases": {
       "title": "Powiązane przypadki testowe",
-      "titleWithCount": "{count, plural, =0 {Powiązane przypadki testowe} =1 {# powiązany przypadek testowy} few {# powiązane przypadki testowe} many {# powiązanych przypadków testowych} other {# powiązanego przypadku testowego}}",
+      "titleWithCount": "{count, plural, =0 {Powiązane przypadki testowe} =1 {# Powiązany przypadek testowy} one {# Powiązany przypadek testowy} few {# Powiązane przypadki testowe} many {# Powiązanych przypadków testowych} other {# Powiązanych przypadków testowych}}",
       "empty": "Brak powiązanych przypadków testowych.",
       "addLink": "Dodaj link",
       "addLinkDialogTitle": "Połącz przypadki testowe",
-      "searchPlaceholder": "Wyszukaj przypadki testowe...",
+      "searchPlaceholder": "Szukaj przypadków testowych...",
       "linkSuccess": "Przypadek testowy połączony.",
       "linkFailed": "Nie udało się połączyć przypadku testowego.",
       "unlinkConfirm": "Czy na pewno chcesz odłączyć ten przypadek testowy?",
@@ -6771,7 +6789,7 @@
       "empty": "Brak powiązanych wymagań.",
       "addLink": "Dodaj link",
       "addLinkDialogTitle": "Połącz wymagania",
-      "searchPlaceholder": "Wyszukaj wymagania...",
+      "searchPlaceholder": "Szukaj wymagań...",
       "linkSuccess": "Wymaganie połączone.",
       "linkFailed": "Nie udało się połączyć wymagania.",
       "unlinkConfirm": "Czy na pewno chcesz odłączyć to wymaganie?",
@@ -6782,18 +6800,18 @@
       "badgeLabel": "Podejrzane",
       "tooltipCaseSide": "To wymaganie zostało zaktualizowane po ostatnim uruchomieniu tego przypadku.",
       "tooltipRequirementSide": "Ostatnie uruchomienie tego przypadku jest starsze niż ostatnia aktualizacja tego wymagania.",
-      "dismissConfirm": "Odrzucić tę flagę podejrzenia? Nowsza edycja wymagania ponownie ją oznaczy.",
+      "dismissConfirm": "Odrzucić tę podejrzaną flagę? Nowsza edycja wymagania oznaczy je ponownie.",
       "dismissAction": "Odrzuć flagę",
-      "dismissSuccess": "Flaga podejrzenia odrzucona.",
-      "dismissFailed": "Nie udało się odrzucić flagi podejrzenia."
+      "dismissSuccess": "Podejrzana flaga odrzucona.",
+      "dismissFailed": "Nie udało się odrzucić podejrzanej flagi."
     },
     "references": {
-      "title": "{count, plural, =0 {Odniesienia} =1 {{count} odniesienie} one {{count} odniesienie} few {{count} odniesienia} many {{count} odniesień} other {{count} odniesień}}",
+      "title": "{count, plural, =0 {Odniesienia} =1 {{count} odniesienie} one {{count} odniesienie} few {{count} odniesienia} many {{count} odniesień} other {{count} odniesienia}}",
       "empty": "Brak odniesień.",
       "emptyHint": "Dołącz zgłoszenia, które ukształtowały to wymaganie.",
       "addReference": "Dodaj odniesienie",
       "addDialogTitle": "Dodaj odniesienie",
-      "searchPlaceholder": "Wyszukaj zgłoszenia...",
+      "searchPlaceholder": "Szukaj zgłoszeń...",
       "createDialogLabel": "Odniesienia",
       "attachSuccess": "Odniesienie dołączone.",
       "attachFailed": "Nie udało się dołączyć odniesienia.",
@@ -6806,23 +6824,23 @@
     "coverage": {
       "title": "Pokrycie",
       "uncovered": "Nieobjęte",
-      "uncoveredTooltip": "Żaden przypadek testowy nie jest powiązany z tym wymaganiem ani z żadnym z jego elementów podrzędnych.",
+      "uncoveredTooltip": "Żadne przypadki testowe nie są powiązane z tym wymaganiem ani żadnym z jego elementów podrzędnych.",
       "statusPassed": "Zaliczony",
       "statusFailed": "Niezaliczony",
       "statusNotRun": "Nie uruchomiono",
       "countLabel": "{passed}/{total}",
-      "breakdownTooltip": "Zaliczone: {passed} · Niezaliczone: {failed} · W trakcie: {inProgress} · Nieuruchomione: {notRun}",
+      "breakdownTooltip": "Zaliczone: {passed} · Niezaliczone: {failed} · W trakcie: {inProgress} · Nie uruchomiono: {notRun}",
       "showOnlyUncovered": "Pokaż tylko nieobjęte",
-      "showOnlyUncoveredUnavailable": "Dane o pokryciu nie są teraz dostępne.",
-      "loadFailed": "Nie udało się załadować danych o pokryciu.",
+      "showOnlyUncoveredUnavailable": "Dane pokrycia nie są teraz dostępne.",
+      "loadFailed": "Nie udało się załadować pokrycia.",
       "retry": "Spróbuj ponownie",
-      "panelTitle": "Przypadki testowe obejmujące",
-      "panelTitleWithCount": "{count, plural, =0 {Obejmujące przypadki testowe} =1 {Obejmuje # przypadek testowy} few {Obejmuje # przypadki testowe} many {Obejmuje # przypadków testowych} other {Obejmuje # przypadku testowego}}",
-      "panelDescription": "Każdy przypadek testowy liczony do pokrycia tego wymagania — przypadki powiązane z nim bezpośrednio oraz przypadki powiązane z jakimkolwiek wymaganiem znajdującym się poniżej niego. Aby dodać lub usunąć powiązania, użyj opcji Powiązane przypadki testowe.",
-      "panelEmpty": "Żaden przypadek testowy jeszcze nie obejmuje tego wymagania.",
+      "panelTitle": "Pokrywające przypadki testowe",
+      "panelTitleWithCount": "{count, plural, =0 {Pokrywające przypadki testowe} =1 {Pokrywający # przypadek testowy} one {Pokrywający # przypadek testowy} few {Pokrywające # przypadki testowe} many {Pokrywających # przypadków testowych} other {Pokrywające # przypadki testowe}}",
+      "panelDescription": "Każdy przypadek testowy liczony do pokrycia tego wymagania — przypadki powiązane z nim bezpośrednio oraz przypadki powiązane z jakimkolwiek wymaganiem poniżej niego. Aby dodać lub usunąć powiązania, użyj opcji Powiązane przypadki testowe.",
+      "panelEmpty": "Żaden przypadek testowy nie pokrywa jeszcze tego wymagania.",
       "columnCase": "Przypadek testowy",
       "columnResult": "Najnowszy wynik",
-      "resultRunLink": "Wyświetl przebieg testu, z którego pochodzi ten wynik",
+      "resultRunLink": "Zobacz przebieg testu, z którego pochodzi ten wynik",
       "columnExecutedAt": "Wykonano w",
       "columnProject": "Projekt",
       "inherited": "Odziedziczone",
@@ -6830,8 +6848,8 @@
       "notRunCell": "Nie uruchomiono"
     },
     "export": {
-      "menuLabel": "Eksportuj śledzenie wymagań",
-      "exportFailed": "Nie udało się wyeksportować śledzenia wymagań.",
+      "menuLabel": "Eksportuj matrycę śledzenia",
+      "exportFailed": "Nie udało się wyeksportować matrycy śledzenia.",
       "pdfEnglishOnlyHint": "Eksporty PDF są generowane tylko w języku angielskim.",
       "csvOnReportsHint": "Aby wyeksportować plik CSV, uruchom raport Śledzenie wymagań."
     },
@@ -6941,7 +6959,7 @@
     "projectSessions": "## Sesje\nSesje testów eksploracyjnych — testowanie ograniczone czasowo i niescenariuszowe, rejestrowane jako notatki i wyniki w stanach aktywnych i zakończonych.",
     "projectTags": "## Tagi\nTagi etykietują i grupują przypadki testowe, sesje oraz przebiegi tego projektu, dzięki czemu łatwo znaleźć powiązane zadania.",
     "projectIssues": "## Problemy\nProblemy z połączonych systemów śledzenia tego projektu, powiązane z przypadkami testowymi, przebiegami i sesjami, w których zostały znalezione lub do których się odnoszą.",
-    "projectRequirements": "## Wymagania\nWymagania projektu w hierarchii — utworzone natywnie w TestPlanIt lub zsynchronizowane z połączonego systemu śledzenia — z powiązanymi przypadkami testowymi i pokryciem zliczanym w całym drzewie.",
+    "projectRequirements": "## Wymagania\nWymagania projektu w hierarchii — tworzone natywnie w TestPlanIt lub synchronizowane z podłączonego trackera — z powiązanymi przypadkami testowymi i pokryciem zsumowanym w całym drzewie.",
     "projectReports": "## Raporty\nRaporty podsumowują testowanie tego projektu — przebiegi testowe, sesje i wyniki — w postaci wykresów i tabel, które można filtrować i eksportować.",
     "projectAuditLogs": "## Dzienniki audytu\nŚcieżka audytu działań wykonanych w tym projekcie — kto, co i kiedy zmienił — do celów śledzenia bezpieczeństwa i zgodności.",
     "projectIntegrations": "## Integracje problemów\nPołącz ten projekt z systemem śledzenia problemów, aby jego przypadki testowe, przebiegi i sesje mogły łączyć się i synchronizować z zewnętrznymi problemami i kamieniami milowymi.",
@@ -7798,12 +7816,12 @@
           "description": "Lista rankingowa przypadków testowych, które należy zautomatyzować w następnej kolejności, oparta na zawartości przypadku, polach niestandardowych i kontekście powiązanego problemu"
         },
         "requirementCoverageGaps": {
-          "label": "Luki w pokryciu wymagań",
-          "description": "Wyświetla wszystkie wymagania bez powiązanych przypadków testowych, aby luki były widoczne bez otwierania drzewa"
+          "label": "Braki w pokryciu wymagań",
+          "description": "Lista wszystkich wymagań bez powiązanych przypadków testowych, aby braki były widoczne bez otwierania drzewa"
         },
         "requirementTraceability": {
           "label": "Śledzenie wymagań",
-          "description": "Każde wymaganie zestawione z powiązanymi przypadkami testowymi i ich najnowszym wynikiem wykonania"
+          "description": "Każde wymaganie wraz z powiązanymi przypadkami testowymi i ich najnowszym wynikiem wykonania"
         }
       },
       "flakyTests": {
@@ -8041,13 +8059,13 @@
         "path": "Ścieżka",
         "testCase": "Przypadek testowy",
         "result": "Wynik",
-        "executedAt": "Wykonano o",
+        "executedAt": "Wykonano w",
         "project": "Projekt",
         "linkedCases": "Powiązane przypadki",
         "uncovered": "Nieobjęte",
         "notRun": "Nie uruchomiono",
         "noData": "Brak danych o wymaganiach dostępnych dla tego raportu.",
-        "noGaps": "Nie znaleziono luk w pokryciu — każde wymaganie ma co najmniej jeden powiązany przypadek testowy."
+        "noGaps": "Nie znaleziono żadnych braków w pokryciu — każde wymaganie ma co najmniej jeden powiązany przypadek testowy."
       },
       "crossProjectReportTypes": {
         "testExecution": {
