@@ -234,7 +234,9 @@
     "filters": {
       "all": "Tous",
       "allStatuses": "Tous les statuts",
-      "allPriorities": "Toutes les priorités"
+      "allPriorities": "Toutes les priorités",
+      "allIssueTypes": "Tous les types de problème",
+      "noIssueType": "Aucun type de problème"
     },
     "fields": {
       "groupName": "Nom du groupe",
@@ -2777,12 +2779,18 @@
         "noMatchingEntries": "Aucune entrée ne correspond aux filtres sélectionnés.",
         "showing": "{loaded} sur {total} entrées"
       },
-      "mentionedComments": {
-        "title": "Mentionné dans les commentaires",
-        "description": "Commentaires où vous êtes mentionné",
-        "noComments": "Vous n'avez été mentionné dans aucun commentaire pour le moment.",
-        "comment": "Commentaire",
-        "showingResults": "Affichage de {start} - {end} de {total}"
+      "myComments": {
+        "title": "Mes commentaires",
+        "description": "Commentaires que vous avez écrits ou dans lesquels vous avez été mentionné",
+        "noComments": "Vous n'avez écrit ou été mentionné dans aucun commentaire pour le moment.",
+        "noMatchingComments": "Aucun commentaire ne correspond aux filtres actuels.",
+        "searchPlaceholder": "Rechercher des commentaires",
+        "filterLabel": "Filtrer les commentaires",
+        "filterAll": "Tous les commentaires",
+        "filterMentioned": "Me mentionnant",
+        "filterAuthored": "Écrits par moi",
+        "showing": "Affichage de {loaded} sur {total} commentaires",
+        "matching": "{matched} correspondant(s) · {loaded} sur {total} commentaires recherchés"
       },
       "twoFactor": {
         "enable": "Activer l'authentification à deux facteurs",

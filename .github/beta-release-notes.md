@@ -6,151 +6,131 @@ installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.16
+### What's new since beta.17
 
-#### Images as AI generation context
+#### Milestone and report counting
 
-- **Screenshots now reach the model.** Test-case generation can send images
-  from your source material alongside the text, so mockups, error screenshots,
-  and UI captures inform the generated cases. An **Images to include as
-  context** picker lists what was found — up to 5 images, 4 MB each, PNG /
-  JPEG / GIF / WebP — with eligible ones pre-selected and oversized ones
-  marked and unselectable.
-- **From Issue.** Jira attachments, including screenshots pasted into a
-  description or comments, and files attached to Azure DevOps work items.
-  Inline images render as `[image: filename]` placeholders in the issue
-  preview so you can see where they sit in the text. Generation from the Jira
-  panel carries the issue's images automatically, under the same limits.
-- **From Document.** The requirements form is now a rich-text editor, and
-  images embedded in it — pasted screenshots, uploaded mockups — are offered
-  as context.
-- **From URL.** The crawler captures a screenshot of each page it visits and
-  offers it as context. On the official workers image (Docker Compose and
-  Helm) this is on by default; turn it off with `CRAWL_SCREENSHOTS=false`
-  (`workers.crawlScreenshots: false` in Helm). Workers running outside the
-  official image need `CRAWL_SCREENSHOTS=true` plus a Chromium executable.
-  Rendering is held to the same SSRF rules as the crawl itself — every
-  sub-resource the page loads is checked, not just the page URL.
-- **Only on vision-capable models.** Support is detected from the model name;
-  when the configured model can't take images the picker stays visible and
-  says so, and generation proceeds with text only. Admins can override the
-  detection per model with `supportsVision` in `modelCapabilities`, or declare
-  it for a whole custom integration with `visionSupport`. The review step
-  reports exactly which images were sent and which were skipped.
-- Images are fetched at generation time and held in a short-lived cache; they
-  are never copied into TestPlanIt's file storage.
+- **Executed automated cases counted as never run.** Automated runs (JUnit,
+  TestNG, Mocha, …) record their outcomes in the result table and never write
+  a status onto the run-case row — and eight consumers assumed that row was
+  always populated. Each now reads manual and automated cases from their own
+  sources:
+  - **Milestone completion and burndown** counted every automated case as
+    permanently incomplete, and also counted cases that had been removed from
+    a run. A dozen-plus milestones were understated, several that were
+    actually at 100%; on the reference data set one milestone's open work was
+    94.7% removed-case phantom.
+  - The **Milestone Completion (%) project-health metric** read the run-case
+    status unconditionally — a milestone reporting 0% across 12,790 cases now
+    reports 100% from its 31,992 results — and its drill-down said
+    "Completed: No" for every automated case, contradicting the number it
+    drills into.
+  - The **export traceability matrix** wrote a blank status for
+    automated-only cases, which read as "Not run".
+  - **Member coverage** treated an empty automated run-case row as
+    authoritative, so its automated fallback never engaged and cases showed
+    falsely as "Not run".
+  - The duplicate scan's **Last Run** column showed a run name and date with
+    a blank status — the worst-hit surface, since automation-sourced cases
+    dominate duplicate scans.
+  - The **run-case detail sheet** fell back to "Untested" — reached directly
+    from Latest Results chips, so clicking a passing automated result opened
+    a sheet saying it never ran.
+  - The dashboard's **assigned-to-me list** kept cases that had been removed
+    from a run in the assignee's task list indefinitely.
+  - The **matrix report** still aggregated iterations, configurations, and
+    snapshots from removed run-cases.
+- **The rule now lives in one place.** Effective run-case status resolves
+  through a single database view used by all of these consumers, so the
+  manual-vs-automated split can't regress one surface at a time. The view is
+  also queryable from psql and BI tools, where the empty status columns were
+  most misleading, and a lint gate fails any new code that reads the raw
+  column directly.
+- No backfill is needed: results were always recorded correctly, so these
+  fixes correct historical and future data alike.
 
-#### AI model configuration
+#### Reviews
 
-- **Cost fields fill themselves in.** When a provider reports per-model
-  pricing — LiteLLM proxies via `/model/info`, and the OpenRouter and Together
-  AI model listings — Cost Per 1M Input/Output Tokens are populated on model
-  selection and after a successful Test Connection, normalized to USD per 1M
-  tokens. A toast confirms the applied rates, and both fields stay editable
-  before you save.
-- **Custom endpoints list their models.** OpenAI-compatible Custom LLM
-  endpoints now populate the model dropdown from `/models`, falling back
-  silently to manual entry when the endpoint doesn't serve it.
-- The available-models route requires an admin session, and the cloud
-  metadata-host blocklist used by SSRF validation is now one shared predicate
-  (`metadata.google` and `100.100.100.200` included).
+- **Your own requests join the Pending queue.** The Pending tab only listed
+  reviews assigned to you, so a request you submitted was invisible until
+  someone decided it. It now also shows the reviews you requested, with a new
+  Assignee column saying who each one is parked with. Rows you submitted
+  carry **Send reminder** and **Cancel request** instead of the decision
+  actions; when you're both requester and eligible reviewer, the decision
+  actions win. Send reminder reuses the scheduled reminder pipeline — same
+  notification, same webhook, same cooldown — so a request nudged just after
+  the hourly scan is refused rather than double-notifying, and the button
+  says when the last reminder went out. The header badge stays scoped to
+  reviews awaiting *your* decision.
+- **A moved case no longer strands its reviews.** Moving cases between
+  projects soft-deletes the source rows through a path that skipped review
+  cleanup, so in-flight reviews stayed pending against cases the inbox hides
+  — the assignee saw an empty inbox while the reminder worker emailed them
+  every day. The move now cancels those reviews, and the reminder scan
+  retires any review whose subject is gone instead of nagging about it.
 
-#### Shared steps
+#### Profile
 
-- **Narrow a large scan.** Step Sequence Duplicates gains **Min. Steps** and
-  **Min. Cases** dropdowns. Options are derived from the counts actually
-  present in the scan, so every choice narrows the results, and each selection
-  is remembered per project. Changing a filter clears the row selection, so a
-  bulk dismissal only ever applies to the rows you picked in the list in front
-  of you.
-- **The conversion dialog shows its steps every time.** It resolved the
-  matched run by id range, but a case whose steps were reordered or inserted
-  into can have an end id lower than its start id — the query returned nothing
-  and the editor opened empty. The range now resolves by position, dialog
-  state resets on each open so a reopened match no longer inherits the
-  previous one's name or edits, and a match whose steps are gone says it's
-  stale instead of showing an empty editor.
-- **Large scans stay responsive.** The results table virtualizes and no longer
-  loads every matched case's full step text up front; step-text previews are
-  unchanged.
+- **Mentioned in Comments becomes My Comments.** The section now lists both
+  comments you've written and comments that @-mention you, with a scope
+  filter (All Comments / Mentioning Me / Written by Me) and a text search —
+  @-mentioned names count as text, so searching a teammate's name finds the
+  comments that mention them. The list loads more as you scroll, with a
+  counter showing how many are loaded and, while searching, how many match.
 
-#### Test runs
+#### Repository
 
-- **Duplicate works from the runs list again.** The list row hid its Duplicate
-  action for completed runs, so the same run could be duplicated from its
-  detail page but not from the list it appears in. Completed rows also get
-  their record-key item back.
-- **Imported cases show the automation icon.** Existing cases matched by a
-  result import are marked automated but keep their original source, so they
-  rendered with the manual icon throughout the automated-run views.
+- The folder tree fills the full height of its panel instead of stopping
+  short of the bottom.
 
-#### Test case result history
+#### Stored preferences and hydration
 
-- The history card no longer collapses to ~5 rows when it mounts below the
-  fold, and notes, step results, iteration values, and log output are fetched
-  per result when a row is expanded rather than for every row up front.
+- **A saved preference no longer breaks the page that saved it.** Six
+  components read localStorage while initializing state, which renders one
+  way on the server and another on the client. With nothing stored both
+  agree — so everything worked in a fresh browser — but the first write broke
+  every load after it. Affected surfaces now render the default and adopt the
+  stored value on mount: sidebar sections no longer collapse the section
+  you're currently on (previously leaving you on a page with no link to it),
+  and a lint scanner fails the build if the pattern reappears.
+- **Resizable panels move again.** Panel groups with a saved layout hydrated
+  into a state where the divider dragged but nothing moved — invisible until
+  you resized once, since the failure needed a stored layout. Panel groups
+  now mount client-side behind a same-sized placeholder. Affects every
+  resizable surface.
 
-#### Reports
+#### Uploads
 
-- **Charts plotted zeros in every non-English locale.** Report rows are keyed
-  by the registry's English label, but the chart read them through the
-  localized display label. Any metric whose display label differed — Test
-  Results, Test Results Count, and Test Cases Count in English, and *every*
-  metric in other locales — drew a flat zero line while the results table
-  showed correct values.
+- **The per-file upload limit is configurable.** `UPLOAD_MAX_MB` (default 10,
+  the previous hardcoded value) sets the ceiling for attachments and inline
+  document images. It must be present at both build and run time — Compose
+  wires both from the one variable in `.env`, so raising it is an edit plus a
+  rebuild, not a restart. This also fixes at-limit uploads being rejected by
+  the framework's body cap with an opaque error before the friendly "File is
+  too large" message could run. Project icons and avatars stay fixed — they
+  are UI thumbnails, not operator-sized payloads.
 
-#### Notifications
+#### API docs
 
-- **Daily digests skip what you've already read.** The fan-out selected unread
-  notifications at queue time, but the worker re-fetched them by id alone, so
-  anything read or dismissed between the cron enqueue and the job running was
-  still emailed and then force-marked read.
-- **No email server, no email jobs.** The digest pass and email jobs now check
-  for a configured SMTP transport first, instead of scanning every user and
-  burning five queue retries per message on installations that run without
-  email.
+- **The /api/docs spec is generated again.** The OpenAPI spec had been
+  hand-patched since the ORM migration and drifted badly — it advertised
+  relation shapes that now return 422 and was missing the join models for
+  case issues, case tags, and milestone issues, `deletedAt` on ~40 models,
+  and the milestone external-sync fields. It is now regenerated from the live
+  schema, a parity test fails CI whenever the checked-in spec no longer
+  matches, and the broken examples in the API reference are corrected (reads
+  are GET with a `q` query parameter, not POST).
 
-#### Integrations
+#### Deployment
 
-- Issue-tracker requests retry on HTTP 429 and 5xx responses and honor a
-  `Retry-After` header when the provider sends one.
-
-#### Audit log
-
-- **A poison batch no longer freezes the pipeline.** A SQL error anywhere in a
-  poll batch aborted the whole transaction, so nothing was marked processed
-  and the worker re-polled the same batch forever while looking alive. Each
-  group now runs under its own SAVEPOINT — a bad group costs only its own rows
-  and retries next poll while the rest of the batch drains — and progress
-  counts completed rows, so a poison-only batch sleeps instead of hot-looping
-  against the database.
-
-#### Administration
-
-- The abandoned-automation-cleanup mode and the QuickScript templates
-  enabled-only filter are switches instead of two-option dropdowns.
-
-#### Languages
-
-- **Czech (Čeština)** joins the interface languages, bringing the total to 17.
-- Count messages say "both" rather than "all 2".
-
-#### Database and deployment
-
-- **Case-insensitive sorting on musl-based Postgres.** Alpine's musl libc
-  can't collate locales, so every `ORDER BY` on text sorted in byte order —
-  all capitals ahead of all lowercase — in the bundled Postgres container.
-  A migration re-collates the sorted display-name columns on existing
-  databases, and the Compose and Helm Postgres now initialize new volumes with
-  ICU as the collation provider.
-- The Docker deployment guide is corrected: `.env.example` ships with
-  local-development values, so `DATABASE_URL`, `VALKEY_URL`, and
-  `ELASTICSEARCH_NODE` must be pointed at the Compose service hostnames.
+- **The nginx container log is capped** at 10 files × 100 MB. It logs request
+  timing on every request and previously grew without bound — 3 GB in 9 days
+  on one deployment — with nothing reclaiming the space short of recreating
+  the container. The cap retains roughly three days of timing data for
+  latency debugging.
 
 #### Schema
 
-- Adds the migration for the `worker` column on JUnit test results. The column
-  was introduced in beta.16's schema but shipped without a migration, so
-  deployments running `migrate deploy` never created it and every automated
-  run's detail page returned a 400. Upgrading from beta.16 applies it
-  normally.
+- Adds a migration creating the effective-case-status view described above.
+  Upgrading applies it normally via `migrate deploy`; databases built with
+  `db push` get it created at application startup.

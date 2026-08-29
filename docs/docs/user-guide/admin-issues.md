@@ -21,6 +21,8 @@ Only system administrators can open this page. To view or manage issues for a si
 
 Issues are listed in a sortable, filterable table. Use the **Filter issues...** box to search by name, title, or description (matching is case-insensitive). The **Columns** control lets you show or hide optional columns; your choice is remembered in this browser for this table.
 
+Three multi-select dropdowns sit beside the search box: **Status**, **Priority**, and **Issue Type**. Each lists the values currently in use. Selecting several values in one dropdown matches issues with any of them; selections in different dropdowns apply together. Leave a dropdown empty to include every value. Matching is case-insensitive, so values that differ only in capitalization are treated as one. The Issue Type dropdown also offers a **No Issue Type** entry when some issues have no type set — issues only receive a type when they are synced from or created in an external tracker, and not every tracker supplies one. A dropdown is hidden when no issue has a value for that field.
+
 | Column | Description |
 | --- | --- |
 | **Name** | The issue key/name, with status, priority, the provider icon, the issue-type icon, and a link out to the external issue. Always shown. |

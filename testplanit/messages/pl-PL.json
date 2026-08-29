@@ -234,7 +234,9 @@
     "filters": {
       "all": "Wszystkie",
       "allStatuses": "Wszystkie statusy",
-      "allPriorities": "Wszystkie priorytety"
+      "allPriorities": "Wszystkie priorytety",
+      "allIssueTypes": "Wszystkie typy problemów",
+      "noIssueType": "Brak typu problemu"
     },
     "fields": {
       "groupName": "Nazwa grupy",
@@ -2777,12 +2779,18 @@
         "noMatchingEntries": "Żaden wpis nie spełnia wybranych filtrów.",
         "showing": "{loaded} z {total} wpisów"
       },
-      "mentionedComments": {
-        "title": "Wspomniano w komentarzach",
-        "description": "Komentarze, w których wspomniano o Tobie",
-        "noComments": "Nie wspomniano o Tobie jeszcze w żadnych komentarzach.",
-        "comment": "Komentarz",
-        "showingResults": "Wyświetlanie {start} - {end} z {total}"
+      "myComments": {
+        "title": "Moje komentarze",
+        "description": "Komentarze, które napisałeś lub w których wspomniano o Tobie",
+        "noComments": "Nie napisałeś jeszcze żadnych komentarzy ani nie wspomniano o Tobie w żadnym z nich.",
+        "noMatchingComments": "Brak komentarzy spełniających bieżące filtry.",
+        "searchPlaceholder": "Wyszukaj komentarze",
+        "filterLabel": "Filtruj komentarze",
+        "filterAll": "Wszystkie komentarze",
+        "filterMentioned": "Wspominające o mnie",
+        "filterAuthored": "Napisane przeze mnie",
+        "showing": "Wyświetlanie {loaded} z {total} komentarzy",
+        "matching": "{matched} pasujących · przeszukano {loaded} z {total} komentarzy"
       },
       "twoFactor": {
         "enable": "Włącz 2FA",

@@ -269,6 +269,12 @@ interface FakeCase {
   stepCount: number;
   /** fieldId -> stored JSON value (absent = no row for that field). */
   fields: Record<number, unknown>;
+  /**
+   * Extra CaseFieldValues rows for fields already in `fields`. Nothing in the
+   * schema enforces one row per (testCaseId, fieldId), so the counts have to
+   * survive duplicates.
+   */
+  duplicateFieldRows?: Array<{ fieldId: number; value: unknown }>;
 }
 
 interface FakeField {
@@ -330,10 +336,13 @@ function matchesFieldRow(
 }
 
 function fieldRows(item: FakeCase) {
-  return Object.entries(item.fields).map(([fieldId, value]) => ({
-    fieldId: Number(fieldId),
-    value,
-  }));
+  return [
+    ...Object.entries(item.fields).map(([fieldId, value]) => ({
+      fieldId: Number(fieldId),
+      value,
+    })),
+    ...(item.duplicateFieldRows ?? []),
+  ];
 }
 
 function matchesRelation<T>(
@@ -465,27 +474,30 @@ function createFakeDb(
       count: async (args: any) => matching(args?.where).length,
     },
     caseFieldValues: {
+      // Row-wise, duplicates included — the engine is responsible for
+      // collapsing them to cases.
       findMany: async (args: any) => {
         const { fieldId, testCaseId } = args.where;
         return cases
-          .filter(
-            (item) =>
-              testCaseId.in.includes(item.id) && item.fields[fieldId] != null
-          )
-          .map((item) => ({
-            testCaseId: item.id,
-            value: item.fields[fieldId],
-          }));
+          .filter((item) => testCaseId.in.includes(item.id))
+          .flatMap((item) =>
+            fieldRows(item)
+              .filter((row) => row.fieldId === fieldId && row.value != null)
+              .map((row) => ({ testCaseId: item.id, value: row.value }))
+          );
       },
       count: async (args: any) => {
         const { fieldId, testCaseId, value } = args.where;
-        return cases.filter(
-          (item) =>
-            testCaseId.in.includes(item.id) &&
-            item.fields[fieldId] != null &&
-            (value?.equals === undefined ||
-              item.fields[fieldId] === value.equals)
-        ).length;
+        return cases
+          .filter((item) => testCaseId.in.includes(item.id))
+          .flatMap((item) =>
+            fieldRows(item).filter(
+              (row) =>
+                row.fieldId === fieldId &&
+                row.value != null &&
+                (value?.equals === undefined || row.value === value.equals)
+            )
+          ).length;
       },
     },
     workflows: { findMany: async () => [] },
@@ -634,6 +646,40 @@ describe("computeRepositoryCaseFacetCounts — option fields and dimensionTotals
       expect.objectContaining({ id: 200, count: 1 }),
       expect.objectContaining({ id: 201, count: 1 }),
     ]);
+  });
+
+  it("collapses duplicate CaseFieldValues rows to one case per option", async () => {
+    // The live repro: (testCaseId, fieldId) carries no unique constraint, so
+    // 56 cases had a second Priority row. A row-wise hasValue then equalled
+    // the case total and drove "None" to 0 — while the `none` filter, a
+    // case-level `caseFieldValues: { none: ... }` where, still returned the 56
+    // cases that genuinely had no row.
+    const withDuplicates = FIXTURE_CASES.map((item) =>
+      item.id === 1 || item.id === 2
+        ? { ...item, duplicateFieldRows: [{ fieldId: 2, value: 147 }] }
+        : item
+    );
+    const { db } = createFakeDb(withDuplicates, [SEVERITY]);
+
+    const result = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [],
+    });
+
+    const severity = result.dynamicFields.Severity;
+    expect(severity.counts).toEqual({ hasValue: 3, noValue: 2 });
+    expect(severity.options).toEqual([
+      expect.objectContaining({ id: 147, count: 2 }),
+      expect.objectContaining({ id: 148, count: 1 }),
+    ]);
+
+    // The invariant the whole bug reduces to: the "None" row is what the
+    // `none` filter returns.
+    const filtered = await computeRepositoryCaseFacetCounts(db, {
+      projectId: PROJECT_ID,
+      predicates: [{ dimension: "field_2", operator: "none", values: [] }],
+    });
+    expect(filtered.totalCount).toBe(severity.counts!.noValue);
   });
 
   it("reports every dimension's self-excluded total", async () => {

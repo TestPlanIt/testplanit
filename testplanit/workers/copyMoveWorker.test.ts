@@ -151,6 +151,22 @@ vi.mock("../lib/services/auditLog", () => ({
   captureAuditEvent: (...args: any[]) => mockCaptureAuditEvent(...args),
 }));
 
+// ─── Mock review cancellation ─────────────────────────────────────────────────
+// A move soft-deletes its source cases on the raw (plugin-free) client, so
+// sideEffectsPlugin's cancel hook never fires — the worker calls these
+// directly instead. Default to "nothing was in flight".
+
+const mockCancelReviewsForDeletedEntities = vi.fn().mockResolvedValue([]);
+const mockAnnounceDeletionCancelledReviews = vi
+  .fn()
+  .mockResolvedValue(undefined);
+vi.mock("../lib/services/reviewCancellation", () => ({
+  cancelReviewsForDeletedEntities: (...args: any[]) =>
+    mockCancelReviewsForDeletedEntities(...args),
+  announceDeletionCancelledReviews: (...args: any[]) =>
+    mockAnnounceDeletionCancelledReviews(...args),
+}));
+
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
 const baseCopyJobData = {
@@ -881,6 +897,80 @@ describe("CopyMoveWorker", () => {
       expect(result.skippedCount).toBe(1);
       expect(result.copiedCount).toBe(0);
       expect(result.movedCount).toBe(0);
+    });
+
+    it("cancels reviews left in flight on the moved-away source cases", async () => {
+      // The move soft-deletes the sources through the raw, plugin-free client
+      // (getDbClientForJob -> rawDb), so sideEffectsPlugin's soft-delete hook
+      // never runs. Without this explicit call the reviews stay PENDING
+      // against rows the inbox hides and the assignee is reminded daily for
+      // work they cannot open.
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({ id: "job-move-rev", data: baseMoveJobData }) as Job
+      );
+
+      expect(mockCancelReviewsForDeletedEntities).toHaveBeenCalledTimes(1);
+      const [, entityType, ids] =
+        mockCancelReviewsForDeletedEntities.mock.calls[0];
+      expect(entityType).toBe("CASE");
+      expect(ids).toEqual([1]);
+    });
+
+    it("announces cancelled reviews with the source case names", async () => {
+      mockCancelReviewsForDeletedEntities.mockResolvedValueOnce([
+        { id: "rr-1", entityId: 1, projectId: 10 },
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({ id: "job-move-rev2", data: baseMoveJobData }) as Job
+      );
+
+      expect(mockAnnounceDeletionCancelledReviews).toHaveBeenCalledTimes(1);
+      const [cancelled, names] =
+        mockAnnounceDeletionCancelledReviews.mock.calls[0];
+      expect(cancelled).toHaveLength(1);
+      // Names come off the pre-fetched source rows — by announcement time the
+      // subjects are already soft-deleted.
+      expect(names.get(1)).toBe("Test Case 1");
+    });
+
+    it("does not cancel reviews when nothing was actually moved", async () => {
+      const skipMoveJobData = {
+        ...baseMoveJobData,
+        caseIds: [1],
+        conflictResolution: "skip" as const,
+      };
+      mockDb.repositoryCases.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 9999 });
+      mockDb.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ data: skipMoveJobData }) as Job);
+
+      expect(mockCancelReviewsForDeletedEntities).not.toHaveBeenCalled();
+    });
+
+    it("completes the move when review cancellation fails", async () => {
+      // Best-effort: a failure here must not strand a half-finished move.
+      mockCancelReviewsForDeletedEntities.mockRejectedValueOnce(
+        new Error("reviewRequest table unavailable")
+      );
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ id: "job-move-rev3", data: baseMoveJobData }) as Job
+      );
+
+      expect(result.movedCount).toBe(1);
+      expect(result.copiedCount).toBe(0);
+      // The sources are still soft-deleted — the move itself is unaffected.
+      expect(mockDb.repositoryCases.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [1] } },
+        data: { isDeleted: true },
+      });
     });
 
     it("should set movedCount equal to copiedCount on successful move", async () => {

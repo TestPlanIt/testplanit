@@ -21,7 +21,10 @@ This page is **read-only** — it lists issues that already exist. You do not ad
 
 ### Filtering and Searching
 
-- **Search Bar:** Filters the displayed issues by their **Name**. The search is case-insensitive and applies dynamically.
+- **Search Bar:** Filters the displayed issues by their **Name**, **Title**, or **Description**. The search is case-insensitive and applies dynamically.
+- **Status, Priority, and Issue Type:** Three multi-select dropdowns sit beside the search bar, each listing the values in use *within this project*. Selecting several values in one dropdown matches issues with any of them; selections in different dropdowns apply together. Leave a dropdown empty to include every value. Matching is case-insensitive, so values that differ only in capitalization are treated as one.
+- **No Issue Type:** The Issue Type dropdown also offers a **No Issue Type** entry when some issues have no type set. Issues only receive a type when they are synced from or created in an external tracker, and not every tracker supplies one, so this entry lets you still find the rest.
+- A dropdown is hidden when no issue in this project has a value for that field.
 
 ### Loading More
 

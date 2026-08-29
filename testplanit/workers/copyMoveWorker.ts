@@ -1,6 +1,6 @@
 import { Job, Worker } from "bullmq";
 import { DbNull } from "@zenstackhq/orm";
-import { runWithAuditContext } from "../lib/auditContext";
+import { getAuditContext, runWithAuditContext } from "../lib/auditContext";
 import { buildGucPayload, withAuditGuc } from "../lib/audit/gucContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
@@ -19,6 +19,10 @@ import {
 } from "../lib/multiTenantDb";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
+import {
+  announceDeletionCancelledReviews,
+  cancelReviewsForDeletedEntities,
+} from "../lib/services/reviewCancellation";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -1203,10 +1207,52 @@ const processor = async (
     // guards against a fully-skipped move (every case hit a collision with
     // conflictResolution:"skip") deleting the originals.
     if (job.data.operation === "move" && createdTargetIds.length > 0) {
+      const movedSourceIds = createdTargetIds.map((c) => c.sourceId);
       await db.repositoryCases.updateMany({
-        where: { id: { in: createdTargetIds.map((c) => c.sourceId) } },
+        where: { id: { in: movedSourceIds } },
         data: { isDeleted: true },
       });
+
+      // `db` is the raw, plugin-free client (getDbClientForJob -> rawDb),
+      // chosen so the bulk copy does not re-trigger the ES-sync hooks this
+      // worker drives itself. The cost is that sideEffectsPlugin's
+      // soft-delete hook never fires here, so the reviews in flight on the
+      // source cases would stay PENDING against rows the inbox hides — the
+      // assignee then gets a reminder every day for work they cannot open.
+      // Cancel them explicitly, matching what the plugin would have done.
+      // Sequential rather than in-transaction (the updateMany above has
+      // already committed); a crash in between leaves an orphan that the
+      // review-reminder worker's liveness gate retires on its next scan.
+      try {
+        const cancelled = await cancelReviewsForDeletedEntities(
+          db as any,
+          "CASE",
+          movedSourceIds
+        );
+        if (cancelled.length > 0) {
+          const names = new Map<number, string>(
+            sourceCases.map((c: any) => [
+              c.id as number,
+              (c.name ?? "") as string,
+            ])
+          );
+          const ctx = getAuditContext();
+          void announceDeletionCancelledReviews(cancelled, names, {
+            userId: ctx?.userId ?? job.data.userId ?? null,
+            userName: ctx?.userName ?? null,
+          }).catch((err) =>
+            console.error(
+              `Copy-move job ${job.id}: announcing reviews cancelled by move failed`,
+              err
+            )
+          );
+        }
+      } catch (err) {
+        console.error(
+          `Copy-move job ${job.id}: cancelling reviews on moved-away source cases failed`,
+          err
+        );
+      }
 
       // Move: soft-delete source FOLDERS after all cases soft-deleted
       if (job.data.folderTree && job.data.folderTree.length > 0) {

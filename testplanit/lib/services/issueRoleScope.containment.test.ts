@@ -353,6 +353,16 @@ const EXEMPT_REQUIREMENT_SCOPED_FILES = [
   "lib/services/requirementHierarchy.ts",
 ];
 
+// SCOPED BY ITS CALLER — this hook holds no scope of its own by design. It
+// serves the three issue list pages' filter dropdowns and takes a
+// `scopeWhere` it spreads into every one of its groupBy `where` clauses, and
+// all three call sites pass `DEFECT_SCOPE_WHERE` (the project page also
+// passes its project filter). The predicate therefore lives at the call
+// sites, which the content-assertion table further down pins by count, not
+// in here. Hard-coding a scope in the hook would be wrong the moment a
+// requirement-side filter bar wants the same option lists.
+const EXEMPT_CALLER_SCOPED_FILES = ["hooks/useIssueFilterOptions.ts"];
+
 // EXEMPT — the search index must contain every row kind so the in-app role
 // filter (a query-time facet against the indexed isRequirement field, not a
 // row-kind exclusion at index time) has something to filter against.
@@ -371,6 +381,7 @@ const ALL_ALLOWED_FILES = [
   ...EXEMPT_EXTERNAL_KEY_LOOKUP_FILES,
   ...EXEMPT_INGESTION_IMPORT_FILES,
   ...EXEMPT_REQUIREMENT_SCOPED_FILES,
+  ...EXEMPT_CALLER_SCOPED_FILES,
   ...EXEMPT_SEARCH_INDEX_FILES,
 ];
 
@@ -469,21 +480,21 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
         },
         {
           file: "app/[locale]/issues/page.tsx",
-          minimum: 4,
+          minimum: 3,
           reason:
-            "1 import + 2 useGroupBy where objects + 1 push into the issuesWhere builder's conditions array",
+            "1 import + 1 scopeWhere handed to useIssueFilterOptions + 1 entry in the issuesWhere builder's conditions array. Was 4 while this page ran its own two useGroupBy calls; those collapsed into the shared hook, which holds no scope of its own",
         },
         {
           file: "app/[locale]/projects/issues/[projectId]/page.tsx",
-          minimum: 4,
+          minimum: 3,
           reason:
-            "1 import + 2 useGroupBy where objects + 1 push into the issuesWhere builder's conditions array",
+            "1 import + 1 scopeWhere handed to useIssueFilterOptions (alongside the project filter) + 1 entry in the issuesWhere builder's conditions array. Was 4 while this page ran its own two useGroupBy calls",
         },
         {
           file: "app/[locale]/admin/issues/page.tsx",
-          minimum: 2,
+          minimum: 3,
           reason:
-            "1 import + 1 spread in the flat issuesWhere builder (this page has no useGroupBy calls)",
+            "1 import + 1 scopeWhere handed to useIssueFilterOptions + 1 entry in the issuesWhere builder's conditions array. Raised from 2: at that floor the builder could silently lose its predicate and still pass, which is exactly what happened when the builder was rewritten from a flat object into a conditions array",
         },
         {
           file: "lib/services/milestoneSummary.ts",

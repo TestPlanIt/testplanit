@@ -140,9 +140,16 @@ Shows historical account information:
 - **Email Verified**: The verification date or "Unverified" status
 - **Users Created**: List of users created by this account
 
-### Mentioned Comments
+### My Comments
 
-Shown only on your own profile. Lists comments where you've been @-mentioned across the system, with links back to the originating test case, run, session, or issue. Useful for catching up on conversations that need your input.
+Shown only on your own profile. Lists comments you've written and comments where you've been @-mentioned across the system, with links back to the originating test case, run, session, or milestone. Useful for catching up on conversations that need your input.
+
+Controls above the list narrow it down:
+
+- **Scope filter**: Show **All Comments**, only comments **Mentioning Me**, or only comments **Written by Me**
+- **Search**: Filter to comments whose text matches — @-mentioned names count as text, so searching a teammate's name finds the comments that mention them
+
+The list loads more comments automatically as you scroll, and a counter at the top right shows how many are loaded (and, while searching, how many match).
 
 Comments created by the [review workflow](reviews-inbox.md) carry the same badge and color accent here as in the entity's own thread — **Review request**, or the decision outcome (**Approved**, **Changes requested**, **Rejected**, or **Cancelled**) — so review activity stands out in the list.
 

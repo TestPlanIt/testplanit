@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { UserMentionedComments } from "@/components/UserMentionedComments";
+import { UserComments } from "@/components/UserComments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   DateFormat,
@@ -1802,15 +1802,15 @@ const UserProfile: React.FC<UserProfileProps> = ({
                           </AccordionContent>
                         </AccordionItem>
 
-                        {/* Mentioned Comments - Only for own profile */}
+                        {/* My Comments - Only for own profile */}
                         {user?.id === session?.user?.id && (
                           <AccordionItem value="mentions">
                             <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                              {t("mentionedComments.title")}
+                              {t("myComments.title")}
                             </AccordionTrigger>
                             <AccordionContent>
                               <div className="px-4">
-                                <UserMentionedComments userId={userId} />
+                                <UserComments userId={userId} />
                               </div>
                             </AccordionContent>
                           </AccordionItem>

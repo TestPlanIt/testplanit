@@ -16,19 +16,18 @@ import {
 } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import type { VisibilityState } from "@tanstack/react-table";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loading } from "~/components/Loading";
+import { useIssueFilterOptions } from "~/hooks/useIssueFilterOptions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  issueFacetConditions,
+  type IssueFacetValue,
+} from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
@@ -85,8 +84,9 @@ function ProjectIssues() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<IssueFacetValue[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<IssueFacetValue[]>([]);
+  const [issueTypeFilter, setIssueTypeFilter] = useState<IssueFacetValue[]>([]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -112,72 +112,12 @@ function ProjectIssues() {
     };
   }, [projectId]);
 
-  // Fetch distinct status values for the filter dropdown (scoped to this project)
-  const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
-    {
-      by: ["status"],
-      where: {
-        isDeleted: false,
-        ...projectFilterForGroupBy,
-        ...DEFECT_SCOPE_WHERE,
-      },
-      orderBy: { status: "asc" },
-    },
-    {
-      enabled: !!session?.user && projectId !== null,
-    }
-  );
-
-  // Fetch distinct priority values for the filter dropdown (scoped to this project)
-  const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
-    {
-      by: ["priority"],
-      where: {
-        isDeleted: false,
-        ...projectFilterForGroupBy,
-        ...DEFECT_SCOPE_WHERE,
-      },
-      orderBy: { priority: "asc" },
-    },
-    {
-      enabled: !!session?.user && projectId !== null,
-    }
-  );
-
-  // Extract unique non-null values, combining options with mismatched casing
-  const statuses = useMemo(() => {
-    if (!statusOptions) return [];
-    const seen = new Map<string, string>();
-    statusOptions
-      .map((item) => item.status)
-      .filter((s): s is string => s !== null && s.trim() !== "")
-      .forEach((s) => {
-        const lower = s.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.set(lower, s);
-        }
-      });
-    return Array.from(seen.values()).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-  }, [statusOptions]);
-
-  const priorities = useMemo(() => {
-    if (!priorityOptions) return [];
-    const seen = new Map<string, string>();
-    priorityOptions
-      .map((item) => item.priority)
-      .filter((p): p is string => p !== null && p.trim() !== "")
-      .forEach((p) => {
-        const lower = p.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.set(lower, p);
-        }
-      });
-    return Array.from(seen.values()).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-  }, [priorityOptions]);
+  // Distinct status/priority/issue type values for the filter dropdowns,
+  // scoped to this project.
+  const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    scopeWhere: { ...projectFilterForGroupBy, ...DEFECT_SCOPE_WHERE },
+    enabled: !!session?.user && projectId !== null,
+  });
 
   // Build search filter for name, title, and description
   const searchFilter = useMemo(() => {
@@ -256,24 +196,19 @@ function ProjectIssues() {
       conditions.push(searchFilter);
     }
 
-    // Add status filter if selected (case-insensitive)
-    if (statusFilter) {
-      conditions.push({
-        status: { equals: statusFilter, mode: "insensitive" as const },
-      });
-    }
-
-    // Add priority filter if selected (case-insensitive)
-    if (priorityFilter) {
-      conditions.push({
-        priority: { equals: priorityFilter, mode: "insensitive" as const },
-      });
-    }
+    // Add the status / priority / issue type facet selections
+    conditions.push(
+      ...issueFacetConditions({
+        status: statusFilter,
+        priority: priorityFilter,
+        issueTypeName: issueTypeFilter,
+      })
+    );
 
     return {
       AND: conditions,
     };
-  }, [projectId, searchFilter, statusFilter, priorityFilter]);
+  }, [projectId, searchFilter, statusFilter, priorityFilter, issueTypeFilter]);
 
   const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
   // A deep link (?issueId=) also fetches the full set so the target row is
@@ -571,54 +506,26 @@ function ProjectIssues() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+            <div className="flex flex-col grow w-full min-w-[250px]">
               <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
                   key="issue-filter"
                   placeholder={t("Pages.Issues.filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
+                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
                 />
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) =>
-                    setStatusFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.actions.status")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("common.filters.allStatuses")}
-                    </SelectItem>
-                    {statuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={priorityFilter}
-                  onValueChange={(value) =>
-                    setPriorityFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.fields.priority")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("common.filters.allPriorities")}
-                    </SelectItem>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority} value={priority}>
-                        {priority}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <IssueListFilters
+                  statuses={statuses}
+                  priorities={priorities}
+                  issueTypes={issueTypes}
+                  statusFilter={statusFilter}
+                  priorityFilter={priorityFilter}
+                  issueTypeFilter={issueTypeFilter}
+                  onStatusChange={setStatusFilter}
+                  onPriorityChange={setPriorityFilter}
+                  onIssueTypeChange={setIssueTypeFilter}
+                />
               </div>
             </div>
 
@@ -650,7 +557,7 @@ function ProjectIssues() {
               fillViewport
               scrollToRowId={targetIssueId}
               highlightRowId={targetIssueId}
-              resetKey={`${debouncedSearchString}|${statusFilter}|${priorityFilter}|${sortConfig.column}|${sortConfig.direction}`}
+              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="issues-table"
               rowTestIdPrefix="issue-row"
             />

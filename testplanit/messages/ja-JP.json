@@ -234,7 +234,9 @@
     "filters": {
       "all": "全て",
       "allStatuses": "すべてのステータス",
-      "allPriorities": "すべての優先事項"
+      "allPriorities": "すべての優先事項",
+      "allIssueTypes": "すべての問題タイプ",
+      "noIssueType": "問題タイプなし"
     },
     "fields": {
       "groupName": "グループ名",
@@ -1369,15 +1371,15 @@
     "overview": {
       "title": "概要",
       "currentMilestones": "現在のマイルストーン",
-      "seeAllMilestones": "{count, plural, =1 {See # Milestone} =2 {See both Milestones} other {See all # Milestones}}",
-      "seeAllTestCases": "{count, plural, =1 {See # Test Case} =2 {See both Test Cases} other {See all # Test Cases}}",
+      "seeAllMilestones": "{count, plural, =1 {#件のマイルストーンを表示} =2 {両方のマイルストーンを表示} other {すべての#件のマイルストーンを表示}}",
+      "seeAllTestCases": "{count, plural, =1 {#件のテストケースを表示} =2 {両方のテストケースを表示} other {すべての#件のテストケースを表示}}",
       "latestTestCases": "最新のテストケース",
       "createdOn": "作成日",
-      "seeAllTagsCount": "{count, plural, =1 {See # Tag} =2 {See both Tags} other {See all # Tags}}",
-      "seeAllActiveSessions": "{count, plural, =1 {See # Active Session} =2 {See both Active Sessions} other {See all # Active Sessions}}",
+      "seeAllTagsCount": "{count, plural, =1 {#件のタグを表示} =2 {両方のタグを表示} other {すべての#件のタグを表示}}",
+      "seeAllActiveSessions": "{count, plural, =1 {#件のアクティブセッションを表示} =2 {両方のアクティブセッションを表示} other {すべての#件のアクティブセッションを表示}}",
       "latestSessions": "最新のセッション",
       "activeTestRuns": "アクティブテスト実行",
-      "seeAllActiveTestRuns": "{count, plural, =1 {See # Active Test Run} =2 {See both Active Test Runs} other {See all # Active Test Runs}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {#件のアクティブなテスト実行を表示} =2 {両方のアクティブなテスト実行を表示} other {すべての#件のアクティブなテスト実行を表示}}",
       "latestTestRuns": "最新のテスト実行",
       "testCaseBreakdown": "テストケースの内訳",
       "noTestCases": "プロジェクトリポジトリが空です。リポジトリを使用してテストケースを追加してください。",
@@ -2777,12 +2779,18 @@
         "noMatchingEntries": "選択したフィルターに一致するエントリーはありません。",
         "showing": "{total}件中{loaded}件のエントリー"
       },
-      "mentionedComments": {
-        "title": "コメントで言及",
-        "description": "あなたが言及されているコメント",
-        "noComments": "あなたはまだコメントで言及されていません。",
-        "comment": "コメント",
-        "showingResults": "{start} - {end} / {total}を表示"
+      "myComments": {
+        "title": "自分のコメント",
+        "description": "あなたが書いた、または言及されたコメント",
+        "noComments": "まだコメントを書いたり、言及されたりしていません。",
+        "noMatchingComments": "現在のフィルターに一致するコメントはありません。",
+        "searchPlaceholder": "コメントを検索",
+        "filterLabel": "コメントをフィルター",
+        "filterAll": "すべてのコメント",
+        "filterMentioned": "自分への言及",
+        "filterAuthored": "自分が書いたもの",
+        "showing": "{total}件中{loaded}件のコメントを表示中",
+        "matching": "{matched}件一致・{total}件中{loaded}件を検索済み"
       },
       "twoFactor": {
         "enable": "2FAを有効にする",

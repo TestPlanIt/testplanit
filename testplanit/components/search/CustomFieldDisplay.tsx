@@ -142,14 +142,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
               {field.fieldName}:
             </span>
             <Badge variant="outline" className="text-xs">
-              <a
-                href={field.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                {field.value}
-              </a>
+              {field.value}
             </Badge>
           </div>
         ) : null;

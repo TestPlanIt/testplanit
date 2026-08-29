@@ -8,7 +8,10 @@ import {
   attachmentsWhereClause,
   shapeAttachmentsFacet,
 } from "~/lib/repositoryCaseAttachmentsFilter";
-import { computeRepositoryCaseFacetCounts } from "~/lib/repositoryCaseFacetCounts";
+import {
+  computeRepositoryCaseFacetCounts,
+  distinctCaseCount,
+} from "~/lib/repositoryCaseFacetCounts";
 import { sanitizeSearchCaseIds } from "~/lib/repositoryCaseSearchIds";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
@@ -1101,30 +1104,31 @@ export async function POST(request: Request) {
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count occurrences of each option (handling both single values and arrays)
-        const optionCountMap = new Map<number, number>();
+        // Count CASES per option (handling both single values and arrays).
+        // Duplicate rows for one (case, field) are collapsed: a case counts
+        // once per option any of its rows selects.
+        const optionCaseIds = new Map<number, Set<number>>();
+        const addOptionCase = (optionId: unknown, testCaseId: number) => {
+          if (typeof optionId !== "number") return;
+          const caseIds = optionCaseIds.get(optionId) || new Set<number>();
+          caseIds.add(testCaseId);
+          optionCaseIds.set(optionId, caseIds);
+        };
         fieldValues.forEach((fv) => {
           if (fv.value !== null && fv.value !== undefined) {
             if (Array.isArray(fv.value)) {
               // Multi-Select field - array of option IDs
               fv.value.forEach((optionId) => {
-                if (typeof optionId === "number") {
-                  optionCountMap.set(
-                    optionId,
-                    (optionCountMap.get(optionId) || 0) + 1
-                  );
-                }
+                addOptionCase(optionId, fv.testCaseId);
               });
             } else if (typeof fv.value === "number") {
               // Dropdown field - single option ID
-              optionCountMap.set(
-                fv.value,
-                (optionCountMap.get(fv.value) || 0) + 1
-              );
+              addOptionCase(fv.value, fv.testCaseId);
             }
           }
         });
@@ -1134,12 +1138,12 @@ export async function POST(request: Request) {
           fieldId: fieldInfo.fieldId,
           options: fieldInfo.options.map((opt) => ({
             ...opt,
-            count: optionCountMap.get(opt.id) || 0,
+            count: optionCaseIds.get(opt.id)?.size || 0,
           })),
         };
       } else if (fieldInfo.type === "Link") {
         // For Link fields, count cases with/without links
-        const linkCount = await baseDb.caseFieldValues.count({
+        const linkRows = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
@@ -1148,7 +1152,11 @@ export async function POST(request: Request) {
             },
             AND: [{ value: { not: "" } }],
           },
+          select: {
+            testCaseId: true,
+          },
         });
+        const linkCount = distinctCaseCount(linkRows);
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1182,7 +1190,7 @@ export async function POST(request: Request) {
         } as any;
       } else if (fieldInfo.type === "Checkbox") {
         // For Checkbox fields, count checked/unchecked
-        const checkedCount = await baseDb.caseFieldValues.count({
+        const checkedRows = await baseDb.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
@@ -1190,7 +1198,11 @@ export async function POST(request: Request) {
               equals: true,
             },
           },
+          select: {
+            testCaseId: true,
+          },
         });
+        const checkedCount = distinctCaseCount(checkedRows);
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1211,12 +1223,14 @@ export async function POST(request: Request) {
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count occurrences of each value
-        const valueCounts = new Map<number, number>();
+        // Count CASES per value; duplicate rows for one case collapse.
+        const valueCaseIds = new Map<number, Set<number>>();
+        const withValueCaseIds = new Set<number>();
         fieldValues.forEach((fv) => {
           if (fv.value !== null && fv.value !== undefined) {
             const numValue =
@@ -1224,22 +1238,25 @@ export async function POST(request: Request) {
                 ? fv.value
                 : parseFloat(fv.value as string);
             if (!isNaN(numValue)) {
-              valueCounts.set(numValue, (valueCounts.get(numValue) || 0) + 1);
+              const caseIds = valueCaseIds.get(numValue) || new Set<number>();
+              caseIds.add(fv.testCaseId);
+              valueCaseIds.set(numValue, caseIds);
+              withValueCaseIds.add(fv.testCaseId);
             }
           }
         });
 
         // Sort values numerically and create options array
-        const sortedValues = Array.from(valueCounts.keys()).sort(
+        const sortedValues = Array.from(valueCaseIds.keys()).sort(
           (a, b) => a - b
         );
         const options = sortedValues.map((value) => ({
           id: value,
           name: value.toString(),
-          count: valueCounts.get(value) || 0,
+          count: valueCaseIds.get(value)?.size || 0,
         }));
 
-        const withValueCount = fieldValues.length;
+        const withValueCount = withValueCaseIds.size;
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1261,19 +1278,22 @@ export async function POST(request: Request) {
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count non-null, non-empty date values
-        const withDateCount = fieldValues.filter((fv) => {
-          if (fv.value === null || fv.value === undefined) return false;
-          // Check if it's a non-empty string
-          if (typeof fv.value === "string") {
-            return fv.value.trim() !== "";
-          }
-          return true;
-        }).length;
+        // Count CASES carrying a non-null, non-empty date value
+        const withDateCount = distinctCaseCount(
+          fieldValues.filter((fv) => {
+            if (fv.value === null || fv.value === undefined) return false;
+            // Check if it's a non-empty string
+            if (typeof fv.value === "string") {
+              return fv.value.trim() !== "";
+            }
+            return true;
+          })
+        );
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
@@ -1297,17 +1317,19 @@ export async function POST(request: Request) {
             },
           },
           select: {
+            testCaseId: true,
             value: true,
           },
         });
 
-        // Count field values that carry any renderable content.
-        let withTextCount = 0;
+        // Count CASES whose field value carries any renderable content.
+        const withTextCaseIds = new Set<number>();
         fieldValues.forEach((fv) => {
           if (!isTiptapEmpty(fv.value)) {
-            withTextCount++;
+            withTextCaseIds.add(fv.testCaseId);
           }
         });
+        const withTextCount = withTextCaseIds.size;
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,

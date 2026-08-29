@@ -234,7 +234,9 @@
     "filters": {
       "all": "All",
       "allStatuses": "All Statuses",
-      "allPriorities": "All Priorities"
+      "allPriorities": "All Priorities",
+      "allIssueTypes": "All Issue Types",
+      "noIssueType": "No Issue Type"
     },
     "fields": {
       "groupName": "Group Name",
@@ -2800,12 +2802,18 @@
         "noMatchingEntries": "No entries match the selected filters.",
         "showing": "{loaded} of {total} entries"
       },
-      "mentionedComments": {
-        "title": "Mentioned in Comments",
-        "description": "Comments where you are mentioned",
-        "noComments": "You haven't been mentioned in any comments yet.",
-        "comment": "Comment",
-        "showingResults": "Showing {start} - {end} of {total}"
+      "myComments": {
+        "title": "My Comments",
+        "description": "Comments you wrote or were mentioned in",
+        "noComments": "You haven't written or been mentioned in any comments yet.",
+        "noMatchingComments": "No comments match the current filters.",
+        "searchPlaceholder": "Search comments",
+        "filterLabel": "Filter comments",
+        "filterAll": "All Comments",
+        "filterMentioned": "Mentioning Me",
+        "filterAuthored": "Written by Me",
+        "showing": "Showing {loaded} of {total} comments",
+        "matching": "{matched} matching · searched {loaded} of {total} comments"
       },
       "twoFactor": {
         "enable": "Enable 2FA",

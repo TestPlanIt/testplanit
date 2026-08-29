@@ -234,7 +234,9 @@
     "filters": {
       "all": "Todos",
       "allStatuses": "Todos os status",
-      "allPriorities": "Todas as prioridades"
+      "allPriorities": "Todas as prioridades",
+      "allIssueTypes": "Todos os tipos de problema",
+      "noIssueType": "Nenhum tipo de problema"
     },
     "fields": {
       "groupName": "Nome do grupo",
@@ -2777,12 +2779,18 @@
         "noMatchingEntries": "Nenhuma entrada corresponde aos filtros selecionados.",
         "showing": "{loaded} de {total} entradas"
       },
-      "mentionedComments": {
-        "title": "Mencionado nos comentários",
-        "description": "Comentários onde você é mencionado",
-        "noComments": "Você ainda não foi mencionado em nenhum comentário.",
-        "comment": "Comentário",
-        "showingResults": "Exibindo {start} - {end} de {total}"
+      "myComments": {
+        "title": "Meus comentários",
+        "description": "Comentários que você escreveu ou nos quais foi mencionado",
+        "noComments": "Você ainda não escreveu nem foi mencionado em nenhum comentário.",
+        "noMatchingComments": "Nenhum comentário corresponde aos filtros atuais.",
+        "searchPlaceholder": "Pesquisar comentários",
+        "filterLabel": "Filtrar comentários",
+        "filterAll": "Todos os comentários",
+        "filterMentioned": "Que me mencionam",
+        "filterAuthored": "Escritos por mim",
+        "showing": "Mostrando {loaded} de {total} comentários",
+        "matching": "{matched} correspondentes · pesquisados {loaded} de {total} comentários"
       },
       "twoFactor": {
         "enable": "Ative a autenticação de dois fatores (2FA).",

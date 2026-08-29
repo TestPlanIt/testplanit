@@ -234,7 +234,9 @@
     "filters": {
       "all": "Все",
       "allStatuses": "Все статусы",
-      "allPriorities": "Все приоритеты"
+      "allPriorities": "Все приоритеты",
+      "allIssueTypes": "Все типы проблем",
+      "noIssueType": "Без типа проблемы"
     },
     "fields": {
       "groupName": "Название группы",
@@ -2777,12 +2779,18 @@
         "noMatchingEntries": "Нет записей, соответствующих выбранным фильтрам.",
         "showing": "{loaded} из {total} записей"
       },
-      "mentionedComments": {
-        "title": "Упомянуто в комментариях",
-        "description": "Комментарии, в которых вас упоминают",
-        "noComments": "Вас ещё никто не упомянул в комментариях.",
-        "comment": "Комментарий",
-        "showingResults": "Отображается {start} - {end} из {total}"
+      "myComments": {
+        "title": "Мои комментарии",
+        "description": "Комментарии, которые вы написали или в которых вас упомянули",
+        "noComments": "Вы ещё не написали ни одного комментария и не были упомянуты ни в одном.",
+        "noMatchingComments": "Нет комментариев, соответствующих текущим фильтрам.",
+        "searchPlaceholder": "Поиск комментариев",
+        "filterLabel": "Фильтр комментариев",
+        "filterAll": "Все комментарии",
+        "filterMentioned": "Упоминания обо мне",
+        "filterAuthored": "Написанные мной",
+        "showing": "Показано {loaded} из {total} комментариев",
+        "matching": "{matched} совпадений · просмотрено {loaded} из {total} комментариев"
       },
       "twoFactor": {
         "enable": "Включить двухфакторную аутентификацию",

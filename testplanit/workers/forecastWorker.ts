@@ -58,15 +58,91 @@ export const JOB_REVIEW_REMINDERS = "review-reminders";
 export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
 
 /**
+ * Load the name and liveness of a review's subject row.
+ *
+ * The worker's `db` is the raw client — no access policy, no soft-delete
+ * filter — so a deleted case/run/session still reads back like any other
+ * row. `isDeleted` has to be selected and checked explicitly. A null return
+ * means the row is gone for good (hard-deleted).
+ */
+async function loadReviewSubject(
+  db: any,
+  entityType: "CASE" | "RUN" | "SESSION",
+  entityId: number
+): Promise<{ name: string; isDeleted: boolean } | null> {
+  const model =
+    entityType === "CASE"
+      ? db.repositoryCases
+      : entityType === "RUN"
+        ? db.testRuns
+        : db.sessions;
+  const row = await model.findUnique({
+    where: { id: entityId },
+    select: { name: true, isDeleted: true },
+  });
+  return row ? { name: row.name, isDeleted: row.isDeleted === true } : null;
+}
+
+/**
+ * Retire a PENDING review whose subject row no longer exists.
+ *
+ * Normally the delete itself cancels what it strands, in the deleting
+ * transaction (`sideEffectsPlugin` -> `cancelReviewsForDeletedEntities`).
+ * This is the backstop for delete paths that run on a plugin-free client
+ * and therefore never fire that hook — without it the row stays PENDING
+ * forever, invisible in the inbox (which hides deleted subjects) but still
+ * eligible for a reminder every threshold window.
+ *
+ * Scoped to PENDING so a decision landing concurrently wins the race. No
+ * reviewer notification: the subject is deleted, so there is nothing to
+ * open, and a "your review was cancelled" ping about an invisible row is
+ * the same noise this removes. The audit entry reuses the soft-delete
+ * path's ENTITY_DELETED label plus a source marker, so the backstop stays
+ * distinguishable from the in-line cancellation.
+ */
+async function cancelStaleReview(
+  db: any,
+  req: {
+    id: string;
+    projectId: number;
+    entityType: string;
+    entityId: number;
+  },
+  tenantId?: string
+): Promise<boolean> {
+  const result = await db.reviewRequest.updateMany({
+    where: { id: req.id, status: "PENDING" },
+    data: { status: "CANCELLED" },
+  });
+  if ((result?.count ?? 0) === 0) return false;
+
+  await captureAuditEvent({
+    action: "REVIEW_CANCELLED",
+    entityType: "ReviewRequest",
+    entityId: req.id,
+    projectId: req.projectId,
+    metadata: {
+      cancelledBy: "ENTITY_DELETED",
+      source: "review-reminder-worker",
+      entityType: req.entityType,
+      entityId: req.entityId,
+    },
+    tenantId,
+  }).catch(() => {});
+
+  return true;
+}
+
+/**
  * Load the context required to compose a REVIEW_REMINDER notification for a
  * single PENDING review row. Mirrors the structure of `loadReviewContext`
  * in `app/actions/reviews.ts` but accepts a `db` argument so the
  * per-tenant client handed to the worker is used. Adds a `requesterName`
  * lookup that the action-side helper doesn't need.
  *
- * Returns null when the project or entity row is missing (deleted in flight
- * between the scan and the load) so the caller skips dispatch for that row
- * without throwing.
+ * Returns null when the project is missing, or when the entity row is gone
+ * or soft-deleted (deleted in flight between the scan and the load), so the
+ * caller skips dispatch for that row without throwing.
  */
 async function loadReviewContextForReminder(
   db: any,
@@ -124,27 +200,11 @@ async function loadReviewContextForReminder(
     ]);
   if (!project) return null;
 
-  let entityName: string | null = null;
-  if (req.entityType === "CASE") {
-    const row = await db.repositoryCases.findUnique({
-      where: { id: req.entityId },
-      select: { name: true },
-    });
-    entityName = row?.name ?? null;
-  } else if (req.entityType === "RUN") {
-    const row = await db.testRuns.findUnique({
-      where: { id: req.entityId },
-      select: { name: true },
-    });
-    entityName = row?.name ?? null;
-  } else {
-    const row = await db.sessions.findUnique({
-      where: { id: req.entityId },
-      select: { name: true },
-    });
-    entityName = row?.name ?? null;
-  }
-  if (entityName === null) return null;
+  const subject = await loadReviewSubject(db, req.entityType, req.entityId);
+  // A soft-deleted subject counts as gone: the inbox hides those rows, so a
+  // reminder about one nags the reviewer about work they cannot open.
+  if (!subject || subject.isDeleted) return null;
+  const entityName = subject.name;
 
   return {
     projectId: project.id,
@@ -575,6 +635,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           const cutoff = new Date(
             now.getTime() - thresholdDays * 24 * 60 * 60 * 1000
           );
+          let staleCount = 0;
 
           const pendingReviews = await db.reviewRequest.findMany({
             where: {
@@ -606,6 +667,22 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
 
           for (const req of pendingReviews) {
             try {
+              // Liveness gate first: a review whose subject has been deleted
+              // can never be acted on. `app/[locale]/reviews/page.tsx` hides
+              // those rows, so the assignee sees an empty inbox while the
+              // reminder keeps arriving. Retire the row instead of nagging.
+              const subject = await loadReviewSubject(
+                db,
+                req.entityType as "CASE" | "RUN" | "SESSION",
+                req.entityId
+              );
+              if (!subject || subject.isDeleted) {
+                if (await cancelStaleReview(db, req, job.data.tenantId)) {
+                  staleCount++;
+                }
+                continue;
+              }
+
               // Recipients: direct assignee XOR all role holders.
               // Requester exclusion is enforced upstream by
               // resolveRoleHolderUserIds for role assignments and by the
@@ -728,7 +805,7 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           }
 
           console.log(
-            `Job ${job.id} completed: ${successCount} reminded, ${failCount} failed.`
+            `Job ${job.id} completed: ${successCount} reminded, ${staleCount} cancelled (subject deleted), ${failCount} failed.`
           );
         } catch (error) {
           console.error(`Job ${job.id}: review-reminder scan failed`, error);

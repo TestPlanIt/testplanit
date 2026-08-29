@@ -234,7 +234,9 @@
     "filters": {
       "all": "Tümü",
       "allStatuses": "Tüm Durumlar",
-      "allPriorities": "Tüm Öncelikler"
+      "allPriorities": "Tüm Öncelikler",
+      "allIssueTypes": "Tüm Sorun Türleri",
+      "noIssueType": "Sorun Türü Yok"
     },
     "fields": {
       "groupName": "Grup Adı",
@@ -2777,12 +2779,18 @@
         "noMatchingEntries": "Seçilen filtrelerle eşleşen kayıt bulunamadı.",
         "showing": "{total} kayıttan {loaded} tanesi"
       },
-      "mentionedComments": {
-        "title": "Yorumlarda Bahsedildi",
-        "description": "Adınızın geçtiği yorumlar",
-        "noComments": "Henüz hiçbir yorumda adınız geçmedi.",
-        "comment": "Yorum",
-        "showingResults": "{start} - {end} arası gösteriliyor, toplam {total}"
+      "myComments": {
+        "title": "Yorumlarım",
+        "description": "Yazdığınız veya adınızın geçtiği yorumlar",
+        "noComments": "Henüz herhangi bir yorum yazmadınız veya bir yorumda adınız geçmedi.",
+        "noMatchingComments": "Mevcut filtrelere uyan yorum bulunamadı.",
+        "searchPlaceholder": "Yorumları ara",
+        "filterLabel": "Yorumları filtrele",
+        "filterAll": "Tüm Yorumlar",
+        "filterMentioned": "Adım Geçenler",
+        "filterAuthored": "Benim Yazdıklarım",
+        "showing": "{total} yorumdan {loaded} tanesi gösteriliyor",
+        "matching": "{matched} eşleşme · {total} yorumdan {loaded} tanesi arandı"
       },
       "twoFactor": {
         "enable": "İki faktörlü kimlik doğrulamayı etkinleştirin.",

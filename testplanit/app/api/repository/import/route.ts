@@ -619,6 +619,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             // Check if we should update an existing case or create a new one
             let newCase;
             let isUpdate = false;
+            // Set whenever an EXISTING RepositoryCases row is reused rather
+            // than inserted — the plain update below, and both create-or-
+            // restore branches. Its field values are replaced, never appended
+            // to: CaseFieldValues has no unique (testCaseId, fieldId), and a
+            // resurrected case still carries the rows from its previous life
+            // (unlike steps, which the case's soft-delete took down with it).
+            // Appending left cases with several rows per field, which broke
+            // every per-row count downstream.
+            let reusedCaseId: number | null = null;
 
             // Calculate the order for this test case (increment per folder)
             folderMaxOrders[caseData.folderId]++;
@@ -634,6 +643,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
               if (existingCase) {
                 isUpdate = true;
+                reusedCaseId = caseData.id;
                 newCase = await enhancedDb.repositoryCases.update({
                   where: { id: caseData.id },
                   data: {
@@ -645,10 +655,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     estimate: caseData.estimate,
                     forecastManual: caseData.forecastManual,
                   },
-                });
-
-                await enhancedDb.caseFieldValues.deleteMany({
-                  where: { testCaseId: caseData.id },
                 });
               } else {
                 // Create-or-restore: if a prior soft-deleted case
@@ -684,6 +690,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     },
                     select: { id: true },
                   });
+                reusedCaseId = softDeletedExisting?.id ?? null;
                 newCase = softDeletedExisting
                   ? await enhancedDb.repositoryCases.update({
                       where: { id: softDeletedExisting.id },
@@ -723,6 +730,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   },
                   select: { id: true },
                 });
+              reusedCaseId = softDeletedExisting?.id ?? null;
               newCase = softDeletedExisting
                 ? await enhancedDb.repositoryCases.update({
                     where: { id: softDeletedExisting.id },
@@ -736,6 +744,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                       ...importFields,
                     },
                   });
+            }
+
+            // Replace, never append: see `reusedCaseId` above.
+            if (reusedCaseId !== null) {
+              await enhancedDb.caseFieldValues.deleteMany({
+                where: { testCaseId: reusedCaseId },
+              });
             }
 
             // Create field values

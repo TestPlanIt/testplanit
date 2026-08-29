@@ -6,20 +6,19 @@ import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { DataTable } from "@/components/tables/DataTable";
+import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { VisibilityState } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIssueFilterOptions } from "~/hooks/useIssueFilterOptions";
+import {
+  issueFacetConditions,
+  type IssueFacetValue,
+} from "~/lib/issues/issueFacetConditions";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
@@ -56,60 +55,19 @@ function Issues() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [priorityFilter, setPriorityFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<IssueFacetValue[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<IssueFacetValue[]>([]);
+  const [issueTypeFilter, setIssueTypeFilter] = useState<IssueFacetValue[]>([]);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
   const accessFilterReady = !!session?.user?.id;
 
-  // Distinct status/priority values for the filter dropdowns.
-  const { data: statusOptions } = useClientQueries(schema).issue.useGroupBy(
-    {
-      by: ["status"],
-      where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
-      orderBy: { status: "asc" },
-    },
-    { enabled: status === "authenticated" }
-  );
-  const { data: priorityOptions } = useClientQueries(schema).issue.useGroupBy(
-    {
-      by: ["priority"],
-      where: { isDeleted: false, ...DEFECT_SCOPE_WHERE },
-      orderBy: { priority: "asc" },
-    },
-    { enabled: status === "authenticated" }
-  );
-
-  const statuses = useMemo(() => {
-    if (!statusOptions) return [];
-    const seen = new Map<string, string>();
-    statusOptions
-      .map((item) => item.status)
-      .filter((s): s is string => s !== null && s.trim() !== "")
-      .forEach((s) => {
-        const lower = s.toLowerCase();
-        if (!seen.has(lower)) seen.set(lower, s);
-      });
-    return Array.from(seen.values()).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-  }, [statusOptions]);
-
-  const priorities = useMemo(() => {
-    if (!priorityOptions) return [];
-    const seen = new Map<string, string>();
-    priorityOptions
-      .map((item) => item.priority)
-      .filter((p): p is string => p !== null && p.trim() !== "")
-      .forEach((p) => {
-        const lower = p.toLowerCase();
-        if (!seen.has(lower)) seen.set(lower, p);
-      });
-    return Array.from(seen.values()).sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
-    );
-  }, [priorityOptions]);
+  // Distinct status/priority/issue type values for the filter dropdowns.
+  const { statuses, priorities, issueTypes } = useIssueFilterOptions({
+    scopeWhere: DEFECT_SCOPE_WHERE,
+    enabled: status === "authenticated",
+  });
 
   const searchFilter = useMemo(() => {
     if (!debouncedSearchString.trim()) {
@@ -155,19 +113,22 @@ function Issues() {
       { OR: relations },
     ];
     if (searchFilter.OR) conditions.push(searchFilter);
-    if (statusFilter) {
-      conditions.push({
-        status: { equals: statusFilter, mode: "insensitive" as const },
-      });
-    }
-    if (priorityFilter) {
-      conditions.push({
-        priority: { equals: priorityFilter, mode: "insensitive" as const },
-      });
-    }
+    conditions.push(
+      ...issueFacetConditions({
+        status: statusFilter,
+        priority: priorityFilter,
+        issueTypeName: issueTypeFilter,
+      })
+    );
 
     return { AND: conditions };
-  }, [accessFilterReady, searchFilter, statusFilter, priorityFilter]);
+  }, [
+    accessFilterReady,
+    searchFilter,
+    statusFilter,
+    priorityFilter,
+    issueTypeFilter,
+  ]);
 
   const isCountSort = COUNT_SORT_COLUMNS.includes(sortConfig.column);
   const orderBy = useMemo(() => {
@@ -420,54 +381,26 @@ function Issues() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start justify-between gap-4">
-            <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
+            <div className="flex flex-col grow w-full min-w-[250px]">
               <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
                   key="issue-filter"
                   placeholder={t("Pages.Issues.filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
+                  className="grow shrink basis-[160px] min-w-[160px] max-w-lg"
                 />
-                <Select
-                  value={statusFilter}
-                  onValueChange={(value) =>
-                    setStatusFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.actions.status")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("common.filters.allStatuses")}
-                    </SelectItem>
-                    {statuses.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={priorityFilter}
-                  onValueChange={(value) =>
-                    setPriorityFilter(value === "all" ? "" : value)
-                  }
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.fields.priority")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {t("common.filters.allPriorities")}
-                    </SelectItem>
-                    {priorities.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <IssueListFilters
+                  statuses={statuses}
+                  priorities={priorities}
+                  issueTypes={issueTypes}
+                  statusFilter={statusFilter}
+                  priorityFilter={priorityFilter}
+                  issueTypeFilter={issueTypeFilter}
+                  onStatusChange={setStatusFilter}
+                  onPriorityChange={setPriorityFilter}
+                  onIssueTypeChange={setIssueTypeFilter}
+                />
               </div>
             </div>
 
@@ -497,7 +430,7 @@ function Issues() {
               hasMore={isCountSort ? false : !!hasNextPage}
               onLoadMore={fetchNextPage}
               estimateSize={60}
-              resetKey={`${debouncedSearchString}|${statusFilter}|${priorityFilter}|${sortConfig.column}|${sortConfig.direction}`}
+              resetKey={`${debouncedSearchString}|${JSON.stringify(statusFilter)}|${JSON.stringify(priorityFilter)}|${JSON.stringify(issueTypeFilter)}|${sortConfig.column}|${sortConfig.direction}`}
               testIdPrefix="issues-table"
               rowTestIdPrefix="issue-row"
             />
