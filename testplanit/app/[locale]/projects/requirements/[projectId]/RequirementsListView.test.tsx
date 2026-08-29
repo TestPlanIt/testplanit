@@ -16,6 +16,7 @@ import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
 import {
   buildRequirementMaps,
+  collectCoverageStatusOptions,
   computeVisibleRequirementIds,
 } from "./requirementsListRows";
 
@@ -687,6 +688,22 @@ function makeLegacyFilterFetchMock(
   coverage: RequirementCoverageResponse | undefined,
   coverageError = false
 ) {
+  // The list has ONE row source now -- the server -- so this fixture has to
+  // answer every tree endpoint the component actually calls, not just the
+  // filter POST. It still derives the match set from the client oracle
+  // (`computeVisibleRequirementIds`), which is what lets these tests keep
+  // stating filter semantics in terms the oracle's own suite already pins.
+  const childrenByParentId: Record<number, Array<Record<string, any>>> = {};
+  for (const row of requirements) {
+    if (row.parentId == null) continue;
+    (childrenByParentId[row.parentId as number] ??= []).push(row);
+  }
+  const withHasChildren = (row: Record<string, any>) => ({
+    ...row,
+    hasChildren: (childrenByParentId[row.id as number]?.length ?? 0) > 0,
+  });
+  const roots = requirements.filter((row) => row.parentId == null);
+
   return vi.fn((url: string, init?: RequestInit) => {
     const method = init?.method ?? "GET";
     if (typeof url === "string" && url.includes("/requirements/tree")) {
@@ -695,8 +712,40 @@ function makeLegacyFilterFetchMock(
           ok: true,
           json: async () => ({
             total: requirements.length,
+            rootTotal: roots.length,
             threshold: 500,
             mode: "all",
+          }),
+        });
+      }
+      if (url.includes("facetsOnly=1")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            statuses: Array.from(
+              new Set(
+                requirements
+                  .map((row) => (row.externalStatus ?? row.status) as string)
+                  .filter(Boolean)
+              )
+            ).sort(),
+            // Derived with the same collector the client used to run on its
+            // in-memory copy, so these tests keep stating option lists in
+            // the terms their own fixtures already express.
+            coverageStatuses: collectCoverageStatusOptions(
+              requirements as any,
+              coverage
+            ),
+          }),
+        });
+      }
+      const childrenMatch = url.match(/\/tree\/(\d+)\/children/);
+      if (childrenMatch) {
+        const parentId = Number(childrenMatch[1]);
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            rows: (childrenByParentId[parentId] ?? []).map(withHasChildren),
           }),
         });
       }
@@ -721,20 +770,54 @@ function makeLegacyFilterFetchMock(
           coverage,
           coverageError,
         });
-        const matchedIds = visible ? Array.from(visible) : [];
+        const visibleIds = visible ? Array.from(visible) : [];
+        // A retained ancestor has to come back as an ANCESTOR, not just as a
+        // visible id: that set is what force-opens the chain, and without it
+        // a matched child renders nowhere because its parent stays collapsed.
+        // The client used to expand every visible id itself, from a complete
+        // in-memory tree it no longer holds.
+        const ancestorIds = visibleIds.filter((id) =>
+          requirements.some(
+            (row) =>
+              visible?.has(row.id as number) &&
+              row.id !== id &&
+              (function isDescendantOf(candidate: any): boolean {
+                let parentId = candidate.parentId as number | null | undefined;
+                while (parentId != null) {
+                  if (parentId === id) return true;
+                  parentId = requirements.find((r) => r.id === parentId)
+                    ?.parentId as number | null | undefined;
+                }
+                return false;
+              })(row)
+          )
+        );
+        const matchedIds = visibleIds.filter((id) => !ancestorIds.includes(id));
         return Promise.resolve({
           ok: true,
           json: async () => ({
             total: requirements.length,
             matchedTotal: matchedIds.length,
             matchedIds,
-            ancestorIds: [],
-            rows: [],
+            ancestorIds,
+            // Rows travel with the match set now: nothing else holds them.
+            rows: requirements
+              .filter((row) => visibleIds.includes(row.id as number))
+              .map(withHasChildren),
             nextCursor: null,
             expandMatchedSubtrees: false,
           }),
         });
       }
+      // The unfiltered roots window.
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          total: requirements.length,
+          rows: roots.map(withHasChildren),
+          nextCursor: null,
+        }),
+      });
     }
     return Promise.resolve({ ok: true });
   });
@@ -762,6 +845,109 @@ function lastFilterRequestBody(): Record<string, unknown> | null {
   return JSON.parse(String(init!.body));
 }
 
+/**
+ * The list reads every row from the tree endpoints, at every project size.
+ * Most tests here still express their fixture as the flat array they used to
+ * hand the ZenStack query, so when a test has not installed its own fetch
+ * mock, serve that same array through the tree routes: roots on the roots
+ * page, the rest per parent on the children endpoint, with `hasChildren`
+ * computed the way the server computes it.
+ */
+function seedTreeFromIssueMock(
+  nonTreeResponse?: () => Promise<unknown> | unknown
+) {
+  // Read through a non-`use` binding: this is a vi.fn(), not a hook, and the
+  // hooks lint rule keys off the call expression's name.
+  const readConfiguredIssueMock = useFindManyIssueMock as unknown as () =>
+    { data?: unknown } | undefined;
+  const configured = readConfiguredIssueMock();
+  const all = Array.isArray(configured?.data)
+    ? (configured!.data as Array<Record<string, unknown>>)
+    : [];
+
+  const childrenByParentId: Record<number, Array<Record<string, unknown>>> = {};
+  for (const row of all) {
+    const parentId = row.parentId as number | null | undefined;
+    if (parentId == null) continue;
+    (childrenByParentId[parentId] ??= []).push(row);
+  }
+  const withHasChildren = (row: Record<string, unknown>) => ({
+    ...row,
+    hasChildren: (childrenByParentId[row.id as number]?.length ?? 0) > 0,
+  });
+  const roots = all.filter((row) => row.parentId == null);
+
+  const treeFetch = makeTreeFetchMock({
+    mode: "lazy",
+    total: all.length,
+    rootTotal: roots.length,
+    rootsRows: roots.map(withHasChildren),
+    childrenByParentId: Object.fromEntries(
+      Object.entries(childrenByParentId).map(([parentId, rows]) => [
+        parentId,
+        rows.map(withHasChildren),
+      ])
+    ),
+    facets: {
+      statuses: Array.from(
+        new Set(
+          all
+            .map((row) => (row.externalStatus ?? row.status) as string | null)
+            .filter((status): status is string => Boolean(status))
+        )
+      ).sort(),
+      coverageStatuses: [],
+    },
+  });
+
+  // The delete dialog's descendant count is a server round trip now, at
+  // every project size -- without it the confirm never leaves its disabled
+  // "count unknown" state.
+  const countDescendantsOf = (id: number): number =>
+    (childrenByParentId[id] ?? []).reduce(
+      (total, child) => total + 1 + countDescendantsOf(child.id as number),
+      0
+    );
+
+  global.fetch = vi.fn((url: string, init?: RequestInit) => {
+    if (typeof url === "string") {
+      if (url.includes("/requirements/tree")) {
+        return (treeFetch as any)(url, init);
+      }
+      const descendantCount = url.match(
+        /\/requirements\/(\d+)\/descendant-count$/
+      );
+      if (descendantCount) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            count: countDescendantsOf(Number(descendantCount[1])),
+          }),
+        });
+      }
+    }
+    if (!nonTreeResponse) return Promise.resolve({ ok: true });
+    return Promise.resolve(nonTreeResponse()).then((value) =>
+      value instanceof Error ? Promise.reject(value) : value
+    );
+  }) as any;
+}
+
+/**
+ * Waits for the list to reach a terminal state. Rows arrive from the server
+ * at every project size now, so nothing is on screen synchronously after a
+ * render -- a test that queries immediately reads the loading frame.
+ */
+async function waitForTree() {
+  await waitFor(() => {
+    expect(
+      screen.queryByTestId("requirements-list") ??
+        screen.queryByTestId("requirements-tree-empty") ??
+        screen.queryByTestId("requirements-list-error")
+    ).not.toBeNull();
+  });
+}
+
 function renderView(
   overrides: {
     selectedRequirementId?: number | null;
@@ -770,6 +956,12 @@ function renderView(
   } = {}
 ) {
   const onSelectRequirement = overrides.onSelectRequirement ?? vi.fn();
+  if (
+    (global.fetch as unknown as { __isDefaultFetch?: boolean })
+      ?.__isDefaultFetch
+  ) {
+    seedTreeFromIssueMock();
+  }
   // 28-15: the delete dialog's lazy-mode descendant count now runs through
   // the REAL `useRequirementSubtreeCount` (a real `useQuery`, per this
   // file's own "mock fetch, not the hook" convention), which needs a real
@@ -871,7 +1063,10 @@ beforeEach(() => {
   capturedFetchOptionsList.length = 0;
   virtualizedHookMock.lastOnLoadMore = null;
   virtualizedHookMock.lastOpts = null;
-  global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
+  const defaultFetch = vi.fn().mockResolvedValue({ ok: true });
+  (defaultFetch as unknown as { __isDefaultFetch?: boolean }).__isDefaultFetch =
+    true;
+  global.fetch = defaultFetch as any;
   useFindManyIssueMock.mockReturnValue({
     data: [],
     isLoading: false,
@@ -896,19 +1091,6 @@ beforeEach(() => {
 });
 
 describe("RequirementsListView", () => {
-  it("scopes the requirement query to this project, live rows, requirement role, name asc", () => {
-    renderView();
-
-    expect(useFindManyIssueMock).toHaveBeenCalled();
-    const [args] = useFindManyIssueMock.mock.calls[0]!;
-    expect(args!.where).toEqual({
-      projectId: 42,
-      isDeleted: false,
-      isRequirement: true,
-    });
-    expect(args!.orderBy).toEqual({ name: "asc" });
-  });
-
   describe("hierarchy", () => {
     beforeEach(() => {
       useFindManyIssueMock.mockReturnValue({
@@ -937,10 +1119,13 @@ describe("RequirementsListView", () => {
       });
     });
 
-    it("renders only the parent row while collapsed, then reveals both children on chevron click", () => {
+    it("renders only the parent row while collapsed, then reveals both children on chevron click", async () => {
       renderView();
+      await waitForTree();
 
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-2")).not.toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
 
@@ -951,8 +1136,12 @@ describe("RequirementsListView", () => {
 
       fireEvent.click(screen.getByTestId("requirement-chevron-1"));
 
-      expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
-      expect(screen.getByTestId("requirement-row-3")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-2")
+      ).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-3")
+      ).toBeInTheDocument();
 
       // The parent's own coverage chip is server-supplied and unchanged by
       // expansion -- never re-derived from the now-rendered children.
@@ -973,8 +1162,9 @@ describe("RequirementsListView", () => {
       });
     });
 
-    it("renders the eight column ids, in order, at the pane's default width", () => {
+    it("renders the eight column ids, in order, at the pane's default width", async () => {
       renderView();
+      await waitForTree();
 
       const table = screen.getByTestId("requirements-list");
       const headerCells = Array.from(
@@ -1001,8 +1191,9 @@ describe("RequirementsListView", () => {
     // merely present-somewhere, since the assertion above only proves the
     // first six labels' order and would miss a hidden column rendering
     // anyway.
-    it("does not render the hidden-by-default createdAt column as a header at the pane's default width", () => {
+    it("does not render the hidden-by-default createdAt column as a header at the pane's default width", async () => {
       renderView();
+      await waitForTree();
 
       const table = screen.getByTestId("requirements-list");
       const headerCells = Array.from(
@@ -1022,9 +1213,10 @@ describe("RequirementsListView", () => {
     // `createdAt: true` permanently (live-confirmed bug, 2026-08-25). A
     // viewer (`isProjectAdmin: false`) reproduces the same "createdAt sits
     // last" configuration statically.
-    it("keeps createdAt hidden when the actions column is absent (viewer / permissions still resolving)", () => {
+    it("keeps createdAt hidden when the actions column is absent (viewer / permissions still resolving)", async () => {
       mockIsProjectAdmin = false;
       renderView();
+      await waitForTree();
 
       const table = screen.getByTestId("requirements-list");
       const labels = Array.from(
@@ -1036,8 +1228,9 @@ describe("RequirementsListView", () => {
       expect(labels).not.toContain("common.fields.createdAt");
     });
 
-    it("keeps createdAt hidden across the permissions flip that appends the actions column after mount", () => {
+    it("keeps createdAt hidden across the permissions flip that appends the actions column after mount", async () => {
       mockIsProjectAdmin = false;
+      seedTreeFromIssueMock();
       const onSelectRequirement = vi.fn();
       // 28-15: real useQuery (useRequirementSubtreeCount) now runs
       // unconditionally, needing a real QueryClient in context -- see
@@ -1066,7 +1259,7 @@ describe("RequirementsListView", () => {
         </QueryClientProvider>
       );
 
-      const table = screen.getByTestId("requirements-list");
+      const table = await screen.findByTestId("requirements-list");
       const labels = Array.from(
         table.querySelectorAll('[role="columnheader"]')
       ).map((cell) => cell.textContent);
@@ -1080,16 +1273,18 @@ describe("RequirementsListView", () => {
     // Columns control (ColumnSelection) is mounted and wired. Its checkbox
     // mechanics are ColumnSelection.test.tsx's responsibility; this proves
     // the requirements toolbar actually offers it.
-    it("renders the Columns control in the toolbar", () => {
+    it("renders the Columns control in the toolbar", async () => {
       renderView();
+      await waitForTree();
 
       expect(
         screen.getByTestId("column-selection-trigger")
       ).toBeInTheDocument();
     });
 
-    it("moves horizontal scroll onto the table body (enableColumnPinning), never overflow-x-hidden", () => {
+    it("moves horizontal scroll onto the table body (enableColumnPinning), never overflow-x-hidden", async () => {
       renderView();
+      await waitForTree();
 
       const scrollBody = screen.getByTestId("requirements-list-scroll");
       expect(scrollBody.className).toContain("overflow-auto");
@@ -1100,8 +1295,9 @@ describe("RequirementsListView", () => {
       expect(tableContainer.className).not.toContain("overflow-x-auto");
     });
 
-    it("does not stretch to 100% width (flexColumnId removed) -- the header row sits at its natural summed column width", () => {
+    it("does not stretch to 100% width (flexColumnId removed) -- the header row sits at its natural summed column width", async () => {
       renderView();
+      await waitForTree();
 
       const headerRow = screen
         .getByTestId("requirements-list")
@@ -1121,7 +1317,7 @@ describe("RequirementsListView", () => {
   // .test.tsx's "ABT-47193 shape" test at the unit level; this one proves the
   // SAME shape survives through the real, wired-up RequirementsListView.
   describe("covering cell drill-down (gap closure 26.2-15)", () => {
-    it("the covering cell's other-project expansion renders a case reached only through a non-requirement descendant (ABT-47193 shape)", () => {
+    it("the covering cell's other-project expansion renders a case reached only through a non-requirement descendant (ABT-47193 shape)", async () => {
       useFindManyIssueMock.mockReturnValue({
         data: [makeRequirement({ id: 1, name: "Parent" })],
         isLoading: false,
@@ -1157,6 +1353,7 @@ describe("RequirementsListView", () => {
       });
 
       renderView();
+      await waitForTree();
 
       fireEvent.click(
         screen.getByTestId("requirement-covering-cases-other-trigger-1")
@@ -1192,9 +1389,10 @@ describe("RequirementsListView", () => {
         error: null,
         refetch,
       });
-      global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
+      seedTreeFromIssueMock();
 
       renderView();
+      await waitForTree();
 
       fireEvent.dragEnter(screen.getByTestId("requirement-row-7"));
       await act(async () => {
@@ -1229,7 +1427,15 @@ describe("RequirementsListView", () => {
           "requirements.tree.moveSuccess"
         )
       );
-      expect(refetch).toHaveBeenCalled();
+      // The refresh goes to the tree route, which is the only row source.
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.filter(
+            ([url]: [string]) =>
+              typeof url === "string" && url.includes("countOnly=1")
+          ).length
+        ).toBeGreaterThan(1);
+      });
 
       await waitFor(() => expect(mockInvalidateQueries).toHaveBeenCalled());
       const [{ predicate }] = mockInvalidateQueries.mock.calls.at(-1)!;
@@ -1250,12 +1456,13 @@ describe("RequirementsListView", () => {
         error: null,
         refetch,
       });
-      global.fetch = vi.fn().mockResolvedValue({
+      seedTreeFromIssueMock(() => ({
         ok: false,
         json: async () => ({ error: "cycle" }),
-      }) as any;
+      }));
 
       renderView();
+      await waitForTree();
 
       fireEvent.dragEnter(screen.getByTestId("requirement-row-7"));
       await act(async () => {
@@ -1271,14 +1478,23 @@ describe("RequirementsListView", () => {
           "requirements.tree.moveRejected cycle"
         )
       );
-      expect(refetch).toHaveBeenCalled();
+      // The refresh goes to the tree route, which is the only row source.
+      await waitFor(() => {
+        expect(
+          (global.fetch as any).mock.calls.filter(
+            ([url]: [string]) =>
+              typeof url === "string" && url.includes("countOnly=1")
+          ).length
+        ).toBeGreaterThan(1);
+      });
       expect(mockInvalidateQueries).not.toHaveBeenCalled();
     });
 
     it("network failure: a rejecting fetch produces moveFailed and no invalidation", async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error("offline")) as any;
+      seedTreeFromIssueMock(() => new Error("offline"));
 
       renderView();
+      await waitForTree();
 
       fireEvent.dragEnter(screen.getByTestId("requirement-row-7"));
       await act(async () => {
@@ -1297,6 +1513,7 @@ describe("RequirementsListView", () => {
 
     it("no-op guard: dropping a requirement onto itself issues no fetch", async () => {
       renderView();
+      await waitForTree();
 
       fireEvent.dragEnter(screen.getByTestId("requirement-row-1"));
       await act(async () => {
@@ -1318,6 +1535,7 @@ describe("RequirementsListView", () => {
 
     it("blank-area guard: a dragleave off the last row into the wrapper's empty strip issues no fetch", async () => {
       renderView();
+      await waitForTree();
 
       const lastRow = screen.getByTestId("requirement-row-7");
       fireEvent.dragEnter(lastRow);
@@ -1342,6 +1560,7 @@ describe("RequirementsListView", () => {
 
     it("flicker-guard companion: a dragleave onto a child node of the same row does not clear the hovered id", async () => {
       renderView();
+      await waitForTree();
 
       const lastRow = screen.getByTestId("requirement-row-7");
       fireEvent.dragEnter(lastRow);
@@ -1379,8 +1598,9 @@ describe("RequirementsListView", () => {
       expect(dropSpecs.list.canDrop()).toBe(false);
     });
 
-    it("drop gate: canDrop() is false while a filter query is active", () => {
+    it("drop gate: canDrop() is false while a filter query is active", async () => {
       renderView();
+      await waitForTree();
       fireEvent.change(screen.getByTestId("requirements-filter-input"), {
         target: { value: "root a" },
       });
@@ -1416,8 +1636,9 @@ describe("RequirementsListView", () => {
       expect(source).not.toContain("useDragLayer");
     });
 
-    it("item() marks the container and the source row; end() clears both; a second end() is idempotent", () => {
+    it("item() marks the container and the source row; end() clears both; a second end() is idempotent", async () => {
       renderView();
+      await waitForTree();
 
       const container = screen.getByTestId("requirements-list-container");
       const row = screen.getByTestId("requirement-row-1");
@@ -1446,8 +1667,9 @@ describe("RequirementsListView", () => {
     // box onto the engine's pointer-events-none ring overlay (a child of the
     // row, `requirement-row-{id}-ring`) so the ring paints above the pinned
     // Actions cell instead of losing to it.
-    it("rows carry the static candidate-ring classes unconditionally on the ring overlay (never toggled by JS)", () => {
+    it("rows carry the static candidate-ring classes unconditionally on the ring overlay (never toggled by JS)", async () => {
       renderView();
+      await waitForTree();
       const row = screen.getByTestId("requirement-row-1");
       const ring = row.querySelector(
         '[data-testid="requirement-row-1-ring"]'
@@ -1479,8 +1701,9 @@ describe("RequirementsListView", () => {
     // Gap closure 26.2-15 (UAT gap 12): the SAME overlay treatment applies to
     // the dynamic drag-over hover ring, not just the static candidate-ring
     // classes above.
-    it("the drag-over hover ring renders on the row's ring overlay, not the row's own box", () => {
+    it("the drag-over hover ring renders on the row's ring overlay, not the row's own box", async () => {
       renderView();
+      await waitForTree();
       const row = screen.getByTestId("requirement-row-1");
 
       fireEvent.dragEnter(row);
@@ -1494,8 +1717,9 @@ describe("RequirementsListView", () => {
       expect(row.className).not.toContain("outline-primary");
     });
 
-    it("the bottom root strip carries the static drag classes and an always-mounted (CSS-hidden) hint", () => {
+    it("the bottom root strip carries the static drag classes and an always-mounted (CSS-hidden) hint", async () => {
       renderView();
+      await waitForTree();
       const strip = screen.getByTestId("requirement-tree-end");
       expect(strip.className).toContain(
         "[[data-req-drag=active]_&]:outline-dashed"
@@ -1545,6 +1769,7 @@ describe("RequirementsListView", () => {
       // `openCreateRoot` ref `RequirementsWorkspace.tsx` calls.
       const listRef = React.createRef<RequirementsListViewHandle>();
       renderView({ ref: listRef });
+      await waitForTree();
 
       act(() => {
         listRef.current?.openCreateRoot();
@@ -1571,15 +1796,19 @@ describe("RequirementsListView", () => {
         error: null,
         refetch: vi.fn(),
       });
-      global.fetch = vi.fn().mockResolvedValue({
+      seedTreeFromIssueMock(() => ({
         ok: true,
         json: async () => ({ deletedIds: [1] }),
-      }) as any;
+      }));
 
       renderView();
+      await waitForTree();
 
-      openMenu(screen.getByTestId("requirement-actions-trigger-1"));
+      openMenu(await screen.findByTestId("requirement-actions-trigger-1"));
       fireEvent.click(screen.getByTestId("requirement-action-delete-1"));
+      await waitFor(() =>
+        expect(screen.getByTestId("delete-requirement-confirm")).toBeEnabled()
+      );
       fireEvent.click(screen.getByTestId("delete-requirement-confirm"));
 
       await waitFor(() => expect(mockInvalidateQueries).toHaveBeenCalled());
@@ -1604,7 +1833,7 @@ describe("RequirementsListView", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("exposes openCreateRoot on its ref for the workspace's action bar button", () => {
+    it("exposes openCreateRoot on its ref for the workspace's action bar button", async () => {
       useFindManyIssueMock.mockReturnValue({
         data: [makeRequirement({ id: 1, name: "Root A" })],
         isLoading: false,
@@ -1613,6 +1842,7 @@ describe("RequirementsListView", () => {
       });
       const listRef = React.createRef<RequirementsListViewHandle>();
       renderView({ ref: listRef });
+      await waitForTree();
 
       expect(
         screen.queryByTestId("create-requirement-name-input")
@@ -1645,10 +1875,11 @@ describe("RequirementsListView", () => {
       });
     });
 
-    it("resolves the same descendant count as the row action, for the same id", () => {
+    it("resolves the same descendant count as the row action, for the same id", async () => {
       // Row-action path: open through the row's own actions menu.
       const { unmount } = renderView();
-      openMenu(screen.getByTestId("requirement-actions-trigger-1"));
+      await waitForTree();
+      openMenu(await screen.findByTestId("requirement-actions-trigger-1"));
       fireEvent.click(screen.getByTestId("requirement-action-delete-1"));
       const rowActionText = screen.getByTestId(
         "delete-requirement-dialog"
@@ -1658,6 +1889,7 @@ describe("RequirementsListView", () => {
       // Panel path: open through the imperative handle, for the same id.
       const listRef = React.createRef<RequirementsListViewHandle>();
       renderView({ ref: listRef });
+      await waitForTree();
       act(() => {
         listRef.current?.openDeleteDialog(1);
       });
@@ -1672,10 +1904,10 @@ describe("RequirementsListView", () => {
     });
 
     it("clears the selection when the requirement deleted through openDeleteDialog is the selected one", async () => {
-      global.fetch = vi.fn().mockResolvedValue({
+      seedTreeFromIssueMock(() => ({
         ok: true,
         json: async () => ({ deletedIds: [1, 2] }),
-      }) as any;
+      }));
 
       const onSelectRequirement = vi.fn();
       const listRef = React.createRef<RequirementsListViewHandle>();
@@ -1684,10 +1916,16 @@ describe("RequirementsListView", () => {
         selectedRequirementId: 1,
         onSelectRequirement,
       });
+      await waitForTree();
 
       act(() => {
         listRef.current?.openDeleteDialog(1);
       });
+      // The dialog's count is a server round trip; Confirm stays disabled
+      // until it lands.
+      await waitFor(() =>
+        expect(screen.getByTestId("delete-requirement-confirm")).toBeEnabled()
+      );
       fireEvent.click(screen.getByTestId("delete-requirement-confirm"));
 
       await waitFor(() =>
@@ -1763,29 +2001,44 @@ describe("RequirementsListView", () => {
       ).toBeInTheDocument();
     });
 
-    it("renders requirements-list-error (not a spinner) and retry calls refetch", () => {
-      const refetch = vi.fn();
-      useFindManyIssueMock.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: new Error("network down"),
-        refetch,
-      });
+    it("renders requirements-list-error (not a spinner) and retry refetches the tree", async () => {
+      // The list's rows come from the server, so its failure state does too:
+      // a failed count round trip is what leaves it with nothing to render.
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        countOk: false,
+      }) as any;
 
       renderView();
+      await waitForTree();
 
-      expect(screen.getByTestId("requirements-list-error")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirements-list-error")
+      ).toBeInTheDocument();
       expect(document.querySelector(".animate-spin")).not.toBeInTheDocument();
+
+      const countCallsBefore = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("countOnly=1")
+      ).length;
 
       fireEvent.click(
         screen.getByRole("button", { name: "search.errors.tryAgain" })
       );
-      expect(refetch).toHaveBeenCalled();
+
+      await waitFor(() => {
+        const after = (global.fetch as any).mock.calls.filter(
+          ([url]: [string]) =>
+            typeof url === "string" && url.includes("countOnly=1")
+        ).length;
+        expect(after).toBeGreaterThan(countCallsBefore);
+      });
     });
   });
 
   describe("empty states", () => {
-    it("renders requirements-tree-empty when there are zero requirements", () => {
+    it("renders requirements-tree-empty when there are zero requirements", async () => {
       useFindManyIssueMock.mockReturnValue({
         data: [],
         isLoading: false,
@@ -1794,8 +2047,11 @@ describe("RequirementsListView", () => {
       });
 
       renderView();
+      await waitForTree();
 
-      expect(screen.getByTestId("requirements-tree-empty")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirements-tree-empty")
+      ).toBeInTheDocument();
     });
 
     it("renders the table's noResultsFound message (not requirements-tree-empty) when a filter matches nothing", async () => {
@@ -1809,6 +2065,7 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, undefined) as any;
 
       renderView();
+      await waitForTree();
 
       fireEvent.change(screen.getByTestId("requirements-filter-input"), {
         target: { value: "no such requirement" },
@@ -1860,6 +2117,7 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption(
         "requirements-coverage-filter",
@@ -1870,7 +2128,9 @@ describe("RequirementsListView", () => {
         expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
       });
       // The covered Root is retained ONLY because it's id 2's ancestor.
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
     });
 
@@ -1913,13 +2173,16 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption("requirements-coverage-filter", "Failed");
 
       await waitFor(() => {
         expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
       });
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
     });
 
@@ -1949,6 +2212,7 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, undefined) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption(
         "requirements-source-filter",
@@ -1958,7 +2222,9 @@ describe("RequirementsListView", () => {
       await waitFor(() => {
         expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
       });
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
     });
 
@@ -2013,6 +2279,7 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption(
         "requirements-coverage-filter",
@@ -2023,7 +2290,9 @@ describe("RequirementsListView", () => {
       await waitFor(() => {
         expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
       });
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-4")).not.toBeInTheDocument();
     });
@@ -2061,6 +2330,7 @@ describe("RequirementsListView", () => {
       ) as any;
 
       renderView();
+      await waitForTree();
 
       expect(filterTrigger("requirements-coverage-filter")).toBeDisabled();
 
@@ -2069,11 +2339,13 @@ describe("RequirementsListView", () => {
       await waitFor(() => {
         expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
       });
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       expect(screen.queryByTestId("requirement-row-3")).not.toBeInTheDocument();
     });
 
-    it("clearing every filter restores the full unfiltered row set, including rows that were only present as retained ancestors", async () => {
+    it("clearing every filter restores the unfiltered roots list, not a stale match set", async () => {
       const requirements = [
         makeRequirement({ id: 1, name: "Root" }),
         makeRequirement({ id: 2, name: "Uncovered Leaf", parentId: 1 }),
@@ -2107,6 +2379,7 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption(
         "requirements-coverage-filter",
@@ -2134,11 +2407,26 @@ describe("RequirementsListView", () => {
         "requirements.coverage.uncovered"
       );
 
+      // Unfiltered, the list shows the project's ROOTS; children come back
+      // on expansion. (The stale match set would have shown only the leaf and
+      // its retained ancestor, and no chevron.)
+      expect(
+        await screen.findByTestId("requirement-row-1")
+      ).toBeInTheDocument();
       await waitFor(() => {
-        expect(screen.getByTestId("requirement-row-3")).toBeInTheDocument();
+        expect(
+          screen.queryByTestId("requirement-row-2")
+        ).not.toBeInTheDocument();
       });
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
-      expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId("requirement-chevron-1"));
+
+      expect(
+        await screen.findByTestId("requirement-row-2")
+      ).toBeInTheDocument();
+      expect(
+        await screen.findByTestId("requirement-row-3")
+      ).toBeInTheDocument();
     });
   });
 
@@ -2209,6 +2497,7 @@ describe("RequirementsListView", () => {
       ) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption("requirements-status-filter", "Open");
       await waitFor(() => {
@@ -2253,6 +2542,7 @@ describe("RequirementsListView", () => {
       global.fetch = makeLegacyFilterFetchMock(requirements, coverage) as any;
 
       renderView();
+      await waitForTree();
 
       await selectFilterOption(
         "requirements-coverage-filter",
@@ -2274,56 +2564,6 @@ describe("RequirementsListView", () => {
       await waitFor(() => {
         expect(lastFilterRequestBody()?.source).toEqual(["MANUAL"]);
       });
-    });
-
-    it("below the threshold, a text-only filter renders matches + ancestors + descendants -- exactly the set captured before this plan", async () => {
-      // Captured BEFORE this plan, by reasoning directly about
-      // `computeVisibleRequirementIds`'s own documented semantics for this
-      // exact fixture (id 2 matches "findme"; id 1 is its ancestor; id 3 is
-      // its descendant; id 4 is an unrelated sibling): with only the text
-      // axis active, the combined match set is {2}, the ancestor walk adds
-      // {1}, and -- because NO non-text axis is active -- the descendant BFS
-      // adds {3}. Id 4 is never matched, never an ancestor, never a
-      // descendant of the match, so it must stay absent. This literal,
-      // {1, 2, 3} vs. NOT 4, is the assertion below -- not re-derived from
-      // the new implementation.
-      const requirements = [
-        makeRequirement({ id: 1, name: "Root" }),
-        makeRequirement({ id: 2, name: "Findme Match", parentId: 1 }),
-        makeRequirement({ id: 3, name: "Descendant", parentId: 2 }),
-        makeRequirement({ id: 4, name: "Other", parentId: 1 }),
-      ];
-      useFindManyIssueMock.mockReturnValue({
-        data: requirements,
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      global.fetch = makeTreeFetchMock({
-        mode: "all",
-        total: 4,
-        matchPages: [
-          {
-            matchedTotal: 1,
-            matchedIds: [2],
-            ancestorIds: [1],
-            expandMatchedSubtrees: true,
-          },
-        ],
-      }) as any;
-
-      renderView();
-
-      fireEvent.change(screen.getByTestId("requirements-filter-input"), {
-        target: { value: "findme" },
-      });
-
-      await waitFor(() => {
-        expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
-      });
-      expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
-      expect(screen.getByTestId("requirement-row-3")).toBeInTheDocument();
-      expect(screen.queryByTestId("requirement-row-4")).not.toBeInTheDocument();
     });
 
     it("above the threshold, a matched row under a filter still expands and fetches its children", async () => {
@@ -2521,7 +2761,7 @@ describe("RequirementsListView", () => {
       expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
     });
 
-    it("every filter control keeps its existing test id and disabled rule", () => {
+    it("every filter control keeps its existing test id and disabled rule", async () => {
       useFindManyIssueMock.mockReturnValue({
         data: [makeRequirement({ id: 1, name: "Root A" })],
         isLoading: false,
@@ -2529,6 +2769,7 @@ describe("RequirementsListView", () => {
         refetch: vi.fn(),
       });
       renderView();
+      await waitForTree();
 
       expect(
         screen.getByTestId("requirements-coverage-filter")
@@ -2727,40 +2968,6 @@ describe("RequirementsListView", () => {
       );
     });
 
-    it("below the threshold with nested children, the denominator is the project total -- never the roots-only count the loaded number would exceed", async () => {
-      // The roots-only denominator exists for LAZY mode, where the window
-      // can only ever load top-level rows. Below the threshold the whole
-      // tree is in memory, so the loaded number counts nested children too
-      // and comparing it against a roots-only total reads as more loaded
-      // than exist: "Showing 4 of 3".
-      global.fetch = makeTreeFetchMock({
-        mode: "all",
-        total: 4,
-        rootTotal: 3,
-      }) as any;
-      useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root A" }),
-          makeRequirement({ id: 2, name: "Root B" }),
-          makeRequirement({ id: 3, name: "Root C" }),
-          makeRequirement({ id: 4, name: "Child of A", parentId: 1 }),
-        ],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-
-      renderView();
-
-      await waitFor(() => {
-        expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
-      });
-
-      expect(screen.getByTestId("requirements-list-showing").textContent).toBe(
-        "common.pagination.showing common.pagination.loadedOfTotal:4·4"
-      );
-    });
-
     it("filtered, the toolbar reads the loaded match count and the server's match total -- never larger than the total", async () => {
       global.fetch = makeTreeFetchMock({
         mode: "lazy",
@@ -2795,28 +3002,7 @@ describe("RequirementsListView", () => {
       );
     });
 
-    it("below the threshold, the showing text still renders, with loaded equal to total when unfiltered", async () => {
-      useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root A" }),
-          makeRequirement({ id: 2, name: "Root B" }),
-        ],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
-
-      renderView();
-
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("requirements-list-showing").textContent
-        ).toBe("common.pagination.showing common.pagination.loadedOfTotal:2·2");
-      });
-    });
-
-    it("the showing text shares its own row with the column picker, below the filters", () => {
+    it("the showing text shares its own row with the column picker, below the filters", async () => {
       useFindManyIssueMock.mockReturnValue({
         data: [makeRequirement({ id: 1, name: "Root A" })],
         isLoading: false,
@@ -2824,6 +3010,7 @@ describe("RequirementsListView", () => {
         refetch: vi.fn(),
       });
       renderView();
+      await waitForTree();
 
       const showing = screen.getByTestId("requirements-list-showing");
       // Operator UAT: the count moved out of the filter row onto a row of
@@ -2845,49 +3032,6 @@ describe("RequirementsListView", () => {
   // mocked -- only `global.fetch`, so the hook's real fetch/merge/state
   // logic runs against a routed fake transport.
   describe("mode fork (28-13)", () => {
-    it('mode: "all" -- the ZenStack load-all query is enabled and the roots-page route is never requested', async () => {
-      global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
-      useFindManyIssueMock.mockReturnValue({
-        data: [makeRequirement({ id: 1, name: "Root A" })],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-
-      renderView();
-
-      await waitFor(() => {
-        const lastCall = useFindManyIssueMock.mock.calls.at(-1)!;
-        expect(lastCall[1]).toMatchObject({ enabled: true });
-      });
-
-      const treeGetCalls = (global.fetch as any).mock.calls.filter(
-        ([url, init]: [string, RequestInit | undefined]) =>
-          typeof url === "string" &&
-          url.includes("/requirements/tree") &&
-          !url.includes("countOnly") &&
-          (init?.method ?? "GET") === "GET"
-      );
-      expect(treeGetCalls).toHaveLength(0);
-    });
-
-    it('mode: "lazy" -- the ZenStack load-all query is disabled and rows come from the roots-page route', async () => {
-      global.fetch = makeTreeFetchMock({
-        mode: "lazy",
-        total: 600,
-        rootsRows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
-      }) as any;
-
-      renderView();
-
-      await waitFor(() => {
-        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
-      });
-
-      const lastCall = useFindManyIssueMock.mock.calls.at(-1)!;
-      expect(lastCall[1]).toMatchObject({ enabled: false });
-    });
-
     it("mode: null (the count round trip is pending) shows the loading state, never an empty tree", () => {
       useFindManyIssueMock.mockReturnValue({
         data: undefined,
@@ -2914,23 +3058,6 @@ describe("RequirementsListView", () => {
       expect(
         screen.queryByTestId("requirements-list-error")
       ).not.toBeInTheDocument();
-    });
-
-    it("the load-all query's options carry optimisticUpdate and an enabled gate reflecting the resolved mode -- nothing else changed", async () => {
-      global.fetch = makeTreeFetchMock({ mode: "all", total: 1 }) as any;
-
-      renderView();
-
-      await waitFor(() => {
-        const lastCall = useFindManyIssueMock.mock.calls.at(-1)!;
-        expect(lastCall[1]).toEqual({ optimisticUpdate: true, enabled: true });
-        const [args] = lastCall;
-        expect((args as { where: unknown }).where).toEqual({
-          projectId: 42,
-          isDeleted: false,
-          isRequirement: true,
-        });
-      });
     });
 
     it("in lazy mode, the error-state retry button refreshes through the hook's own refetch, never the disabled ZenStack query's", async () => {
@@ -3029,69 +3156,6 @@ describe("RequirementsListView", () => {
       expect(
         await screen.findByRole("option", { name: /Passed/ })
       ).toBeInTheDocument();
-    });
-
-    it("keeps the in-memory options below the threshold, unchanged from what ships today", async () => {
-      const requirements = [
-        makeRequirement({ id: 1, name: "Root", status: "Open" }),
-        makeRequirement({
-          id: 2,
-          name: "Child",
-          parentId: 1,
-          status: "Blocked",
-        }),
-      ];
-      useFindManyIssueMock.mockReturnValue({
-        data: requirements,
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-      const coverage = makeCoverageResponse({
-        2: makeBreakdown({
-          status: "PASSED",
-          uncovered: false,
-          statuses: [{ statusId: 10, name: "Passed", color: "#0f0", count: 3 }],
-          linkedCaseCount: 3,
-        }),
-      });
-      useRequirementCoverageMock.mockReturnValue({
-        data: coverage,
-        isError: false,
-      });
-      global.fetch = makeTreeFetchMock({ mode: "all", total: 2 }) as any;
-
-      renderView();
-
-      await waitFor(() => {
-        expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
-      });
-
-      await act(async () => {
-        fireEvent.click(filterTrigger("requirements-status-filter"));
-      });
-      expect(
-        await screen.findByRole("option", { name: "Open" })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("option", { name: "Blocked" })
-      ).toBeInTheDocument();
-      await closeFilterOptions("requirements-status-filter");
-
-      await act(async () => {
-        fireEvent.click(filterTrigger("requirements-coverage-filter"));
-      });
-      expect(
-        await screen.findByRole("option", { name: /Passed/ })
-      ).toBeInTheDocument();
-
-      // Below the threshold, the facets fetch must never even fire --
-      // D-01's own "no behaviour change below 500" (28-19's own hard rule).
-      const facetsCalls = (global.fetch as any).mock.calls.filter(
-        ([url]: [string]) =>
-          typeof url === "string" && url.includes("facetsOnly=1")
-      );
-      expect(facetsCalls).toHaveLength(0);
     });
   });
 
@@ -3228,31 +3292,6 @@ describe("RequirementsListView", () => {
           typeof url === "string" && url.includes("/children")
       );
       expect(childrenCalls).toHaveLength(0);
-    });
-
-    it('in "all" mode, expanding a node never touches the tree data routes', () => {
-      useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Parent Requirement" }),
-          makeRequirement({ id: 2, name: "Child A", parentId: 1 }),
-        ],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-
-      renderView();
-
-      fireEvent.click(screen.getByTestId("requirement-chevron-1"));
-
-      expect(screen.getByTestId("requirement-row-2")).toBeInTheDocument();
-      const treeDataCalls = (global.fetch as any).mock.calls.filter(
-        ([url]: [string]) =>
-          typeof url === "string" &&
-          url.includes("/requirements/tree") &&
-          !url.includes("countOnly")
-      );
-      expect(treeDataCalls).toHaveLength(0);
     });
 
     // 28-13 DECISION (see the auto-expand-ancestors effect's own comment):
@@ -3470,47 +3509,6 @@ describe("RequirementsListView", () => {
       expect(descendantCountCalls[0][0]).toBe(
         "/api/projects/42/requirements/501/descendant-count"
       );
-    });
-
-    it("below the threshold: the count comes from the in-memory tree, and no descendant-count request is ever made", async () => {
-      global.fetch = makeTreeFetchMockWithDescendantCount({
-        mode: "all",
-        total: 2,
-        // Deliberately a very different number from the true in-memory
-        // count (1) -- if this ever got requested and used, the assertion
-        // below would catch it immediately.
-        descendantCounts: { 1: 999 },
-      }) as any;
-      useFindManyIssueMock.mockReturnValue({
-        data: [
-          makeRequirement({ id: 1, name: "Root A" }),
-          makeRequirement({ id: 2, name: "Child A", parentId: 1 }),
-        ],
-        isLoading: false,
-        error: null,
-        refetch: vi.fn(),
-      });
-
-      renderView();
-
-      await waitFor(() => {
-        expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
-      });
-
-      openMenu(screen.getByTestId("requirement-actions-trigger-1"));
-      fireEvent.click(screen.getByTestId("requirement-action-delete-1"));
-
-      await waitFor(() => {
-        expect(
-          screen.getByTestId("delete-requirement-dialog")
-        ).toHaveTextContent("requirements.delete.confirmWithChildren:1");
-      });
-
-      const descendantCountCalls = (global.fetch as any).mock.calls.filter(
-        ([url]: [string]) =>
-          typeof url === "string" && url.includes("/descendant-count")
-      );
-      expect(descendantCountCalls).toHaveLength(0);
     });
 
     it("the dialog does not refetch its count while it stays open, even as unrelated state changes", async () => {

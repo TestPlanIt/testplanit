@@ -2,7 +2,6 @@
 
 import type { Row } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
-import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { ClipboardPlus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -39,11 +38,8 @@ import {
   type RequirementsTreeFilters,
   type RequirementsTreeSort,
 } from "~/hooks/useRequirementsTree";
-import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { ItemTypes } from "~/types/dndTypes";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
-import { schema } from "~/zenstack/schema";
-import type { Issue } from "~/zenstack/models";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { DeleteRequirementModal } from "./DeleteRequirementModal";
 import {
@@ -56,13 +52,7 @@ import {
 } from "./RequirementsListColumns";
 import type { RequirementSelection } from "./RequirementsWorkspace";
 import {
-  buildDescendantIdMap,
-  buildRequirementMaps,
-  collectCoverageStatusOptions,
-  collectRequirementStatusOptions,
-  countDescendants,
   flattenLazyRequirementRows,
-  flattenRequirementRows,
   type LazyRequirementSourceRow,
   type RequirementCoverageFilter,
   type RequirementListFilters,
@@ -221,8 +211,7 @@ const RequirementsListView = forwardRef<
   const [deleteDialogState, setDeleteDialogState] = useState<{
     open: boolean;
     requirementId: number | null;
-    descendantCount: number;
-  }>({ open: false, requirementId: null, descendantCount: 0 });
+  }>({ open: false, requirementId: null });
   const [sortConfig, setSortConfig] = useState<RequirementListSortConfig>({
     column: "name",
     direction: "asc",
@@ -367,7 +356,6 @@ const RequirementsListView = forwardRef<
     [sortConfig.column, sortConfig.direction]
   );
   const {
-    mode,
     total: projectTotal,
     rootTotal: projectRootTotal,
     rows: lazyTreeRows,
@@ -381,7 +369,6 @@ const RequirementsListView = forwardRef<
     loadedCount: treeLoadedCount,
     matchedIds: treeMatchedIds,
     ancestorIds: treeAncestorIds,
-    expandMatchedSubtrees,
     hasMore: treeHasMore,
     onLoadMore: treeOnLoadMore,
     onRetryLoadMore: treeOnRetryLoadMore,
@@ -409,29 +396,6 @@ const RequirementsListView = forwardRef<
   // loading gate (driven by `allRequirements === undefined`) already renders
   // exactly the loading state that null-mode window needs -- no second,
   // separate `mode === null` branch is needed for rendering purposes.
-  const isLazy = mode === "lazy";
-
-  // Load-all query, byte-identical to the file this replaces plus exactly
-  // one addition: `enabled`. The spread (never an inlined scope predicate)
-  // is load-bearing: this file inherits the prior component's entry in
-  // issueRoleScope's own containment test allowlist.
-  const {
-    data: allRequirements,
-    isLoading: requirementsLoading,
-    error: requirementsError,
-    refetch: refetchRequirements,
-  } = useClientQueries(schema).issue.useFindMany(
-    {
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
-        ...REQUIREMENT_SCOPE_WHERE,
-      },
-      orderBy: { name: "asc" },
-    },
-    { optimisticUpdate: true, enabled: mode === "all" }
-  );
-
   const { data: coverage, isError: coverageError } = useRequirementCoverage(
     Number(projectId)
   );
@@ -450,62 +414,27 @@ const RequirementsListView = forwardRef<
   }, [queryClient, projectId]);
 
   // One refresh function for every mutation call site (create/rename/
-  // reparent/delete), so a future call site can never pick the wrong
-  // source -- the mutation-ref-indirection pattern this codebase already
-  // uses for exactly this class of problem. Below the threshold this is the
-  // ZenStack query's own `refetch`; above it, it's the hook's `refetch`,
-  // which re-runs both the count round trip and the current row/match fetch.
+  // reparent/delete). Collapses first: a refetch discards every loaded child
+  // row and empties the hook's record of which parents have loaded, while
+  // expansion state lives here and would survive it -- leaving a node drawn
+  // open with nothing beneath it and no way back, since children are fetched
+  // only on a chevron click and that chevron already reads as expanded.
   const refreshRequirements = useCallback(() => {
-    if (isLazy) {
-      // Collapse first, for the same reason the filter reset below does.
-      // A lazy refetch discards every loaded child row and empties the
-      // hook's "which parents have loaded" record, but expansion state
-      // lives here and would survive it -- leaving a node drawn open with
-      // nothing beneath it and no way back, since children are fetched only
-      // on a chevron click and that chevron already reads as expanded.
-      // Below the threshold the whole tree is in memory, so expansions
-      // there survive a refetch correctly and are left alone.
-      setExpandedByIssueId({});
-      refetchLazyTree();
-    } else {
-      void refetchRequirements();
-    }
-  }, [isLazy, refetchLazyTree, refetchRequirements]);
+    setExpandedByIssueId({});
+    refetchLazyTree();
+  }, [refetchLazyTree]);
 
-  const [requirements, setRequirements] = useState<Issue[]>([]);
-
+  // A failed FIRST roots page sets `loadMoreError` with nothing yet loaded,
+  // which is this list's "the tree would not load at all".
   useEffect(() => {
-    // Only the all-mode pipeline is ever fed from the ZenStack query's data --
-    // in lazy mode `requirements` stays `[]` and the lazy row source below
-    // (`lazyModeRows`) is what actually renders.
-    if (!isLazy && allRequirements) {
-      setRequirements(allRequirements);
-    }
-  }, [isLazy, allRequirements]);
-
-  useEffect(() => {
-    if (!isLazy && requirementsError) {
+    if (lazyLoadMoreError && lazyTreeRows.length === 0) {
       toast.error(t("requirements.tree.loadFailed"));
     }
-  }, [isLazy, requirementsError, t]);
+  }, [lazyLoadMoreError, lazyTreeRows.length, t]);
 
-  // The lazy path's own initial-load failure: `fetchChildren`'s and the
-  // count fetch's own errors have no dedicated surface of their own (28-11),
-  // but a failed FIRST roots page does set `loadMoreError` with nothing yet
-  // loaded -- the lazy-mode equivalent of "a genuine fetch failure", so it
-  // gets the same toast the all-mode path already has (reusing the existing
-  // key -- no new i18n string in this plan).
-  useEffect(() => {
-    if (isLazy && lazyLoadMoreError && lazyTreeRows.length === 0) {
-      toast.error(t("requirements.tree.loadFailed"));
-    }
-  }, [isLazy, lazyLoadMoreError, lazyTreeRows.length, t]);
-
-  // Delay showing the spinner to avoid a flash on fast loads. Byte-identical
-  // to the all-mode-only version this replaces when `isLazy` is false (which
-  // it always is until `mode` has actually resolved to `"lazy"`).
+  // Delay showing the spinner to avoid a flash on fast loads.
   const [showSpinner, setShowSpinner] = useState(false);
-  const isTreeBusy = isLazy ? lazyTreeLoading : requirementsLoading;
+  const isTreeBusy = lazyTreeLoading;
   useEffect(() => {
     if (isTreeBusy) {
       const timer = setTimeout(() => setShowSpinner(true), 200);
@@ -514,95 +443,14 @@ const RequirementsListView = forwardRef<
     setShowSpinner(false);
   }, [isTreeBusy]);
 
-  const { requirementMap, childrenMap } = useMemo(
-    () => buildRequirementMaps(requirements),
-    [requirements]
-  );
-
-  // Self-plus-subtree id lists for the coveringCases column's filter (gap
-  // closure 26.2-11) -- computed once per tree alongside the other
-  // `childrenMap`-derived maps above, never per row.
-  const descendantIdsByRequirementId = useMemo(
-    () => buildDescendantIdMap(childrenMap),
-    [childrenMap]
-  );
-
-  // D-04 (28-14): the four-axis intersection + ancestor-retention walk this
-  // memo used to compute client-side (`computeVisibleRequirementIds`, still
-  // exported from `requirementsListRows.ts` -- 28-09's oracle and its own
-  // test suite are the semantics record, untouched) now runs on the SERVER
-  // (28-09's SQL, proven equivalent to the client function across all 16
-  // filter-axis combinations against real Postgres). This memo only
-  // ASSEMBLES the below-threshold ("all" mode) visible set from the hook's
-  // own `matchedIds`/`ancestorIds`, since this component still holds every
-  // row below the threshold and needs a `Set` to feed `flattenRequirementRows`
-  // exactly as before:
-  //
-  //   visible = matchedIds ∪ ancestorIds ∪ (expandMatchedSubtrees
-  //     ? descendants(matchedIds)
-  //     : ∅)
-  //
-  // The descendant walk stays client-side (via `childrenMap`) because the
-  // rows are already here -- this is what keeps the below-threshold
-  // presentation byte-identical to what shipped before this plan.
-  //
-  // Above the threshold this Set is never consulted for rendering (`rows`
-  // uses `lazyModeRows` instead, whose source is already pruned to
-  // matches+ancestors by the server) -- `expandMatchedSubtrees` there means
-  // something different: a matched row's OWN subtree stays browsable
-  // through expand-on-demand (28-13's wiring) rather than being
-  // auto-revealed, so a match's chevron keeps working under a filter without
-  // this component eagerly fetching every matched subtree at once.
-  const visibleRequirementIds = useMemo(() => {
-    if (!treeIsFiltering) return null;
-    const visible = new Set<number>();
-    treeMatchedIds?.forEach((id) => visible.add(id));
-    treeAncestorIds?.forEach((id) => visible.add(id));
-    if (expandMatchedSubtrees) {
-      const queue = Array.from(treeMatchedIds ?? []);
-      while (queue.length > 0) {
-        const parentId = queue.shift()!;
-        for (const child of childrenMap.get(parentId) ?? []) {
-          if (!visible.has(child.id)) {
-            visible.add(child.id);
-            queue.push(child.id);
-          }
-        }
-      }
-    }
-    return visible;
-  }, [
-    treeIsFiltering,
-    treeMatchedIds,
-    treeAncestorIds,
-    expandMatchedSubtrees,
-    childrenMap,
-  ]);
-
   // Option lists for the Coverage/Status Selects below (28-19 gap closure:
   // defect A). Below the threshold, unchanged from what shipped in gap
   // closure 26.2-12 -- both pure collectors reading the all-mode-only
   // `requirements` array, recomputed only when their own inputs change.
-  // Above the threshold that array stays `[]` forever (it is fed only by
-  // the load-all query, disabled once `mode` resolves to "lazy"), so both
-  // collectors would produce an empty list forever -- the two Selects fork
-  // to the hook's own server-computed facets in that case instead, matching
-  // the collectors' own output type exactly so neither Select's props
-  // change shape by mode.
-  const coverageStatusOptions = useMemo(
-    () =>
-      isLazy
-        ? treeFacets.coverageStatuses
-        : collectCoverageStatusOptions(requirements, coverage),
-    [isLazy, treeFacets, requirements, coverage]
-  );
-  const requirementStatusOptions = useMemo(
-    () =>
-      isLazy
-        ? treeFacets.statuses
-        : collectRequirementStatusOptions(requirements),
-    [isLazy, treeFacets, requirements]
-  );
+  // Server-computed, at every project size: the list holds no complete copy
+  // of the project to collect distinct values from.
+  const coverageStatusOptions = treeFacets.coverageStatuses;
+  const requirementStatusOptions = treeFacets.statuses;
 
   // The three multi-select filters' option lists. Built here rather than
   // inline in the JSX because `MultiAsyncCombobox` refetches whenever its
@@ -638,24 +486,6 @@ const RequirementsListView = forwardRef<
     [t]
   );
 
-  const allModeRows = useMemo(
-    () =>
-      flattenRequirementRows({
-        childrenMap,
-        visibleRequirementIds,
-        expandedByIssueId,
-        sortConfig,
-        coverage,
-      }),
-    [
-      childrenMap,
-      visibleRequirementIds,
-      expandedByIssueId,
-      sortConfig,
-      coverage,
-    ]
-  );
-
   // The lazy sibling (28-12): the hook's `RequirementTreeRow` carries every
   // field this list's own renderer/columns/comparator ever read (28-08's own
   // column-list derivation proved this by reading every consumer first
@@ -680,7 +510,7 @@ const RequirementsListView = forwardRef<
     [lazyTreeRows, expandedByIssueId, sortConfig, coverage, treeMatchedIds]
   );
 
-  const rows = isLazy ? lazyModeRows : allModeRows;
+  const rows = lazyModeRows;
 
   // A by-id lookup over the lazy hook's own loaded (partial) forest --
   // `hasChildren` for the expand-on-demand gate below, and `parentId` for
@@ -754,9 +584,7 @@ const RequirementsListView = forwardRef<
   // regression.
   useEffect(() => {
     if (selectedRequirementId == null) return;
-    const getParentId = isLazy
-      ? (id: number) => lazyRowsById.get(id)?.parentId ?? null
-      : (id: number) => requirementMap.get(id)?.parentId ?? null;
+    const getParentId = (id: number) => lazyRowsById.get(id)?.parentId ?? null;
     setExpandedByIssueId((prev) => {
       let next: Record<number, boolean> | null = null;
       let current = getParentId(selectedRequirementId);
@@ -769,7 +597,7 @@ const RequirementsListView = forwardRef<
       }
       return next ?? prev;
     });
-  }, [selectedRequirementId, requirementMap, isLazy, lazyRowsById]);
+  }, [selectedRequirementId, lazyRowsById]);
 
   // LAZY MODE ONLY: collapse everything when a filter axis changes.
   //
@@ -783,25 +611,17 @@ const RequirementsListView = forwardRef<
   // deliberately not auto-revealed (see the force-open effect below), so
   // re-fetching would put non-matching descendants back on screen, which is
   // precisely what the filter was asked to remove.
-  //
-  // Below the threshold this must NOT happen: the whole `childrenMap` is in
-  // memory, is never wiped, and `visibleRequirementIds` already prunes it --
-  // expansions there survive a filter correctly today.
-  const lazyFilterResetKey = isLazy
-    ? [
-        treeFilters.search,
-        [...treeFilters.status].sort().join(","),
-        [...treeFilters.source].sort().join(","),
-        [...treeFilters.coverage].sort().join(","),
-      ].join("|")
-    : null;
+  const lazyFilterResetKey = [
+    treeFilters.search,
+    [...treeFilters.status].sort().join(","),
+    [...treeFilters.source].sort().join(","),
+    [...treeFilters.coverage].sort().join(","),
+  ].join("|");
   const lastLazyFilterResetKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (lazyFilterResetKey === null) return;
     const previousKey = lastLazyFilterResetKeyRef.current;
     lastLazyFilterResetKeyRef.current = lazyFilterResetKey;
-    // First observation (the count round trip resolving to "lazy") is not a
-    // filter CHANGE -- collapsing there would undo the ancestor chain the
+    // First observation is not a filter CHANGE -- collapsing there would undo the ancestor chain the
     // selection effect above may already have opened for a deep link.
     if (previousKey === null || previousKey === lazyFilterResetKey) return;
     setExpandedByIssueId({});
@@ -825,39 +645,18 @@ const RequirementsListView = forwardRef<
   // reachable without eagerly fetching every matched subtree at once. A
   // no-op (identity preserved) once nothing is filtering.
   useEffect(() => {
-    if (isLazy) {
-      if (!treeAncestorIds || treeAncestorIds.size === 0) return;
-      setExpandedByIssueId((prev) => {
-        let next: Record<number, boolean> | null = null;
-        treeAncestorIds.forEach((issueId) => {
-          if (prev[issueId] === true) return;
-          if (!lazyRowsById.get(issueId)?.hasChildren) return;
-          next = next ?? { ...prev };
-          next[issueId] = true;
-        });
-        return next ?? prev;
-      });
-      return;
-    }
-    if (!visibleRequirementIds) return;
+    if (!treeAncestorIds || treeAncestorIds.size === 0) return;
     setExpandedByIssueId((prev) => {
       let next: Record<number, boolean> | null = null;
-      visibleRequirementIds.forEach((issueId) => {
+      treeAncestorIds.forEach((issueId) => {
         if (prev[issueId] === true) return;
-        const hasChildren = (childrenMap.get(issueId) ?? []).length > 0;
-        if (!hasChildren) return;
+        if (!lazyRowsById.get(issueId)?.hasChildren) return;
         next = next ?? { ...prev };
         next[issueId] = true;
       });
       return next ?? prev;
     });
-  }, [
-    isLazy,
-    treeAncestorIds,
-    lazyRowsById,
-    visibleRequirementIds,
-    childrenMap,
-  ]);
+  }, [treeAncestorIds, lazyRowsById]);
 
   const handleSortChange = useCallback((column: string) => {
     setSortConfig((prev) => ({
@@ -906,12 +705,12 @@ const RequirementsListView = forwardRef<
     (issueId: number) => {
       const wasExpanded = expandedByIssueId[issueId] === true;
       setExpandedByIssueId((prev) => ({ ...prev, [issueId]: !prev[issueId] }));
-      if (!isLazy || wasExpanded) return;
+      if (wasExpanded) return;
       if (lazyRowsById.get(issueId)?.hasChildren) {
         void fetchChildren(issueId);
       }
     },
-    [isLazy, expandedByIssueId, lazyRowsById, fetchChildren]
+    [expandedByIssueId, lazyRowsById, fetchChildren]
   );
 
   const handleAddChild = useCallback((requirement: RequirementRow) => {
@@ -938,25 +737,24 @@ const RequirementsListView = forwardRef<
   // Typed as `{ id: number }` rather than the full `RequirementRow` -- only
   // `.id` is ever read here, and this keeps both call sites structurally
   // valid: the row action hands a flattened `RequirementRow` (which has
-  // `depth`/`hasChildren`), while `openDeleteDialog` below hands a plain
-  // `Issue` looked up from `requirementMap` (which does not).
-  const handleRequestDelete = useCallback(
-    (requirement: { id: number }) => {
-      setDeleteDialogState({
-        open: true,
-        requirementId: requirement.id,
-        descendantCount: countDescendants(childrenMap, requirement.id),
-      });
-    },
-    [childrenMap]
-  );
+  // `depth`/`hasChildren`), while `openDeleteDialog` below hands a row from
+  // the loaded forest (which does not).
+  //
+  // The descendant count is NOT computed here. It comes from the server, per
+  // dialog opening, through `useRequirementSubtreeCount` below: this list
+  // holds only a loaded window of the project, so an in-memory walk would
+  // under-report a subtree whose rows have not been fetched -- and a delete
+  // confirmation that under-reports is the one number that must never be
+  // wrong.
+  const handleRequestDelete = useCallback((requirement: { id: number }) => {
+    setDeleteDialogState({ open: true, requirementId: requirement.id });
+  }, []);
 
   // Lazy mode's server-sourced replacement for the in-memory walk above
   // (28-15, T-28-15-01): `enabled` ties to the dialog's own `open` state, so
   // the round trip fires once when a delete is requested and never refetches
   // while the dialog stays open (the same query key persists for the whole
-  // open lifetime). Gated on `isLazy` too -- below the threshold this never
-  // fires at all, matching 28-CONTEXT's "no behavior change below 500".
+  // open lifetime).
   const {
     count: lazySubtreeCount,
     isLoading: lazySubtreeCountLoading,
@@ -964,7 +762,7 @@ const RequirementsListView = forwardRef<
   } = useRequirementSubtreeCount({
     projectId: Number(projectId),
     requirementId: deleteDialogState.requirementId,
-    enabled: isLazy && deleteDialogState.open,
+    enabled: deleteDialogState.open,
   });
 
   // The single value the modal actually renders. Below the threshold: the
@@ -980,13 +778,11 @@ const RequirementsListView = forwardRef<
   // `data` is still undefined, so an error would otherwise land on the same
   // branch as a resolved count -- rendering "no children" over a subtree
   // nobody counted and leaving the destructive confirm enabled.
-  const modalDescendantCount = !isLazy
-    ? deleteDialogState.descendantCount
-    : !deleteDialogState.open
-      ? 0
-      : lazySubtreeCountLoading || lazySubtreeCountFailed
-        ? null
-        : lazySubtreeCount;
+  const modalDescendantCount = !deleteDialogState.open
+    ? 0
+    : lazySubtreeCountLoading || lazySubtreeCountFailed
+      ? null
+      : lazySubtreeCount;
 
   // The page action bar's Add Requirement button lives in
   // `RequirementsWorkspace.tsx`, outside this component -- it reaches this
@@ -1013,14 +809,12 @@ const RequirementsListView = forwardRef<
         // above the threshold, so consulting it in lazy mode would make the
         // guard above fire for every id and turn the panel's Delete into a
         // permanent no-op on exactly the projects lazy mode exists for.
-        const requirement = isLazy
-          ? lazyRowsById.get(issueId)
-          : requirementMap.get(issueId);
+        const requirement = lazyRowsById.get(issueId);
         if (!requirement) return;
         handleRequestDelete(requirement);
       },
     }),
-    [isLazy, lazyRowsById, requirementMap, handleRequestDelete]
+    [lazyRowsById, handleRequestDelete]
   );
 
   const handleDetached = useCallback(() => {
@@ -1048,9 +842,7 @@ const RequirementsListView = forwardRef<
   // a loaded row, so if none has loaded there is no row a drop event could
   // legitimately target in the first place; this is a readiness gate, not
   // a correctness check.
-  const hasLoadedRequirements = isLazy
-    ? lazyRowsById.size > 0
-    : allRequirements !== undefined;
+  const hasLoadedRequirements = lazyRowsById.size > 0;
 
   // The reparent gesture's server contract (D-04c: no optimistic accept --
   // the fetch is awaited before any UI state changes, no local array
@@ -1235,7 +1027,6 @@ const RequirementsListView = forwardRef<
     isFiltering,
     normalizedFilter,
     coverage,
-    descendantIdsByRequirementId,
     expandedByIssueId,
     onToggleExpand: handleToggleExpand,
     onSelectRequirement: handleSelectRequirement,
@@ -1328,21 +1119,12 @@ const RequirementsListView = forwardRef<
   // seeded array never resolves past its initial state once the fetch has
   // errored -- the error branch below must be checked first, independently).
   // Both modes reduce to the SAME expression the all-mode-only version used
-  // when `isLazy` is false, which it is until `mode` has actually resolved
-  // to `"lazy"` -- see `isLazy`'s own doc comment above for why `mode ===
-  // null` needs no separate branch here.
-  //
-  // `treeCountError` sits OUTSIDE the mode split, deliberately: when the
-  // count round trip fails, `mode` never resolves, so `isLazy` is false and
-  // the load-all query -- gated on `mode === "all"` -- never runs either.
-  // Neither branch below can produce data or an error of its own, and the
-  // "no data yet" spinner further down would spin for the rest of the
-  // session with nothing to retry.
+  // `treeCountError` is its own term: a failed count leaves the list with no
+  // total to measure against and nothing to retry, which the "no data yet"
+  // spinner below would otherwise render as a permanent load.
   const hasLoadError =
     treeCountError ||
-    (isLazy
-      ? lazyLoadMoreError && lazyTreeRows.length === 0 && !lazyTreeLoading
-      : Boolean(requirementsError) && !requirementsLoading);
+    (lazyLoadMoreError && lazyTreeRows.length === 0 && !lazyTreeLoading);
 
   if (hasLoadError) {
     return (
@@ -1364,9 +1146,7 @@ const RequirementsListView = forwardRef<
     );
   }
 
-  const noDataYet = isLazy
-    ? lazyTreeRows.length === 0 && lazyTreeLoading
-    : allRequirements === undefined && !requirementsError;
+  const noDataYet = lazyTreeRows.length === 0 && lazyTreeLoading;
 
   if (showSpinner || noDataYet) {
     return <LoadingSpinner />;
@@ -1376,9 +1156,7 @@ const RequirementsListView = forwardRef<
   // rendered from the same return so the create/delete dialogs below mount
   // exactly once regardless of which one is showing -- their own `open`
   // state gates visibility either way.
-  const isEmpty = isLazy
-    ? (projectTotal ?? 0) === 0
-    : requirements.length === 0;
+  const isEmpty = (projectTotal ?? 0) === 0;
 
   // SCALE-03 (D-08): the matched-aware `x`/`y` pair the toolbar renders
   // verbatim, both sourced from the hook -- never re-derived from
@@ -1393,23 +1171,13 @@ const RequirementsListView = forwardRef<
   // filtered, either mode = loaded matches).
   const showingLoaded = treeLoadedCount;
   // Unfiltered, the denominator is the ROOT count, not every requirement:
-  // the roots window can only ever load top-level rows, so counting nested
+  // the window can only ever load top-level rows, so counting nested
   // children here made a fully-loaded list read as stalled (operator UAT --
   // "463 of 516 and nothing more loads", where 463 was every root and the
-  // other 53 were children behind an expand arrow). Below the threshold the
-  // whole tree is already in memory, so the project total is the honest
-  // denominator there and `projectRootTotal` is absent.
-  //
-  // Gated on `isLazy`, not on `projectRootTotal` being absent: the count
-  // round trip returns `rootTotal` in BOTH modes, so an "is it missing?"
-  // fallback would never fire. Below the threshold `showingLoaded` counts
-  // nested children too, and measuring that against a roots-only total
-  // reads as more loaded than the project holds.
+  // other 53 were children behind an expand arrow).
   const showingTotal = treeIsFiltering
     ? (matchedTotal ?? 0)
-    : isLazy
-      ? (projectRootTotal ?? projectTotal ?? 0)
-      : (projectTotal ?? 0);
+    : (projectRootTotal ?? projectTotal ?? 0);
 
   return (
     <>
@@ -1564,7 +1332,7 @@ const RequirementsListView = forwardRef<
               onSortColumn={handleSortColumn}
               onHideColumn={(columnId) => columnHideRef.current?.(columnId)}
               sortConfig={sortConfig}
-              isLoading={requirementsLoading}
+              isLoading={lazyTreeLoading}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
               // SCALE-02 (D-08): real infinite scroll, replacing the

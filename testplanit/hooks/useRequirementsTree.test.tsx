@@ -398,56 +398,6 @@ describe("useRequirementsTree", () => {
     expect(result.current.rows).toHaveLength(3);
   });
 
-  it("stops the below-threshold sweep when the server hands back the cursor it was given", async () => {
-    // That sweep is the only pager with no user gesture between pages: it
-    // recurses on `nextCursor` until exhausted. A cursor that does not
-    // advance therefore means the same page forever -- an unstoppable
-    // request loop in the tab, with the stack growing each turn. This
-    // surface has produced exactly that defect twice already, so the sweep
-    // asserts progress instead of trusting it.
-    const { result } = renderHook(() =>
-      useRequirementsTree({
-        projectId: 1,
-        filters: { ...INACTIVE_FILTERS, search: "widget" },
-      })
-    );
-
-    await resolveCount("all", 10);
-
-    const stuckCursor = { value: "a", id: 7 };
-    await resolveFilterPage({
-      matchedTotal: 3,
-      matchedIds: [1],
-      ancestorIds: [],
-      nextCursor: stuckCursor,
-    });
-    // The second page returns the SAME boundary it was just handed.
-    await resolveFilterPage({
-      matchedTotal: 3,
-      matchedIds: [2],
-      ancestorIds: [],
-      nextCursor: stuckCursor,
-    });
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    // The sweep stopped rather than re-requesting that boundary forever.
-    expect(countPending("/requirements/tree", { method: "POST" })).toBe(0);
-  });
-
-  it("issues no roots-page request at all in 'all' mode", async () => {
-    const { result } = renderHook(() =>
-      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
-    );
-
-    await resolveCount("all", 10);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(result.current.rows).toEqual([]);
-    expect(result.current.hasMore).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
   // --- 28-19 (gap closure): the Status/Coverage Selects' server-side
   // facet source above the threshold -- see requirementTree.ts's own
   // getRequirementFilterFacets for the server half. ---
@@ -475,34 +425,6 @@ describe("useRequirementsTree", () => {
     expect(result.current.facets.coverageStatuses).toEqual([
       { statusId: 10, name: "Passed", color: "#0f0", count: 3 },
     ]);
-  });
-
-  it("never fetches facets in 'all' mode -- facets stay at their empty starting value, and the below-threshold path issues exactly the ONE request it issues today", async () => {
-    const { result } = renderHook(() =>
-      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
-    );
-
-    await resolveCount("all", 10);
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-
-    expect(countPending("facetsOnly=1")).toBe(0);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(result.current.facets).toEqual({
-      statuses: [],
-      coverageStatuses: [],
-    });
-  });
-
-  it("does not fetch facets while mode is still null (the count round trip hasn't resolved yet)", async () => {
-    renderHook(() =>
-      useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })
-    );
-
-    // Only the count round trip's own request may be pending before mode
-    // resolves -- a facets request this early would mean the gate reads
-    // `mode !== null` instead of the required `mode === "lazy"`.
-    expect(countPending("facetsOnly=1")).toBe(0);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   // --- Task 3: filter submission and the two counts SCALE-03 renders. ---
@@ -553,18 +475,6 @@ describe("useRequirementsTree", () => {
       findPending("/requirements/tree", { method: "POST" })
     );
     expect(parseBody(req).include).toBe("rows");
-  });
-
-  it("requests include: 'ids' in 'all' mode", async () => {
-    renderHook(() =>
-      useRequirementsTree({ projectId: 1, filters: ACTIVE_FILTERS })
-    );
-
-    await resolveCount("all", 10);
-    const req = await waitFor(() =>
-      findPending("/requirements/tree", { method: "POST" })
-    );
-    expect(parseBody(req).include).toBe("ids");
   });
 
   it("changing a filter resets paging and replaces the match set rather than appending to it", async () => {

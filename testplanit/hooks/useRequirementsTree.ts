@@ -90,22 +90,27 @@ export interface UseRequirementsTreeArgs {
 }
 
 export interface UseRequirementsTreeResult {
-  /** `null` until the server's count round trip resolves. */
+  /**
+   * Which side of the server's size threshold this project falls on. Purely
+   * INFORMATIONAL -- the list renders the same way either way, and no
+   * behaviour branches on it. Kept because the count round trip reports it
+   * and it is useful in diagnostics. `null` until that round trip resolves.
+   */
   mode: "all" | "lazy" | null;
   /** The project's classified total, nested children included. */
   total: number | null;
   /** Top-level requirements only -- the unfiltered `y`. The roots window
    *  can never load a nested child, so counting one in the denominator
-   *  makes a fully loaded list read as stalled. `null` below the threshold,
-   *  where the component already holds the whole tree. */
+   *  makes a fully loaded list read as stalled. Reported at every project
+   *  size, and `null` only until the count round trip resolves. */
   rootTotal: number | null;
   isFiltering: boolean;
   /** The server's match total under an active filter -- filtered `y`. */
   matchedTotal: number | null;
   /** The matched-aware `x` -- see the module doc comment below. */
   loadedCount: number;
-  /** Lazy mode only; always `[]` in `"all"` mode (D-01: the component owns
-   *  every row itself below the threshold). */
+  /** Every row the list renders. The hook is the ONLY row source, at every
+   *  project size -- there is no in-memory copy beside it. */
   rows: RequirementTreeRow[];
   /** `null` when not filtering. */
   matchedIds: Set<number> | null;
@@ -115,11 +120,9 @@ export interface UseRequirementsTreeResult {
   isLoading: boolean;
   loadMoreError: boolean;
   /**
-   * The count round trip failed. Distinct from `loadMoreError`, which is a
-   * paging failure ON TOP of rows already shown: this one means `mode` never
-   * resolved, so NEITHER row source can run and the page has nothing to
-   * render. A caller that ignores it shows its "no data yet" spinner
-   * forever, with no error and nothing to retry.
+   * The count round trip failed, so the list has no total to measure its
+   * loaded rows against. Distinct from `loadMoreError`, which is a paging
+   * failure ON TOP of rows already shown.
    */
   countError: boolean;
   onLoadMore: () => void;
@@ -129,14 +132,10 @@ export interface UseRequirementsTreeResult {
    *  rows, or match sets should say. */
   refetch: () => void;
   /**
-   * The Status/Coverage Selects' lazy-mode option source (28-19 gap
-   * closure): `collectRequirementStatusOptions`/`collectCoverageStatusOptions`
-   * (`requirementsListRows.ts`) both read the all-mode-only in-memory
-   * `requirements` array, which stays empty above the threshold -- this is
-   * the server-side facet source the caller falls back to in that case.
-   * Starts empty and fills in once the fetch below resolves; never fetched
-   * at all below the threshold (mode !== "lazy"), so the below-threshold
-   * path issues exactly the requests it issues today.
+   * The Status/Coverage Selects' option source. The server is the only
+   * source: the list holds no complete in-memory copy of the project to
+   * collect distinct values from. Starts empty and fills in once the fetch
+   * resolves.
    */
   facets: RequirementFilterFacets;
 }
@@ -521,7 +520,7 @@ export function useRequirementsTree({
         }
       }
     },
-    [projectId, filters, mode, sort]
+    [projectId, filters, sort]
   );
 
   // --- Reset + kick off the row/match fetch whenever the project, the
@@ -583,7 +582,7 @@ export function useRequirementsTree({
     locateAttemptsRef.current = 0;
   }, [locateId, resetKey]);
   useEffect(() => {
-    if (!enabled || mode !== "lazy" || isFiltering) return;
+    if (!enabled || isFiltering) return;
     if (locateId == null) return;
     // Already loaded -- the caller's own scroll-into-view takes it from here.
     if (rowsMap.has(locateId)) return;
@@ -658,10 +657,7 @@ export function useRequirementsTree({
     setRefetchNonce((n) => n + 1);
   }, []);
 
-  const rows = useMemo(
-    () => (mode === "lazy" ? Array.from(rowsMap.values()) : []),
-    [mode, rowsMap]
-  );
+  const rows = useMemo(() => Array.from(rowsMap.values()), [rowsMap]);
 
   const loadedCount = useMemo(() => {
     if (isFiltering) return matchedIds?.size ?? 0;
