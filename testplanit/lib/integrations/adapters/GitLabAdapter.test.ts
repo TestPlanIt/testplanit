@@ -551,6 +551,52 @@ describe("GitLabAdapter", () => {
       // combined result must still be true.
       expect(result.hasMore).toBe(true);
     });
+
+    it("walks EVERY page of each selected type across successive orchestrator iterations, skipping none", async () => {
+      // The orchestrator advances its offset by the CONCATENATED row count,
+      // so with two types that offset moves two pages per iteration. Deriving
+      // each type's page from it therefore steps 1 -> 3 -> 5 and never asks
+      // for page 2 of either type: roughly half the matching issues are
+      // silently absent, and the run still reports success.
+      const fullPage = (iid: number) => [
+        { ...mockGitLabIssue, iid },
+        { ...mockGitLabIssue, iid: iid + 1 },
+      ];
+      for (let i = 0; i < 6; i++) {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(fullPage(100 + i * 10)),
+        });
+      }
+
+      // Three iterations, driven the way SyncService drives them: offset
+      // advances by the rows returned, and any cursor is handed straight back.
+      let offset = 0;
+      let pageToken: string | undefined;
+      for (let iteration = 0; iteration < 3; iteration++) {
+        const result = await adapter.searchIssues({
+          limit: 2,
+          offset,
+          pageToken,
+          issueTypeIds: ["issue", "incident"],
+        });
+        offset += result.issues.length;
+        pageToken = result.nextPageToken;
+      }
+
+      // calls[0] is authenticate(); six searches follow, in type order.
+      const pagesByType: Record<string, number[]> = { issue: [], incident: [] };
+      for (const [url] of mockFetch.mock.calls.slice(1)) {
+        const parsed = new URL(url as string);
+        const type = parsed.searchParams.get("issue_type");
+        const page = Number(parsed.searchParams.get("page"));
+        if (type) pagesByType[type].push(page);
+      }
+
+      // Each type must be walked 1, 2, 3 -- consecutively and independently.
+      expect(pagesByType.issue).toEqual([1, 2, 3]);
+      expect(pagesByType.incident).toEqual([1, 2, 3]);
+    });
   });
 
   describe("updateIssue", () => {
