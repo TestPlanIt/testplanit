@@ -433,6 +433,9 @@ const RequirementsListView = forwardRef<
   }, [lazyLoadMoreError, lazyTreeRows.length, t]);
 
   // Delay showing the spinner to avoid a flash on fast loads.
+  /** Which project this view has already painted at least once. See the
+   *  first-paint gate near the render states below. */
+  const firstPaintDoneForProjectRef = useRef<string | null>(null);
   const [showSpinner, setShowSpinner] = useState(false);
   const isTreeBusy = lazyTreeLoading;
   useEffect(() => {
@@ -1148,7 +1151,22 @@ const RequirementsListView = forwardRef<
 
   const noDataYet = lazyTreeRows.length === 0 && lazyTreeLoading;
 
-  if (showSpinner || noDataYet) {
+  // The full-view spinner is for the FIRST paint only. Every fetch after
+  // that -- a filter keystroke, a sort, a mutation refetch -- clears the row
+  // map while it runs, and returning a spinner here would unmount the whole
+  // view INCLUDING the toolbar. The filter input would then be destroyed and
+  // rebuilt mid-typing: a new DOM node, no focus, and the caret lost after
+  // roughly every other keystroke.
+  //
+  // Tracked per project, so switching projects still gets its own first
+  // paint. Assigning during render is safe because it is idempotent -- the
+  // same value for the same render -- and nothing outside this component
+  // observes it. Past the first paint the table stays mounted and shows its
+  // own loading treatment through `isLoading` instead.
+  if (!lazyTreeLoading) firstPaintDoneForProjectRef.current = projectId;
+  const isFirstPaint = firstPaintDoneForProjectRef.current !== projectId;
+
+  if ((showSpinner || noDataYet) && isFirstPaint) {
     return <LoadingSpinner />;
   }
 

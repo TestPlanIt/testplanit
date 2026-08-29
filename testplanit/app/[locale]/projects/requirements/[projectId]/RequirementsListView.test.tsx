@@ -2437,6 +2437,64 @@ describe("RequirementsListView", () => {
   // blocks below: `useRequirementsTree` runs for real against a routed fake
   // `fetch`, never mocked itself.
   describe("server-side filtering (28-14)", () => {
+    it("keeps the very same filter input mounted WHILE the filter request is in flight", async () => {
+      // The full-view spinner is a FIRST-PAINT state. If a later fetch can
+      // still return it, the whole view unmounts while the filter request is
+      // open, the input is rebuilt as a new DOM node, and focus and the caret
+      // go with it -- the user loses their place mid-word.
+      //
+      // The filter response is held OPEN deliberately. A mock that resolves
+      // immediately never leaves the window in which the unmount happens, so
+      // a test written against one passes with or without the fix (learned
+      // the hard way -- the first version of this test did exactly that).
+      let releaseFilter: (() => void) | null = null;
+      const treeFetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Root A" })],
+        matchPages: [
+          {
+            matchedTotal: 1,
+            matchedIds: [501],
+            ancestorIds: [],
+            rows: [makeLazyRow({ id: 501, name: "Root A" })],
+            nextCursor: null,
+          },
+        ],
+      });
+      global.fetch = vi.fn((url: string, init?: RequestInit) => {
+        const isFilterPost =
+          typeof url === "string" &&
+          url.includes("/requirements/tree") &&
+          (init?.method ?? "GET") === "POST";
+        if (!isFilterPost) return (treeFetch as any)(url, init);
+        return new Promise((resolve) => {
+          releaseFilter = () => resolve((treeFetch as any)(url, init) as never);
+        });
+      }) as any;
+
+      renderView();
+      await waitForTree();
+
+      const before = screen.getByTestId("requirements-filter-input");
+      fireEvent.change(before, { target: { value: "root" } });
+
+      // Wait until the request is actually open, then look at the DOM while
+      // it still is -- that is the whole window under test.
+      await waitFor(() => expect(releaseFilter).not.toBeNull());
+      expect(screen.queryByTestId("requirements-filter-input")).toBe(before);
+
+      await act(async () => {
+        releaseFilter!();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+      // Still the SAME node afterwards: a remount is what steals focus.
+      expect(screen.getByTestId("requirements-filter-input")).toBe(before);
+    });
+
     it("a burst of keystrokes in the search box produces exactly one filter request, after the debounce", async () => {
       global.fetch = makeTreeFetchMock({
         mode: "lazy",
