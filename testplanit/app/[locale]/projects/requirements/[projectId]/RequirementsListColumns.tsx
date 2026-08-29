@@ -252,6 +252,10 @@ export function useRequirementsListColumns({
         header: tColumnName,
         enableSorting: true,
         enableHiding: false,
+        // This column carries the tree: the expand chevrons and the depth
+        // indent. The nesting guide is painted from the row's own start, so
+        // it stays first while every other column reorders freely.
+        meta: { noReorder: true },
         size: 320,
         minSize: 240,
         maxSize: 640,

@@ -448,81 +448,85 @@ export default function RequirementsWorkspace({
                     </SimpleDndProvider>
                   </div>
                 </ResizablePanel>
-                <ResizableHandle withHandle className="w-1" />
-                <div className="shrink-0 pt-0.5">
-                  <Button
-                    type="button"
-                    onClick={toggleTreeCollapse}
-                    variant="secondary"
-                    className="p-0 -ms-1 rounded-s-none"
-                    data-testid="requirements-tree-collapse-toggle"
-                  >
-                    {isTreeCollapsed ? <ChevronRight /> : <ChevronLeft />}
-                  </Button>
-                </div>
-                <ResizablePanel
-                  id="requirements-detail"
-                  order={2}
-                  defaultSize={70}
-                  minSize={0}
-                  className="p-0 m-0 min-w-[220px]"
-                >
-                  {/* No `overflow-y-auto` here: the details panel is a
-                      full-height flex column that scrolls its own body, so a
-                      second scroll container on the wrapper would unstick its
-                      toolbar. Matches `repository-details-pane`, which wraps
-                      CaseDetailsPanel the same way. */}
-                  <div
-                    data-testid="requirements-detail-pane"
-                    className="h-full"
-                  >
-                    {selectedRequirementId === null ? (
-                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        {t("requirements.detail.selectPrompt")}
+                {/* Nothing selected means no detail pane at all -- the list
+                    takes the full width, the way the repository page's own
+                    case-details pane behaves. The resize handle and the
+                    collapse toggle go with it: both exist to divide the list
+                    from the details, and a toggle that collapsed the list
+                    with nothing beside it would leave an empty page. */}
+                {selectedRequirementId !== null && (
+                  <>
+                    <ResizableHandle withHandle className="w-1" />
+                    <div className="shrink-0 pt-0.5">
+                      <Button
+                        type="button"
+                        onClick={toggleTreeCollapse}
+                        variant="secondary"
+                        className="p-0 -ms-1 rounded-s-none"
+                        data-testid="requirements-tree-collapse-toggle"
+                      >
+                        {isTreeCollapsed ? <ChevronRight /> : <ChevronLeft />}
+                      </Button>
+                    </div>
+                    <ResizablePanel
+                      id="requirements-detail"
+                      order={2}
+                      defaultSize={70}
+                      minSize={0}
+                      className="p-0 m-0 min-w-[220px]"
+                    >
+                      {/* No `overflow-y-auto` here: the details panel is a
+                        full-height flex column that scrolls its own body, so a
+                        second scroll container on the wrapper would unstick its
+                        toolbar. Matches `repository-details-pane`, which wraps
+                        CaseDetailsPanel the same way. */}
+                      <div
+                        data-testid="requirements-detail-pane"
+                        className="h-full"
+                      >
+                        <RequirementDetailsPanel
+                          projectId={projectId}
+                          requirementId={selectedRequirementId}
+                          fullWidth={effectiveFullWidth}
+                          onToggleFullWidth={toggleDetailsFullWidth}
+                          onClose={closeDetails}
+                          onPrev={() =>
+                            requirementNav?.prevId != null &&
+                            goToRequirement(requirementNav.prevId)
+                          }
+                          onNext={() =>
+                            requirementNav?.nextId != null &&
+                            goToRequirement(requirementNav.nextId)
+                          }
+                          hasPrev={!!requirementNav?.hasPrev}
+                          hasNext={!!requirementNav?.hasNext}
+                          position={requirementNav?.position ?? null}
+                          total={requirementNav?.total ?? 0}
+                          // Reaches the SAME delete dialog + descendant count
+                          // the row action opens, through the list's own ref
+                          // -- never a
+                          // second delete path. Gated on `canAddEdit` here,
+                          // not inside the panel: the row action menu that
+                          // carries Delete is itself rendered only under this
+                          // same flag (RequirementsListColumns.tsx), and this
+                          // workspace is the only place that already knows
+                          // it -- a second `useProjectPermissions` call
+                          // inside the panel would be a second owner of the
+                          // same answer.
+                          onRequestDelete={
+                            canAddEdit
+                              ? () =>
+                                  listViewRef.current?.openDeleteDialog(
+                                    selectedRequirementId
+                                  )
+                              : undefined
+                          }
+                          editRequest={editRequest}
+                        />
                       </div>
-                    ) : (
-                      <RequirementDetailsPanel
-                        projectId={projectId}
-                        requirementId={selectedRequirementId}
-                        fullWidth={effectiveFullWidth}
-                        onToggleFullWidth={toggleDetailsFullWidth}
-                        onClose={closeDetails}
-                        onPrev={() =>
-                          requirementNav?.prevId != null &&
-                          goToRequirement(requirementNav.prevId)
-                        }
-                        onNext={() =>
-                          requirementNav?.nextId != null &&
-                          goToRequirement(requirementNav.nextId)
-                        }
-                        hasPrev={!!requirementNav?.hasPrev}
-                        hasNext={!!requirementNav?.hasNext}
-                        position={requirementNav?.position ?? null}
-                        total={requirementNav?.total ?? 0}
-                        // Reaches the SAME delete dialog + descendant count
-                        // the row action opens, through the list's own ref
-                        // -- never a
-                        // second delete path. Gated on `canAddEdit` here,
-                        // not inside the panel: the row action menu that
-                        // carries Delete is itself rendered only under this
-                        // same flag (RequirementsListColumns.tsx), and this
-                        // workspace is the only place that already knows
-                        // it -- a second `useProjectPermissions` call
-                        // inside the panel would be a second owner of the
-                        // same answer.
-                        onRequestDelete={
-                          canAddEdit
-                            ? () =>
-                                listViewRef.current?.openDeleteDialog(
-                                  selectedRequirementId
-                                )
-                            : undefined
-                        }
-                        editRequest={editRequest}
-                      />
-                    )}
-                  </div>
-                </ResizablePanel>
+                    </ResizablePanel>
+                  </>
+                )}
               </ResizablePanelGroup>
             </div>
           ) : (

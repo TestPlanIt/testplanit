@@ -1335,12 +1335,8 @@ const RequirementsListView = forwardRef<
               isLoading={lazyTreeLoading}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              // SCALE-02 (D-08): real infinite scroll, replacing the
-              // hardcoded literal -- the hook's own `hasMore`/`onLoadMore`/
-              // `loadedCount` already answer correctly for EVERY mode
-              // (always `false`/a no-op in "all" mode, per 28-11's own
-              // contract), so these are wired unconditionally rather than
-              // branched on `isLazy`.
+              // SCALE-02 (D-08): real infinite scroll -- the hook owns
+              // `hasMore`/`onLoadMore`/`loadedCount` for every project size.
               hasMore={treeHasMore}
               onLoadMore={treeOnLoadMore}
               loadedCount={treeLoadedCount}
@@ -1375,7 +1371,6 @@ const RequirementsListView = forwardRef<
               // leave almost nothing left to scroll, which was considered
               // and rejected, not merely overlooked.
               enableColumnPinning
-              enableColumnReorder={false}
               pinFirstLast={false}
               highlightRowId={selectedRequirementId}
               scrollToRowId={scrollToRequirementId}

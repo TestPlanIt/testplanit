@@ -9,6 +9,8 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
+import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -50,6 +52,7 @@ import {
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { LinkedRequirementCasesPanel } from "./LinkedRequirementCasesPanel";
 import { RequirementAttachments } from "./RequirementAttachments";
+import { useRequirementCoverageBreakdown } from "~/hooks/useRequirementCoverage";
 import { RequirementCoveragePanel } from "./RequirementCoveragePanel";
 import {
   RequirementProvenanceBadge,
@@ -226,6 +229,11 @@ export default function RequirementDetailPanel({
     },
     { optimisticUpdate: true }
   );
+
+  // Scoped to this one requirement -- see the hook's own doc for why it does
+  // not reuse the list's whole-project rollup.
+  const { breakdown: coverageBreakdown, isLoading: coverageIsLoading } =
+    useRequirementCoverageBreakdown(Number(projectId), requirementId);
 
   const { mutateAsync: updateRequirement } =
     useClientQueries(schema).issue.useUpdate();
@@ -785,6 +793,39 @@ export default function RequirementDetailPanel({
         onStagedFilesChange={setStagedFiles}
         onPendingChangesChange={setPendingAttachmentChanges}
       />
+
+      {/* The list's own coverage chip, heading the covering-cases card below
+          it: the summary answers "is this covered?" and the card answers "by
+          what", so the two read as one section. Same component and same
+          `uncoveredWhen` the list column renders, so the two surfaces cannot
+          disagree about what a state looks like -- and the same legend the
+          list's own column header carries, since a reader meeting these
+          status colours here needs the key as much as one meeting them
+          there. */}
+      <div
+        className="flex items-center"
+        data-testid="requirement-detail-coverage-summary"
+      >
+        <span className="text-sm font-medium">{t("coverageLabel")}</span>
+        <IterationStatusLegendPopover projectId={Number(projectId)} />
+        {coverageBreakdown ? (
+          <span className="flex-auto pl-2">
+            <CoverageChip
+              breakdown={coverageBreakdown}
+              uncoveredWhen="no-linked-cases"
+            />
+          </span>
+        ) : (
+          // Never render an Uncovered chip for a breakdown that simply has
+          // not arrived (or failed): "uncovered" is a claim about the data,
+          // and this surface must not make it on the strength of a pending
+          // request. The list column takes the same position.
+          <span className="text-sm text-muted-foreground pl-2">
+            {coverageIsLoading ? tCommon("loading") : "—"}
+          </span>
+        )}
+      </div>
+
       {/* Coverage summary first, then the editable link list -- read-only
           subtree drill-down above, direct-link editor below. See
           RequirementCoveragePanel.tsx's own comment for why the two never

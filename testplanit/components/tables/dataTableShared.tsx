@@ -78,6 +78,17 @@ export interface CustomColumnMeta {
   /** Opt a column out of the default single-line truncation so its cells wrap. */
   wrap?: boolean;
   /**
+   * Hold this column in its declared position while the rest stay
+   * drag-reorderable. For a table that renders a TREE, the column carrying
+   * the chevrons and the indent is load-bearing: the nesting guide is
+   * painted from the row's own start, so moving that column elsewhere would
+   * leave the guide marking one column and the chevron sitting in another.
+   * Pinning would also hold a column still, but it freezes it against
+   * horizontal scroll as well, which is a different (and much heavier)
+   * decision.
+   */
+  noReorder?: boolean;
+  /**
    * Rendered INSIDE the header cell but AFTER (as a sibling of) the
    * column-menu trigger button. The header content itself lives inside that
    * trigger `<button>`, so any interactive header adornment (a popover, a

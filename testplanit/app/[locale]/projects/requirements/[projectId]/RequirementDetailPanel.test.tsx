@@ -191,6 +191,12 @@ vi.mock("./RequirementProvenanceBadge", () => ({
 // The coverage panel's own behavior (rows, inherited marking, cross-project
 // links) is RequirementCoveragePanel.test.tsx's job (26-09) -- this file
 // only needs to prove it mounts, and where.
+// Same stand-in the list-column and table suites use: the legend runs its
+// own `status` query, which this file's ZenStack mock does not model.
+vi.mock("@/components/iterations/IterationStatusLegendPopover", () => ({
+  IterationStatusLegendPopover: () => <span data-testid="mock-status-legend" />,
+}));
+
 vi.mock("./RequirementCoveragePanel", () => ({
   RequirementCoveragePanel: ({ requirementId }: any) => (
     <div
@@ -1492,6 +1498,54 @@ describe("RequirementDetailPanel", () => {
 });
 
 describe("RequirementDetailPanel (Phase 26 coverage additions)", () => {
+  it("heads the covering-cases card with the list's own coverage chip and its legend", async () => {
+    // The panel's own summary: the same chip the list column renders, so a
+    // reader does not have to open the card below (or the list) to learn
+    // whether this requirement is covered.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        projectId: 7,
+        coverage: {
+          "1": {
+            status: "PASSED",
+            linkedCaseCount: 3,
+            directCaseCount: 3,
+            directCrossProjectCaseCount: 0,
+            passed: 3,
+            failed: 0,
+            inProgress: 0,
+            notRun: 0,
+            untested: 0,
+            statuses: [],
+          },
+        },
+      }),
+    }) as any;
+
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+
+    const summary = await screen.findByTestId(
+      "requirement-detail-coverage-summary"
+    );
+    expect(summary).toBeInTheDocument();
+    expect(
+      within(summary).getByTestId("mock-status-legend")
+    ).toBeInTheDocument();
+
+    // Scoped to this requirement, never the whole-project rollup: that
+    // response is megabytes on a large project and this page needs one entry.
+    await waitFor(() => {
+      const coverageCalls = (global.fetch as any).mock.calls.filter(
+        ([url]: [string]) =>
+          typeof url === "string" && url.includes("/requirements/coverage")
+      );
+      expect(coverageCalls.length).toBeGreaterThan(0);
+      expect(coverageCalls[0][0]).toContain("requirementIds=1");
+    });
+  });
+
   it("mounts the coverage panel above the linked-cases panel", () => {
     setRequirement(nativeRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);

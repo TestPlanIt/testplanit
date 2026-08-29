@@ -86,6 +86,45 @@ export function useRequirementCoverage(projectId: number | undefined) {
 }
 
 /**
+ * One requirement's coverage breakdown, scoped server-side.
+ *
+ * Separate from `useRequirementCoverage` (and deliberately NOT sharing its
+ * cache entry) because the two answer different questions at very different
+ * costs. The whole-project rollup is right for the list, which paints a chip
+ * on every row; for a single requirement's detail page it would download the
+ * entire project to read one entry -- ~2.4MB and ~2s on an
+ * 11,000-requirement project. The breakdown itself is identical either way:
+ * each is computed over that requirement's own whole subtree.
+ */
+export function useRequirementCoverageBreakdown(
+  projectId: number | undefined,
+  requirementId: number | null | undefined
+) {
+  const enabled = Number.isFinite(projectId) && Number.isFinite(requirementId);
+  const query = useQuery<RequirementCoverageResponse>({
+    queryKey: ["requirementCoverage", projectId, "one", requirementId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/projects/${projectId}/requirements/coverage?requirementIds=${requirementId}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch requirement coverage");
+      }
+      return response.json();
+    },
+    enabled,
+  });
+
+  return {
+    breakdown: enabled
+      ? coverageFor(query.data, Number(requirementId))
+      : undefined,
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
+}
+
+/**
  * The one place the route's `String(id)` key convention lives. The route
  * serializes its `Map<number, RequirementCoverageBreakdown>` through
  * `Object.fromEntries`, which stringifies every key — callers index with
@@ -95,5 +134,9 @@ export function coverageFor(
   data: RequirementCoverageResponse | undefined,
   requirementId: number
 ): RequirementCoverageBreakdown | undefined {
-  return data?.coverage[String(requirementId)];
+  // `coverage` is optional-chained too, not just `data`: a response that
+  // resolved without that key (a stubbed fetch, a future error envelope)
+  // would otherwise throw while indexing `undefined`, taking the calling
+  // component down with it rather than reading as "no breakdown yet".
+  return data?.coverage?.[String(requirementId)];
 }

@@ -28,9 +28,9 @@ const mockedGetCoverage = getRequirementCoverage as unknown as ReturnType<
   typeof vi.fn
 >;
 
-function makeRequest(projectId = "5"): NextRequest {
+function makeRequest(projectId = "5", query = ""): NextRequest {
   return new NextRequest(
-    `http://localhost/api/projects/${projectId}/requirements/coverage`
+    `http://localhost/api/projects/${projectId}/requirements/coverage${query}`
   );
 }
 
@@ -101,9 +101,57 @@ describe("GET /api/projects/[projectId]/requirements/coverage", () => {
     const res = await GET(makeRequest("5"), params("5"));
 
     expect(res.status).toBe(200);
-    expect(mockedGetCoverage).toHaveBeenCalledWith(5, {
-      accessibleProjectIds: null,
-    });
+    expect(mockedGetCoverage).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: null },
+      // No `requirementIds` in the query means the whole project, which the
+      // service expresses as an absent options object.
+      undefined
+    );
+  });
+
+  it("scopes the rollup to the requested ids when requirementIds is supplied", async () => {
+    mockedResolveScope.mockResolvedValue(null);
+
+    const res = await GET(
+      makeRequest("5", "?requirementIds=21011,21012"),
+      params("5")
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedGetCoverage).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: null },
+      { rootIds: [21011, 21012] }
+    );
+  });
+
+  it("400s a non-numeric requirementIds rather than silently widening to the whole project", async () => {
+    mockedResolveScope.mockResolvedValue(null);
+
+    const res = await GET(
+      makeRequest("5", "?requirementIds=21011,notanumber"),
+      params("5")
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedGetCoverage).not.toHaveBeenCalled();
+  });
+
+  it("treats an EMPTY requirementIds as 'nothing asked for', never as the whole project", async () => {
+    mockedResolveScope.mockResolvedValue(null);
+
+    const res = await GET(makeRequest("5", "?requirementIds="), params("5"));
+
+    expect(res.status).toBe(200);
+    // `[]`, not `undefined`: widening an explicitly empty scope to every
+    // requirement in the project is the expensive mistake this parameter
+    // exists to avoid.
+    expect(mockedGetCoverage).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: null },
+      { rootIds: [] }
+    );
   });
 
   it("serializes the service Map into a non-empty object keyed by requirement id", async () => {

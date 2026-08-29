@@ -63,9 +63,45 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const coverage = await getRequirementCoverage(projectId, {
-      accessibleProjectIds: scope,
-    });
+    // Optional scoping: `?requirementIds=1,2,3` returns the rollup for just
+    // those requirements (each still computed over its OWN whole subtree, so
+    // a scoped breakdown is identical to the one the whole-project response
+    // carries for the same id). Without it the response stays exactly what
+    // it has always been -- every requirement in the project.
+    //
+    // This is the drill-down caller `getRequirementCoverage`'s own `rootIds`
+    // option was built for. It exists because the whole-project rollup is
+    // genuinely large: on an 11,000-requirement project it is ~2.4MB and
+    // ~2s, which is the right cost for a list that renders a chip per row
+    // and entirely the wrong one for a single requirement's detail page.
+    const requirementIdsParam = request.nextUrl.searchParams.get(
+      "requirementIds"
+    );
+    let rootIds: number[] | undefined;
+    if (requirementIdsParam !== null) {
+      const parsed = requirementIdsParam
+        .split(",")
+        .map((value) => value.trim())
+        .filter((value) => value !== "")
+        .map(Number);
+      if (parsed.some((id) => !Number.isInteger(id) || id <= 0)) {
+        return NextResponse.json(
+          { error: "requirementIds must be positive integers" },
+          { status: 400 }
+        );
+      }
+      // An explicitly empty list is not the same as an absent parameter:
+      // absent means "the whole project", empty means "nothing was asked
+      // for". Kept as `[]` so the service's own short-circuit answers it,
+      // rather than silently widening to a whole-project scan.
+      rootIds = parsed;
+    }
+
+    const coverage = await getRequirementCoverage(
+      projectId,
+      { accessibleProjectIds: scope },
+      rootIds === undefined ? undefined : { rootIds }
+    );
 
     // `NextResponse.json` on a raw `Map` produces `{}` with a 200 and no
     // error anywhere — the Milestone analogue this route was modelled on

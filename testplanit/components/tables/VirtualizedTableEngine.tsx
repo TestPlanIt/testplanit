@@ -1042,13 +1042,15 @@ export function VirtualizedTableEngine({
                   renderHeaderCell(header, { dragStyle: {}, grip: null })
                 );
               }
-              // Pinned columns and the expander stay put; everything else can
-              // be dragged.
+              // Pinned columns, the expander, and any column that declares
+              // `meta.noReorder` stay put; everything else can be dragged.
               const reorderDisabledFor = (
                 column: (typeof headers)[number]["column"]
               ) =>
                 (enableColumnPinning && !!column.getIsPinned()) ||
-                column.id === "expander";
+                column.id === "expander" ||
+                (column.columnDef.meta as CustomColumnMeta | undefined)
+                  ?.noReorder === true;
               return (
                 <SortableContext
                   items={visibleHeaders
