@@ -90,7 +90,13 @@ export interface CustomColumnMeta {
 
 export type SortConfig = { column: string; direction: "asc" | "desc" };
 
-export const EXPANDER_COLUMN_WIDTH = 24;
+/** One nesting level's indent, in px, applied by `RowExpanderPrefix`. Matches
+ *  the step the requirements list uses for its own tree. */
+export const NESTING_INDENT_PX = 24;
+
+/** The chevron slot's width, in px — reserved on every row whether or not it
+ *  can expand, so text keeps one origin. `h-5 w-5` in class form. */
+export const EXPANDER_SLOT_PX = 20;
 
 export function shallowEqualRecord(
   a: Record<string, boolean>,
@@ -224,70 +230,81 @@ export function useSortingAdapter(
 }
 
 /**
- * The expander column prepended when rows can nest (grouping or sub-rows).
- * Shared by both engines; sized to a fixed 24px well and excluded from
- * sorting/hiding/resizing.
+ * The expand/collapse chevron for a row with sub-rows, rendered INLINE at the
+ * head of the first content cell.
+ *
+ * This replaced a dedicated `expander` column prepended to every nesting
+ * table. That column was wrong twice over. It was sized to a 24px well while
+ * the virtualized engine gives every cell `px-3` — a ONE PIXEL content box
+ * under `overflow: hidden`, which clipped the chevron to 13 of its 16px (the
+ * literal "▶" it used to render is ~10px and squeaked through, so the
+ * clipping stayed invisible until the glyph was replaced with the app's
+ * standard icon). And on a GROUPED row it drew a second chevron beside the
+ * one `resolveGroupableCellContent` already renders in the grouped cell, so
+ * every grouping table showed two.
+ *
+ * Inline is also what the requirements list does with its own tree chevron,
+ * so the two nesting surfaces in this app now work the same way.
+ *
+ * Renders a same-sized SPACER rather than nothing when a row cannot expand,
+ * so a mixed list of expandable and leaf rows keeps one text origin instead
+ * of going ragged. Indents by depth, which the removed column could not do.
+ * Deliberately silent on a GROUPED row: that row's own cell already carries
+ * a chevron, and this is what stops it doubling.
  */
-export function useExpanderColumn<TData>(
-  subRowsLabel?: string
-): ColumnDef<TData, any> {
+export function RowExpanderPrefix<TData>({
+  row,
+  subRowsLabel,
+}: {
+  row: Row<TData>;
+  subRowsLabel?: string;
+}) {
   const tActions = useTranslations("common.actions");
-  return useMemo(
-    () => ({
-      id: "expander",
-      header: () => null,
-      cell: ({ row }: { row: Row<TData> }) => {
-        if (!row.getCanExpand()) return null;
-        const isExpanded = row.getIsExpanded();
-        const subRowsCount = row.subRows?.length ?? 0;
-        const tooltipText = isExpanded
-          ? tActions("collapse")
-          : `${tActions("expand")}${subRowsLabel && subRowsCount > 0 ? ` • ${subRowsCount} ${subRowsLabel}` : ""}`;
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  onClick={row.getToggleExpandedHandler()}
-                  style={{ cursor: "pointer" }}
-                  // Same muted-to-foreground hover the requirements list's
-                  // own chevron uses, so the affordance reads as live in
-                  // both places. This button had no hover state at all.
-                  className="me-2 text-muted-foreground hover:text-foreground"
-                  aria-label={tooltipText}
+  const canExpand = row.getCanExpand() && !row.getIsGrouped();
+  const isExpanded = row.getIsExpanded();
+  const subRowsCount = row.subRows?.length ?? 0;
+  const tooltipText = isExpanded
+    ? tActions("collapse")
+    : `${tActions("expand")}${subRowsLabel && subRowsCount > 0 ? ` • ${subRowsCount} ${subRowsLabel}` : ""}`;
+
+  return (
+    <span
+      className="me-1 flex shrink-0 items-center"
+      style={{ paddingInlineStart: row.depth * NESTING_INDENT_PX }}
+    >
+      {canExpand ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={row.getToggleExpandedHandler()}
+                style={{ cursor: "pointer" }}
+                className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label={tooltipText}
+                data-testid="row-expander"
+              >
+                {/* The rotation lives on this span as an inline transform,
+                    not as a `rotate-90` class on the icon: the class form
+                    sets the standalone `rotate` property, and only a node
+                    that survives the toggle animates either way. */}
+                <span
+                  className="inline-flex items-center justify-center transition-transform duration-200"
+                  style={{
+                    transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                  }}
                 >
-                  {/* The same lucide chevron every other expand/collapse
-                      affordance in the app uses (the repository folder tree,
-                      the requirements list), rotated the same 90deg. It
-                      replaced a literal "▶" character, which rendered as a
-                      much heavier solid triangle at font-dependent metrics
-                      and was read aloud as its own Unicode name on top of
-                      the button's aria-label. */}
-                  <span
-                    className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-                    style={{
-                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                    }}
-                  >
-                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{tooltipText}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      },
-      size: EXPANDER_COLUMN_WIDTH,
-      minSize: EXPANDER_COLUMN_WIDTH,
-      maxSize: EXPANDER_COLUMN_WIDTH,
-      enableSorting: false,
-      enableResizing: false,
-      enableHiding: false,
-      meta: { isPinned: "left" },
-    }),
-    [tActions, subRowsLabel]
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>{tooltipText}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <span className="h-5 w-5 shrink-0" aria-hidden="true" />
+      )}
+    </span>
   );
 }
 

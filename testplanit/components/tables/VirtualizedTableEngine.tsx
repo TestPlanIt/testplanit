@@ -59,8 +59,9 @@ import {
   type SortConfig,
   getFlexPinningStyles,
   resolveGroupableCellContent,
+  RowExpanderPrefix,
+  NESTING_INDENT_PX,
   TruncatedHeaderLabel,
-  useExpanderColumn,
   useInitialColumnPinning,
   usePersistedColumnOrder,
   useSortingAdapter,
@@ -105,6 +106,11 @@ const ESTIMATED_ROW_HEIGHT = 44;
  *  started scrolling. Read by the deep-link scroll effect below. */
 const DEEP_LINK_SCROLL_TOLERANCE_PX = 8;
 const DEEP_LINK_SCROLL_MAX_ATTEMPTS = 20;
+
+/** The `px-3` this engine puts on every cell. Named because the nesting
+ *  guide's default offset is measured from the cell's content origin, which
+ *  begins after it. */
+const CELL_PADDING_INLINE_PX = 12;
 
 /**
  * Render-prop shell that makes one flex header cell drag-reorderable. The cell
@@ -557,15 +563,15 @@ export function VirtualizedTableEngine({
   // viewport mirror the body's scrollLeft so the columns stay aligned.
   const headerScrollRef = useRef<HTMLDivElement>(null);
 
-  // Prepend an expander column when rows can nest (grouping or sub-rows).
-  const expanderColumn = useExpanderColumn<any>(subRowsLabel);
-
   const groupingActive = !!(grouping && grouping.length > 0);
-  const finalColumns = useMemo(
-    () =>
-      groupingActive || getSubRows ? [expanderColumn, ...columns] : columns,
-    [groupingActive, getSubRows, expanderColumn, columns]
-  );
+
+  // No expander COLUMN is prepended any more. The chevron is rendered inline
+  // at the head of the first content cell (`RowExpanderPrefix`) -- see that
+  // component's own doc for why the column had to go. `finalColumns` is now
+  // just the caller's own set, kept as a named value so the rest of this file
+  // (column order, pinning, sizing) reads unchanged.
+  const expansionActive = groupingActive || Boolean(getSubRows);
+  const finalColumns = columns;
 
   // Drag-to-reorder columns, persisted per surface under the same key as
   // widths.
@@ -1117,8 +1123,31 @@ export function VirtualizedTableEngine({
                 // Row-scoped, not per-cell: the guide is painted on the row
                 // itself so it can cross the row's own divider -- see its
                 // own render below for why that placement is required.
+                //
+                // Without a consumer-supplied offset, an EXPANSION-based
+                // sub-row gets one derived from its first column's width, so
+                // the guide lands at that column's inner right edge -- where
+                // the indent cell ends, and exactly where this used to be
+                // drawn as a `border-e-4` on the cell itself. Measured from
+                // the row's own first visible cell rather than the leaf
+                // column list, so column pinning cannot reorder it out from
+                // under the guide. `undefined` means "no opinion" and falls
+                // through; an explicit `null` from the consumer means "no
+                // guide on this row" and is honoured.
+                const consumerGuideOffset = getRowNestingGuideOffset?.(row);
                 const nestingGuideOffset =
-                  getRowNestingGuideOffset?.(row) ?? null;
+                  consumerGuideOffset !== undefined
+                    ? consumerGuideOffset
+                    : row.depth > 0
+                      ? // Past the cell's own `px-3` and this row's indent,
+                        // but BEFORE the chevron slot, so the rule marks the
+                        // indent the row was pushed over by and leaves the
+                        // slot's full width clear between it and the text.
+                        // Placing it after the slot put it hard against the
+                        // first column's own content (operator UAT: "it's
+                        // right on top of the date").
+                        CELL_PADDING_INLINE_PX + row.depth * NESTING_INDENT_PX
+                      : null;
                 const isHighlighted =
                   highlightRowId != null &&
                   String(row.original?.id) === String(highlightRowId);
@@ -1210,25 +1239,7 @@ export function VirtualizedTableEngine({
                               column.getIsPinned() &&
                               (isSubRow
                                 ? "table-row-surface-nested"
-                                : "table-row-surface"),
-                            // Nesting guide: a wide colored bar on the RIGHT edge of
-                            // the first (indent) cell of a sub-row, marking where the
-                            // nested content begins.
-                            //
-                            // Keyed on `row.depth`, NOT `isSubRow`: the
-                            // placement assumes the first column IS the narrow
-                            // indent cell, which is true for every
-                            // expansion-based table but not for one supplying
-                            // `getRowNestingDepth` -- that table draws its own
-                            // indent inside a first column of arbitrary width,
-                            // so this bar would land at that column's far edge,
-                            // hundreds of pixels from the nesting it claims to
-                            // mark. Such a table owns its own begins-here
-                            // marker, at the indent; it still gets the nested
-                            // SURFACE above, which is placement-independent.
-                            row.depth > 0 &&
-                              cellIndex === 0 &&
-                              "border-e-4 border-e-primary"
+                                : "table-row-surface")
                           )}
                           style={{
                             ...(isFlex
@@ -1244,6 +1255,12 @@ export function VirtualizedTableEngine({
                               : {}),
                           }}
                         >
+                          {expansionActive && cellIndex === 0 && (
+                            <RowExpanderPrefix
+                              row={row}
+                              subRowsLabel={subRowsLabel}
+                            />
+                          )}
                           {wrap ? (
                             content
                           ) : (
@@ -1268,18 +1285,36 @@ export function VirtualizedTableEngine({
                         `pointer-events-none` so it never intercepts a click
                         or a native drag from the row beneath it.
 
-                        ASSUMES the guide's column is NOT pinned: this is
-                        positioned against the row, so a sticky first column
-                        would scroll out from under it. True for every
-                        consumer today (a table that draws its own indent
-                        does so in a wide, unpinned first column); a pinned
-                        variant would have to live in the cell and give up
-                        crossing the divider. */}
+                        This REPLACED a `border-e-4 border-e-primary` on the
+                        sub-row's first cell, which had stopped being a
+                        primary-coloured bar at all: the nested-row rule in
+                        globals.css sets `border-color` on every side of a
+                        nested row's cells to the softened divider tint, so
+                        the guide silently computed to grey. Painting it as
+                        its own element is what keeps its colour its own.
+
+                        `z-10` clears a PINNED first cell, which is `sticky`
+                        with `z-index: 2` and an opaque fill and otherwise
+                        paints straight over this (the audit log pins its
+                        first column, and the guide was invisible there until
+                        this z-index was added). Kept below the ring overlay's
+                        `z-20` so a selection ring still reads on top.
+
+                        KNOWN LIMIT with a pinned first column: this is
+                        positioned against the ROW, so while the body is
+                        scrolled horizontally the sticky cell stays put and
+                        the guide travels with the row, separating the two.
+                        Not reachable at normal widths -- these tables give a
+                        column `flex`, so the body only scrolls once the
+                        window is narrow enough to force it. Living inside
+                        the cell instead would track the pin, at the cost of
+                        the cell's `overflow-hidden` clipping the rule back
+                        to the cell and losing the divider crossing. */}
                     {nestingGuideOffset !== null && (
                       <span
                         aria-hidden="true"
                         data-testid="virtualized-nesting-guide"
-                        className="pointer-events-none absolute top-0 -bottom-px w-1 bg-primary/40"
+                        className="pointer-events-none absolute top-0 -bottom-px z-10 w-1 bg-primary/40"
                         style={{ insetInlineStart: nestingGuideOffset }}
                       />
                     )}

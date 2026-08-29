@@ -86,7 +86,7 @@ import {
   reconcileColumnOrder,
   resolveGroupableCellContent,
   shallowEqualRecord,
-  useExpanderColumn,
+  RowExpanderPrefix,
   useInitialColumnPinning,
   useSortingAdapter,
 } from "./dataTableShared";
@@ -773,14 +773,12 @@ function PagedTable<TData extends DataRow, TValue>({
     [storageKey]
   );
 
-  // Add expander column if grouping or sub-rows are set
-  const expanderColumn = useExpanderColumn<TData>(subRowsLabel);
-  const finalColumns = useMemo(() => {
-    if ((grouping && grouping.length > 0) || getSubRows) {
-      return [expanderColumn, ...columns];
-    }
-    return columns;
-  }, [columns, grouping, expanderColumn, getSubRows]);
+  // No expander COLUMN: the chevron renders inline at the head of the first
+  // content cell (`RowExpanderPrefix`) -- see that component's doc for why.
+  const expansionActive = Boolean(
+    (grouping && grouping.length > 0) || getSubRows
+  );
+  const finalColumns = columns;
 
   // Keep the current column set available to the width-persist handler without
   // rebuilding the callback each render.
@@ -1148,7 +1146,7 @@ function PagedTable<TData extends DataRow, TValue>({
                       }
                     }}
                   >
-                    {row.getVisibleCells().map((cell) => {
+                    {row.getVisibleCells().map((cell, cellIndex) => {
                       const { column } = cell;
                       const cellContent = resolveGroupableCellContent(
                         cell,
@@ -1194,7 +1192,23 @@ function PagedTable<TData extends DataRow, TValue>({
                               wrapper carries no width of its own — content may
                               use all the space a stretched column actually
                               has, not just the configured `size`. */}
-                          {(column.columnDef.meta as CustomColumnMeta)?.wrap ? (
+                          {expansionActive && cellIndex === 0 ? (
+                            <span className="flex min-w-0 items-center">
+                              <RowExpanderPrefix
+                                row={row}
+                                subRowsLabel={subRowsLabel}
+                              />
+                              {(column.columnDef.meta as CustomColumnMeta)
+                                ?.wrap ? (
+                                cellContent
+                              ) : (
+                                <div className="min-w-0 truncate">
+                                  {cellContent}
+                                </div>
+                              )}
+                            </span>
+                          ) : (column.columnDef.meta as CustomColumnMeta)
+                              ?.wrap ? (
                             cellContent
                           ) : (
                             <div className="truncate">{cellContent}</div>

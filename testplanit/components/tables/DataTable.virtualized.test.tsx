@@ -216,6 +216,43 @@ describe("DataTable (virtualized mode)", () => {
     expect(root.className).not.toContain("table-row-surface-nested");
   });
 
+  // An expansion-based sub-row gets a guide without the consumer asking for
+  // one, derived from its own indent depth. This used to be a `border-e-4` on
+  // a dedicated expander column's cell, which had stopped rendering as a
+  // primary bar at all -- the nested-row CSS repaints every border on a nested
+  // cell with the softened divider tint.
+  it("derives a nesting guide offset from the first column for an expansion sub-row", () => {
+    renderTable({
+      data: [
+        {
+          id: 1,
+          name: "Parent",
+          count: 0,
+          subRows: [{ id: 11, name: "Child", count: 0 }],
+        },
+      ],
+      getSubRows: (row: RowShape) => row.subRows,
+      expanded: true,
+    });
+
+    const guides = screen.getAllByTestId("virtualized-nesting-guide");
+    // The sub-row gets one; the parent does not.
+    expect(guides).toHaveLength(1);
+    // The cell's own 12px `px-3` plus one 24px indent level: the rule marks
+    // the indent the sub-row was pushed over by, with the chevron slot still
+    // clear between it and the text.
+    expect(guides[0].getAttribute("style")).toContain("36px");
+  });
+
+  it("gives a root row no nesting guide", () => {
+    renderTable({
+      data: [{ id: 1, name: "Root", count: 0 }],
+    });
+    expect(
+      screen.queryByTestId("virtualized-nesting-guide")
+    ).not.toBeInTheDocument();
+  });
+
   it("leaves nesting on row.depth when getRowNestingDepth is absent, so existing tables are untouched", () => {
     renderTable({
       data: [
