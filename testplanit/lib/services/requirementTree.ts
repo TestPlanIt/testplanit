@@ -1064,7 +1064,13 @@ export async function resolveRequirementMatches(
     // access directly) so the parameter this template binds is
     // unambiguously the escaped/wrapped VALUE, never raw user input.
     const likeTerm = wrapLikeTerm(axes.search);
-    axisFragments.push(sql`i.name ILIKE ${likeTerm}`);
+    // Name OR title -- see `computeVisibleRequirementIds`'s own comment for
+    // why both: `name` is a synced requirement's tracker key, `title` its
+    // summary, and the list renders them together. The two must agree, since
+    // the live-DB parity suite measures this SQL against that function.
+    axisFragments.push(
+      sql`(i.name ILIKE ${likeTerm} OR i.title ILIKE ${likeTerm})`
+    );
   }
   // `= ANY(...::text[])` is the multi-select translation of
   // `matchesRequirementStatusFilters`/`matchesRequirementSourceFilters`'s

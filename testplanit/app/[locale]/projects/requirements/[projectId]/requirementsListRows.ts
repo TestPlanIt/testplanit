@@ -280,12 +280,19 @@ export function computeVisibleRequirementIds({
   coverage,
   coverageError,
 }: ComputeVisibleRequirementIdsArgs): Set<number> | null {
-  // Requirements whose own name matches the filter box.
+  // Requirements whose own name OR title matches the filter box.
+  //
+  // Both, because a synced requirement's `name` is the tracker KEY and its
+  // `title` is the human summary -- which is exactly why every surface
+  // renders them together as "KEY: Title" (`formatIssueDisplayText`).
+  // Matching name alone made a requirement reachable only by typing its key,
+  // never by a word someone remembers from reading it.
   let filterMatchIds: Set<number> | null = null;
   if (normalizedFilter) {
     filterMatchIds = new Set<number>();
     requirements.forEach((requirement) => {
-      if (requirement.name.toLowerCase().includes(normalizedFilter)) {
+      const haystack = `${requirement.name} ${requirement.title ?? ""}`;
+      if (haystack.toLowerCase().includes(normalizedFilter)) {
         filterMatchIds!.add(requirement.id);
       }
     });

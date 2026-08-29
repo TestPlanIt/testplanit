@@ -627,6 +627,20 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
   });
 });
 
+/**
+ * The compiled SQL with the SEARCH axis's own parenthesised group removed.
+ *
+ * That axis matches `name OR title` (a synced requirement's key and its
+ * summary), so a blunt "contains no OR" assertion would now fire on a
+ * legitimate intra-axis OR. What these tests actually guard is that the
+ * AXES are intersected -- an OR between two different axis predicates is
+ * the mutation that matters -- so the search group is stripped first and
+ * the guard is applied to everything else.
+ */
+function sqlOutsideSearchGroup(sql: string): string {
+  return sql.replace(/\([^()]*ILIKE[^()]*\)/gi, "<search-axis>");
+}
+
 describe("resolveRequirementMatches -- intersection, never union (unit, mocked $qb + real compiler)", () => {
   it("ANDs two active axes together in the compiled SQL, never ORs them", async () => {
     const { db, captured } = makeCapturingMockDb([[]]);
@@ -641,7 +655,11 @@ describe("resolveRequirementMatches -- intersection, never union (unit, mocked $
       db as never
     );
     expect(captured[0].sql).toMatch(/ILIKE \$\d+\)?\s+AND\s+/i);
-    expect(captured[0].sql.toUpperCase()).not.toContain(" OR ");
+    expect(sqlOutsideSearchGroup(captured[0].sql).toUpperCase()).not.toContain(
+      " OR "
+    );
+    // The search axis's own OR is still exactly one group, not a leak.
+    expect(captured[0].sql.match(/ILIKE/gi)).toHaveLength(2);
   });
 
   it("ANDs all four axes together when every axis is active simultaneously", async () => {
@@ -661,9 +679,12 @@ describe("resolveRequirementMatches -- intersection, never union (unit, mocked $
     // the 4 axis fragments = well over the single join an OR-mutated build
     // would still contain -- the precise count is asserted by the
     // structural "andAll" test below; this behavioral test only pins that
-    // the word "OR" never appears when every axis is active at once.
+    // no OR joins two AXES when every axis is active at once. The search
+    // axis's own name-OR-title group is stripped first.
     expect(andCount).toBeGreaterThanOrEqual(3);
-    expect(captured[0].sql.toUpperCase()).not.toContain(" OR ");
+    expect(sqlOutsideSearchGroup(captured[0].sql).toUpperCase()).not.toContain(
+      " OR "
+    );
   });
 });
 

@@ -537,6 +537,64 @@ describe("compareRequirements status sort", () => {
 });
 
 describe("computeVisibleRequirementIds", () => {
+  it("matches the filter against TITLE as well as name", () => {
+    // A synced requirement's `name` is the tracker KEY and its `title` is the
+    // human summary -- which is why the list renders them as "KEY: Title".
+    // Matching only `name` means a requirement is reachable solely by typing
+    // its key, never by a word anyone would remember from reading it.
+    const requirements = [
+      makeRequirement({
+        id: 1,
+        name: "ADM-110",
+        title: 'Gray out "No email required" checkbox',
+        parentId: null,
+      }),
+      makeRequirement({
+        id: 2,
+        name: "ADM-733",
+        title: "Support scorecard template configuration",
+        parentId: null,
+      }),
+    ];
+    const { requirementMap, childrenMap } = buildRequirementMaps(requirements);
+
+    const result = computeVisibleRequirementIds({
+      requirements,
+      requirementMap,
+      childrenMap,
+      normalizedFilter: "checkbox",
+      filters: noFilters,
+      coverage: undefined,
+      coverageError: false,
+    });
+
+    expect(result && [...result]).toEqual([1]);
+  });
+
+  it("still matches on name, so a tracker key alone finds its requirement", () => {
+    const requirements = [
+      makeRequirement({
+        id: 1,
+        name: "ADM-110",
+        title: "Something else entirely",
+        parentId: null,
+      }),
+    ];
+    const { requirementMap, childrenMap } = buildRequirementMaps(requirements);
+
+    const result = computeVisibleRequirementIds({
+      requirements,
+      requirementMap,
+      childrenMap,
+      normalizedFilter: "adm-110",
+      filters: noFilters,
+      coverage: undefined,
+      coverageError: false,
+    });
+
+    expect(result && [...result]).toEqual([1]);
+  });
+
   it("returns null when the filter box is empty and no filter axis is active", () => {
     const requirements = [
       makeRequirement({ id: 1, name: "Root", parentId: null }),
