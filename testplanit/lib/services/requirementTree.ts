@@ -864,6 +864,71 @@ interface AncestorRow {
  * itself the parent of a different match must never come back as its own
  * "ancestor" (`matchedIds`/`ancestorIds` must stay disjoint).
  */
+/** One ancestor row, as the breadcrumb renders it. */
+export interface RequirementAncestorRow {
+  id: number;
+  name: string;
+  title: string;
+  externalUrl: string | null;
+}
+
+/**
+ * The chain of requirement-classified parents above one requirement,
+ * OUTERMOST FIRST -- the order a breadcrumb reads in.
+ *
+ * Separate from `resolveAncestorIds` above, which answers a different
+ * question for the filtered list: that one takes MANY seeds, returns a
+ * DISTINCT unordered id set, and excludes ids that are themselves matches.
+ * A breadcrumb needs exactly the opposite -- one seed, ordered, with the
+ * columns needed to render a label -- so the two share the walk's shape and
+ * its guards but not its result.
+ *
+ * The same classification rule the sibling walk uses: a parent that is not
+ * itself a requirement-classified row ends the chain, because Jira sync
+ * writes `parentId` on every synced issue regardless of classification. And
+ * the same `depth < 100` cap, for the same reason -- an unguarded recursive
+ * CTE over cyclic data hangs rather than errors.
+ */
+export async function getRequirementAncestorChain(
+  projectId: number,
+  requirementId: number,
+  db: Pick<typeof baseDb, "$qb"> = baseDb
+): Promise<RequirementAncestorRow[]> {
+  const { rows } = await sql<RequirementAncestorRow & { depth: number }>`
+    WITH RECURSIVE ancestors AS (
+      SELECT parent.id, parent."parentId", parent.name, parent.title,
+             parent."externalUrl", 1 AS depth
+      FROM "Issue" seed
+      JOIN "Issue" parent ON parent.id = seed."parentId"
+      WHERE seed.id = ${requirementId}
+        AND seed."projectId" = ${projectId}
+        AND parent."projectId" = ${projectId}
+        AND parent."isRequirement" = true
+        AND parent."isDeleted" = false
+
+      UNION ALL
+
+      SELECT next.id, next."parentId", next.name, next.title,
+             next."externalUrl", a.depth + 1
+      FROM "Issue" next
+      INNER JOIN ancestors a ON next.id = a."parentId"
+      WHERE next."projectId" = ${projectId}
+        AND next."isRequirement" = true
+        AND next."isDeleted" = false
+        AND a.depth < 100
+    )
+    SELECT id, name, title, "externalUrl"
+    FROM ancestors
+    ORDER BY depth DESC
+  `.execute(db.$qb);
+  return rows.map(({ id, name, title, externalUrl }) => ({
+    id,
+    name,
+    title,
+    externalUrl,
+  }));
+}
+
 async function resolveAncestorIds(
   projectId: number,
   matchedIds: number[],
