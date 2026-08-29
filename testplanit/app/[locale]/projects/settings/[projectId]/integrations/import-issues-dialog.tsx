@@ -147,7 +147,14 @@ export function ImportIssuesDialog({
   // (28-06); a recent, bounded sample uses the generic import-issues path
   // (unchanged). Neither server route changes here -- this only decides
   // which existing endpoint to call.
-  const useTypedPath = days === null || cap === null;
+  // Derived from the recency Select ALONE. `cap` is deliberately not part of
+  // this: it goes null for the render in which the input is empty, which is
+  // an ordinary step on the way to retyping a number, and letting that decide
+  // the endpoint made the dialog abandon the user's recency window mid-edit.
+  // The cap is also not a mode the user picks -- it only means anything on
+  // the windowed path, so that path owns it and the typed path disables it
+  // rather than displaying a number it will not send.
+  const useTypedPath = days === null;
 
   const issueTypeIds = selectedTypes.map((issueType) => issueType.id);
 
@@ -344,14 +351,17 @@ export function ImportIssuesDialog({
               type="number"
               min={1}
               max={MAX_CAP}
-              value={cap ?? ""}
+              disabled={useTypedPath}
+              value={useTypedPath ? "" : (cap ?? "")}
               onChange={(e) => {
                 const raw = e.target.value;
                 setCap(raw === "" ? null : Number(raw));
               }}
             />
             <p className="text-xs text-muted-foreground">
-              {t("importCapHint")}
+              {useTypedPath
+                ? t("importAllHistoryNoCapHint")
+                : t("importCapHint", { cap: String(DEFAULT_CAP) })}
             </p>
           </div>
 

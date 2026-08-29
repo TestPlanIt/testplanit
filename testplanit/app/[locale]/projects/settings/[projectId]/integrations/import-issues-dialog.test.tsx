@@ -200,6 +200,43 @@ describe("ImportIssuesDialog (#501/28-20 merged dialog)", () => {
     expect(screen.queryByTestId("multi-async-combobox")).toBeNull();
   });
 
+  it("clearing the cap field mid-edit does not switch a windowed import to the uncapped whole-history one", async () => {
+    // `cap` goes null for the render in which the input is empty -- which
+    // happens on the way to retyping a number. If the endpoint choice reads
+    // that emptiness, the dialog silently abandons the recency window the
+    // user chose and offers an unbounded import instead.
+    mockFetchRoutes([
+      ["import-issues/preview", () => ({ json: { matched: 5, cap: 200 } })],
+      ["import-issues", () => ({ json: { jobId: "job-1" } })],
+    ]);
+
+    render(
+      <ImportIssuesDialog
+        integrationId={1}
+        projectId={100}
+        target={target}
+        open={true}
+        onOpenChange={vi.fn()}
+        onStarted={vi.fn()}
+        initialIssueTypeIds={["type-1"]}
+        initialIssueTypeNames={{ "type-1": "Epic" }}
+      />
+    );
+
+    // A real recency window is chosen, so this is the windowed path...
+    fireEvent.change(screen.getByLabelText("importUpdatedWithin"), {
+      target: { value: "90" },
+    });
+    // ...and clearing the cap must not move it off that path.
+    fireEvent.change(screen.getByLabelText("importMax"), {
+      target: { value: "" },
+    });
+
+    expect(
+      screen.queryByTestId("import-issues-typed-start")
+    ).not.toBeInTheDocument();
+  });
+
   it("imports every issue of the selected types when no limit is set", async () => {
     mockFetchRoutes([
       [
@@ -439,9 +476,11 @@ describe("ImportIssuesDialog (#501/28-20 merged dialog)", () => {
       />
     );
 
-    // Clear the cap -- alone, this is enough to route to the typed path.
-    fireEvent.change(screen.getByLabelText("importMax"), {
-      target: { value: "" },
+    // Select All history -- the recency window is what chooses the typed
+    // path. (This used to clear the cap instead, which routed here only
+    // because an empty cap field was allowed to change the endpoint.)
+    fireEvent.change(screen.getByLabelText("importUpdatedWithin"), {
+      target: { value: "all" },
     });
 
     fireEvent.click(screen.getByTestId("import-issues-typed-start"));
