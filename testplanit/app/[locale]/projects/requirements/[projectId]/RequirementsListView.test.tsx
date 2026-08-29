@@ -2049,6 +2049,14 @@ describe("RequirementsListView", () => {
         "requirements.coverage.uncovered"
       );
       await waitFor(() => {
+        // Anchor on the toolbar. An absence-only assertion is ALSO satisfied
+        // by the whole view being absent, and a lazy filter change
+        // briefly renders nothing while it refetches -- so without this the
+        // wait can succeed on the empty intermediate render and the next
+        // synchronous query then finds no DOM at all.
+        expect(
+          screen.getByTestId("requirements-filter-input")
+        ).toBeInTheDocument();
         expect(
           screen.queryByTestId("requirement-row-3")
         ).not.toBeInTheDocument();
@@ -2334,6 +2342,14 @@ describe("RequirementsListView", () => {
       });
 
       await waitFor(() => {
+        // Anchor on the toolbar. An absence-only assertion is ALSO satisfied
+        // by the whole view being absent, and a lazy filter change
+        // briefly renders nothing while it refetches -- so without this the
+        // wait can succeed on the empty intermediate render and the next
+        // synchronous query then finds no DOM at all.
+        expect(
+          screen.getByTestId("requirements-filter-input")
+        ).toBeInTheDocument();
         expect(
           screen.queryByTestId("requirement-row-502")
         ).not.toBeInTheDocument();
@@ -2376,6 +2392,14 @@ describe("RequirementsListView", () => {
       });
 
       await waitFor(() => {
+        // Anchor on the toolbar. An absence-only assertion is ALSO satisfied
+        // by the whole view being absent, and a lazy filter change
+        // briefly renders nothing while it refetches -- so without this the
+        // wait can succeed on the empty intermediate render and the next
+        // synchronous query then finds no DOM at all.
+        expect(
+          screen.getByTestId("requirements-filter-input")
+        ).toBeInTheDocument();
         expect(
           screen.queryByTestId("requirement-row-502")
         ).not.toBeInTheDocument();
@@ -3058,6 +3082,14 @@ describe("RequirementsListView", () => {
 
       fireEvent.click(screen.getByTestId("requirement-chevron-501"));
       await waitFor(() => {
+        // Anchor on the toolbar. An absence-only assertion is ALSO satisfied
+        // by the whole view being absent, and a lazy filter change
+        // briefly renders nothing while it refetches -- so without this the
+        // wait can succeed on the empty intermediate render and the next
+        // synchronous query then finds no DOM at all.
+        expect(
+          screen.getByTestId("requirements-filter-input")
+        ).toBeInTheDocument();
         expect(
           screen.queryByTestId("requirement-row-502")
         ).not.toBeInTheDocument();
@@ -3181,6 +3213,14 @@ describe("RequirementsListView", () => {
       });
       fireEvent.click(screen.getByTestId("requirement-chevron-501"));
       await waitFor(() => {
+        // Anchor on the toolbar. An absence-only assertion is ALSO satisfied
+        // by the whole view being absent, and a lazy filter change
+        // briefly renders nothing while it refetches -- so without this the
+        // wait can succeed on the empty intermediate render and the next
+        // synchronous query then finds no DOM at all.
+        expect(
+          screen.getByTestId("requirements-filter-input")
+        ).toBeInTheDocument();
         expect(
           screen.queryByTestId("requirement-row-502")
         ).not.toBeInTheDocument();
@@ -3411,6 +3451,14 @@ describe("RequirementsListView", () => {
 
       fireEvent.click(screen.getByText("common.cancel"));
       await waitFor(() => {
+        // Anchor on the toolbar. An absence-only assertion is ALSO satisfied
+        // by the whole view being absent, and a lazy filter change
+        // briefly renders nothing while it refetches -- so without this the
+        // wait can succeed on the empty intermediate render and the next
+        // synchronous query then finds no DOM at all.
+        expect(
+          screen.getByTestId("requirements-filter-input")
+        ).toBeInTheDocument();
         expect(
           screen.queryByTestId("delete-requirement-dialog")
         ).not.toBeInTheDocument();
@@ -3726,7 +3774,14 @@ describe("RequirementsListView", () => {
         expect(filterCalls.length).toBeGreaterThan(0);
       });
 
-      fireEvent.dragEnter(screen.getByTestId("requirement-row-502"));
+      // `findBy`, not `getBy`: the wait above proves only that the filter
+      // REQUEST was issued. A filter change in lazy mode collapses the tree
+      // and refetches, so the rows are briefly absent between that request
+      // and its response, and a synchronous query reads the empty
+      // intermediate render whenever the response has not landed yet. The
+      // three sibling drag tests above wait on the ROW rather than on a
+      // fetch call, which is why only this one was load-sensitive.
+      fireEvent.dragEnter(await screen.findByTestId("requirement-row-502"));
       await act(async () => {
         await dropSpecs.list.drop(
           { requirementId: 501, name: "Lazy Root A" },

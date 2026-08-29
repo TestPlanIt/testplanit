@@ -35,8 +35,10 @@ import {
   DEFAULT_REQUIREMENT_SORT,
   REQUIREMENT_SORT_COLUMNS,
   getRequirementRootsPage,
+  resolveRequirementMatches,
   type RequirementRootsCursor,
   type RequirementSortColumn,
+  type RequirementTreeFilterAxes,
   type RequirementTreeSort,
 } from "~/lib/services/requirementTree";
 import type { Issue } from "~/zenstack/models";
@@ -531,6 +533,198 @@ describeIntegration("requirements tree server-side sorting (live DB)", () => {
         DEFAULT_REQUIREMENT_SORT
       );
       expect(defaulted).toEqual(explicit);
+    });
+  });
+
+  /**
+   * The FILTERED page is a second, separate implementation of the same idea.
+   * `getRequirementRootsPage` orders by the sort expression directly and
+   * cursor-compares it directly; `resolveRequirementMatches` computes the
+   * axis intersection in a `matches` CTE, windows a count over it, and then
+   * orders and cursor-compares the ALIAS (`"requirementSortKey"`) from
+   * outside that CTE. The two share their descriptor and their cursor
+   * rendering but not their statement, so proving one proves nothing about
+   * the other -- and the paging that exists for this path today was only
+   * ever walked under the default name sort.
+   */
+  describe("filtered match paging under a non-default sort", () => {
+    /** Matches the whole fixture: every row's name starts with the prefix.
+     *  A full-set walk is the strongest version of this assertion, since a
+     *  narrow filter could hide a boundary bug behind a single page. */
+    const allRowsAxes = (namePrefix: string): RequirementTreeFilterAxes => ({
+      search: namePrefix,
+      status: [],
+      source: [],
+    });
+
+    async function walkMatches(
+      sort: RequirementTreeSort,
+      limit: number
+    ): Promise<{ ids: number[]; totals: number[] }> {
+      const ids: number[] = [];
+      const totals: number[] = [];
+      let cursor: RequirementRootsCursor | null = null;
+      const maxPages = Math.ceil(ROOT_COUNT / limit) * 4 + 10;
+      let pages = 0;
+
+      do {
+        if (++pages > maxPages) {
+          throw new Error(
+            `walkMatches: exceeded ${maxPages} pages for ${sort.column}/${sort.direction} -- the cursor is not advancing`
+          );
+        }
+        const page = await resolveRequirementMatches(
+          {
+            projectId: forest.projectId,
+            axes: allRowsAxes(forest.namePrefix),
+            coverageMatchIds: null,
+            limit,
+            cursor,
+            include: "ids",
+            sort,
+          },
+          db
+        );
+        ids.push(...page.matchedIds);
+        totals.push(page.matchedTotal);
+        cursor = page.nextCursor;
+      } while (cursor);
+
+      return { ids, totals };
+    }
+
+    for (const column of REQUIREMENT_SORT_COLUMNS) {
+      const coverageDerived =
+        column === "coverage" ||
+        column === "linkedCases" ||
+        column === "coveringCases";
+
+      for (const direction of DIRECTIONS) {
+        it(`${column} ${direction}: pages the match set to exhaustion, matching the unpaged set`, async () => {
+          const sort: RequirementTreeSort = {
+            column,
+            direction,
+            ...(coverageDerived
+              ? {
+                  coverageValues: {
+                    ids: forest.rootIds.filter((_, index) => index % 3 !== 0),
+                    values: forest.rootIds
+                      .filter((_, index) => index % 3 !== 0)
+                      .map((_, index) => (index % 7) + 1),
+                  },
+                }
+              : {}),
+          };
+
+          const unpaged = await resolveRequirementMatches(
+            {
+              projectId: forest.projectId,
+              axes: allRowsAxes(forest.namePrefix),
+              coverageMatchIds: null,
+              limit: ROOT_COUNT + 50,
+              cursor: null,
+              include: "ids",
+              sort,
+            },
+            db
+          );
+          expect(unpaged.nextCursor).toBeNull();
+          expect(unpaged.matchedIds).toHaveLength(ROOT_COUNT);
+
+          const { ids, totals } = await walkMatches(sort, PAGE_LIMIT);
+
+          expect(duplicatesOf(ids)).toEqual([]);
+          expect(ids).toEqual(unpaged.matchedIds);
+          // `matchedTotal` is windowed over the whole match set BEFORE the
+          // cursor trims it, so every page must report the same total --
+          // a total that shrank page by page would mean the count had moved
+          // inside the cursor's own filter.
+          expect(new Set(totals)).toEqual(new Set([ROOT_COUNT]));
+        });
+      }
+    }
+
+    it("createdAt ascending at a page limit of 1 -- the microsecond cursor path, through the CTE this time", async () => {
+      const sort: RequirementTreeSort = {
+        column: "createdAt",
+        direction: "asc",
+      };
+      const unpaged = await resolveRequirementMatches(
+        {
+          projectId: forest.projectId,
+          axes: allRowsAxes(forest.namePrefix),
+          coverageMatchIds: null,
+          limit: ROOT_COUNT + 50,
+          cursor: null,
+          include: "ids",
+          sort,
+        },
+        db
+      );
+      const { ids } = await walkMatches(sort, 1);
+
+      expect(duplicatesOf(ids)).toEqual([]);
+      expect(ids).toEqual(unpaged.matchedIds);
+    });
+
+    it("a narrower axis still pages cleanly under a sort whose values are almost all tied", async () => {
+      // `source` collapses 120 rows into 3 distinct values, so nearly every
+      // page boundary falls INSIDE a tie -- the case where a keyset tuple
+      // that disagreed with its own ORDER BY would lose or repeat rows.
+      const sort: RequirementTreeSort = {
+        column: "source",
+        direction: "desc",
+      };
+      const axes: RequirementTreeFilterAxes = {
+        search: forest.namePrefix,
+        status: [],
+        source: ["MANUAL", "SYNCED"],
+      };
+
+      const unpaged = await resolveRequirementMatches(
+        {
+          projectId: forest.projectId,
+          axes,
+          coverageMatchIds: null,
+          limit: ROOT_COUNT + 50,
+          cursor: null,
+          include: "ids",
+          sort,
+        },
+        db
+      );
+
+      const ids: number[] = [];
+      let cursor: RequirementRootsCursor | null = null;
+      let pages = 0;
+      do {
+        if (++pages > ROOT_COUNT + 10) {
+          throw new Error(
+            "source/desc narrow walk: the cursor is not advancing"
+          );
+        }
+        const page = await resolveRequirementMatches(
+          {
+            projectId: forest.projectId,
+            axes,
+            coverageMatchIds: null,
+            limit: 3,
+            cursor,
+            include: "ids",
+            sort,
+          },
+          db
+        );
+        ids.push(...page.matchedIds);
+        cursor = page.nextCursor;
+      } while (cursor);
+
+      expect(duplicatesOf(ids)).toEqual([]);
+      expect(ids).toEqual(unpaged.matchedIds);
+      // The axis really did narrow the set -- otherwise this test would be
+      // the full-set walk above wearing a different name.
+      expect(ids.length).toBeGreaterThan(0);
+      expect(ids.length).toBeLessThan(ROOT_COUNT);
     });
   });
 });
