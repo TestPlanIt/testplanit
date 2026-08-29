@@ -398,6 +398,43 @@ describe("useRequirementsTree", () => {
     expect(result.current.rows).toHaveLength(3);
   });
 
+  it("stops the below-threshold sweep when the server hands back the cursor it was given", async () => {
+    // That sweep is the only pager with no user gesture between pages: it
+    // recurses on `nextCursor` until exhausted. A cursor that does not
+    // advance therefore means the same page forever -- an unstoppable
+    // request loop in the tab, with the stack growing each turn. This
+    // surface has produced exactly that defect twice already, so the sweep
+    // asserts progress instead of trusting it.
+    const { result } = renderHook(() =>
+      useRequirementsTree({
+        projectId: 1,
+        filters: { ...INACTIVE_FILTERS, search: "widget" },
+      })
+    );
+
+    await resolveCount("all", 10);
+
+    const stuckCursor = { value: "a", id: 7 };
+    await resolveFilterPage({
+      matchedTotal: 3,
+      matchedIds: [1],
+      ancestorIds: [],
+      nextCursor: stuckCursor,
+    });
+    // The second page returns the SAME boundary it was just handed.
+    await resolveFilterPage({
+      matchedTotal: 3,
+      matchedIds: [2],
+      ancestorIds: [],
+      nextCursor: stuckCursor,
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The sweep stopped rather than re-requesting that boundary forever.
+    expect(countPending("/requirements/tree", { method: "POST" })).toBe(0);
+  });
+
   it("issues no roots-page request at all in 'all' mode", async () => {
     const { result } = renderHook(() =>
       useRequirementsTree({ projectId: 1, filters: INACTIVE_FILTERS })

@@ -501,6 +501,11 @@ function makeLazyRow(
 function makeTreeFetchMock(options: {
   mode: "all" | "lazy";
   total: number;
+  /** The project's ROOT count, as the live count round trip always reports
+   *  it. Defaults to `total` -- a flat project, where every requirement is
+   *  a root. Set it BELOW `total` to model a project with nested children,
+   *  which is what separates the two candidate denominators. */
+  rootTotal?: number;
   rootsRows?: Array<Record<string, unknown>>;
   /** A sequence of roots-window pages, consumed one per GET (the last is
    *  reused if a test calls `onLoadMore` beyond the queue's length) -- lets
@@ -548,6 +553,12 @@ function makeTreeFetchMock(options: {
           ok: true,
           json: async () => ({
             total: options.total,
+            // The live route returns `rootTotal` in BOTH modes, so this
+            // fixture must too. Omitting it left `projectRootTotal` null in
+            // every test, which meant the consumer's `?? projectTotal`
+            // fallback always fired here and never in production -- the
+            // difference the "x of y" denominator turns on.
+            rootTotal: options.rootTotal ?? options.total,
             threshold: 500,
             mode: options.mode,
           }),
@@ -1696,9 +1707,62 @@ describe("RequirementsListView", () => {
         screen.queryByTestId("delete-requirement-dialog")
       ).not.toBeInTheDocument();
     });
+
+    it("opens the dialog in LAZY mode, where the row lives in the loaded partial forest rather than the all-mode map", async () => {
+      // Above the threshold `requirements` stays `[]` by design, so the map
+      // built from it is permanently empty. A lookup that only consults that
+      // map therefore fails for EVERY id -- the no-op above stops being the
+      // "unknown id" guard it was written as and becomes the behaviour of
+      // the panel's Delete button on every project large enough to be lazy.
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [makeLazyRow({ id: 501, name: "Lazy Root" })],
+      }) as any;
+
+      const listRef = React.createRef<RequirementsListViewHandle>();
+      renderView({ ref: listRef });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      act(() => {
+        listRef.current?.openDeleteDialog(501);
+      });
+
+      expect(
+        await screen.findByTestId("delete-requirement-dialog")
+      ).toBeInTheDocument();
+    });
   });
 
   describe("error state", () => {
+    it("a failed count round trip renders the error state with a retry, never an endless spinner", async () => {
+      // When the count fails, `mode` never resolves: `isLazy` stays false and
+      // the load-all query, gated on `mode === "all"`, never fires either.
+      // Neither row source can report anything, so without a count-error
+      // signal the page shows its "no data yet" spinner for the rest of the
+      // session and offers nothing to retry.
+      global.fetch = makeTreeFetchMock({
+        mode: "lazy",
+        total: 600,
+        countOk: false,
+      }) as any;
+      useFindManyIssueMock.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderView();
+
+      expect(
+        await screen.findByTestId("requirements-list-error")
+      ).toBeInTheDocument();
+    });
+
     it("renders requirements-list-error (not a spinner) and retry calls refetch", () => {
       const refetch = vi.fn();
       useFindManyIssueMock.mockReturnValue({
@@ -2663,6 +2727,40 @@ describe("RequirementsListView", () => {
       );
     });
 
+    it("below the threshold with nested children, the denominator is the project total -- never the roots-only count the loaded number would exceed", async () => {
+      // The roots-only denominator exists for LAZY mode, where the window
+      // can only ever load top-level rows. Below the threshold the whole
+      // tree is in memory, so the loaded number counts nested children too
+      // and comparing it against a roots-only total reads as more loaded
+      // than exist: "Showing 4 of 3".
+      global.fetch = makeTreeFetchMock({
+        mode: "all",
+        total: 4,
+        rootTotal: 3,
+      }) as any;
+      useFindManyIssueMock.mockReturnValue({
+        data: [
+          makeRequirement({ id: 1, name: "Root A" }),
+          makeRequirement({ id: 2, name: "Root B" }),
+          makeRequirement({ id: 3, name: "Root C" }),
+          makeRequirement({ id: 4, name: "Child of A", parentId: 1 }),
+        ],
+        isLoading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-1")).toBeInTheDocument();
+      });
+
+      expect(screen.getByTestId("requirements-list-showing").textContent).toBe(
+        "common.pagination.showing common.pagination.loadedOfTotal:4·4"
+      );
+    });
+
     it("filtered, the toolbar reads the loaded match count and the server's match total -- never larger than the total", async () => {
       global.fetch = makeTreeFetchMock({
         mode: "lazy",
@@ -3297,6 +3395,44 @@ describe("RequirementsListView", () => {
   // per this file's own "mock fetch, not the hook" convention) -- only
   // `global.fetch` is routed, via `makeTreeFetchMockWithDescendantCount`.
   describe("delete confirmation descendant count (28-15)", () => {
+    it("lazy mode: a FAILED descendant-count request leaves the count unknown and Confirm disabled -- never 'no children' over a subtree that has them", async () => {
+      // The destructive case. React Query settles a failed query into
+      // `status: "error"` with `data` undefined, at which point `isLoading`
+      // is false -- so a consumer that only checks `isLoading` sees "not
+      // loading, no data" and, if it defaults that to 0, renders the
+      // no-children copy over a subtree that may hold hundreds of rows.
+      // Confirming there cascades the delete across every one of them.
+      global.fetch = makeTreeFetchMockWithDescendantCount({
+        mode: "lazy",
+        total: 600,
+        rootsRows: [
+          makeLazyRow({ id: 501, name: "Lazy Root", hasChildren: true }),
+        ],
+        descendantCountOk: false,
+      }) as any;
+
+      renderView();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("requirement-row-501")).toBeInTheDocument();
+      });
+
+      openMenu(screen.getByTestId("requirement-actions-trigger-501"));
+      fireEvent.click(screen.getByTestId("requirement-action-delete-501"));
+
+      const dialog = await screen.findByTestId("delete-requirement-dialog");
+
+      await waitFor(() => {
+        expect(screen.getByTestId("delete-requirement-confirm")).toBeDisabled();
+      });
+      // The specific wrong outcome: the reassuring copy. `hasChildren` is
+      // true on this row, so "no children" is not merely unknown-but-
+      // harmless, it is a statement the server never made.
+      expect(dialog).not.toHaveTextContent(
+        "requirements.delete.confirmNoChildren"
+      );
+    });
+
     it("lazy mode: opening the delete dialog for a root whose subtree hasn't loaded states the server's real descendant count, not zero", async () => {
       global.fetch = makeTreeFetchMockWithDescendantCount({
         mode: "lazy",

@@ -40,6 +40,31 @@ const REQUIREMENTS_TREE_PAGE_SIZE = 100;
  */
 const LOCATE_MAX_PAGES = 10;
 
+/**
+ * The ceiling on the below-threshold filtered sweep. That sweep is the one
+ * pager with no user gesture between pages -- it recurses on the server's
+ * cursor until it is exhausted -- so it needs a bound the scroll-driven
+ * pagers get for free. At `REQUIREMENTS_TREE_PAGE_SIZE` rows a page this
+ * covers 2,000 matches, well past the 500-row threshold that put the project
+ * in this mode at all, so a real project can never reach it.
+ */
+const ALL_MODE_MAX_SWEEP_PAGES = 20;
+
+/**
+ * Whether a page handed back the very boundary it was given. A cursor that
+ * does not advance means the next request returns the same page forever;
+ * this surface has already produced that defect twice (a timestamp cursor
+ * truncated to milliseconds), so the sweep asserts progress rather than
+ * trusting it.
+ */
+function isSameRootsCursor(
+  next: RequirementRootsCursor | null,
+  previous: RequirementRootsCursor | null
+): boolean {
+  if (next === null || previous === null) return false;
+  return next.id === previous.id && next.value === previous.value;
+}
+
 /** The list's default order. Mirrors `DEFAULT_REQUIREMENT_SORT` in
  *  `lib/services/requirementTree.ts`, restated here because a client module
  *  cannot import a value from that file (see the import note above). */
@@ -114,6 +139,14 @@ export interface UseRequirementsTreeResult {
   hasMore: boolean;
   isLoading: boolean;
   loadMoreError: boolean;
+  /**
+   * The count round trip failed. Distinct from `loadMoreError`, which is a
+   * paging failure ON TOP of rows already shown: this one means `mode` never
+   * resolved, so NEITHER row source can run and the page has nothing to
+   * render. A caller that ignores it shows its "no data yet" spinner
+   * forever, with no error and nothing to retry.
+   */
+  countError: boolean;
   onLoadMore: () => void;
   onRetryLoadMore: () => void;
   fetchChildren: (parentId: number) => Promise<void>;
@@ -323,6 +356,7 @@ export function useRequirementsTree({
   // Roots-only denominator for the unfiltered "x of y" -- see the route's
   // own note: a nested child is never a row the roots window can load.
   const [rootTotal, setRootTotal] = useState<number | null>(null);
+  const [countError, setCountError] = useState(false);
 
   const [rowsMap, setRowsMap] = useState<Map<number, RequirementTreeRow>>(
     () => new Map()
@@ -382,6 +416,7 @@ export function useRequirementsTree({
     setMode(null);
     setTotal(null);
     setRootTotal(null);
+    setCountError(false);
     void (async () => {
       try {
         const data = await fetchTreeCount(projectId);
@@ -390,9 +425,14 @@ export function useRequirementsTree({
         setTotal(data.total);
         setRootTotal(data.rootTotal ?? null);
       } catch {
-        // No dedicated count-fetch error slot in this plan's interface --
-        // `mode` simply never resolves, so the hook stays in its initial
-        // loading state. Documented as an open decision for 28-13/28-14.
+        if (countGenerationRef.current !== generation) return;
+        // `mode` stays null, so neither row source can run. Reported rather
+        // than swallowed: without it the caller cannot tell "still loading"
+        // from "this will never load", and renders a spinner that never
+        // resolves and offers no retry. `refetch()` bumps `refetchNonce`,
+        // which re-runs this effect, so an existing Try again control is a
+        // working recovery path.
+        setCountError(true);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -447,10 +487,17 @@ export function useRequirementsTree({
         if (fetchGenerationRef.current !== generation) return;
         setLoadMoreError(true);
       } finally {
+        // Generation-gated, like every other side effect in this block. A
+        // superseded fetch clearing the shared gate would open it while the
+        // generation that REPLACED it still has a request outstanding, so
+        // the scroll sentinel could fire a second fetch against the same
+        // cursor -- two writers racing one cursor ref. The reset effect
+        // clears this flag itself when it bumps the generation, so a
+        // stale fetch never needs to.
         if (fetchGenerationRef.current === generation) {
           setIsLoading(false);
+          pagingInFlightRef.current = false;
         }
-        pagingInFlightRef.current = false;
       }
     },
     [projectId, sort]
@@ -461,7 +508,8 @@ export function useRequirementsTree({
   const runFilteredFetch = useCallback(
     async (
       generation: number,
-      cursor: RequirementRootsCursor | null
+      cursor: RequirementRootsCursor | null,
+      sweptPages = 0
     ): Promise<void> => {
       const includeRows = mode === "lazy";
       try {
@@ -483,8 +531,21 @@ export function useRequirementsTree({
         matchCursorRef.current = page.nextCursor;
         setLoadMoreError(false);
 
-        if (mode === "all" && page.nextCursor !== null) {
-          await runFilteredFetch(generation, page.nextCursor);
+        // The below-threshold sweep runs to completion on its own, with no
+        // user gesture between pages, so it is bounded on BOTH the number of
+        // pages and cursor progress. A server that hands back the boundary
+        // it was given -- the exact shape of the two paging defects this
+        // surface has already produced -- would otherwise spin the tab in an
+        // unstoppable request loop, growing the stack with every turn.
+        // Stopping early leaves a short match set, which the toolbar's own
+        // "x of y" already makes visible; it never hangs the page.
+        if (
+          mode === "all" &&
+          page.nextCursor !== null &&
+          sweptPages + 1 < ALL_MODE_MAX_SWEEP_PAGES &&
+          !isSameRootsCursor(page.nextCursor, cursor)
+        ) {
+          await runFilteredFetch(generation, page.nextCursor, sweptPages + 1);
           return;
         }
 
@@ -493,10 +554,17 @@ export function useRequirementsTree({
         if (fetchGenerationRef.current !== generation) return;
         setLoadMoreError(true);
       } finally {
+        // Generation-gated, like every other side effect in this block. A
+        // superseded fetch clearing the shared gate would open it while the
+        // generation that REPLACED it still has a request outstanding, so
+        // the scroll sentinel could fire a second fetch against the same
+        // cursor -- two writers racing one cursor ref. The reset effect
+        // clears this flag itself when it bumps the generation, so a
+        // stale fetch never needs to.
         if (fetchGenerationRef.current === generation) {
           setIsLoading(false);
+          pagingInFlightRef.current = false;
         }
-        pagingInFlightRef.current = false;
       }
     },
     [projectId, filters, mode, sort]
@@ -665,6 +733,7 @@ export function useRequirementsTree({
     hasMore,
     isLoading,
     loadMoreError,
+    countError,
     onLoadMore,
     onRetryLoadMore,
     fetchChildren,

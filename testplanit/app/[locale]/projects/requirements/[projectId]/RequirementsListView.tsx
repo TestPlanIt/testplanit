@@ -373,6 +373,7 @@ const RequirementsListView = forwardRef<
     rows: lazyTreeRows,
     isLoading: lazyTreeLoading,
     loadMoreError: lazyLoadMoreError,
+    countError: treeCountError,
     fetchChildren,
     refetch: refetchLazyTree,
     isFiltering: treeIsFiltering,
@@ -456,6 +457,15 @@ const RequirementsListView = forwardRef<
   // which re-runs both the count round trip and the current row/match fetch.
   const refreshRequirements = useCallback(() => {
     if (isLazy) {
+      // Collapse first, for the same reason the filter reset below does.
+      // A lazy refetch discards every loaded child row and empties the
+      // hook's "which parents have loaded" record, but expansion state
+      // lives here and would survive it -- leaving a node drawn open with
+      // nothing beneath it and no way back, since children are fetched only
+      // on a chevron click and that chevron already reads as expanded.
+      // Below the threshold the whole tree is in memory, so expansions
+      // there survive a refetch correctly and are left alone.
+      setExpandedByIssueId({});
       refetchLazyTree();
     } else {
       void refetchRequirements();
@@ -947,12 +957,15 @@ const RequirementsListView = forwardRef<
   // while the dialog stays open (the same query key persists for the whole
   // open lifetime). Gated on `isLazy` too -- below the threshold this never
   // fires at all, matching 28-CONTEXT's "no behavior change below 500".
-  const { count: lazySubtreeCount, isLoading: lazySubtreeCountLoading } =
-    useRequirementSubtreeCount({
-      projectId: Number(projectId),
-      requirementId: deleteDialogState.requirementId,
-      enabled: isLazy && deleteDialogState.open,
-    });
+  const {
+    count: lazySubtreeCount,
+    isLoading: lazySubtreeCountLoading,
+    isError: lazySubtreeCountFailed,
+  } = useRequirementSubtreeCount({
+    projectId: Number(projectId),
+    requirementId: deleteDialogState.requirementId,
+    enabled: isLazy && deleteDialogState.open,
+  });
 
   // The single value the modal actually renders. Below the threshold: the
   // in-memory count computed above, unchanged. Above it, while the dialog is
@@ -961,13 +974,19 @@ const RequirementsListView = forwardRef<
   // rather than show a number that might undercount), then the resolved
   // count. While the dialog is closed the value is moot (the modal itself
   // unmounts/hides on `open={false}`); `0` is just an inert placeholder.
+  //
+  // A FAILED round trip is `null` too, and the count is never defaulted to a
+  // number. React Query reports `isLoading: false` on an errored query whose
+  // `data` is still undefined, so an error would otherwise land on the same
+  // branch as a resolved count -- rendering "no children" over a subtree
+  // nobody counted and leaving the destructive confirm enabled.
   const modalDescendantCount = !isLazy
     ? deleteDialogState.descendantCount
     : !deleteDialogState.open
       ? 0
-      : lazySubtreeCountLoading
+      : lazySubtreeCountLoading || lazySubtreeCountFailed
         ? null
-        : (lazySubtreeCount ?? 0);
+        : lazySubtreeCount;
 
   // The page action bar's Add Requirement button lives in
   // `RequirementsWorkspace.tsx`, outside this component -- it reaches this
@@ -988,12 +1007,20 @@ const RequirementsListView = forwardRef<
         // separate pieces of state -- a filtered-out or since-deleted
         // selection is reachable today, so an unknown id no-ops rather than
         // opening a dialog for a row this list can't find.
-        const requirement = requirementMap.get(issueId);
+        //
+        // Read from whichever map this mode actually populates.
+        // `requirementMap` is built from `requirements`, which stays `[]`
+        // above the threshold, so consulting it in lazy mode would make the
+        // guard above fire for every id and turn the panel's Delete into a
+        // permanent no-op on exactly the projects lazy mode exists for.
+        const requirement = isLazy
+          ? lazyRowsById.get(issueId)
+          : requirementMap.get(issueId);
         if (!requirement) return;
         handleRequestDelete(requirement);
       },
     }),
-    [requirementMap, handleRequestDelete]
+    [isLazy, lazyRowsById, requirementMap, handleRequestDelete]
   );
 
   const handleDetached = useCallback(() => {
@@ -1304,9 +1331,18 @@ const RequirementsListView = forwardRef<
   // when `isLazy` is false, which it is until `mode` has actually resolved
   // to `"lazy"` -- see `isLazy`'s own doc comment above for why `mode ===
   // null` needs no separate branch here.
-  const hasLoadError = isLazy
-    ? lazyLoadMoreError && lazyTreeRows.length === 0 && !lazyTreeLoading
-    : Boolean(requirementsError) && !requirementsLoading;
+  //
+  // `treeCountError` sits OUTSIDE the mode split, deliberately: when the
+  // count round trip fails, `mode` never resolves, so `isLazy` is false and
+  // the load-all query -- gated on `mode === "all"` -- never runs either.
+  // Neither branch below can produce data or an error of its own, and the
+  // "no data yet" spinner further down would spin for the rest of the
+  // session with nothing to retry.
+  const hasLoadError =
+    treeCountError ||
+    (isLazy
+      ? lazyLoadMoreError && lazyTreeRows.length === 0 && !lazyTreeLoading
+      : Boolean(requirementsError) && !requirementsLoading);
 
   if (hasLoadError) {
     return (
@@ -1363,9 +1399,17 @@ const RequirementsListView = forwardRef<
   // other 53 were children behind an expand arrow). Below the threshold the
   // whole tree is already in memory, so the project total is the honest
   // denominator there and `projectRootTotal` is absent.
+  //
+  // Gated on `isLazy`, not on `projectRootTotal` being absent: the count
+  // round trip returns `rootTotal` in BOTH modes, so an "is it missing?"
+  // fallback would never fire. Below the threshold `showingLoaded` counts
+  // nested children too, and measuring that against a roots-only total
+  // reads as more loaded than the project holds.
   const showingTotal = treeIsFiltering
     ? (matchedTotal ?? 0)
-    : (projectRootTotal ?? projectTotal ?? 0);
+    : isLazy
+      ? (projectRootTotal ?? projectTotal ?? 0)
+      : (projectTotal ?? 0);
 
   return (
     <>

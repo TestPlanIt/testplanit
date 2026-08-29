@@ -9,6 +9,15 @@ export interface UseRequirementSubtreeCountArgs {
 export interface UseRequirementSubtreeCountResult {
   count: number | null;
   isLoading: boolean;
+  /**
+   * Separate from `isLoading` because React Query's `isLoading` is
+   * `isPending && isFetching`: once a query settles into `status: "error"`
+   * it is FALSE while `data` stays undefined. A consumer that gates only on
+   * `isLoading` therefore reads a failed request as "finished, no data" --
+   * which is the exact state that must not become `0`. Gate on
+   * `isLoading || isError`, or simply pass `count` through untouched.
+   */
+  isError: boolean;
   error: unknown;
 }
 
@@ -53,6 +62,7 @@ export function useRequirementSubtreeCount({
   return {
     count: query.data?.count ?? null,
     isLoading: query.isLoading,
+    isError: query.isError,
     error: query.error,
   };
 }
