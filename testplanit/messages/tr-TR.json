@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Senkronize edilen gereksinimler, izleyicinin hiyerarşisini yansıtır. Taşımak için bağlantıyı kesin."
     },
     "detail": {
-      "selectPrompt": "Ayrıntılarını görüntülemek için bir gereksinim seçin.",
+      "coverageLabel": "Kapsam",
       "previousRequirement": "Önceki gereksinim",
       "nextRequirement": "Sonraki gereksinim",
       "breadcrumbLabel": "Gereksinim hiyerarşisi",

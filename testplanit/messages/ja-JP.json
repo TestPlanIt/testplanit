@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "同期された要件はトラッカーの階層をミラーリングします。移動するには切断してください。"
     },
     "detail": {
-      "selectPrompt": "詳細を表示する要件を選択してください。",
+      "coverageLabel": "カバレッジ",
       "previousRequirement": "前の要件",
       "nextRequirement": "次の要件",
       "breadcrumbLabel": "要件の階層",
@@ -6771,7 +6771,7 @@
     },
     "linkedCases": {
       "title": "リンクされたテストケース",
-      "titleWithCount": "{count, plural, =0 {Linked Test Cases} =1 {# Linked Test Case} other {# Linked Test Cases}}",
+      "titleWithCount": "{count, plural, =0 {リンクされたテストケース} =1 {# 件のリンクされたテストケース} other {# 件のリンクされたテストケース}}",
       "empty": "リンクされたテストケースはありません。",
       "addLink": "リンクを追加",
       "addLinkDialogTitle": "テストケースをリンク",
@@ -6806,7 +6806,7 @@
       "dismissFailed": "疑わしいフラグの解除に失敗しました。"
     },
     "references": {
-      "title": "{count, plural, =0 {References} =1 {{count} Reference} other {{count} References}}",
+      "title": "{count, plural, =0 {参照} =1 {{count} 件の参照} other {{count} 件の参照}}",
       "empty": "参照はまだありません。",
       "emptyHint": "この要件を形成したチケットを添付します。",
       "addReference": "参照を追加",
@@ -6835,7 +6835,7 @@
       "loadFailed": "カバレッジの読み込みに失敗しました。",
       "retry": "リトライ",
       "panelTitle": "カバーしているテストケース",
-      "panelTitleWithCount": "{count, plural, =0 {Covering Test Cases} =1 {Covering # Test Case} other {Covering # Test Cases}}",
+      "panelTitleWithCount": "{count, plural, =0 {カバーするテストケース} =1 {カバーする # 件のテストケース} other {カバーする # 件のテストケース}}",
       "panelDescription": "この要件のカバレッジに数えられるすべてのテストケース — 直接リンクされたケースと、その下位の要件にリンクされたケースの両方です。リンクを追加または削除するには、リンクされたテストケースを使用してください。",
       "panelEmpty": "この要件をカバーするテストケースはまだありません。",
       "columnCase": "テストケース",

@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Các yêu cầu được đồng bộ phản ánh cấu trúc phân cấp của trình theo dõi. Hãy tách rời để di chuyển."
     },
     "detail": {
-      "selectPrompt": "Chọn một yêu cầu để xem chi tiết.",
+      "coverageLabel": "Độ phủ",
       "previousRequirement": "Yêu cầu trước",
       "nextRequirement": "Yêu cầu tiếp theo",
       "breadcrumbLabel": "Cấu trúc phân cấp yêu cầu",
@@ -6753,7 +6753,7 @@
     "delete": {
       "dialogTitle": "Xóa yêu cầu",
       "confirmNoChildren": "Bạn có chắc chắn muốn xóa yêu cầu này không? Thao tác này có thể hoàn tác.",
-      "confirmWithChildren": "This requirement has {count, plural, one {{count} descendant} other {{count} descendants}} that will also be deleted. This action can be undone.",
+      "confirmWithChildren": "Yêu cầu này có {count, plural, other {{count} mục con}} cũng sẽ bị xóa. Hành động này có thể được hoàn tác.",
       "submit": "Xóa",
       "success": "Đã xóa yêu cầu.",
       "failed": "Không thể xóa yêu cầu.",

@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Gesynchroniseerde vereisten weerspiegelen de hiërarchie van de tracker. Ontkoppel om deze te verplaatsen."
     },
     "detail": {
-      "selectPrompt": "Selecteer een vereiste om de details te bekijken.",
+      "coverageLabel": "Dekking",
       "previousRequirement": "Vorige vereiste",
       "nextRequirement": "Volgende vereiste",
       "breadcrumbLabel": "Vereistenhiërarchie",

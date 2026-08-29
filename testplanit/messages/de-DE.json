@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Synchronisierte Anforderungen spiegeln die Hierarchie des Trackers wider. Trennen Sie sie, um sie zu verschieben."
     },
     "detail": {
-      "selectPrompt": "Wählen Sie eine Anforderung aus, um deren Details anzuzeigen.",
+      "coverageLabel": "Abdeckung",
       "previousRequirement": "Vorherige Anforderung",
       "nextRequirement": "Nächste Anforderung",
       "breadcrumbLabel": "Anforderungshierarchie",

@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "المتطلبات المتزامنة تعكس التسلسل الهرمي لأداة التتبع. افصلها لنقلها."
     },
     "detail": {
-      "selectPrompt": "حدد متطلبًا لعرض تفاصيله.",
+      "coverageLabel": "التغطية",
       "previousRequirement": "المتطلب السابق",
       "nextRequirement": "المتطلب التالي",
       "breadcrumbLabel": "التسلسل الهرمي للمتطلب",

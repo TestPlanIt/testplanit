@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "同步的需求会镜像跟踪器的层次结构。请分离后再移动。"
     },
     "detail": {
-      "selectPrompt": "选择一个需求以查看其详情。",
+      "coverageLabel": "覆盖率",
       "previousRequirement": "上一个需求",
       "nextRequirement": "下一个需求",
       "breadcrumbLabel": "需求层次结构",

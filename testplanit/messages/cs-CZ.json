@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Synchronizované požadavky odrážejí hierarchii trackeru. Chcete-li jej přesunout, odpojte jej."
     },
     "detail": {
-      "selectPrompt": "Vyberte požadavek pro zobrazení jeho podrobností.",
+      "coverageLabel": "Pokrytí",
       "previousRequirement": "Předchozí požadavek",
       "nextRequirement": "Další požadavek",
       "breadcrumbLabel": "Hierarchie požadavků",

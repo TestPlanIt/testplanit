@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "已同步的需求會反映追蹤器的層級結構。請解除連結以移動它。"
     },
     "detail": {
-      "selectPrompt": "選擇一個需求以查看其詳細資料。",
+      "coverageLabel": "涵蓋範圍",
       "previousRequirement": "上一個需求",
       "nextRequirement": "下一個需求",
       "breadcrumbLabel": "需求層級結構",

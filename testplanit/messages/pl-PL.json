@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Zsynchronizowane wymagania odzwierciedlają hierarchię z trackera. Odłącz, aby je przenieść."
     },
     "detail": {
-      "selectPrompt": "Wybierz wymaganie, aby zobaczyć jego szczegóły.",
+      "coverageLabel": "Pokrycie",
       "previousRequirement": "Poprzednie wymaganie",
       "nextRequirement": "Następne wymaganie",
       "breadcrumbLabel": "Hierarchia wymagań",

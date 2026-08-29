@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "동기화된 요구 사항은 트래커의 계층 구조를 그대로 반영합니다. 이동하려면 분리하세요."
     },
     "detail": {
-      "selectPrompt": "세부 정보를 보려면 요구 사항을 선택하세요.",
+      "coverageLabel": "커버리지",
       "previousRequirement": "이전 요구 사항",
       "nextRequirement": "다음 요구 사항",
       "breadcrumbLabel": "요구 사항 계층 구조",

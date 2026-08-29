@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Les exigences synchronisées reflètent la hiérarchie du système de suivi. Détachez-la pour la déplacer."
     },
     "detail": {
-      "selectPrompt": "Sélectionnez une exigence pour afficher ses détails.",
+      "coverageLabel": "Couverture",
       "previousRequirement": "Exigence précédente",
       "nextRequirement": "Exigence suivante",
       "breadcrumbLabel": "Hiérarchie des exigences",

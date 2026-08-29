@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Synced requirements mirror the tracker's hierarchy. Detach to move it."
     },
     "detail": {
-      "selectPrompt": "Select a requirement to view its details.",
+      "coverageLabel": "Coverage",
       "previousRequirement": "Previous requirement",
       "nextRequirement": "Next requirement",
       "breadcrumbLabel": "Requirement hierarchy",

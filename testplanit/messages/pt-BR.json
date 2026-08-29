@@ -6704,7 +6704,7 @@
       "dragLockedSynced": "Requisitos sincronizados espelham a hierarquia do rastreador. Desanexe para movê-lo."
     },
     "detail": {
-      "selectPrompt": "Selecione um requisito para ver seus detalhes.",
+      "coverageLabel": "Cobertura",
       "previousRequirement": "Requisito anterior",
       "nextRequirement": "Próximo requisito",
       "breadcrumbLabel": "Hierarquia de requisitos",
