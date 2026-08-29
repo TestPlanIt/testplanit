@@ -784,6 +784,11 @@ export function VirtualizedTableEngine({
     // roughly a third of a second, after which the guard latches regardless
     // -- a deep link is never worth fighting the reader for longer than
     // that, and by then they may be scrolling themselves.
+    //
+    // `getOffsetForIndex` is optional: it is not part of the surface a
+    // virtualizer stand-in must implement. Absent, the row counts as landed
+    // on the first attempt -- the same outcome as a row that cannot be
+    // centred.
     let frame = 0;
     let attempts = 0;
     let cancelled = false;
@@ -794,7 +799,7 @@ export function VirtualizedTableEngine({
       attempts += 1;
       frame = requestAnimationFrame(() => {
         if (cancelled) return;
-        const target = virtualizer.getOffsetForIndex(index, "center")?.[0];
+        const target = virtualizer.getOffsetForIndex?.(index, "center")?.[0];
         const current = virtualizer.scrollOffset;
         const landed =
           target == null ||

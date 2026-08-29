@@ -196,7 +196,14 @@ vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
     return {
       scrollRef: () => {},
       sentinelRef: { current: null },
-      virtualizer: { scrollToIndex: virtualizedHookMock.scrollToIndex },
+      // The engine's deep-link retry reads `getOffsetForIndex` and
+      // `scrollOffset` to decide whether its scroll landed. Stub them as
+      // "already there" so the retry settles on its first frame.
+      virtualizer: {
+        scrollToIndex: virtualizedHookMock.scrollToIndex,
+        getOffsetForIndex: () => [0, "center"] as const,
+        scrollOffset: 0,
+      },
       virtualItems: Array.from({ length: opts.count }, (_, i) => ({
         key: i,
         index: i,
