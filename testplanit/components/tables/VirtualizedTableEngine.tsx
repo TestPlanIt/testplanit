@@ -97,6 +97,15 @@ import { tableStyles } from "./tableStyles";
 
 const ESTIMATED_ROW_HEIGHT = 44;
 
+/** How close the scroll offset has to get to a deep-linked row's own offset
+ *  to count as landed, and how many animation frames the attempt is allowed
+ *  to take before giving up. Dynamic row measurement keeps nudging the
+ *  target offset while rows settle, so this is a tolerance rather than an
+ *  equality, and the cap keeps the retry from ever fighting a reader who has
+ *  started scrolling. Read by the deep-link scroll effect below. */
+const DEEP_LINK_SCROLL_TOLERANCE_PX = 8;
+const DEEP_LINK_SCROLL_MAX_ATTEMPTS = 20;
+
 /**
  * Render-prop shell that makes one flex header cell drag-reorderable. The cell
  * div is the sortable node (so it slides during a drag) but only the grip
@@ -385,6 +394,41 @@ export interface VirtualizedTableEngineProps {
    * queries `[data-row-id]`.
    */
   getRowProps?: (row: Row<any>) => VirtualizedRowExtraProps | undefined;
+  /**
+   * Nesting depth for a table that models its own hierarchy as a `depth`
+   * field on a FLAT data array rather than through TanStack's `getSubRows`
+   * expansion. TanStack's own `row.depth` stays 0 for such a table, so
+   * without this the engine cannot tell a child row from a root and the
+   * nested-row surface never paints (the requirements tree list is the
+   * case this exists for: it flattens its tree itself so the virtualizer
+   * sees one flat window).
+   *
+   * OPT-IN, and deliberately additive: absent, every existing table keeps
+   * reading nesting from `row.depth` exactly as it does today. It feeds the
+   * SAME `isSubRow` the expansion path already computes, so a consumer that
+   * opts in gets the established nested-row treatment (tinted surface,
+   * softened intra-group dividers, matching pinned-cell fill) rather than a
+   * second, parallel nesting style.
+   */
+  getRowNestingDepth?: (row: Row<any>) => number;
+  /**
+   * Where, in px from the first cell's inline start, to paint a FULL-ROW-
+   * HEIGHT nesting guide — or `null`/undefined for none.
+   *
+   * Companion to `getRowNestingDepth`, and needed for the same reason: a
+   * table that draws its own indent inside a wide first column has nowhere
+   * to put the engine's own guide (which hangs off that column's right
+   * edge, correct only when the column IS the indent cell). It cannot draw
+   * a full-height one itself either — every cell's content is wrapped in a
+   * `flex-1 truncate` div that both CLIPS and sizes to its content, so a
+   * rule drawn from inside the cell renderer can only ever be as tall as
+   * the text. Painting it here, as a sibling of that wrapper, is what lets
+   * it reach the row's top and bottom borders.
+   *
+   * The offset is the CALLER's to compute because only the caller knows its
+   * own indent and leading slots.
+   */
+  getRowNestingGuideOffset?: (row: Row<any>) => number | null;
   testIdPrefix?: string;
   rowTestIdPrefix?: string;
 }
@@ -429,6 +473,8 @@ export function VirtualizedTableEngine({
   scrollToRowId,
   highlightRowId,
   getRowProps,
+  getRowNestingDepth,
+  getRowNestingGuideOffset,
   testIdPrefix = "virtualized-table",
   rowTestIdPrefix = "virtualized-row",
 }: VirtualizedTableEngineProps) {
@@ -604,6 +650,7 @@ export function VirtualizedTableEngine({
   // unchanged. An explicit `loadedCount` prop still wins for server-lazy trees.
   const loadedRowCount = loadedCount ?? table.getCoreRowModel().flatRows.length;
   const leafColumns = table.getVisibleLeafColumns();
+
   const totalWidth = leafColumns.reduce((sum, c) => sum + c.getSize(), 0);
 
   // When a flex column is configured, the table stretches to fill its container
@@ -654,15 +701,30 @@ export function VirtualizedTableEngine({
   // grouping, the column set, or a caller-supplied external signal such as a
   // filter) — but NOT when a page is appended (that would defeat infinite
   // scroll).
+  // The COLUMN SET is deliberately NOT part of this key.
+  //
+  // It used to be, and that quietly broke deep links. A column set can change
+  // well after mount for reasons that have nothing to do with the result set:
+  // the requirements list appends its Actions column only once
+  // `useProjectPermissions` resolves, and responsive tables show/hide columns
+  // as the pane is resized. Each of those fired the scroll-to-top below --
+  // landing AFTER `scrollToRowId` had already centred a deep-linked row,
+  // silently throwing the reader back to row one (operator repro: opening
+  // `?requirement=<row 70>` left the list at scrollTop 0 with the row not
+  // even rendered).
+  //
+  // It is also wrong on its own terms: hiding a column is not a new result
+  // set, and being flung to the top of a long list for it is a wart. Sort,
+  // grouping and the caller's own signal all genuinely re-order or re-scope
+  // the rows, so those stay.
   const resetKey = useMemo(
     () =>
       JSON.stringify({
         sort: sortConfig ?? null,
         grouping: grouping ?? null,
-        cols: columns.map((c) => c.id),
         external: externalResetKey ?? null,
       }),
-    [sortConfig, grouping, columns, externalResetKey]
+    [sortConfig, grouping, externalResetKey]
   );
 
   const {
@@ -698,8 +760,53 @@ export function VirtualizedTableEngine({
       (r) => String(r.original?.id) === String(scrollToRowId)
     );
     if (index < 0) return;
-    scrolledToRef.current = scrollToRowId;
-    virtualizer.scrollToIndex(index, { align: "center" });
+
+    // RE-ASSERTED until it actually lands, and the guard is latched only
+    // once it has. A single call that latched immediately did not survive:
+    // the scroll-to-top in `useVirtualizedInfiniteList` can run AFTER this
+    // one and zero it -- in dev on every load, because React StrictMode
+    // double-invokes effects, and in production whenever anything changes
+    // that list's own reset key while a deep link is still settling. The
+    // effect then refused to retry, because it had already recorded the id
+    // as done, so `?requirement=<row 70>` opened at row one with the target
+    // not even rendered (operator report).
+    //
+    // Landing is CHECKED, not assumed: `getOffsetForIndex` gives the offset
+    // this index should sit at, including the clamp at the end of the list,
+    // so a row that simply cannot be centred still counts as landed instead
+    // of spinning the retry out. The attempt cap bounds the whole thing to
+    // roughly a third of a second, after which the guard latches regardless
+    // -- a deep link is never worth fighting the reader for longer than
+    // that, and by then they may be scrolling themselves.
+    let frame = 0;
+    let attempts = 0;
+    let cancelled = false;
+
+    const apply = () => {
+      if (cancelled) return;
+      virtualizer.scrollToIndex(index, { align: "center" });
+      attempts += 1;
+      frame = requestAnimationFrame(() => {
+        if (cancelled) return;
+        const target = virtualizer.getOffsetForIndex(index, "center")?.[0];
+        const current = virtualizer.scrollOffset;
+        const landed =
+          target == null ||
+          current == null ||
+          Math.abs(current - target) <= DEEP_LINK_SCROLL_TOLERANCE_PX;
+        if (landed || attempts >= DEEP_LINK_SCROLL_MAX_ATTEMPTS) {
+          scrolledToRef.current = scrollToRowId;
+          return;
+        }
+        apply();
+      });
+    };
+    apply();
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
   }, [scrollToRowId, rows, virtualizer]);
 
   const headers = table.getHeaderGroups().at(-1)?.headers ?? [];
@@ -1001,7 +1108,17 @@ export function VirtualizedTableEngine({
                 const row = rows[vItem.index];
                 if (!row) return null;
                 const isGrouped = row.getIsGrouped();
-                const isSubRow = row.depth > 0;
+                // `getRowNestingDepth` wins when supplied: a table that
+                // flattens its own tree carries the real depth on the row
+                // data, where TanStack's `row.depth` is always 0. Falls
+                // back to the expansion path's own depth otherwise, so
+                // nothing changes for a table that never passes it.
+                const isSubRow = (getRowNestingDepth?.(row) ?? row.depth) > 0;
+                // Row-scoped, not per-cell: the guide is painted on the row
+                // itself so it can cross the row's own divider -- see its
+                // own render below for why that placement is required.
+                const nestingGuideOffset =
+                  getRowNestingGuideOffset?.(row) ?? null;
                 const isHighlighted =
                   highlightRowId != null &&
                   String(row.original?.id) === String(highlightRowId);
@@ -1097,7 +1214,19 @@ export function VirtualizedTableEngine({
                             // Nesting guide: a wide colored bar on the RIGHT edge of
                             // the first (indent) cell of a sub-row, marking where the
                             // nested content begins.
-                            isSubRow &&
+                            //
+                            // Keyed on `row.depth`, NOT `isSubRow`: the
+                            // placement assumes the first column IS the narrow
+                            // indent cell, which is true for every
+                            // expansion-based table but not for one supplying
+                            // `getRowNestingDepth` -- that table draws its own
+                            // indent inside a first column of arbitrary width,
+                            // so this bar would land at that column's far edge,
+                            // hundreds of pixels from the nesting it claims to
+                            // mark. Such a table owns its own begins-here
+                            // marker, at the indent; it still gets the nested
+                            // SURFACE above, which is placement-independent.
+                            row.depth > 0 &&
                               cellIndex === 0 &&
                               "border-e-4 border-e-primary"
                           )}
@@ -1125,6 +1254,35 @@ export function VirtualizedTableEngine({
                         </div>
                       );
                     })}
+                    {/* Full-height nesting guide, drawn on the ROW rather
+                        than inside the first cell. Two reasons, both
+                        load-bearing: every cell wraps its content in a
+                        `flex-1 truncate` div that clips to the height of its
+                        own text, and the cell itself is `overflow-hidden`,
+                        so a rule drawn in either place stops short of the
+                        row's own 1px divider and reads as broken between
+                        consecutive sub-rows. `-bottom-px` extends it over
+                        that divider, and being a positioned descendant it
+                        paints above the row's border without needing a
+                        z-index that would also lift it over a pinned cell.
+                        `pointer-events-none` so it never intercepts a click
+                        or a native drag from the row beneath it.
+
+                        ASSUMES the guide's column is NOT pinned: this is
+                        positioned against the row, so a sticky first column
+                        would scroll out from under it. True for every
+                        consumer today (a table that draws its own indent
+                        does so in a wide, unpinned first column); a pinned
+                        variant would have to live in the cell and give up
+                        crossing the divider. */}
+                    {nestingGuideOffset !== null && (
+                      <span
+                        aria-hidden="true"
+                        data-testid="virtualized-nesting-guide"
+                        className="pointer-events-none absolute top-0 -bottom-px w-1 bg-primary/40"
+                        style={{ insetInlineStart: nestingGuideOffset }}
+                      />
+                    )}
                     {/* Ring/highlight overlay -- rendered ABOVE every cell,
                         including a pinned (sticky) one, so an outline drawn
                         here can never lose to the pinned cell's own opaque

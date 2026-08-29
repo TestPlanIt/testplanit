@@ -224,6 +224,8 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "highlightRowId"
       | "testIdPrefix"
       | "getRowProps"
+      | "getRowNestingDepth"
+      | "getRowNestingGuideOffset"
     > {
   virtualized: true;
 }

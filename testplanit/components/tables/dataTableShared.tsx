@@ -35,6 +35,7 @@ import {
   ArrowDownUp,
   ArrowUpZA,
   Check,
+  ChevronRight,
   EyeOff,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -250,16 +251,26 @@ export function useExpanderColumn<TData>(
                   type="button"
                   onClick={row.getToggleExpandedHandler()}
                   style={{ cursor: "pointer" }}
-                  className="me-2"
+                  // Same muted-to-foreground hover the requirements list's
+                  // own chevron uses, so the affordance reads as live in
+                  // both places. This button had no hover state at all.
+                  className="me-2 text-muted-foreground hover:text-foreground"
                   aria-label={tooltipText}
                 >
+                  {/* The same lucide chevron every other expand/collapse
+                      affordance in the app uses (the repository folder tree,
+                      the requirements list), rotated the same 90deg. It
+                      replaced a literal "▶" character, which rendered as a
+                      much heavier solid triangle at font-dependent metrics
+                      and was read aloud as its own Unicode name on top of
+                      the button's aria-label. */}
                   <span
                     className="inline-flex items-center justify-center w-4 transition-transform duration-200"
                     style={{
                       transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
                     }}
                   >
-                    {"▶"}
+                    <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </span>
                 </button>
               </TooltipTrigger>
@@ -451,13 +462,16 @@ export function resolveGroupableCellContent(
             row.getIsExpanded() ? tActions("collapse") : tActions("expand")
           }
         >
+          {/* Same chevron as the sub-row expander above -- a grouped row and
+              an expandable parent row are the same gesture and must not look
+              like two different ones. */}
           <span
             className="inline-flex items-center justify-center w-4 transition-transform duration-200"
             style={{
               transform: row.getIsExpanded() ? "rotate(90deg)" : "rotate(0deg)",
             }}
           >
-            {"▶"}
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </span>
         </Button>
         {flexRender(cell.column.columnDef.cell, cell.getContext())}

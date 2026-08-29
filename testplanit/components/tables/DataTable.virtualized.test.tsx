@@ -197,6 +197,40 @@ describe("DataTable (virtualized mode)", () => {
     expect(hookMock.lastOpts?.loadedCount).toBe(4);
   });
 
+  // `getRowNestingDepth` exists for a table that flattens its own tree (the
+  // requirements list): TanStack's `row.depth` is 0 on every row of a flat
+  // array, so without it a child row is indistinguishable from a root and the
+  // shared nested-row surface never paints.
+  it("reads nesting depth from getRowNestingDepth when the table supplies its own depth", () => {
+    renderTable({
+      data: [
+        { id: 1, name: "Root", count: 0, depth: 0 },
+        { id: 2, name: "Child", count: 0, depth: 1 },
+      ] as any,
+      getRowNestingDepth: (row) => (row.original as { depth: number }).depth,
+    });
+
+    const root = screen.getByTestId("virtualized-row-1");
+    const child = screen.getByTestId("virtualized-row-2");
+    expect(child.className).toContain("table-row-surface-nested");
+    expect(root.className).not.toContain("table-row-surface-nested");
+  });
+
+  it("leaves nesting on row.depth when getRowNestingDepth is absent, so existing tables are untouched", () => {
+    renderTable({
+      data: [
+        { id: 1, name: "Root", count: 0, depth: 0 },
+        { id: 2, name: "Child", count: 0, depth: 1 },
+      ] as any,
+    });
+
+    // A `depth` field the engine was never told to read must not change how
+    // any row paints.
+    expect(screen.getByTestId("virtualized-row-2").className).not.toContain(
+      "table-row-surface-nested"
+    );
+  });
+
   it("lets an explicit loadedCount prop override the derived tree count", () => {
     renderTable({
       hasMore: true,
