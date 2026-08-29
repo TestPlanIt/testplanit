@@ -108,17 +108,25 @@ export const POST = withAuditContext(
       // terminal state (28-05 proved the service tolerates a late write, but
       // the route should not attempt one), and refusing a second cancel
       // while already cancel-requested avoids a redundant write.
-      if (mapping.syncStatus !== SYNC_STATUS.syncing) {
+      //
+      // The status is matched in the WHERE clause rather than in a separate
+      // `if` above the write: the import runs in a worker and can land its
+      // terminal `completed` between a read here and a write here. A
+      // check-then-write would then replace that terminal state with
+      // `cancel-requested`, which the start route treats as "already
+      // running" and this route treats as "nothing to cancel" — a mapping
+      // no button can move, recoverable only by an unrelated full re-sync.
+      const { count } = await baseDb.integrationProject.updateMany({
+        where: { id: mapping.id, syncStatus: SYNC_STATUS.syncing },
+        data: { syncStatus: SYNC_STATUS.cancelRequested },
+      });
+
+      if (count === 0) {
         return NextResponse.json(
           { error: "No running import to cancel for this mapping" },
           { status: 409 }
         );
       }
-
-      await baseDb.integrationProject.update({
-        where: { id: mapping.id },
-        data: { syncStatus: SYNC_STATUS.cancelRequested },
-      });
 
       return NextResponse.json({ success: true });
     } catch (error: any) {

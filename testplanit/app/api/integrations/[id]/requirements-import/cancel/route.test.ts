@@ -14,14 +14,17 @@ vi.mock("~/lib/auditContextWrappers", () => ({
   withAuditContext: (handler: any) => handler,
 }));
 
-const { mockFindFirst, mockUpdate } = vi.hoisted(() => ({
+const { mockFindFirst, mockUpdateMany } = vi.hoisted(() => ({
   mockFindFirst: vi.fn(),
-  mockUpdate: vi.fn(),
+  mockUpdateMany: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({
   baseDb: {
-    integrationProject: { findFirst: mockFindFirst, update: mockUpdate },
+    integrationProject: {
+      findFirst: mockFindFirst,
+      updateMany: mockUpdateMany,
+    },
   },
 }));
 
@@ -48,9 +51,8 @@ import { POST } from "./route";
 const mockedSession = getServerSession as unknown as ReturnType<typeof vi.fn>;
 const mockedFindFirst = baseDb.integrationProject
   .findFirst as unknown as ReturnType<typeof vi.fn>;
-const mockedUpdate = baseDb.integrationProject.update as unknown as ReturnType<
-  typeof vi.fn
->;
+const mockedUpdateMany = baseDb.integrationProject
+  .updateMany as unknown as ReturnType<typeof vi.fn>;
 const mockedAuth = authorizeProjectAdminForProject as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -80,7 +82,7 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
       syncStatus: "syncing",
       projectIntegration: { config: {} },
     });
-    mockedUpdate.mockResolvedValue({ id: "ip-1" });
+    mockedUpdateMany.mockResolvedValue({ count: 1 });
   });
 
   it("returns 401 when there is no session", async () => {
@@ -94,7 +96,7 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
     expect(res.status).toBe(401);
     expect(mockedAuth).not.toHaveBeenCalled();
     expect(mockedFindFirst).not.toHaveBeenCalled();
-    expect(mockedUpdate).not.toHaveBeenCalled();
+    expect(mockedUpdateMany).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the integration id is not numeric", async () => {
@@ -158,7 +160,7 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
 
     expect(res.status).toBe(403);
     expect(mockedFindFirst).not.toHaveBeenCalled();
-    expect(mockedUpdate).not.toHaveBeenCalled();
+    expect(mockedUpdateMany).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the mapping does not belong to the caller's authorized project (cross-project aim)", async () => {
@@ -183,15 +185,16 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
         }),
       })
     );
-    expect(mockedUpdate).not.toHaveBeenCalled();
+    expect(mockedUpdateMany).not.toHaveBeenCalled();
   });
 
-  it("returns 409 and performs no write when the mapping is not currently syncing", async () => {
+  it("returns 409 and changes nothing when the mapping is not currently syncing", async () => {
     mockedFindFirst.mockResolvedValue({
       id: "ip-1",
       syncStatus: "completed",
       projectIntegration: { config: {} },
     });
+    mockedUpdateMany.mockResolvedValue({ count: 0 });
 
     const res = await POST(
       makeRequest({ projectId: 42, integrationProjectId: "ip-1" }),
@@ -199,7 +202,35 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
     );
 
     expect(res.status).toBe(409);
-    expect(mockedUpdate).not.toHaveBeenCalled();
+    // The write is attempted but matches nothing: the running-state check
+    // lives in the WHERE clause, which is what makes it safe against an
+    // import that finishes between the read and the write.
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: "ip-1", syncStatus: "syncing" },
+      data: { syncStatus: "cancel-requested" },
+    });
+  });
+
+  it("does NOT overwrite a terminal state when the import completes between the read and the write", async () => {
+    // The read sees a running import...
+    mockedFindFirst.mockResolvedValue({
+      id: "ip-1",
+      syncStatus: "syncing",
+      projectIntegration: { config: {} },
+    });
+    // ...but by the time the write lands, the worker has written `completed`,
+    // so the guarded update matches no rows. Without the guard this would
+    // stamp `cancel-requested` over the terminal state, leaving a mapping the
+    // start route refuses ("already running") and the cancel route refuses
+    // ("nothing to cancel") -- unreachable by any button.
+    mockedUpdateMany.mockResolvedValue({ count: 0 });
+
+    const res = await POST(
+      makeRequest({ projectId: 42, integrationProjectId: "ip-1" }),
+      params
+    );
+
+    expect(res.status).toBe(409);
   });
 
   it("returns 409 and performs no duplicate write on a second cancel while already cancel-requested", async () => {
@@ -208,6 +239,8 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
       syncStatus: "cancel-requested",
       projectIntegration: { config: {} },
     });
+    // The guarded update matches nothing: the row is no longer `syncing`.
+    mockedUpdateMany.mockResolvedValue({ count: 0 });
 
     const res = await POST(
       makeRequest({ projectId: 42, integrationProjectId: "ip-1" }),
@@ -215,7 +248,6 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
     );
 
     expect(res.status).toBe(409);
-    expect(mockedUpdate).not.toHaveBeenCalled();
   });
 
   it("writes exactly { syncStatus: cancel-requested } and returns 200 for a running import", async () => {
@@ -228,9 +260,9 @@ describe("POST /api/integrations/[id]/requirements-import/cancel", () => {
     const body = await res.json();
     expect(body).toEqual({ success: true });
 
-    expect(mockedUpdate).toHaveBeenCalledTimes(1);
-    expect(mockedUpdate).toHaveBeenCalledWith({
-      where: { id: "ip-1" },
+    expect(mockedUpdateMany).toHaveBeenCalledTimes(1);
+    expect(mockedUpdateMany).toHaveBeenCalledWith({
+      where: { id: "ip-1", syncStatus: "syncing" },
       data: { syncStatus: "cancel-requested" },
     });
   });

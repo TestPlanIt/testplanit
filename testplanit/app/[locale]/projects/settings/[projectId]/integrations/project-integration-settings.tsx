@@ -704,7 +704,16 @@ export function ProjectIntegrationSettings({
                               variant="outline"
                               size="icon"
                               className="h-7 w-7 shrink-0"
-                              disabled={ip.syncStatus === SYNC_STATUS.syncing}
+                              // `cancel-requested` counts as busy, the same
+                              // way the poll interval above already treats
+                              // it: the run is still winding down and the
+                              // start route refuses it as already running,
+                              // so an enabled button here only ever produces
+                              // an error toast.
+                              disabled={
+                                ip.syncStatus === SYNC_STATUS.syncing ||
+                                ip.syncStatus === SYNC_STATUS.cancelRequested
+                              }
                               onClick={() =>
                                 setImportRequest({
                                   initialIssueTypeIds:
