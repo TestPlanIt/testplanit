@@ -353,14 +353,17 @@ export async function getRequirementRootsPage(
   const lastRow = pageRows[pageRows.length - 1];
   const nextCursor: RequirementRootsCursor | null =
     hasMore && lastRow
-      ? { value: toCursorValue(lastRow.requirementSortKey), id: lastRow.id }
+      ? { value: toCursorValue(lastRow.requirementSortCursor), id: lastRow.id }
       : null;
 
-  // The sort key is a paging mechanism, not part of the row contract --
+  // The sort columns are a paging mechanism, not part of the row contract --
   // stripped so `RequirementTreeRow` stays exactly what every consumer
   // (and every serialized response) already expects.
   return {
-    rows: pageRows.map(({ requirementSortKey: _key, ...row }) => row),
+    rows: pageRows.map(
+      ({ requirementSortKey: _key, requirementSortCursor: _cursor, ...row }) =>
+        row
+    ),
     nextCursor,
   };
 }
@@ -755,28 +758,53 @@ function requirementSortKeyCursorFragment(
 
 /**
  * The sort value a page hands back as the next cursor. Selected as its own
- * aliased column (`req_sort_key`) rather than re-derived in JS from the row:
- * re-deriving would mean a SECOND implementation of every expression above,
- * and the two would drift the moment one changed.
+ * aliased column rather than re-derived in JS from the row: re-deriving would
+ * mean a SECOND implementation of every expression above, and the two would
+ * drift the moment one changed.
+ *
+ * TWO columns, not one, because ordering and cursoring want different types
+ * of the same value:
+ *
+ * `requirementSortKey` keeps the descriptor's own type. The matches-CTE path
+ * both ORDERs BY and cursor-compares this alias, and those have to happen in
+ * the column's real type -- a timestamp compared as text would be at the
+ * mercy of the database's collation, and an ICU collation may treat the `-`
+ * and `:` in an ISO timestamp as ignorable punctuation rather than ordering
+ * on them.
+ *
+ * `requirementSortCursor` is that same value rendered LOSSLESSLY for the
+ * round trip out to a caller and back. It exists for `timestamptz`:
+ * `Issue.createdAt` is `@db.Timestamptz(6)` and so carries microseconds,
+ * while the driver maps a timestamp to a JS `Date`, whose `toISOString()`
+ * has only millisecond resolution. Handing that truncated value back as a
+ * cursor makes the next page's `>` comparison match the boundary row all
+ * over again -- the page repeats, its cursor is unchanged, and an ascending
+ * `createdAt` walk never terminates. `to_char(... 'US' ...)` keeps all six
+ * digits, and `boundCursorValue`'s `::timestamptz` parses them back exactly.
  */
 function requirementSortKeyFragment(
   sort: RequirementTreeSort
 ): RawBuilder<unknown> {
-  const { expr } = requirementSortDescriptor(sort);
-  return sql`${expr} AS "requirementSortKey"`;
+  const { expr, cast } = requirementSortDescriptor(sort);
+  const cursorExpr =
+    cast === "timestamptz"
+      ? sql`to_char(${expr} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`
+      : expr;
+  return sql`${expr} AS "requirementSortKey", ${cursorExpr} AS "requirementSortCursor"`;
 }
 
-/** A row as it comes back from a sorted page, before the sort key is
+/** A row as it comes back from a sorted page, before the sort columns are
  *  stripped off for the caller. */
 type SortedRequirementRow = RequirementTreeRow & {
   requirementSortKey: string | number | Date | null;
+  requirementSortCursor: string | number | null;
 };
 
-/** Normalizes the selected sort key into the cursor's own value type. A
- *  timestamp arrives as a JS `Date` from the pg driver and has to go back
- *  as an ISO string, which is what the `::timestamptz` cast above parses. */
-function toCursorValue(key: SortedRequirementRow["requirementSortKey"]) {
-  if (key instanceof Date) return key.toISOString();
+/** Normalizes the selected cursor column into the cursor's own value type.
+ *  Never sees a `Date`: `requirementSortKeyFragment` renders a timestamp to
+ *  text in SQL precisely so the driver's millisecond-resolution `Date`
+ *  mapping is never on this path. */
+function toCursorValue(key: SortedRequirementRow["requirementSortCursor"]) {
   if (typeof key === "number") return key;
   return String(key ?? "");
 }
@@ -1046,7 +1074,7 @@ export async function resolveRequirementMatches(
   const lastRow = pageRows[pageRows.length - 1];
   const nextCursor: RequirementRootsCursor | null =
     hasMore && lastRow
-      ? { value: toCursorValue(lastRow.requirementSortKey), id: lastRow.id }
+      ? { value: toCursorValue(lastRow.requirementSortCursor), id: lastRow.id }
       : null;
 
   const matchedTotal = Number(rows[0]?.matchedTotal ?? 0);

@@ -113,10 +113,12 @@ function makeMatchRow(
   overrides: Partial<RequirementTreeRow> & {
     matchedTotal?: number | bigint;
     requirementSortKey?: unknown;
+    requirementSortCursor?: unknown;
   } = {}
 ) {
   return {
     requirementSortKey: overrides.name ?? "a",
+    requirementSortCursor: overrides.name ?? "a",
     id: 1,
     name: "a",
     title: "a",
@@ -149,16 +151,22 @@ const NO_AXES: RequirementTreeFilterAxes = {
   source: [],
 };
 
-// The page queries also SELECT the sort key (`requirementSortKey`), which is
-// what the next cursor is derived from -- a mock row without one would make
-// every cursor assertion below prove nothing. Defaulted to the row's own
-// `name`, which is exactly what the default name sort's expression produces
-// for a row whose title is not distinct.
+// The page queries SELECT two sort columns: `requirementSortKey`, which the
+// matches CTE orders and cursor-compares on, and `requirementSortCursor`,
+// the losslessly-rendered value the next cursor is actually derived from. A
+// mock row without both would make every cursor assertion below prove
+// nothing. Defaulted to the row's own `name`, which is exactly what the
+// default name sort's expression produces for a row whose title is not
+// distinct.
 function makeRow(
-  overrides: Partial<RequirementTreeRow> & { requirementSortKey?: unknown }
+  overrides: Partial<RequirementTreeRow> & {
+    requirementSortKey?: unknown;
+    requirementSortCursor?: unknown;
+  }
 ): RequirementTreeRow {
   return {
     requirementSortKey: overrides.name ?? "a",
+    requirementSortCursor: overrides.name ?? "a",
     id: 1,
     name: "a",
     title: "a",
@@ -250,11 +258,14 @@ describe("getRequirementRootsPage (unit, mocked $qb)", () => {
         db as never
       )
     ).resolves.toEqual({
-      // The sort key is stripped from the rows a caller sees -- it is a
-      // paging mechanism, not part of `RequirementTreeRow`.
+      // Both sort columns are stripped from the rows a caller sees -- they
+      // are a paging mechanism, not part of `RequirementTreeRow`.
       rows: rows.map((row) => {
-        const { requirementSortKey: _key, ...rest } =
-          row as RequirementTreeRow & Record<string, unknown>;
+        const {
+          requirementSortKey: _key,
+          requirementSortCursor: _cursor,
+          ...rest
+        } = row as RequirementTreeRow & Record<string, unknown>;
         return rest;
       }),
       nextCursor: null,
@@ -404,6 +415,50 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     expect(captured[0].sql).toContain(
       'ORDER BY "requirementSortKey" DESC, id DESC'
     );
+  });
+
+  // The live-DB lane
+  // (__tests__/integration/requirements-tree-sort.integration.test.ts) proves
+  // the BEHAVIOUR this shape exists for: without the lossless rendering, an
+  // ascending `createdAt` walk re-emits its boundary row forever and the
+  // cursor never advances, because `Issue.createdAt` is `Timestamptz(6)` and
+  // a JS `Date` cursor only carries milliseconds. This assertion is the cheap
+  // guard that the rendering is still in the statement at all.
+  it("renders a timestamp sort key to microsecond text for the cursor, never letting a millisecond-resolution Date become the cursor value", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: [], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+        sort: { column: "createdAt", direction: "asc" },
+      },
+      db as never
+    );
+    expect(captured[0].sql).toContain('HH24:MI:SS.US"Z"');
+    expect(captured[0].sql).toContain('AS "requirementSortCursor"');
+    // The ordering column keeps its real type -- ordering an ISO timestamp as
+    // text would put it at the mercy of the database's collation.
+    expect(captured[0].sql).toContain('AS "requirementSortKey"');
+  });
+
+  it("leaves a non-timestamp sort key alone -- only the timestamp cast needs re-rendering", async () => {
+    const { db, captured } = makeCapturingMockDb([[]]);
+    await resolveRequirementMatches(
+      {
+        projectId: 1,
+        axes: { search: "widget", status: [], source: [] },
+        coverageMatchIds: null,
+        limit: 50,
+        include: "ids",
+        sort: { column: "name", direction: "asc" },
+      },
+      db as never
+    );
+    expect(captured[0].sql).not.toContain("to_char");
+    expect(captured[0].sql).toContain('AS "requirementSortCursor"');
   });
 
   it("sorts a coverage-derived column through the caller's precomputed values, LEFT joined so a requirement missing from the rollup still appears", async () => {
