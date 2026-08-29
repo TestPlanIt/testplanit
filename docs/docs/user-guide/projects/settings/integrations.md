@@ -58,15 +58,15 @@ Linking and inbound webhooks bring issues into TestPlanIt one at a time. When yo
 
 Each linked external project row has a single **Import Issues** button (the download icon). It opens a dialog where you scope what to pull:
 
-- **Issue types** — for trackers that expose issue types, optionally narrow the import to specific ones. Opening this dialog from the **Requirement Sync** section (see [Requirement Sync](#requirement-sync)) preselects the project's configured requirement types.
+- **Issue types** — for trackers that expose issue types, the configured requirement types this run will cover, shown for confirmation. Opening this dialog from the **Requirement Sync** section (see [Requirement Sync](#requirement-sync)) scopes it to the project's configured requirement types.
 - **Updated within** — import issues updated in the last 30, 90, 180, or 365 days (default 90), or choose **All history** for no date limit at all.
-- **Maximum to import** — a cap on how many issues this run creates (default 200, maximum 1000). Clear the field for no cap.
+- **Maximum to import** — a cap on how many issues this run creates (default 200, maximum 1000), which applies to a dated run. Choosing **All history** imports every matching issue with no cap, and disables this field.
 
 A recent, capped sample (today's default) behaves as it always has: click **Preview** to see roughly how many issues match your filter (and whether the cap will trim the result), then **Import** to run it in the background.
 
-Choosing **All history** or clearing the cap switches to an uncapped run instead: it targets the project's configured requirement types (see [Requirement Sync](#requirement-sync)), has no date window and no cap, and pages to completion. If the project hasn't classified any requirement types yet, it says so instead of importing anything. Otherwise, before it writes anything, it states roughly how many matching issues the tracker holds and asks you to confirm — this is also the import that starts automatically when saving a **Requirement Sync** change newly classifies a type, so you don't have to remember to run it afterward.
+Choosing **All history** switches to an uncapped run instead: it targets the project's configured requirement types (see [Requirement Sync](#requirement-sync)), has no date window and no cap, and pages to completion. If the project hasn't classified any requirement types yet, it says so instead of importing anything. Otherwise, before it writes anything, it states roughly how many matching issues the tracker holds and asks you to confirm — this is also the import that starts automatically when saving a **Requirement Sync** change newly classifies a type, so you don't have to remember to run it afterward.
 
-The linked project's status badge shows **Syncing** while any import runs and **Synced** when it finishes — the same badge the [re-sync](../../integrations.md#re-syncing-linked-issues) uses. An uncapped run additionally shows its progress in the **Requirement Sync** section, with a **Stop** action: *"Stopping takes effect after the current page finishes importing. Issues already imported will stay."* Only one import can run per linked project at a time.
+The linked project's status badge shows **Syncing** while any import runs and **Synced** when it finishes — the same badge the [re-sync](../../integrations.md#re-syncing-linked-issues) uses. An uncapped run additionally shows its progress on the linked external project's own row, with a **Stop** action: *"Stopping takes effect after the current page finishes importing. Issues already imported will stay."* Only one import can run per linked project at a time.
 
 Imported issues are created **in this project** and behave like any other linked issue:
 
@@ -109,7 +109,7 @@ For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, and Mant
 
 Before you save, an **Impact of this change** preview shows how many existing issues will become requirements or stop being requirements, plus a callout for detached or locally edited rows that would lose their requirement status. Nothing is applied until **Save**; saving also reclassifies existing issues to match. Removing a type is reversible — re-adding it restores the classification, and nothing is deleted.
 
-To bring in every existing issue of the configured types — not just the ones classified as they arrive — use the linked project's own **Import Issues** action, described in [Importing issues in bulk](#importing-issues-in-bulk); opening it from here starts it already scoped to these types with no limit. Saving a change that newly classifies a type offers this same import unprompted. While an uncapped run is in progress, its status and a **Stop** action appear here, alongside the linked tracker project.
+To bring in every existing issue of the configured types — not just the ones classified as they arrive — use the linked project's own **Import Issues** action, described in [Importing issues in bulk](#importing-issues-in-bulk); opening it from here starts it already scoped to these types with no limit. Saving a change that newly classifies a type offers this same import unprompted. While an uncapped run is in progress, its status and a **Stop** action appear on the linked external project's row under **Linked External Projects**.
 
 Classified requirements appear on the project's [Requirements](../requirements.md) page once the feature is enabled for the project under [Advanced settings](advanced.md) — see [Enabling Requirements](../requirements.md#enabling-requirements) for the full two-step setup.
 
