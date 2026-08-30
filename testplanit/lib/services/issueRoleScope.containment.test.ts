@@ -213,6 +213,14 @@ const SCOPED_FILES = [
   "app/[locale]/projects/requirements/[projectId]/[requirementId]/page.tsx",
   "app/[locale]/requirement/[requirementId]/page.tsx",
   "hooks/useRequirementAncestors.ts",
+  // The report builder's share-redirect hydration resolves display labels
+  // for requirement-scope ids restored from the URL. Spreads
+  // REQUIREMENT_SCOPE_WHERE into its single useFindMany — the ids come
+  // straight from the URL, so the predicate is what stops a crafted link
+  // from resolving a defect's name/title into the scope picker. Verified
+  // by direct read; display-only either way, since the report routes
+  // scope their own reads server-side.
+  "components/reports/ReportBuilder.tsx",
   // 27-09's LINK-03 reference picker forks components/issues/search-issues-dialog.tsx
   // wholesale (D-09/D-12) and inherits its exact DEFECT_SCOPE_WHERE /
   // includeRequirements toggle at the same query boundary, unchanged by the

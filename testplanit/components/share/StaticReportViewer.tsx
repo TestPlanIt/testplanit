@@ -1,6 +1,7 @@
 "use client";
 
 import { ReportRenderer } from "@/components/reports/ReportRenderer";
+import { buildSharedReportSearchParams } from "@/components/reports/reportShareParams";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,26 +47,7 @@ export function StaticReportViewer({
   const fullReportUrl = useMemo(() => {
     if (!shareData.projectId || !config) return null;
 
-    const params = new URLSearchParams();
-    if (config.reportType) params.set("reportType", config.reportType);
-    if (config.startDate) params.set("startDate", config.startDate);
-    if (config.endDate) params.set("endDate", config.endDate);
-    if (config.dimensions)
-      params.set(
-        "dimensions",
-        Array.isArray(config.dimensions)
-          ? config.dimensions.join(",")
-          : config.dimensions
-      );
-    if (config.metrics)
-      params.set(
-        "metrics",
-        Array.isArray(config.metrics)
-          ? config.metrics.join(",")
-          : config.metrics
-      );
-    if (config.dimensionFilters)
-      params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
+    const params = buildSharedReportSearchParams(config);
     return `/projects/reports/${shareData.projectId}?${params.toString()}`;
   }, [shareData.projectId, config]);
 

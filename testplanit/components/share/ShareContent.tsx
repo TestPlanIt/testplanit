@@ -6,6 +6,7 @@ import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { buildSharedReportSearchParams } from "~/components/reports/reportShareParams";
 import { PasswordGate } from "./PasswordGate";
 import { SharedReportViewer } from "./SharedReportViewer";
 
@@ -76,35 +77,9 @@ export function ShareContent({
           // Build full report URL with configuration
           let reportUrl: string | undefined;
           if (data.entityType === "REPORT" && data.projectId) {
-            const config = shareData.entityConfig;
-            const params = new URLSearchParams();
-
-            if (config.reportType) params.set("reportType", config.reportType);
-            if (config.startDate) params.set("startDate", config.startDate);
-            if (config.endDate) params.set("endDate", config.endDate);
-            if (config.dimensions)
-              params.set(
-                "dimensions",
-                Array.isArray(config.dimensions)
-                  ? config.dimensions.join(",")
-                  : config.dimensions
-              );
-            if (config.metrics)
-              params.set(
-                "metrics",
-                Array.isArray(config.metrics)
-                  ? config.metrics.join(",")
-                  : config.metrics
-              );
-            if (config.dimensionFilters)
-              params.set(
-                "dimensionFilters",
-                JSON.stringify(config.dimensionFilters)
-              );
-            if (config.page) params.set("page", config.page.toString());
-            if (config.pageSize)
-              params.set("pageSize", config.pageSize.toString());
-
+            const params = buildSharedReportSearchParams(
+              shareData.entityConfig
+            );
             reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
           }
 
@@ -193,35 +168,7 @@ export function ShareContent({
         // Build full report URL with configuration
         let reportUrl: string | undefined;
         if (data.entityType === "REPORT" && data.projectId) {
-          const config = shareData.entityConfig;
-          const params = new URLSearchParams();
-
-          if (config.reportType) params.set("reportType", config.reportType);
-          if (config.startDate) params.set("startDate", config.startDate);
-          if (config.endDate) params.set("endDate", config.endDate);
-          if (config.dimensions)
-            params.set(
-              "dimensions",
-              Array.isArray(config.dimensions)
-                ? config.dimensions.join(",")
-                : config.dimensions
-            );
-          if (config.metrics)
-            params.set(
-              "metrics",
-              Array.isArray(config.metrics)
-                ? config.metrics.join(",")
-                : config.metrics
-            );
-          if (config.dimensionFilters)
-            params.set(
-              "dimensionFilters",
-              JSON.stringify(config.dimensionFilters)
-            );
-          if (config.page) params.set("page", config.page.toString());
-          if (config.pageSize)
-            params.set("pageSize", config.pageSize.toString());
-
+          const params = buildSharedReportSearchParams(shareData.entityConfig);
           reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
         }
 
@@ -331,29 +278,7 @@ export function ShareContent({
       }
 
       // Construct URL with report configuration
-      const params = new URLSearchParams();
-
-      if (config.reportType) params.set("reportType", config.reportType);
-      if (config.startDate) params.set("startDate", config.startDate);
-      if (config.endDate) params.set("endDate", config.endDate);
-      if (config.dimensions)
-        params.set(
-          "dimensions",
-          Array.isArray(config.dimensions)
-            ? config.dimensions.join(",")
-            : config.dimensions
-        );
-      if (config.metrics)
-        params.set(
-          "metrics",
-          Array.isArray(config.metrics)
-            ? config.metrics.join(",")
-            : config.metrics
-        );
-      if (config.dimensionFilters)
-        params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
-      if (config.page) params.set("page", config.page.toString());
-      if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+      const params = buildSharedReportSearchParams(config);
 
       // Redirect to appropriate Reports page
       const reportsUrl = projectId

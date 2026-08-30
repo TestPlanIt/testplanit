@@ -57,6 +57,7 @@ import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportRenderer } from "~/components/reports/ReportRenderer";
 import { ShareButton } from "~/components/reports/ShareButton";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
+import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -111,6 +112,7 @@ import {
   resolveSyncedReportType,
   resolveTabChange,
 } from "./reportUrlUtils";
+import { parsePerTypeReportParams } from "./reportShareParams";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
@@ -347,6 +349,14 @@ function ReportBuilderContent({
   const initialReportType =
     searchParams.get("reportType") || computedDefaultReportType;
   const [reportType, setReportType] = useState<string>(initialReportType);
+  // Per-type report params (share redirects and deep links) are read ONCE
+  // at mount and seed the initializers below — pre-built reports auto-run
+  // with mounted state, so hydrating in an effect would race that first
+  // run. In-app type switches reset the URL (buildCleanReportUrlParams),
+  // so these params can only describe the mounted URL's report type.
+  const [initialPerTypeParams] = useState(() =>
+    parsePerTypeReportParams(searchParams, initialReportType)
+  );
   const [dimensions, setDimensions] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any[]>([]);
   const [results, setResults] = useState<any[] | null>(null);
@@ -372,7 +382,7 @@ function ReportBuilderContent({
   const [selectedFilterType, setSelectedFilterType] = useState<string>("");
   const [selectedFilterValues, setSelectedFilterValues] = useState<
     Record<string, Array<string | number>>
-  >({});
+  >(initialPerTypeParams.trendsFilterValues);
   const [filterOptions, setFilterOptions] = useState<any>(null);
 
   // Legacy state for builder tab priority filter
@@ -385,10 +395,10 @@ function ReportBuilderContent({
 
   const [dateGrouping, setDateGrouping] = useState<
     "daily" | "weekly" | "monthly" | "quarterly" | "annually"
-  >("weekly");
+  >(initialPerTypeParams.dateGrouping);
   const [lastUsedDateGrouping, setLastUsedDateGrouping] = useState<
     "daily" | "weekly" | "monthly" | "quarterly" | "annually"
-  >("weekly");
+  >(initialPerTypeParams.dateGrouping);
   // When the folder dimension is grouped, roll results up into ancestor
   // folders so a parent folder includes its whole subtree.
   const [folderIncludeDescendants, setFolderIncludeDescendants] =
@@ -423,43 +433,121 @@ function ReportBuilderContent({
     >("most_executed");
 
   // Flaky tests state
-  const [consecutiveRuns, setConsecutiveRuns] = useState(10);
+  const [consecutiveRuns, setConsecutiveRuns] = useState(
+    initialPerTypeParams.consecutiveRuns
+  );
   // Requirement report scope (gaps/traceability): the requirements whose
   // subtrees the report is confined to. Empty = whole project. Options are
   // kept whole (not just ids) so the trigger can keep rendering their
-  // labels; only ids travel in the request body.
+  // labels; only ids travel in the request body. Ids restored from the URL
+  // start as placeholder options — the run needs only the ids, and the
+  // resolution query below swaps in real labels when it lands.
   const [requirementScope, setRequirementScope] = useState<
     RequirementScopeOption[]
-  >([]);
+  >(() =>
+    initialPerTypeParams.requirementIds.map((id) => ({
+      id,
+      name: `#${id}`,
+      title: null,
+      externalUrl: null,
+    }))
+  );
   // Traceability's requirement-level coverage-state filter (empty = all;
   // applied server-side so counts/CSV/viz/share all describe one set) and
-  // the coverage-debt report's opt-in never-ran tier.
+  // the coverage-debt report's never-ran tier.
   const [requirementCoverageStates, setRequirementCoverageStates] = useState<
     string[]
-  >([]);
+  >(initialPerTypeParams.requirementCoverageStates);
   // ON by default (operator direction 2026-08-30): never-run linked cases
   // are as evidence-free as true gaps, so the debt report opens complete.
-  const [includeNotRunDebt, setIncludeNotRunDebt] = useState(true);
-  const [flipThreshold, setFlipThreshold] = useState(5);
+  const [includeNotRunDebt, setIncludeNotRunDebt] = useState(
+    initialPerTypeParams.includeNotRunDebt
+  );
+  const [flipThreshold, setFlipThreshold] = useState(
+    initialPerTypeParams.flipThreshold
+  );
   const [flakyAutomatedFilter, setFlakyAutomatedFilter] = useState<
     "all" | "automated" | "manual"
-  >("all");
+  >(initialPerTypeParams.flakyAutomatedFilter);
   // Track the consecutiveRuns value used when report was last run (for stable chart/table rendering)
-  const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(10);
+  const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(
+    initialPerTypeParams.consecutiveRuns
+  );
 
   // Test case health state
-  const [staleDaysThreshold, setStaleDaysThreshold] = useState(30);
-  const [minExecutionsForRate, setMinExecutionsForRate] = useState(5);
-  const [lookbackDays, setLookbackDays] = useState(90);
+  const [staleDaysThreshold, setStaleDaysThreshold] = useState(
+    initialPerTypeParams.staleDaysThreshold
+  );
+  const [minExecutionsForRate, setMinExecutionsForRate] = useState(
+    initialPerTypeParams.minExecutionsForRate
+  );
+  const [lookbackDays, setLookbackDays] = useState(
+    initialPerTypeParams.lookbackDays
+  );
   const [healthAutomatedFilter, setHealthAutomatedFilter] = useState<
     "all" | "automated" | "manual"
-  >("all");
+  >(initialPerTypeParams.healthAutomatedFilter);
   const [healthStatusFilter, setHealthStatusFilter] = useState<
     "all" | "healthy" | "never_executed" | "always_passing" | "always_failing"
-  >("all");
+  >(initialPerTypeParams.healthStatusFilter);
   const [healthStaleFilter, setHealthStaleFilter] = useState<
     "all" | "stale" | "notStale"
-  >("all");
+  >(initialPerTypeParams.healthStaleFilter);
+
+  // Resolve display labels for scope options restored from the URL as
+  // placeholders. Display-only: the report request already carried the
+  // ids, and an id the viewer cannot see (or that was deleted since the
+  // share was made) simply keeps its placeholder — the report routes
+  // apply their own scope checks regardless.
+  const placeholderScopeIds = useMemo(
+    () =>
+      requirementScope
+        .filter(
+          (option) => option.title === null && option.name === `#${option.id}`
+        )
+        .map((option) => option.id),
+    [requirementScope]
+  );
+  const { data: resolvedScopeOptions } = useClientQueries(
+    schema
+  ).issue.useFindMany(
+    {
+      where: {
+        id: { in: placeholderScopeIds },
+        // The ids come straight from the URL — the requirement-role
+        // predicate keeps a crafted link from resolving a defect's
+        // name/title into the picker (HYG-01).
+        ...REQUIREMENT_SCOPE_WHERE,
+        isDeleted: false,
+      },
+      select: { id: true, name: true, title: true, externalUrl: true },
+    },
+    { enabled: placeholderScopeIds.length > 0 }
+  );
+  useEffect(() => {
+    if (!resolvedScopeOptions || resolvedScopeOptions.length === 0) return;
+    const byId = new Map(
+      resolvedScopeOptions.map((issue) => [issue.id, issue])
+    );
+    setRequirementScope((prev) => {
+      let changed = false;
+      const next = prev.map((option) => {
+        const resolved =
+          option.title === null && option.name === `#${option.id}`
+            ? byId.get(option.id)
+            : undefined;
+        if (!resolved) return option;
+        changed = true;
+        return {
+          id: resolved.id,
+          name: resolved.name,
+          title: resolved.title,
+          externalUrl: resolved.externalUrl,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [resolvedScopeOptions]);
 
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
@@ -1611,9 +1699,10 @@ function ReportBuilderContent({
           }
         }
         if (matchesReportType(reportType, "requirement-coverage-gaps")) {
-          if (includeNotRunDebt) {
-            body.includeNotRun = true;
-          }
+          // Always explicit: the config a share stores must distinguish
+          // "toggled off" from "predates the toggle", or the redirect
+          // would restore the default instead of the shared state.
+          body.includeNotRun = includeNotRunDebt;
         }
 
         // Add sorting parameters if configured
