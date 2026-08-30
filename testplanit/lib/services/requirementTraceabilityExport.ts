@@ -1,4 +1,7 @@
-import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import {
+  formatIssueDisplayText,
+  resolveRequirementDisplayStatus,
+} from "~/utils/issueDisplayText";
 
 import type {
   RequirementCoverageBreakdown,
@@ -30,6 +33,23 @@ export type RequirementNode = {
   title: string | null;
   externalUrl: string | null;
   parentId: number | null;
+  /** Icon inputs for the shared IssueTypeIcon, exactly what the
+   * requirements tree renders — optional so pure-path callers and older
+   * fixtures need not carry them. */
+  issueTypeName?: string | null;
+  issueTypeIconUrl?: string | null;
+  /** Gap-report (coverage debt) enrichment — the fields
+   * `resolveRequirementDisplayStatus` and the Uncovered-since column
+   * read. Optional for the same fixture-compat reason as the icon pair. */
+  priority?: string | null;
+  status?: string | null;
+  externalStatus?: string | null;
+  integrationId?: number | null;
+  requirementDetachedAt?: Date | string | null;
+  createdAt?: Date | string | null;
+  /** The sync-maintained metadata blob (`buildSyncedIssueData`) — read
+   * here only for `data.createdAt`, the tracker's own creation instant. */
+  data?: unknown;
 };
 
 /**
@@ -45,9 +65,31 @@ export type RequirementTraceabilityRow = {
   requirementId: number;
   requirementKey: string; // Issue.name
   requirementTitle: string | null;
-  requirementPath: string; // "Root > Child > Leaf"
+  requirementPath: string; // "Root > Child > Leaf" — includes the requirement itself; the matrix's ordering key
+  /** The ancestors alone — "Root > Child" for a leaf, "" for a top-level
+   * requirement. What the Path column and the exports DISPLAY: repeating
+   * the requirement's own text inside its path made the column read as a
+   * copy of the Requirement column in a mostly-flat project. */
+  requirementParentPath: string;
+  requirementIssueTypeName?: string | null;
+  requirementIssueTypeIconUrl?: string | null;
+  /** Requirement-level context for the coverage-debt report: priority,
+   * the DISPLAY status (already resolved through
+   * `resolveRequirementDisplayStatus` — never a raw status read), and
+   * when the requirement was created (the age of an uncovered gap). */
+  requirementPriority?: string | null;
+  requirementStatus?: string | null;
+  requirementCreatedAt?: string | null;
+  /** The id of the requirement's top-level root (itself when top-level)
+   * — what makes a hierarchy bar's label clickable even when the root
+   * has no row of its own in the result set. */
+  requirementRootId?: number;
   caseId: number | null; // null => coverage gap
   caseName: string | null;
+  /** TestCaseNameDisplay's icon inputs; absent on gap rows. */
+  caseAutomated?: boolean;
+  caseSource?: string | null;
+  caseHasParameters?: boolean;
   caseProjectId: number | null;
   caseProjectName: string | null;
   statusName: string | null; // null => not run
@@ -74,8 +116,19 @@ export type RequirementCoverageGapRow = Pick<
   | "requirementKey"
   | "requirementTitle"
   | "requirementPath"
+  | "requirementParentPath"
+  | "requirementIssueTypeName"
+  | "requirementIssueTypeIconUrl"
+  | "requirementPriority"
+  | "requirementStatus"
+  | "requirementCreatedAt"
+  | "requirementRootId"
   | "linkedCaseCount"
->;
+> & {
+  /** UNCOVERED for a true gap; NOT_RUN for the opt-in never-ran tier —
+   * the column that keeps the two tiers distinguishable in one list. */
+  coverageStatus: RequirementCoverageStatus;
+};
 
 /** Bound on the ancestor walk in `buildRequirementPaths` — matches
  * `app/api/milestones/[milestoneId]/export/route.ts`'s `buildParentPath`
@@ -96,6 +149,16 @@ const MAX_PATH_HOPS = 25;
  * Title" exactly like the tree does, rather than a second, drifting
  * "KEY: Title" convention invented here.
  */
+/** Parses `data.createdAt` defensively — the column is untyped Json fed
+ * by the sync writer; anything but a valid date string reads as absent. */
+function trackerCreatedAt(data: unknown): string | null {
+  if (typeof data !== "object" || data === null) return null;
+  const value = (data as Record<string, unknown>).createdAt;
+  if (typeof value !== "string") return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
 export function buildRequirementPaths(
   requirements: RequirementNode[]
 ): Map<number, string> {
@@ -131,6 +194,40 @@ export function buildRequirementPaths(
 }
 
 /**
+ * The topmost resolvable ancestor for every requirement — the id behind
+ * the hierarchy bars' clickable root labels. Same walk, guards, and
+ * requirement-rows-only semantics as `buildRequirementPaths` (a chain
+ * broken by a non-requirement parent tops out at the break, matching the
+ * path's own first segment). A top-level requirement is its own root.
+ */
+export function buildRequirementRootIds(
+  requirements: RequirementNode[]
+): Map<number, number> {
+  const byId = new Map(
+    requirements.map((requirement) => [requirement.id, requirement])
+  );
+  const rootIds = new Map<number, number>();
+
+  for (const requirement of requirements) {
+    const visited = new Set<number>();
+    let current: RequirementNode = requirement;
+    let hops = 0;
+    while (hops < MAX_PATH_HOPS) {
+      if (visited.has(current.id)) break;
+      visited.add(current.id);
+      const parent =
+        current.parentId != null ? byId.get(current.parentId) : undefined;
+      if (!parent) break;
+      current = parent;
+      hops++;
+    }
+    rootIds.set(requirement.id, current.id);
+  }
+
+  return rootIds;
+}
+
+/**
  * Builds the full set of traceability rows from the requirement list, the
  * rollup's coverage breakdown, and the drill-down's covering-case lists —
  * the same two shipped services every consumer of this matrix composes,
@@ -150,13 +247,43 @@ export function buildTraceabilityRows(params: {
 }): RequirementTraceabilityRow[] {
   const { requirements, coverage, coveringCases } = params;
   const paths = buildRequirementPaths(requirements);
+  const rootIds = buildRequirementRootIds(requirements);
 
   const rows: RequirementTraceabilityRow[] = [];
 
   for (const requirement of requirements) {
     const path =
       paths.get(requirement.id) ?? formatIssueDisplayText(requirement);
+    // The path always ends with the requirement's own display text (it is
+    // the walk's last segment by construction), so the ancestors-only
+    // display path is an exact suffix strip — " > " plus the self segment,
+    // or the empty string for a top-level requirement.
+    const selfText = formatIssueDisplayText(requirement);
+    const parentPath =
+      path.length > selfText.length && path.endsWith(selfText)
+        ? path.slice(0, path.length - selfText.length - " > ".length)
+        : "";
     const breakdown = coverage.get(requirement.id);
+    const requirementPriority = requirement.priority ?? null;
+    // WR-03's single status convention: a locked (synced) requirement
+    // shows the tracker's status, a detached/native one its local status.
+    const requirementStatus = resolveRequirementDisplayStatus({
+      status: requirement.status,
+      externalStatus: requirement.externalStatus,
+      isRequirement: true,
+      integrationId: requirement.integrationId ?? null,
+      requirementDetachedAt: requirement.requirementDetachedAt ?? null,
+    });
+    // Uncovered-since prefers the TRACKER's creation date (persisted at
+    // `data.createdAt` by buildSyncedIssueData): the local `createdAt` is
+    // when the row reached TestPlanIt, which for an imported requirement
+    // is the import date. Rows synced before that key existed (and native
+    // requirements, whose local date IS the true one) fall back.
+    const requirementCreatedAt =
+      trackerCreatedAt(requirement.data) ??
+      (requirement.createdAt != null
+        ? new Date(requirement.createdAt).toISOString()
+        : null);
     const linkedCaseCount = breakdown?.linkedCaseCount ?? 0;
     const coverageStatus: RequirementCoverageStatus =
       breakdown?.status ?? "UNCOVERED";
@@ -171,6 +298,13 @@ export function buildTraceabilityRows(params: {
         requirementKey: requirement.name,
         requirementTitle: requirement.title,
         requirementPath: path,
+        requirementParentPath: parentPath,
+        requirementIssueTypeName: requirement.issueTypeName ?? null,
+        requirementIssueTypeIconUrl: requirement.issueTypeIconUrl ?? null,
+        requirementPriority,
+        requirementStatus,
+        requirementCreatedAt,
+        requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
         caseId: null,
         caseName: null,
         caseProjectId: null,
@@ -193,8 +327,18 @@ export function buildTraceabilityRows(params: {
         requirementKey: requirement.name,
         requirementTitle: requirement.title,
         requirementPath: path,
+        requirementParentPath: parentPath,
+        requirementIssueTypeName: requirement.issueTypeName ?? null,
+        requirementIssueTypeIconUrl: requirement.issueTypeIconUrl ?? null,
+        requirementPriority,
+        requirementStatus,
+        requirementCreatedAt,
+        requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
         caseId: coveringCase.caseId,
         caseName: coveringCase.caseName,
+        caseAutomated: coveringCase.automated,
+        caseSource: coveringCase.source,
+        caseHasParameters: coveringCase.hasParameters,
         caseProjectId: coveringCase.projectId,
         caseProjectName: coveringCase.projectName,
         statusName: coveringCase.lastStatusName,
@@ -216,12 +360,109 @@ export function buildTraceabilityRows(params: {
 }
 
 /**
+ * Resolves the requirement rows belonging to the subtrees of `rootIds`:
+ * each root plus every descendant reachable through REQUIREMENT rows
+ * only. The walk runs over the requirement-scoped node list, which has
+ * no edge across a non-requirement node — a requirement grandchild whose
+ * intermediate parent is an unclassified Story is deliberately NOT a
+ * member, exactly matching `getRequirementSubtreeIds`'s recursive-arm
+ * predicate and the tree UI's own `childrenMap` membership. The coverage
+ * ROLLUP for each member still walks through non-requirement descendants
+ * (`requirementCoverage.ts`'s anchor-only asymmetry); only row
+ * membership stops at them.
+ *
+ * Ids that don't resolve to a node in `requirements` (deleted, foreign
+ * project, or not a requirement) are ignored rather than errored — the
+ * report must keep rendering after a scoped-to requirement is deleted,
+ * and a caller-supplied foreign id must select nothing. Order of the
+ * returned rows follows `requirements`, not `rootIds`.
+ */
+export function filterRequirementsToRoots(
+  requirements: RequirementNode[],
+  rootIds: number[]
+): RequirementNode[] {
+  const byId = new Map(
+    requirements.map((requirement) => [requirement.id, requirement])
+  );
+  const childrenByParent = new Map<number, RequirementNode[]>();
+  for (const requirement of requirements) {
+    if (requirement.parentId === null) continue;
+    const siblings = childrenByParent.get(requirement.parentId);
+    if (siblings) {
+      siblings.push(requirement);
+    } else {
+      childrenByParent.set(requirement.parentId, [requirement]);
+    }
+  }
+
+  // The membership set doubles as the visited set: a cycle in
+  // caller-supplied data terminates instead of looping, same defensive
+  // stance as `buildRequirementPaths` above.
+  const membership = new Set<number>();
+  const queue: number[] = [];
+  for (const rootId of rootIds) {
+    if (byId.has(rootId) && !membership.has(rootId)) {
+      membership.add(rootId);
+      queue.push(rootId);
+    }
+  }
+  while (queue.length > 0) {
+    const nodeId = queue.pop()!;
+    for (const child of childrenByParent.get(nodeId) ?? []) {
+      if (!membership.has(child.id)) {
+        membership.add(child.id);
+        queue.push(child.id);
+      }
+    }
+  }
+
+  return requirements.filter((requirement) => membership.has(requirement.id));
+}
+
+/**
  * The gap-report view of the matrix: exactly the rows with a null
  * `caseId`. The gap report and the matrix are the same data viewed
  * twice, which is what makes them incapable of disagreeing — a report
  * handler filters this from the SAME rows the matrix rendered, rather
  * than issuing an independent query that could drift from it.
  */
+/**
+ * The opt-in second tier of the coverage-debt report: one row per
+ * requirement whose classified state is NOT_RUN — covering cases exist
+ * but none has ever executed, so there is still zero evidence. Derived
+ * from the SAME matrix rows as `toGapRows` (deduped by requirement, the
+ * pair rows collapse to requirement-level), for the same
+ * incapable-of-disagreeing reason.
+ */
+export function toNotRunRequirementRows(
+  rows: RequirementTraceabilityRow[]
+): RequirementCoverageGapRow[] {
+  const seen = new Set<number>();
+  const result: RequirementCoverageGapRow[] = [];
+  for (const row of rows) {
+    if (row.coverageStatus !== "NOT_RUN" || seen.has(row.requirementId)) {
+      continue;
+    }
+    seen.add(row.requirementId);
+    result.push({
+      requirementId: row.requirementId,
+      requirementKey: row.requirementKey,
+      requirementTitle: row.requirementTitle,
+      requirementPath: row.requirementPath,
+      requirementParentPath: row.requirementParentPath,
+      requirementIssueTypeName: row.requirementIssueTypeName,
+      requirementIssueTypeIconUrl: row.requirementIssueTypeIconUrl,
+      requirementPriority: row.requirementPriority,
+      requirementStatus: row.requirementStatus,
+      requirementCreatedAt: row.requirementCreatedAt,
+      requirementRootId: row.requirementRootId,
+      coverageStatus: row.coverageStatus,
+      linkedCaseCount: row.linkedCaseCount,
+    });
+  }
+  return result;
+}
+
 export function toGapRows(
   rows: RequirementTraceabilityRow[]
 ): RequirementCoverageGapRow[] {
@@ -232,6 +473,14 @@ export function toGapRows(
       requirementKey: row.requirementKey,
       requirementTitle: row.requirementTitle,
       requirementPath: row.requirementPath,
+      requirementParentPath: row.requirementParentPath,
+      requirementIssueTypeName: row.requirementIssueTypeName,
+      requirementIssueTypeIconUrl: row.requirementIssueTypeIconUrl,
+      requirementPriority: row.requirementPriority,
+      requirementStatus: row.requirementStatus,
+      requirementCreatedAt: row.requirementCreatedAt,
+      requirementRootId: row.requirementRootId,
+      coverageStatus: row.coverageStatus,
       linkedCaseCount: row.linkedCaseCount,
     }));
 }

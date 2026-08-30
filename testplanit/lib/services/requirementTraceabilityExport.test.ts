@@ -11,7 +11,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildRequirementPaths,
+  buildRequirementRootIds,
   buildTraceabilityRows,
+  filterRequirementsToRoots,
   toGapRows,
   type RequirementNode,
   type RequirementTraceabilityRow,
@@ -63,6 +65,9 @@ function coveringCase(
   return {
     projectId: 1,
     projectName: "Project One",
+    automated: false,
+    source: null,
+    hasParameters: false,
     lastStatusName: null,
     lastStatusColor: null,
     lastStatusIsSuccess: null,
@@ -198,6 +203,7 @@ describe("requirementTraceabilityExport", () => {
         requirementKey: "REQ-1",
         requirementTitle: null,
         requirementPath: "REQ-1",
+        requirementParentPath: "",
         caseId: 10,
         caseName: "Case A",
         caseProjectId: 1,
@@ -213,6 +219,7 @@ describe("requirementTraceabilityExport", () => {
         requirementKey: "REQ-2",
         requirementTitle: null,
         requirementPath: "REQ-2",
+        requirementParentPath: "",
         caseId: null,
         caseName: null,
         caseProjectId: null,
@@ -233,7 +240,164 @@ describe("requirementTraceabilityExport", () => {
       requirementKey: "REQ-2",
       requirementTitle: null,
       requirementPath: "REQ-2",
+      requirementParentPath: "",
+      requirementIssueTypeName: undefined,
+      requirementIssueTypeIconUrl: undefined,
+      requirementPriority: undefined,
+      requirementStatus: undefined,
+      requirementCreatedAt: undefined,
+      coverageStatus: "UNCOVERED",
       linkedCaseCount: 0,
+    });
+  });
+
+  it("prefers the tracker's creation date over the local row date for Uncovered Since", () => {
+    const synced = node({
+      id: 1,
+      name: "REQ-1",
+      createdAt: new Date("2026-08-28T00:00:00.000Z"), // import time
+      data: { labels: [], createdAt: "2024-03-05T10:00:00.000Z" },
+    });
+    const legacy = node({
+      id: 2,
+      name: "REQ-2",
+      createdAt: new Date("2026-08-28T00:00:00.000Z"),
+      // Synced before data.createdAt existed, or garbage in the untyped
+      // Json — falls back to the local date rather than dropping the cell.
+      data: { labels: [], createdAt: "not-a-date" },
+    });
+
+    const rows = buildTraceabilityRows({
+      requirements: [synced, legacy],
+      coverage: new Map(),
+      coveringCases: new Map(),
+    });
+
+    expect(
+      rows.find((row) => row.requirementId === 1)?.requirementCreatedAt
+    ).toBe("2024-03-05T10:00:00.000Z");
+    expect(
+      rows.find((row) => row.requirementId === 2)?.requirementCreatedAt
+    ).toBe("2026-08-28T00:00:00.000Z");
+  });
+
+  it("resolves every requirement's top-level root id, stopping where the path does", () => {
+    const requirements = [
+      node({ id: 1, name: "Enrolments" }),
+      node({ id: 2, name: "Domestic", parentId: 1 }),
+      node({ id: 3, name: "Undergraduate", parentId: 2 }),
+      // Parent 99 is not a requirement — the chain tops out at itself,
+      // exactly where its path starts.
+      node({ id: 4, name: "Orphaned", parentId: 99 }),
+    ];
+
+    const rootIds = buildRequirementRootIds(requirements);
+
+    expect(rootIds.get(1)).toBe(1);
+    expect(rootIds.get(2)).toBe(1);
+    expect(rootIds.get(3)).toBe(1);
+    expect(rootIds.get(4)).toBe(4);
+
+    const rows = buildTraceabilityRows({
+      requirements,
+      coverage: new Map(),
+      coveringCases: new Map(),
+    });
+    expect(rows.find((row) => row.requirementId === 3)?.requirementRootId).toBe(
+      1
+    );
+    expect(rows.find((row) => row.requirementId === 4)?.requirementRootId).toBe(
+      4
+    );
+  });
+
+  describe("filterRequirementsToRoots", () => {
+    it("keeps a root and every requirement-reachable descendant, drops the rest", () => {
+      const requirements = [
+        node({ id: 1, name: "Enrolments" }),
+        node({ id: 2, name: "Domestic", parentId: 1 }),
+        node({ id: 3, name: "Undergraduate", parentId: 2 }),
+        node({ id: 4, name: "Integrations" }),
+        node({ id: 5, name: "SSO", parentId: 4 }),
+      ];
+
+      const scoped = filterRequirementsToRoots(requirements, [1]);
+
+      expect(scoped.map((requirement) => requirement.id)).toEqual([1, 2, 3]);
+    });
+
+    it("unions several roots without duplicating a shared selection", () => {
+      const requirements = [
+        node({ id: 1, name: "Enrolments" }),
+        node({ id: 2, name: "Domestic", parentId: 1 }),
+        node({ id: 4, name: "Integrations" }),
+        node({ id: 5, name: "SSO", parentId: 4 }),
+      ];
+
+      // Selecting a root AND one of its own descendants must not emit the
+      // descendant twice.
+      const scoped = filterRequirementsToRoots(requirements, [1, 2, 4]);
+
+      expect(scoped.map((requirement) => requirement.id)).toEqual([1, 2, 4, 5]);
+    });
+
+    it("does not cross a non-requirement gap in the parent chain", () => {
+      // Node 3's real parent (id 99) is not a requirement, so it is absent
+      // from the requirement-scoped node list — the walk must stop there,
+      // matching getRequirementSubtreeIds's recursive-arm predicate and
+      // the tree UI's own childrenMap membership.
+      const requirements = [
+        node({ id: 1, name: "Enrolments" }),
+        node({ id: 2, name: "Domestic", parentId: 1 }),
+        node({ id: 3, name: "Orphaned leaf", parentId: 99 }),
+      ];
+
+      const scoped = filterRequirementsToRoots(requirements, [1]);
+
+      expect(scoped.map((requirement) => requirement.id)).toEqual([1, 2]);
+    });
+
+    it("ignores ids that resolve to no requirement", () => {
+      const requirements = [
+        node({ id: 1, name: "Enrolments" }),
+        node({ id: 2, name: "Domestic", parentId: 1 }),
+      ];
+
+      expect(filterRequirementsToRoots(requirements, [999])).toEqual([]);
+      expect(
+        filterRequirementsToRoots(requirements, [999, 1]).map(
+          (requirement) => requirement.id
+        )
+      ).toEqual([1, 2]);
+    });
+
+    it("terminates on a parent cycle in caller-supplied data", () => {
+      const requirements = [
+        node({ id: 1, name: "A", parentId: 2 }),
+        node({ id: 2, name: "B", parentId: 1 }),
+        node({ id: 3, name: "Unrelated" }),
+      ];
+
+      const scoped = filterRequirementsToRoots(requirements, [1]);
+
+      expect(scoped.map((requirement) => requirement.id)).toEqual([1, 2]);
+    });
+
+    it("scopes the built rows' paths to start at the selected root", () => {
+      // The loader hands buildTraceabilityRows the FILTERED list, so a
+      // scoped root's own (excluded) ancestor never contributes a path
+      // segment — "report on Enrolments" reads from Enrolments down.
+      const requirements = [
+        node({ id: 1, name: "Everything" }),
+        node({ id: 2, name: "Enrolments", parentId: 1 }),
+        node({ id: 3, name: "Domestic", parentId: 2 }),
+      ];
+
+      const scoped = filterRequirementsToRoots(requirements, [2]);
+      const paths = buildRequirementPaths(scoped);
+
+      expect(paths.get(2)).toBe("Enrolments");
+      expect(paths.get(3)).toBe("Enrolments > Domestic");
     });
   });
 

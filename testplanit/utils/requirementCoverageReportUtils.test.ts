@@ -83,6 +83,7 @@ function fixtureRows(): RequirementTraceabilityRow[] {
       requirementKey: "REQ-1",
       requirementTitle: "Requirement One",
       requirementPath: "REQ-1",
+      requirementParentPath: "",
       caseId: null,
       caseName: null,
       caseProjectId: null,
@@ -98,6 +99,7 @@ function fixtureRows(): RequirementTraceabilityRow[] {
       requirementKey: "REQ-2",
       requirementTitle: "Requirement Two",
       requirementPath: "REQ-2",
+      requirementParentPath: "",
       caseId: null,
       caseName: null,
       caseProjectId: null,
@@ -113,6 +115,7 @@ function fixtureRows(): RequirementTraceabilityRow[] {
       requirementKey: "REQ-3",
       requirementTitle: "Requirement Three",
       requirementPath: "REQ-3",
+      requirementParentPath: "",
       caseId: 10,
       caseName: "Case A",
       caseProjectId: 5,
@@ -128,6 +131,7 @@ function fixtureRows(): RequirementTraceabilityRow[] {
       requirementKey: "REQ-3",
       requirementTitle: "Requirement Three",
       requirementPath: "REQ-3",
+      requirementParentPath: "",
       caseId: 11,
       caseName: "Case B",
       caseProjectId: 5,
@@ -258,6 +262,157 @@ describe("requirementCoverageReportUtils", () => {
     // The bypass branch has no authenticated viewer to resolve a scope
     // from, so it must not consult the per-user resolver at all.
     expect(mockedResolveScope).not.toHaveBeenCalled();
+  });
+
+  describe("coverage-debt tiers and the coverage-state filter", () => {
+    function notRunRows(): RequirementTraceabilityRow[] {
+      // REQ-9: two covering-case rows, both never executed — classified
+      // NOT_RUN. Must collapse to ONE tier-2 row, and only when the
+      // caller opts in.
+      const base = fixtureRows();
+      const notRunRow = (caseId: number): RequirementTraceabilityRow => ({
+        requirementId: 9,
+        requirementKey: "REQ-9",
+        requirementTitle: "Requirement Nine",
+        requirementPath: "REQ-9",
+        requirementParentPath: "",
+        caseId,
+        caseName: `Case ${caseId}`,
+        caseProjectId: 5,
+        caseProjectName: "Project Five",
+        statusName: null,
+        statusColor: null,
+        executedAt: null,
+        linkedCaseCount: 2,
+        coverageStatus: "NOT_RUN",
+      });
+      return [...base, notRunRow(20), notRunRow(21)];
+    }
+
+    it("gaps stays tier-1 only without the opt-in", async () => {
+      mockedLoad.mockResolvedValue(traceabilityData(notRunRows()));
+
+      const res = await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5 }),
+        "gaps"
+      );
+
+      const body = await res.json();
+      expect(body.total).toBe(2);
+      expect(
+        body.data.every(
+          (row: { coverageStatus: string }) =>
+            row.coverageStatus === "UNCOVERED"
+        )
+      ).toBe(true);
+    });
+
+    it("includeNotRun adds ONE deduped tier-2 row per never-run requirement", async () => {
+      mockedLoad.mockResolvedValue(traceabilityData(notRunRows()));
+
+      const res = await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, includeNotRun: true }),
+        "gaps"
+      );
+
+      const body = await res.json();
+      expect(body.total).toBe(3);
+      const tier2 = body.data.filter(
+        (row: { coverageStatus: string }) => row.coverageStatus === "NOT_RUN"
+      );
+      expect(tier2).toHaveLength(1);
+      expect(tier2[0].requirementId).toBe(9);
+      // Tier 2 keeps its linked count — the distinguishing signal beside
+      // tier 1's zero.
+      expect(tier2[0].linkedCases).toBe(2);
+    });
+
+    it("filters the traceability variant to the requested coverage states server-side", async () => {
+      const res = await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, coverageStates: ["UNCOVERED"] }),
+        "traceability"
+      );
+
+      const body = await res.json();
+      // Only the two uncovered requirements' gap rows survive; REQ-3's
+      // PASSED pair rows are filtered out — and total describes the
+      // FILTERED set, so counts, CSV, and viz agree with the table.
+      expect(body.total).toBe(2);
+      expect(
+        body.data.every(
+          (row: { coverageStatus: string }) =>
+            row.coverageStatus === "UNCOVERED"
+        )
+      ).toBe(true);
+    });
+
+    it("rejects an unknown coverage state with a 400 before loading", async () => {
+      const res = await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, coverageStates: ["BOGUS"] }),
+        "traceability"
+      );
+
+      expect(res.status).toBe(400);
+      expect(mockedLoad).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("requirementIds scope parameter", () => {
+    it("passes the scope through to the loader as rootIds", async () => {
+      const res = await handleRequirementCoverageReportPOST(
+        makeRequest({ projectId: 5, requirementIds: [7, 9] }),
+        "traceability"
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockedLoad).toHaveBeenCalledWith(
+        5,
+        { accessibleProjectIds: [5] },
+        undefined,
+        { rootIds: [7, 9] }
+      );
+    });
+
+    it.each([[null], [[]]])(
+      "treats %j as whole-project (the unscoped two-argument call)",
+      async (requirementIds) => {
+        const res = await handleRequirementCoverageReportPOST(
+          makeRequest({ projectId: 5, requirementIds }),
+          "gaps"
+        );
+
+        expect(res.status).toBe(200);
+        expect(mockedLoad).toHaveBeenCalledWith(5, {
+          accessibleProjectIds: [5],
+        });
+      }
+    );
+
+    it.each([["not-an-array"], [[1.5]], [[0]], [[-3]], [["seven"]]])(
+      "rejects malformed requirementIds %j with a 400 before loading",
+      async (requirementIds) => {
+        const res = await handleRequirementCoverageReportPOST(
+          makeRequest({ projectId: 5, requirementIds }),
+          "gaps"
+        );
+
+        expect(res.status).toBe(400);
+        expect(mockedLoad).not.toHaveBeenCalled();
+      }
+    );
+
+    it("rejects a scope list past the rollup's own root cap", async () => {
+      const res = await handleRequirementCoverageReportPOST(
+        makeRequest({
+          projectId: 5,
+          requirementIds: Array.from({ length: 1001 }, (_, i) => i + 1),
+        }),
+        "gaps"
+      );
+
+      expect(res.status).toBe(400);
+      expect(mockedLoad).not.toHaveBeenCalled();
+    });
   });
 
   // F3/F4 [WARNING]: a Bearer-token-authenticated caller has no NextAuth

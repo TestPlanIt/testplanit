@@ -174,13 +174,25 @@ function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
   const h = {
     requirement: t("reports.ui.requirementCoverage.requirement"),
     path: t("reports.ui.requirementCoverage.path"),
+    priority: t("common.fields.priority"),
+    status: t("common.actions.status"),
+    coverage: t("requirements.coverage.title"),
     linkedCases: t("reports.ui.requirementCoverage.linkedCases"),
+    uncoveredSince: t("reports.ui.requirementCoverage.uncoveredSince"),
+  };
+  const coverageLabels: Record<string, string> = {
+    UNCOVERED: t("requirements.coverage.uncovered"),
+    NOT_RUN: t("requirements.coverage.statusNotRun"),
   };
   return rows.map((r: any) => {
     const row: CsvRow = {};
     row[h.requirement] = formatRequirementCellText(r);
-    row[h.path] = r.requirementPath ?? "";
+    row[h.path] = r.requirementParentPath ?? "";
+    row[h.priority] = r.requirementPriority ?? "";
+    row[h.status] = r.requirementStatus ?? "";
+    row[h.coverage] = coverageLabels[r.coverageStatus] ?? "";
     row[h.linkedCases] = r.linkedCases ?? 0;
+    row[h.uncoveredSince] = fmtDateTime(r.requirementCreatedAt);
     return row;
   });
 }
@@ -190,6 +202,7 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
   const h = {
     requirement: t("reports.ui.requirementCoverage.requirement"),
     path: t("reports.ui.requirementCoverage.path"),
+    coverage: t("requirements.coverage.title"),
     testCase: t("reports.ui.requirementCoverage.testCase"),
     result: t("reports.ui.requirementCoverage.result"),
     executedAt: t("reports.ui.requirementCoverage.executedAt"),
@@ -197,6 +210,14 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
   };
   const uncovered = t("reports.ui.requirementCoverage.uncovered");
   const notRun = t("reports.ui.requirementCoverage.notRun");
+  // The requirement's classified coverage state, labeled with the same
+  // `requirements.coverage.*` vocabulary the tree and the table column use.
+  const coverageLabels: Record<string, string> = {
+    UNCOVERED: t("requirements.coverage.uncovered"),
+    PASSED: t("requirements.coverage.statusPassed"),
+    FAILED: t("requirements.coverage.statusFailed"),
+    NOT_RUN: t("requirements.coverage.statusNotRun"),
+  };
   // Mirrors the report table cell's and the PDF exporter's three-way split
   // (`useExportRequirementTraceabilityPdf.ts`): a null `testCaseId` is the
   // coverage gap and writes the localized "Uncovered" label; a linked case
@@ -206,7 +227,8 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
   return rows.map((r: any) => {
     const row: CsvRow = {};
     row[h.requirement] = formatRequirementCellText(r);
-    row[h.path] = r.requirementPath ?? "";
+    row[h.path] = r.requirementParentPath ?? "";
+    row[h.coverage] = coverageLabels[r.coverageStatus] ?? "";
     row[h.testCase] = r.testCaseName ?? "";
     row[h.result] =
       r.testCaseId == null ? uncovered : (r.lastStatusName ?? notRun);

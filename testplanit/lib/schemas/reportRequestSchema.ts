@@ -55,6 +55,19 @@ export const reportRequestSchema = z
     dimensionFilters: z
       .record(z.string(), z.array(z.union([z.string(), z.number()])))
       .optional(),
+    // Requirement report scope: confine the gaps/traceability reports to
+    // these requirements' subtrees. Empty means whole-project, same as
+    // omitting it. `.nullish()` — a restored share config may carry an
+    // explicit null.
+    requirementIds: z.array(z.number().int().positive()).max(1000).nullish(),
+    // Traceability: keep only rows whose requirement classifies to one of
+    // these states. Empty = all states, same as omitting it.
+    coverageStates: z
+      .array(z.enum(["PASSED", "FAILED", "NOT_RUN", "UNCOVERED"]))
+      .nullish(),
+    // Coverage-debt (gaps) report: also list requirements whose linked
+    // cases have never run (tier 2), not only the zero-linked tier.
+    includeNotRun: z.boolean().nullish(),
   })
   .superRefine((data, ctx) => {
     // Rule: If endDate is provided, startDate must also be provided

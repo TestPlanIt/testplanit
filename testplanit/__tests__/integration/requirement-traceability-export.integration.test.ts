@@ -89,6 +89,7 @@ describeIntegration(
 
     let unrestricted: RequirementTraceabilityData;
     let restricted: RequirementTraceabilityData;
+    let scopedToMid: RequirementTraceabilityData;
     let coverageIndependent: Awaited<ReturnType<typeof getRequirementCoverage>>;
 
     beforeAll(async () => {
@@ -297,6 +298,15 @@ describeIntegration(
         { accessibleProjectIds: [projectOneId] },
         db
       );
+      // The root-scoped variant, anchored mid-chain: membership must be
+      // reqMid + reqLeaf only, and the scoped rollup must still inherit
+      // reqLeaf's case up to reqMid through the bounded closure.
+      scopedToMid = await loadRequirementTraceability(
+        projectOneId,
+        { accessibleProjectIds: null },
+        db,
+        { rootIds: [reqMidId] }
+      );
       coverageIndependent = await getRequirementCoverage(
         projectOneId,
         { accessibleProjectIds: null },
@@ -404,6 +414,45 @@ describeIntegration(
         (row) => row.requirementId === reqLeafId
       );
       expect(leafRow?.requirementPath.split(" > ")).toHaveLength(3);
+    });
+
+    it("confines a root-scoped load to the subtree, with paths and rollup intact", async () => {
+      // Membership: reqMid and reqLeaf only. reqRoot (the scoped root's
+      // own parent) and the three standalone requirements must not appear.
+      const scopedIds = new Set(
+        scopedToMid.rows.map((row) => row.requirementId)
+      );
+      expect([...scopedIds].sort((a, b) => a - b)).toEqual(
+        [reqMidId, reqLeafId].sort((a, b) => a - b)
+      );
+
+      // One covering-case row each: reqLeaf's direct link, inherited by
+      // reqMid through the bounded closure — proving the scoped rollup
+      // still walks the subtree rather than counting only direct links.
+      expect(scopedToMid.rows).toHaveLength(2);
+      const midRow = scopedToMid.rows.find(
+        (row) => row.requirementId === reqMidId
+      );
+      expect(midRow?.linkedCaseCount).toBe(1);
+      expect(midRow?.caseId).not.toBeNull();
+
+      // Paths are relative to the scoped root: the excluded ancestor
+      // (reqRoot) contributes no segment.
+      const leafRow = scopedToMid.rows.find(
+        (row) => row.requirementId === reqLeafId
+      );
+      expect(midRow?.requirementPath.split(" > ")).toHaveLength(1);
+      expect(leafRow?.requirementPath.split(" > ")).toHaveLength(2);
+
+      // A scope list resolving to nothing produces an empty matrix, not an
+      // error and not a whole-project fallback.
+      const scopedToNothing = await loadRequirementTraceability(
+        projectOneId,
+        { accessibleProjectIds: null },
+        db,
+        { rootIds: [999999999] }
+      );
+      expect(scopedToNothing.rows).toEqual([]);
     });
 
     it("produces exactly one null-case row per uncovered requirement", async () => {

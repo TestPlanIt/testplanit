@@ -4,7 +4,10 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import type { RequirementCoverageStatus } from "~/lib/services/requirementCoverage";
 import { loadRequirementTraceability } from "~/lib/services/requirementTraceability";
-import { toGapRows } from "~/lib/services/requirementTraceabilityExport";
+import {
+  toGapRows,
+  toNotRunRequirementRows,
+} from "~/lib/services/requirementTraceabilityExport";
 import { authOptions } from "~/server/auth";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
@@ -46,7 +49,19 @@ export interface RequirementCoverageGapReportRow {
   requirementKey: string;
   requirementTitle: string | null;
   requirementPath: string;
-  linkedCases: number; // always 0 for a gap — kept so the column set is uniform
+  requirementParentPath: string;
+  requirementIssueTypeName?: string | null;
+  requirementIssueTypeIconUrl?: string | null;
+  requirementPriority?: string | null;
+  requirementStatus?: string | null;
+  /** ISO timestamp the requirement was created — how long the debt has
+   * existed ("Uncovered since"). */
+  requirementCreatedAt?: string | null;
+  requirementRootId?: number;
+  /** UNCOVERED (tier 1, zero linked cases) or NOT_RUN (opt-in tier 2,
+   * cases exist but none ever executed). */
+  coverageStatus: RequirementCoverageStatus;
+  linkedCases: number; // 0 for a true gap; the linked count for tier 2
 }
 
 export interface RequirementTraceabilityReportRow {
@@ -55,7 +70,14 @@ export interface RequirementTraceabilityReportRow {
   requirementKey: string;
   requirementTitle: string | null;
   requirementPath: string;
+  requirementParentPath: string;
+  requirementIssueTypeName?: string | null;
+  requirementIssueTypeIconUrl?: string | null;
+  requirementRootId?: number;
   testCaseId: number | null; // null => coverage gap row
+  testCaseAutomated?: boolean;
+  testCaseSource?: string | null;
+  testCaseHasParameters?: boolean;
   testCaseName: string | null;
   caseProjectId: number | null;
   caseProjectName: string | null;
@@ -63,6 +85,71 @@ export interface RequirementTraceabilityReportRow {
   lastStatusColor: string | null;
   lastExecutedAt: string | null;
   coverageStatus: RequirementCoverageStatus;
+}
+
+/** Mirrors `getRequirementCoverage`'s own `MAX_ROOT_IDS` — a scope list
+ * larger than the rollup could ever be asked to anchor on is a malformed
+ * request, not a bigger report. */
+const MAX_REQUIREMENT_SCOPE_IDS = 1000;
+
+/**
+ * Parses the optional `requirementIds` scope parameter: the requirement
+ * roots whose subtrees the report is confined to. Absent, null, or an
+ * empty array all mean "the whole project" — the builder omits the key
+ * when nothing is selected, and an explicit empty selection means the
+ * same thing there (the `dimensionFilters` convention: empty = all).
+ * Anything that isn't a list of positive integers is a 400, never a
+ * silently-ignored key.
+ */
+function parseRequirementScopeIds(
+  raw: unknown
+): { ok: true; rootIds: number[] | undefined } | { ok: false } {
+  if (raw === undefined || raw === null) {
+    return { ok: true, rootIds: undefined };
+  }
+  if (!Array.isArray(raw) || raw.length > MAX_REQUIREMENT_SCOPE_IDS) {
+    return { ok: false };
+  }
+  const rootIds = raw.map(Number);
+  if (rootIds.some((id) => !Number.isInteger(id) || id <= 0)) {
+    return { ok: false };
+  }
+  return { ok: true, rootIds: rootIds.length > 0 ? rootIds : undefined };
+}
+
+const COVERAGE_STATE_VALUES = new Set([
+  "PASSED",
+  "FAILED",
+  "NOT_RUN",
+  "UNCOVERED",
+]);
+
+/**
+ * Parses the traceability variant's optional `coverageStates` filter —
+ * the requirement-level classified states to keep. Absent/null/empty
+ * means every state (the builder omits the key when nothing is
+ * selected, the `dimensionFilters` convention). Applied SERVER-side so
+ * the row count, the CSV, the visualization, and a share link's stored
+ * config all describe the same filtered set.
+ */
+function parseCoverageStates(
+  raw: unknown
+): { ok: true; states: Set<string> | undefined } | { ok: false } {
+  if (raw === undefined || raw === null) {
+    return { ok: true, states: undefined };
+  }
+  if (
+    !Array.isArray(raw) ||
+    raw.some(
+      (value) => typeof value !== "string" || !COVERAGE_STATE_VALUES.has(value)
+    )
+  ) {
+    return { ok: false };
+  }
+  return {
+    ok: true,
+    states: raw.length > 0 ? new Set(raw as string[]) : undefined,
+  };
 }
 
 export async function handleRequirementCoverageReportPOST(
@@ -85,6 +172,25 @@ export async function handleRequirementCoverageReportPOST(
         { status: 400 }
       );
     }
+
+    const scopeIds = parseRequirementScopeIds(body?.requirementIds);
+    if (!scopeIds.ok) {
+      return Response.json(
+        { error: "Invalid requirementIds" },
+        { status: 400 }
+      );
+    }
+
+    const coverageStates = parseCoverageStates(body?.coverageStates);
+    if (!coverageStates.ok) {
+      return Response.json(
+        { error: "Invalid coverageStates" },
+        { status: 400 }
+      );
+    }
+    // Loosely-typed on purpose (the schema's `.nullish()` convention): a
+    // restored share config may carry an explicit null.
+    const includeNotRun = body?.includeNotRun === true;
 
     // One resolved scope, fed into the one loader call below — never a
     // second, independently-scoped read.
@@ -128,32 +234,71 @@ export async function handleRequirementCoverageReportPOST(
       accessibleProjectIds = await resolveViewerProjectScope(auth.user.userId);
     }
 
-    const data = await loadRequirementTraceability(projectId, {
-      accessibleProjectIds,
-    });
+    // The scoped call passes the loader's default db client explicitly —
+    // the options bag is the fourth parameter, and `undefined` there keeps
+    // the default-parameter semantics identical to the two-argument call
+    // the unscoped path (and its existing tests) rely on.
+    const data =
+      scopeIds.rootIds !== undefined
+        ? await loadRequirementTraceability(
+            projectId,
+            { accessibleProjectIds },
+            undefined,
+            { rootIds: scopeIds.rootIds }
+          )
+        : await loadRequirementTraceability(projectId, {
+            accessibleProjectIds,
+          });
 
     if (variant === "gaps") {
-      const rows: RequirementCoverageGapReportRow[] = toGapRows(data.rows).map(
+      // Tier 1 (zero linked cases) always; tier 2 (linked but never run)
+      // only when the caller opted in — both derived from the SAME matrix
+      // rows, so the debt report can never disagree with traceability.
+      const debtRows = [
+        ...toGapRows(data.rows),
+        ...(includeNotRun ? toNotRunRequirementRows(data.rows) : []),
+      ];
+      const rows: RequirementCoverageGapReportRow[] = debtRows.map(
         (row, index) => ({
           id: index,
           requirementId: row.requirementId,
           requirementKey: row.requirementKey,
           requirementTitle: row.requirementTitle,
           requirementPath: row.requirementPath,
+          requirementParentPath: row.requirementParentPath,
+          requirementIssueTypeName: row.requirementIssueTypeName,
+          requirementIssueTypeIconUrl: row.requirementIssueTypeIconUrl,
+          requirementPriority: row.requirementPriority,
+          requirementStatus: row.requirementStatus,
+          requirementCreatedAt: row.requirementCreatedAt,
+          requirementRootId: row.requirementRootId,
+          coverageStatus: row.coverageStatus,
           linkedCases: row.linkedCaseCount,
         })
       );
       return Response.json({ data: rows, total: rows.length });
     }
 
-    const rows: RequirementTraceabilityReportRow[] = data.rows.map(
+    const matrixRows = coverageStates.states
+      ? data.rows.filter((row) =>
+          coverageStates.states!.has(row.coverageStatus)
+        )
+      : data.rows;
+    const rows: RequirementTraceabilityReportRow[] = matrixRows.map(
       (row, index) => ({
         id: index,
         requirementId: row.requirementId,
         requirementKey: row.requirementKey,
         requirementTitle: row.requirementTitle,
         requirementPath: row.requirementPath,
+        requirementParentPath: row.requirementParentPath,
+        requirementIssueTypeName: row.requirementIssueTypeName,
+        requirementIssueTypeIconUrl: row.requirementIssueTypeIconUrl,
+        requirementRootId: row.requirementRootId,
         testCaseId: row.caseId,
+        testCaseAutomated: row.caseAutomated,
+        testCaseSource: row.caseSource,
+        testCaseHasParameters: row.caseHasParameters,
         testCaseName: row.caseName,
         caseProjectId: row.caseProjectId,
         caseProjectName: row.caseProjectName,

@@ -177,6 +177,9 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
     expect(entries[0]).toEqual({
       caseId: 100,
       caseName: "Case With Result",
+      automated: false,
+      source: null,
+      hasParameters: false,
       projectId: 1,
       projectName: "Project One",
       lastStatusName: "Passed",
@@ -221,6 +224,9 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
     expect(entries[0]).toEqual({
       caseId: 101,
       caseName: "Case Never Executed",
+      automated: false,
+      source: null,
+      hasParameters: false,
       projectId: 1,
       projectName: "Project One",
       lastStatusName: null,

@@ -252,6 +252,7 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
           requirementKey: "REQ-1",
           requirementTitle: "Enrol domestic students",
           requirementPath: "Enrolments > Enrol domestic students",
+          requirementParentPath: "Enrolments",
           linkedCases: 0,
         },
       ],
@@ -263,9 +264,9 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
     expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
       "REQ-1: Enrol domestic students"
     );
-    expect(row["reports.ui.requirementCoverage.path"]).toBe(
-      "Enrolments > Enrol domestic students"
-    );
+    // The CSV writes the ancestors-only parent path — repeating the
+    // requirement's own text made Path a copy of the Requirement column.
+    expect(row["reports.ui.requirementCoverage.path"]).toBe("Enrolments");
     expect(row["reports.ui.requirementCoverage.linkedCases"]).toBe(0);
   });
 
@@ -287,6 +288,7 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
           requirementKey: "New Requirement",
           requirementTitle: "New Requirement",
           requirementPath: "New Requirement",
+          requirementParentPath: "",
           linkedCases: 0,
         },
       ],
@@ -307,6 +309,7 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
           requirementKey: "New Requirement",
           requirementTitle: "New Requirement",
           requirementPath: "New Requirement",
+          requirementParentPath: "",
           testCaseId: null,
           testCaseName: null,
           caseProjectId: null,
@@ -333,6 +336,8 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
           requirementKey: "REQ-1",
           requirementTitle: "Enrol domestic students",
           requirementPath: "Enrolments > Enrol domestic students",
+          requirementParentPath: "Enrolments",
+          coverageStatus: "PASSED",
           testCaseId: 55,
           testCaseName: "Enrol via portal",
           caseProjectId: 10,
@@ -347,8 +352,11 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
     expect(row["reports.ui.requirementCoverage.requirement"]).toBe(
       "REQ-1: Enrol domestic students"
     );
-    expect(row["reports.ui.requirementCoverage.path"]).toBe(
-      "Enrolments > Enrol domestic students"
+    expect(row["reports.ui.requirementCoverage.path"]).toBe("Enrolments");
+    // The requirement-level Coverage column, labeled with the tree's own
+    // vocabulary key.
+    expect(row["requirements.coverage.title"]).toBe(
+      "requirements.coverage.statusPassed"
     );
     expect(row["reports.ui.requirementCoverage.testCase"]).toBe(
       "Enrol via portal"
@@ -373,6 +381,7 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
           requirementKey: "REQ-1",
           requirementTitle: "Enrol domestic students",
           requirementPath: "Enrolments > Enrol domestic students",
+          requirementParentPath: "Enrolments",
           testCaseId: null,
           testCaseName: null,
           caseProjectId: null,
@@ -386,6 +395,7 @@ describe("buildReportCsvRows (Phase 26 requirement report additions)", () => {
           requirementKey: "REQ-2",
           requirementTitle: "Enrol international students",
           requirementPath: "Enrolments > Enrol international students",
+          requirementParentPath: "Enrolments",
           testCaseId: 56,
           testCaseName: "Enrol via agent",
           caseProjectId: 10,

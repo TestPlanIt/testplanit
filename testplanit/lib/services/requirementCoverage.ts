@@ -489,6 +489,12 @@ export interface RequirementCoveringCase {
   caseName: string;
   projectId: number;
   projectName: string;
+  /** Display metadata `TestCaseNameDisplay` keys its icon on — a case
+   * served without these renders as a manual, parameterless case
+   * regardless of what it is. */
+  automated: boolean;
+  source: string | null;
+  hasParameters: boolean;
   lastStatusName: string | null;
   lastStatusColor: string | null;
   lastStatusIsSuccess: boolean | null;
@@ -508,6 +514,9 @@ interface RequirementCoveringCaseRow {
   case_name: string;
   case_project_id: number | bigint;
   project_name: string;
+  case_automated: boolean;
+  case_source: string | null;
+  case_has_parameters: boolean;
   status_name: string | null;
   status_color: string | null;
   is_success: boolean | null;
@@ -577,6 +586,9 @@ export async function getRequirementCoveringCases(
       rc.name AS case_name,
       rc."projectId" AS case_project_id,
       p.name AS project_name,
+      rc."automated" AS case_automated,
+      rc."source"::text AS case_source,
+      rc."hasParameters" AS case_has_parameters,
       lr.status_name,
       lr.status_color,
       lr.is_success,
@@ -607,6 +619,9 @@ export async function getRequirementCoveringCases(
       caseName: row.case_name,
       projectId: Number(row.case_project_id),
       projectName: row.project_name,
+      automated: row.case_automated === true,
+      source: row.case_source ?? null,
+      hasParameters: row.case_has_parameters === true,
       lastStatusName: row.status_name ?? null,
       lastStatusColor: row.status_color ?? null,
       lastStatusIsSuccess: row.is_success ?? null,
