@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { AlertTriangle, Link2, Plus, X } from "lucide-react";
+import { AlertTriangle, Link2, Plus, X, ClipboardCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -324,6 +324,7 @@ export function LinkedRequirementsPanel({
                     <TableCell>
                       <div className="flex items-center gap-2 min-w-0">
                         <IssueTypeIcon
+                          fallbackIcon={ClipboardCheck}
                           issueTypeName={row.issueTypeName}
                           iconUrl={row.issueTypeIconUrl}
                           className="h-4 w-4 shrink-0"
@@ -514,6 +515,7 @@ function AddLinkedRequirementDialog({
           renderOption={(option: Issue) => (
             <span className="flex items-center gap-2">
               <IssueTypeIcon
+                fallbackIcon={ClipboardCheck}
                 issueTypeName={option.issueTypeName}
                 iconUrl={option.issueTypeIconUrl}
                 className="h-4 w-4 shrink-0"
@@ -533,6 +535,7 @@ function AddLinkedRequirementDialog({
               {value ? (
                 <span className="flex items-center gap-1 overflow-hidden">
                   <IssueTypeIcon
+                    fallbackIcon={ClipboardCheck}
                     issueTypeName={value.issueTypeName}
                     iconUrl={value.issueTypeIconUrl}
                     className="h-4 w-4 shrink-0"

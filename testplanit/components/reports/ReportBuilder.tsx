@@ -5,6 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
+  RequirementScopePicker,
+  type RequirementScopeOption,
+} from "@/components/reports/RequirementScopePicker";
+import { RequirementCoverageStateFilter } from "@/components/reports/RequirementCoverageStateFilter";
+import { Switch } from "@/components/ui/switch";
+import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
@@ -418,6 +424,22 @@ function ReportBuilderContent({
 
   // Flaky tests state
   const [consecutiveRuns, setConsecutiveRuns] = useState(10);
+  // Requirement report scope (gaps/traceability): the requirements whose
+  // subtrees the report is confined to. Empty = whole project. Options are
+  // kept whole (not just ids) so the trigger can keep rendering their
+  // labels; only ids travel in the request body.
+  const [requirementScope, setRequirementScope] = useState<
+    RequirementScopeOption[]
+  >([]);
+  // Traceability's requirement-level coverage-state filter (empty = all;
+  // applied server-side so counts/CSV/viz/share all describe one set) and
+  // the coverage-debt report's opt-in never-ran tier.
+  const [requirementCoverageStates, setRequirementCoverageStates] = useState<
+    string[]
+  >([]);
+  // ON by default (operator direction 2026-08-30): never-run linked cases
+  // are as evidence-free as true gaps, so the debt report opens complete.
+  const [includeNotRunDebt, setIncludeNotRunDebt] = useState(true);
   const [flipThreshold, setFlipThreshold] = useState(5);
   const [flakyAutomatedFilter, setFlakyAutomatedFilter] = useState<
     "all" | "automated" | "manual"
@@ -795,12 +817,12 @@ function ReportBuilderContent({
   );
 
   // Requirement report types (D-2, COV-04) are pre-built and flat — no
-  // grouping, no project-dimension branch. `projectId` decides the
-  // traceability report's cross-project project cell, matching 26-09's
-  // RequirementCoveragePanel convention.
-  const requirementCoverageGapColumns = useRequirementCoverageGapColumns();
-  const requirementTraceabilityColumns =
-    useRequirementTraceabilityColumns(projectId);
+  // grouping, no project-dimension branch. Every covering case's row names
+  // its project (the report's own included), so the column set needs no
+  // project context.
+  const requirementCoverageGapColumns =
+    useRequirementCoverageGapColumns(results);
+  const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
 
   // Choose which columns to use based on report type
   const columns = matchesReportType(reportType, "automation-trends")
@@ -1571,6 +1593,29 @@ function ReportBuilderContent({
           }
         }
 
+        // For the requirement reports, confine the matrix to the selected
+        // requirements' subtrees. Empty selection = whole project, and the
+        // key is omitted entirely so older share configs and new ones read
+        // the same way.
+        if (
+          matchesReportType(reportType, "requirement-coverage-gaps") ||
+          matchesReportType(reportType, "requirement-traceability")
+        ) {
+          if (requirementScope.length > 0) {
+            body.requirementIds = requirementScope.map((option) => option.id);
+          }
+        }
+        if (matchesReportType(reportType, "requirement-traceability")) {
+          if (requirementCoverageStates.length > 0) {
+            body.coverageStates = requirementCoverageStates;
+          }
+        }
+        if (matchesReportType(reportType, "requirement-coverage-gaps")) {
+          if (includeNotRunDebt) {
+            body.includeNotRun = true;
+          }
+        }
+
         // Add sorting parameters if configured
         if (sortConfig) {
           // Map frontend column IDs to backend metric IDs
@@ -1878,6 +1923,9 @@ function ReportBuilderContent({
       healthAutomatedFilter,
       healthStatusFilter,
       healthStaleFilter,
+      requirementScope,
+      requirementCoverageStates,
+      includeNotRunDebt,
     ]
   );
 
@@ -2338,20 +2386,34 @@ function ReportBuilderContent({
                       {/* Date Range Selection. Snapshot-style LLM reports
                           (automation-candidates) don't accept a date range —
                           the LLM ranks the current state of every manual
-                          case, so a range would be meaningless. */}
+                          case, so a range would be meaningless. The two
+                          requirement reports don't either: coverage is
+                          defined as each case's LATEST-EVER result (the
+                          milestone's recorded latest-result decision,
+                          deliberately not windowed), so their handler
+                          ignores dates — showing the control would imply a
+                          filter that cannot exist. */}
                       {!matchesReportType(
                         reportType,
                         "automation-candidates"
-                      ) && (
-                        <div className="grid gap-2">
-                          <DateRangePickerField
-                            control={form.control}
-                            name="dateRange"
-                            label={tReports("dateRange.selectDateRange")}
-                            helpKey="reportBuilder.dateRange"
-                          />
-                        </div>
-                      )}
+                      ) &&
+                        !matchesReportType(
+                          reportType,
+                          "requirement-coverage-gaps"
+                        ) &&
+                        !matchesReportType(
+                          reportType,
+                          "requirement-traceability"
+                        ) && (
+                          <div className="grid gap-2">
+                            <DateRangePickerField
+                              control={form.control}
+                              name="dateRange"
+                              label={tReports("dateRange.selectDateRange")}
+                              helpKey="reportBuilder.dateRange"
+                            />
+                          </div>
+                        )}
 
                       {/* Date Grouping Selection for Automation Trends */}
                       {(reportType === "automation-trends" ||
@@ -2552,6 +2614,54 @@ function ReportBuilderContent({
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Requirement Report Scope (gaps/traceability) */}
+                      {(matchesReportType(
+                        reportType,
+                        "requirement-coverage-gaps"
+                      ) ||
+                        matchesReportType(
+                          reportType,
+                          "requirement-traceability"
+                        )) &&
+                        mode === "project" &&
+                        projectId && (
+                          <RequirementScopePicker
+                            projectId={projectId}
+                            value={requirementScope}
+                            onValueChange={setRequirementScope}
+                          />
+                        )}
+
+                      {matchesReportType(
+                        reportType,
+                        "requirement-traceability"
+                      ) && (
+                        <RequirementCoverageStateFilter
+                          value={requirementCoverageStates}
+                          onValueChange={setRequirementCoverageStates}
+                        />
+                      )}
+
+                      {matchesReportType(
+                        reportType,
+                        "requirement-coverage-gaps"
+                      ) && (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="requirement-debt-include-not-run"
+                            checked={includeNotRunDebt}
+                            onCheckedChange={setIncludeNotRunDebt}
+                            data-testid="requirement-debt-include-not-run"
+                          />
+                          <label
+                            htmlFor="requirement-debt-include-not-run"
+                            className="text-sm font-medium"
+                          >
+                            {tReports("requirementCoverage.includeNotRun")}
+                          </label>
                         </div>
                       )}
 

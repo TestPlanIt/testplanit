@@ -73,10 +73,25 @@ describe("useRequirementCoverageReportColumns", () => {
     const { result } = renderHook(() => useRequirementCoverageGapColumns());
     const columns = result.current;
 
+    // No NOT_RUN tier in the rows → the Coverage and Linked Cases
+    // columns are omitted (both would be constants: "Uncovered" and 0).
     expect(columns.map((c: any) => c.id)).toEqual([
       "requirement",
       "requirementPath",
+      "priority",
+      "status",
+      "uncoveredSince",
     ]);
+
+    const { result: withTier } = renderHook(() =>
+      useRequirementCoverageGapColumns([
+        { coverageStatus: "UNCOVERED" },
+        { coverageStatus: "NOT_RUN" },
+      ])
+    );
+    const tierIds = withTier.current.map((c: any) => c.id);
+    expect(tierIds).toContain("coverage");
+    expect(tierIds).toContain("linkedCases");
 
     const gapRow = {
       id: 0,
@@ -84,6 +99,7 @@ describe("useRequirementCoverageReportColumns", () => {
       requirementKey: "REQ-1",
       requirementTitle: "Enrol domestic students",
       requirementPath: "Enrolments > Enrol domestic students",
+      requirementParentPath: "Enrolments",
       linkedCases: 0,
     };
 
@@ -92,16 +108,21 @@ describe("useRequirementCoverageReportColumns", () => {
     );
     expect(getByText("REQ-1: Enrol domestic students")).toBeInTheDocument();
 
-    const { getByText: getPathText } = render(
+    // The Path column displays the ANCESTORS-ONLY parent path, never the
+    // full path that repeats the requirement's own text as its last
+    // segment (operator finding 2026-08-29: in a mostly-flat project the
+    // full path made this column a copy of the Requirement column).
+    const { getByText: getPathText, queryByText } = render(
       <>{cellFor(columns, "requirementPath", gapRow)}</>
     );
+    expect(getPathText("Enrolments")).toBeInTheDocument();
     expect(
-      getPathText("Enrolments > Enrol domestic students")
-    ).toBeInTheDocument();
+      queryByText("Enrolments > Enrol domestic students")
+    ).not.toBeInTheDocument();
   });
 
   it("renders the uncovered treatment for a null case row", () => {
-    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
     const columns = result.current;
 
     const gapRow = {
@@ -130,7 +151,7 @@ describe("useRequirementCoverageReportColumns", () => {
   });
 
   it("renders a not-run treatment for a covering case with no execution", () => {
-    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
     const columns = result.current;
 
     const notRunRow = {
@@ -200,7 +221,7 @@ describe("useRequirementCoverageReportColumns", () => {
   });
 
   it("renders a native requirement's name ONCE, not doubled, in the traceability columns", () => {
-    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
     const columns = result.current;
 
     const nativeRow = {
@@ -228,6 +249,99 @@ describe("useRequirementCoverageReportColumns", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("orders the traceability columns with Coverage between Path and Test Case", () => {
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
+
+    expect(result.current.map((c: any) => c.id)).toEqual([
+      "requirement",
+      "requirementPath",
+      "coverage",
+      "testCaseId",
+      "result",
+      "executedAt",
+      "project",
+    ]);
+  });
+
+  it("renders the classified coverage state with the tree's own vocabulary", () => {
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
+    const columns = result.current;
+
+    const baseRow = {
+      id: 0,
+      requirementId: 1,
+      requirementKey: "REQ-1",
+      requirementTitle: "Enrol domestic students",
+      requirementPath: "Enrolments > Enrol domestic students",
+      testCaseId: 55,
+      testCaseName: "Enrol via portal",
+      caseProjectId: 10,
+      caseProjectName: "Enrolments",
+      lastStatusName: "Passed",
+      lastStatusColor: "#10b981",
+      lastExecutedAt: "2026-08-23T14:04:00.000Z",
+    };
+
+    const cases: Array<[string, string, string]> = [
+      ["PASSED", "requirement-report-coverage-passed", "statusPassed"],
+      ["FAILED", "requirement-report-coverage-failed", "statusFailed"],
+      ["NOT_RUN", "requirement-report-coverage-not-run", "statusNotRun"],
+      ["UNCOVERED", "requirement-report-coverage-uncovered", "uncovered"],
+    ];
+    for (const [status, testId, label] of cases) {
+      const { getByTestId, unmount } = render(
+        <>
+          {cellFor(columns, "coverage", { ...baseRow, coverageStatus: status })}
+        </>
+      );
+      expect(getByTestId(testId)).toHaveTextContent(label);
+      unmount();
+    }
+  });
+
+  it("names the project on a SAME-project covering case, not only cross-project ones", () => {
+    // Operator direction 2026-08-29: a blank Project cell is reserved for
+    // the gap row (no case at all) — a local case names its own project.
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
+    const columns = result.current;
+
+    const localRow = {
+      id: 0,
+      requirementId: 1,
+      requirementKey: "REQ-1",
+      requirementTitle: "Enrol domestic students",
+      requirementPath: "Enrolments",
+      testCaseId: 55,
+      testCaseName: "Enrol via portal",
+      caseProjectId: 10,
+      caseProjectName: "Web",
+      lastStatusName: null,
+      lastStatusColor: null,
+      lastExecutedAt: null,
+      coverageStatus: "NOT_RUN",
+    };
+
+    // ProjectNameDisplay renders the name in both the trigger and the
+    // (mocked, always-rendered) tooltip content — assert presence, not
+    // uniqueness.
+    const { getAllByText } = render(
+      <>{cellFor(columns, "project", localRow)}</>
+    );
+    expect(getAllByText("Web").length).toBeGreaterThan(0);
+
+    // The gap row stays blank — it has no case, so it has no project.
+    const gapRow = {
+      ...localRow,
+      testCaseId: null,
+      testCaseName: null,
+      caseProjectId: null,
+      caseProjectName: null,
+      coverageStatus: "UNCOVERED",
+    };
+    const { container } = render(<>{cellFor(columns, "project", gapRow)}</>);
+    expect(container).toBeEmptyDOMElement();
+  });
+
   // F8: the Executed At cell must use the app locale (via
   // `getDateFnsLocale`), not date-fns's built-in en-US default -- the
   // established pattern in hooks/useDrillDownColumns.tsx. Compare against
@@ -248,7 +362,7 @@ describe("useRequirementCoverageReportColumns", () => {
     // couldn't discriminate a regression.
     expect(expectedWithAppLocale).not.toBe(defaultFormatted);
 
-    const { result } = renderHook(() => useRequirementTraceabilityColumns(10));
+    const { result } = renderHook(() => useRequirementTraceabilityColumns());
     const columns = result.current;
 
     const row = {

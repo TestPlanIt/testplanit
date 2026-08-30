@@ -38,6 +38,9 @@ import {
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
+import { sortRequirementReportRows } from "~/utils/requirementReportSort";
+import { RequirementCoverageOverview } from "@/components/reports/RequirementCoverageOverview";
+import { RequirementDebtOverview } from "@/components/reports/RequirementDebtOverview";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants
@@ -251,12 +254,12 @@ export function ReportRenderer({
   );
 
   // Requirement report types (D-2, COV-04) are pre-built, flat, project-scoped
-  // tables — no dimension/metric picker, no grouping. `projectId` decides the
-  // traceability project cell's cross-project badge (see 26-09's identical
-  // "same project as the row it's rendered under never shows a badge" rule).
-  const requirementCoverageGapColumns = useRequirementCoverageGapColumns();
-  const requirementTraceabilityColumns =
-    useRequirementTraceabilityColumns(projectId);
+  // tables — no dimension/metric picker, no grouping. Every covering case's
+  // row names its project (the report's own included), so the column set
+  // needs no project context.
+  const requirementCoverageGapColumns =
+    useRequirementCoverageGapColumns(results);
+  const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
 
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
@@ -300,6 +303,24 @@ export function ReportRenderer({
     reportType,
     "requirement-traceability"
   );
+
+  // The virtualized DataTable is manualSorting — the caller owns row
+  // order. The requirement reports return their full set in path order
+  // and their handler ignores sortColumn, so the sort a header menu
+  // requests is applied HERE, to the in-memory rows, rather than as a
+  // full-matrix refetch per click. Every other report type keeps its
+  // existing (server-ordered) rows untouched.
+  const requirementSortedResults = useMemo(() => {
+    if (!isRequirementCoverageGaps && !isRequirementTraceability) {
+      return results;
+    }
+    return sortRequirementReportRows(results ?? [], sortConfig);
+  }, [
+    isRequirementCoverageGaps,
+    isRequirementTraceability,
+    results,
+    sortConfig,
+  ]);
 
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
@@ -535,7 +556,19 @@ export function ReportRenderer({
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-            <div className="flex-1 min-h-0 w-full">{memoizedChart.chart}</div>
+            <div className="flex-1 min-h-0 w-full overflow-auto">
+              {/* The traceability report's visualization: coverage donut
+                  + stat tiles (its legend) + a coverage-by-hierarchy
+                  breakdown, all computed from the same rows the table
+                  shows so the panel can never disagree with it. */}
+              {isRequirementTraceability && (results?.length ?? 0) > 0 ? (
+                <RequirementCoverageOverview rows={results} />
+              ) : isRequirementCoverageGaps && (results?.length ?? 0) > 0 ? (
+                <RequirementDebtOverview rows={results} />
+              ) : (
+                memoizedChart.chart
+              )}
+            </div>
           </CardContent>
         </Card>
       </ResizablePanel>
@@ -584,7 +617,7 @@ export function ReportRenderer({
             <DataTable
               virtualized
               columns={columns as ColumnDef<any>[]}
-              data={results}
+              data={requirementSortedResults}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
               columnSizingStorageKey={`report:${getBaseReportType(reportType)}`}

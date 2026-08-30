@@ -1,7 +1,14 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import { ArrowLeft, CircleSlash2, Save, SquarePen, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleSlash2,
+  Save,
+  SquarePen,
+  Trash2,
+  ClipboardCheck,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -610,6 +617,7 @@ export default function RequirementDetailPanel({
             </Button>
           )}
           <IssueTypeIcon
+            fallbackIcon={ClipboardCheck}
             issueTypeName={requirement.issueTypeName}
             iconUrl={requirement.issueTypeIconUrl}
             className="h-4 w-4 shrink-0"

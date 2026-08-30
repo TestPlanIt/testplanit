@@ -13,6 +13,8 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  ClipboardX,
+  ClipboardList,
 } from "lucide-react";
 
 export interface ReportType {
@@ -124,7 +126,7 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     id: "requirement-coverage-gaps",
     label: tReports("reportTypes.requirementCoverageGaps.label"),
     description: tReports("reportTypes.requirementCoverageGaps.description"),
-    icon: Flag,
+    icon: ClipboardX,
     endpoint: "/api/report-builder/requirement-coverage-gaps",
     isPreBuilt: true,
   },
@@ -132,7 +134,7 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     id: "requirement-traceability",
     label: tReports("reportTypes.requirementTraceability.label"),
     description: tReports("reportTypes.requirementTraceability.description"),
-    icon: Grid3x3,
+    icon: ClipboardList,
     endpoint: "/api/report-builder/requirement-traceability",
     isPreBuilt: true,
   },

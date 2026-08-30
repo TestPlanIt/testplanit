@@ -10,6 +10,7 @@ import {
   MoreVertical,
   SquarePenIcon,
   Trash2Icon,
+  ClipboardCheck,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -1049,6 +1050,7 @@ function RequirementNameCell({
         />
       )}
       <IssueTypeIcon
+        fallbackIcon={ClipboardCheck}
         issueTypeName={requirement.issueTypeName}
         iconUrl={requirement.issueTypeIconUrl}
         className="h-4 w-4 shrink-0"
