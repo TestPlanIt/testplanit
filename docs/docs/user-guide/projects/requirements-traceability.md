@@ -58,10 +58,26 @@ References are annotations for traceability only — they don't affect coverage,
 
 Two pre-built reports on the project's [Reports](./reports/index.md) page cover requirements. Both appear in the Report Type dropdown only when the project has [requirements enabled](./requirements.md#enabling-requirements):
 
-* **Requirement Coverage Gaps** — *"List every requirement with zero linked test cases, so gaps are visible without opening the tree."* One row per uncovered requirement, with its path in the tree.
-* **Requirement Traceability** — *"Every requirement paired with its linked test cases and their latest execution result."* One row per requirement–case pair, with the requirement's path, the case, its latest result, when it executed, and the case's project. An uncovered requirement still appears — once, with an **Uncovered** badge in place of a case — and a linked case that has never executed shows **Not run**, so gaps and untested links stay distinguishable.
+* **Requirement Coverage Gaps** — *"List every requirement with zero linked test cases, so gaps are visible without opening the tree."* One row per uncovered requirement with the context to triage it: its parent path, **Priority**, **Status**, its coverage state, its linked-case count, and **Uncovered Since** (the requirement's creation date in the tracker where it is known, otherwise when it reached TestPlanIt). Turn on **Include requirements whose tests have never run** to add a second tier — requirements that have linked cases but no execution ever, which are just as evidence-free as true gaps; the Coverage column keeps the two tiers distinguishable.
+* **Requirement Traceability** — *"Every requirement paired with its linked test cases and their latest execution result."* One row per requirement–case pair, with the requirement (and its issue-type icon), its **Parent Path** (the ancestors above it — blank for a top-level requirement), its rolled-up **Coverage** state, the case, its latest result, when it executed, and the case's project. An uncovered requirement still appears — once, with an **Uncovered** badge in place of a case — and a linked case that has never executed shows **Not run**, so gaps and untested links stay distinguishable.
+
+The traceability report's visualization panel summarizes the same rows per requirement: a donut of the four coverage states with the requirement total in the center, compact counts beside it, and a **Coverage by top-level requirement** breakdown — one bar per hierarchy (the ten largest; the rest are totalled in an **Other** line) whose length reflects the hierarchy's size and whose segments show its coverage mix.
+
+### Filtering traceability by coverage state
+
+The **Coverage** control above the traceability results keeps only the rows of requirements in the selected states — filter to **Failed** for an instant "what's failing" view, or **Uncovered** to see gaps in matrix form. The filter is applied when the report runs, so the row count, the visualization, the CSV export, and any share link all describe the same filtered set.
+
+### Scoping a report to part of the tree
+
+Both reports cover the whole project by default. The **Scope to requirements** picker above the results limits a report to just the requirements you select and everything beneath them — pick a top-level requirement to report on one hierarchy (*"report on Enrolments only"*), or several to combine subtrees. With a scope selected, each row's path starts at the selected requirement rather than at the top of the project's tree. Leave the picker empty to report on every requirement.
+
+The scope travels with the report's [share link](./reports/index.md#sharing), so a stakeholder's shared copy shows the same slice of the tree.
 
 Like the other tabular reports, both offer an **Export CSV** button above the results — see [Exporting Results](./reports/index.md#exporting-results).
+
+:::note Shared copies and cross-project coverage
+A report opened through a share link is confined to the shared project. A covering case that lives in **another** project doesn't appear in the shared copy, and a requirement covered *only* by such cases shows as a gap there even though the signed-in view shows it covered.
+:::
 
 ## PDF Export
 

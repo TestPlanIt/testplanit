@@ -12,7 +12,9 @@ The Requirements page gives a project a tree of what the system should do. Requi
 
 Requirements is off by default. Two independent settings control it — one classifies which tracker issues count as requirements, the other turns the feature on for the project. Neither implies the other:
 
-1. **Classify requirement types** (for tracker-synced requirements). On **Project Settings → Issue Integrations**, the **Requirement Sync** section lets you choose which tracker issue types count as requirements. Turn on **Enable requirement classification**, pick the issue types (for example Epic, Story, or a custom Requirement type), and save. Before you save, the section previews the impact — how many existing issues will become requirements, or stop being requirements — and notes that re-adding a type restores the classification; nothing is deleted. The section appears for Jira, Azure DevOps, GitLab, Redmine, and MantisBT integrations.
+1. **Classify requirement types** (for tracker-synced requirements). On **Project Settings → Issue Integrations**, the **Requirement Sync** section lets you choose which tracker issue types count as requirements. Turn on **Enable requirement classification**, pick the issue types (for example Epic, Story, or a custom Requirement type), and save. Before you save, the section previews the impact — how many existing issues will become requirements, or stop being requirements — and notes that re-adding a type restores the classification; nothing is deleted. The section appears for Jira, Azure DevOps, GitLab, Redmine, MantisBT, and GitHub integrations.
+
+   **GitHub classifies by label.** GitHub has no issue types, so for a GitHub integration the section selects repository **labels** instead: an issue counts as a requirement while it carries at least one selected label, and stops being one when it carries none of them. Because labels live on the issue rather than in a type field, the section describes the effect of a label change instead of previewing exact counts. Gitea and Simple URL integrations don't support requirement classification.
 2. **Enable requirements for the project.** On **Project Settings → Advanced**, turn on **Enable requirements**.
 
 Classification alone shows nothing: until the project toggle is on there is no Requirements area at all, and a direct link to the page shows **Requirements Aren't Enabled**. The project toggle alone shows an empty tree: you can author requirements natively, but nothing arrives from the tracker until requirement types are classified.
@@ -92,6 +94,8 @@ Requirements created this way are fully editable and carry the **Manual** source
 Requirements form a hierarchy, and manual and detached requirements can be reorganized by drag and drop: drag a row by its grip and drop it onto another requirement to nest it there, or onto the *"Drop here to move to the top level"* strip at the bottom of the list to make it a root. Invalid moves (for example, dropping a requirement into its own subtree) are rejected with a message and nothing changes.
 
 Synced requirements mirror the tracker's own parent/child structure — its epics, stories, and sub-tasks — and cannot be moved while synced. Their drag grip is disabled with the hint *"Synced requirements mirror the tracker's hierarchy. Detach to move it."*
+
+GitHub issues carry no parent/child relationship into TestPlanIt (sub-issue relationships aren't read), so label-classified GitHub requirements all arrive at the top level. To nest one under another, detach it first.
 
 Drag and drop is unavailable while the search box has text in it; clear the search first.
 
