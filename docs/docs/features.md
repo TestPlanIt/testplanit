@@ -105,6 +105,18 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Milestone types** - Define custom milestone categories (releases, sprints, etc.)
 - **Jira milestone sync** - Import Jira Fix Versions and Sprints as Milestones, kept fresh via webhooks and periodic refresh, with synced issue membership and per-issue test coverage
 
+### Requirements
+
+- **Requirement hierarchies** - Model what the system should do as requirement trees — multiple independent hierarchies per project, nested to any depth (opt-in per project)
+- **Tracker-synced requirements** - Designate which issue types count as requirements and mirror them, hierarchy included, as live read-only requirements; supported for Jira, Azure DevOps, GitLab, Redmine, and MantisBT, with GitHub classifying by label
+- **Three ownership modes** - Keep a requirement synced and locked to the tracker, detach it to local ownership while keeping its tracker reference, or author it natively in TestPlanIt
+- **Rich documentation** - Every requirement carries rich-text documentation and attachments, editable even on synced requirements
+- **Many-to-many test linkage** - Link test cases to requirements from either side, including cases in other projects
+- **Coverage rollup** - Each requirement rolls up its covering cases' latest results through its whole subtree, with per-status counts, an uncovered filter, and drill-down to the covering cases
+- **Suspect flags** - A link is flagged when the requirement's content changes after the case's last run; re-executing clears it automatically, or dismiss it after review
+- **Traceability references** - Attach the tracker tickets or internal issues that shaped a requirement, separate from its own sync source
+- **Traceability PDF export** - Download the project's full requirement traceability matrix as a PDF
+
 ### Issue Tracking Integration
 
 - **Jira integration** - Link test cases and results to Jira issues
@@ -134,6 +146,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Execution Log report** - Pre-built timeline of every result event with expanded step details
 - **Automation Candidates report** - LLM-ranked list of manual cases best suited for automation, drawing on custom field signals and attached-issue metadata
 - **Parameter Iteration Matrix** - Pivots per-iteration outcomes across runs for parameterized cases
+- **Requirement Traceability report** - Every requirement paired with its covering cases and their latest results, with subtree scoping, coverage-state filtering, and a per-hierarchy coverage visualization
+- **Requirement Coverage Gaps report** - A prioritized coverage-debt list — requirements with no tests and, by default, those whose tests have never run — with priority, status, debt aging, and per-hierarchy breakdowns
 - **Cross-project reports** - Aggregate results across multiple projects in a single view
 - **Coverage analysis** - Understand what has been tested and what remains
 - **Trend analysis** - Track quality metrics over time
