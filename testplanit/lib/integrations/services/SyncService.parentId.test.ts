@@ -346,6 +346,60 @@ describe("SyncService — synced parentId and requirement classification", () =>
     expect(disabledCall.update.isRequirement).toBe(false);
   });
 
+  it("sets isRequirement from labels for a typeless tracker's issue", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    // A GitHub-style config: the designation entries are LABEL names
+    // (GitHub's getIssueTypes serves labels), and the mapped issue
+    // carries no issueType at all.
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["epic"] } },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-labeled", labels: ["bug", "epic"] })
+    );
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.create.isRequirement).toBe(true);
+    expect(call.update.isRequirement).toBe(true);
+  });
+
+  it("never lets a label collide with a configured type id on a typed issue", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["10001"] } },
+    });
+
+    // The issue HAS a type (not configured) and a label whose name equals
+    // the configured type id — the precedence contract says the type
+    // governs, so this must classify false.
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({
+        id: "ext-collision",
+        issueType: { id: "10002" },
+        labels: ["10001"],
+      })
+    );
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.create.isRequirement).toBe(false);
+    expect(call.update.isRequirement).toBe(false);
+  });
+
   it("leaves isRequirement untouched when the db client does not expose projectIntegration", async () => {
     const { SyncService } = await import("./SyncService");
     const service = new SyncService();

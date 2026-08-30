@@ -118,6 +118,46 @@ export function effectiveRequirementTypeIds(
 }
 
 /**
+ * The designation inputs one external issue contributes to requirement
+ * classification: its tracker type id (when the tracker models types)
+ * and its label names (when it does not). Mirrors the two `IssueData`
+ * fields the sync path reads (`issueType?.id`, `labels`).
+ */
+export interface RequirementDesignationInput {
+  issueTypeId?: string | null;
+  labels?: string[] | null;
+}
+
+/**
+ * Whether one external issue matches the effective designation list.
+ *
+ * Trackers that model issue types (Jira, Azure DevOps, GitLab, Redmine,
+ * MantisBT) match on the TYPE ID ALONE. A tracker that models no types
+ * — GitHub, whose `getIssueTypes` serves repository LABELS as the
+ * designation vocabulary — leaves `issueTypeId` empty on every mapped
+ * issue, and only then do labels match: any configured entry present in
+ * the issue's label list designates it. Labels never override a real
+ * type: a typed tracker's issue whose label happens to collide with a
+ * configured type id must not classify through the collision. That
+ * asymmetry is the whole contract — keep it in exactly this one
+ * function (the sync writer, the import filter and the recompute all
+ * express it), or the three will drift.
+ */
+export function matchesRequirementDesignation(
+  effectiveTypeIds: string[],
+  issue: RequirementDesignationInput
+): boolean {
+  if (effectiveTypeIds.length === 0) {
+    return false;
+  }
+  if (issue.issueTypeId != null && issue.issueTypeId !== "") {
+    return effectiveTypeIds.includes(issue.issueTypeId);
+  }
+  const labels = issue.labels ?? [];
+  return labels.some((label) => effectiveTypeIds.includes(label));
+}
+
+/**
  * Returns `{ ...(plain-object rawConfig or {}), requirements: next }`.
  * Never mutates the input. The spread over `rawConfig` is what protects
  * the sibling `milestoneSync` namespace living on the same shared `config`

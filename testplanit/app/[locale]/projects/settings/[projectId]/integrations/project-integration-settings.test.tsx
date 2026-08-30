@@ -589,13 +589,29 @@ describe("ProjectIntegrationSettings", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not render Milestone Sync or Requirement Types sections for a non-capable integration (GITHUB)", () => {
+  it("renders Requirement Types but not Milestone Sync for GITHUB (label-mode requirement classification, no milestone sync)", () => {
     const githubProps = {
       ...defaultProps,
       integration: { ...defaultProps.integration, provider: "GITHUB" },
     };
 
     render(<ProjectIntegrationSettings {...githubProps} />);
+
+    expect(
+      screen.queryByTestId("milestone-sync-section")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+  });
+
+  it("does not render Milestone Sync or Requirement Types sections for a non-capable integration (GITEA)", () => {
+    const giteaProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "GITEA" },
+    };
+
+    render(<ProjectIntegrationSettings {...giteaProps} />);
 
     expect(
       screen.queryByTestId("milestone-sync-section")

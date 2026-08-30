@@ -13,7 +13,9 @@ import { AuthenticationService } from "../AuthenticationService";
 import { integrationManager } from "../IntegrationManager";
 import {
   effectiveRequirementTypeIds,
+  matchesRequirementDesignation,
   readRequirementTypeConfig,
+  type RequirementDesignationInput,
 } from "../requirementTypeConfig";
 import { SYNC_STATUS } from "../syncStatus";
 
@@ -181,9 +183,12 @@ export async function resolveSyncedParentId(
  * Classifies a synced issue against the project's stored
  * `config.requirements` namespace for the `Issue.isRequirement` column —
  * the write path `schema.zmodel:3393`'s comment names but that nothing
- * implemented until this phase (P3e). Takes the issue TYPE id, not the
- * whole `IssueData`, for the same narrow-input reason as
- * `resolveSyncedParentId`.
+ * implemented until this phase (P3e). Takes only the two designation
+ * fields (type id, labels), not the whole `IssueData`, for the same
+ * narrow-input reason as `resolveSyncedParentId`. The type-vs-label
+ * precedence lives in `matchesRequirementDesignation` — a typed tracker
+ * matches on the type id alone; a typeless tracker (GitHub, whose
+ * designation vocabulary is repository labels) matches on labels.
  *
  * Returns `undefined` (leave the column untouched) when the owning project
  * is unknown or the db client exposes no `projectIntegration` model — the
@@ -210,7 +215,7 @@ export async function resolveSyncedRequirementFlag(
   db: any,
   integrationId: number,
   ownerProjectId: number | null,
-  issueTypeId: string | null | undefined
+  designation: RequirementDesignationInput
 ): Promise<boolean | undefined> {
   if (
     ownerProjectId == null ||
@@ -228,9 +233,10 @@ export async function resolveSyncedRequirementFlag(
     select: { config: true },
   });
 
-  return effectiveRequirementTypeIds(
-    readRequirementTypeConfig(row?.config)
-  ).includes(issueTypeId ?? "");
+  return matchesRequirementDesignation(
+    effectiveRequirementTypeIds(readRequirementTypeConfig(row?.config)),
+    designation
+  );
 }
 
 /**
@@ -1120,8 +1126,35 @@ export class SyncService {
       issueTypeIds: options.issueTypeIds,
     });
 
-    const hasTotal = typeof total === "number" && Number.isFinite(total);
-    const matched = hasTotal && total >= issues.length ? total : issues.length;
+    // Re-apply the type predicate to the sampled page, exactly as
+    // performProjectImport re-applies it to every imported page — an
+    // adapter that ignores `issueTypeIds` (GitHub serves labels and
+    // filters nothing server-side) would otherwise preview the WHOLE
+    // repository while the real import filters, and the offer dialog
+    // would promise rows the import then skips. For adapters that do
+    // filter server-side the page comes back all-matching, this filter
+    // removes nothing, and every value below is byte-identical to the
+    // pre-filter computation.
+    const typeFilterActive =
+      Array.isArray(options.issueTypeIds) && options.issueTypeIds.length > 0;
+    const pageMatches = typeFilterActive
+      ? issues.filter((issueData) =>
+          matchesRequirementDesignation(options.issueTypeIds!, {
+            issueTypeId: issueData.issueType?.id,
+            labels: issueData.labels,
+          })
+        )
+      : issues;
+    // A page the filter narrowed proves the tracker's own `total` counted
+    // unfiltered rows — discard it rather than report a number the import
+    // can never reach.
+    const filterNarrowedPage = pageMatches.length < issues.length;
+    const hasTotal =
+      !filterNarrowedPage &&
+      typeof total === "number" &&
+      Number.isFinite(total);
+    const matched =
+      hasTotal && total >= pageMatches.length ? total : pageMatches.length;
     const more =
       hasMore || (hasTotal && total > matched) || issues.length >= sampleLimit;
     // Honest exactness for the fallback path: a self-reported total, or a
@@ -1309,8 +1342,10 @@ export class SyncService {
           if (
             issueTypeIds &&
             issueTypeIds.length > 0 &&
-            (!issueData.issueType ||
-              !issueTypeIds.includes(issueData.issueType.id))
+            !matchesRequirementDesignation(issueTypeIds, {
+              issueTypeId: issueData.issueType?.id,
+              labels: issueData.labels,
+            })
           ) {
             skipped++;
             continue;
@@ -2078,7 +2113,7 @@ export class SyncService {
       db,
       integrationId,
       projectId,
-      issueData.issueType?.id
+      { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
     );
     const issueFields = {
       name: issueData.key || issueData.id,
@@ -2231,7 +2266,7 @@ export class SyncService {
       db,
       integrationId,
       existingIssue.projectId ?? null,
-      issueData.issueType?.id
+      { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
     );
 
     const issuePayload = {

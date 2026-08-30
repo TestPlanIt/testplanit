@@ -470,6 +470,67 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   /**
+   * Resolves the {owner, repo} pair a repository-scoped read should hit.
+   * Mapped tracker projects carry either the full name ("owner/repo" —
+   * `getProjects` returns `repo.full_name` as the id) or the short repo
+   * name (the same call's `key`); a short name borrows the owner from the
+   * integration's configured repository. No argument falls back to the
+   * configured repository whole.
+   */
+  private resolveRepoRef(projectKey?: string): {
+    owner: string;
+    repo: string;
+  } {
+    if (projectKey?.includes("/")) {
+      const [owner, repo] = projectKey.split("/");
+      if (owner && repo) {
+        return { owner, repo };
+      }
+    }
+    if (this.owner && projectKey) {
+      return { owner: this.owner, repo: projectKey };
+    }
+    if (this.owner && this.repo) {
+      return { owner: this.owner, repo: this.repo };
+    }
+    throw new Error("Repository not configured");
+  }
+
+  /**
+   * GitHub models no issue types — repository LABELS are the designation
+   * vocabulary this adapter serves through the issue-type contract, the
+   * way GitLab's own `getIssueTypes` returns a list its tracker never
+   * enumerates. `id === name` deliberately: a label reaches issue
+   * payloads (`mapGitHubIssue`'s `labels`) only as its name, so the name
+   * is the only join key classification can use — see
+   * `matchesRequirementDesignation`'s type-vs-label precedence contract.
+   * Paged to three pages (300 labels), comfortably past the
+   * requirement-config selection cap of 200.
+   */
+  async getIssueTypes(
+    projectKey: string
+  ): Promise<Array<{ id: string; name: string }>> {
+    const { owner, repo } = this.resolveRepoRef(projectKey);
+
+    const labels: Array<{ id: string; name: string }> = [];
+    for (let page = 1; page <= 3; page++) {
+      const pageLabels = await this.makeRequest<any[]>(
+        `${this.baseUrl}/repos/${owner}/${repo}/labels?per_page=100&page=${page}`
+      );
+      labels.push(
+        ...pageLabels.map((label: any) => ({
+          id: label.name,
+          name: label.name,
+        }))
+      );
+      if (pageLabels.length < 100) {
+        break;
+      }
+    }
+    return labels;
+  }
+
+  /**
    * Get available labels for a repository
    */
   async getLabels(): Promise<
@@ -673,7 +734,15 @@ export class GitHubAdapter extends BaseAdapter {
             email: githubIssue.user.email,
           }
         : undefined,
-      labels: githubIssue.labels.map((label: any) => label.name),
+      // Label names feed requirement classification (the designation
+      // vocabulary for a tracker with no issue types), so this mapping is
+      // load-bearing, guarded against payloads without a labels array,
+      // and tolerant of GitHub's occasional plain-string label form.
+      labels: Array.isArray(githubIssue.labels)
+        ? githubIssue.labels.map((label: any) =>
+            typeof label === "string" ? label : label.name
+          )
+        : [],
       // Store repo context in customFields for sync support
       customFields: {
         _github_owner: owner,

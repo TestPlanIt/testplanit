@@ -5,6 +5,7 @@ import {
   MAX_REQUIREMENT_TYPE_IDS,
   diffRequirementTypeIds,
   effectiveRequirementTypeIds,
+  matchesRequirementDesignation,
   mergeRequirementTypeConfig,
   readRequirementTypeConfig,
   sanitizeRequirementTypeIds,
@@ -127,5 +128,67 @@ describe("sanitizeRequirementTypeIds", () => {
       (_, i) => `id-${i}`
     );
     expect(sanitizeRequirementTypeIds(tooMany)).toBeNull();
+  });
+});
+
+// The single type-vs-label precedence contract: a typed issue matches on
+// its type id alone; only a TYPELESS issue (GitHub — labels are the
+// designation vocabulary its getIssueTypes serves) matches on labels.
+// The sync writer, the import filter and the recompute SQL all express
+// this rule; these cases pin the pure definition they share.
+describe("matchesRequirementDesignation", () => {
+  it("matches a typed issue on its type id", () => {
+    expect(
+      matchesRequirementDesignation(["10001"], { issueTypeId: "10001" })
+    ).toBe(true);
+    expect(
+      matchesRequirementDesignation(["10001"], { issueTypeId: "10002" })
+    ).toBe(false);
+  });
+
+  it("matches a typeless issue on any configured label", () => {
+    expect(
+      matchesRequirementDesignation(["epic", "requirement"], {
+        labels: ["bug", "epic"],
+      })
+    ).toBe(true);
+    expect(matchesRequirementDesignation(["epic"], { labels: ["bug"] })).toBe(
+      false
+    );
+    expect(matchesRequirementDesignation(["epic"], { labels: [] })).toBe(false);
+    expect(matchesRequirementDesignation(["epic"], {})).toBe(false);
+  });
+
+  it("never lets a label match override a real type", () => {
+    // The issue's label collides with a configured entry, but the issue
+    // HAS a type — the type governs, and it isn't configured.
+    expect(
+      matchesRequirementDesignation(["10001"], {
+        issueTypeId: "10002",
+        labels: ["10001"],
+      })
+    ).toBe(false);
+  });
+
+  it("treats an empty or missing type id as typeless", () => {
+    expect(
+      matchesRequirementDesignation(["epic"], {
+        issueTypeId: "",
+        labels: ["epic"],
+      })
+    ).toBe(true);
+    expect(
+      matchesRequirementDesignation(["epic"], {
+        issueTypeId: null,
+        labels: ["epic"],
+      })
+    ).toBe(true);
+  });
+
+  it("matches nothing against an empty designation list", () => {
+    expect(matchesRequirementDesignation([], { issueTypeId: "10001" })).toBe(
+      false
+    );
+    expect(matchesRequirementDesignation([], { labels: ["epic"] })).toBe(false);
   });
 });

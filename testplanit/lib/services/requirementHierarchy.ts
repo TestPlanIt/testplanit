@@ -535,25 +535,40 @@ function normalizeTypeIds(ids: string[]): string[] {
  * `authorizeProjectAdminForProject` gate) is responsible for authorizing the
  * operation before invoking this.
  *
- * No batching machinery here, deliberately: this is at most two
- * project-scoped statements against a bounded input (issueTypeIds capped by
+ * No batching machinery here, deliberately: this is at most four
+ * project-scoped statements (a type-column pair plus a label-mode pair for
+ * typeless trackers) against a bounded input (issueTypeIds capped by
  * `sanitizeRequirementTypeIds`'s `MAX_REQUIREMENT_TYPE_IDS`), not a
  * whole-tenant sweep. Do not copy the SCIM access-recompute worker's
  * fixed-size batching loop here — that pattern exists for a per-row lookup
  * across every tenant, a different problem than a pure predicate-membership
  * flip scoped to one project's issues. Equally, do not repeat that worker's
- * known unbounded-sweep residual: the statement set here is exactly two
- * statements, both project-scoped, with the input id lists already capped
- * by the caller.
+ * known unbounded-sweep residual: every statement is project-scoped, with
+ * the input id lists already capped by the caller.
  */
 export async function recomputeRequirementClassification(
   projectId: number,
   addedTypeIds: string[],
   removedTypeIds: string[],
-  opts?: { tx?: TxClient }
+  opts?: {
+    tx?: TxClient;
+    /**
+     * The FULL post-save effective designation list
+     * (`effectiveRequirementTypeIds(nextConfig)`), consumed only by the
+     * label-mode declassify below: a typeless row is declassified when it
+     * carries a removed entry AND no remaining entry — the type-mode
+     * statements never need this because one row has exactly one type,
+     * so membership in `removed` already implies absence from the next
+     * list. Callers that can remove entries MUST pass it; omitting it
+     * reads as "nothing remains configured", which over-declassifies any
+     * multi-label row that still carries another configured label.
+     */
+    nextEffectiveTypeIds?: string[];
+  }
 ): Promise<{ classified: number; declassified: number }> {
   const added = normalizeTypeIds(addedTypeIds);
   const removed = normalizeTypeIds(removedTypeIds);
+  const nextEffective = normalizeTypeIds(opts?.nextEffectiveTypeIds ?? []);
 
   if (added.length === 0 && removed.length === 0) {
     // A no-op save must not open a transaction — and therefore must not
@@ -575,6 +590,35 @@ export async function recomputeRequirementClassification(
           AND "isRequirement" = false
           AND "isDeleted" = false
       `;
+      // Label-mode twin (typeless trackers — GitHub serves repository
+      // labels as its designation vocabulary; see
+      // `matchesRequirementDesignation` for the precedence contract this
+      // pair of statements mirrors in SQL). Scoped to rows a typeless
+      // SYNC wrote: `issueTypeId IS NULL` keeps a typed tracker's rows
+      // out even when a label collides with a configured type id, and
+      // `integrationId IS NOT NULL` keeps native rows (which also have
+      // no type id, and no labels) from ever entering the scan. Labels
+      // live at `data->'labels'` (buildSyncedIssueData); the CASE guard
+      // turns a NULL/absent/non-array value into an empty array rather
+      // than a jsonb_array_elements_text error.
+      classified += await tx.$executeRaw`
+        UPDATE "Issue"
+        SET "isRequirement" = true
+        WHERE "projectId" = ${projectId}
+          AND "issueTypeId" IS NULL
+          AND "integrationId" IS NOT NULL
+          AND "isRequirement" = false
+          AND "isDeleted" = false
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements_text(
+              CASE WHEN jsonb_typeof("data" -> 'labels') = 'array'
+                   THEN "data" -> 'labels'
+                   ELSE '[]'::jsonb END
+            ) AS issue_label(value)
+            WHERE issue_label.value = ANY(${added}::text[])
+          )
+      `;
     }
     if (removed.length > 0) {
       declassified = await tx.$executeRaw`
@@ -584,6 +628,38 @@ export async function recomputeRequirementClassification(
           AND "issueTypeId" = ANY(${removed}::text[])
           AND "isRequirement" = true
           AND "isDeleted" = false
+      `;
+      // Label-mode twin of the declassify. The extra NOT EXISTS clause is
+      // the one semantic divergence from the type-mode statement: an
+      // issue can carry SEVERAL configured labels, so losing one must not
+      // declassify a row that still carries another entry from the
+      // post-save list (`nextEffectiveTypeIds`).
+      declassified += await tx.$executeRaw`
+        UPDATE "Issue"
+        SET "isRequirement" = false
+        WHERE "projectId" = ${projectId}
+          AND "issueTypeId" IS NULL
+          AND "integrationId" IS NOT NULL
+          AND "isRequirement" = true
+          AND "isDeleted" = false
+          AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements_text(
+              CASE WHEN jsonb_typeof("data" -> 'labels') = 'array'
+                   THEN "data" -> 'labels'
+                   ELSE '[]'::jsonb END
+            ) AS issue_label(value)
+            WHERE issue_label.value = ANY(${removed}::text[])
+          )
+          AND NOT EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements_text(
+              CASE WHEN jsonb_typeof("data" -> 'labels') = 'array'
+                   THEN "data" -> 'labels'
+                   ELSE '[]'::jsonb END
+            ) AS issue_label(value)
+            WHERE issue_label.value = ANY(${nextEffective}::text[])
+          )
       `;
     }
     return { classified, declassified };

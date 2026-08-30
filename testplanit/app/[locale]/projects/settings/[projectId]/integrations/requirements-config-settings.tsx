@@ -55,6 +55,12 @@ interface RequirementImportMapping {
  * static, provider-determined fact rather than round-tripping to the
  * server just to learn it. Mirrors MilestoneSyncSettings' own
  * MILESTONE_CAPABLE_PROVIDERS shape and source-of-truth reasoning.
+ *
+ * GITHUB is the one LABEL-MODE member: its `getIssueTypes` serves
+ * repository labels (GitHub models no issue types), so this card's
+ * picker selects labels there, and the impact preview cannot count
+ * matches client-side (labels live in a JSON column the client query
+ * layer can't filter on) — see `labelMode` below.
  */
 const REQUIREMENT_TYPE_CAPABLE_PROVIDERS = new Set([
   "JIRA",
@@ -62,6 +68,7 @@ const REQUIREMENT_TYPE_CAPABLE_PROVIDERS = new Set([
   "GITLAB",
   "REDMINE",
   "MANTISBT",
+  "GITHUB",
 ]);
 
 function isRequirementTypeCapable(provider: string): boolean {
@@ -145,8 +152,16 @@ export function RequirementsConfigSettings({
       await Promise.all(
         (mappings ?? []).map(async (mapping) => {
           try {
+            // GitHub's label listing needs the full "owner/repo" ref,
+            // which mappings carry as externalProjectId (getProjects
+            // returns repo.full_name as the id); every typed tracker
+            // keys getIssueTypes on the short project KEY.
+            const projectRef =
+              integration.provider === "GITHUB"
+                ? mapping.externalProjectId
+                : mapping.externalProjectKey;
             const response = await fetch(
-              `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(mapping.externalProjectKey)}`
+              `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(projectRef)}`
             );
             if (response.ok) {
               const data = await response.json();
@@ -174,7 +189,7 @@ export function RequirementsConfigSettings({
         total: filtered.length,
       };
     },
-    [mappings, integration.id]
+    [mappings, integration.id, integration.provider]
   );
 
   // Deriving the diff from effectiveRequirementTypeIds (not the raw id
@@ -191,6 +206,14 @@ export function RequirementsConfigSettings({
 
   const projectId = projectIntegration.projectId;
 
+  // Label mode (GitHub): the selections are label names, matched against
+  // `Issue.data->'labels'` server-side. The three impact-preview counts
+  // below are keyed on the `issueTypeId` COLUMN, which is NULL on every
+  // label-classified row — running them would preview a confident zero
+  // for a save that reclassifies plenty, so label mode disables them and
+  // renders a plain-language note instead.
+  const labelMode = integration.provider === "GITHUB";
+
   const { data: becomingCount } = useClientQueries(schema).issue.useCount(
     {
       where: {
@@ -200,7 +223,7 @@ export function RequirementsConfigSettings({
         isDeleted: false,
       },
     },
-    { enabled: diff.added.length > 0 }
+    { enabled: !labelMode && diff.added.length > 0 }
   );
 
   const { data: stoppingCount } = useClientQueries(schema).issue.useCount(
@@ -212,7 +235,7 @@ export function RequirementsConfigSettings({
         isDeleted: false,
       },
     },
-    { enabled: diff.removed.length > 0 }
+    { enabled: !labelMode && diff.removed.length > 0 }
   );
 
   const { data: detachedOrLocalCount } = useClientQueries(
@@ -227,7 +250,7 @@ export function RequirementsConfigSettings({
         OR: [{ requirementDetachedAt: { not: null } }, { integrationId: null }],
       },
     },
-    { enabled: diff.removed.length > 0 }
+    { enabled: !labelMode && diff.removed.length > 0 }
   );
 
   if (!isRequirementTypeCapable(integration.provider)) {
@@ -320,7 +343,9 @@ export function RequirementsConfigSettings({
 
       <div className="space-y-2">
         <Label className="text-sm text-muted-foreground">
-          {t("requirementsConfig.issueTypesLabel")}
+          {labelMode
+            ? t("requirementsConfig.labelsLabel")
+            : t("requirementsConfig.issueTypesLabel")}
         </Label>
         <MultiAsyncCombobox<IssueType>
           value={selected}
@@ -329,8 +354,16 @@ export function RequirementsConfigSettings({
           renderOption={(issueType) => <span>{issueType.name}</span>}
           getOptionValue={(issueType) => issueType.id}
           getOptionLabel={(issueType) => issueType.name}
-          placeholder={t("requirementsConfig.issueTypesPlaceholder")}
-          ariaLabel={t("requirementsConfig.issueTypesAriaLabel")}
+          placeholder={
+            labelMode
+              ? t("requirementsConfig.labelsPlaceholder")
+              : t("requirementsConfig.issueTypesPlaceholder")
+          }
+          ariaLabel={
+            labelMode
+              ? t("requirementsConfig.labelsAriaLabel")
+              : t("requirementsConfig.issueTypesAriaLabel")
+          }
           disabled={!enabled || isSaving}
         />
       </div>
@@ -340,26 +373,34 @@ export function RequirementsConfigSettings({
           <Label className="text-sm text-muted-foreground">
             {t("requirementsConfig.previewHeading")}
           </Label>
-          {diff.added.length > 0 && (
+          {labelMode ? (
             <p className="text-sm">
-              {t("requirementsConfig.becomingRequirements", {
-                count: becomingCount ?? 0,
-              })}
+              {t("requirementsConfig.labelPreviewNote")}
             </p>
-          )}
-          {diff.removed.length > 0 && (
-            <p className="text-sm">
-              {t("requirementsConfig.stoppingRequirements", {
-                count: stoppingCount ?? 0,
-              })}
-            </p>
-          )}
-          {(detachedOrLocalCount ?? 0) > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {t("requirementsConfig.detachedCallout", {
-                count: detachedOrLocalCount ?? 0,
-              })}
-            </p>
+          ) : (
+            <>
+              {diff.added.length > 0 && (
+                <p className="text-sm">
+                  {t("requirementsConfig.becomingRequirements", {
+                    count: becomingCount ?? 0,
+                  })}
+                </p>
+              )}
+              {diff.removed.length > 0 && (
+                <p className="text-sm">
+                  {t("requirementsConfig.stoppingRequirements", {
+                    count: stoppingCount ?? 0,
+                  })}
+                </p>
+              )}
+              {(detachedOrLocalCount ?? 0) > 0 && (
+                <p className="text-sm text-muted-foreground">
+                  {t("requirementsConfig.detachedCallout", {
+                    count: detachedOrLocalCount ?? 0,
+                  })}
+                </p>
+              )}
+            </>
           )}
           <p className="text-xs text-muted-foreground">
             {t("requirementsConfig.reversibilityNote")}

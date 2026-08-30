@@ -159,6 +159,10 @@ export const PUT = withAuditContext(
         });
         return recomputeRequirementClassification(projectId, added, removed, {
           tx,
+          // Label-mode declassify correctness: a typeless (label-matched)
+          // row that loses one configured label but still carries another
+          // entry from this list must stay classified.
+          nextEffectiveTypeIds: nextEffective,
         });
       });
 

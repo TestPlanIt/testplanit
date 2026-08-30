@@ -182,7 +182,10 @@ describe("requirements-config route", () => {
       42,
       ["10001", "10002"],
       [],
-      { tx: mockTx }
+      // nextEffectiveTypeIds must be the FULL post-save effective list —
+      // the label-mode declassify keeps a multi-label row classified only
+      // when the route hands it what remains configured.
+      { tx: mockTx, nextEffectiveTypeIds: ["10001", "10002"] }
     );
   });
 

@@ -481,9 +481,15 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
     const { SyncService } = await import("./SyncService");
     const service = new SyncService();
 
+    // A server-side-filtering adapter's page carries the requested type on
+    // every returned issue — the preview's own re-applied predicate (the
+    // same one performProjectImport runs per page) must keep them all.
     const adapter = makeSearchAdapter([
       {
-        issues: [makeExtIssue({ id: "a" }), makeExtIssue({ id: "b" })],
+        issues: [
+          makeExtIssue({ id: "a", issueType: { id: "10001" } }),
+          makeExtIssue({ id: "b", issueType: { id: "10002" } }),
+        ],
         total: 7,
         hasMore: true,
       },
@@ -526,7 +532,7 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
     const adapter = makeSearchAdapter([
       {
         issues: Array.from({ length: PAGE_SIZE }, (_, i) =>
-          makeExtIssue({ id: `t${i}` })
+          makeExtIssue({ id: `t${i}`, issueType: { id: "10001" } })
         ),
         total: undefined,
         hasMore: false,
@@ -621,7 +627,7 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
     const adapter = makeSearchAdapter([
       {
         issues: Array.from({ length: PAGE_SIZE }, (_, i) =>
-          makeExtIssue({ id: `f${i}` })
+          makeExtIssue({ id: `f${i}`, issueType: { id: "10001" } })
         ),
         total: undefined,
         hasMore: false,
@@ -643,7 +649,10 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
 
     const adapter = makeSearchAdapter([
       {
-        issues: [makeExtIssue({ id: "a" }), makeExtIssue({ id: "b" })],
+        issues: [
+          makeExtIssue({ id: "a", issueType: { id: "10001" } }),
+          makeExtIssue({ id: "b", issueType: { id: "10002" } }),
+        ],
         total: 7,
         hasMore: true,
       },
@@ -664,7 +673,7 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
 
     const adapter = makeSearchAdapter([
       {
-        issues: [makeExtIssue({ id: "only-one" })],
+        issues: [makeExtIssue({ id: "only-one", issueType: { id: "10001" } })],
         total: undefined,
         hasMore: false,
       },
@@ -677,5 +686,38 @@ describe("SyncService — previewProjectImport type-scoped windowless probe (#50
 
     expect(result.matched).toBe(1);
     expect(result.exactness).toBe("exact");
+  });
+
+  it("re-filters the sampled page and discards the total when the adapter ignored the type filter", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+
+    // A GitHub-style adapter: no server-side type filtering, no issue
+    // types at all — designation entries are LABEL names. The sampled
+    // page holds the whole repository; only one issue carries a
+    // configured label. The preview must report what the import will
+    // actually keep, not the tracker's unfiltered total.
+    const adapter = makeSearchAdapter([
+      {
+        issues: [
+          makeExtIssue({ id: "gh-1", labels: ["epic"] }),
+          makeExtIssue({ id: "gh-2", labels: ["bug"] }),
+          makeExtIssue({ id: "gh-3" }),
+        ],
+        total: 3,
+        hasMore: false,
+      },
+    ]);
+    mockGetAdapter.mockResolvedValue(adapter);
+
+    const result = await service.previewProjectImport(1, "ip-1", {
+      issueTypeIds: ["epic"],
+    });
+
+    expect(result.matched).toBe(1);
+    // A partial page means every candidate was seen, so the filtered
+    // count is exact even though the reported total was discarded.
+    expect(result.exactness).toBe("exact");
+    expect(result.hasMore).toBe(false);
   });
 });

@@ -503,3 +503,206 @@ describeIntegration("LINK-03 reference shells never enter the tree", () => {
     expect(treeIdsAfter).toContain(controlIssueId);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Label-mode recompute — the typeless-tracker twin statements. GitHub rows
+// carry no issueTypeId; their designation vocabulary is label names stored
+// at Issue.data->'labels' by buildSyncedIssueData. This block proves the
+// four semantics the SQL pair must hold, against real jsonb:
+//   1. classify-by-label reaches only synced, typeless, live rows;
+//   2. a typed row is NEVER classified through a label/type-id collision;
+//   3. a native row (no integrationId) is never scanned;
+//   4. removing one label keeps a row classified while ANOTHER configured
+//      label remains (nextEffectiveTypeIds), and declassifies it when
+//      nothing remains.
+//
+// A DEDICATED raw client, same reasoning as linkDb above: the earlier
+// blocks' afterAll hooks disconnect their own pools before this block runs.
+const labelDb = createRawDbClient();
+
+describeIntegration("label-mode recompute (typeless trackers, live DB)", () => {
+  let adminUserId: string;
+  let projectId: number;
+  let integrationId: number;
+
+  let labeledUnclassifiedId: number;
+  let multiLabelClassifiedId: number;
+  let singleLabelClassifiedId: number;
+  let typedCollisionId: number;
+  let nativeWithLabelsId: number;
+  let nullDataId: number;
+
+  const allIssueIds: number[] = [];
+
+  let firstResult: { classified: number; declassified: number };
+  let secondResult: { classified: number; declassified: number };
+  let afterClassify: Map<number, boolean>;
+  let afterRemoval: Map<number, boolean>;
+
+  async function snapshot(): Promise<Map<number, boolean>> {
+    const rows = await labelDb.issue.findMany({
+      where: { id: { in: allIssueIds } },
+      select: { id: true, isRequirement: true },
+    });
+    return new Map(rows.map((row) => [row.id, row.isRequirement]));
+  }
+
+  beforeAll(async () => {
+    const [{ current_database: dbName }] = await labelDb.$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
+    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+      throw new Error(
+        `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+      );
+    }
+
+    const role = await labelDb.roles.findFirst({
+      where: { isDefault: true, isDeleted: false },
+    });
+    if (!role) throw new Error("Test prerequisite: no default role row");
+
+    const admin = await labelDb.user.create({
+      data: {
+        email: `${STAMP}-label-admin@example.com`,
+        name: `Label Recompute Admin ${STAMP}`,
+        authMethod: "INTERNAL",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+        roleId: role.id,
+        password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+      },
+      select: { id: true },
+    });
+    adminUserId = admin.id;
+
+    const project = await labelDb.projects.create({
+      data: { name: `${STAMP}-label-project`, createdBy: adminUserId },
+      select: { id: true },
+    });
+    projectId = project.id;
+
+    const integration = await labelDb.integration.create({
+      data: {
+        name: `${STAMP}-label-github`,
+        provider: "GITHUB",
+        authType: "API_KEY",
+        status: "ACTIVE",
+        credentials: {},
+        settings: {},
+      },
+      select: { id: true },
+    });
+    integrationId = integration.id;
+
+    async function createIssue(
+      name: string,
+      overrides: Record<string, unknown> = {}
+    ) {
+      const issue = await labelDb.issue.create({
+        data: {
+          name: `${STAMP}-${name}`,
+          title: `${STAMP}-${name}`,
+          createdById: adminUserId,
+          projectId,
+          ...overrides,
+        },
+        select: { id: true },
+      });
+      allIssueIds.push(issue.id);
+      return issue.id;
+    }
+
+    labeledUnclassifiedId = await createIssue("label-unclassified", {
+      integrationId,
+      externalId: `${STAMP}-lbl-1`,
+      data: { labels: ["epic", "misc"] },
+      isRequirement: false,
+    });
+    multiLabelClassifiedId = await createIssue("label-multi-classified", {
+      integrationId,
+      externalId: `${STAMP}-lbl-2`,
+      data: { labels: ["epic", "requirement"] },
+      isRequirement: true,
+    });
+    singleLabelClassifiedId = await createIssue("label-single-classified", {
+      integrationId,
+      externalId: `${STAMP}-lbl-3`,
+      data: { labels: ["epic"] },
+      isRequirement: true,
+    });
+    // A TYPED row whose label collides with the configured entry — the
+    // precedence contract says the type column governs, so the label
+    // statements must exclude it (issueTypeId IS NULL).
+    typedCollisionId = await createIssue("label-typed-collision", {
+      integrationId,
+      externalId: `${STAMP}-lbl-4`,
+      issueTypeId: "30001",
+      data: { labels: ["epic"] },
+      isRequirement: false,
+    });
+    // Native row (no integrationId). A real native row never has labels;
+    // seeding some anyway proves the integrationId guard alone keeps it
+    // out of the scan.
+    nativeWithLabelsId = await createIssue("label-native", {
+      data: { labels: ["epic"] },
+      isRequirement: false,
+    });
+    nullDataId = await createIssue("label-null-data", {
+      integrationId,
+      externalId: `${STAMP}-lbl-6`,
+      isRequirement: false,
+    });
+
+    // Call 1 — the admin configures ["epic", "requirement"]; "epic" is the
+    // newly-added entry.
+    firstResult = await recomputeRequirementClassification(
+      projectId,
+      ["epic"],
+      [],
+      { nextEffectiveTypeIds: ["epic", "requirement"] }
+    );
+    afterClassify = await snapshot();
+
+    // Call 2 — the admin removes "epic"; "requirement" remains configured.
+    secondResult = await recomputeRequirementClassification(
+      projectId,
+      [],
+      ["epic"],
+      { nextEffectiveTypeIds: ["requirement"] }
+    );
+    afterRemoval = await snapshot();
+  });
+
+  afterAll(async () => {
+    await labelDb.issue.deleteMany({ where: { id: { in: allIssueIds } } });
+    await labelDb.projects.delete({ where: { id: projectId } });
+    await labelDb.integration.delete({ where: { id: integrationId } });
+    await labelDb.user.delete({ where: { id: adminUserId } });
+    await labelDb.$disconnect();
+  });
+
+  it("classifies a synced typeless row carrying an added label, and only that row", () => {
+    expect(firstResult).toEqual({ classified: 1, declassified: 0 });
+    expect(afterClassify.get(labeledUnclassifiedId)).toBe(true);
+  });
+
+  it("never classifies a typed row through a label/type-id collision", () => {
+    expect(afterClassify.get(typedCollisionId)).toBe(false);
+    expect(afterRemoval.get(typedCollisionId)).toBe(false);
+  });
+
+  it("never scans native rows or rows with no stored labels", () => {
+    expect(afterClassify.get(nativeWithLabelsId)).toBe(false);
+    expect(afterClassify.get(nullDataId)).toBe(false);
+  });
+
+  it("keeps a multi-label row classified while another configured label remains, declassifies the rest", () => {
+    expect(secondResult).toEqual({ classified: 0, declassified: 2 });
+    // Still carries "requirement", which stayed configured.
+    expect(afterRemoval.get(multiLabelClassifiedId)).toBe(true);
+    // Their only configured label was removed.
+    expect(afterRemoval.get(singleLabelClassifiedId)).toBe(false);
+    expect(afterRemoval.get(labeledUnclassifiedId)).toBe(false);
+  });
+});

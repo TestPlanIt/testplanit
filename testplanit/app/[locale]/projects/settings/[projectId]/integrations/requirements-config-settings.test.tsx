@@ -72,10 +72,18 @@ vi.mock("@/components/ui/multi-async-combobox", () => ({
     ariaLabel,
     disabled,
     onValueChange,
+    fetchOptions,
   }: any) => (
     <div data-testid="multi-async-combobox">
       <span>{placeholder}</span>
       <span>{ariaLabel}</span>
+      <button
+        type="button"
+        data-testid="mock-fetch-options"
+        onClick={() => void fetchOptions?.("", 0, 50)}
+      >
+        Fetch options
+      </button>
       {value.map((v: any) => (
         <span key={v.id} data-testid="selected-type">
           {v.name}
@@ -592,4 +600,100 @@ describe("RequirementsConfigSettings — offer-on-save, progress polling, and st
   // (#501/28-21) along with the code -- this section's own `mappings` query
   // no longer selects syncStatus/syncError or polls, since it no longer
   // displays any of that.
+});
+
+// ---------------------------------------------------------------------------
+// GitHub label mode — the card's one label-mode provider. Selections are
+// LABEL names (the adapter's getIssueTypes serves repository labels), the
+// wording switches from types to labels, and the type-column impact
+// preview is replaced by a note because the counts would be a confident
+// zero (labels live in a JSON column the client query layer can't match).
+// ---------------------------------------------------------------------------
+describe("RequirementsConfigSettings — GitHub label mode", () => {
+  const githubIntegration = {
+    id: 2,
+    provider: "GITHUB",
+    name: "GitHub",
+  } as any;
+
+  const githubMapping = makeMapping({
+    externalProjectId: "testowner/testrepo",
+    externalProjectKey: "testrepo",
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockMappingsFindMany.mockReturnValue({ data: [githubMapping] });
+    mockIssueUseCount.mockReturnValue({ data: 0 });
+    mockInvalidateQueries.mockResolvedValue(undefined);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ issueTypes: [] }),
+    }) as any;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  function renderGitHubCard() {
+    render(
+      <RequirementsConfigSettings
+        projectIntegration={makeProjectIntegration({
+          requirements: {
+            enabled: true,
+            issueTypeIds: ["epic"],
+            issueTypeNames: { epic: "epic" },
+          },
+        })}
+        integration={githubIntegration}
+        onRequestImport={mockOnRequestImport}
+      />
+    );
+  }
+
+  it("renders for GITHUB with label wording instead of issue-type wording", () => {
+    renderGitHubCard();
+
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+    expect(screen.getByText("labelsLabel")).toBeInTheDocument();
+    expect(screen.getByText("labelsPlaceholder")).toBeInTheDocument();
+    expect(screen.getByText("labelsAriaLabel")).toBeInTheDocument();
+    expect(screen.queryByText("issueTypesLabel")).not.toBeInTheDocument();
+  });
+
+  it("replaces the numeric impact preview with the label note and never runs the type-column counts", async () => {
+    // A non-zero stub: if any of the three counts DID render, it would
+    // show 9 and the becoming/stopping assertions below would catch it.
+    mockIssueUseCount.mockReturnValue({ data: 9 });
+
+    renderGitHubCard();
+    fireEvent.click(screen.getByTestId("mock-add-type"));
+
+    await waitFor(() => {
+      expect(screen.getByText(/labelPreviewNote/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/becomingRequirements/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/stoppingRequirements/)).not.toBeInTheDocument();
+    // Every type-column count query must be gated off in label mode —
+    // its where clause keys on issueTypeId, NULL on every labeled row.
+    for (const call of mockIssueUseCount.mock.calls) {
+      expect(call[1]?.enabled).toBe(false);
+    }
+  });
+
+  it("fetches the label vocabulary with the full owner/repo ref, not the short repo key", async () => {
+    renderGitHubCard();
+    fireEvent.click(screen.getAllByTestId("mock-fetch-options")[0]);
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `/api/integrations/2/issue-types?projectKey=${encodeURIComponent("testowner/testrepo")}`
+        )
+      );
+    });
+  });
 });
