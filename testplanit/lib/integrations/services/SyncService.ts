@@ -94,13 +94,27 @@ export interface SyncedIssueData {
    * parent don't gain a spurious key.
    */
   parent?: { id: string; key?: string };
+  /**
+   * The TRACKER's own creation instant (ISO) — `Issue.createdAt` is when
+   * the local row appeared (an import stamps import time), which is the
+   * wrong answer for "how long has this existed uncovered". Present only
+   * when the adapter supplied a valid date; rows synced before this key
+   * existed self-heal on their next sync (data is rebuilt wholesale).
+   */
+  createdAt?: string;
 }
 
 export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
+  const createdAtMs = issueData.createdAt
+    ? new Date(issueData.createdAt).getTime()
+    : NaN;
   return {
     labels: Array.isArray(issueData.labels) ? issueData.labels : [],
     components: Array.isArray(issueData.components) ? issueData.components : [],
     ...(issueData.parent ? { parent: issueData.parent } : {}),
+    ...(Number.isFinite(createdAtMs)
+      ? { createdAt: new Date(createdAtMs).toISOString() }
+      : {}),
   };
 }
 
