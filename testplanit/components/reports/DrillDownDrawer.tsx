@@ -244,6 +244,7 @@ export function DrillDownDrawer({
               <div className="min-h-0 flex-1">
                 <DataTable
                   virtualized
+                  pinLastColumn={false}
                   columns={columns as any}
                   data={records}
                   columnVisibility={{}}

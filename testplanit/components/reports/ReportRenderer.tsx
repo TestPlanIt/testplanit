@@ -536,6 +536,7 @@ export function ReportRenderer({
           <CardContent className="h-[calc(100%-4rem)] p-6 pt-0">
             <DataTable
               virtualized
+              pinLastColumn={false}
               columns={columns as ColumnDef<any>[]}
               data={results}
               columnVisibility={columnVisibility}

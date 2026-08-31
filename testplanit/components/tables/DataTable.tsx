@@ -205,6 +205,7 @@ export interface VirtualizedDataTableProps<TData extends DataRow, TValue = any>
       | "flexColumnId"
       | "enableColumnPinning"
       | "pinFirstLast"
+      | "pinLastColumn"
       | "pinnedColumnStyle"
       | "pinnedHeaderStyle"
       | "columnSizingStorageKey"
