@@ -464,6 +464,11 @@ export default function RequirementsWorkspace({
                         variant="secondary"
                         className="p-0 -ms-1 rounded-s-none"
                         data-testid="requirements-tree-collapse-toggle"
+                        aria-label={
+                          isTreeCollapsed
+                            ? t("common.actions.expandLeftPanel")
+                            : t("common.actions.collapseLeftPanel")
+                        }
                       >
                         {isTreeCollapsed ? <ChevronRight /> : <ChevronLeft />}
                       </Button>

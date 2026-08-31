@@ -42,6 +42,17 @@ export function isCaseLatestExecutionQueryKey(
 /**
  * Invalidates this case's latest-execution query (or every open one when
  * `caseId` is omitted).
+ *
+ * No production path calls this today, deliberately: the one surface
+ * where a result submission and this hook's consumer share a page
+ * (AddResultModal beside LinkedRequirementsPanel) already sweeps it via
+ * its keyless `queryClient.invalidateQueries()` after submit, and
+ * results submitted on other pages are covered by the query's own
+ * staleTime plus refetch-on-mount. The export exists for any future
+ * submission surface that invalidates selectively instead of keylessly —
+ * such a caller must use this predicate-based invalidator, because the
+ * shared `invalidateLinkedQueries` sweep matches key content this hook's
+ * key does not carry (see `isCaseLatestExecutionQueryKey` above).
  */
 export function invalidateCaseLatestExecution(
   queryClient: QueryClient,

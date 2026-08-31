@@ -136,7 +136,7 @@ export function DeferredIssueManager({
       return;
     }
 
-    if (!issue.isExternal || !session?.user?.id) return;
+    if (!session?.user?.id) return;
 
     // console.log("DeferredIssueManager: Creating issue:", {
     //   key: issue.key,

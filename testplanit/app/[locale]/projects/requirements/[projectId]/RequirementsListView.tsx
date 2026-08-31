@@ -804,8 +804,9 @@ const RequirementsListView = forwardRef<
       openDeleteDialog: (issueId: number) => {
         // The panel's selection and this list's filtered/loaded set are
         // separate pieces of state -- a filtered-out or since-deleted
-        // selection is reachable today, so an unknown id no-ops rather than
-        // opening a dialog for a row this list can't find.
+        // selection is reachable today, so an unknown id cannot open a
+        // dialog for a row this list can't find; it toasts instead of
+        // silently doing nothing.
         //
         // Read from whichever map this mode actually populates.
         // `requirementMap` is built from `requirements`, which stays `[]`
@@ -813,11 +814,14 @@ const RequirementsListView = forwardRef<
         // guard above fire for every id and turn the panel's Delete into a
         // permanent no-op on exactly the projects lazy mode exists for.
         const requirement = lazyRowsById.get(issueId);
-        if (!requirement) return;
+        if (!requirement) {
+          toast.error(t("requirements.delete.failed"));
+          return;
+        }
         handleRequestDelete(requirement);
       },
     }),
-    [lazyRowsById, handleRequestDelete]
+    [lazyRowsById, handleRequestDelete, t]
   );
 
   const handleDetached = useCallback(() => {

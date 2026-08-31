@@ -6814,8 +6814,6 @@
       "empty": "No references yet.",
       "emptyHint": "Attach tickets that shaped this requirement.",
       "addReference": "Add Reference",
-      "addDialogTitle": "Add Reference",
-      "searchPlaceholder": "Search issues...",
       "createDialogLabel": "References",
       "attachSuccess": "Reference attached.",
       "attachFailed": "Failed to attach reference.",

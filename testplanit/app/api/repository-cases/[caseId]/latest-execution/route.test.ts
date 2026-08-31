@@ -97,12 +97,15 @@ describe("GET /api/repository-cases/[caseId]/latest-execution", () => {
     expect(mockedGetLatestExecutedAt).not.toHaveBeenCalled();
   });
 
-  it("returns 403 when the viewer's project scope excludes the case's own project", async () => {
+  it("answers an out-of-scope viewer with the same 404 a missing case gets", async () => {
+    // Not 403: a 403/404 pair would let a caller outside the project
+    // enumerate which case ids exist.
     mockedResolveScope.mockResolvedValue([6, 7]);
 
     const res = await GET(makeRequest(), params());
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Case not found" });
     expect(mockedGetLatestExecutedAt).not.toHaveBeenCalled();
   });
 

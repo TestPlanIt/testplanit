@@ -2275,6 +2275,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       onClick={toggleCollapse}
                       variant="secondary"
                       className="p-0 -ms-1 rounded-s-none"
+                      aria-label={
+                        isCollapsed
+                          ? t("common.actions.expandLeftPanel")
+                          : t("common.actions.collapseLeftPanel")
+                      }
                     >
                       {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
                     </Button>

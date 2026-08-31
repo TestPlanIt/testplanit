@@ -13,9 +13,11 @@ import type { Attachments } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
 
 interface RequirementAttachmentsProps {
-  projectId: string;
   requirementId: number;
   isEditMode: boolean;
+  /** True while the panel's save is in flight — staging a file mid-save
+   *  would be silently discarded by the success handler's reset. */
+  isSaving: boolean;
   onStagedFilesChange: (files: File[]) => void;
   onPendingChangesChange: (changes: AttachmentChanges) => void;
 }
@@ -47,6 +49,7 @@ interface RequirementAttachmentsProps {
 export function RequirementAttachments({
   requirementId,
   isEditMode,
+  isSaving,
   onStagedFilesChange,
   onPendingChangesChange,
 }: RequirementAttachmentsProps) {
@@ -80,7 +83,11 @@ export function RequirementAttachments({
       <h3 className="font-bold">{t("title")}</h3>
       {isEditMode ? (
         <>
-          <UploadAttachments onFileSelect={onStagedFilesChange} compact />
+          <UploadAttachments
+            onFileSelect={onStagedFilesChange}
+            compact
+            disabled={isSaving}
+          />
           {hasAttachments ? (
             <AttachmentsDisplay
               attachments={attachments!}

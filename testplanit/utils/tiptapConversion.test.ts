@@ -6,6 +6,7 @@ import {
   ensureTipTapJSON,
   isLikelyMarkdown,
   serializeTipTapJSON,
+  tipTapJSONEquals,
 } from "./tiptapConversion";
 
 describe("convertTextToTipTapJSON", () => {
@@ -310,5 +311,41 @@ describe("ensureTipTapJSON with markdown", () => {
       "Visit [TestPlanIt](https://testplanit.com) for details."
     );
     expect(result.type).toBe("doc");
+  });
+});
+
+describe("tipTapJSONEquals", () => {
+  // The seam under test: Postgres jsonb re-orders object keys, so the
+  // same document serializes differently from the DB and the editor.
+  const editorOrder =
+    '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Hello"}]}]}';
+  const jsonbOrder =
+    '{"content":[{"content":[{"text":"Hello","type":"text"}],"type":"paragraph"}],"type":"doc"}';
+
+  it("treats jsonb key order and editor key order as the same document", () => {
+    expect(tipTapJSONEquals(editorOrder, jsonbOrder)).toBe(true);
+  });
+
+  it("still detects a real text change", () => {
+    const changed = editorOrder.replace("Hello", "Goodbye");
+    expect(tipTapJSONEquals(editorOrder, changed)).toBe(false);
+  });
+
+  it("does not treat content order as insignificant", () => {
+    const twoParagraphs = (first: string, second: string) =>
+      JSON.stringify({
+        type: "doc",
+        content: [first, second].map((text) => ({
+          type: "paragraph",
+          content: [{ type: "text", text }],
+        })),
+      });
+    expect(
+      tipTapJSONEquals(twoParagraphs("a", "b"), twoParagraphs("b", "a"))
+    ).toBe(false);
+  });
+
+  it("treats null and the canonical empty document as equal", () => {
+    expect(tipTapJSONEquals(null, serializeTipTapJSON(null))).toBe(true);
   });
 });

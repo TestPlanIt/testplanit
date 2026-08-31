@@ -27,11 +27,15 @@ export type CaseLatestExecutionResponse = {
  * member.
  *
  * Gate order, fixed: 401 (no session) -> 400 (non-integer case id) ->
- * 404 (case does not exist or is soft-deleted) -> 403 (viewer's project
+ * 404 (case does not exist, is soft-deleted, OR the viewer's project
  * scope excludes the case's OWN project) -> 200/500. The identity
  * pre-check runs BEFORE the scope check because the scope check needs the
  * case's real project -- there is no client-supplied project id to check
  * against instead; it is re-derived from the addressed row every time.
+ * The scope failure answers 404, not 403: a distinguishable pair would
+ * let a caller outside the project enumerate which case ids exist (the
+ * sibling reference routes avoid the same oracle by gating on the
+ * client-supplied projectId first, which this route does not have).
  */
 export async function GET(
   request: NextRequest,
@@ -63,7 +67,7 @@ export async function GET(
 
     const scope = await resolveViewerProjectScope(session.user.id);
     if (scope !== null && !scope.includes(existing.projectId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
 
     const latestByCase = await getCaseLatestExecutedAt([caseId]);

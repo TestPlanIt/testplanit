@@ -277,8 +277,7 @@ export function RequirementReferenceSearchDialog({
     setSearchFailures([]);
 
     try {
-      const projectsToSearch =
-        activeIntegrationProjects?.filter(() => true) || [];
+      const projectsToSearch = activeIntegrationProjects ?? [];
 
       if (projectsToSearch.length === 0) {
         // Fallback: legacy single-project search from config

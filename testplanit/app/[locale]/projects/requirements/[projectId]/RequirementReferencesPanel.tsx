@@ -37,6 +37,7 @@ interface ReferencedIssueRow {
   status: string | null;
   externalKey: string | null;
   externalUrl: string | null;
+  projectId: number;
 }
 
 interface ReferenceRow {
@@ -98,6 +99,7 @@ export function RequirementReferencesPanel({
           status: true,
           externalKey: true,
           externalUrl: true,
+          projectId: true,
         },
       },
     },
@@ -160,13 +162,16 @@ export function RequirementReferencesPanel({
       );
       if (responses.every((res) => res.ok)) {
         toast.success(t("attachSuccess"));
-        void refetch();
       } else {
         toast.error(t("attachFailed"));
       }
     } catch {
       toast.error(t("attachFailed"));
     } finally {
+      // Unconditional: a partial failure (or a network throw after some
+      // POSTs landed) still attached the successful references, and they
+      // must show now rather than on the next remount.
+      void refetch();
       setIsMutating(false);
     }
   };
@@ -249,7 +254,12 @@ export function RequirementReferencesPanel({
                         </a>
                       ) : (
                         <Link
-                          href={`/projects/issues/${projectId}?issueId=${row.referencedIssueId}`}
+                          // The referenced issue's OWN project, not the
+                          // requirement's: the POST route permits
+                          // cross-project internal picks, and the issues
+                          // page can only resolve the id in its home
+                          // project.
+                          href={`/projects/issues/${issue.projectId}?issueId=${row.referencedIssueId}`}
                           className="block truncate font-medium min-w-0"
                           title={label}
                           data-testid={`requirement-reference-link-${row.referencedIssueId}`}

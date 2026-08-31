@@ -94,11 +94,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 import { toast } from "sonner";
 import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
 
+const mockRefetch = vi.fn();
 function setReferenceRows(rows: any[]) {
   mockFindMany.mockReturnValue({
     data: rows,
     isLoading: false,
-    refetch: vi.fn(),
+    refetch: mockRefetch,
   });
 }
 
@@ -112,6 +113,7 @@ const internalRow = {
     status: "Open",
     externalKey: null,
     externalUrl: null,
+    projectId: 7,
   },
 };
 
@@ -125,6 +127,7 @@ const externalRow = {
     status: "In Progress",
     externalKey: "TPI-12",
     externalUrl: "https://jira.example.com/browse/TPI-12",
+    projectId: 7,
   },
 };
 
@@ -222,6 +225,25 @@ describe("RequirementReferencesPanel", () => {
     expect(link.tagName).toBe("A");
     expect(link).toHaveAttribute("href", "/projects/issues/7?issueId=55");
     expect(link).not.toHaveAttribute("target", "_blank");
+  });
+
+  it("links a cross-project internal reference to the issue's own project", () => {
+    // The POST route permits cross-project internal picks (scope-gated),
+    // and the issues page only resolves an id in its home project — the
+    // link must carry the referenced issue's projectId, not the
+    // requirement's.
+    setReferenceRows([
+      {
+        ...internalRow,
+        referencedIssue: { ...internalRow.referencedIssue, projectId: 31 },
+      },
+    ]);
+    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+
+    expect(screen.getByTestId("requirement-reference-link-55")).toHaveAttribute(
+      "href",
+      "/projects/issues/31?issueId=55"
+    );
   });
 
   it("removes a reference through a popover confirm, never a native dialog", async () => {
@@ -351,7 +373,9 @@ describe("RequirementReferencesPanel attach flow", () => {
     );
   });
 
-  it("toasts failure and does not refetch when the attach request fails", async () => {
+  it("toasts failure but still refetches when the attach request fails", async () => {
+    // A partial failure still attached the successful references — the
+    // refetch must happen so they show now, not on the next remount.
     global.fetch = vi.fn(async () => ({
       ok: false,
       json: async () => ({ error: "Failed to attach reference." }),
@@ -367,5 +391,6 @@ describe("RequirementReferencesPanel attach flow", () => {
       expect(toast.error).toHaveBeenCalled();
     });
     expect(toast.success).not.toHaveBeenCalled();
+    expect(mockRefetch).toHaveBeenCalled();
   });
 });

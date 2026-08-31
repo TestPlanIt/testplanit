@@ -48,6 +48,7 @@ import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import {
   ensureTipTapJSON,
   serializeTipTapJSON,
+  tipTapJSONEquals,
 } from "~/utils/tiptapConversion";
 import { schema } from "~/zenstack/schema";
 import type { Issue } from "~/zenstack/models";
@@ -420,9 +421,12 @@ export default function RequirementDetailPanel({
       // LOCKED_ISSUE_FIELDS, so a locked row strips them client-side too,
       // defense-in-depth against a stale/re-enabled control.
       const updateData: Record<string, unknown> = {};
+      // Structural compare, not string compare: the loaded side is a
+      // jsonb round-trip whose key order differs from the editor's
+      // serialization of the identical document.
       if (
         dirtyFields.note &&
-        data.note !== buildResetValues(requirement).note
+        !tipTapJSONEquals(data.note, buildResetValues(requirement).note)
       ) {
         updateData.note = ensureTipTapJSON(data.note);
       }
@@ -549,7 +553,7 @@ export default function RequirementDetailPanel({
     }
   };
 
-  if (isLoading || !isFormReady) {
+  if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <LoadingSpinner />
@@ -561,7 +565,18 @@ export default function RequirementDetailPanel({
     // The tree only ever selects a live requirement id (REQUIREMENT_SCOPE_WHERE-
     // scoped), so this is unreachable in normal use -- render nothing rather
     // than invent copy for a state the product surface doesn't expose.
+    // Checked BEFORE the form-ready gate: the form only ever seeds from a
+    // loaded row, so on a settled-null query `isFormReady` never flips and
+    // gating on it first would spin forever.
     return null;
+  }
+
+  if (!isFormReady) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   // The repository-case details view's own edit/cancel/save idiom
@@ -795,9 +810,9 @@ export default function RequirementDetailPanel({
 
       <RequirementAttachments
         key={attachmentsResetKey}
-        projectId={projectId}
         requirementId={requirement.id}
         isEditMode={isEditMode}
+        isSaving={isSubmitting}
         onStagedFilesChange={setStagedFiles}
         onPendingChangesChange={setPendingAttachmentChanges}
       />

@@ -271,3 +271,37 @@ export const serializeTipTapJSON = (value: any): string => {
     return JSON.stringify(emptyEditorContent);
   }
 };
+
+// Deterministic serialization regardless of object key order. Array order
+// is preserved — for a TipTap document it is content order.
+const stableStringify = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map(
+        (key) =>
+          `${JSON.stringify(key)}:${stableStringify(
+            (value as Record<string, unknown>)[key]
+          )}`
+      )
+      .join(",")}}`;
+  }
+  return JSON.stringify(value) ?? "null";
+};
+
+/**
+ * Structural equality for two documents in any of the shapes
+ * `ensureTipTapJSON` accepts. Postgres jsonb re-orders object keys, so a
+ * document round-tripped through the DB serializes with different key
+ * order than the same document fresh from the editor — a plain string
+ * compare of the two reads as a content change when nothing changed.
+ */
+export const tipTapJSONEquals = (a: any, b: any): boolean => {
+  return (
+    stableStringify(ensureTipTapJSON(a)) ===
+    stableStringify(ensureTipTapJSON(b))
+  );
+};
