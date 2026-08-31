@@ -283,6 +283,15 @@ export interface VirtualizedTableEngineProps {
   pinFirstLast?: boolean;
 
   /**
+   * Whether the automatic freeze includes the LAST column. Defaults to true;
+   * pass false to freeze only the first column — for tables whose last column
+   * is ordinary data rather than actions (report tables), where a frozen right
+   * edge just covers content during horizontal scroll. Only meaningful with
+   * the `pinFirstLast` default behaviour.
+   */
+  pinLastColumn?: boolean;
+
+  /**
    * Extra inline style for pinned BODY cells, merged over the sticky
    * positioning. Use it to override the default opaque background so pinned
    * columns match a tinted surface — e.g. a completed-milestone card, where the
@@ -462,6 +471,7 @@ export function VirtualizedTableEngine({
   flexColumnId,
   enableColumnPinning = true,
   pinFirstLast = true,
+  pinLastColumn = true,
   pinnedColumnStyle,
   pinnedHeaderStyle,
   columnSizingStorageKey,
@@ -557,6 +567,7 @@ export function VirtualizedTableEngine({
     getSubRows,
     enabled: enableColumnPinning,
     autoPinFirstLast: pinFirstLast,
+    autoPinLast: pinLastColumn,
   });
 
   // In pinning mode the body scrolls horizontally; this ref lets the header

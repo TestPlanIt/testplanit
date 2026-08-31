@@ -325,7 +325,9 @@ export function RowExpanderPrefix<TData>({
  *
  * `autoPinFirstLast` (the virtualized engine's default behaviour): when the
  * caller pinned nothing, freeze the first and last columns to the table edges,
- * with the auto-added expander riding along on the left. `alwaysPinExpander`
+ * with the auto-added expander riding along on the left; `autoPinLast: false`
+ * limits that freeze to the first column (report tables — no actions column,
+ * so the last column has no claim to the right edge). `alwaysPinExpander`
  * (the paged engine's behaviour): pin the expander whenever it is present, even
  * alongside explicit `meta.isPinned` columns.
  */
@@ -335,6 +337,7 @@ export function useInitialColumnPinning({
   getSubRows,
   enabled = true,
   autoPinFirstLast = false,
+  autoPinLast = true,
   alwaysPinExpander = false,
 }: {
   columns: ColumnDef<any, any>[];
@@ -342,6 +345,7 @@ export function useInitialColumnPinning({
   getSubRows?: (row: any, index: number) => any[] | undefined;
   enabled?: boolean;
   autoPinFirstLast?: boolean;
+  autoPinLast?: boolean;
   alwaysPinExpander?: boolean;
 }): [ColumnPinningState, Dispatch<SetStateAction<ColumnPinningState>>] {
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
@@ -371,7 +375,7 @@ export function useInitialColumnPinning({
       const lastId = columns[columns.length - 1]?.id as string | undefined;
       if (firstId) left.push(firstId);
       if (hasExpander) left.unshift("expander");
-      if (lastId && lastId !== firstId) right.push(lastId);
+      if (autoPinLast && lastId && lastId !== firstId) right.push(lastId);
     } else if (alwaysPinExpander && hasExpander) {
       left.unshift("expander");
     }
@@ -380,6 +384,7 @@ export function useInitialColumnPinning({
   }, [
     enabled,
     autoPinFirstLast,
+    autoPinLast,
     alwaysPinExpander,
     columns,
     grouping,
