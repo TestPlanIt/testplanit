@@ -427,7 +427,10 @@ export function useIssueTestCoverageSummaryColumns(
             </div>
           );
         },
-        enableSorting: true,
+        // No row property backs this column (leaf cells render null, the
+        // breakdown only appears on grouped rows), so a sort on it was a
+        // silent no-op — the menu item promised an order it never applied.
+        enableSorting: false,
         size: 120,
         minSize: 100,
       })

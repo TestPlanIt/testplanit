@@ -105,6 +105,7 @@ import {
   draggableFieldToDimension,
   getReportSummary,
 } from "~/utils/reportUtils";
+import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
   buildCleanReportUrlParams,
   isUrlInSyncWithReportType,
@@ -1822,7 +1823,6 @@ function ReportBuilderContent({
           }
 
           // Apply sorting if configured
-          let sortedData = [...allData];
           const effectiveSortConfig =
             updateUrl &&
             (reportType === "flaky-tests" ||
@@ -1832,39 +1832,12 @@ function ReportBuilderContent({
               ? { column: "flipCount", direction: "desc" as const }
               : sortConfig;
 
-          if (effectiveSortConfig) {
-            sortedData.sort((a, b) => {
-              let aVal = a[effectiveSortConfig.column];
-              let bVal = b[effectiveSortConfig.column];
-
-              // Handle project column - extract name from object
-              if (effectiveSortConfig.column === "project") {
-                aVal = aVal?.name || "";
-                bVal = bVal?.name || "";
-              }
-
-              if (aVal === bVal) return 0;
-              if (aVal === null || aVal === undefined) return 1;
-              if (bVal === null || bVal === undefined) return -1;
-
-              // For strings, use localeCompare for proper alphabetical sorting
-              if (typeof aVal === "string" && typeof bVal === "string") {
-                const comparison = aVal.localeCompare(bVal);
-                return effectiveSortConfig.direction === "asc"
-                  ? comparison
-                  : -comparison;
-              }
-
-              // For numbers or other types, use standard comparison
-              const comparison = aVal < bVal ? -1 : 1;
-              return effectiveSortConfig.direction === "asc"
-                ? comparison
-                : -comparison;
-            });
-          }
-
           // Render the full sorted set; the table virtualizes it (no paging).
-          setResults(sortedData);
+          // The shared utility sorts by what each column DISPLAYS — see its
+          // doc comment for the id-vs-property overrides.
+          setResults(
+            sortPreBuiltReportRows(reportType, allData, effectiveSortConfig)
+          );
         } else {
           // Custom reports return the entire result set in `allResults` on the
           // first POST — render that full set and virtualize it (no paging).
@@ -2185,34 +2158,7 @@ function ReportBuilderContent({
     if (matchesReportType(reportType, "execution-log")) return;
     if (!allResults || allResults.length === 0) return;
 
-    let sortedResults = [...allResults];
-    if (sortConfig) {
-      sortedResults.sort((a, b) => {
-        let aVal = a[sortConfig.column];
-        let bVal = b[sortConfig.column];
-
-        // Handle project column - extract name from object
-        if (sortConfig.column === "project") {
-          aVal = aVal?.name || "";
-          bVal = bVal?.name || "";
-        }
-
-        if (aVal === bVal) return 0;
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
-
-        // For strings, use localeCompare for proper alphabetical sorting
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          const comparison = aVal.localeCompare(bVal);
-          return sortConfig.direction === "asc" ? comparison : -comparison;
-        }
-
-        // For numbers or other types, use standard comparison
-        const comparison = aVal < bVal ? -1 : 1;
-        return sortConfig.direction === "asc" ? comparison : -comparison;
-      });
-    }
-    setResults(sortedResults);
+    setResults(sortPreBuiltReportRows(reportType, allResults, sortConfig));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortConfig, reportType, allResults]);
 
