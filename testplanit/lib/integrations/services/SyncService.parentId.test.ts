@@ -280,6 +280,42 @@ describe("SyncService — synced parentId and requirement classification", () =>
     expect(mockIssueUpdate.mock.calls[0][0].data.parentId).toBeUndefined();
   });
 
+  it("updateExistingIssue strips the locally-owned columns for a DETACHED requirement — only the mirrors refresh", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockIssueFindFirst.mockResolvedValueOnce({
+      id: 44,
+      projectId: 7,
+      data: {},
+      isRequirement: true,
+      requirementDetachedAt: new Date("2026-08-01T00:00:00Z"),
+    });
+
+    await (service as any).updateExistingIssue(
+      db,
+      1,
+      makeIssueData({ id: "ext-detached", priority: "High", status: "closed" })
+    );
+
+    expect(mockIssueUpdate).toHaveBeenCalledTimes(1);
+    const data = mockIssueUpdate.mock.calls[0][0].data;
+    for (const field of [
+      "title",
+      "description",
+      "status",
+      "priority",
+      "parentId",
+    ]) {
+      expect(data).not.toHaveProperty(field);
+    }
+    expect(data.externalStatus).toBe("closed");
+    expect(data.externalPriority).toBe("High");
+    expect(data.lastSyncedAt).toBeInstanceOf(Date);
+  });
+
   it("sets isRequirement from the project's configured requirement issue types", async () => {
     const { SyncService } = await import("./SyncService");
     const service = new SyncService();

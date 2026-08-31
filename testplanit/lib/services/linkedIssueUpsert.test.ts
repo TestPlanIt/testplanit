@@ -83,7 +83,11 @@ describe("upsertLinkedIssueShell (PROV-06 reviewed raw-write shell)", () => {
     expect(upsertArgs.update.testRuns).toEqual({ connect: { id: 42 } });
   });
 
-  it("passes the update payload through with title intact when the existing row is detached", async () => {
+  // Flipped from the original "still writable after detach" pin: once
+  // detached the USER owns the locked-field content, so a tracker-sourced
+  // shell refresh must not clobber local edits — only the mirror columns
+  // pass through.
+  it("strips locked fields from the update payload when the existing row is DETACHED — mirrors still pass through", async () => {
     const db = makeDb({
       id: 1,
       isRequirement: true,
@@ -95,11 +99,19 @@ describe("upsertLinkedIssueShell (PROV-06 reviewed raw-write shell)", () => {
       externalId: "PROJ-3",
       integrationId: 5,
       create: {},
-      update: { title: "still writable after detach" },
+      update: {
+        title: "tracker copy of the title",
+        priority: "High",
+        externalStatus: "In Review",
+        externalPriority: "High",
+      },
     });
 
     const upsertArgs = db.issue.upsert.mock.calls[0][0];
-    expect(upsertArgs.update.title).toBe("still writable after detach");
+    expect(upsertArgs.update).not.toHaveProperty("title");
+    expect(upsertArgs.update).not.toHaveProperty("priority");
+    expect(upsertArgs.update.externalStatus).toBe("In Review");
+    expect(upsertArgs.update.externalPriority).toBe("High");
   });
 
   it("passes the update payload through with title intact when the existing row is not a requirement", async () => {

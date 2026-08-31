@@ -1,4 +1,8 @@
 import { rawDb as defaultDb } from "@/lib/rawDb";
+import {
+  isDetachedRequirement,
+  LOCKED_ISSUE_FIELDS,
+} from "~/lib/services/linkedIssueUpsert";
 import type { DbClient } from "~/lib/zenstack";
 import { Job, JobsOptions } from "bullmq";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
@@ -2071,6 +2075,8 @@ export class SyncService {
             select: {
               id: true,
               projectId: true,
+              isRequirement: true,
+              requirementDetachedAt: true,
               _count: {
                 select: {
                   children: true,
@@ -2156,6 +2162,19 @@ export class SyncService {
       lastSyncedAt: new Date(),
       projectId,
     };
+    // A detached requirement's locally-owned columns (LOCKED_ISSUE_FIELDS)
+    // must survive the poll: the user owns their content once detached, so
+    // the update refreshes only the mirror/metadata columns — the same
+    // strip `upsertLinkedIssueShell` applies, from the sync side.
+    const updateFields: Record<string, unknown> = {
+      ...issueFields,
+      isDeleted: false,
+    };
+    if (isDetachedRequirement(existing)) {
+      for (const field of LOCKED_ISSUE_FIELDS) {
+        delete updateFields[field];
+      }
+    }
     const upserted = await db.issue.upsert({
       where: {
         externalId_integrationId: {
@@ -2169,10 +2188,7 @@ export class SyncService {
         integrationId,
         createdById: project.createdBy,
       },
-      update: {
-        ...issueFields,
-        isDeleted: false,
-      },
+      update: updateFields,
     });
 
     // Index newly-created issues just like manual import does. Best-effort
@@ -2312,9 +2328,19 @@ export class SyncService {
       lastSyncedAt: new Date(),
     };
 
+    // Same detach gate as upsertIssueFromExternal: once a requirement is
+    // released to local ownership the poll keeps only the mirror columns
+    // fresh, never the five locally-owned ones.
+    const updateData: Record<string, unknown> = { ...issuePayload };
+    if (isDetachedRequirement(existingIssue)) {
+      for (const field of LOCKED_ISSUE_FIELDS) {
+        delete updateData[field];
+      }
+    }
+
     await db.issue.update({
       where: { id: existingIssue.id },
-      data: issuePayload,
+      data: updateData,
     });
 
     // Manually sync to Elasticsearch since enhanced Prisma client bypasses extensions

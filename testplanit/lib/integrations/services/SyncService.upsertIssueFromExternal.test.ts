@@ -222,4 +222,44 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
       parent: { id: "999", key: "TPI-999" },
     });
   });
+
+  it("strips the locally-owned columns from the update branch for a DETACHED requirement — the poll refreshes only the mirrors", async () => {
+    mockIssueUpsert.mockResolvedValue({ id: 558 });
+
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
+    const rawDbModule = await import("@/lib/rawDb");
+    const db = (rawDbModule as any).rawDb;
+    (db.issue as any).findUnique = vi.fn().mockResolvedValue({
+      id: 558,
+      projectId: 42,
+      isRequirement: true,
+      requirementDetachedAt: new Date("2026-08-01T00:00:00Z"),
+      _count: { children: 0, caseIssues: 0, milestoneIssues: 0 },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      42,
+      makeIssueData({ id: "ext-detached", priority: "High", status: "closed" })
+    );
+
+    const args = mockIssueUpsert.mock.calls[0][0];
+    for (const field of [
+      "title",
+      "description",
+      "status",
+      "priority",
+      "parentId",
+    ]) {
+      expect(args.update).not.toHaveProperty(field);
+    }
+    expect(args.update.externalStatus).toBe("closed");
+    expect(args.update.externalPriority).toBe("High");
+    // The create branch keeps every field — a fresh row has no local
+    // state to protect.
+    expect(args.create.title).toBe("Issue 1");
+    expect(args.create.priority).toBe("High");
+  });
 });

@@ -52,6 +52,18 @@ export function isRequirementLocked(row: LockableRow): boolean {
   );
 }
 
+/**
+ * The lock's inverse ownership state: a requirement released to local
+ * ownership by detach. The user now owns the LOCKED_ISSUE_FIELDS content,
+ * so TRACKER-sourced writers (the sync poll, shell refreshes) must not
+ * overwrite those five columns — the mirror columns (`externalStatus`,
+ * `externalPriority`, `externalData`, `data`) are what they keep fresh.
+ */
+export function isDetachedRequirement(row: LockableRow): boolean {
+  if (!row) return false;
+  return row.isRequirement === true && row.requirementDetachedAt != null;
+}
+
 interface UpsertLinkedIssueShellArgs {
   externalId: string;
   integrationId: number;
@@ -86,10 +98,14 @@ export async function upsertLinkedIssueShell(
       : null;
 
   // Only the update branch is ever stripped — a fresh create has no prior
-  // locked state to protect, and the caller's create payload is the row's
-  // own initial values, not an overwrite of tracker-owned data.
+  // state to protect, and the caller's create payload is the row's own
+  // initial values, not an overwrite. Both ownership states strip: while
+  // LOCKED the tracker owns these fields and a local writer's stale copy
+  // must not land; once DETACHED the user owns them and a tracker-sourced
+  // refresh must not clobber local edits. Either way the shell's update
+  // only refreshes mirror/metadata columns.
   let effectiveUpdate = update;
-  if (isRequirementLocked(existing)) {
+  if (isRequirementLocked(existing) || isDetachedRequirement(existing)) {
     effectiveUpdate = { ...update };
     for (const field of LOCKED_ISSUE_FIELDS) {
       delete effectiveUpdate[field];

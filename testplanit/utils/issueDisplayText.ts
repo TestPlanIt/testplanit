@@ -79,12 +79,15 @@ export function formatRequirementCellText(row: {
  * instead, or an edit saved through the now-writable Input would display as
  * if it silently failed.
  *
- * This only matters once the two columns diverge. `SyncService.ts`'s
- * `upsertIssueFromExternal` writes both `status` and `externalStatus` from
- * the same `issueData.status` in the same object literal (its `issueFields`
- * assignment), so a detached requirement nobody has edited yet still
- * resolves to the identical string under either branch -- nothing visibly
- * changes for it.
+ * This only matters once the two columns diverge. While locked, sync
+ * writes both `status` and `externalStatus` from the same `issueData.status`
+ * in the same object literal (`SyncService.ts`'s `issueFields`), so a
+ * detached requirement nobody has edited yet still resolves to the
+ * identical string under either branch. Once detached, the poll strips the
+ * locally-owned columns (`LOCKED_ISSUE_FIELDS` — the `isDetachedRequirement`
+ * gate in both sync write paths) and refreshes only the mirrors, so a local
+ * edit persists across polls and the divergence this resolver arbitrates is
+ * durable.
  */
 export function resolveRequirementDisplayStatus(row: {
   status?: string | null;
