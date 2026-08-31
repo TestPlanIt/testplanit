@@ -314,6 +314,60 @@ export class GiteaAdapter extends BaseAdapter {
     }));
   }
 
+  /**
+   * Gitea models no issue types — repository LABELS are the designation
+   * vocabulary this adapter serves through the issue-type contract, same
+   * as GitHub's. `id === name` deliberately: a label reaches issue
+   * payloads (`mapGiteaIssue`'s `labels`) only as its name, so the name
+   * is the only join key classification can use. Paged to three pages
+   * (300 labels), past the requirement-config selection cap of 200; Gitea
+   * list endpoints page with `limit`/`page` (`per_page` is ignored and
+   * would truncate at the 30-row default). Org-owned repos can also carry
+   * ORGANIZATION labels, which appear on issues but are not served by the
+   * repo labels endpoint — union them in; the org endpoint 404s for
+   * user-owned repos, so its failure is silently tolerated.
+   */
+  async getIssueTypes(
+    projectKey: string
+  ): Promise<Array<{ id: string; name: string }>> {
+    const { owner, repo } = this.resolveRepo(projectKey);
+
+    const names = new Set<string>();
+    const collect = (pageLabels: any[]) => {
+      for (const label of pageLabels) {
+        if (typeof label?.name === "string" && label.name !== "") {
+          names.add(label.name);
+        }
+      }
+    };
+
+    for (let page = 1; page <= 3; page++) {
+      const pageLabels = await this.makeRequest<any[]>(
+        `${this.baseUrl}/api/v1/repos/${owner}/${repo}/labels?limit=100&page=${page}`
+      );
+      collect(Array.isArray(pageLabels) ? pageLabels : []);
+      if (!Array.isArray(pageLabels) || pageLabels.length < 100) {
+        break;
+      }
+    }
+
+    try {
+      for (let page = 1; page <= 3; page++) {
+        const pageLabels = await this.makeRequest<any[]>(
+          `${this.baseUrl}/api/v1/orgs/${owner}/labels?limit=100&page=${page}`
+        );
+        collect(Array.isArray(pageLabels) ? pageLabels : []);
+        if (!Array.isArray(pageLabels) || pageLabels.length < 100) {
+          break;
+        }
+      }
+    } catch {
+      // User-owned repo (or org labels unreadable) — repo labels suffice.
+    }
+
+    return Array.from(names, (name) => ({ id: name, name }));
+  }
+
   async searchUsers(query: string): Promise<
     Array<{
       accountId: string;
@@ -364,6 +418,12 @@ export class GiteaAdapter extends BaseAdapter {
     if (projectId && projectId.includes("/")) {
       const [owner, repo] = projectId.split("/");
       return { owner, repo };
+    }
+    // A short repo name (getProjects' `key`) borrows the configured owner;
+    // without this tier it would silently fall through to the configured
+    // repository and read the wrong repo's data.
+    if (this.owner && projectId) {
+      return { owner: this.owner, repo: projectId };
     }
     if (this.owner && this.repo) {
       return { owner: this.owner, repo: this.repo };
@@ -430,8 +490,10 @@ export class GiteaAdapter extends BaseAdapter {
         _gitea_owner: owner,
         _gitea_repo: repo,
       },
-      createdAt: new Date(issue.created),
-      updatedAt: new Date(issue.updated),
+      // Gitea's API sends `created_at`/`updated_at`; the bare names are kept
+      // as a fallback for older payload shapes already stored in fixtures.
+      createdAt: new Date(issue.created_at ?? issue.created),
+      updatedAt: new Date(issue.updated_at ?? issue.updated),
       url: issue.html_url,
     };
   }

@@ -603,27 +603,31 @@ describe("RequirementsConfigSettings — offer-on-save, progress polling, and st
 });
 
 // ---------------------------------------------------------------------------
-// GitHub label mode — the card's one label-mode provider. Selections are
-// LABEL names (the adapter's getIssueTypes serves repository labels), the
-// wording switches from types to labels, and the type-column impact
-// preview is replaced by a note because the counts would be a confident
-// zero (labels live in a JSON column the client query layer can't match).
+// Label mode — GitHub and Gitea, the card's two label-mode providers.
+// Selections are LABEL names (each adapter's getIssueTypes serves
+// repository labels), the wording switches from types to labels, and the
+// type-column impact preview is replaced by a note because the counts
+// would be a confident zero (labels live in a JSON column the client
+// query layer can't match).
 // ---------------------------------------------------------------------------
-describe("RequirementsConfigSettings — GitHub label mode", () => {
-  const githubIntegration = {
+describe.each([
+  ["GITHUB", "GitHub"],
+  ["GITEA", "Gitea"],
+])("RequirementsConfigSettings — %s label mode", (provider, providerName) => {
+  const labelModeIntegration = {
     id: 2,
-    provider: "GITHUB",
-    name: "GitHub",
+    provider,
+    name: providerName,
   } as any;
 
-  const githubMapping = makeMapping({
+  const labelModeMapping = makeMapping({
     externalProjectId: "testowner/testrepo",
     externalProjectKey: "testrepo",
   });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMappingsFindMany.mockReturnValue({ data: [githubMapping] });
+    mockMappingsFindMany.mockReturnValue({ data: [labelModeMapping] });
     mockIssueUseCount.mockReturnValue({ data: 0 });
     mockInvalidateQueries.mockResolvedValue(undefined);
     global.fetch = vi.fn().mockResolvedValue({
@@ -636,7 +640,7 @@ describe("RequirementsConfigSettings — GitHub label mode", () => {
     global.fetch = originalFetch;
   });
 
-  function renderGitHubCard() {
+  function renderLabelModeCard() {
     render(
       <RequirementsConfigSettings
         projectIntegration={makeProjectIntegration({
@@ -646,14 +650,14 @@ describe("RequirementsConfigSettings — GitHub label mode", () => {
             issueTypeNames: { epic: "epic" },
           },
         })}
-        integration={githubIntegration}
+        integration={labelModeIntegration}
         onRequestImport={mockOnRequestImport}
       />
     );
   }
 
-  it("renders for GITHUB with label wording instead of issue-type wording", () => {
-    renderGitHubCard();
+  it(`renders for ${provider} with label wording instead of issue-type wording`, () => {
+    renderLabelModeCard();
 
     expect(
       screen.getByTestId("requirements-config-section")
@@ -669,7 +673,7 @@ describe("RequirementsConfigSettings — GitHub label mode", () => {
     // show 9 and the becoming/stopping assertions below would catch it.
     mockIssueUseCount.mockReturnValue({ data: 9 });
 
-    renderGitHubCard();
+    renderLabelModeCard();
     fireEvent.click(screen.getByTestId("mock-add-type"));
 
     await waitFor(() => {
@@ -685,7 +689,7 @@ describe("RequirementsConfigSettings — GitHub label mode", () => {
   });
 
   it("fetches the label vocabulary with the full owner/repo ref, not the short repo key", async () => {
-    renderGitHubCard();
+    renderLabelModeCard();
     fireEvent.click(screen.getAllByTestId("mock-fetch-options")[0]);
 
     await waitFor(() => {

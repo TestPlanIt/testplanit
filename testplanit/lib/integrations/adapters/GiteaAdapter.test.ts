@@ -13,8 +13,8 @@ describe("GiteaAdapter", () => {
     body: "This is a test issue body",
     state: "open",
     html_url: "https://gitea.example.com/testowner/testrepo/issues/7",
-    created: "2024-01-15T10:00:00.000Z",
-    updated: "2024-01-15T12:00:00.000Z",
+    created_at: "2024-01-15T10:00:00.000Z",
+    updated_at: "2024-01-15T12:00:00.000Z",
     user: { login: "reporter", full_name: "Reporter User" },
     assignee: { login: "assignee", full_name: "Assignee User" },
     labels: [{ name: "bug" }, { name: "backend" }],
@@ -260,6 +260,39 @@ describe("GiteaAdapter", () => {
       expect(result.key).toBe("testowner/testrepo#7");
       expect(result.id).toBe("7");
     });
+
+    // Gitea's API sends created_at/updated_at. A wrong field name here is
+    // silent data loss downstream: buildSyncedIssueData drops non-finite
+    // dates, so Issue.data.createdAt (the coverage-debt "Uncovered Since"
+    // source) would simply never be written for Gitea rows.
+    it("maps the API's created_at/updated_at into createdAt/updatedAt", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGiteaIssue),
+      });
+
+      const result = await adapter.getIssue("testowner/testrepo#7");
+      expect(result.createdAt).toEqual(new Date("2024-01-15T10:00:00.000Z"));
+      expect(result.updatedAt).toEqual(new Date("2024-01-15T12:00:00.000Z"));
+    });
+
+    it("falls back to bare created/updated field names", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockGiteaIssue,
+            created_at: undefined,
+            updated_at: undefined,
+            created: "2023-06-01T08:00:00.000Z",
+            updated: "2023-06-02T09:00:00.000Z",
+          }),
+      });
+
+      const result = await adapter.getIssue("testowner/testrepo#7");
+      expect(result.createdAt).toEqual(new Date("2023-06-01T08:00:00.000Z"));
+      expect(result.updatedAt).toEqual(new Date("2023-06-02T09:00:00.000Z"));
+    });
   });
 
   describe("searchIssues", () => {
@@ -437,6 +470,153 @@ describe("GiteaAdapter", () => {
 
       expect(projects).toHaveLength(1);
       expect(projects[0].id).toBe("testowner/testrepo");
+    });
+  });
+
+  describe("getIssueTypes (labels as the designation vocabulary)", () => {
+    const orgNotFound = {
+      ok: false,
+      status: 404,
+      text: () => Promise.resolve("Not Found"),
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1 }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "gitea-token" });
+      mockFetch.mockClear();
+    });
+
+    it("unions repository and organization labels, id === name, deduped", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              { id: 1, name: "epic", color: "ff0000" },
+              { id: 2, name: "requirement", color: "00ff00" },
+            ]),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve([
+              { id: 9, name: "requirement", color: "00ff00" },
+              { id: 10, name: "org-wide", color: "0000ff" },
+            ]),
+        });
+
+      const issueTypes = await adapter.getIssueTypes("testowner/testrepo");
+
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        "https://gitea.example.com/api/v1/repos/testowner/testrepo/labels?limit=100&page=1",
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "https://gitea.example.com/api/v1/orgs/testowner/labels?limit=100&page=1",
+        expect.any(Object)
+      );
+      expect(issueTypes).toEqual([
+        { id: "epic", name: "epic" },
+        { id: "requirement", name: "requirement" },
+        { id: "org-wide", name: "org-wide" },
+      ]);
+    });
+
+    it("tolerates a missing org labels endpoint (user-owned repo)", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([{ id: 1, name: "epic", color: "f00" }]),
+        })
+        .mockResolvedValueOnce(orgNotFound);
+
+      const issueTypes = await adapter.getIssueTypes("testowner/testrepo");
+
+      expect(issueTypes).toEqual([{ id: "epic", name: "epic" }]);
+    });
+
+    it("resolves a short repo key with the configured owner", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([{ id: 1, name: "epic", color: "f00" }]),
+        })
+        .mockResolvedValueOnce(orgNotFound);
+
+      await adapter.getIssueTypes("otherrepo");
+
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        "https://gitea.example.com/api/v1/repos/testowner/otherrepo/labels?limit=100&page=1",
+        expect.any(Object)
+      );
+    });
+
+    it("resolves a full owner/repo ref over the configured repository", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([{ id: 1, name: "epic", color: "f00" }]),
+        })
+        .mockResolvedValueOnce(orgNotFound);
+
+      await adapter.getIssueTypes("otherowner/otherrepo");
+
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        "https://gitea.example.com/api/v1/repos/otherowner/otherrepo/labels?limit=100&page=1",
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "https://gitea.example.com/api/v1/orgs/otherowner/labels?limit=100&page=1",
+        expect.any(Object)
+      );
+    });
+
+    // Gitea pages with limit/page — a copied per_page would be ignored and
+    // silently truncate the vocabulary at the 30-row server default.
+    it("pages past a full first page with limit/page and stops on a short one", async () => {
+      const fullPage = Array.from({ length: 100 }, (_, i) => ({
+        id: i,
+        name: `label-${i}`,
+        color: "cccccc",
+      }));
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(fullPage),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve([{ id: 200, name: "tail" }]),
+        })
+        .mockResolvedValueOnce(orgNotFound);
+
+      const issueTypes = await adapter.getIssueTypes("testowner/testrepo");
+
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "https://gitea.example.com/api/v1/repos/testowner/testrepo/labels?limit=100&page=2",
+        expect.any(Object)
+      );
+      expect(issueTypes).toHaveLength(101);
+      expect(issueTypes[100]).toEqual({ id: "tail", name: "tail" });
+    });
+
+    it("throws when no repository can be resolved", async () => {
+      const bare = new GiteaAdapter({
+        provider: "GITEA",
+        baseUrl: "https://gitea.example.com",
+      });
+      await expect(bare.getIssueTypes("")).rejects.toThrow(
+        "Gitea repository not configured"
+      );
     });
   });
 });

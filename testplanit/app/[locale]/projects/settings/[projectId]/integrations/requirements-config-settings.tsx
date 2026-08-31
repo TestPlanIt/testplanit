@@ -56,11 +56,11 @@ interface RequirementImportMapping {
  * server just to learn it. Mirrors MilestoneSyncSettings' own
  * MILESTONE_CAPABLE_PROVIDERS shape and source-of-truth reasoning.
  *
- * GITHUB is the one LABEL-MODE member: its `getIssueTypes` serves
- * repository labels (GitHub models no issue types), so this card's
- * picker selects labels there, and the impact preview cannot count
- * matches client-side (labels live in a JSON column the client query
- * layer can't filter on) — see `labelMode` below.
+ * GITHUB and GITEA are the LABEL-MODE members: their `getIssueTypes`
+ * serves repository labels (neither tracker models issue types), so this
+ * card's picker selects labels there, and the impact preview cannot
+ * count matches client-side (labels live in a JSON column the client
+ * query layer can't filter on) — see `labelMode` below.
  */
 const REQUIREMENT_TYPE_CAPABLE_PROVIDERS = new Set([
   "JIRA",
@@ -69,7 +69,13 @@ const REQUIREMENT_TYPE_CAPABLE_PROVIDERS = new Set([
   "REDMINE",
   "MANTISBT",
   "GITHUB",
+  "GITEA",
 ]);
+
+/** Providers whose designation vocabulary is labels, not issue types. Also
+ *  the providers whose mappings key `getIssueTypes` on the full
+ *  "owner/repo" ref (`externalProjectId`) rather than the short key. */
+const LABEL_MODE_PROVIDERS = new Set(["GITHUB", "GITEA"]);
 
 function isRequirementTypeCapable(provider: string): boolean {
   return REQUIREMENT_TYPE_CAPABLE_PROVIDERS.has(provider);
@@ -152,14 +158,13 @@ export function RequirementsConfigSettings({
       await Promise.all(
         (mappings ?? []).map(async (mapping) => {
           try {
-            // GitHub's label listing needs the full "owner/repo" ref,
-            // which mappings carry as externalProjectId (getProjects
-            // returns repo.full_name as the id); every typed tracker
-            // keys getIssueTypes on the short project KEY.
-            const projectRef =
-              integration.provider === "GITHUB"
-                ? mapping.externalProjectId
-                : mapping.externalProjectKey;
+            // GitHub's and Gitea's label listings need the full
+            // "owner/repo" ref, which mappings carry as externalProjectId
+            // (both getProjects return repo.full_name as the id); every
+            // typed tracker keys getIssueTypes on the short project KEY.
+            const projectRef = LABEL_MODE_PROVIDERS.has(integration.provider)
+              ? mapping.externalProjectId
+              : mapping.externalProjectKey;
             const response = await fetch(
               `/api/integrations/${integration.id}/issue-types?projectKey=${encodeURIComponent(projectRef)}`
             );
@@ -206,13 +211,13 @@ export function RequirementsConfigSettings({
 
   const projectId = projectIntegration.projectId;
 
-  // Label mode (GitHub): the selections are label names, matched against
-  // `Issue.data->'labels'` server-side. The three impact-preview counts
-  // below are keyed on the `issueTypeId` COLUMN, which is NULL on every
-  // label-classified row — running them would preview a confident zero
-  // for a save that reclassifies plenty, so label mode disables them and
-  // renders a plain-language note instead.
-  const labelMode = integration.provider === "GITHUB";
+  // Label mode (GitHub, Gitea): the selections are label names, matched
+  // against `Issue.data->'labels'` server-side. The three impact-preview
+  // counts below are keyed on the `issueTypeId` COLUMN, which is NULL on
+  // every label-classified row — running them would preview a confident
+  // zero for a save that reclassifies plenty, so label mode disables them
+  // and renders a plain-language note instead.
+  const labelMode = LABEL_MODE_PROVIDERS.has(integration.provider);
 
   const { data: becomingCount } = useClientQueries(schema).issue.useCount(
     {

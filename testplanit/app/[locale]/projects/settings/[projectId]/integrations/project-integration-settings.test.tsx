@@ -605,13 +605,29 @@ describe("ProjectIntegrationSettings", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not render Milestone Sync or Requirement Types sections for a non-capable integration (GITEA)", () => {
+  it("renders Requirement Types but not Milestone Sync for GITEA (label-mode requirement classification, no milestone sync)", () => {
     const giteaProps = {
       ...defaultProps,
       integration: { ...defaultProps.integration, provider: "GITEA" },
     };
 
     render(<ProjectIntegrationSettings {...giteaProps} />);
+
+    expect(
+      screen.queryByTestId("milestone-sync-section")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("requirements-config-section")
+    ).toBeInTheDocument();
+  });
+
+  it("does not render Milestone Sync or Requirement Types sections for a non-capable integration (SIMPLE_URL)", () => {
+    const simpleUrlProps = {
+      ...defaultProps,
+      integration: { ...defaultProps.integration, provider: "SIMPLE_URL" },
+    };
+
+    render(<ProjectIntegrationSettings {...simpleUrlProps} />);
 
     expect(
       screen.queryByTestId("milestone-sync-section")

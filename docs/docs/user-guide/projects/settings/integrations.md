@@ -102,13 +102,13 @@ Enabling or changing milestone sync settings, running **Sync now**, and **Import
 
 ## Requirement Sync
 
-For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, MantisBT, and GitHub), a **Requirement Sync** section appears on the active integration's settings. It chooses which tracker issue types count as requirements in this project — existing issues are reclassified to match whenever you change the selection:
+For requirement-capable providers (Jira, Azure DevOps, GitLab, Redmine, MantisBT, GitHub, and Gitea), a **Requirement Sync** section appears on the active integration's settings. It chooses which tracker issue types count as requirements in this project — existing issues are reclassified to match whenever you change the selection:
 
 - **Enable requirement classification** — turns classification on; the picker below stays disabled until it is.
 - **Issue types** — a multi-select of the issue types across all of this integration's linked external projects (for example Epic, Story, or a custom Requirement type).
-- **Labels** (GitHub only) — GitHub has no issue types, so the picker selects repository labels instead: an issue counts as a requirement while it carries **at least one** selected label, and stops being one when it carries none of them.
+- **Labels** (GitHub and Gitea) — neither tracker has issue types, so the picker selects repository labels instead (for Gitea, organization labels on an org-owned repository are included): an issue counts as a requirement while it carries **at least one** selected label, and stops being one when it carries none of them.
 
-Before you save, an **Impact of this change** preview shows how many existing issues will become requirements or stop being requirements, plus a callout for detached or locally edited rows that would lose their requirement status. For GitHub the preview describes the effect of the label change rather than counting rows. Nothing is applied until **Save**; saving also reclassifies existing issues to match. Removing a type is reversible — re-adding it restores the classification, and nothing is deleted.
+Before you save, an **Impact of this change** preview shows how many existing issues will become requirements or stop being requirements, plus a callout for detached or locally edited rows that would lose their requirement status. For GitHub and Gitea the preview describes the effect of the label change rather than counting rows. Nothing is applied until **Save**; saving also reclassifies existing issues to match. Removing a type is reversible — re-adding it restores the classification, and nothing is deleted.
 
 To bring in every existing issue of the configured types — not just the ones classified as they arrive — use the linked project's own **Import Issues** action, described in [Importing issues in bulk](#importing-issues-in-bulk); opening it from here starts it already scoped to these types with no limit. Saving a change that newly classifies a type offers this same import unprompted. While an uncapped run is in progress, its status and a **Stop** action appear on the linked external project's row under **Linked External Projects**.
 
