@@ -139,6 +139,7 @@ export async function loadRequirementTraceability(
         issueTypeName: true,
         issueTypeIconUrl: true,
         priority: true,
+        externalPriority: true,
         status: true,
         externalStatus: true,
         integrationId: true,

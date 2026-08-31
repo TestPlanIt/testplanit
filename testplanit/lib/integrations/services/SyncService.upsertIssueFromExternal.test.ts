@@ -127,6 +127,48 @@ describe("SyncService.upsertIssueFromExternal (D-12 canonical upsert)", () => {
     expect(result.id).toBe(555);
   });
 
+  it("mirrors a supplied priority into both priority columns", async () => {
+    mockIssueUpsert.mockResolvedValue({ id: 556 });
+
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
+    const rawDbModule = await import("@/lib/rawDb");
+
+    await (service as any).upsertIssueFromExternal(
+      (rawDbModule as any).rawDb,
+      1,
+      42,
+      makeIssueData({ id: "ext-prio", priority: "High" })
+    );
+
+    const args = mockIssueUpsert.mock.calls[0][0];
+    expect(args.create.priority).toBe("High");
+    expect(args.create.externalPriority).toBe("High");
+    expect(args.update.priority).toBe("High");
+    expect(args.update.externalPriority).toBe("High");
+  });
+
+  it('never fabricates a priority — a provider without one stores NULL, not "medium"', async () => {
+    mockIssueUpsert.mockResolvedValue({ id: 557 });
+
+    const syncServiceModule = await import("./SyncService");
+    const service = new syncServiceModule.SyncService();
+    const rawDbModule = await import("@/lib/rawDb");
+
+    await (service as any).upsertIssueFromExternal(
+      (rawDbModule as any).rawDb,
+      1,
+      42,
+      makeIssueData({ id: "ext-noprio", priority: undefined })
+    );
+
+    const args = mockIssueUpsert.mock.calls[0][0];
+    expect(args.create.priority).toBeNull();
+    expect(args.create.externalPriority).toBeNull();
+    expect(args.update.priority).toBeNull();
+    expect(args.update.externalPriority).toBeNull();
+  });
+
   it("writes via db.issue.upsert keyed on externalId_integrationId", async () => {
     mockIssueUpsert.mockResolvedValue({ id: 555 });
 

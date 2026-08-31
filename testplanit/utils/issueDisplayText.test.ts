@@ -3,6 +3,7 @@ import {
   formatIssueDisplayText,
   formatRequirementCellText,
   hasDistinctIssueTitle,
+  resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "./issueDisplayText";
 
@@ -189,6 +190,86 @@ describe("resolveRequirementDisplayStatus", () => {
         ...lockedRow,
         status: null,
         externalStatus: null,
+      })
+    ).toBe(null);
+  });
+});
+
+// The priority twin resolves over the same lock predicate; the cases mirror
+// the status suite above so the two resolvers cannot drift apart silently.
+describe("resolveRequirementDisplayPriority", () => {
+  const lockedRow = {
+    isRequirement: true,
+    integrationId: 9,
+    requirementDetachedAt: null,
+  };
+  const detachedRow = {
+    isRequirement: true,
+    integrationId: 9,
+    requirementDetachedAt: new Date().toISOString(),
+  };
+  const nativeRow = {
+    isRequirement: true,
+    integrationId: null,
+    requirementDetachedAt: null,
+  };
+
+  it("prefers externalPriority on a locked row", () => {
+    expect(
+      resolveRequirementDisplayPriority({
+        ...lockedRow,
+        priority: "low",
+        externalPriority: "Highest",
+      })
+    ).toBe("Highest");
+  });
+
+  it("falls back to priority on a locked row with a null externalPriority", () => {
+    expect(
+      resolveRequirementDisplayPriority({
+        ...lockedRow,
+        priority: "low",
+        externalPriority: null,
+      })
+    ).toBe("low");
+  });
+
+  it("prefers the local priority on a detached row", () => {
+    expect(
+      resolveRequirementDisplayPriority({
+        ...detachedRow,
+        priority: "low",
+        externalPriority: "Highest",
+      })
+    ).toBe("low");
+  });
+
+  it("falls back to externalPriority on a detached row with a null priority", () => {
+    expect(
+      resolveRequirementDisplayPriority({
+        ...detachedRow,
+        priority: null,
+        externalPriority: "Highest",
+      })
+    ).toBe("Highest");
+  });
+
+  it("returns the local priority for a native row", () => {
+    expect(
+      resolveRequirementDisplayPriority({
+        ...nativeRow,
+        priority: "high",
+        externalPriority: "Highest",
+      })
+    ).toBe("high");
+  });
+
+  it("returns null when both columns are null — no fabricated fallback", () => {
+    expect(
+      resolveRequirementDisplayPriority({
+        ...lockedRow,
+        priority: null,
+        externalPriority: null,
       })
     ).toBe(null);
   });

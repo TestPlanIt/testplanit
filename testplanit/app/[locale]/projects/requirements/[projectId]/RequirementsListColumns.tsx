@@ -59,6 +59,7 @@ import type { RepositoryCasesWhereInput } from "~/zenstack/input";
 import { cn } from "~/utils";
 import {
   formatIssueDisplayText,
+  resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
@@ -306,7 +307,10 @@ export function useRequirementsListColumns({
         // `RequirementDetailPanel`'s existing priority field (already
         // shipped, already gated on `isRequirementLocked`); this cell is
         // read-only display only.
-        accessorFn: (row) => row.priority ?? "",
+        // Reads through `resolveRequirementDisplayPriority` -- the same
+        // lock-aware local/external split the Status column resolves, so a
+        // detached row's own edited priority wins over the stale mirror.
+        accessorFn: (row) => resolveRequirementDisplayPriority(row) ?? "",
         header: tColumnPriority,
         enableSorting: true,
         // Omitted `meta.isVisible` (unlike `createdAt` below) -- this
@@ -323,7 +327,9 @@ export function useRequirementsListColumns({
             className="whitespace-nowrap"
             data-testid={`requirement-priority-cell-${row.original.id}`}
           >
-            <IssuePriorityDisplay priority={row.original.priority} />
+            <IssuePriorityDisplay
+              priority={resolveRequirementDisplayPriority(row.original)}
+            />
           </div>
         ),
       },

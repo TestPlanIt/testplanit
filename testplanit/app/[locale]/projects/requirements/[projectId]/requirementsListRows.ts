@@ -9,6 +9,7 @@ import { requirementCoverageSortValue } from "~/lib/services/requirementCoverage
 import type { RequirementCoverageStatusCount } from "~/lib/services/requirementCoverage";
 import {
   formatIssueDisplayText,
+  resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
 import type { Issue } from "~/zenstack/models";
@@ -558,7 +559,9 @@ function compareRequirements(
     // string. The `status` case above already made this exact call for
     // `externalStatus`.
     case "priority": {
-      primary = (a.priority ?? "").localeCompare(b.priority ?? "");
+      primary = (resolveRequirementDisplayPriority(a) ?? "").localeCompare(
+        resolveRequirementDisplayPriority(b) ?? ""
+      );
       break;
     }
     case "name":

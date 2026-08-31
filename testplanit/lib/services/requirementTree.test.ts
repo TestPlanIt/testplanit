@@ -125,6 +125,7 @@ function makeMatchRow(
     status: null,
     externalStatus: null,
     priority: null,
+    externalPriority: null,
     externalId: null,
     externalKey: null,
     externalUrl: null,
@@ -173,6 +174,7 @@ function makeRow(
     status: null,
     externalStatus: null,
     priority: null,
+    externalPriority: null,
     externalId: null,
     externalKey: null,
     externalUrl: null,
@@ -415,6 +417,11 @@ describe("resolveRequirementMatches -- the three SQL axes (unit, mocked $qb + re
     expect(captured[0].sql).toContain(
       'ORDER BY "requirementSortKey" DESC, id DESC'
     );
+    // The priority sort key resolves through the lock-aware local/external
+    // CASE (REQUIREMENT_DISPLAY_PRIORITY_CASE), mirroring what
+    // resolveRequirementDisplayPriority shows — a raw `i.priority` sort
+    // would order synced rows by a column the UI does not display.
+    expect(captured[0].sql).toContain('"externalPriority"');
   });
 
   // The live-DB lane

@@ -1,5 +1,6 @@
 import {
   formatIssueDisplayText,
+  resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
 
@@ -42,6 +43,7 @@ export type RequirementNode = {
    * `resolveRequirementDisplayStatus` and the Uncovered-since column
    * read. Optional for the same fixture-compat reason as the icon pair. */
   priority?: string | null;
+  externalPriority?: string | null;
   status?: string | null;
   externalStatus?: string | null;
   integrationId?: number | null;
@@ -264,7 +266,14 @@ export function buildTraceabilityRows(params: {
         ? path.slice(0, path.length - selfText.length - " > ".length)
         : "";
     const breakdown = coverage.get(requirement.id);
-    const requirementPriority = requirement.priority ?? null;
+    // Same lock-aware read as status below -- never raw `priority`.
+    const requirementPriority = resolveRequirementDisplayPriority({
+      priority: requirement.priority,
+      externalPriority: requirement.externalPriority,
+      isRequirement: true,
+      integrationId: requirement.integrationId ?? null,
+      requirementDetachedAt: requirement.requirementDetachedAt ?? null,
+    });
     // WR-03's single status convention: a locked (synced) requirement
     // shows the tracker's status, a detached/native one its local status.
     const requirementStatus = resolveRequirementDisplayStatus({

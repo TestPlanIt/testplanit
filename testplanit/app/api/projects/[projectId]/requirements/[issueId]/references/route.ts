@@ -293,6 +293,7 @@ export async function POST(
         externalKey: external.key,
         externalUrl: external.externalUrl,
         externalStatus: external.status,
+        externalPriority: external.priority ?? null,
       };
 
       const issue = await upsertLinkedIssueShell(baseDb, {

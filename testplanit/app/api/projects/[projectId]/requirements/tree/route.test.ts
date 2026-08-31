@@ -81,6 +81,7 @@ function makeRow(
     status: null,
     externalStatus: null,
     priority: null,
+    externalPriority: null,
     externalId: null,
     externalKey: null,
     externalUrl: null,

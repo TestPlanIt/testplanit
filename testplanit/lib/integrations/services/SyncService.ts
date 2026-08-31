@@ -2134,10 +2134,14 @@ export class SyncService {
       title: issueData.title,
       description: issueData.description || "",
       status: issueData.status,
-      priority: issueData.priority || "medium",
+      // No fabricated fallback: a provider with no priority concept
+      // (GitHub, Gitea, GitLab) stores NULL and renders as the dash, not
+      // as a made-up "medium".
+      priority: issueData.priority ?? null,
       externalKey: issueData.key,
       externalUrl: issueData.url,
       externalStatus: issueData.status,
+      externalPriority: issueData.priority ?? null,
       externalData: issueData.customFields || {},
       // Non-customfield tracker metadata that auto-tag's prompt extractor
       // reads to surface linked-issue context. Kept distinct from
@@ -2288,11 +2292,13 @@ export class SyncService {
       title: issueData.title,
       description: issueData.description || "",
       status: issueData.status,
-      priority: issueData.priority || "medium",
+      // See createNewIssue's issueFields — never fabricate a priority.
+      priority: issueData.priority ?? null,
       externalId: issueData.id,
       externalKey: issueData.key,
       externalUrl: issueData.url,
       externalStatus: issueData.status,
+      externalPriority: issueData.priority ?? null,
       externalData: issueData.customFields || {},
       // See createNewIssue above — keep the non-customfield tracker metadata
       // (labels, components) fresh on every sync. Existing rows in the wild

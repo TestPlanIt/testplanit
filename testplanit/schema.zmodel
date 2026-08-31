@@ -3428,6 +3428,7 @@ model Issue {
     externalKey           String?
     externalUrl           String?                     @url
     externalStatus        String?
+    externalPriority      String?
     externalData          Json?
     issueTypeId           String?
     issueTypeName         String?

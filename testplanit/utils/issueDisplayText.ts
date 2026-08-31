@@ -97,3 +97,24 @@ export function resolveRequirementDisplayStatus(row: {
     ? (row.externalStatus ?? row.status ?? null)
     : (row.status ?? row.externalStatus ?? null);
 }
+
+/**
+ * The priority twin of `resolveRequirementDisplayStatus` — same lock-aware
+ * precedence over the same column split (`Issue.priority` is the editable
+ * local column, `Issue.externalPriority` the sync-only tracker mirror), for
+ * the same reason: while locked the tracker owns the value, and once
+ * unlocked the column the user can actually change has to win. Both are
+ * nullable with no fabricated fallback — a tracker with no priority
+ * concept resolves to null and renders as the dash.
+ */
+export function resolveRequirementDisplayPriority(row: {
+  priority?: string | null;
+  externalPriority?: string | null;
+  isRequirement?: boolean | null;
+  integrationId?: number | null;
+  requirementDetachedAt?: Date | string | null;
+}): string | null {
+  return isRequirementLocked(row)
+    ? (row.externalPriority ?? row.priority ?? null)
+    : (row.priority ?? row.externalPriority ?? null);
+}

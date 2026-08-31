@@ -50,6 +50,7 @@ import {
 } from "~/app/[locale]/projects/requirements/[projectId]/requirementsListRows";
 import {
   formatIssueDisplayText,
+  resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
 
@@ -161,6 +162,13 @@ async function seedSortForest(namePrefix: string): Promise<SortForest> {
       : null;
 
     const externalStatus = integrationId !== null ? `ext-${i % 4}` : null;
+    // Diverges from the LOCAL priority on purpose (and is null on every
+    // 7th synced row): a locked row must sort by the tracker's value, a
+    // locked row with a null mirror must fall back to the local column,
+    // and a fixture where the two columns always coincided would never
+    // exercise the lock-aware CASE at all.
+    const externalPriority =
+      integrationId !== null && i % 7 !== 0 ? `ext-p-${i % 4}` : null;
 
     // MICROSECONDS. Rows are spaced 1ms apart, but each carries a distinct
     // sub-millisecond component, so a cursor that truncates to milliseconds
@@ -176,11 +184,12 @@ async function seedSortForest(namePrefix: string): Promise<SortForest> {
       INSERT INTO "Issue"
         ("name", "title", "createdById", "projectId", "isRequirement",
          "isDeleted", "parentId", "priority", "status", "externalStatus",
-         "externalUrl", "integrationId", "requirementDetachedAt", "createdAt")
+         "externalPriority", "externalUrl", "integrationId",
+         "requirementDetachedAt", "createdAt")
       VALUES
         (${name}, ${title}, ${admin.id}, ${project.id}, true,
          false, NULL, ${priority}, ${status}, ${externalStatus},
-         ${externalUrl}, ${integrationId},
+         ${externalPriority}, ${externalUrl}, ${integrationId},
          ${detachedAt}::timestamptz, ${createdAt}::timestamptz)
       RETURNING id
     `;
@@ -355,7 +364,7 @@ describeIntegration("requirements tree server-side sorting (live DB)", () => {
         case "status":
           return resolveRequirementDisplayStatus(row) ?? "";
         case "priority":
-          return row.priority ?? "";
+          return resolveRequirementDisplayPriority(row) ?? "";
         case "source":
           return requirementSourceSortValue(row);
         case "createdAt":

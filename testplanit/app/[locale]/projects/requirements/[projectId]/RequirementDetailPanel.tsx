@@ -55,6 +55,7 @@ import type { Issue } from "~/zenstack/models";
 import {
   formatIssueDisplayText,
   hasDistinctIssueTitle,
+  resolveRequirementDisplayPriority,
   resolveRequirementDisplayStatus,
 } from "~/utils/issueDisplayText";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
@@ -157,7 +158,11 @@ const SCALAR_FIELDS: ReadonlyArray<{
     labelKey: "fields.priority",
     renderDisplay: (row) => (
       <div data-testid="requirement-display-priority">
-        <IssuePriorityDisplay priority={row.priority} />
+        {/* Same lock-aware resolution as the status field above and the
+            list's own Priority column. */}
+        <IssuePriorityDisplay
+          priority={resolveRequirementDisplayPriority(row)}
+        />
       </div>
     ),
   },

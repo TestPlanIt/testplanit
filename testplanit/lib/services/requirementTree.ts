@@ -87,6 +87,7 @@ export interface RequirementTreeRow {
   status: string | null;
   externalStatus: string | null;
   priority: string | null;
+  externalPriority: string | null;
   externalId: string | null;
   externalKey: string | null;
   externalUrl: string | null;
@@ -203,6 +204,7 @@ const REQUIREMENT_TREE_COLUMNS = sql`
   i.status,
   i."externalStatus",
   i.priority,
+  i."externalPriority",
   i."externalId",
   i."externalKey",
   i."externalUrl",
@@ -525,6 +527,22 @@ const REQUIREMENT_DISPLAY_STATUS_CASE = sql`
 `;
 
 /**
+ * The priority twin: line-for-line SQL translation of
+ * `resolveRequirementDisplayPriority` (utils/issueDisplayText.ts), same
+ * lock predicate as the status CASE above — the three expressions must
+ * not drift.
+ */
+const REQUIREMENT_DISPLAY_PRIORITY_CASE = sql`
+  CASE
+    WHEN i."isRequirement" = true
+      AND i."integrationId" IS NOT NULL
+      AND i."requirementDetachedAt" IS NULL
+    THEN COALESCE(i."externalPriority", i.priority)
+    ELSE COALESCE(i.priority, i."externalPriority")
+  END
+`;
+
+/**
  * SQL translation of `requirementSourceSortValue`
  * (requirementsListRows.ts:451-455):
  *
@@ -626,7 +644,10 @@ function requirementSortDescriptor(
         cast: "text",
       };
     case "priority":
-      return { expr: sql`COALESCE(i.priority, '')`, cast: "text" };
+      return {
+        expr: sql`COALESCE(${REQUIREMENT_DISPLAY_PRIORITY_CASE}, '')`,
+        cast: "text",
+      };
     case "source":
       return { expr: REQUIREMENT_SOURCE_RANK_CASE, cast: "numeric" };
     case "createdAt":
