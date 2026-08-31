@@ -6814,8 +6814,6 @@
       "empty": "Brak odniesień.",
       "emptyHint": "Dołącz zgłoszenia, które ukształtowały to wymaganie.",
       "addReference": "Dodaj odniesienie",
-      "addDialogTitle": "Dodaj odniesienie",
-      "searchPlaceholder": "Szukaj zgłoszeń...",
       "createDialogLabel": "Odniesienia",
       "attachSuccess": "Odniesienie dołączone.",
       "attachFailed": "Nie udało się dołączyć odniesienia.",

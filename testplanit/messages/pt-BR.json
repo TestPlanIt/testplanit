@@ -6814,8 +6814,6 @@
       "empty": "Ainda não há referências.",
       "emptyHint": "Anexe tíquetes que moldaram este requisito.",
       "addReference": "Adicionar referência",
-      "addDialogTitle": "Adicionar referência",
-      "searchPlaceholder": "Pesquisar problemas...",
       "createDialogLabel": "Referências",
       "attachSuccess": "Referência anexada.",
       "attachFailed": "Falha ao anexar a referência.",

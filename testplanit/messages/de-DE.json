@@ -6814,8 +6814,6 @@
       "empty": "Noch keine Referenzen.",
       "emptyHint": "Fügen Sie Tickets hinzu, die diese Anforderung geprägt haben.",
       "addReference": "Referenz hinzufügen",
-      "addDialogTitle": "Referenz hinzufügen",
-      "searchPlaceholder": "Issues suchen...",
       "createDialogLabel": "Referenzen",
       "attachSuccess": "Referenz hinzugefügt.",
       "attachFailed": "Referenz konnte nicht hinzugefügt werden.",

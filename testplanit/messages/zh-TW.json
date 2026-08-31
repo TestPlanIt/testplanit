@@ -6814,8 +6814,6 @@
       "empty": "尚無參照。",
       "emptyHint": "附加影響此需求的工單。",
       "addReference": "新增參照",
-      "addDialogTitle": "新增參照",
-      "searchPlaceholder": "搜尋問題……",
       "createDialogLabel": "參照",
       "attachSuccess": "參照已附加。",
       "attachFailed": "附加參照失敗。",

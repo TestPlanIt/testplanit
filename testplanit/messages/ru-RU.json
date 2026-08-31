@@ -6814,8 +6814,6 @@
       "empty": "Ссылок пока нет.",
       "emptyHint": "Прикрепите тикеты, которые повлияли на это требование.",
       "addReference": "Добавить ссылку",
-      "addDialogTitle": "Добавить ссылку",
-      "searchPlaceholder": "Поиск задач...",
       "createDialogLabel": "Ссылки",
       "attachSuccess": "Ссылка прикреплена.",
       "attachFailed": "Не удалось прикрепить ссылку.",

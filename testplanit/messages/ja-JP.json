@@ -6814,8 +6814,6 @@
       "empty": "参照はまだありません。",
       "emptyHint": "この要件を形成したチケットを添付します。",
       "addReference": "参照を追加",
-      "addDialogTitle": "参照を追加",
-      "searchPlaceholder": "課題を検索…",
       "createDialogLabel": "参照",
       "attachSuccess": "参照を添付しました。",
       "attachFailed": "参照の添付に失敗しました。",

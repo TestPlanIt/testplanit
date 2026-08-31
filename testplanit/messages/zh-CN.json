@@ -6814,8 +6814,6 @@
       "empty": "暂无引用。",
       "emptyHint": "附加影响此需求的工单。",
       "addReference": "添加引用",
-      "addDialogTitle": "添加引用",
-      "searchPlaceholder": "搜索问题……",
       "createDialogLabel": "引用",
       "attachSuccess": "引用已附加。",
       "attachFailed": "附加引用失败。",

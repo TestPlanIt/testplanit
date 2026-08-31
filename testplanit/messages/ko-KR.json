@@ -6814,8 +6814,6 @@
       "empty": "아직 참조가 없습니다.",
       "emptyHint": "이 요구 사항을 형성한 티켓을 첨부하세요.",
       "addReference": "참조 추가",
-      "addDialogTitle": "참조 추가",
-      "searchPlaceholder": "이슈 검색...",
       "createDialogLabel": "참조",
       "attachSuccess": "참조가 첨부되었습니다.",
       "attachFailed": "참조를 첨부하는 데 실패했습니다.",

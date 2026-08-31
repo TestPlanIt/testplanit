@@ -6814,8 +6814,6 @@
       "empty": "Aún no hay referencias.",
       "emptyHint": "Adjunta los tickets que dieron forma a este requisito.",
       "addReference": "Agregar referencia",
-      "addDialogTitle": "Agregar referencia",
-      "searchPlaceholder": "Buscar problemas...",
       "createDialogLabel": "Referencias",
       "attachSuccess": "Referencia adjuntada.",
       "attachFailed": "No se pudo adjuntar la referencia.",

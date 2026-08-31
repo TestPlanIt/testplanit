@@ -6814,8 +6814,6 @@
       "empty": "Zatím žádné odkazy.",
       "emptyHint": "Přiložte tikety, které tento požadavek ovlivnily.",
       "addReference": "Přidat odkaz",
-      "addDialogTitle": "Přidat odkaz",
-      "searchPlaceholder": "Hledat úkoly...",
       "createDialogLabel": "Odkazy",
       "attachSuccess": "Odkaz přiložen.",
       "attachFailed": "Nepodařilo se přiložit odkaz.",

@@ -6814,8 +6814,6 @@
       "empty": "Henüz referans yok.",
       "emptyHint": "Bu gereksinimi şekillendiren biletleri ekleyin.",
       "addReference": "Referans Ekle",
-      "addDialogTitle": "Referans Ekle",
-      "searchPlaceholder": "Sorunları ara...",
       "createDialogLabel": "Referanslar",
       "attachSuccess": "Referans eklendi.",
       "attachFailed": "Referans eklenemedi.",

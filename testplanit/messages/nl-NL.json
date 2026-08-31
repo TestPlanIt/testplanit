@@ -6814,8 +6814,6 @@
       "empty": "Nog geen referenties.",
       "emptyHint": "Voeg tickets toe die deze vereiste hebben vormgegeven.",
       "addReference": "Referentie toevoegen",
-      "addDialogTitle": "Referentie toevoegen",
-      "searchPlaceholder": "Problemen zoeken...",
       "createDialogLabel": "Referenties",
       "attachSuccess": "Referentie toegevoegd.",
       "attachFailed": "Het toevoegen van de referentie is mislukt.",

@@ -6814,8 +6814,6 @@
       "empty": "Chưa có tham chiếu nào.",
       "emptyHint": "Đính kèm các phiếu đã hình thành nên yêu cầu này.",
       "addReference": "Thêm tham chiếu",
-      "addDialogTitle": "Thêm tham chiếu",
-      "searchPlaceholder": "Tìm kiếm vấn đề...",
       "createDialogLabel": "Tham chiếu",
       "attachSuccess": "Đã đính kèm tham chiếu.",
       "attachFailed": "Không thể đính kèm tham chiếu.",

@@ -6814,8 +6814,6 @@
       "empty": "لا توجد مراجع بعد.",
       "emptyHint": "أرفق التذاكر التي شكّلت هذا المتطلب.",
       "addReference": "إضافة مرجع",
-      "addDialogTitle": "إضافة مرجع",
-      "searchPlaceholder": "البحث عن المشكلات...",
       "createDialogLabel": "المراجع",
       "attachSuccess": "تم إرفاق المرجع.",
       "attachFailed": "فشل إرفاق المرجع.",
