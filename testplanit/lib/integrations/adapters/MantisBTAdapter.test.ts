@@ -266,28 +266,37 @@ describe("MantisBTAdapter", () => {
         { id: 1, summary: "login bug" },
         { id: 2, summary: "logout works" },
       ];
-      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+      // Issues without dates are stamped `new Date()` on mapping; the two
+      // calls below must see the same clock or a millisecond boundary
+      // between them fails the deep-equal under full-suite load.
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+      try {
+        mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
 
-      const withoutTypes = await adapter.searchIssues({
-        projectId: "3",
-        limit: 10,
-      });
-      const urlWithoutTypes = mockFetch.mock.calls[0][0];
+        const withoutTypes = await adapter.searchIssues({
+          projectId: "3",
+          limit: 10,
+        });
+        const urlWithoutTypes = mockFetch.mock.calls[0][0];
 
-      mockFetch.mockClear();
-      mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
+        mockFetch.mockClear();
+        mockFetch.mockResolvedValueOnce(okJson({ issues: page }));
 
-      const withTypes = await adapter.searchIssues({
-        projectId: "3",
-        limit: 10,
-        issueTypeIds: ["10", "20"],
-      });
-      const urlWithTypes = mockFetch.mock.calls[0][0];
+        const withTypes = await adapter.searchIssues({
+          projectId: "3",
+          limit: 10,
+          issueTypeIds: ["10", "20"],
+        });
+        const urlWithTypes = mockFetch.mock.calls[0][0];
 
-      expect(urlWithTypes).toBe(urlWithoutTypes);
-      expect(withTypes.issues).toEqual(withoutTypes.issues);
-      expect(withTypes.total).toBe(withoutTypes.total);
-      expect(withTypes.hasMore).toBe(withoutTypes.hasMore);
+        expect(urlWithTypes).toBe(urlWithoutTypes);
+        expect(withTypes.issues).toEqual(withoutTypes.issues);
+        expect(withTypes.total).toBe(withoutTypes.total);
+        expect(withTypes.hasMore).toBe(withoutTypes.hasMore);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
