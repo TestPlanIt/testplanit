@@ -17,7 +17,7 @@ Before using AI test generation, ensure:
 
 ## Generation Wizard
 
-The AI test generation wizard guides you through a 4-step process:
+The AI test generation wizard guides you through a 4-step process. Besides launching it from the Test Case Repository, it also opens pre-seeded — with the issue-selection step already filled in — from a [milestone's in-scope issues](./projects/milestone-details.md#in-scope) and from the rows of the [Requirement Coverage Gaps report](./projects/requirements-traceability.md#generating-test-cases-for-a-gap), where the imported cases are linked back to the seeding issue or requirement.
 
 ### Step 1: Select Source
 

@@ -65,6 +65,12 @@ The traceability report's visualization panel summarizes the same rows per requi
 
 The gaps report has its own visualization: totals for the two tiers plus an **On Closed Requirements** count (debt on requirements whose status reads as closed/done/resolved — usually a cleanup list rather than a testing backlog), a **Debt by top-level requirement** breakdown with the same linked bars, and **Debt aging** — how long each item has been uncovered, bucketed as under 30 days, 30–90, 90–180, 180–365, and over a year.
 
+### Generating test cases for a gap
+
+Each gap row ends with a **Generate Test Cases** button (the sparkles icon) that opens the [AI test-case generation wizard](../llm-test-generation.md) pre-seeded with that requirement — the wizard skips its issue-picker step and generates against the requirement's title and body (a synced requirement's tracker description, or a native requirement's rich-text note), plus, for synced requirements, the tracker context the wizard already gathers: the comment thread and directly linked issues. Imported cases land in a folder named after the requirement and are **linked back to it**, so accepting the wizard's results is what closes the gap — the report re-runs automatically after the import, and the row leaves the list (or moves to the never-run tier).
+
+The button appears for viewers who can add/edit the project's Test Case Repository, and only when the project has an active [LLM integration](../llm-integrations.md). It is never offered on a report opened through a [share link](./reports/index.md#sharing).
+
 ### Filtering traceability by coverage state
 
 The **Coverage** control above the traceability results keeps only the rows of requirements in the selected states — filter to **Failed** for an instant "what's failing" view, or **Uncovered** to see gaps in matrix form. The filter is applied when the report runs, so the row count, the visualization, the CSV export, and any share link all describe the same filtered set.
