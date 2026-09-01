@@ -119,18 +119,21 @@ A **Synced** requirement shows the tracker's status everywhere — in the list, 
 
 ### How synced requirements arrive
 
-Any tracker issue that reaches TestPlanIt — through issue sync, an inbound webhook, a bulk import, or being linked to a test artifact — is classified against the project's configured requirement types. Matching issues appear in the requirements tree; changing the classification later reclassifies existing issues to match. Subsequent syncs keep a synced requirement's tracker-owned fields and its position in the hierarchy up to date.
+Any tracker issue that reaches TestPlanIt — through issue sync, an inbound webhook, a bulk import, or being linked to a test artifact — is classified against the project's configured requirement types. Matching issues appear in the requirements tree; changing the classification later reclassifies existing issues to match, except issues pinned by a [per-issue override](#using-a-single-issue-as-a-requirement), which keep their overridden state. Subsequent syncs keep a synced requirement's tracker-owned fields and its position in the hierarchy up to date.
 
 Each linked external project has a single **Import Issues** action — there is no separate button for requirements. By default it imports a recent, capped sample; choose **All history** and it instead imports every issue of the project's configured requirement types, with no date window and no cap, paged to completion. Opening it from the **Requirement Sync** section of [Issue Integrations](./settings/integrations.md#requirement-sync) starts it already scoped that way. Either path, once uncapped, first states roughly how many matching issues the tracker holds and asks you to confirm before writing anything — see [Importing issues in bulk](./settings/integrations.md#importing-issues-in-bulk). It then runs in the background, its progress shown on the linked external project's row under **Linked External Projects**, and a project administrator can stop it at any time — stopping takes effect after the page currently being imported finishes, and the issues already imported stay.
 
-### Tracking a tracker issue that isn't a requirement type
+### Using a single issue as a requirement
 
-Requirement classification follows the project's configured requirement types exactly, with no per-issue override — a single Story in a project that only classifies Epics as requirements never becomes one on its own. To track an issue like that as a requirement:
+Requirement classification normally follows the project's configured requirement types, but a project administrator can override it per issue — the way to track one Story as a requirement in a project that only classifies Epics:
 
-1. Create a native requirement — click **Add Requirement** (see [Creating Requirements](#creating-requirements)) and give it a name.
-2. Attach the tracker issue to it as a reference — open the requirement's detail panel and, in the **References** card, click **Add Reference** and search for the issue (see [References](./requirements-traceability.md#references)).
+* **Promote an issue.** On the Requirements page, click **Add Requirement** and switch to the **Promote an existing issue** tab: choose one of the project's synced issues, click **Use as requirement**, and confirm. (The same action is on the project's **Issues** page — open a synced issue's row menu (⋮) and choose **Use as requirement**.) The issue joins the requirements tree immediately and no longer appears in the Issues views while it's a requirement; if its tracker parent isn't itself a requirement, it appears at the top level. The override is per issue and holds through both syncs and later requirement-type configuration changes.
+* **Exclude an issue.** On the Requirements page, click a synced requirement's **Synced** badge, choose **Don't use as requirement**, and confirm. The issue leaves the requirements tree and appears on the Issues page instead. This also holds through syncs and configuration changes.
+* **Reset.** An overridden issue's row menu on the Issues page offers **Reset to configured classification** — confirmed the same way — which returns it to whatever the requirement type configuration says.
 
-The reference links out to the tracker issue for traceability; test-case coverage tracks through the native requirement, not the issue directly.
+Both actions require project-admin access and apply only to tracker-synced issues — a native requirement is authored as one and has no classification to override.
+
+An alternative that keeps the issue out of the requirements tree entirely: create a native requirement (see [Creating Requirements](#creating-requirements)) and attach the tracker issue to it as a reference in the **References** card (see [References](./requirements-traceability.md#references)). The reference links out to the tracker issue for traceability; coverage then tracks through the native requirement, not the issue directly.
 
 ### Detaching a requirement
 
