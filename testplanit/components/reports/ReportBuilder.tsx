@@ -55,9 +55,12 @@ import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
 import { MatrixFilterPanel } from "@/components/matrix/MatrixFilterPanel";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportRenderer } from "~/components/reports/ReportRenderer";
+import { RequirementGapGenerateCases } from "~/components/reports/RequirementGapGenerateCases";
 import { ShareButton } from "~/components/reports/ShareButton";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import { ApplicationArea } from "~/zenstack/models";
+import type { RequirementCoverageGapReportRow } from "~/utils/requirementCoverageReportUtils";
 import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -80,6 +83,7 @@ import { useDrillDown } from "~/hooks/useDrillDown";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import {
@@ -909,8 +913,43 @@ function ReportBuilderContent({
   // grouping, no project-dimension branch. Every covering case's row names
   // its project (the report's own included), so the column set needs no
   // project context.
-  const requirementCoverageGapColumns =
-    useRequirementCoverageGapColumns(results);
+  //
+  // "Generate Test Cases" on gap rows: same two-part eligibility as the
+  // milestone member-issues flow (MemberIssuesTable) — the viewer can
+  // add/edit the Test Case Repository AND the project has an active LLM
+  // connection. Project mode only: the wizard resolves its projectId from
+  // the route params, which the cross-project reports page does not carry.
+  const gapGenerationEligible =
+    mode === "project" &&
+    Boolean(projectId) &&
+    matchesReportType(reportType, "requirement-coverage-gaps");
+  const { permissions: tcRepoPermissions } = useProjectPermissions(
+    projectId ?? 0,
+    ApplicationArea.TestCaseRepository
+  );
+  const { data: gapLlmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
+    { where: { projectId: Number(projectId), isActive: true } },
+    { enabled: gapGenerationEligible }
+  );
+  const canGenerateFromGap =
+    gapGenerationEligible &&
+    (tcRepoPermissions?.canAddEdit ?? false) &&
+    (gapLlmIntegrations?.length ?? 0) > 0;
+  const [gapGenerateRow, setGapGenerateRow] =
+    useState<RequirementCoverageGapReportRow | null>(null);
+  // Stable identity — this feeds the column hook's useMemo; an inline arrow
+  // would regenerate the column defs on every render (the cell-remount trap
+  // MemberIssuesTable documents on its own renderRowActions).
+  const handleGenerateFromGap = useCallback(
+    (row: RequirementCoverageGapReportRow) => setGapGenerateRow(row),
+    []
+  );
+  const requirementCoverageGapColumns = useRequirementCoverageGapColumns(
+    results,
+    canGenerateFromGap ? handleGenerateFromGap : undefined
+  );
   const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
 
   // Choose which columns to use based on report type
@@ -3607,6 +3646,26 @@ function ReportBuilderContent({
         onLoadMore={drillDown.loadMore}
         aggregates={drillDown.aggregates}
       />
+      {gapGenerateRow && projectId != null && (
+        <RequirementGapGenerateCases
+          projectId={Number(projectId)}
+          requirementId={gapGenerateRow.requirementId}
+          requirementKey={gapGenerateRow.requirementKey}
+          requirementTitle={
+            gapGenerateRow.requirementTitle ?? gapGenerateRow.requirementKey
+          }
+          onClose={() => setGapGenerateRow(null)}
+          onImportComplete={() => {
+            // The imported cases are linked back to the requirement — re-run
+            // the report so the closed gap leaves the list without a manual
+            // re-run.
+            void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
+              append: false,
+              page: 1,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

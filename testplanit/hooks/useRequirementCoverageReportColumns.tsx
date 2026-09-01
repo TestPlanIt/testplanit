@@ -1,5 +1,11 @@
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
@@ -105,11 +111,20 @@ export function useRequirementCoverageGapColumns(
    * this from the DATA (not the toggle) means the shared static view
    * needs no extra config plumbing.
    */
-  rows?: Array<{ coverageStatus?: string }> | null
+  rows?: Array<{ coverageStatus?: string }> | null,
+  /**
+   * When provided, appends a per-row "Generate Test Cases" action that
+   * seeds the AI generation wizard from the gap's requirement. Only the
+   * in-app builder passes it (gated on Test Case Repository add/edit + an
+   * active LLM connection); the shared/static viewer calls this hook with
+   * no callback, so the action can never reach a share-link viewer.
+   */
+  onGenerateTestCases?: (row: RequirementCoverageGapReportRow) => void
 ): ColumnDef<RequirementCoverageGapReportRow, any>[] {
   const t = useTranslations("reports.ui.requirementCoverage");
   const tCoverage = useTranslations("requirements.coverage");
   const tCommon = useTranslations("common");
+  const tRepo = useTranslations("repository");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
   const hasNotRunTier = useMemo(
@@ -293,8 +308,54 @@ export function useRequirementCoverageGapColumns(
       })
     );
 
+    if (onGenerateTestCases) {
+      columns.push(
+        columnHelper.display({
+          id: "actions",
+          enableHiding: false,
+          enableGrouping: false,
+          enableSorting: false,
+          enableResizing: false,
+          meta: { isPinned: "right" },
+          // Sized so the label survives the header's drag handle + padding
+          // (60px truncated "Actions" to "A…").
+          header: () => <span>{tCommon("actions.actionsLabel")}</span>,
+          cell: (info) => (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label={tRepo("generateTestCases.buttonText")}
+                  data-testid={`requirement-gap-generate-${info.row.original.requirementId}`}
+                  onClick={() => onGenerateTestCases(info.row.original)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {tRepo("generateTestCases.buttonText")}
+              </TooltipContent>
+            </Tooltip>
+          ),
+          size: 100,
+          minSize: 80,
+          maxSize: 140,
+        })
+      );
+    }
+
     return columns;
-  }, [t, tCoverage, tCommon, dateFnsLocale, hasNotRunTier]);
+  }, [
+    t,
+    tCoverage,
+    tCommon,
+    tRepo,
+    dateFnsLocale,
+    hasNotRunTier,
+    onGenerateTestCases,
+  ]);
 }
 
 /**

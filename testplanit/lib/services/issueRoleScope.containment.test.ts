@@ -221,6 +221,14 @@ const SCOPED_FILES = [
   // by direct read; display-only either way, since the report routes
   // scope their own reads server-side.
   "components/reports/ReportBuilder.tsx",
+  // The gap report's "Generate Test Cases" seed fetch: resolves the clicked
+  // gap row's requirement into the generation wizard's seed. Spreads
+  // REQUIREMENT_SCOPE_WHERE AND pins projectId into its single useFindFirst
+  // — the row id comes from report data that may be stale, so the predicate
+  // is what stops it resolving a defect, or another project's issue, into
+  // the seed. Verified by direct read; RequirementGapGenerateCases.test.tsx
+  // asserts on the mocked hook's own `where` argument for this query.
+  "components/reports/RequirementGapGenerateCases.tsx",
   // 27-09's LINK-03 reference picker forks components/issues/search-issues-dialog.tsx
   // wholesale (D-09/D-12) and inherits its exact DEFECT_SCOPE_WHERE /
   // includeRequirements toggle at the same query boundary, unchanged by the

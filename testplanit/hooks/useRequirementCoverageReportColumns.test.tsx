@@ -13,7 +13,7 @@
 // definitions, cell logic, and the three-way result branching all run for
 // real.
 
-import { render, renderHook } from "@testing-library/react";
+import { fireEvent, render, renderHook } from "@testing-library/react";
 import { format } from "date-fns";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -247,6 +247,47 @@ describe("useRequirementCoverageReportColumns", () => {
     expect(
       queryByText("New Requirement: New Requirement")
     ).not.toBeInTheDocument();
+  });
+
+  // The gap-row "Generate Test Cases" action exists only when the caller
+  // passes a handler. ReportBuilder passes one only when the viewer can
+  // add/edit the Test Case Repository AND the project has an active LLM
+  // connection; the shared/static viewer never passes one — so the column's
+  // absence without a callback is what keeps the action off share links.
+  it("appends an actions column that fires the generate callback on the clicked row", () => {
+    const onGenerate = vi.fn();
+    const { result } = renderHook(() =>
+      useRequirementCoverageGapColumns(undefined, onGenerate)
+    );
+    const ids = result.current.map((c: any) => c.id);
+    expect(ids[ids.length - 1]).toBe("actions");
+
+    // Labeled and right-pinned (operator direction 2026-08-31), via the
+    // DataTable's meta.isPinned convention.
+    const actionsColumn: any = result.current[result.current.length - 1];
+    expect(actionsColumn.meta?.isPinned).toBe("right");
+
+    const gapRow = {
+      id: 0,
+      requirementId: 7,
+      requirementKey: "REQ-7",
+      requirementTitle: "Enrol domestic students",
+      requirementPath: "Enrolments > Enrol domestic students",
+      linkedCases: 0,
+    };
+    const { getByTestId } = render(
+      <>{cellFor(result.current, "actions", gapRow)}</>
+    );
+    fireEvent.click(getByTestId("requirement-gap-generate-7"));
+    expect(onGenerate).toHaveBeenCalledTimes(1);
+    expect(onGenerate).toHaveBeenCalledWith(gapRow);
+  });
+
+  it("omits the actions column when no generate callback is provided", () => {
+    // The shared/static viewer's call shape (and the builder's when the
+    // viewer lacks repo add/edit or the project has no LLM connection).
+    const { result } = renderHook(() => useRequirementCoverageGapColumns());
+    expect(result.current.map((c: any) => c.id)).not.toContain("actions");
   });
 
   it("orders the traceability columns with Coverage between Path and Test Case", () => {
