@@ -119,96 +119,97 @@ model PendingAuth {
 }
 
 model User {
-    id                              String                        @id @default(cuid())
-    name                            String                        @length(1) @deny('update', scimGivenName != null)
-    email                           String                        @unique @email @deny('update', scimGivenName != null)
-    emailVerified                   DateTime?
-    emailVerifToken                 String?
-    emailTokenExpires               DateTime?
-    password                        String?                       @omit @length(4)
-    image                           String?
-    accounts                        Account[]
-    authMethod                      AuthMethod                    @default(INTERNAL)
-    externalId                      String?                 // For SAML/OAuth user mapping
-    scimUserName                    String?                       @unique @deny('update', scimGivenName != null)
-    scimExternalId                  String?                       @unique @deny('update', scimGivenName != null)
-    scimExtensions                  Json?
-    scimGivenName                   String?                       @deny('update', scimGivenName != null)
-    scimFamilyName                  String?                       @deny('update', scimGivenName != null)
-    access                          Access                        @default(NONE)
-    accessSource                    AccessSource                  @default(MANUAL)
-    roleId                          Int
-    role                            Roles                         @relation(fields: [roleId], references: [id])
-    isActive                        Boolean                       @default(true) @deny('update', scimGivenName != null)
-    isDeleted                       Boolean                       @default(false)
-    deletedAt                       DateTime?                     @db.Timestamptz(6)
-    isApi                           Boolean                       @default(false)
-    createdAt                       DateTime                      @default(now()) @db.Timestamptz(6)
-    createdById                     String?
-    createdBy                       User?                         @relation("UserCreator", fields: [createdById], references: [id])
-    updatedAt                       DateTime                      @updatedAt
-    userPreferences                 UserPreferences?
-    createdUsers                    User[]                        @relation("UserCreator")
-    projects                        ProjectAssignment[]
-    createdProjects                 Projects[]                    @relation("ProjectCreator")
-    groups                          GroupAssignment[]
-    createdMilestones               Milestones[]
-    repositoryFolders               RepositoryFolders[]
-    repositoryCases                 RepositoryCases[]
-    attachments                     Attachments[]
-    assignedSessions                Sessions[]                    @relation("SessionAssignedTo")
-    createdSessions                 Sessions[]                    @relation("SessionCreatedBy")
-    sessionResults                  SessionResults[]
-    testRunCreatedBy                TestRuns[]                    @relation("TestRunCreatedBy")
-    compositionLockedTestRuns       TestRuns[]                    @relation("TestRunCompositionLockedBy")
-    testRunCasesAssigned            TestRunCases[]
-    testRunResults                  TestRunResults[]
-    editedTestRunResults            TestRunResults[]              @relation("TestRunResultEditor")
-    testRunCaseIterations           TestRunCaseIteration[]
-    createdDataSets                 DataSet[]
-    createdDataSetVersions          DataSetVersion[]              @relation("DataSetVersionsCreatedBy")
-    createdSharedDataSetAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSetAssignmentCreatedBy")
-    createdIssues                   Issue[]                       @relation("IssueCreator")
-    createdRequirementReferences    RequirementIssueReference[]   @relation("RequirementIssueReferenceCreator")
-    projectPermissions              UserProjectPermission[]
-    junitTestSuites                 JUnitTestSuite[]
-    junitTestResults                JUnitTestResult[]
-    junitProperties                 JUnitProperty[]
-    junitAttachments                JUnitAttachment[]
-    junitTestSteps                  JUnitTestStep[]
-    createdCaseLinks                RepositoryCaseLink[]          @relation("UserCreatedCaseLinks")
-    createdSharedStepGroups         SharedStepGroup[]
-    notifications                   Notification[]
-    userIntegrationAuths            UserIntegrationAuth[]
-    createdEmailDomains             AllowedEmailDomain[]
-    lastActiveAt                    DateTime?
-    lastSeenVersion                 String?
-    llmUsages                       LlmUsage[]
-    generatedLlmReportSnapshots     LlmReportSnapshot[]           @relation("LlmReportSnapshotGeneratedBy")
-    testmoImportJobs                TestmoImportJob[]
-    createdComments                 Comment[]                     @relation("CommentCreator")
-    commentMentions                 CommentMention[]              @relation("CommentMentions")
-    apiTokens                       ApiToken[]
-    scimSystemTokens                ScimToken[]                   @relation("ScimSystemUser")
-    scimTokensCreated               ScimToken[]                   @relation("ScimTokenCreatedBy")
-    scimTokensRevoked               ScimToken[]                   @relation("ScimTokenRevokedBy")
-    createdShareLinks               ShareLink[]                   @relation("ShareLinkCreator")
-    shareLinkAccessLogs             ShareLinkAccessLog[]          @relation("ShareLinkAccessor")
-    reviewsRequested                ReviewRequest[]               @relation("ReviewRequestedBy")
-    reviewsAssigned                 ReviewRequest[]               @relation("ReviewAssignedToUser")
-    reviewsDecided                  ReviewRequest[]               @relation("ReviewDecidedBy")
+    id                                       String                            @id @default(cuid())
+    name                                     String                            @length(1) @deny('update', scimGivenName != null)
+    email                                    String                            @unique @email @deny('update', scimGivenName != null)
+    emailVerified                            DateTime?
+    emailVerifToken                          String?
+    emailTokenExpires                        DateTime?
+    password                                 String?                           @omit @length(4)
+    image                                    String?
+    accounts                                 Account[]
+    authMethod                               AuthMethod                        @default(INTERNAL)
+    externalId                               String?                 // For SAML/OAuth user mapping
+    scimUserName                             String?                           @unique @deny('update', scimGivenName != null)
+    scimExternalId                           String?                           @unique @deny('update', scimGivenName != null)
+    scimExtensions                           Json?
+    scimGivenName                            String?                           @deny('update', scimGivenName != null)
+    scimFamilyName                           String?                           @deny('update', scimGivenName != null)
+    access                                   Access                            @default(NONE)
+    accessSource                             AccessSource                      @default(MANUAL)
+    roleId                                   Int
+    role                                     Roles                             @relation(fields: [roleId], references: [id])
+    isActive                                 Boolean                           @default(true) @deny('update', scimGivenName != null)
+    isDeleted                                Boolean                           @default(false)
+    deletedAt                                DateTime?                         @db.Timestamptz(6)
+    isApi                                    Boolean                           @default(false)
+    createdAt                                DateTime                          @default(now()) @db.Timestamptz(6)
+    createdById                              String?
+    createdBy                                User?                             @relation("UserCreator", fields: [createdById], references: [id])
+    updatedAt                                DateTime                          @updatedAt
+    userPreferences                          UserPreferences?
+    createdUsers                             User[]                            @relation("UserCreator")
+    projects                                 ProjectAssignment[]
+    createdProjects                          Projects[]                        @relation("ProjectCreator")
+    groups                                   GroupAssignment[]
+    createdMilestones                        Milestones[]
+    repositoryFolders                        RepositoryFolders[]
+    repositoryCases                          RepositoryCases[]
+    attachments                              Attachments[]
+    assignedSessions                         Sessions[]                        @relation("SessionAssignedTo")
+    createdSessions                          Sessions[]                        @relation("SessionCreatedBy")
+    sessionResults                           SessionResults[]
+    testRunCreatedBy                         TestRuns[]                        @relation("TestRunCreatedBy")
+    compositionLockedTestRuns                TestRuns[]                        @relation("TestRunCompositionLockedBy")
+    testRunCasesAssigned                     TestRunCases[]
+    testRunResults                           TestRunResults[]
+    editedTestRunResults                     TestRunResults[]                  @relation("TestRunResultEditor")
+    testRunCaseIterations                    TestRunCaseIteration[]
+    createdDataSets                          DataSet[]
+    createdDataSetVersions                   DataSetVersion[]                  @relation("DataSetVersionsCreatedBy")
+    createdSharedDataSetAssignments          CaseSharedDataSetAssignment[]     @relation("CaseSharedDataSetAssignmentCreatedBy")
+    createdIssues                            Issue[]                           @relation("IssueCreator")
+    createdRequirementReferences             RequirementIssueReference[]       @relation("RequirementIssueReferenceCreator")
+    projectPermissions                       UserProjectPermission[]
+    junitTestSuites                          JUnitTestSuite[]
+    junitTestResults                         JUnitTestResult[]
+    junitProperties                          JUnitProperty[]
+    junitAttachments                         JUnitAttachment[]
+    junitTestSteps                           JUnitTestStep[]
+    createdCaseLinks                         RepositoryCaseLink[]              @relation("UserCreatedCaseLinks")
+    createdSharedStepGroups                  SharedStepGroup[]
+    notifications                            Notification[]
+    userIntegrationAuths                     UserIntegrationAuth[]
+    createdEmailDomains                      AllowedEmailDomain[]
+    lastActiveAt                             DateTime?
+    lastSeenVersion                          String?
+    llmUsages                                LlmUsage[]
+    generatedLlmReportSnapshots              LlmReportSnapshot[]               @relation("LlmReportSnapshotGeneratedBy")
+    capturedRequirementTraceabilitySnapshots RequirementTraceabilitySnapshot[] @relation("RequirementTraceabilitySnapshotCapturedBy")
+    testmoImportJobs                         TestmoImportJob[]
+    createdComments                          Comment[]                         @relation("CommentCreator")
+    commentMentions                          CommentMention[]                  @relation("CommentMentions")
+    apiTokens                                ApiToken[]
+    scimSystemTokens                         ScimToken[]                       @relation("ScimSystemUser")
+    scimTokensCreated                        ScimToken[]                       @relation("ScimTokenCreatedBy")
+    scimTokensRevoked                        ScimToken[]                       @relation("ScimTokenRevokedBy")
+    createdShareLinks                        ShareLink[]                       @relation("ShareLinkCreator")
+    shareLinkAccessLogs                      ShareLinkAccessLog[]              @relation("ShareLinkAccessor")
+    reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
+    reviewsAssigned                          ReviewRequest[]                   @relation("ReviewAssignedToUser")
+    reviewsDecided                           ReviewRequest[]                   @relation("ReviewDecidedBy")
 
     // Two-factor authentication
-    twoFactorEnabled                Boolean                       @default(false)
-    twoFactorSecret                 String?                       @omit // Encrypted TOTP secret
-    twoFactorBackupCodes            String?                       @omit // JSON array of hashed backup codes
+    twoFactorEnabled                         Boolean                           @default(false)
+    twoFactorSecret                          String?                           @omit // Encrypted TOTP secret
+    twoFactorBackupCodes                     String?                           @omit // JSON array of hashed backup codes
 
     // Account lockout and password management
-    failedLoginAttempts             Int                           @default(0)
-    lockedUntil                     DateTime?                     @db.Timestamptz(6)
-    passwordChangedAt               DateTime?                     @db.Timestamptz(6)
-    mustChangePassword              Boolean                       @default(false)
-    passwordHistory                 PasswordHistory[]
+    failedLoginAttempts                      Int                               @default(0)
+    lockedUntil                              DateTime?                         @db.Timestamptz(6)
+    passwordChangedAt                        DateTime?                         @db.Timestamptz(6)
+    mustChangePassword                       Boolean                           @default(false)
+    passwordHistory                          PasswordHistory[]
 
     @@index([isActive, isDeleted])
     @@index([access])
@@ -529,74 +530,75 @@ model Roles {
 }
 
 model Projects {
-    id                              Int                                   @id @default(autoincrement())
-    name                            String                                @unique @length(1)
-    key                             String?                               @unique
-    iconUrl                         String?
-    note                            String?
-    docs                            String?
-    isCompleted                     Boolean                               @default(false)
-    isDeleted                       Boolean                               @default(false)
-    deletedAt                       DateTime?                             @db.Timestamptz(6)
-    completedAt                     DateTime?                             @db.Date
-    createdAt                       DateTime                              @default(now()) @db.Timestamptz(6)
-    createdBy                       String
-    creator                         User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
-    assignedUsers                   ProjectAssignment[]
-    assignedStatuses                ProjectStatusAssignment[]
-    milestoneTypes                  MilestoneTypesAssignment[]
-    assignedTemplates               TemplateProjectAssignment[]
-    assignedWorkflows               ProjectWorkflowAssignment[]
-    assignedConfigurations          ProjectConfigurationAssignment[]
-    milestones                      Milestones[]
-    repositories                    Repositories[]
-    repositoryFolders               RepositoryFolders[]
-    repositoryCases                 RepositoryCases[]
-    repositoryCaseVersions          RepositoryCaseVersions[]
-    sessions                        Sessions[]
-    sessionVersions                 SessionVersions[]
-    testRuns                        TestRuns[]
-    defaultAccessType               ProjectAccessType                     @default(GLOBAL_ROLE)
-    defaultRoleId                   Int?
-    defaultRole                     Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-    userPermissions                 UserProjectPermission[]
-    groupPermissions                GroupProjectPermission[]
-    sharedStepGroups                SharedStepGroup[]
-    dataSets                        DataSet[]
-    projectIntegrations             ProjectIntegration[]
-    webhookConfigs                  WebhookConfig[]
-    webhookOutboxEvents             WebhookOutboxEvent[]
-    projectLlmIntegrations          ProjectLlmIntegration[]
-    codeRepositoryConfig            ProjectCodeRepositoryConfig?
-    promptConfigId                  String?
-    promptConfig                    PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
-    issues                          Issue[]
-    llmUsages                       LlmUsage[]
-    llmFeatureConfigs               LlmFeatureConfig[]
-    llmResponseCaches               LlmResponseCache[]
-    llmReportSnapshots              LlmReportSnapshot[]
-    comments                        Comment[]
-    auditLogs                       AuditLog[]
-    shareLinks                      ShareLink[]
-    assignedExportTemplates         CaseExportTemplateProjectAssignment[]
-    defaultCaseExportTemplateId     Int?
-    defaultCaseExportTemplate       CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
-    quickScriptEnabled              Boolean                               @default(false)
+    id                               Int                                   @id @default(autoincrement())
+    name                             String                                @unique @length(1)
+    key                              String?                               @unique
+    iconUrl                          String?
+    note                             String?
+    docs                             String?
+    isCompleted                      Boolean                               @default(false)
+    isDeleted                        Boolean                               @default(false)
+    deletedAt                        DateTime?                             @db.Timestamptz(6)
+    completedAt                      DateTime?                             @db.Date
+    createdAt                        DateTime                              @default(now()) @db.Timestamptz(6)
+    createdBy                        String
+    creator                          User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers                    ProjectAssignment[]
+    assignedStatuses                 ProjectStatusAssignment[]
+    milestoneTypes                   MilestoneTypesAssignment[]
+    assignedTemplates                TemplateProjectAssignment[]
+    assignedWorkflows                ProjectWorkflowAssignment[]
+    assignedConfigurations           ProjectConfigurationAssignment[]
+    milestones                       Milestones[]
+    repositories                     Repositories[]
+    repositoryFolders                RepositoryFolders[]
+    repositoryCases                  RepositoryCases[]
+    repositoryCaseVersions           RepositoryCaseVersions[]
+    sessions                         Sessions[]
+    sessionVersions                  SessionVersions[]
+    testRuns                         TestRuns[]
+    defaultAccessType                ProjectAccessType                     @default(GLOBAL_ROLE)
+    defaultRoleId                    Int?
+    defaultRole                      Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions                  UserProjectPermission[]
+    groupPermissions                 GroupProjectPermission[]
+    sharedStepGroups                 SharedStepGroup[]
+    dataSets                         DataSet[]
+    projectIntegrations              ProjectIntegration[]
+    webhookConfigs                   WebhookConfig[]
+    webhookOutboxEvents              WebhookOutboxEvent[]
+    projectLlmIntegrations           ProjectLlmIntegration[]
+    codeRepositoryConfig             ProjectCodeRepositoryConfig?
+    promptConfigId                   String?
+    promptConfig                     PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+    issues                           Issue[]
+    llmUsages                        LlmUsage[]
+    llmFeatureConfigs                LlmFeatureConfig[]
+    llmResponseCaches                LlmResponseCache[]
+    llmReportSnapshots               LlmReportSnapshot[]
+    requirementTraceabilitySnapshots RequirementTraceabilitySnapshot[]
+    comments                         Comment[]
+    auditLogs                        AuditLog[]
+    shareLinks                       ShareLink[]
+    assignedExportTemplates          CaseExportTemplateProjectAssignment[]
+    defaultCaseExportTemplateId      Int?
+    defaultCaseExportTemplate        CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
+    quickScriptEnabled               Boolean                               @default(false)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
-    junitIterationPropertyNames     String[]                              @default([])
-    reviewWorkflowEnabled           Boolean                               @default(false)
-    requireResultFlipJustification  Boolean                               @default(false)
-    editResultsDurationSeconds      Int?
-    requireIssueOnFailure           Boolean                               @default(false)
-    excludeNotStartedFromRuns       Boolean                               @default(false)
-    requirementsEnabled             Boolean                               @default(false)
-    autoLockCompositionOnInProgress Boolean                               @default(false)
-    abandonedRunIdleMinutes         Int?
-    abandonedRunStateId             Int?
-    abandonedRunState               Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)
-    duplicateScanResults            DuplicateScanResult[]
-    stepSequenceMatches             StepSequenceMatch[]
-    reviewRequests                  ReviewRequest[]
+    junitIterationPropertyNames      String[]                              @default([])
+    reviewWorkflowEnabled            Boolean                               @default(false)
+    requireResultFlipJustification   Boolean                               @default(false)
+    editResultsDurationSeconds       Int?
+    requireIssueOnFailure            Boolean                               @default(false)
+    excludeNotStartedFromRuns        Boolean                               @default(false)
+    requirementsEnabled              Boolean                               @default(false)
+    autoLockCompositionOnInProgress  Boolean                               @default(false)
+    abandonedRunIdleMinutes          Int?
+    abandonedRunStateId              Int?
+    abandonedRunState                Workflows?                            @relation("ProjectAbandonedRunState", fields: [abandonedRunStateId], references: [id], onDelete: SetNull)
+    duplicateScanResults             DuplicateScanResult[]
+    stepSequenceMatches              StepSequenceMatch[]
+    reviewRequests                   ReviewRequest[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -5534,6 +5536,127 @@ model LlmReportSnapshot {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+}
+
+/// Point-in-time record of a project's requirement traceability matrix —
+/// audit evidence of which test cases covered which requirements, with
+/// what latest result, at the moment of capture. The capture is immutable:
+/// only name/note and soft-deletion change afterwards. The per-requirement
+/// rows live in RequirementTraceabilitySnapshotEntry.
+model RequirementTraceabilitySnapshot {
+    id                  Int                                    @id @default(autoincrement())
+    projectId           Int
+    project             Projects                               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                String                                 @length(1, 200)
+    note                String?
+    capturedById        String                                 @deny('update', true)
+    capturedBy          User                                   @relation("RequirementTraceabilitySnapshotCapturedBy", fields: [capturedById], references: [id])
+    capturedAt          DateTime                               @default(now()) @db.Timestamptz(6) @deny('update', true)
+    /// Requirement root ids (number[]) the capture was scoped to; empty = the whole project.
+    scopeRequirementIds Json                                   @default("[]") @deny('update', true)
+    requirementCount    Int                                    @deny('update', true)
+    passedCount         Int                                    @deny('update', true)
+    failedCount         Int                                    @deny('update', true)
+    notRunCount         Int                                    @deny('update', true)
+    uncoveredCount      Int                                    @deny('update', true)
+    /// Requirement–case pairs in the matrix (a gap row counts zero).
+    caseLinkCount       Int                                    @deny('update', true)
+    entries             RequirementTraceabilitySnapshotEntry[]
+    isDeleted           Boolean                                @default(false)
+    deletedAt           DateTime?                              @db.Timestamptz(6)
+    createdAt           DateTime                               @default(now()) @db.Timestamptz(6)
+    updatedAt           DateTime                               @updatedAt
+
+    @@index([projectId, capturedAt])
+    @@index([projectId, isDeleted])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+
+    @@deny('read', isDeleted)
+
+    @@allow('read', projectId in auth().accessibleProjectIds)
+
+    // Capture (create) and rename/soft-delete (update) gated on Reporting.canAddEdit,
+    // the same ladder LlmReportSnapshot uses.
+    @@allow('create,update',
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Reporting' && canAddEdit])] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Reporting' && canAddEdit]))] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canAddEdit])
+    )
+
+    @@allow('delete',
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Reporting' && canDelete])] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Reporting' && canDelete]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Reporting' && canDelete]))] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Reporting' && canDelete]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canDelete]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'Reporting' && canDelete])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+/// One requirement's row in a traceability snapshot: its identity and tree
+/// position as they were, its classified coverage state, and the covering
+/// cases with their latest results at capture time (`cases` holds
+/// RequirementTraceabilitySnapshotCase[]). No FK to Issue on purpose — the
+/// record must outlive the requirement it describes. Written only by the
+/// capture service through the raw client; read-only through the policy
+/// client.
+model RequirementTraceabilitySnapshotEntry {
+    id                          Int                             @id @default(autoincrement())
+    snapshotId                  Int
+    snapshot                    RequirementTraceabilitySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+    requirementId               Int
+    requirementKey              String
+    requirementTitle            String?
+    requirementPath             String
+    requirementParentPath       String
+    requirementParentId         Int?
+    requirementRootId           Int
+    requirementIssueTypeName    String?
+    requirementIssueTypeIconUrl String?
+    requirementPriority         String?
+    requirementStatus           String?
+    requirementCreatedAt        DateTime?                       @db.Timestamptz(6)
+    coverageStatus              String
+    linkedCaseCount             Int
+    cases                       Json
+
+    @@index([snapshotId])
+    @@index([requirementId, snapshotId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    @@deny('read', snapshot.isDeleted)
+    @@allow('read', snapshot.projectId in auth().accessibleProjectIds)
+    @@allow('read', auth().access == 'ADMIN')
 }
 
 // Custom SSO provider configuration

@@ -463,5 +463,6 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "ShareLink" },
   { table: "PromptConfig" },
   { table: "LlmReportSnapshot" },
+  { table: "RequirementTraceabilitySnapshot" },
   { table: "Comment" },
 ];

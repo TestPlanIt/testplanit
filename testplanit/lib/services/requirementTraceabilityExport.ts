@@ -86,6 +86,10 @@ export type RequirementTraceabilityRow = {
    * — what makes a hierarchy bar's label clickable even when the root
    * has no row of its own in the result set. */
   requirementRootId?: number;
+  /** The requirement's parent id as the loader read it (null for a
+   * top-level requirement) — what lets a persisted snapshot's rows be
+   * re-scoped to a subtree later without re-reading the live tree. */
+  requirementParentId?: number | null;
   caseId: number | null; // null => coverage gap
   caseName: string | null;
   /** TestCaseNameDisplay's icon inputs; absent on gap rows. */
@@ -105,6 +109,9 @@ export type RequirementTraceabilityData = {
   projectId: number;
   projectName: string;
   generatedAt: string;
+  /** Present when the rows are a persisted snapshot rather than the live
+   * matrix — `generatedAt` is then the capture instant. */
+  snapshot?: { id: number; name: string; capturedAt: string };
   rows: RequirementTraceabilityRow[];
 };
 
@@ -314,6 +321,7 @@ export function buildTraceabilityRows(params: {
         requirementStatus,
         requirementCreatedAt,
         requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
+        requirementParentId: requirement.parentId,
         caseId: null,
         caseName: null,
         caseProjectId: null,
@@ -343,6 +351,7 @@ export function buildTraceabilityRows(params: {
         requirementStatus,
         requirementCreatedAt,
         requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
+        requirementParentId: requirement.parentId,
         caseId: coveringCase.caseId,
         caseName: coveringCase.caseName,
         caseAutomated: coveringCase.automated,
