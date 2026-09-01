@@ -192,7 +192,7 @@ export function DatasetCell({
               onFocus={onEdit}
               tabIndex={0}
               className={cn(
-                "border-transparent cursor-text hover:border-input shadow-none focus-visible:ring-0",
+                "truncate border-transparent cursor-text hover:border-input shadow-none focus-visible:ring-0",
                 isEmpty && "text-muted-foreground/50 italic",
                 parameter?.type === "INTEGER" &&
                   "font-mono tabular-nums text-end"
