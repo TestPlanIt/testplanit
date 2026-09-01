@@ -115,7 +115,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Coverage rollup** - Each requirement rolls up its covering cases' latest results through its whole subtree, with per-status counts, an uncovered filter, and drill-down to the covering cases
 - **Suspect flags** - A link is flagged when the requirement's content changes after the case's last run; re-executing clears it automatically, or dismiss it after review
 - **Traceability references** - Attach the tracker tickets or internal issues that shaped a requirement, separate from its own sync source
-- **Traceability PDF export** - Download the project's full requirement traceability matrix as a PDF
+- **Traceability snapshots** - Capture immutable, point-in-time records of the traceability matrix — stamped with who captured them and when — as evidence for release sign-offs and audits
+- **Coverage change tracking** - Compare a snapshot against a later snapshot or the live matrix to see which requirements' coverage changed and how
 
 ### Issue Tracking Integration
 

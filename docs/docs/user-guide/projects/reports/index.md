@@ -11,7 +11,7 @@ For analytics aggregated across every project in the system, see [Administration
 
 ## Pre-Built Reports
 
-Pre-built reports have fixed configurations and don't require dimension or metric selection. They show up at the top of the Report Type dropdown in the project's Reports page.
+Pre-built reports have fixed configurations and don't require dimension or metric selection. They appear in the Report Type dropdown on the project's Reports page, which lists every report type alphabetically.
 
 | Report | What it shows |
 | --- | --- |
@@ -21,6 +21,7 @@ Pre-built reports have fixed configurations and don't require dimension or metri
 | [Flaky Tests](./flaky-tests.md) | Test cases whose pass/fail outcomes flip across recent runs, with the flip count and timeline. |
 | [Issue Test Coverage](./issue-test-coverage.md) | Coverage of external issues (Jira, GitHub, Azure DevOps, GitLab, Gitea/Forgejo) by linked test cases. |
 | [Iteration Matrix](./iteration-matrix.md) | A 2D grid of parameterized test case results across configurations. |
+| [Requirement Coverage Changes](../requirements-traceability.md#comparing-snapshots) | What changed between a saved [traceability snapshot](../requirements-traceability.md#snapshots) and a later snapshot or the live matrix — one row per requirement whose coverage differs, classified by what changed. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
 | [Requirement Coverage Gaps](../requirements-traceability.md#reports) | Every requirement with zero linked test cases — and, by default, those whose linked tests have never run — with priority, status, and age, so coverage debt is visible without opening the requirements tree. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
 | [Requirement Traceability](../requirements-traceability.md#reports) | Every requirement paired with its linked test cases and their latest execution result. Appears only when the project has [requirements enabled](../requirements.md#enabling-requirements). |
 | [Test Case Health](./test-case-health.md) | Per-case health score combining staleness, execution frequency, and pass-rate pattern. |

@@ -38,7 +38,7 @@ Navigate to **Projects → [Your Project] → Requirements**. The page is a resi
 
 Drag the divider to resize the split, or use the chevron button on the divider to collapse and restore the list. The page header carries two actions:
 
-* **Export PDF** — downloads the project's requirement traceability matrix as a PDF (see [PDF export](./requirements-traceability.md#pdf-export)).
+* **Snapshots** — saves a point-in-time traceability snapshot, or opens a saved one in the Requirement Traceability report (see [Snapshots](./requirements-traceability.md#snapshots)).
 * **Add Requirement** — opens the Create Requirement dialog (project administrators only).
 
 ### The requirements list

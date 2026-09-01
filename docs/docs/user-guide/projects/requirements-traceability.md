@@ -56,10 +56,11 @@ References are annotations for traceability only — they don't affect coverage,
 
 ## Reports
 
-Two pre-built reports on the project's [Reports](./reports/index.md) page cover requirements. Both appear in the Report Type dropdown only when the project has [requirements enabled](./requirements.md#enabling-requirements):
+Three pre-built reports on the project's [Reports](./reports/index.md) page cover requirements. They appear in the Report Type dropdown only when the project has [requirements enabled](./requirements.md#enabling-requirements):
 
 * **Requirement Coverage Gaps** — *"List every requirement with zero linked test cases, so gaps are visible without opening the tree."* One row per requirement with the context to triage it: its parent path, **Priority**, **Status**, and **Uncovered Since** (the requirement's creation date in the tracker where it is known, otherwise when it reached TestPlanIt). By default the report also includes a second tier — requirements that have linked cases but no execution ever — and shows **Coverage** and **Linked Cases** columns to keep the two tiers distinguishable; turn off **Include requirements whose tests have never run** to see only the zero-linked gaps.
 * **Requirement Traceability** — *"Every requirement paired with its linked test cases and their latest execution result."* One row per requirement–case pair, with the requirement (and its issue-type icon), its **Parent Path** (the ancestors above it — blank for a top-level requirement), its rolled-up **Coverage** state, the case, its latest result, when it executed, and the case's project. An uncovered requirement still appears — once, with an **Uncovered** badge in place of a case — and a linked case that has never executed shows **Not run**, so gaps and untested links stay distinguishable.
+* **Requirement Coverage Changes** — *"Compare a saved traceability snapshot against a later snapshot or the live matrix to see which requirements' coverage changed."* See [Comparing snapshots](#comparing-snapshots) below.
 
 The traceability report's visualization panel summarizes the same rows per requirement: a donut of the four coverage states with the requirement total in the center, compact counts beside it, and a **Coverage by top-level requirement** breakdown — one bar per hierarchy (the ten largest; the rest are totalled in an **Other** line) whose length reflects the hierarchy's size and whose segments show its coverage mix. Each bar's label links to that requirement's details.
 
@@ -81,16 +82,42 @@ Both reports cover the whole project by default. The **Scope to requirements** p
 
 The scope travels with the report's [share link](./reports/index.md#sharing), so a stakeholder's shared copy shows the same slice of the tree.
 
-Like the other tabular reports, both offer an **Export CSV** button above the results — see [Exporting Results](./reports/index.md#exporting-results).
+Like the other tabular reports, all three offer an **Export CSV** button above the results — see [Exporting Results](./reports/index.md#exporting-results).
 
 :::note Shared copies and cross-project coverage
-A report opened through a share link is confined to the shared project. A covering case that lives in **another** project doesn't appear in the shared copy, and a requirement covered *only* by such cases shows as a gap there even though the signed-in view shows it covered.
+A report opened through a share link is confined to the shared project. A covering case that lives in **another** project doesn't appear in the shared copy, and a requirement covered *only* by such cases shows as a gap there even though the signed-in view shows it covered. A shared **snapshot** is the exception: it shows the record exactly as it was captured.
 :::
 
-## PDF Export
+## Snapshots
 
-The **Export PDF** button on the Requirements page header downloads the whole project's traceability matrix — every requirement with its covering cases and their latest results — as a PDF, with the project name, generation time, and generating user stamped in the header.
+The traceability matrix is live — it changes with every execution, link, and sync. A **snapshot** is a saved, point-in-time copy of it: every requirement in scope, its covering test cases, and their latest results at the moment of capture, stamped with who captured it and when. Snapshots never change afterwards, which makes them the evidence to keep for a release sign-off, an audit, or a compliance review — *"this is what coverage looked like when we shipped 2.4."*
 
-:::note
-PDF exports are generated in English only. For a CSV export, run the **Requirement Traceability** report instead.
-:::
+### Saving a snapshot
+
+Two places save one:
+
+* On the **Requirement Traceability** or **Requirement Coverage Gaps** report, open the **Snapshot** menu and choose **Save snapshot**.
+* On the Requirements page header, open the **Snapshots** menu (the camera button) and choose **Save snapshot**.
+
+Give the snapshot a name (*"Release 2.4 sign-off"*) and, optionally, a note about what it is evidence for. From a report, the snapshot captures whatever is currently in the **Scope to requirements** picker — leave it empty to capture the whole project. Saving requires add/edit rights on the project's **Reporting** area.
+
+### Viewing a snapshot
+
+The **Snapshot** menu on the Requirement Traceability and Requirement Coverage Gaps reports switches between the **Live matrix** and any saved snapshot; each entry shows when it was captured and, where there is room, its requirement and uncovered counts. With a snapshot selected, the whole report — the rows, the visualization panel, the coverage-state filter, the CSV export, and any [share link](./reports/index.md#sharing) you create — describes that snapshot rather than the live data, and the lines under the menu show who captured it, when, and its counts. Scoping still works: the picker narrows the snapshot to the selected subtrees using the hierarchy as it was at capture time.
+
+From the Requirements page, the **Snapshots** menu lists the same snapshots — click one to open it in the Requirement Traceability report. To delete a snapshot, use the trash icon on its row in any of the snapshot menus (this requires delete rights on the project's **Reporting** area). Deleting a snapshot never affects any requirement or test case.
+
+### Comparing snapshots
+
+The **Requirement Coverage Changes** report answers *"what changed?"* Pick a **Baseline snapshot** and what to **Compare to** — the live matrix (the default) or a later snapshot — from their menus, then run the report. The baseline menu also offers **Save snapshot**, so you can capture the current state as a baseline without leaving the report. One row appears per requirement whose coverage differs between the two sides, classified by what changed:
+
+| Change | Meaning |
+| --- | --- |
+| **Added** | The requirement exists on the comparison side only. |
+| **Removed** | The requirement exists in the baseline only — deleted, declassified, or moved out of scope. |
+| **Coverage changed** | Its classified coverage state moved (for example, **Uncovered** → **Not run**, or **Passed** → **Failed**). |
+| **Links changed** | The same state, but the set of covering cases changed. |
+| **Results changed** | The same cases, but at least one latest result or execution time moved. |
+
+Each row shows the coverage state and linked-case count on both sides, plus how many cases were added, removed, or re-executed. Turn on **Include unchanged requirements** to list every requirement, including those that didn't change. The visualization panel summarizes the transitions — **Newly covered**, **Newly uncovered**, **Now failing**, and **No longer failing** — and the number of requirements in each change category. Sort by the **Change** column to bring the most consequential changes to the top.
+
