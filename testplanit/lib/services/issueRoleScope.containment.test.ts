@@ -256,6 +256,12 @@ const ROLE_AWARE_BY_DESIGN_FILES = [
 const EXEMPT_IDENTITY_LOOKUP_FILES = [
   "app/api/issues/[issueId]/link/route.ts",
   "app/api/issues/[issueId]/unlink/route.ts",
+  // The per-issue classification override route: resolves ONE row the
+  // caller addressed by id (project-pinned), and deliberately WITHOUT the
+  // requirement-role predicate — its whole purpose is moving that row
+  // across the requirement/defect line, so the promotion direction must
+  // reach a row that is not a requirement yet.
+  "app/api/projects/[projectId]/requirements/[issueId]/override/route.ts",
   "app/api/issues/counts/route.ts",
   "app/api/issues/projects/route.ts",
   "app/api/llm/magic-select-cases/route.ts",

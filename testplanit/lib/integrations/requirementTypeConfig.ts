@@ -158,6 +158,35 @@ export function matchesRequirementDesignation(
 }
 
 /**
+ * String-literal twin of the generated `RequirementOverride` Prisma enum
+ * (assignment-compatible in both directions), so this module can stay
+ * dependency-free — it is imported by a "use client" settings card.
+ */
+export type RequirementOverrideValue = "FORCE_ON" | "FORCE_OFF";
+
+/**
+ * The single definition of how the per-issue tri-state override composes
+ * with config classification: FORCE_ON/FORCE_OFF pin the flag, null
+ * inherits the config match. Every site that computes `isRequirement`
+ * for a synced issue (the two sync write paths, the recompute's SQL —
+ * which expresses the null arm as `"requirementOverride" IS NULL` — and
+ * the override route) resolves through this rule; re-deriving it inline
+ * is how the arms drift.
+ */
+export function resolveEffectiveRequirementFlag(
+  override: RequirementOverrideValue | null | undefined,
+  configMatch: boolean
+): boolean {
+  if (override === "FORCE_ON") {
+    return true;
+  }
+  if (override === "FORCE_OFF") {
+    return false;
+  }
+  return configMatch;
+}
+
+/**
  * Returns `{ ...(plain-object rawConfig or {}), requirements: next }`.
  * Never mutates the input. The spread over `rawConfig` is what protects
  * the sibling `milestoneSync` namespace living on the same shared `config`

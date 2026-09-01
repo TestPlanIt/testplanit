@@ -581,6 +581,10 @@ export async function recomputeRequirementClassification(
   ): Promise<{ classified: number; declassified: number }> => {
     let classified = 0;
     let declassified = 0;
+    // Every statement below skips rows carrying a per-issue tri-state
+    // override ("requirementOverride" IS NOT NULL): FORCE_ON/FORCE_OFF pin
+    // isRequirement against config changes in BOTH directions — the SQL
+    // form of `resolveEffectiveRequirementFlag`'s null arm.
     if (added.length > 0) {
       classified = await tx.$executeRaw`
         UPDATE "Issue"
@@ -589,6 +593,7 @@ export async function recomputeRequirementClassification(
           AND "issueTypeId" = ANY(${added}::text[])
           AND "isRequirement" = false
           AND "isDeleted" = false
+          AND "requirementOverride" IS NULL
       `;
       // Label-mode twin (typeless trackers — GitHub serves repository
       // labels as its designation vocabulary; see
@@ -609,6 +614,7 @@ export async function recomputeRequirementClassification(
           AND "integrationId" IS NOT NULL
           AND "isRequirement" = false
           AND "isDeleted" = false
+          AND "requirementOverride" IS NULL
           AND EXISTS (
             SELECT 1
             FROM jsonb_array_elements_text(
@@ -628,6 +634,7 @@ export async function recomputeRequirementClassification(
           AND "issueTypeId" = ANY(${removed}::text[])
           AND "isRequirement" = true
           AND "isDeleted" = false
+          AND "requirementOverride" IS NULL
       `;
       // Label-mode twin of the declassify. The extra NOT EXISTS clause is
       // the one semantic divergence from the type-mode statement: an
@@ -642,6 +649,7 @@ export async function recomputeRequirementClassification(
           AND "integrationId" IS NOT NULL
           AND "isRequirement" = true
           AND "isDeleted" = false
+          AND "requirementOverride" IS NULL
           AND EXISTS (
             SELECT 1
             FROM jsonb_array_elements_text(

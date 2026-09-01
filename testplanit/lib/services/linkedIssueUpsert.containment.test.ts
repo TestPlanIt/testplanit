@@ -51,6 +51,10 @@ const ALLOWED_FILES = [
   "app/api/issues/[issueId]/unlink/route.ts",
   "app/api/projects/[projectId]/requirements/[issueId]/reparent/route.ts",
   "app/api/projects/[projectId]/requirements/[issueId]/detach/route.ts",
+  // The per-issue classification override: writes requirementOverride +
+  // isRequirement together through the enhanced client (neither field is
+  // policy-locked), project-admin gated, single id-addressed row.
+  "app/api/projects/[projectId]/requirements/[issueId]/override/route.ts",
 ];
 
 // Test fixtures legitimately write issues directly — never subject to the

@@ -19,6 +19,7 @@ import {
   effectiveRequirementTypeIds,
   matchesRequirementDesignation,
   readRequirementTypeConfig,
+  resolveEffectiveRequirementFlag,
   type RequirementDesignationInput,
 } from "../requirementTypeConfig";
 import { SYNC_STATUS } from "../syncStatus";
@@ -2077,6 +2078,7 @@ export class SyncService {
               projectId: true,
               isRequirement: true,
               requirementDetachedAt: true,
+              requirementOverride: true,
               _count: {
                 select: {
                   children: true,
@@ -2129,12 +2131,22 @@ export class SyncService {
       projectId,
       issueData.parent
     );
-    const resolvedIsRequirement = await resolveSyncedRequirementFlag(
+    const configuredIsRequirement = await resolveSyncedRequirementFlag(
       db,
       integrationId,
       projectId,
       { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
     );
+    // The per-issue tri-state override outranks the config; `undefined`
+    // (config unreadable — mock db, or no owner project) still means
+    // "leave the column untouched" when no override pins it. The config
+    // arm passed to the resolver is unused whenever the override is set.
+    // A CREATE branch always resolves through the config: a brand-new row
+    // has no override by definition.
+    const resolvedIsRequirement =
+      existing?.requirementOverride != null
+        ? resolveEffectiveRequirementFlag(existing.requirementOverride, false)
+        : configuredIsRequirement;
     const issueFields = {
       name: issueData.key || issueData.id,
       title: issueData.title,
@@ -2296,12 +2308,22 @@ export class SyncService {
       existingIssue.projectId ?? null,
       issueData.parent
     );
-    const resolvedIsRequirement = await resolveSyncedRequirementFlag(
+    const configuredIsRequirement = await resolveSyncedRequirementFlag(
       db,
       integrationId,
       existingIssue.projectId ?? null,
       { issueTypeId: issueData.issueType?.id, labels: issueData.labels }
     );
+    // Same override precedence as upsertIssueFromExternal: a pinned row
+    // never follows the config, and `undefined` still means "leave the
+    // column untouched" only when no override pins it.
+    const resolvedIsRequirement =
+      existingIssue.requirementOverride != null
+        ? resolveEffectiveRequirementFlag(
+            existingIssue.requirementOverride,
+            false
+          )
+        : configuredIsRequirement;
 
     const issuePayload = {
       name: issueData.key || issueData.id, // Use key if available, otherwise use id

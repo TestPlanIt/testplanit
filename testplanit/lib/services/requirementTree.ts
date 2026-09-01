@@ -246,6 +246,33 @@ function requirementHasChildrenFragment(projectId: number) {
 }
 
 /**
+ * Effective-root predicate: a requirement renders at the tree's top level
+ * when it has no parent, or when its parent is not a LIVE requirement in
+ * the SAME project — a promoted issue sitting under a non-requirement
+ * Epic, or a child orphaned by declassification. Without the second arm
+ * such rows vanish from the unfiltered tree entirely: the roots window
+ * skips them and their parent (not being in the tree) can never be
+ * expanded to reveal them. The project pin mirrors
+ * `requirementHasChildrenFragment` above for the same reason, so the two
+ * fragments partition every live requirement exactly: reachable through a
+ * same-project requirement parent, or an effective root — never neither.
+ * The client-side twin of this rule is `flattenLazyRequirementRows`'s
+ * orphan promotion (`requirementsListRows.ts`).
+ */
+function requirementEffectiveRootFragment() {
+  return sql`(
+    i."parentId" IS NULL
+    OR NOT EXISTS (
+      SELECT 1 FROM "Issue" root_parent
+      WHERE root_parent."id" = i."parentId"
+        AND root_parent."projectId" = i."projectId"
+        AND root_parent."isRequirement" = true
+        AND root_parent."isDeleted" = false
+    )
+  )`;
+}
+
+/**
  * Live, requirement-role rows in a project -- the number 28-13's mode
  * decision compares against `REQUIREMENT_LAZY_THRESHOLD`. Soft-deleted rows
  * and non-requirement (defect) rows are excluded, matching every other
@@ -290,14 +317,15 @@ export async function countProjectRequirementRoots(
     WHERE i."projectId" = ${projectId}
       AND i."isRequirement" = true
       AND i."isDeleted" = false
-      AND i."parentId" IS NULL
+      AND ${requirementEffectiveRootFragment()}
   `.execute(db.$qb);
   return Number(rows[0]?.count ?? 0);
 }
 
 /**
- * One keyset-paginated window of a project's requirement ROOTS
- * (`parentId IS NULL`), ordered by `(name, id)` -- stable and gap-free
+ * One keyset-paginated window of a project's requirement ROOTS (the
+ * effective-root predicate above: no parent, or no same-project
+ * requirement parent), ordered by `(name, id)` -- stable and gap-free
  * under concurrent writes because `id` breaks every tie `name` alone could
  * leave (28-RESEARCH Q3(b), measured at 1,200 rows in 28-01: an Index Scan
  * on `Issue_projectId_idx`, sub-millisecond, no Seq Scan). Every returned
@@ -344,7 +372,7 @@ export async function getRequirementRootsPage(
     WHERE i."projectId" = ${projectId}
       AND i."isRequirement" = true
       AND i."isDeleted" = false
-      AND i."parentId" IS NULL
+      AND ${requirementEffectiveRootFragment()}
       ${cursorFragment}
     ${requirementSortOrderFragment(sort)}
     LIMIT ${limit + 1}

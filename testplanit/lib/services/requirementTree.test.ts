@@ -1122,11 +1122,34 @@ describe("requirementTree.ts source shape (structural, mutation-provable)", () =
     expect(rootsPageBody).toContain("LIMIT ${limit + 1}");
   });
 
-  it("the outer roots query repeats projectId, the role predicate, isDeleted, and parentId IS NULL", () => {
+  it("the outer roots query repeats projectId, the role predicate, isDeleted, and the effective-root fragment", () => {
     expect(rootsPageBody).toContain('i."projectId" = ${projectId}');
     expect(rootsPageBody).toContain('i."isRequirement" = true');
     expect(rootsPageBody).toContain('i."isDeleted" = false');
-    expect(rootsPageBody).toContain('i."parentId" IS NULL');
+    // Effective roots, not bare `parentId IS NULL`: a requirement whose
+    // parent is not a live same-project requirement (a promoted issue
+    // under a non-requirement Epic, or a declassification orphan) must
+    // surface at the top level rather than vanish from the tree.
+    expect(rootsPageBody).toContain("requirementEffectiveRootFragment()");
+  });
+
+  it("the effective-root fragment keeps parentId IS NULL and pins the parent probe to the same project", () => {
+    const start = content.indexOf("function requirementEffectiveRootFragment");
+    expect(start).toBeGreaterThan(-1);
+    const fragmentBody = content.slice(
+      start,
+      content.indexOf("export async function", start)
+    );
+    expect(fragmentBody).toContain('i."parentId" IS NULL');
+    expect(fragmentBody).toContain("OR NOT EXISTS");
+    expect(fragmentBody).toContain('root_parent."id" = i."parentId"');
+    // Same-project pin, for the same reason requirementHasChildrenFragment
+    // carries one: parentId has no column-level project constraint, and a
+    // cross-project requirement parent is unreachable in this project's
+    // tree — its child must count as a root HERE.
+    expect(fragmentBody).toContain('root_parent."projectId" = i."projectId"');
+    expect(fragmentBody).toContain('root_parent."isRequirement" = true');
+    expect(fragmentBody).toContain('root_parent."isDeleted" = false');
   });
 
   it("the child-presence EXISTS subquery repeats projectId, the role predicate, and isDeleted", () => {

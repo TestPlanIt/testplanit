@@ -436,6 +436,99 @@ describe("SyncService — synced parentId and requirement classification", () =>
     expect(call.update.isRequirement).toBe(false);
   });
 
+  // The per-issue tri-state override outranks the config at BOTH sync
+  // write sites — a pinned row must survive every poll in the pinned
+  // state, or promotion/exclusion would silently revert on the next sync.
+  it("keeps a FORCE_OFF row unclassified on upsert even when its type is configured", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["10001"] } },
+    });
+    // Existing row carries the override (the existence pre-check select).
+    mockIssueFindUnique.mockResolvedValue({
+      id: 555,
+      projectId: 7,
+      isRequirement: false,
+      requirementDetachedAt: null,
+      requirementOverride: "FORCE_OFF",
+      _count: { children: 0, caseIssues: 0, milestoneIssues: 0 },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-pinned-off", issueType: { id: "10001" } })
+    );
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.update.isRequirement).toBe(false);
+  });
+
+  it("keeps a FORCE_ON row classified on upsert even when its type is not configured", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["10001"] } },
+    });
+    mockIssueFindUnique.mockResolvedValue({
+      id: 556,
+      projectId: 7,
+      isRequirement: true,
+      requirementDetachedAt: null,
+      requirementOverride: "FORCE_ON",
+      _count: { children: 0, caseIssues: 0, milestoneIssues: 0 },
+    });
+
+    await (service as any).upsertIssueFromExternal(
+      db,
+      1,
+      7,
+      makeIssueData({ id: "ext-pinned-on", issueType: { id: "10002" } })
+    );
+
+    const call = mockIssueUpsert.mock.calls[0][0];
+    expect(call.update.isRequirement).toBe(true);
+  });
+
+  it("honors the override in updateExistingIssue's payload too", async () => {
+    const { SyncService } = await import("./SyncService");
+    const service = new SyncService();
+    const { rawDb } = await import("@/lib/rawDb");
+    const db = rawDb as any;
+
+    mockProjectIntegrationFindFirst.mockResolvedValue({
+      config: { requirements: { enabled: true, issueTypeIds: ["10001"] } },
+    });
+    // updateExistingIssue loads the full row via findFirst.
+    mockIssueFindFirst.mockResolvedValueOnce({
+      id: 557,
+      projectId: 7,
+      externalId: "ext-pinned-on-2",
+      integrationId: 1,
+      isRequirement: true,
+      requirementDetachedAt: null,
+      requirementOverride: "FORCE_ON",
+      data: {},
+    });
+
+    await (service as any).updateExistingIssue(
+      db,
+      1,
+      makeIssueData({ id: "ext-pinned-on-2", issueType: { id: "10002" } })
+    );
+
+    expect(mockIssueUpdate).toHaveBeenCalledTimes(1);
+    expect(mockIssueUpdate.mock.calls[0][0].data.isRequirement).toBe(true);
+  });
+
   it("leaves isRequirement untouched when the db client does not expose projectIntegration", async () => {
     const { SyncService } = await import("./SyncService");
     const service = new SyncService();

@@ -3474,6 +3474,9 @@ model Issue {
     requirementDetachedAt DateTime?                   @db.Timestamptz(6)
     // Set by the classification write path; not derived per read.
     isRequirement         Boolean                     @default(false)
+    // Tri-state per-issue classification override: FORCE_ON/FORCE_OFF pin
+    // isRequirement regardless of the type config; null inherits the config.
+    requirementOverride   RequirementOverride?
     currentVersion        Int                         @default(1)
 
     @@unique([externalId, integrationId])
@@ -3504,6 +3507,15 @@ model Issue {
     @@deny('all', auth().access == 'NONE')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('create, read, update', auth().access != null)
+}
+
+enum RequirementOverride {
+    FORCE_ON
+    FORCE_OFF
+
+    @@deny('all', auth() == null)
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
 }
 
 enum IntegrationProvider {

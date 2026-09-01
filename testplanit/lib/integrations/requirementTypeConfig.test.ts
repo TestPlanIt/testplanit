@@ -8,6 +8,7 @@ import {
   matchesRequirementDesignation,
   mergeRequirementTypeConfig,
   readRequirementTypeConfig,
+  resolveEffectiveRequirementFlag,
   sanitizeRequirementTypeIds,
 } from "./requirementTypeConfig";
 
@@ -190,5 +191,23 @@ describe("matchesRequirementDesignation", () => {
       false
     );
     expect(matchesRequirementDesignation([], { labels: ["epic"] })).toBe(false);
+  });
+});
+
+describe("resolveEffectiveRequirementFlag", () => {
+  it("pins the flag in both directions regardless of the config match", () => {
+    expect(resolveEffectiveRequirementFlag("FORCE_ON", false)).toBe(true);
+    expect(resolveEffectiveRequirementFlag("FORCE_ON", true)).toBe(true);
+    expect(resolveEffectiveRequirementFlag("FORCE_OFF", true)).toBe(false);
+    expect(resolveEffectiveRequirementFlag("FORCE_OFF", false)).toBe(false);
+  });
+
+  it("inherits the config match when no override is set", () => {
+    // null and undefined are BOTH the inherit arm — the column is
+    // nullable, and a narrow select that omits it must not read as a pin.
+    expect(resolveEffectiveRequirementFlag(null, true)).toBe(true);
+    expect(resolveEffectiveRequirementFlag(null, false)).toBe(false);
+    expect(resolveEffectiveRequirementFlag(undefined, true)).toBe(true);
+    expect(resolveEffectiveRequirementFlag(undefined, false)).toBe(false);
   });
 });

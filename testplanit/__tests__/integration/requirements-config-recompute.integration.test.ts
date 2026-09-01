@@ -45,6 +45,8 @@ describeIntegration("requirements-config recompute (live DB)", () => {
   let p1ClassifiedBId: number;
   let p1SoftDeletedAId: number;
   let p1DetachedBId: number;
+  let p1PinnedOffAId: number;
+  let p1PinnedOnBId: number;
 
   // P2 — the control project. Every row here must come out byte-identical.
   let p2UnclassifiedAId: number;
@@ -163,6 +165,21 @@ describeIntegration("requirements-config recompute (live DB)", () => {
       requirementDetachedAt: new Date(),
       parentId: p1ClassifiedAId,
     });
+    // Tri-state override pins: each matches its statement's every other
+    // predicate (type added / type removed, live, right project), so the
+    // ONLY thing keeping them unchanged is the
+    // `"requirementOverride" IS NULL` guard — and their exclusion is also
+    // what keeps the classified/declassified COUNTS at 1/2 below.
+    p1PinnedOffAId = await createIssue(p1Id, "p1-pinned-off-a", {
+      issueTypeId: TYPE_A,
+      isRequirement: false,
+      requirementOverride: "FORCE_OFF",
+    });
+    p1PinnedOnBId = await createIssue(p1Id, "p1-pinned-on-b", {
+      issueTypeId: TYPE_B,
+      isRequirement: true,
+      requirementOverride: "FORCE_ON",
+    });
 
     // P2 fixtures — the exact same five states, same types, in a different
     // project. None of these should be touched by a P1-scoped recompute.
@@ -274,6 +291,25 @@ describeIntegration("requirements-config recompute (live DB)", () => {
     });
     expect(row?.isRequirement).toBe(false);
     expect(row?.isDeleted).toBe(true);
+  });
+
+  it("skips rows pinned by a tri-state override in both directions", async () => {
+    // FORCE_OFF + TYPE_A (added): the classify statement matched every
+    // other predicate — only the override guard kept it false.
+    const pinnedOff = await db.issue.findUnique({
+      where: { id: p1PinnedOffAId },
+      select: { isRequirement: true, requirementOverride: true },
+    });
+    expect(pinnedOff?.isRequirement).toBe(false);
+    expect(pinnedOff?.requirementOverride).toBe("FORCE_OFF");
+
+    // FORCE_ON + TYPE_B (removed): the declassify twin.
+    const pinnedOn = await db.issue.findUnique({
+      where: { id: p1PinnedOnBId },
+      select: { isRequirement: true, requirementOverride: true },
+    });
+    expect(pinnedOn?.isRequirement).toBe(true);
+    expect(pinnedOn?.requirementOverride).toBe("FORCE_ON");
   });
 
   it("leaves requirementDetachedAt, parentId and title untouched", async () => {

@@ -18,6 +18,7 @@ import { coverageFor } from "~/hooks/useRequirementCoverage";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import {
+  countProjectRequirementRoots,
   countProjectRequirements,
   getRequirementChildren,
   getRequirementFilterFacets,
@@ -282,6 +283,95 @@ describeIntegration("requirements tree lazy loading (live DB)", () => {
     } finally {
       await tearDownRequirementForest(forestA);
       await tearDownRequirementForest(forestB);
+    }
+  }, 60_000);
+
+  it("renders a requirement under a NON-requirement parent as an effective root, never dropping it", async () => {
+    // The per-issue promotion shape: a Story pinned FORCE_ON whose tracker
+    // parent is a non-requirement Epic. Under the old `parentId IS NULL`
+    // roots predicate such a row was unreachable from the unfiltered tree
+    // entirely — not a root, and its parent (absent from the tree) could
+    // never be expanded to reveal it. Same mechanism covers a child
+    // orphaned by declassifying its parent.
+    const forest = await seedRequirementForest({
+      size: 3,
+      namePrefix: `${STAMP}-eff-root`,
+      rootCount: 3,
+    });
+    const extraIds: number[] = [];
+    try {
+      const project = await db.projects.findUnique({
+        where: { id: forest.projectId },
+        select: { createdBy: true },
+      });
+      const nonReqParent = await db.issue.create({
+        data: {
+          name: `${STAMP}-eff-root-defect-parent`,
+          title: `${STAMP}-eff-root-defect-parent`,
+          createdById: project!.createdBy,
+          projectId: forest.projectId,
+          isRequirement: false,
+        },
+        select: { id: true },
+      });
+      extraIds.push(nonReqParent.id);
+      const promoted = await db.issue.create({
+        data: {
+          name: `${STAMP}-eff-root-promoted`,
+          title: `${STAMP}-eff-root-promoted`,
+          createdById: project!.createdBy,
+          projectId: forest.projectId,
+          isRequirement: true,
+          requirementOverride: "FORCE_ON",
+          parentId: nonReqParent.id,
+        },
+        select: { id: true },
+      });
+      extraIds.push(promoted.id);
+      // Control: a requirement nested under a REQUIREMENT parent must stay
+      // reachable only through expansion, not become a root — the two
+      // fragments partition rows exactly.
+      const nested = await db.issue.create({
+        data: {
+          name: `${STAMP}-eff-root-nested`,
+          title: `${STAMP}-eff-root-nested`,
+          createdById: project!.createdBy,
+          projectId: forest.projectId,
+          isRequirement: true,
+          parentId: forest.rootIds[0],
+        },
+        select: { id: true },
+      });
+      extraIds.push(nested.id);
+
+      const page = await getRequirementRootsPage(
+        { projectId: forest.projectId, limit: 50 },
+        db
+      );
+      const rootIds = new Set(page.rows.map((row) => row.id));
+      expect(rootIds.has(promoted.id)).toBe(true);
+      expect(rootIds.has(nested.id)).toBe(false);
+      expect(rootIds.has(nonReqParent.id)).toBe(false);
+
+      // The denominator agrees with the window: 3 seeded roots + the
+      // promoted orphan.
+      const rootCount = await countProjectRequirementRoots(
+        forest.projectId,
+        db
+      );
+      expect(rootCount).toBe(4);
+
+      // The nested control is still reachable the normal way.
+      const children = await getRequirementChildren(
+        { projectId: forest.projectId, parentId: forest.rootIds[0] },
+        db
+      );
+      expect(children.map((row) => row.id)).toContain(nested.id);
+    } finally {
+      // Children before parents — parentId carries onDelete: Cascade, but
+      // explicit ordering keeps the teardown deterministic.
+      await db.issue.deleteMany({ where: { id: { in: extraIds } } });
+      await tearDownRequirementForest(forest);
     }
   }, 60_000);
 
