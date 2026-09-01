@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Được liên kết với một mục con của yêu cầu này, không phải trực tiếp với nó.",
       "notRunCell": "Chưa chạy"
     },
-    "export": {
-      "menuLabel": "Xuất khả năng truy vết",
-      "exportFailed": "Không thể xuất khả năng truy vết.",
-      "pdfEnglishOnlyHint": "Các bản xuất PDF chỉ được tạo bằng tiếng Anh.",
-      "csvOnReportsHint": "Để xuất tệp CSV, hãy chạy báo cáo Truy vết yêu cầu."
-    },
     "disabled": {
       "title": "Tính năng yêu cầu chưa được bật",
       "description": "Dự án này chưa bật tính năng yêu cầu. Hãy nhờ quản trị viên dự án bật tính năng này trong cài đặt dự án để bắt đầu xây dựng cây yêu cầu."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Khả năng truy xuất yêu cầu",
           "description": "Mỗi yêu cầu được ghép với các trường hợp thử nghiệm liên kết và kết quả thi hành gần nhất của chúng"
+        },
+        "requirementCoverageChanges": {
+          "label": "Thay đổi phạm vi kiểm thử yêu cầu",
+          "description": "So sánh một ảnh chụp nhanh khả năng truy xuất đã lưu với một ảnh chụp nhanh sau đó hoặc với ma trận trực tiếp để xem phạm vi kiểm thử của yêu cầu nào đã thay đổi"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 ngày",
         "ageOver365": "Hơn một năm",
         "includeNotRun": "Bao gồm các yêu cầu có bài kiểm tra chưa từng chạy",
-        "otherRoots": "Khác ({count, plural, other {# hệ thống phân cấp}})"
+        "otherRoots": "Khác ({count, plural, other {# hệ thống phân cấp}})",
+        "snapshotLabel": "Ảnh chụp nhanh",
+        "snapshotLive": "Ma trận trực tiếp",
+        "snapshotHelp": "Hiển thị một ảnh chụp nhanh đã lưu của ma trận tại một thời điểm cụ thể thay vì dữ liệu trực tiếp. Ảnh chụp nhanh là các bản ghi bất biến mà bạn có thể xuất, chia sẻ và so sánh.",
+        "snapshotPlaceholder": "Chọn một ảnh chụp nhanh",
+        "snapshotRequirementsCount": "{count, plural, other {# yêu cầu}}",
+        "snapshotUncoveredCount": "{count} chưa được kiểm tra",
+        "snapshotCapturedBy": "Được chụp vào {date} bởi {user}",
+        "noSnapshots": "Chưa có ảnh chụp nhanh nào. Hãy lưu một ảnh từ báo cáo Khả năng truy xuất yêu cầu hoặc trang Yêu cầu.",
+        "saveSnapshot": "Lưu ảnh chụp nhanh",
+        "saveSnapshotTitle": "Lưu ảnh chụp nhanh khả năng truy xuất",
+        "saveSnapshotDescription": "Ghi lại ma trận khả năng truy xuất hiện tại — mọi yêu cầu, các trường hợp kiểm thử liên quan và kết quả gần nhất của chúng — dưới dạng một ảnh chụp nhanh tại một thời điểm, bất biến và có tên, mà bạn có thể xem, xuất, chia sẻ và so sánh sau này.",
+        "saveSnapshotScoped": "Chỉ những yêu cầu hiện đang trong phạm vi mới được ghi lại.",
+        "snapshotName": "Tên",
+        "snapshotNamePlaceholder": "Ký duyệt phiên bản 2.4",
+        "snapshotNote": "Ghi chú",
+        "snapshotNotePlaceholder": "Không bắt buộc — ảnh chụp nhanh này là bằng chứng cho điều gì",
+        "snapshotSaved": "Đã lưu ảnh chụp nhanh \"{name}\".",
+        "snapshotSaveFailed": "Không thể lưu ảnh chụp nhanh.",
+        "deleteSnapshot": "Xóa ảnh chụp nhanh",
+        "deleteSnapshotTitle": "Xóa ảnh chụp nhanh này?",
+        "deleteSnapshotDescription": "\"{name}\" sẽ không còn khả dụng như một dạng xem báo cáo, cơ sở so sánh hoặc mục tiêu chia sẻ. Không có yêu cầu hoặc trường hợp kiểm thử nào bị ảnh hưởng.",
+        "snapshotDeleted": "Đã xóa ảnh chụp nhanh.",
+        "snapshotDeleteFailed": "Không thể xóa ảnh chụp nhanh.",
+        "baselineLabel": "Ảnh chụp nhanh cơ sở",
+        "compareLabel": "So sánh với",
+        "baselineRequired": "Chọn một ảnh chụp nhanh cơ sở để chạy báo cáo này.",
+        "includeUnchanged": "Bao gồm các yêu cầu không thay đổi",
+        "change": "Thay đổi",
+        "coverageBefore": "Phạm vi kiểm thử trước",
+        "coverageAfter": "Phạm vi kiểm thử sau",
+        "linkedCasesBefore": "Liên kết trước",
+        "linkedCasesAfter": "Liên kết sau",
+        "casesAdded": "Trường hợp đã thêm",
+        "casesRemoved": "Trường hợp đã xóa",
+        "resultsChanged": "Kết quả đã thay đổi",
+        "changeAdded": "Đã thêm",
+        "changeRemoved": "Đã xóa",
+        "changeCoverage": "Phạm vi kiểm thử đã thay đổi",
+        "changeLinks": "Liên kết đã thay đổi",
+        "changeResults": "Kết quả đã thay đổi",
+        "changeUnchanged": "Không thay đổi",
+        "changedRequirements": "Yêu cầu đã thay đổi",
+        "newlyCovered": "Mới được kiểm thử",
+        "newlyUncovered": "Mới bị bỏ trống",
+        "nowFailing": "Hiện đang thất bại",
+        "noLongerFailing": "Không còn thất bại",
+        "byChangeKind": "Yêu cầu theo loại thay đổi",
+        "noChanges": "Không có thay đổi về phạm vi kiểm thử giữa hai bên.",
+        "snapshotsMenu": "Ảnh chụp nhanh",
+        "openSnapshotInReport": "Mở trong báo cáo Truy xuất nguồn gốc yêu cầu"
       },
       "crossProjectReportTypes": {
         "testExecution": {

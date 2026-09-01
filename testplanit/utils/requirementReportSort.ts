@@ -36,6 +36,26 @@ const COVERAGE_SEVERITY_RANK: Record<string, number> = {
   PASSED: 3,
 };
 
+// The coverage-changes report's kind column: most consequential first
+// (a requirement that vanished or whose classified state moved), least
+// (unchanged) last — never the enum's alphabetical order.
+const CHANGE_KIND_RANK: Record<string, number> = {
+  REMOVED: 0,
+  ADDED: 1,
+  COVERAGE_CHANGED: 2,
+  LINKS_CHANGED: 3,
+  RESULTS_CHANGED: 4,
+  UNCHANGED: 5,
+};
+
+// A missing side (ADDED has no "before", REMOVED no "after") sorts
+// beyond every real state under either direction — an absence, not the
+// worst state.
+function coverageRank(status: string | null | undefined): number {
+  if (status == null) return 99;
+  return COVERAGE_SEVERITY_RANK[status] ?? 98;
+}
+
 function sortValue(row: any, column: string): string | number | null {
   switch (column) {
     case "requirement":
@@ -65,6 +85,23 @@ function sortValue(row: any, column: string): string | number | null {
       return row.requirementCreatedAt
         ? Date.parse(row.requirementCreatedAt)
         : 0;
+    // Coverage-changes report columns.
+    case "change":
+      return CHANGE_KIND_RANK[row.changeKind] ?? 99;
+    case "previousCoverage":
+      return coverageRank(row.previousCoverageStatus);
+    case "currentCoverage":
+      return coverageRank(row.currentCoverageStatus);
+    case "previousLinkedCases":
+      return row.previousLinkedCaseCount ?? -1;
+    case "currentLinkedCases":
+      return row.currentLinkedCaseCount ?? -1;
+    case "casesAdded":
+      return row.casesAdded ?? 0;
+    case "casesRemoved":
+      return row.casesRemoved ?? 0;
+    case "resultsChanged":
+      return row.resultsChanged ?? 0;
     default:
       return null;
   }

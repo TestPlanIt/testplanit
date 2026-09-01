@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Doğrudan bu gereksinime değil, bir alt öğesine bağlı.",
       "notRunCell": "Çalıştırılmadı"
     },
-    "export": {
-      "menuLabel": "İzlenebilirliği Dışa Aktar",
-      "exportFailed": "İzlenebilirlik dışa aktarılamadı.",
-      "pdfEnglishOnlyHint": "PDF dışa aktarımları yalnızca İngilizce olarak oluşturulur.",
-      "csvOnReportsHint": "CSV dışa aktarımı için Gereksinim İzlenebilirliği raporunu çalıştırın."
-    },
     "disabled": {
       "title": "Gereksinimler Etkin Değil",
       "description": "Bu proje gereksinimler özelliğini etkinleştirmemiş. Gereksinim ağaçları oluşturmaya başlamak için bir proje yöneticisinden proje ayarlarında bu özelliği etkinleştirmesini isteyin."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Gereksinim İzlenebilirliği",
           "description": "Her gereksinim, bağlantılı test durumları ve bunların en son yürütme sonucuyla eşleştirilir"
+        },
+        "requirementCoverageChanges": {
+          "label": "Gereksinim Kapsamı Değişiklikleri",
+          "description": "Hangi gereksinimlerin kapsamının değiştiğini görmek için kaydedilmiş bir izlenebilirlik anlık görüntüsünü daha sonraki bir anlık görüntü veya canlı matrisle karşılaştırın"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 gün",
         "ageOver365": "Bir yıldan fazla",
         "includeNotRun": "Testleri hiç çalıştırılmamış gereksinimleri dahil et",
-        "otherRoots": "Diğer ({count, plural, one {# hiyerarşi} other {# hiyerarşi}})"
+        "otherRoots": "Diğer ({count, plural, one {# hiyerarşi} other {# hiyerarşi}})",
+        "snapshotLabel": "Anlık Görüntü",
+        "snapshotLive": "Canlı matris",
+        "snapshotHelp": "Canlı veriler yerine matrisin kaydedilmiş bir zaman noktası anlık görüntüsünü gösterin. Anlık görüntüler; dışa aktarabileceğiniz, paylaşabileceğiniz ve karşılaştırabileceğiniz değiştirilemez kayıtlardır.",
+        "snapshotPlaceholder": "Bir anlık görüntü seçin",
+        "snapshotRequirementsCount": "{count, plural, one {# gereksinim} other {# gereksinim}}",
+        "snapshotUncoveredCount": "{count} kapsanmayan",
+        "snapshotCapturedBy": "{date} tarihinde {user} tarafından alındı",
+        "noSnapshots": "Henüz anlık görüntü yok. Gereksinim İzlenebilirliği raporundan veya Gereksinimler sayfasından bir anlık görüntü kaydedin.",
+        "saveSnapshot": "Anlık görüntüyü kaydet",
+        "saveSnapshotTitle": "İzlenebilirlik anlık görüntüsünü kaydet",
+        "saveSnapshotDescription": "Geçerli izlenebilirlik matrisini — her gereksinimi, onu kapsayan test senaryolarını ve bunların en son sonuçlarını — daha sonra görüntüleyebileceğiniz, dışa aktarabileceğiniz, paylaşabileceğiniz ve karşılaştırabileceğiniz, adlandırılmış, değiştirilemez bir zaman noktası anlık görüntüsü olarak kaydeder.",
+        "saveSnapshotScoped": "Yalnızca şu anda kapsam içinde olan gereksinimler alınacaktır.",
+        "snapshotName": "Ad",
+        "snapshotNamePlaceholder": "Sürüm 2.4 onayı",
+        "snapshotNote": "Not",
+        "snapshotNotePlaceholder": "İsteğe bağlı — bu anlık görüntünün neyin kanıtı olduğu",
+        "snapshotSaved": "\"{name}\" anlık görüntüsü kaydedildi.",
+        "snapshotSaveFailed": "Anlık görüntü kaydedilemedi.",
+        "deleteSnapshot": "Anlık görüntüyü sil",
+        "deleteSnapshotTitle": "Bu anlık görüntü silinsin mi?",
+        "deleteSnapshotDescription": "\"{name}\" artık bir rapor görünümü, karşılaştırma temel çizgisi veya paylaşım hedefi olarak kullanılamayacak. Hiçbir gereksinim veya test senaryosu etkilenmez.",
+        "snapshotDeleted": "Anlık görüntü silindi.",
+        "snapshotDeleteFailed": "Anlık görüntü silinemedi.",
+        "baselineLabel": "Temel anlık görüntü",
+        "compareLabel": "Şununla karşılaştır",
+        "baselineRequired": "Bu raporu çalıştırmak için bir temel anlık görüntü seçin.",
+        "includeUnchanged": "Değişmeyen gereksinimleri dahil et",
+        "change": "Değişiklik",
+        "coverageBefore": "Önceki Kapsam",
+        "coverageAfter": "Sonraki Kapsam",
+        "linkedCasesBefore": "Önceki Bağlantılı",
+        "linkedCasesAfter": "Sonraki Bağlantılı",
+        "casesAdded": "Eklenen Senaryolar",
+        "casesRemoved": "Kaldırılan Senaryolar",
+        "resultsChanged": "Değişen Sonuçlar",
+        "changeAdded": "Eklendi",
+        "changeRemoved": "Kaldırıldı",
+        "changeCoverage": "Kapsam değişti",
+        "changeLinks": "Bağlantılar değişti",
+        "changeResults": "Sonuçlar değişti",
+        "changeUnchanged": "Değişmedi",
+        "changedRequirements": "Değişen gereksinimler",
+        "newlyCovered": "Yeni kapsanan",
+        "newlyUncovered": "Yeni kapsam dışı kalan",
+        "nowFailing": "Şimdi başarısız",
+        "noLongerFailing": "Artık başarısız değil",
+        "byChangeKind": "Değişikliğe göre gereksinimler",
+        "noChanges": "İki taraf arasında kapsam değişikliği yok.",
+        "snapshotsMenu": "Anlık Görüntüler",
+        "openSnapshotInReport": "Gereksinim İzlenebilirlik raporunda aç"
       },
       "crossProjectReportTypes": {
         "testExecution": {

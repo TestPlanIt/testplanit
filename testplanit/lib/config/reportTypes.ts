@@ -15,6 +15,7 @@ import {
   Users,
   ClipboardX,
   ClipboardList,
+  GitCompareArrows,
 } from "lucide-react";
 
 export interface ReportType {
@@ -139,6 +140,14 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
+    id: "requirement-coverage-changes",
+    label: tReports("reportTypes.requirementCoverageChanges.label"),
+    description: tReports("reportTypes.requirementCoverageChanges.description"),
+    icon: GitCompareArrows,
+    endpoint: "/api/report-builder/requirement-coverage-changes",
+    isPreBuilt: true,
+  },
+  {
     id: "iteration-matrix",
     label: tReports("reportTypes.iterationMatrix.label"),
     description: tReports("reportTypes.iterationMatrix.description"),
@@ -240,3 +249,16 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
 ];
+
+/**
+ * The picker's display order: alphabetical by the LOCALIZED label
+ * (operator direction 2026-09-01), so the registry arrays above stay in
+ * registration order and every locale reads its own alphabet. Returns a
+ * new array; `localeCompare` keeps diacritics and case sane where a raw
+ * codepoint sort would not.
+ */
+export const sortReportTypesByLabel = (
+  reportTypes: ReportType[],
+  locale: string
+): ReportType[] =>
+  [...reportTypes].sort((a, b) => a.label.localeCompare(b.label, locale));

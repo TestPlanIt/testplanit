@@ -79,14 +79,9 @@ describe("requirements drag-drop context nesting (structural)", () => {
 // same JS-heap-exhaustion reason the structural guard above documents (the
 // real DataTable/virtualizer stack is heavy in jsdom) — NOT to hide the
 // drag-drop nesting invariant, which the structural tests above cover
-// unmocked, on source text, and stay green and untouched.
-// `useExportRequirementTraceabilityPdf`
-// is stubbed so these tests exercise the workspace's own wiring (which
-// action renders where, disabled state, the opt-in gate) rather than
-// re-proving the hook's own PDF-rendering behavior, already covered by
-// useExportRequirementTraceabilityPdf.test.ts.
-const { mockUseExportPdf, projectFlags, mockToastError } = vi.hoisted(() => ({
-  mockUseExportPdf: vi.fn(),
+// unmocked, on source text, and stay green and untouched. The header's
+// Snapshots menu is stubbed the same way (see its own suite).
+const { projectFlags, mockToastError } = vi.hoisted(() => ({
   projectFlags: {
     requirementsEnabled: true,
     // Left undefined by default so the mocked query result has no
@@ -117,8 +112,13 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("requirement=1"),
 }));
 
+const mockRouterPush = vi.hoisted(() => vi.fn());
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn(), replace: vi.fn(), push: vi.fn() }),
+  useRouter: () => ({
+    refresh: vi.fn(),
+    replace: vi.fn(),
+    push: mockRouterPush,
+  }),
   usePathname: () => "/projects/requirements/42",
   Link: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
@@ -135,8 +135,16 @@ vi.mock("sonner", () => ({
   toast: { error: mockToastError, success: vi.fn() },
 }));
 
+// Saved traceability snapshots the header's Export PDF menu lists; empty
+// by default so the menu trigger is absent unless a test opts in.
+let mockSnapshotRows: Array<{ id: number; name: string; capturedAt: string }> =
+  [];
+
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
+    requirementTraceabilitySnapshot: {
+      useFindMany: () => ({ data: mockSnapshotRows }),
+    },
     projects: {
       useFindUnique: () => ({
         // Real TanStack Query has no `data` while `isPending` is true --
@@ -161,6 +169,12 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 
 vi.mock("~/zenstack/schema", () => ({ schema: {} }));
 
+// The real models module derives its enums from the (mocked-empty) schema
+// above; the workspace only needs the one area it gates Save Snapshot on.
+vi.mock("~/zenstack/models", () => ({
+  ApplicationArea: { Reporting: "Reporting" },
+}));
+
 // A stub so the header assertion pins WHICH help key renders without
 // dragging react-markdown + Radix Popover into this suite.
 vi.mock("@/components/ui/help-popover", () => ({
@@ -169,17 +183,41 @@ vi.mock("@/components/ui/help-popover", () => ({
   ),
 }));
 
-vi.mock("~/hooks/pdf/useExportRequirementTraceabilityPdf", () => ({
-  useExportRequirementTraceabilityPdf: mockUseExportPdf,
-}));
-
 let mockIsProjectAdmin = true;
+// The Reporting-area bit the Save Snapshot button reads; off by default.
+let mockReportingCanAddEdit = false;
+let mockReportingCanDelete = false;
 vi.mock("~/hooks/useProjectPermissions", () => ({
-  useProjectPermissions: () => ({
-    permissions: null,
+  useProjectPermissions: (_projectId: unknown, area?: string) => ({
+    permissions:
+      area === "Reporting"
+        ? {
+            canAddEdit: mockReportingCanAddEdit,
+            canDelete: mockReportingCanDelete,
+            canClose: false,
+          }
+        : null,
     isProjectAdmin: mockIsProjectAdmin,
     isLoading: false,
   }),
+}));
+
+// The header's Snapshots menu is its own component with its own suite;
+// here it is a stub that exposes the props the workspace wires into it.
+const capturedSnapshotMenuProps: { current: any } = { current: null };
+vi.mock("@/components/reports/RequirementSnapshotHeaderMenu", () => ({
+  RequirementSnapshotHeaderMenu: (props: any) => {
+    capturedSnapshotMenuProps.current = props;
+    return (
+      <>
+        <button data-testid="mock-snapshots-menu" />
+        <button
+          data-testid="mock-snapshots-menu-open"
+          onClick={() => props.onOpen(12)}
+        />
+      </>
+    );
+  },
 }));
 
 // Same seam RequirementCoveragePanel.test.tsx uses: Radix's Tooltip.Root
@@ -274,34 +312,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     projectFlags.requirementsEnabled = true;
     projectFlags.isPending = undefined;
     mockIsProjectAdmin = true;
-    mockUseExportPdf.mockReturnValue({
-      isExporting: false,
-      handleExport: vi.fn(),
-    });
     capturedDetailPanelProps.length = 0;
-  });
-
-  it("offers a traceability PDF export action in the workspace header", () => {
-    render(<RequirementsWorkspace projectId="42" />);
-
-    const action = screen.getByTestId("requirements-export-pdf");
-    expect(action).not.toBeNull();
-    expect(action.textContent).toContain("common.actions.exportPdf");
-    expect(action.hasAttribute("disabled")).toBe(false);
-  });
-
-  it("disables the export action while an export is running", () => {
-    mockUseExportPdf.mockReturnValue({
-      isExporting: true,
-      handleExport: vi.fn(),
-    });
-
-    render(<RequirementsWorkspace projectId="42" />);
-
-    const action = screen.getByTestId("requirements-export-pdf");
-    expect(action.hasAttribute("disabled")).toBe(true);
-    expect(action.textContent).toContain("common.actions.exportingPdf");
-    expect(action.className).toContain("animate-pulse");
   });
 
   it("renders the requirements-disabled notice instead of the workspace when the project flag is off", () => {
@@ -318,7 +329,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     expect(screen.queryByTestId("requirements-tree-pane")).toBeNull();
     expect(screen.queryByTestId("mock-requirements-list-view")).toBeNull();
     expect(screen.queryByTestId("requirements-detail-pane")).toBeNull();
-    expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
+    expect(screen.queryByTestId("mock-snapshots-menu")).toBeNull();
     expect(screen.queryByTestId("requirements-tree-add-root")).toBeNull();
   });
 
@@ -327,10 +338,10 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
   // PDF, using the same button-group idiom the milestone detail page's
   // header uses.
   describe("action bar Add Requirement (gap closure 26.2-16, UAT gap 13)", () => {
-    it("renders Export PDF then Add Requirement, in that order", () => {
+    it("renders the Snapshots menu then Add Requirement, in that order", () => {
       render(<RequirementsWorkspace projectId="42" />);
 
-      const exportButton = screen.getByTestId("requirements-export-pdf");
+      const exportButton = screen.getByTestId("mock-snapshots-menu");
       const addButton = screen.getByTestId("requirements-tree-add-root");
       expect(addButton.textContent).toContain("requirements.tree.addRoot");
 
@@ -353,7 +364,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
 
       render(<RequirementsWorkspace projectId="42" />);
 
-      expect(screen.getByTestId("requirements-export-pdf")).not.toBeNull();
+      expect(screen.getByTestId("mock-snapshots-menu")).not.toBeNull();
       expect(screen.queryByTestId("requirements-tree-add-root")).toBeNull();
     });
   });
@@ -362,7 +373,7 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
   // two-state ternary, so a project with the feature ON would flash the
   // disabled notice for one render while the query was still pending. These
   // two cases pin the three-state gate that replaced it.
-  it("shows a loading placeholder, not the disabled notice or the export action, while the flag query is pending", () => {
+  it("shows a loading placeholder, not the disabled notice or the action bar, while the flag query is pending", () => {
     projectFlags.isPending = true;
 
     render(<RequirementsWorkspace projectId="42" />);
@@ -374,11 +385,11 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
     expect(loading.className).toContain("h-[calc(100vh-14rem)]");
     expect(loading.className).toContain("min-h-[400px]");
 
-    // Fail closed: neither the disabled notice nor the export action (which
-    // would otherwise let an operator export a feature not yet known to be
+    // Fail closed: neither the disabled notice nor the action bar (which
+    // would otherwise let an operator act on a feature not yet known to be
     // on) may render before the query resolves.
     expect(screen.queryByTestId("requirements-disabled-notice")).toBeNull();
-    expect(screen.queryByTestId("requirements-export-pdf")).toBeNull();
+    expect(screen.queryByTestId("mock-snapshots-menu")).toBeNull();
   });
 
   it("renders the disabled notice, not the loading placeholder, once the query resolves with the flag off", () => {
@@ -389,26 +400,6 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
 
     expect(screen.getByTestId("requirements-disabled-notice")).not.toBeNull();
     expect(screen.queryByTestId("requirements-gate-loading")).toBeNull();
-  });
-
-  // Additive coverage (not one of the three scaffolded titles): the plan's
-  // <behavior> block and hard_rules both require a rejected export to
-  // surface a localized toast rather than fail silently.
-  it("shows a localized error toast when the export fails", () => {
-    let onError: ((error: unknown) => void) | undefined;
-    mockUseExportPdf.mockImplementation((props: any) => {
-      onError = props.onError;
-      return { isExporting: false, handleExport: vi.fn() };
-    });
-
-    render(<RequirementsWorkspace projectId="42" />);
-
-    expect(onError).toBeTypeOf("function");
-    onError!(new Error("network down"));
-
-    expect(mockToastError).toHaveBeenCalledWith(
-      "requirements.export.exportFailed"
-    );
   });
 
   // A requirement can be deleted from the detail panel, not only from the
@@ -476,5 +467,50 @@ describe("RequirementsWorkspace (Phase 26 coverage additions)", () => {
       const lastProps = capturedDetailPanelProps.at(-1);
       expect(lastProps.editRequest).toEqual({ id: 1, token: 2 });
     });
+  });
+});
+
+describe("traceability snapshots in the workspace header", () => {
+  beforeEach(() => {
+    mockReportingCanAddEdit = false;
+    mockReportingCanDelete = false;
+    mockIsProjectAdmin = true;
+    capturedSnapshotMenuProps.current = null;
+  });
+
+  it("mounts the Snapshots menu with the viewer's Reporting rights", () => {
+    render(<RequirementsWorkspace projectId="42" />);
+    expect(screen.getByTestId("mock-snapshots-menu")).not.toBeNull();
+    expect(capturedSnapshotMenuProps.current).toMatchObject({
+      projectId: 42,
+      canManage: false,
+      canDelete: false,
+    });
+  });
+
+  it("grants capture and delete from the Reporting area bits, not project-admin", () => {
+    mockReportingCanAddEdit = true;
+    mockReportingCanDelete = true;
+    mockIsProjectAdmin = false;
+    render(<RequirementsWorkspace projectId="42" />);
+    expect(capturedSnapshotMenuProps.current).toMatchObject({
+      canManage: true,
+      canDelete: true,
+    });
+  });
+
+  it("opens a chosen snapshot in the traceability report with its id", () => {
+    mockRouterPush.mockReset();
+    render(<RequirementsWorkspace projectId="42" />);
+    fireEvent.click(screen.getByTestId("mock-snapshots-menu-open"));
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/projects/reports/42?reportType=requirement-traceability&snapshotId=12"
+    );
+  });
+
+  it("hides the menu with the rest of the action bar when requirements are off", () => {
+    projectFlags.requirementsEnabled = false;
+    render(<RequirementsWorkspace projectId="42" />);
+    expect(screen.queryByTestId("mock-snapshots-menu")).toBeNull();
   });
 });

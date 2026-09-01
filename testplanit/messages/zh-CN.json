@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "关联到此需求的后代，而非直接关联到此需求。",
       "notRunCell": "未运行"
     },
-    "export": {
-      "menuLabel": "导出可追溯性",
-      "exportFailed": "导出可追溯性失败。",
-      "pdfEnglishOnlyHint": "PDF 导出仅以英语生成。",
-      "csvOnReportsHint": "如需 CSV 导出，请运行需求可追溯性报表。"
-    },
     "disabled": {
       "title": "需求功能未启用",
       "description": "此项目尚未启用需求功能。请让项目管理员在项目设置中启用该功能，以开始构建需求树。"
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "需求可追溯性",
           "description": "每个需求与其关联的测试用例及其最新执行结果配对"
+        },
+        "requirementCoverageChanges": {
+          "label": "需求覆盖变更",
+          "description": "将已保存的可追溯性快照与后续快照或实时矩阵进行比较，以查看哪些需求的覆盖情况发生了变化"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365天",
         "ageOver365": "超过一年",
         "includeNotRun": "包含测试从未运行过的需求",
-        "otherRoots": "其他（{count, plural, other {# 个层级}}）"
+        "otherRoots": "其他（{count, plural, other {# 个层级}}）",
+        "snapshotLabel": "快照",
+        "snapshotLive": "实时矩阵",
+        "snapshotHelp": "显示矩阵的已保存时点快照，而非实时数据。快照是不可变的记录，您可以导出、共享和比较它们。",
+        "snapshotPlaceholder": "选择快照",
+        "snapshotRequirementsCount": "{count, plural, other {# 项需求}}",
+        "snapshotUncoveredCount": "{count} 个未覆盖",
+        "snapshotCapturedBy": "由 {user} 于 {date} 捕获",
+        "noSnapshots": "暂无快照。请从需求可追溯性报告或需求页面保存一个。",
+        "saveSnapshot": "保存快照",
+        "saveSnapshotTitle": "保存可追溯性快照",
+        "saveSnapshotDescription": "将当前的可追溯性矩阵——每个需求、其覆盖的测试用例及其最新结果——记录为一个不可变的、具名的时点快照，您可以稍后查看、导出、共享和比较它。",
+        "saveSnapshotScoped": "仅当前范围内的需求将被捕获。",
+        "snapshotName": "名称",
+        "snapshotNamePlaceholder": "2.4 版本签核",
+        "snapshotNote": "备注",
+        "snapshotNotePlaceholder": "可选——此快照用于证明什么",
+        "snapshotSaved": "快照“{name}”已保存。",
+        "snapshotSaveFailed": "保存快照失败。",
+        "deleteSnapshot": "删除快照",
+        "deleteSnapshotTitle": "删除此快照？",
+        "deleteSnapshotDescription": "“{name}”将不再作为报告视图、比较基准或共享目标使用。不会影响任何需求或测试用例。",
+        "snapshotDeleted": "快照已删除。",
+        "snapshotDeleteFailed": "删除快照失败。",
+        "baselineLabel": "基准快照",
+        "compareLabel": "与之比较",
+        "baselineRequired": "选择一个基准快照以运行此报告。",
+        "includeUnchanged": "包含未变更的需求",
+        "change": "变更",
+        "coverageBefore": "变更前覆盖率",
+        "coverageAfter": "变更后覆盖率",
+        "linkedCasesBefore": "变更前关联数",
+        "linkedCasesAfter": "变更后关联数",
+        "casesAdded": "新增用例",
+        "casesRemoved": "移除用例",
+        "resultsChanged": "结果已变更",
+        "changeAdded": "新增",
+        "changeRemoved": "已移除",
+        "changeCoverage": "覆盖率已变更",
+        "changeLinks": "关联已变更",
+        "changeResults": "结果已变更",
+        "changeUnchanged": "未变更",
+        "changedRequirements": "已变更的需求",
+        "newlyCovered": "新增覆盖",
+        "newlyUncovered": "新增未覆盖",
+        "nowFailing": "现已失败",
+        "noLongerFailing": "不再失败",
+        "byChangeKind": "按变更类型划分的需求",
+        "noChanges": "两侧之间没有覆盖率变化。",
+        "snapshotsMenu": "快照",
+        "openSnapshotInReport": "在需求可追溯性报告中打开"
       },
       "crossProjectReportTypes": {
         "testExecution": {

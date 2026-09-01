@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "この要件の子要件にリンクされており、直接リンクされていません。",
       "notRunCell": "未実行"
     },
-    "export": {
-      "menuLabel": "トレーサビリティをエクスポート",
-      "exportFailed": "トレーサビリティのエクスポートに失敗しました。",
-      "pdfEnglishOnlyHint": "PDFエクスポートは英語のみで生成されます。",
-      "csvOnReportsHint": "CSVエクスポートには、要件トレーサビリティレポートを実行してください。"
-    },
     "disabled": {
       "title": "要件が有効になっていません",
       "description": "このプロジェクトでは要件機能が有効になっていません。要件ツリーの構築を始めるには、プロジェクト管理者にプロジェクト設定で有効にするよう依頼してください。"
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "要件トレーサビリティ",
           "description": "リンクされたテストケースと最新の実行結果を各要件とペアで表示します"
+        },
+        "requirementCoverageChanges": {
+          "label": "要件カバレッジの変更",
+          "description": "保存したトレーサビリティスナップショットを、後のスナップショットまたはライブマトリックスと比較して、どの要件のカバレッジが変化したかを確認します"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180〜365日",
         "ageOver365": "1年以上",
         "includeNotRun": "テストが一度も実行されていない要件を含める",
-        "otherRoots": "その他（{count, plural, other {#件の階層}}）"
+        "otherRoots": "その他（{count, plural, other {#件の階層}}）",
+        "snapshotLabel": "スナップショット",
+        "snapshotLive": "ライブマトリックス",
+        "snapshotHelp": "ライブデータの代わりに、保存された時点のマトリックスのスナップショットを表示します。スナップショットはエクスポート、共有、比較が可能な不変のレコードです。",
+        "snapshotPlaceholder": "スナップショットを選択",
+        "snapshotRequirementsCount": "{count, plural, other {# 件の要件}}",
+        "snapshotUncoveredCount": "未カバー: {count} 件",
+        "snapshotCapturedBy": "{date} に {user} が取得",
+        "noSnapshots": "スナップショットはまだありません。要件トレーサビリティレポートまたは要件ページから保存してください。",
+        "saveSnapshot": "スナップショットを保存",
+        "saveSnapshotTitle": "トレーサビリティスナップショットを保存",
+        "saveSnapshotDescription": "現在のトレーサビリティマトリックス（すべての要件、それをカバーするテストケース、およびその最新の結果）を、後で表示・エクスポート・共有・比較できる不変の名前付きスナップショットとして記録します。",
+        "saveSnapshotScoped": "現在スコープ内にある要件のみがキャプチャされます。",
+        "snapshotName": "名前",
+        "snapshotNamePlaceholder": "リリース2.4サインオフ",
+        "snapshotNote": "注記",
+        "snapshotNotePlaceholder": "任意 — このスナップショットが何の証拠であるか",
+        "snapshotSaved": "スナップショット「{name}」を保存しました。",
+        "snapshotSaveFailed": "スナップショットの保存に失敗しました。",
+        "deleteSnapshot": "スナップショットを削除",
+        "deleteSnapshotTitle": "このスナップショットを削除しますか？",
+        "deleteSnapshotDescription": "「{name}」はレポートビュー、比較のベースライン、共有対象として利用できなくなります。要件やテストケースには影響しません。",
+        "snapshotDeleted": "スナップショットを削除しました。",
+        "snapshotDeleteFailed": "スナップショットの削除に失敗しました。",
+        "baselineLabel": "ベースラインスナップショット",
+        "compareLabel": "比較対象",
+        "baselineRequired": "このレポートを実行するには、ベースラインスナップショットを選択してください。",
+        "includeUnchanged": "変更のない要件を含める",
+        "change": "変更",
+        "coverageBefore": "変更前のカバレッジ",
+        "coverageAfter": "変更後のカバレッジ",
+        "linkedCasesBefore": "変更前のリンク数",
+        "linkedCasesAfter": "変更後のリンク数",
+        "casesAdded": "追加されたケース",
+        "casesRemoved": "削除されたケース",
+        "resultsChanged": "変更された結果",
+        "changeAdded": "追加",
+        "changeRemoved": "削除",
+        "changeCoverage": "カバレッジが変更されました",
+        "changeLinks": "リンクが変更されました",
+        "changeResults": "結果が変更されました",
+        "changeUnchanged": "変更なし",
+        "changedRequirements": "変更された要件",
+        "newlyCovered": "新たにカバーされた",
+        "newlyUncovered": "新たに未カバーとなった",
+        "nowFailing": "新たに失敗中",
+        "noLongerFailing": "失敗が解消された",
+        "byChangeKind": "変更種別ごとの要件",
+        "noChanges": "両者の間にカバレッジの変更はありません。",
+        "snapshotsMenu": "スナップショット",
+        "openSnapshotInReport": "要件トレーサビリティレポートで開く"
       },
       "crossProjectReportTypes": {
         "testExecution": {

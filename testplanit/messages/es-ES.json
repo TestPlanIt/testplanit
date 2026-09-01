@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Vinculado a un descendiente de este requisito, no directamente a él.",
       "notRunCell": "No ejecutado"
     },
-    "export": {
-      "menuLabel": "Exportar trazabilidad",
-      "exportFailed": "No se pudo exportar la trazabilidad.",
-      "pdfEnglishOnlyHint": "Las exportaciones a PDF se generan solo en inglés.",
-      "csvOnReportsHint": "Para una exportación a CSV, ejecuta el informe de trazabilidad de requisitos."
-    },
     "disabled": {
       "title": "Los requisitos no están habilitados",
       "description": "Este proyecto no ha activado la función de requisitos. Pide a un administrador del proyecto que la habilite en la configuración del proyecto para empezar a construir árboles de requisitos."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Trazabilidad de Requisitos",
           "description": "Cada requisito emparejado con sus casos de prueba vinculados y su último resultado de ejecución"
+        },
+        "requirementCoverageChanges": {
+          "label": "Cambios en la cobertura de requisitos",
+          "description": "Compare una instantánea de trazabilidad guardada con una instantánea posterior o con la matriz en vivo para ver qué cobertura de requisitos cambió"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 días",
         "ageOver365": "Más de un año",
         "includeNotRun": "Incluir requisitos cuyas pruebas nunca se han ejecutado",
-        "otherRoots": "Otros ({count, plural, one {# jerarquía} other {# jerarquías}})"
+        "otherRoots": "Otros ({count, plural, one {# jerarquía} other {# jerarquías}})",
+        "snapshotLabel": "Instantánea",
+        "snapshotLive": "Matriz en vivo",
+        "snapshotHelp": "Muestra una instantánea guardada de la matriz en un momento dado en lugar de los datos en vivo. Las instantáneas son registros inmutables que puede exportar, compartir y comparar.",
+        "snapshotPlaceholder": "Elija una instantánea",
+        "snapshotRequirementsCount": "{count, plural, one {# requisito} other {# requisitos}}",
+        "snapshotUncoveredCount": "{count} sin cubrir",
+        "snapshotCapturedBy": "Capturada el {date} por {user}",
+        "noSnapshots": "Aún no hay instantáneas. Guarde una desde el informe de trazabilidad de requisitos o desde la página de requisitos.",
+        "saveSnapshot": "Guardar instantánea",
+        "saveSnapshotTitle": "Guardar instantánea de trazabilidad",
+        "saveSnapshotDescription": "Registra la matriz de trazabilidad actual —cada requisito, sus casos de prueba de cobertura y sus últimos resultados— como una instantánea inmutable y con nombre de un momento dado que puede ver, exportar, compartir y comparar más adelante.",
+        "saveSnapshotScoped": "Solo se capturarán los requisitos actualmente en el alcance.",
+        "snapshotName": "Nombre",
+        "snapshotNamePlaceholder": "Aprobación de la versión 2.4",
+        "snapshotNote": "Nota",
+        "snapshotNotePlaceholder": "Opcional: de qué es evidencia esta instantánea",
+        "snapshotSaved": "Instantánea \"{name}\" guardada.",
+        "snapshotSaveFailed": "No se pudo guardar la instantánea.",
+        "deleteSnapshot": "Eliminar instantánea",
+        "deleteSnapshotTitle": "¿Eliminar esta instantánea?",
+        "deleteSnapshotDescription": "\"{name}\" ya no estará disponible como vista de informe, línea base de comparación o destino de compartición. No se ve afectado ningún requisito ni caso de prueba.",
+        "snapshotDeleted": "Instantánea eliminada.",
+        "snapshotDeleteFailed": "No se pudo eliminar la instantánea.",
+        "baselineLabel": "Instantánea de referencia",
+        "compareLabel": "Comparar con",
+        "baselineRequired": "Elija una instantánea de referencia para ejecutar este informe.",
+        "includeUnchanged": "Incluir requisitos sin cambios",
+        "change": "Cambio",
+        "coverageBefore": "Cobertura antes",
+        "coverageAfter": "Cobertura después",
+        "linkedCasesBefore": "Vinculados antes",
+        "linkedCasesAfter": "Vinculados después",
+        "casesAdded": "Casos añadidos",
+        "casesRemoved": "Casos eliminados",
+        "resultsChanged": "Resultados cambiados",
+        "changeAdded": "Añadido",
+        "changeRemoved": "Eliminado",
+        "changeCoverage": "Cobertura cambiada",
+        "changeLinks": "Enlaces cambiados",
+        "changeResults": "Resultados cambiados",
+        "changeUnchanged": "Sin cambios",
+        "changedRequirements": "Requisitos modificados",
+        "newlyCovered": "Recién cubiertos",
+        "newlyUncovered": "Recién sin cobertura",
+        "nowFailing": "Ahora fallando",
+        "noLongerFailing": "Ya no falla",
+        "byChangeKind": "Requisitos por tipo de cambio",
+        "noChanges": "No hay cambios de cobertura entre ambos lados.",
+        "snapshotsMenu": "Instantáneas",
+        "openSnapshotInReport": "Abrir en el informe de Trazabilidad de Requisitos"
       },
       "crossProjectReportTypes": {
         "testExecution": {

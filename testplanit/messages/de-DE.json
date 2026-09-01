@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Mit einer untergeordneten Anforderung verknüpft, nicht direkt mit dieser.",
       "notRunCell": "Nicht ausgeführt"
     },
-    "export": {
-      "menuLabel": "Rückverfolgbarkeit exportieren",
-      "exportFailed": "Rückverfolgbarkeit konnte nicht exportiert werden.",
-      "pdfEnglishOnlyHint": "PDF-Exporte werden nur auf Englisch erstellt.",
-      "csvOnReportsHint": "Für einen CSV-Export führen Sie den Bericht „Anforderungsrückverfolgbarkeit“ aus."
-    },
     "disabled": {
       "title": "Anforderungen sind nicht aktiviert",
       "description": "Dieses Projekt hat die Anforderungsfunktion nicht aktiviert. Bitten Sie einen Projektadministrator, sie in den Projekteinstellungen zu aktivieren, um mit dem Aufbau von Anforderungsbäumen zu beginnen."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Anforderungsnachverfolgbarkeit",
           "description": "Jede Anforderung gepaart mit ihren verknüpften Testfällen und deren letztem Ausführungsergebnis"
+        },
+        "requirementCoverageChanges": {
+          "label": "Änderungen der Anforderungsabdeckung",
+          "description": "Vergleichen Sie eine gespeicherte Rückverfolgbarkeits-Momentaufnahme mit einer späteren Momentaufnahme oder der Live-Matrix, um zu sehen, welche Anforderungen sich in ihrer Abdeckung geändert haben"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 Tage",
         "ageOver365": "Über ein Jahr",
         "includeNotRun": "Anforderungen einschließen, deren Tests noch nie ausgeführt wurden",
-        "otherRoots": "Andere ({count, plural, one {# Hierarchie} other {# Hierarchien}})"
+        "otherRoots": "Andere ({count, plural, one {# Hierarchie} other {# Hierarchien}})",
+        "snapshotLabel": "Momentaufnahme",
+        "snapshotLive": "Live-Matrix",
+        "snapshotHelp": "Zeigt eine gespeicherte Momentaufnahme der Matrix zu einem bestimmten Zeitpunkt anstelle der Live-Daten an. Momentaufnahmen sind unveränderliche Datensätze, die Sie exportieren, teilen und vergleichen können.",
+        "snapshotPlaceholder": "Momentaufnahme auswählen",
+        "snapshotRequirementsCount": "{count, plural, one {# Anforderung} other {# Anforderungen}}",
+        "snapshotUncoveredCount": "{count} nicht abgedeckt",
+        "snapshotCapturedBy": "Erfasst am {date} von {user}",
+        "noSnapshots": "Noch keine Momentaufnahmen vorhanden. Erstellen Sie eine über den Bericht zur Anforderungsrückverfolgbarkeit oder die Seite Anforderungen.",
+        "saveSnapshot": "Momentaufnahme speichern",
+        "saveSnapshotTitle": "Rückverfolgbarkeits-Momentaufnahme speichern",
+        "saveSnapshotDescription": "Erfasst die aktuelle Rückverfolgbarkeitsmatrix – jede Anforderung, ihre abdeckenden Testfälle und deren neueste Ergebnisse – als unveränderliche, benannte Momentaufnahme, die Sie später ansehen, exportieren, teilen und vergleichen können.",
+        "saveSnapshotScoped": "Es werden nur die derzeit im Geltungsbereich befindlichen Anforderungen erfasst.",
+        "snapshotName": "Name",
+        "snapshotNamePlaceholder": "Abnahme Release 2.4",
+        "snapshotNote": "Notiz",
+        "snapshotNotePlaceholder": "Optional – wofür diese Momentaufnahme als Nachweis dient",
+        "snapshotSaved": "Momentaufnahme \"{name}\" gespeichert.",
+        "snapshotSaveFailed": "Die Momentaufnahme konnte nicht gespeichert werden.",
+        "deleteSnapshot": "Momentaufnahme löschen",
+        "deleteSnapshotTitle": "Diese Momentaufnahme löschen?",
+        "deleteSnapshotDescription": "\"{name}\" wird nicht mehr als Berichtsansicht, Vergleichsbasis oder Freigabeziel verfügbar sein. Keine Anforderung oder Testfall wird davon beeinflusst.",
+        "snapshotDeleted": "Momentaufnahme gelöscht.",
+        "snapshotDeleteFailed": "Die Momentaufnahme konnte nicht gelöscht werden.",
+        "baselineLabel": "Basis-Momentaufnahme",
+        "compareLabel": "Vergleichen mit",
+        "baselineRequired": "Wählen Sie eine Basis-Momentaufnahme aus, um diesen Bericht auszuführen.",
+        "includeUnchanged": "Unveränderte Anforderungen einbeziehen",
+        "change": "Änderung",
+        "coverageBefore": "Abdeckung vorher",
+        "coverageAfter": "Abdeckung nachher",
+        "linkedCasesBefore": "Verknüpft vorher",
+        "linkedCasesAfter": "Verknüpft nachher",
+        "casesAdded": "Fälle hinzugefügt",
+        "casesRemoved": "Fälle entfernt",
+        "resultsChanged": "Ergebnisse geändert",
+        "changeAdded": "Hinzugefügt",
+        "changeRemoved": "Entfernt",
+        "changeCoverage": "Abdeckung geändert",
+        "changeLinks": "Verknüpfungen geändert",
+        "changeResults": "Ergebnisse geändert",
+        "changeUnchanged": "Unverändert",
+        "changedRequirements": "Geänderte Anforderungen",
+        "newlyCovered": "Neu abgedeckt",
+        "newlyUncovered": "Neu ungedeckt",
+        "nowFailing": "Jetzt fehlgeschlagen",
+        "noLongerFailing": "Nicht mehr fehlgeschlagen",
+        "byChangeKind": "Anforderungen nach Änderung",
+        "noChanges": "Keine Abdeckungsänderungen zwischen den beiden Seiten.",
+        "snapshotsMenu": "Snapshot-Menü",
+        "openSnapshotInReport": "Im Bericht zur Anforderungsverfolgung öffnen"
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -19,6 +19,7 @@ const PRE_BUILT_REPORT_TYPES = [
   "automation-candidates",
   "requirement-coverage-gaps",
   "requirement-traceability",
+  "requirement-coverage-changes",
 ] as const;
 
 /**
@@ -68,6 +69,19 @@ export const reportRequestSchema = z
     // Coverage-debt (gaps) report: also list requirements whose linked
     // cases have never run (tier 2), not only the zero-linked tier.
     includeNotRun: z.boolean().nullish(),
+    // Traceability: render a persisted snapshot instead of the live
+    // matrix. Absent/null = live.
+    snapshotId: z.number().int().positive().nullish(),
+    // Coverage changes: the baseline snapshot, and what to compare it to
+    // (another snapshot; absent/null = the live matrix). The handler
+    // requires the baseline; the schema leaves it nullish so a restored
+    // share config with a stale null still parses and fails at the
+    // handler with a clear error rather than a validation blob.
+    baselineSnapshotId: z.number().int().positive().nullish(),
+    compareSnapshotId: z.number().int().positive().nullish(),
+    // Coverage changes: also list requirements whose coverage did not
+    // change between the two sides.
+    includeUnchanged: z.boolean().nullish(),
   })
   .superRefine((data, ctx) => {
     // Rule: If endDate is provided, startDate must also be provided

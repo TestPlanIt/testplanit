@@ -509,3 +509,66 @@ describe("Phase 26 requirement report registration (six sites)", () => {
     expect(missing, missing.join("\n")).toEqual([]);
   });
 });
+
+describe("requirement-coverage-changes CSV", () => {
+  it("writes the diff columns with localized labels and blank absent sides", () => {
+    const t = (key: string) => key;
+    const rows = buildReportCsvRows({
+      reportType: "requirement-coverage-changes",
+      rows: [
+        {
+          requirementId: 1,
+          requirementKey: "REQ-1",
+          requirementTitle: "Enrol domestic students",
+          requirementParentPath: "Enrolments",
+          changeKind: "COVERAGE_CHANGED",
+          previousCoverageStatus: "UNCOVERED",
+          currentCoverageStatus: "NOT_RUN",
+          previousLinkedCaseCount: 0,
+          currentLinkedCaseCount: 2,
+          casesAdded: 2,
+          casesRemoved: 0,
+          resultsChanged: 0,
+        },
+        {
+          requirementId: 2,
+          requirementKey: "REQ-2",
+          requirementTitle: null,
+          requirementParentPath: "",
+          changeKind: "REMOVED",
+          previousCoverageStatus: "FAILED",
+          currentCoverageStatus: null,
+          previousLinkedCaseCount: 1,
+          currentLinkedCaseCount: null,
+          casesAdded: 0,
+          casesRemoved: 1,
+          resultsChanged: 0,
+        },
+      ],
+      dimensions: [],
+      metrics: [],
+      t,
+      locale: "en-US",
+      isCrossProject: false,
+    } as any);
+
+    expect(rows[0]["reports.ui.requirementCoverage.change"]).toBe(
+      "reports.ui.requirementCoverage.changeCoverage"
+    );
+    expect(rows[0]["reports.ui.requirementCoverage.coverageBefore"]).toBe(
+      "requirements.coverage.uncovered"
+    );
+    expect(rows[0]["reports.ui.requirementCoverage.coverageAfter"]).toBe(
+      "requirements.coverage.statusNotRun"
+    );
+    expect(rows[0]["reports.ui.requirementCoverage.linkedCasesAfter"]).toBe(2);
+    expect(rows[0]["reports.ui.requirementCoverage.casesAdded"]).toBe(2);
+    // The removed requirement has no "after" side: blank, never a state.
+    expect(rows[1]["reports.ui.requirementCoverage.change"]).toBe(
+      "reports.ui.requirementCoverage.changeRemoved"
+    );
+    expect(rows[1]["reports.ui.requirementCoverage.coverageAfter"]).toBe("");
+    expect(rows[1]["reports.ui.requirementCoverage.linkedCasesAfter"]).toBe("");
+    expect(rows[1]["reports.ui.requirementCoverage.casesRemoved"]).toBe(1);
+  });
+});

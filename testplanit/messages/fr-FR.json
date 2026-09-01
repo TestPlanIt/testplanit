@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Lié à un descendant de cette exigence, pas directement à elle.",
       "notRunCell": "Non exécuté"
     },
-    "export": {
-      "menuLabel": "Exporter la traçabilité",
-      "exportFailed": "Échec de l'exportation de la traçabilité.",
-      "pdfEnglishOnlyHint": "Les exports PDF sont générés uniquement en anglais.",
-      "csvOnReportsHint": "Pour un export CSV, exécutez le rapport de traçabilité des exigences."
-    },
     "disabled": {
       "title": "Les exigences ne sont pas activées",
       "description": "Ce projet n'a pas activé la fonctionnalité des exigences. Demandez à un administrateur de projet de l'activer dans les paramètres du projet pour commencer à construire des arborescences d'exigences."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Traçabilité des exigences",
           "description": "Chaque exigence associée à ses cas de test liés et à leur dernier résultat d'exécution"
+        },
+        "requirementCoverageChanges": {
+          "label": "Modifications de la couverture des exigences",
+          "description": "Comparez un instantané de traçabilité enregistré à un instantané ultérieur ou à la matrice en direct pour voir la couverture de quelles exigences a changé"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 jours",
         "ageOver365": "Plus d'un an",
         "includeNotRun": "Inclure les exigences dont les tests n'ont jamais été exécutés",
-        "otherRoots": "Autres ({count, plural, one {# hiérarchie} other {# hiérarchies}})"
+        "otherRoots": "Autres ({count, plural, one {# hiérarchie} other {# hiérarchies}})",
+        "snapshotLabel": "Instantané",
+        "snapshotLive": "Matrice en direct",
+        "snapshotHelp": "Affichez un instantané enregistré de la matrice à un moment donné au lieu des données en direct. Les instantanés sont des enregistrements immuables que vous pouvez exporter, partager et comparer.",
+        "snapshotPlaceholder": "Choisissez un instantané",
+        "snapshotRequirementsCount": "{count, plural, one {# exigence} other {# exigences}}",
+        "snapshotUncoveredCount": "{count} non couvertes",
+        "snapshotCapturedBy": "Capturé le {date} par {user}",
+        "noSnapshots": "Aucun instantané pour le moment. Enregistrez-en un depuis le rapport de traçabilité des exigences ou la page des exigences.",
+        "saveSnapshot": "Enregistrer l'instantané",
+        "saveSnapshotTitle": "Enregistrer l'instantané de traçabilité",
+        "saveSnapshotDescription": "Enregistre la matrice de traçabilité actuelle — chaque exigence, ses cas de test associés et leurs derniers résultats — sous la forme d'un instantané nommé et immuable, à un moment donné, que vous pourrez consulter, exporter, partager et comparer ultérieurement.",
+        "saveSnapshotScoped": "Seules les exigences actuellement dans le périmètre seront capturées.",
+        "snapshotName": "Nom",
+        "snapshotNamePlaceholder": "Validation de la version 2.4",
+        "snapshotNote": "Remarque",
+        "snapshotNotePlaceholder": "Facultatif — ce que cet instantané permet de justifier",
+        "snapshotSaved": "Instantané « {name} » enregistré.",
+        "snapshotSaveFailed": "Impossible d'enregistrer l'instantané.",
+        "deleteSnapshot": "Supprimer l'instantané",
+        "deleteSnapshotTitle": "Supprimer cet instantané ?",
+        "deleteSnapshotDescription": "« {name} » ne sera plus disponible comme vue de rapport, référence de comparaison ou cible de partage. Aucune exigence ni cas de test n'est affecté.",
+        "snapshotDeleted": "Instantané supprimé.",
+        "snapshotDeleteFailed": "Impossible de supprimer l'instantané.",
+        "baselineLabel": "Instantané de référence",
+        "compareLabel": "Comparer à",
+        "baselineRequired": "Choisissez un instantané de référence pour exécuter ce rapport.",
+        "includeUnchanged": "Inclure les exigences inchangées",
+        "change": "Modification",
+        "coverageBefore": "Couverture avant",
+        "coverageAfter": "Couverture après",
+        "linkedCasesBefore": "Liés avant",
+        "linkedCasesAfter": "Liés après",
+        "casesAdded": "Cas ajoutés",
+        "casesRemoved": "Cas supprimés",
+        "resultsChanged": "Résultats modifiés",
+        "changeAdded": "Ajouté",
+        "changeRemoved": "Supprimé",
+        "changeCoverage": "Couverture modifiée",
+        "changeLinks": "Liens modifiés",
+        "changeResults": "Résultats modifiés",
+        "changeUnchanged": "Inchangé",
+        "changedRequirements": "Exigences modifiées",
+        "newlyCovered": "Nouvellement couvertes",
+        "newlyUncovered": "Nouvellement non couvertes",
+        "nowFailing": "En échec désormais",
+        "noLongerFailing": "Plus en échec",
+        "byChangeKind": "Exigences par type de modification",
+        "noChanges": "Aucun changement de couverture entre les deux côtés.",
+        "snapshotsMenu": "Instantanés",
+        "openSnapshotInReport": "Ouvrir dans le rapport de traçabilité des exigences"
       },
       "crossProjectReportTypes": {
         "testExecution": {

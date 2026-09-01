@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Powiązane z elementem podrzędnym tego wymagania, nie bezpośrednio z nim.",
       "notRunCell": "Nie uruchomiono"
     },
-    "export": {
-      "menuLabel": "Eksportuj matrycę śledzenia",
-      "exportFailed": "Nie udało się wyeksportować matrycy śledzenia.",
-      "pdfEnglishOnlyHint": "Eksporty PDF są generowane tylko w języku angielskim.",
-      "csvOnReportsHint": "Aby wyeksportować plik CSV, uruchom raport Śledzenie wymagań."
-    },
     "disabled": {
       "title": "Wymagania nie są włączone",
       "description": "Ten projekt nie ma włączonej funkcji wymagań. Poproś administratora projektu o jej włączenie w ustawieniach projektu, aby zacząć budować drzewa wymagań."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Śledzenie wymagań",
           "description": "Każde wymaganie wraz z powiązanymi przypadkami testowymi i ich najnowszym wynikiem wykonania"
+        },
+        "requirementCoverageChanges": {
+          "label": "Zmiany pokrycia wymagań",
+          "description": "Porównaj zapisaną migawkę śledzenia z późniejszą migawką lub aktywną macierzą, aby sprawdzić, których wymagań pokrycie się zmieniło"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 dni",
         "ageOver365": "Powyżej roku",
         "includeNotRun": "Uwzględnij wymagania, których testy nigdy nie zostały uruchomione",
-        "otherRoots": "Inne ({count, plural, one {# hierarchia} few {# hierarchie} many {# hierarchii} other {# hierarchii}})"
+        "otherRoots": "Inne ({count, plural, one {# hierarchia} few {# hierarchie} many {# hierarchii} other {# hierarchii}})",
+        "snapshotLabel": "Migawka",
+        "snapshotLive": "Aktywna macierz",
+        "snapshotHelp": "Wyświetl zapisaną migawkę macierzy z danego momentu w czasie zamiast danych na żywo. Migawki są niezmiennymi zapisami, które można eksportować, udostępniać i porównywać.",
+        "snapshotPlaceholder": "Wybierz migawkę",
+        "snapshotRequirementsCount": "{count, plural, one {# wymaganie} few {# wymagania} many {# wymagań} other {# wymagania}}",
+        "snapshotUncoveredCount": "{count} niepokrytych",
+        "snapshotCapturedBy": "Przechwycono {date} przez {user}",
+        "noSnapshots": "Brak migawek. Zapisz jedną z raportu Śledzenie wymagań lub ze strony Wymagania.",
+        "saveSnapshot": "Zapisz migawkę",
+        "saveSnapshotTitle": "Zapisz migawkę śledzenia",
+        "saveSnapshotDescription": "Zapisuje aktualną macierz śledzenia — każde wymaganie, powiązane z nim przypadki testowe oraz ich najnowsze wyniki — jako niezmienną, nazwaną migawkę z danego momentu, którą można później przeglądać, eksportować, udostępniać i porównywać.",
+        "saveSnapshotScoped": "Zostaną przechwycone tylko wymagania aktualnie objęte zakresem.",
+        "snapshotName": "Nazwa",
+        "snapshotNamePlaceholder": "Zatwierdzenie wydania 2.4",
+        "snapshotNote": "Notatka",
+        "snapshotNotePlaceholder": "Opcjonalnie — czego dowodem jest ta migawka",
+        "snapshotSaved": "Migawka „{name}” została zapisana.",
+        "snapshotSaveFailed": "Nie udało się zapisać migawki.",
+        "deleteSnapshot": "Usuń migawkę",
+        "deleteSnapshotTitle": "Usunąć tę migawkę?",
+        "deleteSnapshotDescription": "„{name}” nie będzie już dostępna jako widok raportu, punkt odniesienia do porównań ani element do udostępniania. Żadne wymaganie ani przypadek testowy nie zostaną naruszone.",
+        "snapshotDeleted": "Migawka usunięta.",
+        "snapshotDeleteFailed": "Nie udało się usunąć migawki.",
+        "baselineLabel": "Migawka bazowa",
+        "compareLabel": "Porównaj z",
+        "baselineRequired": "Wybierz migawkę bazową, aby wygenerować ten raport.",
+        "includeUnchanged": "Uwzględnij niezmienione wymagania",
+        "change": "Zmiana",
+        "coverageBefore": "Pokrycie przed",
+        "coverageAfter": "Pokrycie po",
+        "linkedCasesBefore": "Powiązane przed",
+        "linkedCasesAfter": "Powiązane po",
+        "casesAdded": "Dodane przypadki",
+        "casesRemoved": "Usunięte przypadki",
+        "resultsChanged": "Zmienione wyniki",
+        "changeAdded": "Dodano",
+        "changeRemoved": "Usunięto",
+        "changeCoverage": "Pokrycie zmienione",
+        "changeLinks": "Powiązania zmienione",
+        "changeResults": "Wyniki zmienione",
+        "changeUnchanged": "Bez zmian",
+        "changedRequirements": "Zmienione wymagania",
+        "newlyCovered": "Nowo objęte pokryciem",
+        "newlyUncovered": "Nowo bez pokrycia",
+        "nowFailing": "Obecnie niezaliczone",
+        "noLongerFailing": "Już nie niezaliczone",
+        "byChangeKind": "Wymagania według zmiany",
+        "noChanges": "Brak zmian pokrycia między obiema stronami.",
+        "snapshotsMenu": "Migawki",
+        "openSnapshotInReport": "Otwórz w raporcie identyfikowalności wymagań"
       },
       "crossProjectReportTypes": {
         "testExecution": {

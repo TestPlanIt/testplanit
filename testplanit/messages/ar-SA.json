@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "مرتبط بعنصر تابع لهذا المتطلب، وليس به مباشرة.",
       "notRunCell": "لم يُشغّل"
     },
-    "export": {
-      "menuLabel": "تصدير التتبع",
-      "exportFailed": "فشل تصدير التتبع.",
-      "pdfEnglishOnlyHint": "يتم إنشاء ملفات PDF المُصدَّرة باللغة الإنجليزية فقط.",
-      "csvOnReportsHint": "للتصدير بصيغة CSV، شغّل تقرير تتبع المتطلبات."
-    },
     "disabled": {
       "title": "المتطلبات غير مُفعّلة",
       "description": "لم يقم هذا المشروع بتفعيل ميزة المتطلبات. اطلب من مسؤول المشروع تفعيلها في إعدادات المشروع لبدء بناء أشجار المتطلبات."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "تتبّع المتطلبات",
           "description": "كل متطلب مقترن بحالات الاختبار المرتبطة به وآخر نتيجة تنفيذ لها"
+        },
+        "requirementCoverageChanges": {
+          "label": "تغييرات تغطية المتطلبات",
+          "description": "قارن لقطة تتبع محفوظة بلقطة لاحقة أو بالمصفوفة الحية لمعرفة المتطلبات التي تغيرت تغطيتها"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 يومًا",
         "ageOver365": "أكثر من سنة",
         "includeNotRun": "تضمين المتطلبات التي لم تُنفَّذ اختباراتها مطلقًا",
-        "otherRoots": "أخرى ({count, plural, zero {# تسلسل هرمي} one {تسلسل هرمي واحد} two {تسلسلان هرميان} few {# تسلسلات هرمية} many {# تسلسلاً هرمياً} other {# تسلسل هرمي}})"
+        "otherRoots": "أخرى ({count, plural, zero {# تسلسل هرمي} one {تسلسل هرمي واحد} two {تسلسلان هرميان} few {# تسلسلات هرمية} many {# تسلسلاً هرمياً} other {# تسلسل هرمي}})",
+        "snapshotLabel": "لقطة",
+        "snapshotLive": "المصفوفة الحية",
+        "snapshotHelp": "عرض لقطة محفوظة للمصفوفة في نقطة زمنية معينة بدلاً من البيانات الحية. اللقطات سجلات ثابتة يمكنك تصديرها ومشاركتها ومقارنتها.",
+        "snapshotPlaceholder": "اختر لقطة",
+        "snapshotRequirementsCount": "{count, plural, zero {# متطلب} one {متطلب واحد} two {متطلبان} few {# متطلبات} many {# متطلبًا} other {# متطلب}}",
+        "snapshotUncoveredCount": "{count} غير مغطى",
+        "snapshotCapturedBy": "تم الالتقاط في {date} بواسطة {user}",
+        "noSnapshots": "لا توجد لقطات حتى الآن. احفظ لقطة من تقرير تتبع المتطلبات أو من صفحة المتطلبات.",
+        "saveSnapshot": "حفظ اللقطة",
+        "saveSnapshotTitle": "حفظ لقطة التتبع",
+        "saveSnapshotDescription": "يسجل مصفوفة التتبع الحالية — كل متطلب، وحالات الاختبار التي تغطيه، وأحدث نتائجها — في لقطة مسماة وثابتة لنقطة زمنية معينة يمكنك عرضها وتصديرها ومشاركتها ومقارنتها لاحقًا.",
+        "saveSnapshotScoped": "سيتم التقاط المتطلبات الموجودة ضمن النطاق الحالي فقط.",
+        "snapshotName": "الاسم",
+        "snapshotNamePlaceholder": "تصديق الإصدار 2.4",
+        "snapshotNote": "ملاحظة",
+        "snapshotNotePlaceholder": "اختياري — الغرض الذي تُستخدم هذه اللقطة كدليل عليه",
+        "snapshotSaved": "تم حفظ اللقطة \"{name}\".",
+        "snapshotSaveFailed": "فشل حفظ اللقطة.",
+        "deleteSnapshot": "حذف اللقطة",
+        "deleteSnapshotTitle": "حذف هذه اللقطة؟",
+        "deleteSnapshotDescription": "لن تكون \"{name}\" متاحة بعد الآن كعرض تقرير، أو خط أساس للمقارنة، أو هدف مشاركة. لن يتأثر أي متطلب أو حالة اختبار.",
+        "snapshotDeleted": "تم حذف اللقطة.",
+        "snapshotDeleteFailed": "فشل حذف اللقطة.",
+        "baselineLabel": "لقطة خط الأساس",
+        "compareLabel": "مقارنة مع",
+        "baselineRequired": "اختر لقطة خط أساس لتشغيل هذا التقرير.",
+        "includeUnchanged": "تضمين المتطلبات غير المتغيرة",
+        "change": "التغيير",
+        "coverageBefore": "التغطية قبل",
+        "coverageAfter": "التغطية بعد",
+        "linkedCasesBefore": "المرتبط قبل",
+        "linkedCasesAfter": "المرتبط بعد",
+        "casesAdded": "الحالات المُضافة",
+        "casesRemoved": "الحالات المُزالة",
+        "resultsChanged": "النتائج المتغيرة",
+        "changeAdded": "تمت الإضافة",
+        "changeRemoved": "تمت الإزالة",
+        "changeCoverage": "تغيرت التغطية",
+        "changeLinks": "تغيرت الروابط",
+        "changeResults": "تغيرت النتائج",
+        "changeUnchanged": "غير متغير",
+        "changedRequirements": "المتطلبات المتغيرة",
+        "newlyCovered": "مغطى حديثًا",
+        "newlyUncovered": "غير مغطى حديثًا",
+        "nowFailing": "فاشل الآن",
+        "noLongerFailing": "لم يعد فاشلاً",
+        "byChangeKind": "المتطلبات حسب التغيير",
+        "noChanges": "لا توجد تغييرات في التغطية بين الجانبين.",
+        "snapshotsMenu": "لقطات",
+        "openSnapshotInReport": "فتح في تقرير تتبع المتطلبات"
       },
       "crossProjectReportTypes": {
         "testExecution": {

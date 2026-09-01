@@ -9,6 +9,7 @@ import {
   type RequirementScopeOption,
 } from "@/components/reports/RequirementScopePicker";
 import { RequirementCoverageStateFilter } from "@/components/reports/RequirementCoverageStateFilter";
+import { RequirementSnapshotPicker } from "@/components/reports/RequirementSnapshotPicker";
 import { Switch } from "@/components/ui/switch";
 import {
   ResizableHandle,
@@ -34,7 +35,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 import React, {
@@ -87,6 +88,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import {
+  useRequirementCoverageChangeColumns,
   useRequirementCoverageGapColumns,
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
@@ -94,6 +96,7 @@ import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
+  sortReportTypesByLabel,
   type ReportType,
 } from "~/lib/config/reportTypes";
 import { usePathname, useRouter } from "~/lib/navigation";
@@ -157,12 +160,13 @@ function isCrossProjectReport(reportType: string): boolean {
   return reportType.startsWith("cross-project-");
 }
 
-// The two Phase 26 requirement report ids (D-2, COV-04). Never a
-// "cross-project-" variant (carve-out 3) -- getRequirementCoverage anchors
-// its recursive closure on a single project id.
+// The requirement report ids (D-2, COV-04, plus the snapshot-diff report).
+// Never a "cross-project-" variant (carve-out 3) -- getRequirementCoverage
+// anchors its recursive closure on a single project id.
 const REQUIREMENT_REPORT_TYPE_IDS = [
   "requirement-coverage-gaps",
   "requirement-traceability",
+  "requirement-coverage-changes",
 ] as const;
 
 /**
@@ -271,16 +275,27 @@ function ReportBuilderContent({
   const requirementsEnabled =
     reportBuilderProject?.requirementsEnabled === true;
 
+  const appLocale = useLocale();
   // Get report types based on mode - done inside client component to avoid passing functions across server/client boundary
   const reportTypes = useMemo(() => {
-    if (mode === "cross-project") return getCrossProjectReportTypes(tReports);
+    // Alphabetical by localized label in every mode — the picker's order,
+    // and (because the default report is the first list entry) the
+    // default selection follow the viewer's alphabet.
+    if (mode === "cross-project")
+      return sortReportTypesByLabel(
+        getCrossProjectReportTypes(tReports),
+        appLocale
+      );
     // Requirement reports are project-scoped and never appear in
     // cross-project mode, so the flag only ever filters the project list.
-    return filterReportTypesForRequirementsFlag(
-      getProjectReportTypes(tReports),
-      requirementsEnabled
+    return sortReportTypesByLabel(
+      filterReportTypesForRequirementsFlag(
+        getProjectReportTypes(tReports),
+        requirementsEnabled
+      ),
+      appLocale
     );
-  }, [mode, tReports, requirementsEnabled]);
+  }, [mode, tReports, requirementsEnabled, appLocale]);
 
   // Results count for the "Showing X of Y" summary. The table is virtualized
   // and infinite-scrolling now, so there is no page/pageSize state — full-set
@@ -467,6 +482,22 @@ function ReportBuilderContent({
   // are as evidence-free as true gaps, so the debt report opens complete.
   const [includeNotRunDebt, setIncludeNotRunDebt] = useState(
     initialPerTypeParams.includeNotRunDebt
+  );
+  // Gaps/traceability: render a persisted snapshot instead of the live
+  // matrix (null = live). Coverage changes: the baseline snapshot the
+  // report is REQUIRED to have, what it compares against (null = live),
+  // and whether unchanged requirements are listed too.
+  const [requirementSnapshotId, setRequirementSnapshotId] = useState<
+    number | null
+  >(initialPerTypeParams.requirementSnapshotId);
+  const [baselineSnapshotId, setBaselineSnapshotId] = useState<number | null>(
+    initialPerTypeParams.baselineSnapshotId
+  );
+  const [compareSnapshotId, setCompareSnapshotId] = useState<number | null>(
+    initialPerTypeParams.compareSnapshotId
+  );
+  const [includeUnchanged, setIncludeUnchanged] = useState(
+    initialPerTypeParams.includeUnchanged
   );
   const [flipThreshold, setFlipThreshold] = useState(
     initialPerTypeParams.flipThreshold
@@ -951,6 +982,31 @@ function ReportBuilderContent({
     canGenerateFromGap ? handleGenerateFromGap : undefined
   );
   const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
+  const requirementCoverageChangeColumns =
+    useRequirementCoverageChangeColumns();
+
+  // Snapshot capture/delete beside the pickers: the same Reporting
+  // add/edit (capture) and delete ladders the snapshot routes enforce,
+  // resolved here only so the buttons are hidden from viewers whose
+  // write would be refused anyway. Project mode only — snapshots belong
+  // to a project.
+  const { permissions: reportingPermissions } = useProjectPermissions(
+    projectId ?? 0,
+    ApplicationArea.Reporting
+  );
+  const canManageSnapshots =
+    mode === "project" &&
+    Boolean(projectId) &&
+    reportingPermissions?.canAddEdit === true;
+  const canDeleteSnapshots =
+    mode === "project" &&
+    Boolean(projectId) &&
+    reportingPermissions?.canDelete === true;
+  // The changes report cannot run without a baseline — auto-run and the
+  // Run button both wait for one instead of firing a guaranteed 400.
+  const changesMissingBaseline =
+    matchesReportType(reportType, "requirement-coverage-changes") &&
+    baselineSnapshotId === null;
 
   // Choose which columns to use based on report type
   const columns = matchesReportType(reportType, "automation-trends")
@@ -967,7 +1023,9 @@ function ReportBuilderContent({
               ? requirementCoverageGapColumns
               : matchesReportType(reportType, "requirement-traceability")
                 ? requirementTraceabilityColumns
-                : standardColumns;
+                : matchesReportType(reportType, "requirement-coverage-changes")
+                  ? requirementCoverageChangeColumns
+                  : standardColumns;
 
   // Single source of truth for row grouping. issue-test-coverage is ALWAYS
   // grouped by issue (issues with expandable test cases) — its last two columns
@@ -1727,10 +1785,21 @@ function ReportBuilderContent({
         // the same way.
         if (
           matchesReportType(reportType, "requirement-coverage-gaps") ||
-          matchesReportType(reportType, "requirement-traceability")
+          matchesReportType(reportType, "requirement-traceability") ||
+          matchesReportType(reportType, "requirement-coverage-changes")
         ) {
           if (requirementScope.length > 0) {
             body.requirementIds = requirementScope.map((option) => option.id);
+          }
+        }
+        if (
+          matchesReportType(reportType, "requirement-coverage-gaps") ||
+          matchesReportType(reportType, "requirement-traceability")
+        ) {
+          // Omitted when live, so a share of the live report stays a
+          // share of the live report.
+          if (requirementSnapshotId !== null) {
+            body.snapshotId = requirementSnapshotId;
           }
         }
         if (matchesReportType(reportType, "requirement-traceability")) {
@@ -1743,6 +1812,15 @@ function ReportBuilderContent({
           // "toggled off" from "predates the toggle", or the redirect
           // would restore the default instead of the shared state.
           body.includeNotRun = includeNotRunDebt;
+        }
+        if (matchesReportType(reportType, "requirement-coverage-changes")) {
+          if (baselineSnapshotId !== null) {
+            body.baselineSnapshotId = baselineSnapshotId;
+          }
+          if (compareSnapshotId !== null) {
+            body.compareSnapshotId = compareSnapshotId;
+          }
+          body.includeUnchanged = includeUnchanged;
         }
 
         // Add sorting parameters if configured
@@ -2027,6 +2105,10 @@ function ReportBuilderContent({
       requirementScope,
       requirementCoverageStates,
       includeNotRunDebt,
+      requirementSnapshotId,
+      baselineSnapshotId,
+      compareSnapshotId,
+      includeUnchanged,
     ]
   );
 
@@ -2059,9 +2141,13 @@ function ReportBuilderContent({
   // completed yet — `results` stays null until a run lands and is reset to
   // null on report-type switches. While true, the results panel shows a
   // loading state instead of a premature "No results found".
+  // The changes report is the one pre-built type whose first run is NOT
+  // guaranteed: without a baseline nothing fires, so the panel must show
+  // its prompt rather than spin forever.
   const awaitingFirstRun =
     results === null &&
     !error &&
+    !changesMissingBaseline &&
     (loading ||
       Boolean(currentReport?.isPreBuilt) ||
       Boolean(searchParams.get("dimensions") && searchParams.get("metrics")));
@@ -2164,16 +2250,19 @@ function ReportBuilderContent({
       "automation-candidates"
     );
 
-    // For pre-built reports, auto-run even without dimensions/metrics
-    const shouldAutoRun = isSnapshotStyleReport
-      ? false
-      : currentReport?.isPreBuilt
-        ? !hasRunForCurrentType && !loading && !error
-        : lastUsedDimensions.length > 0 &&
-          lastUsedMetrics.length > 0 &&
-          !hasRunForCurrentType &&
-          !loading &&
-          !error;
+    // For pre-built reports, auto-run even without dimensions/metrics.
+    // The coverage-changes report waits for a baseline snapshot — once
+    // one is chosen this effect re-evaluates and fires the first run.
+    const shouldAutoRun =
+      isSnapshotStyleReport || changesMissingBaseline
+        ? false
+        : currentReport?.isPreBuilt
+          ? !hasRunForCurrentType && !loading && !error
+          : lastUsedDimensions.length > 0 &&
+            lastUsedMetrics.length > 0 &&
+            !hasRunForCurrentType &&
+            !loading &&
+            !error;
 
     if (shouldAutoRun) {
       lastRunReportType.current = reportType;
@@ -2188,6 +2277,7 @@ function ReportBuilderContent({
     error,
     runReport,
     currentReport,
+    changesMissingBaseline,
   ]);
 
   // Pre-built (non-execution-log) reports hold their full set client-side and
@@ -2311,6 +2401,8 @@ function ReportBuilderContent({
       );
       return;
     }
+    // A changes report without a baseline has nothing to diff against.
+    if (changesMissingBaseline) return;
     // Explicit user run — persist the selections to the URL (for refresh/share).
     void runReport(dimensions, metrics, { persistUrl: true });
   };
@@ -2478,6 +2570,10 @@ function ReportBuilderContent({
                         !matchesReportType(
                           reportType,
                           "requirement-traceability"
+                        ) &&
+                        !matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
                         ) && (
                           <div className="grid gap-2">
                             <DateRangePickerField
@@ -2691,7 +2787,30 @@ function ReportBuilderContent({
                         </div>
                       )}
 
-                      {/* Requirement Report Scope (gaps/traceability) */}
+                      {/* Requirement Report Scope (gaps/traceability/changes) */}
+                      {(matchesReportType(
+                        reportType,
+                        "requirement-coverage-gaps"
+                      ) ||
+                        matchesReportType(
+                          reportType,
+                          "requirement-traceability"
+                        ) ||
+                        matchesReportType(
+                          reportType,
+                          "requirement-coverage-changes"
+                        )) &&
+                        mode === "project" &&
+                        projectId && (
+                          <RequirementScopePicker
+                            projectId={projectId}
+                            value={requirementScope}
+                            onValueChange={setRequirementScope}
+                          />
+                        )}
+
+                      {/* Snapshot to render (gaps/traceability): live or a
+                          saved point-in-time record. */}
                       {(matchesReportType(
                         reportType,
                         "requirement-coverage-gaps"
@@ -2702,10 +2821,20 @@ function ReportBuilderContent({
                         )) &&
                         mode === "project" &&
                         projectId && (
-                          <RequirementScopePicker
-                            projectId={projectId}
-                            value={requirementScope}
-                            onValueChange={setRequirementScope}
+                          <RequirementSnapshotPicker
+                            projectId={Number(projectId)}
+                            value={requirementSnapshotId}
+                            onValueChange={setRequirementSnapshotId}
+                            label={tReports(
+                              "requirementCoverage.snapshotLabel"
+                            )}
+                            nullMode="live"
+                            canManage={canManageSnapshots}
+                            canDelete={canDeleteSnapshots}
+                            requirementIds={requirementScope.map(
+                              (option) => option.id
+                            )}
+                            testIdPrefix="requirement-snapshot"
                           />
                         )}
 
@@ -2718,6 +2847,68 @@ function ReportBuilderContent({
                           onValueChange={setRequirementCoverageStates}
                         />
                       )}
+
+                      {/* Coverage changes: baseline (required) vs. comparison. */}
+                      {matchesReportType(
+                        reportType,
+                        "requirement-coverage-changes"
+                      ) &&
+                        mode === "project" &&
+                        projectId && (
+                          <>
+                            <RequirementSnapshotPicker
+                              projectId={Number(projectId)}
+                              value={baselineSnapshotId}
+                              onValueChange={setBaselineSnapshotId}
+                              label={tReports(
+                                "requirementCoverage.baselineLabel"
+                              )}
+                              nullMode="none"
+                              canManage={canManageSnapshots}
+                              canDelete={canDeleteSnapshots}
+                              requirementIds={requirementScope.map(
+                                (option) => option.id
+                              )}
+                              testIdPrefix="requirement-baseline-snapshot"
+                            />
+                            {changesMissingBaseline ? (
+                              <p
+                                className="text-xs text-muted-foreground"
+                                data-testid="requirement-baseline-required"
+                              >
+                                {tReports(
+                                  "requirementCoverage.baselineRequired"
+                                )}
+                              </p>
+                            ) : null}
+                            <RequirementSnapshotPicker
+                              projectId={Number(projectId)}
+                              value={compareSnapshotId}
+                              onValueChange={setCompareSnapshotId}
+                              label={tReports(
+                                "requirementCoverage.compareLabel"
+                              )}
+                              nullMode="live"
+                              testIdPrefix="requirement-compare-snapshot"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                id="requirement-changes-include-unchanged"
+                                checked={includeUnchanged}
+                                onCheckedChange={setIncludeUnchanged}
+                                data-testid="requirement-changes-include-unchanged"
+                              />
+                              <label
+                                htmlFor="requirement-changes-include-unchanged"
+                                className="text-sm font-medium"
+                              >
+                                {tReports(
+                                  "requirementCoverage.includeUnchanged"
+                                )}
+                              </label>
+                            </div>
+                          </>
+                        )}
 
                       {matchesReportType(
                         reportType,
@@ -3161,7 +3352,7 @@ function ReportBuilderContent({
                       <Button
                         type="button"
                         onClick={handleRunReport}
-                        disabled={loading}
+                        disabled={loading || changesMissingBaseline}
                         className="w-full"
                         data-testid="run-report-button"
                       >
@@ -3473,6 +3664,7 @@ function ReportBuilderContent({
                         onClick={handleRunReport}
                         disabled={
                           loading ||
+                          changesMissingBaseline ||
                           (isPreBuiltReport(reportType)
                             ? false // No requirements for pre-built reports
                             : dimensions.length === 0 || metrics.length === 0)
@@ -3532,6 +3724,11 @@ function ReportBuilderContent({
           <ReportRenderer
             results={results || []}
             awaitingFirstRun={awaitingFirstRun}
+            emptyPrompt={
+              changesMissingBaseline
+                ? tReports("requirementCoverage.baselineRequired")
+                : undefined
+            }
             chartData={allResults ?? undefined}
             reportType={reportType}
             dimensions={lastUsedDimensions}

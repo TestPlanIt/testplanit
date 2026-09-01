@@ -21,6 +21,19 @@ vi.mock("~/lib/services/requirementTraceability", () => ({
   loadRequirementTraceability: vi.fn(),
 }));
 
+// Only the snapshot LOAD is stubbed; the unfold back into matrix rows
+// (`toSnapshotTraceabilityData`) stays real — that seam is what the
+// snapshot branch is proving.
+vi.mock(
+  "~/lib/services/requirementTraceabilitySnapshot",
+  async (importOriginal) => ({
+    ...(await importOriginal<
+      typeof import("~/lib/services/requirementTraceabilitySnapshot")
+    >()),
+    loadRequirementTraceabilitySnapshot: vi.fn(),
+  })
+);
+
 // The real (unmocked) module — toGapRows is the seam this suite is
 // proving, so it stays real rather than mocked. Only the authorizer and
 // the traceability load are stubbed.
@@ -33,12 +46,20 @@ import { getServerSession } from "next-auth";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { loadRequirementTraceability } from "~/lib/services/requirementTraceability";
+import { loadRequirementTraceabilitySnapshot } from "~/lib/services/requirementTraceabilitySnapshot";
+import { groupTraceabilityRows } from "~/lib/services/requirementTraceabilitySnapshotShape";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 import type { RequirementTraceabilityData } from "~/lib/services/requirementTraceability";
 import type { RequirementTraceabilityRow } from "~/lib/services/requirementTraceabilityExport";
 
-import { handleRequirementCoverageReportPOST } from "./requirementCoverageReportUtils";
+import {
+  handleRequirementCoverageChangesPOST,
+  handleRequirementCoverageReportPOST,
+} from "./requirementCoverageReportUtils";
+
+const mockedLoadSnapshot =
+  loadRequirementTraceabilitySnapshot as unknown as ReturnType<typeof vi.fn>;
 
 const mockedSession = getServerSession as unknown as ReturnType<typeof vi.fn>;
 const mockedResolveScope = resolveViewerProjectScope as unknown as ReturnType<
@@ -441,5 +462,279 @@ describe("requirementCoverageReportUtils", () => {
     expect(mockedLoad).toHaveBeenCalledWith(5, {
       accessibleProjectIds: [5],
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Snapshots: the traceability/gaps handler renders a persisted snapshot in
+// place of the live matrix, and the changes handler diffs a baseline
+// snapshot against a later snapshot or the live matrix.
+// ---------------------------------------------------------------------------
+
+function loadedSnapshot(
+  rows: RequirementTraceabilityRow[],
+  overrides: Partial<{ id: number; name: string; projectId: number }> = {}
+) {
+  const entries = groupTraceabilityRows(rows);
+  return {
+    snapshot: {
+      id: overrides.id ?? 77,
+      projectId: overrides.projectId ?? 5,
+      name: overrides.name ?? "Release sign-off",
+      note: null,
+      capturedById: "user-1",
+      capturedAt: new Date("2026-08-15T09:00:00.000Z"),
+      scopeRequirementIds: [],
+      requirementCount: entries.length,
+      passedCount: 0,
+      failedCount: 0,
+      notRunCount: 0,
+      uncoveredCount: 0,
+      caseLinkCount: 0,
+    },
+    projectName: "Project Five",
+    entries,
+  };
+}
+
+describe("snapshot rendering (gaps/traceability)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedAuthorize.mockResolvedValue({ ok: true, bypass: false });
+    mockedSession.mockResolvedValue({ user: { id: "user-1", access: "USER" } });
+    mockedAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1", access: "USER" },
+    });
+    mockedResolveScope.mockResolvedValue([5]);
+    mockedLoad.mockResolvedValue(traceabilityData(fixtureRows()));
+    mockedLoadSnapshot.mockResolvedValue(loadedSnapshot(fixtureRows()));
+  });
+
+  it("serves the snapshot's rows instead of loading the live matrix", async () => {
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: 77 }),
+      "traceability"
+    );
+    expect(response.status).toBe(200);
+    expect(mockedLoadSnapshot).toHaveBeenCalledWith(77, 5);
+    expect(mockedLoad).not.toHaveBeenCalled();
+    const json = await response.json();
+    // The same four pair rows the live fixture produces, unfolded from
+    // the stored entries.
+    expect(json.total).toBe(4);
+    expect(
+      json.data.map((row: any) => [row.requirementKey, row.testCaseName])
+    ).toEqual([
+      ["REQ-1", null],
+      ["REQ-2", null],
+      ["REQ-3", "Case A"],
+      ["REQ-3", "Case B"],
+    ]);
+  });
+
+  it("feeds the gaps variant from the snapshot too", async () => {
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: 77, includeNotRun: false }),
+      "gaps"
+    );
+    const json = await response.json();
+    expect(mockedLoad).not.toHaveBeenCalled();
+    expect(json.data.map((row: any) => row.requirementKey)).toEqual([
+      "REQ-1",
+      "REQ-2",
+    ]);
+  });
+
+  it("404s a snapshot that is not a live record of this project, before any live load", async () => {
+    mockedLoadSnapshot.mockResolvedValue(null);
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: 77 }),
+      "traceability"
+    );
+    expect(response.status).toBe(404);
+    expect(mockedLoad).not.toHaveBeenCalled();
+  });
+
+  it("400s a malformed snapshotId and treats null as live", async () => {
+    const bad = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: "seventy-seven" }),
+      "traceability"
+    );
+    expect(bad.status).toBe(400);
+    expect(mockedLoadSnapshot).not.toHaveBeenCalled();
+
+    const live = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: null }),
+      "traceability"
+    );
+    expect(live.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalledTimes(1);
+    expect(mockedLoadSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("applies the coverage-state filter and the scope to the snapshot's rows", async () => {
+    const filtered = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: 77, coverageStates: ["PASSED"] }),
+      "traceability"
+    );
+    const filteredJson = await filtered.json();
+    expect(filteredJson.data.map((row: any) => row.requirementKey)).toEqual([
+      "REQ-3",
+      "REQ-3",
+    ]);
+
+    const scoped = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: 77, requirementIds: [2] }),
+      "traceability"
+    );
+    const scopedJson = await scoped.json();
+    expect(scopedJson.data.map((row: any) => row.requirementKey)).toEqual([
+      "REQ-2",
+    ]);
+  });
+});
+
+describe("handleRequirementCoverageChangesPOST", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedAuthorize.mockResolvedValue({ ok: true, bypass: false });
+    mockedSession.mockResolvedValue({ user: { id: "user-1", access: "USER" } });
+    mockedAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "user-1", access: "USER" },
+    });
+    mockedResolveScope.mockResolvedValue([5]);
+  });
+
+  // The live matrix has moved on from the baseline: REQ-1 gained a case,
+  // REQ-2 is unchanged, REQ-3 is gone, REQ-4 is new.
+  function laterRows(): RequirementTraceabilityRow[] {
+    const rows = fixtureRows();
+    const req1 = rows[0];
+    const covered1: RequirementTraceabilityRow = {
+      ...req1,
+      caseId: 20,
+      caseName: "Case N",
+      caseProjectId: 5,
+      caseProjectName: "Project Five",
+      statusName: null,
+      statusColor: null,
+      executedAt: null,
+      linkedCaseCount: 1,
+      coverageStatus: "NOT_RUN",
+    };
+    const req4: RequirementTraceabilityRow = {
+      ...rows[1],
+      requirementId: 4,
+      requirementKey: "REQ-4",
+      requirementTitle: "Requirement Four",
+      requirementPath: "REQ-4",
+    };
+    return [covered1, rows[1], req4];
+  }
+
+  it("400s without a baseline snapshot id", async () => {
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({ projectId: 5 })
+    );
+    expect(response.status).toBe(400);
+    expect(mockedLoadSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("404s a baseline that does not resolve in this project", async () => {
+    mockedLoadSnapshot.mockResolvedValue(null);
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({ projectId: 5, baselineSnapshotId: 77 })
+    );
+    expect(response.status).toBe(404);
+    expect(mockedLoad).not.toHaveBeenCalled();
+  });
+
+  it("diffs the baseline against the LIVE matrix by default and lists only changed rows", async () => {
+    mockedLoadSnapshot.mockResolvedValue(loadedSnapshot(fixtureRows()));
+    mockedLoad.mockResolvedValue(traceabilityData(laterRows()));
+
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({ projectId: 5, baselineSnapshotId: 77 })
+    );
+    expect(response.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalledWith(5, { accessibleProjectIds: [5] });
+    const json = await response.json();
+    expect(
+      json.data.map((row: any) => [row.requirementKey, row.changeKind])
+    ).toEqual([
+      ["REQ-1", "COVERAGE_CHANGED"],
+      ["REQ-3", "REMOVED"],
+      ["REQ-4", "ADDED"],
+    ]);
+    // DataTable ids are dense and unique.
+    expect(json.data.map((row: any) => row.id)).toEqual([0, 1, 2]);
+  });
+
+  it("includes unchanged rows on request", async () => {
+    mockedLoadSnapshot.mockResolvedValue(loadedSnapshot(fixtureRows()));
+    mockedLoad.mockResolvedValue(traceabilityData(laterRows()));
+
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({
+        projectId: 5,
+        baselineSnapshotId: 77,
+        includeUnchanged: true,
+      })
+    );
+    const json = await response.json();
+    expect(json.data.map((row: any) => row.changeKind)).toContain("UNCHANGED");
+    expect(json.total).toBe(4);
+  });
+
+  it("compares two snapshots without touching the live matrix", async () => {
+    mockedLoadSnapshot.mockImplementation(async (id: number) =>
+      id === 77
+        ? loadedSnapshot(fixtureRows())
+        : loadedSnapshot(laterRows(), { id: 78, name: "Later" })
+    );
+
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({
+        projectId: 5,
+        baselineSnapshotId: 77,
+        compareSnapshotId: 78,
+      })
+    );
+    expect(response.status).toBe(200);
+    expect(mockedLoad).not.toHaveBeenCalled();
+    expect(mockedLoadSnapshot).toHaveBeenCalledWith(77, 5);
+    expect(mockedLoadSnapshot).toHaveBeenCalledWith(78, 5);
+    const json = await response.json();
+    expect(json.total).toBe(3);
+  });
+
+  it("404s a comparison snapshot that does not resolve", async () => {
+    mockedLoadSnapshot.mockImplementation(async (id: number) =>
+      id === 77 ? loadedSnapshot(fixtureRows()) : null
+    );
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({
+        projectId: 5,
+        baselineSnapshotId: 77,
+        compareSnapshotId: 99,
+      })
+    );
+    expect(response.status).toBe(404);
+  });
+
+  it("scopes both sides to the selected subtrees", async () => {
+    mockedLoadSnapshot.mockResolvedValue(loadedSnapshot(fixtureRows()));
+    mockedLoad.mockResolvedValue(traceabilityData(laterRows()));
+
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({ projectId: 5, baselineSnapshotId: 77, requirementIds: [3] })
+    );
+    const json = await response.json();
+    // Only REQ-3 is in scope on either side: it was removed.
+    expect(
+      json.data.map((row: any) => [row.requirementKey, row.changeKind])
+    ).toEqual([["REQ-3", "REMOVED"]]);
   });
 });

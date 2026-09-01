@@ -129,3 +129,71 @@ describe("sortRequirementReportRows", () => {
     expect(desc.map((r) => r.caseProjectName)).toEqual(["Web", "Cloud", null]);
   });
 });
+
+describe("coverage-changes columns", () => {
+  const changeRows = [
+    {
+      requirementKey: "A",
+      changeKind: "UNCHANGED",
+      previousCoverageStatus: "PASSED",
+      currentCoverageStatus: "PASSED",
+      previousLinkedCaseCount: 2,
+      currentLinkedCaseCount: 2,
+      casesAdded: 0,
+      casesRemoved: 0,
+      resultsChanged: 0,
+    },
+    {
+      requirementKey: "B",
+      changeKind: "REMOVED",
+      previousCoverageStatus: "FAILED",
+      currentCoverageStatus: null,
+      previousLinkedCaseCount: 1,
+      currentLinkedCaseCount: null,
+      casesAdded: 0,
+      casesRemoved: 1,
+      resultsChanged: 0,
+    },
+    {
+      requirementKey: "C",
+      changeKind: "COVERAGE_CHANGED",
+      previousCoverageStatus: "UNCOVERED",
+      currentCoverageStatus: "NOT_RUN",
+      previousLinkedCaseCount: 0,
+      currentLinkedCaseCount: 3,
+      casesAdded: 3,
+      casesRemoved: 0,
+      resultsChanged: 0,
+    },
+  ];
+
+  it("sorts the change column most-consequential first, never alphabetically", () => {
+    const asc = sortRequirementReportRows(changeRows, {
+      column: "change",
+      direction: "asc",
+    });
+    expect(asc.map((r) => r.requirementKey)).toEqual(["B", "C", "A"]);
+  });
+
+  it("sorts a side's coverage by the severity ladder with the absent side last", () => {
+    const asc = sortRequirementReportRows(changeRows, {
+      column: "currentCoverage",
+      direction: "asc",
+    });
+    expect(asc.map((r) => r.requirementKey)).toEqual(["C", "A", "B"]);
+  });
+
+  it("sorts the numeric change columns numerically", () => {
+    const desc = sortRequirementReportRows(changeRows, {
+      column: "casesAdded",
+      direction: "desc",
+    });
+    expect(desc.map((r) => r.requirementKey)).toEqual(["C", "A", "B"]);
+    const linked = sortRequirementReportRows(changeRows, {
+      column: "currentLinkedCases",
+      direction: "asc",
+    });
+    // A missing "after" count sorts before every real count ascending.
+    expect(linked.map((r) => r.requirementKey)).toEqual(["B", "A", "C"]);
+  });
+});

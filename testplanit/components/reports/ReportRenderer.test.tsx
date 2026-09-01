@@ -128,6 +128,35 @@ describe("ReportRenderer", () => {
     expect(screen.getByText("noResultsFound")).toBeInTheDocument();
   });
 
+  it("renders the caller's prompt instead of 'no results' for a report that cannot run yet", () => {
+    render(
+      <ReportRenderer
+        {...defaultProps}
+        reportType="requirement-coverage-changes"
+        results={[]}
+        emptyPrompt="Choose a baseline snapshot to run this report."
+      />
+    );
+    expect(screen.getByTestId("report-empty-prompt")).toBeInTheDocument();
+    expect(
+      screen.getByText("Choose a baseline snapshot to run this report.")
+    ).toBeInTheDocument();
+    expect(screen.queryByText("noResultsFound")).toBeNull();
+  });
+
+  it("keeps the loading state ahead of the prompt while a first run is pending", () => {
+    render(
+      <ReportRenderer
+        {...defaultProps}
+        reportType="requirement-coverage-changes"
+        results={[]}
+        awaitingFirstRun
+        emptyPrompt="Choose a baseline snapshot to run this report."
+      />
+    );
+    expect(screen.queryByTestId("report-empty-prompt")).toBeNull();
+  });
+
   it("renders 'select dimension and metric' message when no dimensions or metrics", () => {
     render(
       <ReportRenderer

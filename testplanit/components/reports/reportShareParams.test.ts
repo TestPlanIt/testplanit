@@ -202,3 +202,71 @@ describe("parsePerTypeReportParams", () => {
     expect(state.flakyAutomatedFilter).toBe("all");
   });
 });
+
+describe("requirement snapshot params", () => {
+  it("serializes the snapshot ids the requirement reports send", () => {
+    const params = buildSharedReportSearchParams({
+      reportType: "requirement-coverage-changes",
+      projectId: 370,
+      baselineSnapshotId: 12,
+      compareSnapshotId: 15,
+      includeUnchanged: false,
+    });
+    expect(params.get("baselineSnapshotId")).toBe("12");
+    expect(params.get("compareSnapshotId")).toBe("15");
+    expect(params.get("includeUnchanged")).toBe("false");
+  });
+
+  it("hydrates a traceability snapshot id only for the two matrix reports", () => {
+    const traceability = parsePerTypeReportParams(
+      new URLSearchParams("snapshotId=9"),
+      "requirement-traceability"
+    );
+    expect(traceability.requirementSnapshotId).toBe(9);
+    const gaps = parsePerTypeReportParams(
+      new URLSearchParams("snapshotId=9"),
+      "requirement-coverage-gaps"
+    );
+    expect(gaps.requirementSnapshotId).toBe(9);
+    const changes = parsePerTypeReportParams(
+      new URLSearchParams("snapshotId=9"),
+      "requirement-coverage-changes"
+    );
+    expect(changes.requirementSnapshotId).toBeNull();
+    expect(
+      parsePerTypeReportParams(
+        new URLSearchParams("snapshotId=abc"),
+        "requirement-traceability"
+      ).requirementSnapshotId
+    ).toBeNull();
+  });
+
+  it("hydrates the changes report's baseline, comparison, scope, and unchanged toggle", () => {
+    const state = parsePerTypeReportParams(
+      new URLSearchParams(
+        "baselineSnapshotId=12&compareSnapshotId=15&includeUnchanged=true&requirementIds=4451"
+      ),
+      "requirement-coverage-changes"
+    );
+    expect(state.baselineSnapshotId).toBe(12);
+    expect(state.compareSnapshotId).toBe(15);
+    expect(state.includeUnchanged).toBe(true);
+    expect(state.requirementIds).toEqual([4451]);
+    // A live comparison stores no compareSnapshotId — absence restores live.
+    const live = parsePerTypeReportParams(
+      new URLSearchParams("baselineSnapshotId=12"),
+      "requirement-coverage-changes"
+    );
+    expect(live.compareSnapshotId).toBeNull();
+    expect(live.includeUnchanged).toBe(
+      PER_TYPE_REPORT_PARAM_DEFAULTS.includeUnchanged
+    );
+    // Type-gated: the traceability report never reads the changes params.
+    const other = parsePerTypeReportParams(
+      new URLSearchParams("baselineSnapshotId=12&includeUnchanged=true"),
+      "requirement-traceability"
+    );
+    expect(other.baselineSnapshotId).toBeNull();
+    expect(other.includeUnchanged).toBe(false);
+  });
+});

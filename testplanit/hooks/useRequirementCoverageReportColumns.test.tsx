@@ -51,6 +51,7 @@ vi.mock("@/components/ui/tooltip", () => ({
 }));
 
 import {
+  useRequirementCoverageChangeColumns,
   useRequirementCoverageGapColumns,
   useRequirementTraceabilityColumns,
 } from "./useRequirementCoverageReportColumns";
@@ -427,5 +428,87 @@ describe("useRequirementCoverageReportColumns", () => {
     );
     expect(getByText(expectedWithAppLocale)).toBeInTheDocument();
     expect(queryByText(defaultFormatted)).not.toBeInTheDocument();
+  });
+});
+
+describe("useRequirementCoverageChangeColumns", () => {
+  const changeRow = {
+    id: 0,
+    requirementId: 9,
+    requirementKey: "REQ-9",
+    requirementTitle: "Refunds",
+    requirementPath: "Billing > Refunds",
+    requirementParentPath: "Billing",
+    requirementIssueTypeName: null,
+    requirementIssueTypeIconUrl: null,
+    requirementRootId: 1,
+    changeKind: "COVERAGE_CHANGED",
+    previousCoverageStatus: "UNCOVERED",
+    currentCoverageStatus: "FAILED",
+    previousLinkedCaseCount: 0,
+    currentLinkedCaseCount: 2,
+    casesAdded: 2,
+    casesRemoved: 0,
+    resultsChanged: 0,
+  };
+
+  it("pins the column ids the sort utility and CSV builder key on", () => {
+    const { result } = renderHook(() => useRequirementCoverageChangeColumns());
+    expect(result.current.map((c: any) => c.id)).toEqual([
+      "requirement",
+      "requirementPath",
+      "change",
+      "previousCoverage",
+      "currentCoverage",
+      "previousLinkedCases",
+      "currentLinkedCases",
+      "casesAdded",
+      "casesRemoved",
+      "resultsChanged",
+    ]);
+  });
+
+  it("renders the change kind as a badge and both coverage sides through the shared state cell", () => {
+    const { result } = renderHook(() => useRequirementCoverageChangeColumns());
+    const columns = result.current;
+
+    const { getByTestId } = render(
+      <>
+        {cellFor(columns, "change", changeRow)}
+        {cellFor(columns, "previousCoverage", changeRow)}
+        {cellFor(columns, "currentCoverage", changeRow)}
+      </>
+    );
+    expect(getByTestId("requirement-change-coverage").textContent).toBe(
+      "changeCoverage"
+    );
+    expect(
+      getByTestId("requirement-report-coverage-uncovered")
+    ).toBeInTheDocument();
+    expect(
+      getByTestId("requirement-report-coverage-failed")
+    ).toBeInTheDocument();
+  });
+
+  it("renders a dash for the side a requirement is absent from", () => {
+    const { result } = renderHook(() => useRequirementCoverageChangeColumns());
+    const removed = {
+      ...changeRow,
+      changeKind: "REMOVED",
+      currentCoverageStatus: null,
+      currentLinkedCaseCount: null,
+    };
+    const { container, getByTestId } = render(
+      <>
+        {cellFor(result.current, "change", removed)}
+        {cellFor(result.current, "currentCoverage", removed)}
+        {cellFor(result.current, "currentLinkedCases", removed)}
+      </>
+    );
+    expect(getByTestId("requirement-change-removed")).toBeInTheDocument();
+    expect(container.textContent).toContain("—");
+    expect(
+      container.querySelector('[data-testid^="requirement-report-coverage-"]')
+    ).toBeNull();
   });
 });

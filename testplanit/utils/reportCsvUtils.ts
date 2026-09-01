@@ -218,8 +218,8 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
     FAILED: t("requirements.coverage.statusFailed"),
     NOT_RUN: t("requirements.coverage.statusNotRun"),
   };
-  // Mirrors the report table cell's and the PDF exporter's three-way split
-  // (`useExportRequirementTraceabilityPdf.ts`): a null `testCaseId` is the
+  // Mirrors the report table cell's three-way split
+  // (`useRequirementCoverageReportColumns.tsx`): a null `testCaseId` is the
   // coverage gap and writes the localized "Uncovered" label; a linked case
   // with no `lastStatusName` has simply never run and writes "Not run" --
   // the two must never collapse to the same blank cell, or a real gap
@@ -234,6 +234,52 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
       r.testCaseId == null ? uncovered : (r.lastStatusName ?? notRun);
     row[h.executedAt] = fmtDateTime(r.lastExecutedAt);
     row[h.project] = r.caseProjectName ?? "";
+    return row;
+  });
+}
+
+function buildRequirementCoverageChanges(p: BuildReportCsvParams): CsvRow[] {
+  const { rows, t } = p;
+  const h = {
+    requirement: t("reports.ui.requirementCoverage.requirement"),
+    path: t("reports.ui.requirementCoverage.path"),
+    change: t("reports.ui.requirementCoverage.change"),
+    before: t("reports.ui.requirementCoverage.coverageBefore"),
+    after: t("reports.ui.requirementCoverage.coverageAfter"),
+    linkedBefore: t("reports.ui.requirementCoverage.linkedCasesBefore"),
+    linkedAfter: t("reports.ui.requirementCoverage.linkedCasesAfter"),
+    casesAdded: t("reports.ui.requirementCoverage.casesAdded"),
+    casesRemoved: t("reports.ui.requirementCoverage.casesRemoved"),
+    resultsChanged: t("reports.ui.requirementCoverage.resultsChanged"),
+  };
+  const coverageLabels: Record<string, string> = {
+    UNCOVERED: t("requirements.coverage.uncovered"),
+    PASSED: t("requirements.coverage.statusPassed"),
+    FAILED: t("requirements.coverage.statusFailed"),
+    NOT_RUN: t("requirements.coverage.statusNotRun"),
+  };
+  const changeLabels: Record<string, string> = {
+    ADDED: t("reports.ui.requirementCoverage.changeAdded"),
+    REMOVED: t("reports.ui.requirementCoverage.changeRemoved"),
+    COVERAGE_CHANGED: t("reports.ui.requirementCoverage.changeCoverage"),
+    LINKS_CHANGED: t("reports.ui.requirementCoverage.changeLinks"),
+    RESULTS_CHANGED: t("reports.ui.requirementCoverage.changeResults"),
+    UNCHANGED: t("reports.ui.requirementCoverage.changeUnchanged"),
+  };
+  // A missing side (no "before" for an added requirement, no "after" for
+  // a removed one) writes an empty cell, distinct from any real state.
+  return rows.map((r: any) => {
+    const row: CsvRow = {};
+    row[h.requirement] = formatRequirementCellText(r);
+    row[h.path] = r.requirementParentPath ?? "";
+    row[h.change] = changeLabels[r.changeKind] ?? "";
+    row[h.before] = coverageLabels[r.previousCoverageStatus] ?? "";
+    row[h.after] = coverageLabels[r.currentCoverageStatus] ?? "";
+    row[h.linkedBefore] = r.previousLinkedCaseCount ?? "";
+    row[h.linkedAfter] = r.currentLinkedCaseCount ?? "";
+    row[h.casesAdded] = r.casesAdded ?? 0;
+    row[h.casesRemoved] = r.casesRemoved ?? 0;
+    row[h.resultsChanged] = r.resultsChanged ?? 0;
     return row;
   });
 }
@@ -410,6 +456,8 @@ export function buildReportCsvRows(p: BuildReportCsvParams): CsvRow[] {
       return buildRequirementCoverageGaps(p);
     case "requirement-traceability":
       return buildRequirementTraceability(p);
+    case "requirement-coverage-changes":
+      return buildRequirementCoverageChanges(p);
     case "execution-log":
       return buildExecutionLog(p);
     case "automation-trends":

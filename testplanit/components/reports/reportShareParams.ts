@@ -148,6 +148,13 @@ export interface PerTypeReportUrlState {
   requirementIds: number[];
   requirementCoverageStates: RequirementCoverageStateValue[];
   includeNotRunDebt: boolean;
+  /** Gaps/traceability: the persisted snapshot to render; null = live. */
+  requirementSnapshotId: number | null;
+  /** Coverage changes: the baseline snapshot (required to run) and what
+   * to compare it to (null = the live matrix). */
+  baselineSnapshotId: number | null;
+  compareSnapshotId: number | null;
+  includeUnchanged: boolean;
   dateGrouping: DateGroupingValue;
   trendsFilterValues: Record<string, Array<string | number>>;
 }
@@ -169,6 +176,10 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   // complete. The run body always sends the explicit boolean, so a
   // share made with it off restores off.
   includeNotRunDebt: true,
+  requirementSnapshotId: null,
+  baselineSnapshotId: null,
+  compareSnapshotId: null,
+  includeUnchanged: false,
   dateGrouping: "weekly",
   trendsFilterValues: {},
 };
@@ -212,6 +223,17 @@ function positiveIntParam(
   if (raw === null) return fallback;
   const parsed = Number.parseInt(raw, 10);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+/** A positive-integer id param whose absence (or garbage) means "none". */
+function optionalIdParam(
+  params: ReadableSearchParams,
+  name: string
+): number | null {
+  const raw = params.get(name);
+  if (raw === null) return null;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 function enumParam<T extends string>(
@@ -376,12 +398,28 @@ export function parsePerTypeReportParams(
 
   if (
     base === "requirement-coverage-gaps" ||
-    base === "requirement-traceability"
+    base === "requirement-traceability" ||
+    base === "requirement-coverage-changes"
   ) {
     state.requirementIds = idListParam(
       params,
       "requirementIds",
       MAX_REQUIREMENT_SCOPE_IDS
+    );
+  }
+  if (
+    base === "requirement-coverage-gaps" ||
+    base === "requirement-traceability"
+  ) {
+    state.requirementSnapshotId = optionalIdParam(params, "snapshotId");
+  }
+  if (base === "requirement-coverage-changes") {
+    state.baselineSnapshotId = optionalIdParam(params, "baselineSnapshotId");
+    state.compareSnapshotId = optionalIdParam(params, "compareSnapshotId");
+    state.includeUnchanged = booleanParam(
+      params,
+      "includeUnchanged",
+      state.includeUnchanged
     );
   }
   if (base === "requirement-traceability") {

@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "이 요구 사항에 직접 연결되지 않고 하위 항목에 연결되어 있습니다.",
       "notRunCell": "실행되지 않음"
     },
-    "export": {
-      "menuLabel": "추적성 내보내기",
-      "exportFailed": "추적성을 내보내는 데 실패했습니다.",
-      "pdfEnglishOnlyHint": "PDF 내보내기는 영어로만 생성됩니다.",
-      "csvOnReportsHint": "CSV로 내보내려면 요구 사항 추적성 보고서를 실행하세요."
-    },
     "disabled": {
       "title": "요구 사항이 활성화되지 않음",
       "description": "이 프로젝트는 요구 사항 기능을 활성화하지 않았습니다. 요구 사항 트리를 구성하려면 프로젝트 관리자에게 프로젝트 설정에서 이 기능을 활성화하도록 요청하세요."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "요구 사항 추적성",
           "description": "모든 요구 사항과 연결된 테스트 케이스 및 최신 실행 결과를 함께 표시합니다"
+        },
+        "requirementCoverageChanges": {
+          "label": "요구사항 커버리지 변경",
+          "description": "저장된 추적성 스냅샷을 이후 스냅샷 또는 실시간 매트릭스와 비교하여 어떤 요구사항의 커버리지가 변경되었는지 확인합니다"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365일",
         "ageOver365": "1년 초과",
         "includeNotRun": "테스트가 한 번도 실행되지 않은 요구 사항 포함",
-        "otherRoots": "기타 ({count, plural, other {#개 계층}})"
+        "otherRoots": "기타 ({count, plural, other {#개 계층}})",
+        "snapshotLabel": "스냅샷",
+        "snapshotLive": "실시간 매트릭스",
+        "snapshotHelp": "실시간 데이터 대신 저장된 특정 시점의 매트릭스 스냅샷을 표시합니다. 스냅샷은 내보내고, 공유하고, 비교할 수 있는 변경 불가능한 기록입니다.",
+        "snapshotPlaceholder": "스냅샷 선택",
+        "snapshotRequirementsCount": "{count, plural, other {요구사항 #개}}",
+        "snapshotUncoveredCount": "미충족 {count}개",
+        "snapshotCapturedBy": "{user}에 의해 {date}에 캡처됨",
+        "noSnapshots": "아직 스냅샷이 없습니다. 요구사항 추적성 보고서 또는 요구사항 페이지에서 스냅샷을 저장하세요.",
+        "saveSnapshot": "스냅샷 저장",
+        "saveSnapshotTitle": "추적성 스냅샷 저장",
+        "saveSnapshotDescription": "현재 추적성 매트릭스—모든 요구사항, 이를 커버하는 테스트 케이스, 그리고 그 최신 결과—를 나중에 보기, 내보내기, 공유, 비교할 수 있는 변경 불가능한 명명된 특정 시점 스냅샷으로 기록합니다.",
+        "saveSnapshotScoped": "현재 범위에 포함된 요구사항만 캡처됩니다.",
+        "snapshotName": "이름",
+        "snapshotNamePlaceholder": "릴리스 2.4 승인",
+        "snapshotNote": "메모",
+        "snapshotNotePlaceholder": "선택 사항 — 이 스냅샷이 무엇에 대한 증거인지",
+        "snapshotSaved": "스냅샷 \"{name}\" 저장됨.",
+        "snapshotSaveFailed": "스냅샷을 저장하지 못했습니다.",
+        "deleteSnapshot": "스냅샷 삭제",
+        "deleteSnapshotTitle": "이 스냅샷을 삭제하시겠습니까?",
+        "deleteSnapshotDescription": "\"{name}\"는 더 이상 보고서 뷰, 비교 기준선 또는 공유 대상으로 사용할 수 없습니다. 요구사항이나 테스트 케이스에는 영향이 없습니다.",
+        "snapshotDeleted": "스냅샷이 삭제되었습니다.",
+        "snapshotDeleteFailed": "스냅샷을 삭제하지 못했습니다.",
+        "baselineLabel": "기준선 스냅샷",
+        "compareLabel": "비교 대상",
+        "baselineRequired": "이 보고서를 실행하려면 기준선 스냅샷을 선택하세요.",
+        "includeUnchanged": "변경되지 않은 요구사항 포함",
+        "change": "변경",
+        "coverageBefore": "변경 전 커버리지",
+        "coverageAfter": "변경 후 커버리지",
+        "linkedCasesBefore": "변경 전 연동됨",
+        "linkedCasesAfter": "변경 후 연동됨",
+        "casesAdded": "추가된 케이스",
+        "casesRemoved": "제거된 케이스",
+        "resultsChanged": "결과 변경됨",
+        "changeAdded": "추가됨",
+        "changeRemoved": "제거됨",
+        "changeCoverage": "커버리지 변경됨",
+        "changeLinks": "링크 변경됨",
+        "changeResults": "결과 변경됨",
+        "changeUnchanged": "변경 없음",
+        "changedRequirements": "변경된 요구사항",
+        "newlyCovered": "새로 커버됨",
+        "newlyUncovered": "새로 커버 안 됨",
+        "nowFailing": "새로 실패함",
+        "noLongerFailing": "더 이상 실패하지 않음",
+        "byChangeKind": "변경 유형별 요구사항",
+        "noChanges": "두 항목 간 커버리지 변경이 없습니다.",
+        "snapshotsMenu": "스냅샷",
+        "openSnapshotInReport": "요구사항 추적성 보고서에서 열기"
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -22,6 +22,7 @@ import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { getDateFnsLocale } from "~/utils/locales";
 
 import type {
+  RequirementCoverageChangeReportRow,
   RequirementCoverageGapReportRow,
   RequirementTraceabilityReportRow,
 } from "~/utils/requirementCoverageReportUtils";
@@ -50,9 +51,9 @@ const REQUIREMENT_COLUMN_SIZE = 280;
 const PATH_COLUMN_SIZE = 320;
 
 /**
- * The result cell mirrors the PDF exporter's three-way logic
- * (`hooks/pdf/useExportRequirementTraceabilityPdf.ts`) so the two exports of
- * one dataset never disagree about what a blank cell means:
+ * The result cell's three-way logic — the CSV builder in
+ * `utils/reportCsvUtils.ts` mirrors it, so the table and the export never
+ * disagree about what a blank cell means:
  *   - `testCaseId == null` -> the coverage gap: the uncovered treatment,
  *     using the same dashed warning tokens as the tree's coverage cell
  *     (`CoverageChip`'s Uncovered badge, never a hardcoded amber).
@@ -613,4 +614,278 @@ export function useRequirementTraceabilityColumns(): ColumnDef<
 
     return columns;
   }, [t, tCoverage, dateFnsLocale]);
+}
+
+/**
+ * The change-kind cell of the coverage-changes report. Added/removed and
+ * a moved coverage state are the consequential kinds and get the
+ * report's badge treatment; the two quieter kinds (links, results) and
+ * "unchanged" render muted, so a reader scanning the column lands on
+ * what matters.
+ */
+function RequirementChangeKindCell({
+  kind,
+}: {
+  kind: RequirementCoverageChangeReportRow["changeKind"];
+}) {
+  const t = useTranslations("reports.ui.requirementCoverage");
+
+  switch (kind) {
+    case "ADDED":
+      return (
+        <Badge
+          variant="outline"
+          data-testid="requirement-change-added"
+          className="whitespace-nowrap border-success/40 bg-success/10 text-foreground"
+        >
+          {t("changeAdded")}
+        </Badge>
+      );
+    case "REMOVED":
+      return (
+        <Badge
+          variant="outline"
+          data-testid="requirement-change-removed"
+          className="whitespace-nowrap border-dashed border-destructive/40 bg-destructive/10 text-foreground"
+        >
+          {t("changeRemoved")}
+        </Badge>
+      );
+    case "COVERAGE_CHANGED":
+      return (
+        <Badge
+          variant="outline"
+          data-testid="requirement-change-coverage"
+          className="whitespace-nowrap border-warning bg-warning/15 text-foreground"
+        >
+          {t("changeCoverage")}
+        </Badge>
+      );
+    case "LINKS_CHANGED":
+      return (
+        <span className="text-sm" data-testid="requirement-change-links">
+          {t("changeLinks")}
+        </span>
+      );
+    case "RESULTS_CHANGED":
+      return (
+        <span className="text-sm" data-testid="requirement-change-results">
+          {t("changeResults")}
+        </span>
+      );
+    default:
+      return (
+        <span
+          className="text-muted-foreground italic text-sm"
+          data-testid="requirement-change-unchanged"
+        >
+          {t("changeUnchanged")}
+        </span>
+      );
+  }
+}
+
+/** A coverage state on one side of the diff; a dash for the side the
+ * requirement is absent from (added → no "before", removed → no "after"). */
+function RequirementCoverageSideCell({
+  status,
+}: {
+  status: RequirementCoverageChangeReportRow["previousCoverageStatus"];
+}) {
+  if (status === null || status === undefined) {
+    return <span className="text-muted-foreground">{"—"}</span>;
+  }
+  return <RequirementCoverageStateCell status={status} />;
+}
+
+function countCell(value: number | null | undefined): React.ReactNode {
+  if (value === null || value === undefined) {
+    return <span className="text-muted-foreground">{"—"}</span>;
+  }
+  return <span className="text-sm tabular-nums">{value}</span>;
+}
+
+export function useRequirementCoverageChangeColumns(): ColumnDef<
+  RequirementCoverageChangeReportRow,
+  any
+>[] {
+  const t = useTranslations("reports.ui.requirementCoverage");
+
+  return useMemo(() => {
+    const columnHelper =
+      createColumnHelper<RequirementCoverageChangeReportRow>();
+    const columns: ColumnDef<RequirementCoverageChangeReportRow, any>[] = [];
+
+    columns.push(
+      columnHelper.accessor("requirementKey", {
+        id: "requirement",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("requirement")}</span>,
+        cell: (info) => (
+          <Link
+            href={`/requirement/${info.row.original.requirementId}`}
+            className="flex min-w-0 items-center gap-1.5 font-medium hover:underline"
+            data-testid={`requirement-report-link-${info.row.original.requirementId}`}
+          >
+            <IssueTypeIcon
+              fallbackIcon={ClipboardCheck}
+              issueTypeName={info.row.original.requirementIssueTypeName}
+              iconUrl={info.row.original.requirementIssueTypeIconUrl}
+              className="h-4 w-4 shrink-0"
+            />
+            <span className="min-w-0 truncate">
+              {formatRequirementCellText(info.row.original)}
+            </span>
+          </Link>
+        ),
+        enableSorting: true,
+        size: REQUIREMENT_COLUMN_SIZE,
+        minSize: 200,
+        maxSize: 500,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("requirementParentPath", {
+        id: "requirementPath",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("path")}</span>,
+        cell: (info) => (
+          <div className="min-w-0 truncate text-sm text-muted-foreground">
+            {info.getValue()}
+          </div>
+        ),
+        enableSorting: true,
+        size: PATH_COLUMN_SIZE,
+        minSize: 200,
+        maxSize: 500,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("changeKind", {
+        id: "change",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("change")}</span>,
+        cell: (info) => (
+          <RequirementChangeKindCell kind={info.row.original.changeKind} />
+        ),
+        enableSorting: true,
+        size: 160,
+        minSize: 120,
+        maxSize: 240,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("previousCoverageStatus", {
+        id: "previousCoverage",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("coverageBefore")}</span>,
+        cell: (info) => (
+          <RequirementCoverageSideCell
+            status={info.row.original.previousCoverageStatus}
+          />
+        ),
+        enableSorting: true,
+        size: 150,
+        minSize: 110,
+        maxSize: 220,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("currentCoverageStatus", {
+        id: "currentCoverage",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("coverageAfter")}</span>,
+        cell: (info) => (
+          <RequirementCoverageSideCell
+            status={info.row.original.currentCoverageStatus}
+          />
+        ),
+        enableSorting: true,
+        size: 150,
+        minSize: 110,
+        maxSize: 220,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("previousLinkedCaseCount", {
+        id: "previousLinkedCases",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("linkedCasesBefore")}</span>,
+        cell: (info) => countCell(info.getValue()),
+        enableSorting: true,
+        size: 120,
+        minSize: 90,
+        maxSize: 180,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("currentLinkedCaseCount", {
+        id: "currentLinkedCases",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("linkedCasesAfter")}</span>,
+        cell: (info) => countCell(info.getValue()),
+        enableSorting: true,
+        size: 120,
+        minSize: 90,
+        maxSize: 180,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("casesAdded", {
+        id: "casesAdded",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("casesAdded")}</span>,
+        cell: (info) => countCell(info.getValue()),
+        enableSorting: true,
+        size: 120,
+        minSize: 90,
+        maxSize: 180,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("casesRemoved", {
+        id: "casesRemoved",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("casesRemoved")}</span>,
+        cell: (info) => countCell(info.getValue()),
+        enableSorting: true,
+        size: 130,
+        minSize: 90,
+        maxSize: 180,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("resultsChanged", {
+        id: "resultsChanged",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{t("resultsChanged")}</span>,
+        cell: (info) => countCell(info.getValue()),
+        enableSorting: true,
+        size: 140,
+        minSize: 100,
+        maxSize: 200,
+      })
+    );
+
+    return columns;
+  }, [t]);
 }

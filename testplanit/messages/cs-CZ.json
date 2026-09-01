@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Propojeno s podřízeným požadavkem, nikoli přímo s tímto požadavkem.",
       "notRunCell": "Neproběhlo"
     },
-    "export": {
-      "menuLabel": "Exportovat sledovatelnost",
-      "exportFailed": "Nepodařilo se exportovat sledovatelnost.",
-      "pdfEnglishOnlyHint": "Exporty do PDF se generují pouze v angličtině.",
-      "csvOnReportsHint": "Pro export do CSV spusťte report Sledovatelnost požadavků."
-    },
     "disabled": {
       "title": "Požadavky nejsou aktivovány",
       "description": "Tento projekt nemá aktivovanou funkci požadavků. Požádejte správce projektu, aby ji aktivoval v nastavení projektu, abyste mohli začít vytvářet stromy požadavků."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Sledovatelnost požadavků",
           "description": "Každý požadavek spárovaný s propojenými testovacími případy a jejich posledním výsledkem provedení"
+        },
+        "requirementCoverageChanges": {
+          "label": "Změny pokrytí požadavků",
+          "description": "Porovnejte uložený snímek sledovatelnosti s pozdějším snímkem nebo aktuální maticí a zjistěte, u kterých požadavků se pokrytí změnilo"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 dní",
         "ageOver365": "Více než rok",
         "includeNotRun": "Zahrnout požadavky, jejichž testy nikdy neběžely",
-        "otherRoots": "Ostatní ({count, plural, one {# hierarchie} few {# hierarchie} many {# hierarchie} other {# hierarchií}})"
+        "otherRoots": "Ostatní ({count, plural, one {# hierarchie} few {# hierarchie} many {# hierarchie} other {# hierarchií}})",
+        "snapshotLabel": "Snímek",
+        "snapshotLive": "Aktuální matice",
+        "snapshotHelp": "Zobrazit uložený snímek matice k určitému okamžiku místo aktuálních dat. Snímky jsou neměnné záznamy, které lze exportovat, sdílet a porovnávat.",
+        "snapshotPlaceholder": "Vyberte snímek",
+        "snapshotRequirementsCount": "{count, plural, one {# požadavek} few {# požadavky} many {# požadavku} other {# požadavků}}",
+        "snapshotUncoveredCount": "{count} nepokrytých",
+        "snapshotCapturedBy": "Pořízeno {date} uživatelem {user}",
+        "noSnapshots": "Zatím žádné snímky. Uložte jeden ze zprávy Sledovatelnost požadavků nebo ze stránky Požadavky.",
+        "saveSnapshot": "Uložit snímek",
+        "saveSnapshotTitle": "Uložit snímek sledovatelnosti",
+        "saveSnapshotDescription": "Zaznamená aktuální matici sledovatelnosti — všechny požadavky, jejich pokrývající testovací případy a jejich nejnovější výsledky — jako neměnný, pojmenovaný snímek k danému okamžiku, který lze později zobrazit, exportovat, sdílet a porovnávat.",
+        "saveSnapshotScoped": "Zachyceny budou pouze požadavky aktuálně v rozsahu.",
+        "snapshotName": "Název",
+        "snapshotNamePlaceholder": "Schválení vydání 2.4",
+        "snapshotNote": "Poznámka",
+        "snapshotNotePlaceholder": "Nepovinné — čeho je tento snímek důkazem",
+        "snapshotSaved": "Snímek „{name}“ byl uložen.",
+        "snapshotSaveFailed": "Uložení snímku se nezdařilo.",
+        "deleteSnapshot": "Odstranit snímek",
+        "deleteSnapshotTitle": "Odstranit tento snímek?",
+        "deleteSnapshotDescription": "„{name}“ již nebude dostupný jako zobrazení sestavy, srovnávací základna ani cíl sdílení. Žádný požadavek ani testovací případ nebude ovlivněn.",
+        "snapshotDeleted": "Snímek byl odstraněn.",
+        "snapshotDeleteFailed": "Odstranění snímku se nezdařilo.",
+        "baselineLabel": "Základní snímek",
+        "compareLabel": "Porovnat s",
+        "baselineRequired": "Pro spuštění této zprávy vyberte základní snímek.",
+        "includeUnchanged": "Zahrnout nezměněné požadavky",
+        "change": "Změna",
+        "coverageBefore": "Pokrytí předtím",
+        "coverageAfter": "Pokrytí poté",
+        "linkedCasesBefore": "Propojeno předtím",
+        "linkedCasesAfter": "Propojeno poté",
+        "casesAdded": "Přidané případy",
+        "casesRemoved": "Odebrané případy",
+        "resultsChanged": "Změněné výsledky",
+        "changeAdded": "Přidáno",
+        "changeRemoved": "Odebráno",
+        "changeCoverage": "Pokrytí se změnilo",
+        "changeLinks": "Odkazy se změnily",
+        "changeResults": "Výsledky se změnily",
+        "changeUnchanged": "Beze změny",
+        "changedRequirements": "Změněné požadavky",
+        "newlyCovered": "Nově pokryto",
+        "newlyUncovered": "Nově nepokryto",
+        "nowFailing": "Nyní neúspěšné",
+        "noLongerFailing": "Již nejsou neúspěšné",
+        "byChangeKind": "Požadavky podle typu změny",
+        "noChanges": "Mezi oběma stranami nedošlo ke změnám pokrytí.",
+        "snapshotsMenu": "Snímky",
+        "openSnapshotInReport": "Otevřít ve zprávě Sledovatelnost požadavků"
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -15,34 +15,23 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { SectionHeader } from "@/components/ui/typography";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { RequirementSnapshotHeaderMenu } from "@/components/reports/RequirementSnapshotHeaderMenu";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ClipboardPlus,
-  FileDown,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardPlus } from "lucide-react";
 import { PanelImperativeHandle } from "react-resizable-panels";
-import { useSession } from "next-auth/react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { RequirementDetailsPanel } from "@/components/requirements/RequirementDetailsPanel";
-import { useExportRequirementTraceabilityPdf } from "~/hooks/pdf/useExportRequirementTraceabilityPdf";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 // `usePathname` comes from the i18n wrapper, never `next/navigation`: the
 // raw hook returns the locale-prefixed path, which the wrapper's own
 // `router.replace` would then prefix a second time.
 import { usePathname, useRouter } from "~/lib/navigation";
+import { ApplicationArea } from "~/zenstack/models";
 import { schema } from "~/zenstack/schema";
 // Imported under an alias: the structural drag-drop-nesting guard in
 // `RequirementsWorkspace.test.tsx` does a raw text search for the literal
@@ -83,8 +72,6 @@ export default function RequirementsWorkspace({
   projectId,
 }: RequirementsWorkspaceProps) {
   const t = useTranslations();
-  const locale = useLocale();
-  const { data: sessionAuth } = useSession();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -289,6 +276,15 @@ export default function RequirementsWorkspace({
   const { isProjectAdmin: canAddEdit } = useProjectPermissions(
     Number(projectId)
   );
+  // Snapshot capture is a Reporting act (the snapshot model's own create
+  // policy), so its button follows that area's add/edit bit rather than
+  // the requirement-editing gate above.
+  const { permissions: reportingPermissions } = useProjectPermissions(
+    Number(projectId),
+    ApplicationArea.Reporting
+  );
+  const canSaveSnapshot = reportingPermissions?.canAddEdit === true;
+  const canDeleteSnapshot = reportingPermissions?.canDelete === true;
 
   // Requirements is opt-in per project. Phase 25 gated only the ProjectMenu
   // entry, so a bookmarked URL still reached this page on a project with
@@ -312,19 +308,12 @@ export default function RequirementsWorkspace({
     { enabled: Boolean(projectId) && !isNaN(Number(projectId)) }
   );
   const requirementsEnabled = project?.requirementsEnabled === true;
+
   // Three states, not two: while the query is in flight neither the enabled
   // panel group nor the disabled notice is known to be correct yet, so both
   // stay hidden behind a loading placeholder (fails CLOSED -- the export
   // action below is gated on `!isGateResolving` too, for the same reason).
   const isGateResolving = isProjectFlagPending === true;
-
-  const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
-    useExportRequirementTraceabilityPdf({
-      projectId: Number(projectId),
-      locale,
-      generatedByName: sessionAuth?.user?.name,
-      onError: () => toast.error(t("requirements.export.exportFailed")),
-    });
 
   return (
     <main>
@@ -341,30 +330,19 @@ export default function RequirementsWorkspace({
             </SectionHeader>
             {requirementsEnabled && !isGateResolving && (
               <div className="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={handleExportPdf}
-                      disabled={isExportingPdf}
-                      data-testid="requirements-export-pdf"
-                      aria-label={t("common.actions.exportPdf")}
-                      className={`group gap-0 transition-all duration-200 hover:gap-2${
-                        isExportingPdf ? " animate-pulse" : ""
-                      }`}
-                    >
-                      <FileDown className="h-4 w-4" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
-                        {isExportingPdf
-                          ? t("common.actions.exportingPdf")
-                          : t("common.actions.exportPdf")}
-                      </span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {t("requirements.export.csvOnReportsHint")}
-                  </TooltipContent>
-                </Tooltip>
+                {/* One Snapshots menu (the saved-searches shape): Save
+                    snapshot first, then each snapshot as a row that opens
+                    it in the traceability report, with a per-row delete. */}
+                <RequirementSnapshotHeaderMenu
+                  projectId={Number(projectId)}
+                  canManage={canSaveSnapshot}
+                  canDelete={canDeleteSnapshot}
+                  onOpen={(snapshotId) =>
+                    router.push(
+                      `/projects/reports/${projectId}?reportType=requirement-traceability&snapshotId=${snapshotId}`
+                    )
+                  }
+                />
                 {canAddEdit && (
                   <Button
                     data-testid="requirements-tree-add-root"

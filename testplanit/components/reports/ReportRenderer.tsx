@@ -34,11 +34,13 @@ import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import {
+  useRequirementCoverageChangeColumns,
   useRequirementCoverageGapColumns,
   useRequirementTraceabilityColumns,
 } from "~/hooks/useRequirementCoverageReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { sortRequirementReportRows } from "~/utils/requirementReportSort";
+import { RequirementCoverageChangesOverview } from "@/components/reports/RequirementCoverageChangesOverview";
 import { RequirementCoverageOverview } from "@/components/reports/RequirementCoverageOverview";
 import { RequirementDebtOverview } from "@/components/reports/RequirementDebtOverview";
 
@@ -156,6 +158,11 @@ interface ReportRendererProps {
   // indicator instead of the no-results card.
   awaitingFirstRun?: boolean;
 
+  // A report that cannot run yet (the coverage-changes report before a
+  // baseline is chosen) shows this instruction instead of "No results
+  // found" — nothing was run, so nothing is missing.
+  emptyPrompt?: string;
+
   // Children (for ShareButton in ReportBuilder, omitted in shared view)
   headerActions?: React.ReactNode;
 }
@@ -201,6 +208,7 @@ export function ReportRenderer({
   userTimezone,
   readOnly = false,
   awaitingFirstRun = false,
+  emptyPrompt,
   headerActions,
 }: ReportRendererProps) {
   const locale = useLocale();
@@ -260,6 +268,8 @@ export function ReportRenderer({
   const requirementCoverageGapColumns =
     useRequirementCoverageGapColumns(results);
   const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
+  const requirementCoverageChangeColumns =
+    useRequirementCoverageChangeColumns();
 
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
@@ -277,7 +287,9 @@ export function ReportRenderer({
               ? requirementCoverageGapColumns
               : matchesReportType(reportType, "requirement-traceability")
                 ? requirementTraceabilityColumns
-                : standardColumns;
+                : matchesReportType(reportType, "requirement-coverage-changes")
+                  ? requirementCoverageChangeColumns
+                  : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -303,6 +315,10 @@ export function ReportRenderer({
     reportType,
     "requirement-traceability"
   );
+  const isRequirementCoverageChanges = matchesReportType(
+    reportType,
+    "requirement-coverage-changes"
+  );
 
   // The virtualized DataTable is manualSorting — the caller owns row
   // order. The requirement reports return their full set in path order
@@ -311,13 +327,18 @@ export function ReportRenderer({
   // full-matrix refetch per click. Every other report type keeps its
   // existing (server-ordered) rows untouched.
   const requirementSortedResults = useMemo(() => {
-    if (!isRequirementCoverageGaps && !isRequirementTraceability) {
+    if (
+      !isRequirementCoverageGaps &&
+      !isRequirementTraceability &&
+      !isRequirementCoverageChanges
+    ) {
       return results;
     }
     return sortRequirementReportRows(results ?? [], sortConfig);
   }, [
     isRequirementCoverageGaps,
     isRequirementTraceability,
+    isRequirementCoverageChanges,
     results,
     sortConfig,
   ]);
@@ -472,6 +493,22 @@ export function ReportRenderer({
     if (awaitingFirstRun) {
       return <Loading />;
     }
+    if (emptyPrompt) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <Card className="max-w-md" data-testid="report-empty-prompt">
+            <CardHeader>
+              <CardTitle>
+                {isRequirementCoverageChanges
+                  ? tReports("reportTypes.requirementCoverageChanges.label")
+                  : tReports("noResultsFound")}
+              </CardTitle>
+              <CardDescription>{emptyPrompt}</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center h-full">
         <Card className="max-w-md">
@@ -491,15 +528,17 @@ export function ReportRenderer({
                   // news, not "no data available."
                   isRequirementCoverageGaps
                   ? tReports("requirementCoverage.noGaps")
-                  : isRequirementTraceability
-                    ? tReports("requirementCoverage.noData")
-                    : isAutomationTrends ||
-                        isFlakyTests ||
-                        isTestCaseHealth ||
-                        isIssueTestCoverage ||
-                        isExecutionLog
-                      ? tReports("noDataAvailable")
-                      : tReports("selectAtLeastOneDimensionAndMetric")}
+                  : isRequirementCoverageChanges
+                    ? tReports("requirementCoverage.noChanges")
+                    : isRequirementTraceability
+                      ? tReports("requirementCoverage.noData")
+                      : isAutomationTrends ||
+                          isFlakyTests ||
+                          isTestCaseHealth ||
+                          isIssueTestCoverage ||
+                          isExecutionLog
+                        ? tReports("noDataAvailable")
+                        : tReports("selectAtLeastOneDimensionAndMetric")}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -565,6 +604,8 @@ export function ReportRenderer({
                 <RequirementCoverageOverview rows={results} />
               ) : isRequirementCoverageGaps && (results?.length ?? 0) > 0 ? (
                 <RequirementDebtOverview rows={results} />
+              ) : isRequirementCoverageChanges && (results?.length ?? 0) > 0 ? (
+                <RequirementCoverageChangesOverview rows={results} />
               ) : (
                 memoizedChart.chart
               )}

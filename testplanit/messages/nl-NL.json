@@ -6879,12 +6879,6 @@
       "inheritedTooltip": "Gekoppeld aan een onderliggend item van deze vereiste, niet rechtstreeks eraan.",
       "notRunCell": "Niet uitgevoerd"
     },
-    "export": {
-      "menuLabel": "Traceerbaarheid exporteren",
-      "exportFailed": "Het exporteren van de traceerbaarheid is mislukt.",
-      "pdfEnglishOnlyHint": "PDF-exports worden alleen in het Engels gegenereerd.",
-      "csvOnReportsHint": "Voor een CSV-export voert u het rapport Vereistentraceerbaarheid uit."
-    },
     "disabled": {
       "title": "Vereisten zijn niet ingeschakeld",
       "description": "Dit project heeft de functie Vereisten niet ingeschakeld. Vraag een projectbeheerder om deze in de projectinstellingen in te schakelen om vereistenbomen te kunnen opbouwen."
@@ -7854,6 +7848,10 @@
         "requirementTraceability": {
           "label": "Vereistentraceerbaarheid",
           "description": "Elke vereiste gekoppeld aan de bijbehorende testgevallen en hun laatste uitvoeringsresultaat"
+        },
+        "requirementCoverageChanges": {
+          "label": "Wijzigingen in vereistendekking",
+          "description": "Vergelijk een opgeslagen traceerbaarheidsmomentopname met een latere momentopname of de live matrix om te zien welke dekking van vereisten is gewijzigd"
         }
       },
       "flakyTests": {
@@ -8114,7 +8112,57 @@
         "age180to365": "180–365 dagen",
         "ageOver365": "Meer dan een jaar",
         "includeNotRun": "Vereisten opnemen waarvan de tests nooit zijn uitgevoerd",
-        "otherRoots": "Overig ({count, plural, one {# hiërarchie} other {# hiërarchieën}})"
+        "otherRoots": "Overig ({count, plural, one {# hiërarchie} other {# hiërarchieën}})",
+        "snapshotLabel": "Momentopname",
+        "snapshotLive": "Live-matrix",
+        "snapshotHelp": "Toon een opgeslagen momentopname van de matrix op een bepaald tijdstip in plaats van de live gegevens. Momentopnamen zijn onveranderlijke records die u kunt exporteren, delen en vergelijken.",
+        "snapshotPlaceholder": "Kies een momentopname",
+        "snapshotRequirementsCount": "{count, plural, one {# vereiste} other {# vereisten}}",
+        "snapshotUncoveredCount": "{count} niet gedekt",
+        "snapshotCapturedBy": "Vastgelegd op {date} door {user}",
+        "noSnapshots": "Nog geen momentopnamen. Sla er een op via het rapport Vereistentraceerbaarheid of de pagina Vereisten.",
+        "saveSnapshot": "Momentopname opslaan",
+        "saveSnapshotTitle": "Traceerbaarheidsmomentopname opslaan",
+        "saveSnapshotDescription": "Legt de huidige traceerbaarheidsmatrix vast — elke vereiste, de bijbehorende testgevallen en hun laatste resultaten — als een onveranderlijke, benoemde momentopname die u later kunt bekijken, exporteren, delen en vergelijken.",
+        "saveSnapshotScoped": "Alleen de vereisten die momenteel binnen bereik zijn, worden vastgelegd.",
+        "snapshotName": "Naam",
+        "snapshotNamePlaceholder": "Goedkeuring release 2.4",
+        "snapshotNote": "Opmerking",
+        "snapshotNotePlaceholder": "Optioneel — waarvoor deze momentopname als bewijs dient",
+        "snapshotSaved": "Momentopname \"{name}\" opgeslagen.",
+        "snapshotSaveFailed": "Het opslaan van de momentopname is mislukt.",
+        "deleteSnapshot": "Momentopname verwijderen",
+        "deleteSnapshotTitle": "Deze momentopname verwijderen?",
+        "deleteSnapshotDescription": "\"{name}\" is niet langer beschikbaar als rapportweergave, vergelijkingsbasislijn of deeldoel. Er wordt geen vereiste of testgeval beïnvloed.",
+        "snapshotDeleted": "Momentopname verwijderd.",
+        "snapshotDeleteFailed": "Het verwijderen van de momentopname is mislukt.",
+        "baselineLabel": "Basislijnmomentopname",
+        "compareLabel": "Vergelijken met",
+        "baselineRequired": "Kies een basislijnmomentopname om dit rapport uit te voeren.",
+        "includeUnchanged": "Ongewijzigde vereisten opnemen",
+        "change": "Wijziging",
+        "coverageBefore": "Dekking voor",
+        "coverageAfter": "Dekking na",
+        "linkedCasesBefore": "Gekoppeld voor",
+        "linkedCasesAfter": "Gekoppeld na",
+        "casesAdded": "Testgevallen toegevoegd",
+        "casesRemoved": "Testgevallen verwijderd",
+        "resultsChanged": "Resultaten gewijzigd",
+        "changeAdded": "Toegevoegd",
+        "changeRemoved": "Verwijderd",
+        "changeCoverage": "Dekking gewijzigd",
+        "changeLinks": "Koppelingen gewijzigd",
+        "changeResults": "Resultaten gewijzigd",
+        "changeUnchanged": "Ongewijzigd",
+        "changedRequirements": "Gewijzigde vereisten",
+        "newlyCovered": "Nieuw gedekt",
+        "newlyUncovered": "Nieuw ongedekt",
+        "nowFailing": "Faalt nu",
+        "noLongerFailing": "Faalt niet meer",
+        "byChangeKind": "Vereisten per wijziging",
+        "noChanges": "Geen dekkingswijzigingen tussen beide zijden.",
+        "snapshotsMenu": "Momentopnames",
+        "openSnapshotInReport": "Openen in het traceerbaarheidsrapport van vereisten"
       },
       "crossProjectReportTypes": {
         "testExecution": {
