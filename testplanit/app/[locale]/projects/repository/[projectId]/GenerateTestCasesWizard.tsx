@@ -4044,18 +4044,24 @@ export function GenerateTestCasesWizard({
             <DialogDescription>
               {t("generateTestCases.description")}
             </DialogDescription>
-            <Alert className="mt-2 bg-primary/10 border-primary/50">
-              <AlertDescription>
-                <div className="flex items-center gap-2 text-xs text-start">
-                  <Info className="w-4 h-4 text-muted-foreground shrink-0" />
-                  {t("generateTestCases.selectSource.folderContextTip", {
-                    folderName:
-                      folderName ??
-                      t("generateTestCases.selectSource.currentFolder"),
-                  })}
-                </div>
-              </AlertDescription>
-            </Alert>
+            {/* "Make sure you have selected the correct folder" is advice
+                only a repository launch can act on — a seeded launch never
+                selects a folder (the per-issue destination folder is created
+                at import), so the tip is hidden there. */}
+            {!isSeeded && (
+              <Alert className="mt-2 bg-primary/10 border-primary/50">
+                <AlertDescription>
+                  <div className="flex items-center gap-2 text-xs text-start">
+                    <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+                    {t("generateTestCases.selectSource.folderContextTip", {
+                      folderName:
+                        folderName ??
+                        t("generateTestCases.selectSource.currentFolder"),
+                    })}
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
           </DialogHeader>
 
           {!isNotificationReopen && (
