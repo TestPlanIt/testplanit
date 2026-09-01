@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "無法存取 {count, number} 個項目。顯示來自 {successCount, number} 個項目的結果。",
     "projectSelectorLabel": "專案",
     "searchFailedTitle": "搜尋失敗",
+    "useAsRequirement": "作為需求使用",
+    "useAsRequirementSuccess": "現在已作為需求使用。可在專案的需求頁面中找到。",
+    "resetRequirementOverride": "重設為已設定的分類",
+    "resetRequirementOverrideSuccess": "分類已重設。此議題將再次依照需求類型設定進行分類。",
+    "requirementOverrideFailed": "更新需求分類失敗。",
     "authComplete": {
       "successTitle": "授權完成",
       "successDescription": "您的帳戶已連接。您可以關閉此視窗並返回您先前的操作。",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "解除連結會使此需求在 TestPlanIt 中完全可編輯，並中斷其與已連結追蹤器的連結。此操作無法復原 — 目前尚不支援重新連結至追蹤器。",
       "detachConfirm": "解除連結",
       "detachSuccess": "需求已解除連結。",
-      "detachFailed": "需求解除連結失敗。"
+      "detachFailed": "需求解除連結失敗。",
+      "exclude": "不作為需求使用",
+      "excludeSuccess": "已不再作為需求使用。將顯示在專案的議題頁面中。",
+      "excludeFailed": "更新需求分類失敗。"
+    },
+    "override": {
+      "promoteTitle": "要將此問題用作需求嗎？",
+      "promoteDescription": "{issue} 將加入需求樹，並且不再顯示於問題檢視畫面中。除非您變更回來，否則即使經過同步和需求類型設定變更，它仍會維持為需求。",
+      "promoteConfirm": "用作需求",
+      "excludeTitle": "要停止使用此需求嗎？",
+      "excludeDescription": "{issue} 將離開需求樹，並顯示於專案的問題頁面中。其測試案例連結將會保留。除非您變更回來，否則即使經過同步和需求類型設定變更，它仍會維持排除狀態。",
+      "excludeConfirm": "不用作需求",
+      "resetTitle": "要重設為已設定的分類嗎？",
+      "resetDescription": "{issue} 將重新遵循專案的需求類型設定，這可能會將其加入需求樹或從中移除。",
+      "resetConfirm": "重置"
     },
     "create": {
       "dialogTitle": "建立需求",
@@ -6745,7 +6764,18 @@
       "submit": "建立需求",
       "submitHint": "按 Enter 鍵建立",
       "success": "需求已建立。",
-      "failed": "需求建立失敗。"
+      "failed": "需求建立失敗。",
+      "modeCreate": "新需求",
+      "modePromote": "提升現有問題",
+      "promoteDescription": "將已同步到此專案的問題用作需求。它會移出問題檢視畫面，保留其追蹤器階層結構，並在同步和設定變更後仍維持為需求。",
+      "promoteParentNote": "遵循追蹤器的階層結構",
+      "promoteIssueLabel": "問題",
+      "promoteChooseIssue": "選擇問題",
+      "promoteChangeIssue": "變更",
+      "promoteNoneSelected": "未選擇問題",
+      "promoteSubmit": "用作需求",
+      "promoteSuccess": "問題現已成為需求。",
+      "promoteFailed": "提升問題失敗。"
     },
     "edit": {
       "dialogTitle": "編輯需求",

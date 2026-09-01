@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "{count, number} 프로젝트에 연결할 수 없습니다. {successCount, number} 프로젝트의 결과를 표시합니다.",
     "projectSelectorLabel": "프로젝트",
     "searchFailedTitle": "검색 실패",
+    "useAsRequirement": "요구사항으로 사용",
+    "useAsRequirementSuccess": "이제 요구사항으로 사용됩니다. 프로젝트의 요구사항 페이지에서 확인할 수 있습니다.",
+    "resetRequirementOverride": "설정된 분류로 재설정",
+    "resetRequirementOverrideSuccess": "분류가 재설정되었습니다. 이 이슈는 다시 요구사항 유형 설정을 따릅니다.",
+    "requirementOverrideFailed": "요구사항 분류를 업데이트하지 못했습니다.",
     "authComplete": {
       "successTitle": "인증 완료",
       "successDescription": "계정이 연결되었습니다. 이 창을 닫고 하던 작업으로 돌아가셔도 됩니다.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "분리하면 이 요구 사항이 TestPlanIt에서 완전히 편집 가능해지고 연결된 트래커와의 링크가 끊어집니다. 이 작업은 되돌릴 수 없으며, 트래커에 다시 연결하는 기능은 아직 지원되지 않습니다.",
       "detachConfirm": "분리",
       "detachSuccess": "요구 사항이 분리되었습니다.",
-      "detachFailed": "요구 사항을 분리하는 데 실패했습니다."
+      "detachFailed": "요구 사항을 분리하는 데 실패했습니다.",
+      "exclude": "요구사항으로 사용하지 않음",
+      "excludeSuccess": "더 이상 요구사항으로 사용되지 않습니다. 프로젝트의 이슈 페이지에 표시됩니다.",
+      "excludeFailed": "요구사항 분류를 업데이트하지 못했습니다."
+    },
+    "override": {
+      "promoteTitle": "이 이슈를 요구 사항으로 사용하시겠습니까?",
+      "promoteDescription": "{issue} 항목은 요구 사항 트리에 합류하며 더 이상 이슈 화면에 표시되지 않습니다. 다시 변경하기 전까지는 동기화 및 요구 사항 유형 구성 변경이 이루어져도 요구 사항 상태로 유지됩니다.",
+      "promoteConfirm": "요구 사항으로 사용",
+      "excludeTitle": "이 요구 사항 사용을 중지하시겠습니까?",
+      "excludeDescription": "{issue} 항목은 요구 사항 트리에서 제외되어 프로젝트의 이슈 페이지에 표시됩니다. 테스트 케이스 링크는 유지됩니다. 다시 변경하기 전까지는 동기화 및 요구 사항 유형 구성 변경이 이루어져도 제외된 상태로 유지됩니다.",
+      "excludeConfirm": "요구 사항으로 사용하지 않음",
+      "resetTitle": "구성된 분류로 재설정하시겠습니까?",
+      "resetDescription": "{issue} 항목은 프로젝트의 요구 사항 유형 구성을 다시 따르게 되며, 이에 따라 요구 사항 트리에 추가되거나 제거될 수 있습니다.",
+      "resetConfirm": "재설정"
     },
     "create": {
       "dialogTitle": "요구 사항 생성",
@@ -6745,7 +6764,18 @@
       "submit": "요구 사항 생성",
       "submitHint": "생성하려면 Enter 키를 누르세요",
       "success": "요구 사항이 생성되었습니다.",
-      "failed": "요구 사항을 생성하는 데 실패했습니다."
+      "failed": "요구 사항을 생성하는 데 실패했습니다.",
+      "modeCreate": "새 요구 사항",
+      "modePromote": "기존 이슈 승격",
+      "promoteDescription": "이 프로젝트에 이미 동기화된 이슈를 요구 사항으로 사용합니다. 이슈 화면에서 제외되며, 트래커의 계층 구조를 유지하고, 동기화 및 구성 변경이 이루어져도 요구 사항 상태로 유지됩니다.",
+      "promoteParentNote": "트래커의 계층 구조를 따름",
+      "promoteIssueLabel": "이슈",
+      "promoteChooseIssue": "이슈 선택",
+      "promoteChangeIssue": "변경",
+      "promoteNoneSelected": "선택된 이슈 없음",
+      "promoteSubmit": "요구 사항으로 사용",
+      "promoteSuccess": "이슈가 이제 요구 사항이 되었습니다.",
+      "promoteFailed": "이슈를 승격하지 못했습니다."
     },
     "edit": {
       "dialogTitle": "요구 사항 편집",

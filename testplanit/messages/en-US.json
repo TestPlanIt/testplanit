@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "{count, number} project(s) could not be reached. Showing results from {successCount, number} project(s).",
     "projectSelectorLabel": "Project",
     "searchFailedTitle": "Search failed",
+    "useAsRequirement": "Use as requirement",
+    "useAsRequirementSuccess": "Now used as a requirement. Find it on the project's Requirements page.",
+    "resetRequirementOverride": "Reset to configured classification",
+    "resetRequirementOverrideSuccess": "Classification reset. This issue follows the requirement type configuration again.",
+    "requirementOverrideFailed": "Failed to update the requirement classification.",
     "authComplete": {
       "successTitle": "Authorization complete",
       "successDescription": "Your account is now connected. You can close this window and return to what you were doing.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Detaching makes this requirement fully editable in TestPlanIt and breaks its link to the connected tracker. This can't be undone — re-attaching to the tracker isn't supported yet.",
       "detachConfirm": "Detach",
       "detachSuccess": "Requirement detached.",
-      "detachFailed": "Failed to detach requirement."
+      "detachFailed": "Failed to detach requirement.",
+      "exclude": "Don't use as requirement",
+      "excludeSuccess": "No longer used as a requirement. It appears on the project's Issues page.",
+      "excludeFailed": "Failed to update the requirement classification."
+    },
+    "override": {
+      "promoteTitle": "Use this issue as a requirement?",
+      "promoteDescription": "{issue} will join the requirements tree and no longer appear in the Issues views. It stays a requirement through syncs and requirement type configuration changes until you change it back.",
+      "promoteConfirm": "Use as requirement",
+      "excludeTitle": "Stop using this requirement?",
+      "excludeDescription": "{issue} will leave the requirements tree and appear on the project's Issues page. Its test case links are kept. It stays excluded through syncs and requirement type configuration changes until you change it back.",
+      "excludeConfirm": "Don't use as requirement",
+      "resetTitle": "Reset to the configured classification?",
+      "resetDescription": "{issue} will follow the project's requirement type configuration again, which may add it to or remove it from the requirements tree.",
+      "resetConfirm": "Reset"
     },
     "create": {
       "dialogTitle": "Create Requirement",
@@ -6745,7 +6764,18 @@
       "submit": "Create Requirement",
       "submitHint": "Press Enter to create",
       "success": "Requirement created.",
-      "failed": "Failed to create requirement."
+      "failed": "Failed to create requirement.",
+      "modeCreate": "New requirement",
+      "modePromote": "Promote an existing issue",
+      "promoteDescription": "Use an issue already synced to this project as a requirement. It moves out of the Issues views, keeps its tracker hierarchy, and stays a requirement through syncs and configuration changes.",
+      "promoteParentNote": "Follows the tracker's hierarchy",
+      "promoteIssueLabel": "Issue",
+      "promoteChooseIssue": "Choose issue",
+      "promoteChangeIssue": "Change",
+      "promoteNoneSelected": "No issue selected",
+      "promoteSubmit": "Use as requirement",
+      "promoteSuccess": "Issue is now a requirement.",
+      "promoteFailed": "Failed to promote the issue."
     },
     "edit": {
       "dialogTitle": "Edit Requirement",

@@ -97,6 +97,10 @@ interface RequirementDetailPanelProps {
    *  since only it knows whether the reader should land on the tree with
    *  this requirement selected or somewhere else entirely. */
   backHref?: string;
+  /** After "Don't use as requirement" succeeds from this panel's own Synced
+   *  badge: the row is no longer a requirement, so the owner must drop the
+   *  selection this panel was showing. */
+  onExcluded?: (requirementId: number) => void;
 }
 
 interface RequirementDetailFormData {
@@ -210,6 +214,7 @@ export default function RequirementDetailPanel({
   onRequestDelete,
   editRequest,
   backHref,
+  onExcluded,
 }: RequirementDetailPanelProps) {
   const t = useTranslations("requirements.detail");
   const tCommon = useTranslations("common");
@@ -650,6 +655,7 @@ export default function RequirementDetailPanel({
           <RequirementProvenanceBadge
             requirement={requirement}
             projectId={Number(projectId)}
+            onExcluded={onExcluded}
           />
           {!isEditMode ? (
             <Button

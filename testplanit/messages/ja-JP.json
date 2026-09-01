@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "{count, number} プロジェクトにアクセスできませんでした。 {successCount, number} プロジェクトの結果を表示します。",
     "projectSelectorLabel": "プロジェクト",
     "searchFailedTitle": "検索に失敗しました",
+    "useAsRequirement": "要件として使用",
+    "useAsRequirementSuccess": "要件として使用されるようになりました。プロジェクトの要件ページで確認できます。",
+    "resetRequirementOverride": "設定された分類にリセット",
+    "resetRequirementOverrideSuccess": "分類がリセットされました。この問題は再び要件タイプの設定に従います。",
+    "requirementOverrideFailed": "要件の分類の更新に失敗しました。",
     "authComplete": {
       "successTitle": "認可が完了しました",
       "successDescription": "アカウントが接続されました。このウィンドウを閉じて、作業を続けることができます。",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "切断すると、この要件はTestPlanItで完全に編集可能になり、接続されたトラッカーへのリンクが解除されます。この操作は元に戻せません — トラッカーへの再接続はまだサポートされていません。",
       "detachConfirm": "切断",
       "detachSuccess": "要件を切断しました。",
-      "detachFailed": "要件の切断に失敗しました。"
+      "detachFailed": "要件の切断に失敗しました。",
+      "exclude": "要件として使用しない",
+      "excludeSuccess": "要件としての使用が解除されました。プロジェクトの課題ページに表示されます。",
+      "excludeFailed": "要件の分類の更新に失敗しました。"
+    },
+    "override": {
+      "promoteTitle": "この問題を要件として使用しますか？",
+      "promoteDescription": "{issue}は要件ツリーに追加され、問題ビューには表示されなくなります。元に戻すまで、同期や要件タイプの設定変更を経ても要件として維持されます。",
+      "promoteConfirm": "要件として使用",
+      "excludeTitle": "この要件の使用を停止しますか？",
+      "excludeDescription": "{issue}は要件ツリーから削除され、プロジェクトの問題ページに表示されます。テストケースへのリンクは維持されます。元に戻すまで、同期や要件タイプの設定変更を経ても除外状態が維持されます。",
+      "excludeConfirm": "要件として使用しない",
+      "resetTitle": "設定された分類にリセットしますか？",
+      "resetDescription": "{issue}はプロジェクトの要件タイプ設定に再び従うようになり、要件ツリーへの追加または削除が行われる可能性があります。",
+      "resetConfirm": "リセット"
     },
     "create": {
       "dialogTitle": "要件を作成",
@@ -6745,7 +6764,18 @@
       "submit": "要件を作成",
       "submitHint": "Enterキーを押して作成",
       "success": "要件を作成しました。",
-      "failed": "要件の作成に失敗しました。"
+      "failed": "要件の作成に失敗しました。",
+      "modeCreate": "新規要件",
+      "modePromote": "既存の問題を昇格",
+      "promoteDescription": "このプロジェクトに既に同期済みの問題を要件として使用します。問題ビューから移動し、トラッカーの階層は維持され、同期や設定変更を経ても要件として維持されます。",
+      "promoteParentNote": "トラッカーの階層に従います",
+      "promoteIssueLabel": "問題",
+      "promoteChooseIssue": "問題を選択",
+      "promoteChangeIssue": "変更",
+      "promoteNoneSelected": "問題が選択されていません",
+      "promoteSubmit": "要件として使用",
+      "promoteSuccess": "問題が要件になりました。",
+      "promoteFailed": "問題の昇格に失敗しました。"
     },
     "edit": {
       "dialogTitle": "要件を編集",

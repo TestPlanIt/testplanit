@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Nie można nawiązać połączenia z projektami {count, number} . Wyświetlane są wyniki z projektów {successCount, number}.",
     "projectSelectorLabel": "Projekt",
     "searchFailedTitle": "Wyszukiwanie nie powiodło się",
+    "useAsRequirement": "Użyj jako wymagania",
+    "useAsRequirementSuccess": "Jest teraz używane jako wymaganie. Znajdziesz je na stronie Wymagania projektu.",
+    "resetRequirementOverride": "Przywróć skonfigurowaną klasyfikację",
+    "resetRequirementOverrideSuccess": "Klasyfikacja została zresetowana. To zgłoszenie ponownie stosuje konfigurację typu wymagania.",
+    "requirementOverrideFailed": "Nie udało się zaktualizować klasyfikacji wymagania.",
     "authComplete": {
       "successTitle": "Autoryzacja zakończona",
       "successDescription": "Twoje konto jest teraz połączone. Możesz zamknąć to okno i wrócić do wykonywanej czynności.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Odłączenie sprawia, że to wymaganie staje się w pełni edytowalne w TestPlanIt i zrywa jego połączenie z podłączonym trackerem. Tej czynności nie można odwrócić — ponowne podłączenie do trackera nie jest jeszcze wspierane.",
       "detachConfirm": "Odłącz",
       "detachSuccess": "Wymaganie odłączone.",
-      "detachFailed": "Nie udało się odłączyć wymagania."
+      "detachFailed": "Nie udało się odłączyć wymagania.",
+      "exclude": "Nie używaj jako wymagania",
+      "excludeSuccess": "Nie jest już używane jako wymaganie. Pojawia się na stronie Zgłoszenia projektu.",
+      "excludeFailed": "Nie udało się zaktualizować klasyfikacji wymagania."
+    },
+    "override": {
+      "promoteTitle": "Użyć tego zgłoszenia jako wymagania?",
+      "promoteDescription": "{issue} przejdzie do drzewa wymagań i nie będzie już widoczne w widokach zgłoszeń. Pozostanie wymaganiem podczas synchronizacji oraz zmian konfiguracji typu wymagania, aż do momentu przywrócenia poprzedniego stanu.",
+      "promoteConfirm": "Użyj jako wymaganie",
+      "excludeTitle": "Przestać używać tego wymagania?",
+      "excludeDescription": "{issue} opuści drzewo wymagań i pojawi się na stronie zgłoszeń projektu. Powiązania z przypadkami testowymi zostaną zachowane. Pozostanie wykluczone podczas synchronizacji oraz zmian konfiguracji typu wymagania, aż do momentu przywrócenia poprzedniego stanu.",
+      "excludeConfirm": "Nie używaj jako wymaganie",
+      "resetTitle": "Zresetować do skonfigurowanej klasyfikacji?",
+      "resetDescription": "{issue} będzie znowu podlegać konfiguracji typu wymagań projektu, co może dodać je do drzewa wymagań lub usunąć z niego.",
+      "resetConfirm": "Resetuj"
     },
     "create": {
       "dialogTitle": "Utwórz wymaganie",
@@ -6745,7 +6764,18 @@
       "submit": "Utwórz wymaganie",
       "submitHint": "Naciśnij Enter, aby utworzyć",
       "success": "Wymaganie utworzone.",
-      "failed": "Nie udało się utworzyć wymagania."
+      "failed": "Nie udało się utworzyć wymagania.",
+      "modeCreate": "Nowe wymaganie",
+      "modePromote": "Podnieś istniejące zgłoszenie",
+      "promoteDescription": "Użyj zgłoszenia już zsynchronizowanego z tym projektem jako wymagania. Zostanie ono przeniesione z widoków zgłoszeń, zachowa hierarchię systemu śledzenia i pozostanie wymaganiem podczas synchronizacji i zmian konfiguracji.",
+      "promoteParentNote": "Podlega hierarchii systemu śledzenia",
+      "promoteIssueLabel": "Zgłoszenie",
+      "promoteChooseIssue": "Wybierz zgłoszenie",
+      "promoteChangeIssue": "Zmień",
+      "promoteNoneSelected": "Nie wybrano zgłoszenia",
+      "promoteSubmit": "Użyj jako wymaganie",
+      "promoteSuccess": "Zgłoszenie jest teraz wymaganiem.",
+      "promoteFailed": "Nie udało się podnieść zgłoszenia."
     },
     "edit": {
       "dialogTitle": "Edytuj wymaganie",

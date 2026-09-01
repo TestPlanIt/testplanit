@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { RequirementOverrideConfirmDialog } from "@/components/requirements/RequirementOverrideConfirmDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ExternalLink, Unlink } from "lucide-react";
+import { ClipboardX, ExternalLink, Unlink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "~/lib/navigation";
 import { toast } from "sonner";
@@ -56,6 +57,7 @@ export const COLLAPSE_HYSTERESIS_PX = 4;
 
 export interface RequirementProvenanceBadgeRow {
   id: number;
+  name?: string | null;
   isRequirement: boolean;
   integrationId: number | null;
   requirementDetachedAt: Date | string | null;
@@ -70,6 +72,10 @@ interface RequirementProvenanceBadgeProps {
   /** Lets a parent invalidate its own query instead of relying on a router
    *  refresh after a successful detach. */
   onDetached?: () => void;
+  /** Fires after a successful "Don't use as requirement" (FORCE_OFF
+   *  classification override) with the row's id: the row leaves the
+   *  requirements tree, so a parent that has it selected must deselect. */
+  onExcluded?: (requirementId: number) => void;
   className?: string;
 }
 
@@ -95,6 +101,7 @@ export function RequirementProvenanceBadge({
   requirement,
   projectId,
   onDetached,
+  onExcluded,
   className,
 }: RequirementProvenanceBadgeProps) {
   const t = useTranslations("requirements.provenance");
@@ -105,6 +112,7 @@ export function RequirementProvenanceBadge({
   const tCommon = useTranslations("common");
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [excludeConfirmOpen, setExcludeConfirmOpen] = useState(false);
   const [isDetaching, setIsDetaching] = useState(false);
   const { isProjectAdmin } = useProjectPermissions(projectId);
   const wrapRef = useRef<HTMLSpanElement>(null);
@@ -136,6 +144,28 @@ export function RequirementProvenanceBadge({
   const openInTracker = () => {
     if (!trackerUrl) return;
     window.open(trackerUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleExclude = async () => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/requirements/${requirement.id}/override`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ override: "FORCE_OFF" }),
+        }
+      );
+      if (!res.ok) {
+        throw new Error(`Override failed with status ${res.status}`);
+      }
+      toast.success(t("excludeSuccess"));
+      onExcluded?.(requirement.id);
+      router.refresh();
+    } catch (err) {
+      console.error("Failed to exclude requirement:", err);
+      toast.error(t("excludeFailed"));
+    }
   };
 
   const handleDetach = async () => {
@@ -387,6 +417,16 @@ export function RequirementProvenanceBadge({
             <ExternalLink className="h-4 w-4" />
             {t("openInTracker", { provider: tCommon("fields.issueTracker") })}
           </DropdownMenuItem>
+          {/* FORCE_OFF classification override, behind the shared
+              conversion confirmation. */}
+          <DropdownMenuItem
+            className="gap-1"
+            onClick={() => setExcludeConfirmOpen(true)}
+            data-testid="requirement-provenance-menu-exclude"
+          >
+            <ClipboardX className="h-4 w-4" />
+            {t("exclude")}
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="gap-1 text-destructive focus:text-destructive"
             onClick={() => setConfirmOpen(true)}
@@ -397,6 +437,18 @@ export function RequirementProvenanceBadge({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <RequirementOverrideConfirmDialog
+        action="exclude"
+        issueLabel={
+          requirement.externalKey ?? requirement.name ?? `#${requirement.id}`
+        }
+        open={excludeConfirmOpen}
+        onOpenChange={setExcludeConfirmOpen}
+        onConfirm={() => {
+          setExcludeConfirmOpen(false);
+          void handleExclude();
+        }}
+      />
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

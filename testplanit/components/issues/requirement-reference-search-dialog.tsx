@@ -76,7 +76,7 @@ type InternalIssue = {
   };
 };
 
-type IssueItem =
+export type IssueItem =
   | (InternalIssue & { isExternal: false })
   | (ExternalIssue & { isExternal: true });
 
@@ -98,6 +98,16 @@ interface RequirementReferenceSearchDialogProps {
    * should not let you pick another requirement as if it were a defect.
    */
   includeRequirements?: boolean;
+  /**
+   * Promotion picker mode (Create Requirement → "Promote an existing
+   * issue"): restricts results to rows the override route can actually
+   * promote — this project's SYNCED, non-requirement issues — and pins the
+   * search to the internal source (the tracker chip is hidden; an issue
+   * that has never synced into the project has no row to pin). Leaves
+   * `includeRequirements` semantics untouched: a requirement is never a
+   * promotion target.
+   */
+  promotableOnly?: boolean;
 }
 
 export function RequirementReferenceSearchDialog({
@@ -109,6 +119,7 @@ export function RequirementReferenceSearchDialog({
   onIssuesSelected,
   linkedIssueIds = [],
   includeRequirements = false,
+  promotableOnly = false,
 }: RequirementReferenceSearchDialogProps) {
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState("");
@@ -182,10 +193,10 @@ export function RequirementReferenceSearchDialog({
   // refetched identity must not stomp a user's Internal selection.
   const activeIntegrationId = activeIntegration?.id;
   useEffect(() => {
-    if (activeIntegrationId) {
+    if (activeIntegrationId && !promotableOnly) {
       setSearchExternal(true);
     }
-  }, [activeIntegrationId]);
+  }, [activeIntegrationId, promotableOnly]);
 
   // Search internal issues (only when no integration or explicitly internal)
   const { data: internalIssues, isLoading: loadingInternal } = useClientQueries(
@@ -195,6 +206,9 @@ export function RequirementReferenceSearchDialog({
       where: {
         projectId,
         ...(includeRequirements ? {} : DEFECT_SCOPE_WHERE),
+        // Promotion targets must be synced: a native defect has no tracker
+        // identity for the override to pin (the route 400s it).
+        ...(promotableOnly ? { integrationId: { not: null } } : {}),
         ...(debouncedSearchQuery && {
           OR: [
             { title: { contains: debouncedSearchQuery, mode: "insensitive" } },
@@ -595,7 +609,7 @@ export function RequirementReferenceSearchDialog({
                     : t("issues.searchIssuesDescription")}
                 </DialogDescription>
               </div>
-              {activeIntegration && !authError && (
+              {activeIntegration && !authError && !promotableOnly && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -630,7 +644,7 @@ export function RequirementReferenceSearchDialog({
             {/* Source toggle (operator UAT 2026-08-25): reachable internal
                 search while an integration is active. Hidden without an
                 integration -- the dialog is already internal-only then. */}
-            {activeIntegration && (
+            {activeIntegration && !promotableOnly && (
               <div className="flex flex-wrap gap-1 px-0">
                 <Badge
                   variant={searchExternal ? "outline" : "default"}

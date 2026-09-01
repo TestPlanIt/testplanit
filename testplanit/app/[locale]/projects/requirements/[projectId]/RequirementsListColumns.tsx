@@ -187,6 +187,9 @@ interface UseRequirementsListColumnsArgs {
   onRequestEdit: (requirement: RequirementRow) => void;
   onRequestDelete: (requirement: RequirementRow) => void;
   onDetached: () => void;
+  /** After "Don't use as requirement" succeeds on a row — the view refetches
+   *  and deselects that row if it was the selected one. */
+  onExcluded: (requirementId: number) => void;
   /**
    * Plain DOM mutation, owned by `RequirementsListView.tsx` (it owns the
    * list container the affordance CSS keys off of). Called from the name
@@ -221,6 +224,7 @@ export function useRequirementsListColumns({
   onRequestEdit,
   onRequestDelete,
   onDetached,
+  onExcluded,
   markDragActive,
   clearDragActive,
 }: UseRequirementsListColumnsArgs): ColumnDef<RequirementRow>[] {
@@ -479,6 +483,7 @@ export function useRequirementsListColumns({
             requirement={row.original}
             projectId={projectId}
             onDetached={onDetached}
+            onExcluded={onExcluded}
           />
         ),
       },
@@ -576,6 +581,7 @@ export function useRequirementsListColumns({
     onRequestEdit,
     onRequestDelete,
     onDetached,
+    onExcluded,
     markDragActive,
     clearDragActive,
     preferredDateTimeFormat,

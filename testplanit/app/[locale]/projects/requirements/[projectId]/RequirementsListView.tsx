@@ -128,6 +128,10 @@ export interface RequirementsListViewHandle {
    *  same dialog the row action opens. No-ops when the id is not in
    *  the current set. */
   openDeleteDialog: (issueId: number) => void;
+  /** Refetches the list — the detail panel's route to "this row just
+   *  stopped being a requirement, drop it" after an exclusion from its own
+   *  Synced badge. */
+  refreshRequirements: () => void;
 }
 
 // Gap closure 26.2-16 (UAT gap 9 rebuild): the attribute + row-lookup
@@ -801,6 +805,9 @@ const RequirementsListView = forwardRef<
       openCreateRoot: () => {
         setCreateDialogState({ open: true, parentId: null, parentName: null });
       },
+      refreshRequirements: () => {
+        refreshRequirements();
+      },
       openDeleteDialog: (issueId: number) => {
         // The panel's selection and this list's filtered/loaded set are
         // separate pieces of state -- a filtered-out or since-deleted
@@ -821,12 +828,26 @@ const RequirementsListView = forwardRef<
         handleRequestDelete(requirement);
       },
     }),
-    [lazyRowsById, handleRequestDelete, t]
+    [lazyRowsById, handleRequestDelete, refreshRequirements, t]
   );
 
   const handleDetached = useCallback(() => {
     refreshRequirements();
   }, [refreshRequirements]);
+
+  // An excluded row is no longer a requirement: it leaves this list on
+  // refetch, and if it was the selected row the detail pane would be left
+  // pointing at a row its requirement-scoped query can no longer see —
+  // so the selection clears too (same rule the delete path applies).
+  const handleExcluded = useCallback(
+    (requirementId: number) => {
+      refreshRequirements();
+      if (requirementId === selectedRequirementId) {
+        onSelectRequirement(null);
+      }
+    },
+    [refreshRequirements, selectedRequirementId, onSelectRequirement]
+  );
 
   // 28-19 (gap closure, defect B): a readiness signal true in BOTH modes,
   // replacing the guard's old `!allRequirements` term below. That term was
@@ -1041,6 +1062,7 @@ const RequirementsListView = forwardRef<
     onRequestEdit: handleRequestEdit,
     onRequestDelete: handleRequestDelete,
     onDetached: handleDetached,
+    onExcluded: handleExcluded,
     markDragActive,
     clearDragActive,
   });

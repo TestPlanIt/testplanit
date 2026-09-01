@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Impossible d'accéder au(x) projet(s) {count, number} . Affichage des résultats du/des projet(s) {successCount, number}.",
     "projectSelectorLabel": "Projet",
     "searchFailedTitle": "La recherche a échoué.",
+    "useAsRequirement": "Utiliser comme exigence",
+    "useAsRequirementSuccess": "Désormais utilisé comme exigence. Retrouvez-le sur la page Exigences du projet.",
+    "resetRequirementOverride": "Réinitialiser à la classification configurée",
+    "resetRequirementOverrideSuccess": "Classification réinitialisée. Ce ticket suit à nouveau la configuration du type d'exigence.",
+    "requirementOverrideFailed": "Échec de la mise à jour de la classification de l'exigence.",
     "authComplete": {
       "successTitle": "Autorisation terminée",
       "successDescription": "Votre compte est maintenant connecté. Vous pouvez fermer cette fenêtre et reprendre ce que vous faisiez.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Le détachement rend cette exigence entièrement modifiable dans TestPlanIt et rompt son lien avec le système de suivi connecté. Cette action est irréversible — le rattachement au système de suivi n'est pas encore pris en charge.",
       "detachConfirm": "Détacher",
       "detachSuccess": "Exigence détachée.",
-      "detachFailed": "Échec du détachement de l'exigence."
+      "detachFailed": "Échec du détachement de l'exigence.",
+      "exclude": "Ne pas utiliser comme exigence",
+      "excludeSuccess": "N'est plus utilisé comme exigence. Il apparaît sur la page Tickets du projet.",
+      "excludeFailed": "Échec de la mise à jour de la classification de l'exigence."
+    },
+    "override": {
+      "promoteTitle": "Utiliser ce problème comme exigence ?",
+      "promoteDescription": "{issue} rejoindra l'arborescence des exigences et n'apparaîtra plus dans les vues Problèmes. Il reste une exigence lors des synchronisations et des modifications de configuration du type d'exigence jusqu'à ce que vous le changiez à nouveau.",
+      "promoteConfirm": "Utiliser comme exigence",
+      "excludeTitle": "Arrêter d'utiliser cette exigence ?",
+      "excludeDescription": "{issue} quittera l'arborescence des exigences et apparaîtra sur la page Problèmes du projet. Ses liens vers les cas de test sont conservés. Il reste exclu lors des synchronisations et des modifications de configuration du type d'exigence jusqu'à ce que vous le changiez à nouveau.",
+      "excludeConfirm": "Ne pas utiliser comme exigence",
+      "resetTitle": "Réinitialiser à la classification configurée ?",
+      "resetDescription": "{issue} suivra à nouveau la configuration du type d'exigence du projet, ce qui peut l'ajouter à l'arborescence des exigences ou l'en retirer.",
+      "resetConfirm": "Réinitialiser"
     },
     "create": {
       "dialogTitle": "Créer une exigence",
@@ -6745,7 +6764,18 @@
       "submit": "Créer une exigence",
       "submitHint": "Appuyez sur Entrée pour créer",
       "success": "Exigence créée.",
-      "failed": "Échec de la création de l'exigence."
+      "failed": "Échec de la création de l'exigence.",
+      "modeCreate": "Nouvelle exigence",
+      "modePromote": "Promouvoir un problème existant",
+      "promoteDescription": "Utiliser un problème déjà synchronisé avec ce projet comme exigence. Il quitte les vues Problèmes, conserve la hiérarchie de son outil de suivi et reste une exigence lors des synchronisations et des modifications de configuration.",
+      "promoteParentNote": "Suit la hiérarchie de l'outil de suivi",
+      "promoteIssueLabel": "Problème",
+      "promoteChooseIssue": "Choisir un problème",
+      "promoteChangeIssue": "Changer",
+      "promoteNoneSelected": "Aucun problème sélectionné",
+      "promoteSubmit": "Utiliser comme exigence",
+      "promoteSuccess": "Le problème est maintenant une exigence.",
+      "promoteFailed": "Impossible de promouvoir le problème."
     },
     "edit": {
       "dialogTitle": "Modifier l'exigence",

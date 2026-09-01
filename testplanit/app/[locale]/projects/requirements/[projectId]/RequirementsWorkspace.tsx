@@ -527,6 +527,16 @@ export default function RequirementsWorkspace({
                               : undefined
                           }
                           editRequest={editRequest}
+                          // The panel's own Synced badge can exclude the row
+                          // it is showing: the selection is this workspace's
+                          // to clear (the URL param), and the list -- when
+                          // mounted -- refetches so the row leaves it.
+                          onExcluded={(requirementId) => {
+                            listViewRef.current?.refreshRequirements();
+                            if (requirementId === selectedRequirementId) {
+                              goToRequirement(null);
+                            }
+                          }}
                         />
                       </div>
                     </ResizablePanel>

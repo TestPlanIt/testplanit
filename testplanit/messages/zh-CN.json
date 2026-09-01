@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "无法访问 {count, number} 个项目。显示来自 {successCount, number} 个项目的结果。",
     "projectSelectorLabel": "项目",
     "searchFailedTitle": "搜索失败",
+    "useAsRequirement": "用作需求",
+    "useAsRequirementSuccess": "现已用作需求。可在项目的需求页面中找到它。",
+    "resetRequirementOverride": "重置为已配置的分类",
+    "resetRequirementOverrideSuccess": "分类已重置。此问题将再次遵循需求类型配置。",
+    "requirementOverrideFailed": "更新需求分类失败。",
     "authComplete": {
       "successTitle": "授权完成",
       "successDescription": "您的账户已连接。您可以关闭此窗口，返回之前的操作。",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "分离操作会使此需求在 TestPlanIt 中完全可编辑，并断开与连接跟踪器的链接。此操作无法撤销 — 目前尚不支持重新连接到跟踪器。",
       "detachConfirm": "分离",
       "detachSuccess": "需求已分离。",
-      "detachFailed": "分离需求失败。"
+      "detachFailed": "分离需求失败。",
+      "exclude": "不用作需求",
+      "excludeSuccess": "不再用作需求。它将出现在项目的问题页面中。",
+      "excludeFailed": "更新需求分类失败。"
+    },
+    "override": {
+      "promoteTitle": "将此问题用作需求？",
+      "promoteDescription": "{issue} 将加入需求树，不再显示在问题视图中。在您改回之前，即使经过同步和需求类型配置更改，它仍将保持为需求。",
+      "promoteConfirm": "用作需求",
+      "excludeTitle": "停止使用此需求？",
+      "excludeDescription": "{issue} 将离开需求树，并显示在项目的问题页面上。其测试用例链接将被保留。在您改回之前，即使经过同步和需求类型配置更改，它仍将保持排除状态。",
+      "excludeConfirm": "不用作需求",
+      "resetTitle": "重置为配置的分类？",
+      "resetDescription": "{issue} 将重新遵循项目的需求类型配置，这可能会将其添加到需求树中或从需求树中移除。",
+      "resetConfirm": "重置"
     },
     "create": {
       "dialogTitle": "创建需求",
@@ -6745,7 +6764,18 @@
       "submit": "创建需求",
       "submitHint": "按 Enter 键创建",
       "success": "需求已创建。",
-      "failed": "创建需求失败。"
+      "failed": "创建需求失败。",
+      "modeCreate": "新建需求",
+      "modePromote": "提升现有问题",
+      "promoteDescription": "将已同步到此项目的问题用作需求。它会从问题视图中移出，保留其跟踪器层级结构，并在同步和配置更改后仍保持为需求。",
+      "promoteParentNote": "遵循跟踪器的层级结构",
+      "promoteIssueLabel": "问题",
+      "promoteChooseIssue": "选择问题",
+      "promoteChangeIssue": "更改",
+      "promoteNoneSelected": "未选择问题",
+      "promoteSubmit": "用作需求",
+      "promoteSuccess": "问题现已成为需求。",
+      "promoteFailed": "提升问题失败。"
     },
     "edit": {
       "dialogTitle": "编辑需求",

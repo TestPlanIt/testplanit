@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "{count, number} projekt(y) se nepodařilo kontaktovat. Zobrazují se výsledky z {successCount, number} projekt(y).",
     "projectSelectorLabel": "Projekt",
     "searchFailedTitle": "Vyhledávání se nezdařilo",
+    "useAsRequirement": "Použít jako požadavek",
+    "useAsRequirementSuccess": "Nyní použito jako požadavek. Najdete jej na stránce Požadavky projektu.",
+    "resetRequirementOverride": "Resetovat na nakonfigurovanou klasifikaci",
+    "resetRequirementOverrideSuccess": "Klasifikace byla resetována. Tento problém se nyní znovu řídí konfigurací typu požadavku.",
+    "requirementOverrideFailed": "Nepodařilo se aktualizovat klasifikaci požadavku.",
     "authComplete": {
       "successTitle": "Autorizace dokončena",
       "successDescription": "Váš účet je nyní připojen. Toto okno můžete zavřít a vrátit se k tomu, co jste dělali.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Odpojení umožní tento požadavek plně upravovat v TestPlanIt a zruší jeho propojení s připojeným trackerem. Tuto akci nelze vrátit zpět — opětovné připojení k trackeru zatím není podporováno.",
       "detachConfirm": "Odpojit",
       "detachSuccess": "Požadavek odpojen.",
-      "detachFailed": "Nepodařilo se odpojit požadavek."
+      "detachFailed": "Nepodařilo se odpojit požadavek.",
+      "exclude": "Nepoužívat jako požadavek",
+      "excludeSuccess": "Již se nepoužívá jako požadavek. Zobrazuje se na stránce Problémy projektu.",
+      "excludeFailed": "Nepodařilo se aktualizovat klasifikaci požadavku."
+    },
+    "override": {
+      "promoteTitle": "Použít tento issue jako požadavek?",
+      "promoteDescription": "{issue} se přesune do stromu požadavků a nebude se již zobrazovat v zobrazeních Issues. Zůstane požadavkem i po synchronizacích a změnách konfigurace typu požadavku, dokud to nezměníte zpět.",
+      "promoteConfirm": "Použít jako požadavek",
+      "excludeTitle": "Přestat používat tento požadavek?",
+      "excludeDescription": "{issue} opustí strom požadavků a zobrazí se na stránce Issues projektu. Odkazy na testovací případy zůstanou zachovány. Zůstane vyloučen i po synchronizacích a změnách konfigurace typu požadavku, dokud to nezměníte zpět.",
+      "excludeConfirm": "Nepoužívat jako požadavek",
+      "resetTitle": "Obnovit nakonfigurovanou klasifikaci?",
+      "resetDescription": "{issue} se bude znovu řídit konfigurací typu požadavku projektu, což jej může do stromu požadavků přidat nebo z něj odstranit.",
+      "resetConfirm": "Obnovit"
     },
     "create": {
       "dialogTitle": "Vytvořit požadavek",
@@ -6745,7 +6764,18 @@
       "submit": "Vytvořit požadavek",
       "submitHint": "Stiskněte Enter pro vytvoření",
       "success": "Požadavek vytvořen.",
-      "failed": "Nepodařilo se vytvořit požadavek."
+      "failed": "Nepodařilo se vytvořit požadavek.",
+      "modeCreate": "Nový požadavek",
+      "modePromote": "Povýšit existující issue",
+      "promoteDescription": "Použít issue, který je již synchronizován s tímto projektem, jako požadavek. Přesune se z zobrazení Issues, zachová hierarchii trackeru a zůstane požadavkem i po synchronizacích a změnách konfigurace.",
+      "promoteParentNote": "Řídí se hierarchií trackeru",
+      "promoteIssueLabel": "Požadavek",
+      "promoteChooseIssue": "Vybrat issue",
+      "promoteChangeIssue": "Změnit",
+      "promoteNoneSelected": "Nevybrán žádný issue",
+      "promoteSubmit": "Použít jako požadavek",
+      "promoteSuccess": "Issue je nyní požadavkem.",
+      "promoteFailed": "Povýšení issue se nezdařilo."
     },
     "edit": {
       "dialogTitle": "Upravit požadavek",

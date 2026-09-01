@@ -61,6 +61,16 @@ vi.mock("@/components/issues/DeferredIssueManager", () => ({
   },
 }));
 
+// The promotion picker is stubbed to a props recorder: the tests drive
+// `onIssueSelected` directly, the way the real dialog would on a click.
+let capturedPickerProps: Record<string, any> | null = null;
+vi.mock("@/components/issues/requirement-reference-search-dialog", () => ({
+  RequirementReferenceSearchDialog: (props: any) => {
+    capturedPickerProps = props;
+    return <div data-testid="mock-promotion-picker" />;
+  },
+}));
+
 import { toast } from "sonner";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 
@@ -72,10 +82,230 @@ describe("CreateRequirementDialog", () => {
     });
     capturedOnIssuesChange = null;
     capturedLinkedIssueIds = null;
+    capturedPickerProps = null;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ created: true }),
     }) as any;
+  });
+
+  describe("promote an existing issue", () => {
+    const openPromoteTab = () => {
+      // Radix Tabs activates a trigger on mousedown (automatic activation
+      // mode), so a bare click event never switches tabs under jsdom.
+      const trigger = screen.getByTestId("create-requirement-mode-promote");
+      fireEvent.mouseDown(trigger, { button: 0 });
+      fireEvent.click(trigger);
+    };
+
+    it("mounts the picker in promotableOnly mode and enables submit only once an issue is picked", () => {
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+      openPromoteTab();
+
+      // The picker is restricted to this project's synced, non-requirement
+      // rows — the only rows the override route can promote.
+      expect(capturedPickerProps?.promotableOnly).toBe(true);
+      expect(capturedPickerProps?.projectId).toBe(7);
+      expect(screen.getByTestId("create-requirement-submit")).toBeDisabled();
+      expect(
+        screen.getByTestId("create-requirement-promote-target")
+      ).toHaveTextContent("requirements.create.promoteNoneSelected");
+
+      fireEvent.click(screen.getByTestId("create-requirement-promote-pick"));
+      expect(capturedPickerProps?.open).toBe(true);
+
+      act(() => {
+        capturedPickerProps?.onIssueSelected?.({
+          isExternal: false,
+          id: 12036,
+          name: "ABT-47364",
+          title: "Content details loader lock",
+          externalKey: "ABT-47364",
+          description: null,
+          status: "Open",
+          priority: null,
+          externalId: "47364",
+          externalUrl: null,
+          externalStatus: "Open",
+        });
+      });
+
+      expect(
+        screen.getByTestId("create-requirement-promote-target")
+      ).toHaveTextContent("ABT-47364: Content details loader lock");
+      expect(screen.getByTestId("create-requirement-submit")).toBeEnabled();
+      expect(screen.getByTestId("create-requirement-submit")).toHaveTextContent(
+        "requirements.create.promoteSubmit"
+      );
+    });
+
+    it("promotes through the override route, never the create mutation, and reports the issue's own id", async () => {
+      const mutateAsync = vi.fn().mockResolvedValue({ id: 42 });
+      useCreateIssueMock.mockReturnValue({ mutateAsync });
+      const onOpenChange = vi.fn();
+      const onCreated = vi.fn();
+
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={99}
+          parentName="Some parent"
+          open
+          onOpenChange={onOpenChange}
+          onCreated={onCreated}
+        />
+      );
+      openPromoteTab();
+      act(() => {
+        capturedPickerProps?.onIssueSelected?.({
+          isExternal: false,
+          id: 12036,
+          name: "ABT-47364",
+          title: "t",
+          externalKey: "ABT-47364",
+          description: null,
+          status: null,
+          priority: null,
+          externalId: null,
+          externalUrl: null,
+          externalStatus: null,
+        });
+      });
+      fireEvent.click(screen.getByTestId("create-requirement-submit"));
+      // The conversion confirms first; nothing is posted until then.
+      expect(global.fetch).not.toHaveBeenCalled();
+      expect(
+        screen.getByTestId("requirement-override-dialog")
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("requirement-override-confirm"));
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/projects/7/requirements/12036/override",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ override: "FORCE_ON" }),
+          }
+        );
+      });
+      // The tree's "Add child" parent is NOT applied: a synced issue's
+      // hierarchy is the tracker's, and nothing is created.
+      expect(mutateAsync).not.toHaveBeenCalled();
+      await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+      expect(onCreated).toHaveBeenCalledWith(12036);
+      expect(toast.success).toHaveBeenCalledWith(
+        "requirements.create.promoteSuccess"
+      );
+    });
+
+    it("keeps the dialog open and reports failure when the route rejects", async () => {
+      (global.fetch as any) = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+      });
+      const onOpenChange = vi.fn();
+      const onCreated = vi.fn();
+
+      render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={onOpenChange}
+          onCreated={onCreated}
+        />
+      );
+      openPromoteTab();
+      act(() => {
+        capturedPickerProps?.onIssueSelected?.({
+          isExternal: false,
+          id: 5,
+          name: "X-5",
+          title: "t",
+          externalKey: "X-5",
+          description: null,
+          status: null,
+          priority: null,
+          externalId: null,
+          externalUrl: null,
+          externalStatus: null,
+        });
+      });
+      fireEvent.click(screen.getByTestId("create-requirement-submit"));
+      fireEvent.click(screen.getByTestId("requirement-override-confirm"));
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "requirements.create.promoteFailed"
+        )
+      );
+      expect(onOpenChange).not.toHaveBeenCalledWith(false);
+      expect(onCreated).not.toHaveBeenCalled();
+    });
+
+    it("re-opens on the create tab with the promotion target cleared", () => {
+      const { rerender } = render(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+      openPromoteTab();
+      act(() => {
+        capturedPickerProps?.onIssueSelected?.({
+          isExternal: false,
+          id: 5,
+          name: "X-5",
+          title: "t",
+          externalKey: "X-5",
+          description: null,
+          status: null,
+          priority: null,
+          externalId: null,
+          externalUrl: null,
+          externalStatus: null,
+        });
+      });
+      expect(
+        screen.getByTestId("create-requirement-promote-target")
+      ).toHaveTextContent("X-5");
+
+      rerender(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open={false}
+          onOpenChange={vi.fn()}
+        />
+      );
+      rerender(
+        <CreateRequirementDialog
+          projectId="7"
+          parentId={null}
+          open
+          onOpenChange={vi.fn()}
+        />
+      );
+
+      // Back on the create tab: the name input is the active surface again.
+      expect(
+        screen.getByTestId("create-requirement-name-input")
+      ).toBeInTheDocument();
+      openPromoteTab();
+      expect(
+        screen.getByTestId("create-requirement-promote-target")
+      ).toHaveTextContent("requirements.create.promoteNoneSelected");
+    });
   });
 
   it("submits on Return in the name field", async () => {

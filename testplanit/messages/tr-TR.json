@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "{count, number} projeye ulaşılamadı. {successCount, number} projeden sonuçlar gösteriliyor.",
     "projectSelectorLabel": "Proje",
     "searchFailedTitle": "Arama başarısız oldu",
+    "useAsRequirement": "Gereksinim olarak kullan",
+    "useAsRequirementSuccess": "Artık gereksinim olarak kullanılıyor. Projenin Gereksinimler sayfasında bulabilirsiniz.",
+    "resetRequirementOverride": "Yapılandırılmış sınıflandırmaya sıfırla",
+    "resetRequirementOverrideSuccess": "Sınıflandırma sıfırlandı. Bu sorun yeniden gereksinim türü yapılandırmasını takip ediyor.",
+    "requirementOverrideFailed": "Gereksinim sınıflandırması güncellenemedi.",
     "authComplete": {
       "successTitle": "Yetkilendirme tamamlandı",
       "successDescription": "Hesabınız artık bağlandı. Bu pencereyi kapatıp yapmakta olduğunuz işe geri dönebilirsiniz.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Bağlantıyı kesmek, bu gereksinimi TestPlanIt içinde tamamen düzenlenebilir hale getirir ve bağlı izleyiciyle olan bağlantısını koparır. Bu işlem geri alınamaz — izleyiciye yeniden bağlanma henüz desteklenmiyor.",
       "detachConfirm": "Bağlantıyı Kes",
       "detachSuccess": "Gereksimin bağlantısı kesildi.",
-      "detachFailed": "Gereksinimin bağlantısı kesilemedi."
+      "detachFailed": "Gereksinimin bağlantısı kesilemedi.",
+      "exclude": "Gereksinim olarak kullanma",
+      "excludeSuccess": "Artık gereksinim olarak kullanılmıyor. Projenin Sorunlar sayfasında görünür.",
+      "excludeFailed": "Gereksinim sınıflandırması güncellenemedi."
+    },
+    "override": {
+      "promoteTitle": "Bu sorun bir gereksinim olarak mı kullanılsın?",
+      "promoteDescription": "{issue}, gereksinim ağacına katılacak ve artık Sorunlar görünümlerinde görünmeyecek. Siz geri değiştirene kadar senkronizasyonlar ve gereksinim türü yapılandırma değişiklikleri boyunca gereksinim olarak kalır.",
+      "promoteConfirm": "Gereksinim olarak kullan",
+      "excludeTitle": "Bu gereksinimin kullanımı durdurulsun mu?",
+      "excludeDescription": "{issue}, gereksinim ağacından çıkacak ve projenin Sorunlar sayfasında görünecektir. Test senaryosu bağlantıları korunur. Siz geri değiştirene kadar senkronizasyonlar ve gereksinim türü yapılandırma değişiklikleri boyunca hariç tutulmuş olarak kalır.",
+      "excludeConfirm": "Gereksinim olarak kullanma",
+      "resetTitle": "Yapılandırılmış sınıflandırmaya sıfırlansın mı?",
+      "resetDescription": "{issue}, gereksinim ağacına eklenmesine veya ağaçtan çıkarılmasına neden olabilecek şekilde projenin gereksinim türü yapılandırmasını yeniden izleyecek.",
+      "resetConfirm": "Sıfırla"
     },
     "create": {
       "dialogTitle": "Gereksinim Oluştur",
@@ -6745,7 +6764,18 @@
       "submit": "Gereksinim Oluştur",
       "submitHint": "Oluşturmak için Enter tuşuna basın",
       "success": "Gereksinim oluşturuldu.",
-      "failed": "Gereksinim oluşturulamadı."
+      "failed": "Gereksinim oluşturulamadı.",
+      "modeCreate": "Yeni gereksinim",
+      "modePromote": "Mevcut bir sorunu yükselt",
+      "promoteDescription": "Bu projeyle zaten senkronize edilmiş bir sorunu gereksinim olarak kullanın. Sorun, Sorunlar görünümlerinden çıkar, izleyici hiyerarşisini korur ve senkronizasyonlar ile yapılandırma değişiklikleri boyunca gereksinim olarak kalır.",
+      "promoteParentNote": "İzleyicinin hiyerarşisini takip eder",
+      "promoteIssueLabel": "Sorun",
+      "promoteChooseIssue": "Sorun seç",
+      "promoteChangeIssue": "Değiştir",
+      "promoteNoneSelected": "Sorun seçilmedi",
+      "promoteSubmit": "Gereksinim olarak kullan",
+      "promoteSuccess": "Sorun artık bir gereksinim.",
+      "promoteFailed": "Sorun yükseltilemedi."
     },
     "edit": {
       "dialogTitle": "Gereksinimi Düzenle",

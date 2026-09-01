@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "No se pudo acceder al/los proyecto(s) {count, number} . Mostrando resultados del/de los proyecto(s) {successCount, number}.",
     "projectSelectorLabel": "Proyecto",
     "searchFailedTitle": "La búsqueda falló.",
+    "useAsRequirement": "Usar como requisito",
+    "useAsRequirementSuccess": "Ahora se usa como requisito. Encuéntrelo en la página de Requisitos del proyecto.",
+    "resetRequirementOverride": "Restablecer a la clasificación configurada",
+    "resetRequirementOverrideSuccess": "Clasificación restablecida. Este problema vuelve a seguir la configuración de tipo de requisito.",
+    "requirementOverrideFailed": "No se pudo actualizar la clasificación del requisito.",
     "authComplete": {
       "successTitle": "Autorización completada",
       "successDescription": "Su cuenta ya está conectada. Puede cerrar esta ventana y volver a lo que estaba haciendo.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Desvincular hace que este requisito sea totalmente editable en TestPlanIt y rompe su enlace con el rastreador conectado. Esto no se puede deshacer: volver a vincularlo con el rastreador aún no es compatible.",
       "detachConfirm": "Desvincular",
       "detachSuccess": "Requisito desvinculado.",
-      "detachFailed": "No se pudo desvincular el requisito."
+      "detachFailed": "No se pudo desvincular el requisito.",
+      "exclude": "No usar como requisito",
+      "excludeSuccess": "Ya no se usa como requisito. Aparece en la página de Problemas del proyecto.",
+      "excludeFailed": "No se pudo actualizar la clasificación del requisito."
+    },
+    "override": {
+      "promoteTitle": "¿Usar esta incidencia como requisito?",
+      "promoteDescription": "{issue} se unirá al árbol de requisitos y ya no aparecerá en las vistas de Incidencias. Seguirá siendo un requisito a través de las sincronizaciones y los cambios de configuración del tipo de requisito hasta que lo revierta.",
+      "promoteConfirm": "Usar como requisito",
+      "excludeTitle": "¿Dejar de usar este requisito?",
+      "excludeDescription": "{issue} saldrá del árbol de requisitos y aparecerá en la página de Incidencias del proyecto. Se conservan sus enlaces a casos de prueba. Permanecerá excluido a través de las sincronizaciones y los cambios de configuración del tipo de requisito hasta que lo revierta.",
+      "excludeConfirm": "No usar como requisito",
+      "resetTitle": "¿Restablecer a la clasificación configurada?",
+      "resetDescription": "{issue} volverá a seguir la configuración del tipo de requisito del proyecto, lo que puede añadirlo al árbol de requisitos o eliminarlo de él.",
+      "resetConfirm": "Restablecer"
     },
     "create": {
       "dialogTitle": "Crear requisito",
@@ -6745,7 +6764,18 @@
       "submit": "Crear requisito",
       "submitHint": "Presiona Enter para crear",
       "success": "Requisito creado.",
-      "failed": "No se pudo crear el requisito."
+      "failed": "No se pudo crear el requisito.",
+      "modeCreate": "Nuevo requisito",
+      "modePromote": "Promover una incidencia existente",
+      "promoteDescription": "Utilice una incidencia ya sincronizada con este proyecto como requisito. Se moverá fuera de las vistas de Incidencias, mantendrá su jerarquía de seguimiento y seguirá siendo un requisito a través de las sincronizaciones y los cambios de configuración.",
+      "promoteParentNote": "Sigue la jerarquía del sistema de seguimiento",
+      "promoteIssueLabel": "Incidencia",
+      "promoteChooseIssue": "Elegir incidencia",
+      "promoteChangeIssue": "Cambiar",
+      "promoteNoneSelected": "Ninguna incidencia seleccionada",
+      "promoteSubmit": "Usar como requisito",
+      "promoteSuccess": "La incidencia ahora es un requisito.",
+      "promoteFailed": "Error al promover la incidencia."
     },
     "edit": {
       "dialogTitle": "Editar requisito",

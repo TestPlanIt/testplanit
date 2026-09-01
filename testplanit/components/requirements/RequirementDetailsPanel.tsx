@@ -62,6 +62,9 @@ interface RequirementDetailsPanelProps {
    *  standalone route, which owns neither dialog. */
   onRequestDelete?: () => void;
   editRequest?: { id: number; token: number } | null;
+  /** Forwarded to the detail panel's Synced badge: fires after "Don't use
+   *  as requirement" succeeds, so the owner can drop the selection. */
+  onExcluded?: (requirementId: number) => void;
 }
 
 /**
@@ -89,6 +92,7 @@ export function RequirementDetailsPanel({
   total,
   onRequestDelete,
   editRequest,
+  onExcluded,
 }: RequirementDetailsPanelProps) {
   const t = useTranslations();
   const toggleLabel = fullWidth
@@ -268,6 +272,7 @@ export function RequirementDetailsPanel({
           requirementId={requirementId}
           onRequestDelete={onRequestDelete}
           editRequest={editRequest}
+          onExcluded={onExcluded}
         />
       </div>
     </div>

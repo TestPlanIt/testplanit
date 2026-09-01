@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Não foi possível acessar o(s) projeto(s) {count, number} . Exibindo resultados do(s) projeto(s) {successCount, number}.",
     "projectSelectorLabel": "Projeto",
     "searchFailedTitle": "A busca falhou",
+    "useAsRequirement": "Usar como requisito",
+    "useAsRequirementSuccess": "Agora usado como requisito. Encontre-o na página de Requisitos do projeto.",
+    "resetRequirementOverride": "Redefinir para a classificação configurada",
+    "resetRequirementOverrideSuccess": "Classificação redefinida. Esta issue segue novamente a configuração do tipo de requisito.",
+    "requirementOverrideFailed": "Falha ao atualizar a classificação do requisito.",
     "authComplete": {
       "successTitle": "Autorização concluída",
       "successDescription": "Sua conta está conectada agora. Você pode fechar esta janela e voltar ao que estava fazendo.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Desanexar torna este requisito totalmente editável no TestPlanIt e quebra seu vínculo com o rastreador conectado. Isso não pode ser desfeito — reanexar ao rastreador ainda não é suportado.",
       "detachConfirm": "Desanexar",
       "detachSuccess": "Requisito desanexado.",
-      "detachFailed": "Falha ao desanexar o requisito."
+      "detachFailed": "Falha ao desanexar o requisito.",
+      "exclude": "Não usar como requisito",
+      "excludeSuccess": "Não é mais usado como requisito. Ele aparece na página de Issues do projeto.",
+      "excludeFailed": "Falha ao atualizar a classificação do requisito."
+    },
+    "override": {
+      "promoteTitle": "Usar este problema como requisito?",
+      "promoteDescription": "{issue} entrará na árvore de requisitos e não aparecerá mais nas visualizações de Problemas. Ele permanece como requisito durante sincronizações e alterações na configuração do tipo de requisito até que você o altere novamente.",
+      "promoteConfirm": "Usar como requisito",
+      "excludeTitle": "Parar de usar este requisito?",
+      "excludeDescription": "{issue} deixará a árvore de requisitos e aparecerá na página de Problemas do projeto. Seus vínculos com casos de teste são mantidos. Ele permanece excluído durante sincronizações e alterações na configuração do tipo de requisito até que você o altere novamente.",
+      "excludeConfirm": "Não usar como requisito",
+      "resetTitle": "Redefinir para a classificação configurada?",
+      "resetDescription": "{issue} seguirá novamente a configuração do tipo de requisito do projeto, o que pode adicioná-lo à árvore de requisitos ou removê-lo dela.",
+      "resetConfirm": "Redefinir"
     },
     "create": {
       "dialogTitle": "Criar requisito",
@@ -6745,7 +6764,18 @@
       "submit": "Criar requisito",
       "submitHint": "Pressione Enter para criar",
       "success": "Requisito criado.",
-      "failed": "Falha ao criar o requisito."
+      "failed": "Falha ao criar o requisito.",
+      "modeCreate": "Novo requisito",
+      "modePromote": "Promover um problema existente",
+      "promoteDescription": "Use um problema já sincronizado com este projeto como requisito. Ele sai das visualizações de Problemas, mantém a hierarquia do rastreador e permanece como requisito durante sincronizações e alterações de configuração.",
+      "promoteParentNote": "Segue a hierarquia do rastreador",
+      "promoteIssueLabel": "Problema",
+      "promoteChooseIssue": "Escolher problema",
+      "promoteChangeIssue": "Alterar",
+      "promoteNoneSelected": "Nenhum problema selecionado",
+      "promoteSubmit": "Usar como requisito",
+      "promoteSuccess": "O problema agora é um requisito.",
+      "promoteFailed": "Falha ao promover o problema."
     },
     "edit": {
       "dialogTitle": "Editar requisito",

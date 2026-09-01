@@ -221,6 +221,40 @@ describe("RequirementProvenanceBadge", () => {
     ).toBeNull();
   });
 
+  it("posts FORCE_OFF to the override route from the exclude item, with no confirm step", async () => {
+    const onExcluded = vi.fn();
+    render(
+      <RequirementProvenanceBadge
+        requirement={lockedRow}
+        projectId={7}
+        onExcluded={onExcluded}
+      />
+    );
+
+    openMenu(screen.getByTestId("requirement-provenance-locked"));
+    fireEvent.click(screen.getByTestId("requirement-provenance-menu-exclude"));
+    // Every issue <-> requirement conversion confirms first (shared
+    // dialog); nothing is posted until the confirm button.
+    expect(global.fetch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("requirement-override-confirm"));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/projects/7/requirements/2/override",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ override: "FORCE_OFF" }),
+        }
+      );
+    });
+    await waitFor(() => {
+      // Carries the row's id so a parent with that row selected can
+      // deselect it — the row is no longer a requirement.
+      expect(onExcluded).toHaveBeenCalledWith(2);
+    });
+  });
+
   it("posts to the detach route and never uses a native confirm dialog", async () => {
     const confirmSpy = vi.spyOn(window, "confirm");
     render(

@@ -82,6 +82,15 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
 // (covered by DeferredIssueManager.test.tsx) -- same stand-in convention
 // UnifiedIssueManager.test.tsx and caseIssueLinkSave.test.tsx already use
 // for this exact component.
+// The create dialog's promotion picker (mounted only on its promote tab)
+// runs integration + issue queries this view's ZenStack stub does not
+// serve — stubbed out the same way DeferredIssueManager is below.
+vi.mock("@/components/issues/requirement-reference-search-dialog", () => ({
+  RequirementReferenceSearchDialog: () => (
+    <div data-testid="mock-promotion-picker" />
+  ),
+}));
+
 vi.mock("@/components/issues/DeferredIssueManager", () => ({
   DeferredIssueManager: () => <div data-testid="deferred-issue-manager" />,
 }));

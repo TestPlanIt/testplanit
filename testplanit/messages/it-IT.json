@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Impossibile raggiungere il/i progetto/i {count, number} . Vengono mostrati i risultati del/i progetto/i {successCount, number}.",
     "projectSelectorLabel": "Progetto",
     "searchFailedTitle": "Ricerca non riuscita",
+    "useAsRequirement": "Usa come requisito",
+    "useAsRequirementSuccess": "Ora utilizzato come requisito. Puoi trovarlo nella pagina Requisiti del progetto.",
+    "resetRequirementOverride": "Ripristina alla classificazione configurata",
+    "resetRequirementOverrideSuccess": "Classificazione ripristinata. Questo problema segue di nuovo la configurazione del tipo di requisito.",
+    "requirementOverrideFailed": "Impossibile aggiornare la classificazione del requisito.",
     "authComplete": {
       "successTitle": "Autorizzazione completata",
       "successDescription": "Il tuo account è ora connesso. Puoi chiudere questa finestra e tornare a quello che stavi facendo.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Lo scollegamento rende questo requisito completamente modificabile in TestPlanIt e interrompe il collegamento con il tracker connesso. Questa azione non può essere annullata: il ricollegamento al tracker non è ancora supportato.",
       "detachConfirm": "Scollega",
       "detachSuccess": "Requisito scollegato.",
-      "detachFailed": "Impossibile scollegare il requisito."
+      "detachFailed": "Impossibile scollegare il requisito.",
+      "exclude": "Non utilizzare come requisito",
+      "excludeSuccess": "Non più utilizzato come requisito. Appare nella pagina Problemi del progetto.",
+      "excludeFailed": "Impossibile aggiornare la classificazione del requisito."
+    },
+    "override": {
+      "promoteTitle": "Usare questo problema come requisito?",
+      "promoteDescription": "{issue} entrerà nell'albero dei requisiti e non apparirà più nelle visualizzazioni Problemi. Rimane un requisito durante le sincronizzazioni e le modifiche alla configurazione del tipo di requisito finché non viene ripristinato.",
+      "promoteConfirm": "Usa come requisito",
+      "excludeTitle": "Interrompere l'utilizzo di questo requisito?",
+      "excludeDescription": "{issue} lascerà l'albero dei requisiti e apparirà nella pagina Problemi del progetto. I suoi collegamenti ai casi di test vengono mantenuti. Rimane escluso durante le sincronizzazioni e le modifiche alla configurazione del tipo di requisito finché non viene ripristinato.",
+      "excludeConfirm": "Non usare come requisito",
+      "resetTitle": "Ripristinare la classificazione configurata?",
+      "resetDescription": "{issue} seguirà nuovamente la configurazione del tipo di requisito del progetto, che potrebbe aggiungerlo o rimuoverlo dall'albero dei requisiti.",
+      "resetConfirm": "Ripristina"
     },
     "create": {
       "dialogTitle": "Crea requisito",
@@ -6745,7 +6764,18 @@
       "submit": "Crea requisito",
       "submitHint": "Premi Invio per creare",
       "success": "Requisito creato.",
-      "failed": "Impossibile creare il requisito."
+      "failed": "Impossibile creare il requisito.",
+      "modeCreate": "Nuovo requisito",
+      "modePromote": "Promuovi un problema esistente",
+      "promoteDescription": "Usa come requisito un problema già sincronizzato con questo progetto. Uscirà dalle visualizzazioni Problemi, manterrà la sua gerarchia del tracker e rimarrà un requisito durante le sincronizzazioni e le modifiche alla configurazione.",
+      "promoteParentNote": "Segue la gerarchia del tracker",
+      "promoteIssueLabel": "Problema",
+      "promoteChooseIssue": "Scegli problema",
+      "promoteChangeIssue": "Modifica",
+      "promoteNoneSelected": "Nessun problema selezionato",
+      "promoteSubmit": "Usa come requisito",
+      "promoteSuccess": "Il problema è ora un requisito.",
+      "promoteFailed": "Impossibile promuovere il problema."
     },
     "edit": {
       "dialogTitle": "Modifica requisito",

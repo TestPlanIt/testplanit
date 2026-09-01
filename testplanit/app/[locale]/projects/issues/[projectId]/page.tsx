@@ -18,11 +18,26 @@ import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { IssueListFilters } from "@/components/issues/IssueListFilters";
 import type { VisibilityState } from "@tanstack/react-table";
+import { useQueryClient } from "@tanstack/react-query";
+import { ClipboardCheck, MoreVertical, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Loading } from "~/components/Loading";
+import {
+  RequirementOverrideConfirmDialog,
+  type RequirementOverrideAction,
+} from "@/components/requirements/RequirementOverrideConfirmDialog";
 import { useIssueFilterOptions } from "~/hooks/useIssueFilterOptions";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
   issueFacetConditions,
@@ -32,6 +47,65 @@ import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
 const PAGE_SIZE = 50;
+
+/**
+ * Per-row overflow menu for the classification override (project-admin
+ * gated by the caller; the override route's
+ * `authorizeProjectAdminForProject` is the real backstop). "Use as
+ * requirement" pins FORCE_ON; "Reset to configured classification"
+ * appears only on a row an override already pins (a FORCE_OFF-excluded
+ * row — a FORCE_ON row is a requirement and never surfaces on this
+ * defect-scoped page).
+ */
+function IssueRowActionsMenu({
+  actionsLabel,
+  useAsRequirementLabel,
+  resetLabel,
+  onUseAsRequirement,
+  onResetOverride,
+}: {
+  actionsLabel: string;
+  useAsRequirementLabel: string;
+  resetLabel: string;
+  onUseAsRequirement: () => void;
+  onResetOverride?: () => void;
+}) {
+  return (
+    <div className="flex w-full items-center justify-center">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            aria-label={actionsLabel}
+            data-testid="issue-row-actions"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={onUseAsRequirement}
+            data-testid="issue-use-as-requirement"
+          >
+            <ClipboardCheck className="h-4 w-4 me-2" />
+            {useAsRequirementLabel}
+          </DropdownMenuItem>
+          {onResetOverride && (
+            <DropdownMenuItem
+              onClick={onResetOverride}
+              data-testid="issue-requirement-override-reset"
+            >
+              <RotateCcw className="h-4 w-4 me-2" />
+              {resetLabel}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
 
 // Count columns are computed via a separate join call and can't be sorted
 // across pages without the full set in hand. Sorting by one fetches everything
@@ -67,11 +141,54 @@ function ProjectIssues() {
         id: true,
         name: true,
         iconUrl: true,
+        requirementsEnabled: true,
       },
     },
     {
       enabled: !!projectId && !isAuthLoading,
     }
+  );
+
+  // "Use as requirement" eligibility: classification is a project-admin
+  // act (client mirror of the override route's
+  // authorizeProjectAdminForProject), and only meaningful when the
+  // project has the Requirements feature enabled at all.
+  const { isProjectAdmin } = useProjectPermissions(projectId ?? 0);
+  const canOverrideClassification =
+    isProjectAdmin && Boolean(project?.requirementsEnabled);
+
+  const queryClient = useQueryClient();
+  const handleSetOverride = useCallback(
+    async (
+      issueId: number,
+      override: "FORCE_ON" | null,
+      successMessage: string
+    ) => {
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/requirements/${issueId}/override`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ override }),
+          }
+        );
+        if (!res.ok) {
+          throw new Error(`Override failed with status ${res.status}`);
+        }
+        toast.success(successMessage);
+        // A promoted row leaves this defect-scoped list (and joins the
+        // requirements tree) — sweep every ZenStack query rather than
+        // guessing key shapes (the predicate-not-prefix rule).
+        void queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey[0] === "zenstack",
+        });
+      } catch (err) {
+        console.error("Failed to set requirement override:", err);
+        toast.error(t("issues.requirementOverrideFailed"));
+      }
+    },
+    [projectId, queryClient, t]
   );
 
   const [sortConfig, setSortConfig] = useState<{
@@ -435,6 +552,63 @@ function ProjectIssues() {
       (pi) => pi.integration?.provider === "SIMPLE_URL"
     );
 
+  // Every conversion confirms first (shared dialog); the menu items only
+  // stage the request here.
+  const [pendingOverride, setPendingOverride] = useState<{
+    issueId: number;
+    issueLabel: string;
+    action: Extract<RequirementOverrideAction, "promote" | "reset">;
+  } | null>(null);
+  const confirmPendingOverride = () => {
+    const pending = pendingOverride;
+    setPendingOverride(null);
+    if (!pending) return;
+    void handleSetOverride(
+      pending.issueId,
+      pending.action === "promote" ? "FORCE_ON" : null,
+      pending.action === "promote"
+        ? t("issues.useAsRequirementSuccess")
+        : t("issues.resetRequirementOverrideSuccess")
+    );
+  };
+
+  // Stable identity — feeds useIssueColumns' useMemo; an inline arrow
+  // would regenerate the column defs (and remount every cell) on each
+  // render (the popover-flicker trap MemberIssuesTable documents).
+  const renderIssueRowActions = useCallback(
+    (row: ExtendedIssues) => {
+      // Only synced issues can carry a classification override; a native
+      // defect renders no menu at all.
+      if (row.integrationId == null) return null;
+      const issueLabel = row.externalKey ?? row.name;
+      return (
+        <IssueRowActionsMenu
+          actionsLabel={t("common.actions.actionsLabel")}
+          useAsRequirementLabel={t("issues.useAsRequirement")}
+          resetLabel={t("issues.resetRequirementOverride")}
+          onUseAsRequirement={() =>
+            setPendingOverride({
+              issueId: row.id,
+              issueLabel,
+              action: "promote",
+            })
+          }
+          onResetOverride={
+            row.requirementOverride != null
+              ? () =>
+                  setPendingOverride({
+                    issueId: row.id,
+                    issueLabel,
+                    action: "reset",
+                  })
+              : undefined
+          }
+        />
+      );
+    },
+    [t]
+  );
+
   const columns = useIssueColumns({
     translations: {
       name: t("common.name"),
@@ -448,9 +622,13 @@ function ProjectIssues() {
       testRuns: t("common.fields.testRuns"),
       milestones: t("common.fields.milestones"),
       integration: t("common.fields.integration"),
+      actions: t("common.actions.actionsLabel"),
     },
     isLoadingCounts,
     hideSyncedFields: onlySimpleUrl,
+    renderRowActions: canOverrideClassification
+      ? renderIssueRowActions
+      : undefined,
   });
 
   if (projectId === null && !isAuthLoading) {
@@ -561,6 +739,17 @@ function ProjectIssues() {
               testIdPrefix="issues-table"
               rowTestIdPrefix="issue-row"
             />
+            {pendingOverride && (
+              <RequirementOverrideConfirmDialog
+                action={pendingOverride.action}
+                issueLabel={pendingOverride.issueLabel}
+                open
+                onOpenChange={(nextOpen) => {
+                  if (!nextOpen) setPendingOverride(null);
+                }}
+                onConfirm={confirmPendingOverride}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

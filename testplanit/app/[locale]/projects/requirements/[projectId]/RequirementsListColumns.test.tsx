@@ -237,6 +237,7 @@ const onAddChild = vi.fn();
 const onRequestEdit = vi.fn();
 const onRequestDelete = vi.fn();
 const onDetached = vi.fn();
+const onExcluded = vi.fn();
 const markDragActive = vi.fn();
 const clearDragActive = vi.fn();
 
@@ -255,6 +256,7 @@ function baseArgs(overrides: Partial<ColumnsArgs> = {}): ColumnsArgs {
     onRequestEdit,
     onRequestDelete,
     onDetached,
+    onExcluded,
     markDragActive,
     clearDragActive,
     ...overrides,
@@ -322,6 +324,7 @@ beforeEach(() => {
   onRequestEdit.mockReset();
   onRequestDelete.mockReset();
   onDetached.mockReset();
+  onExcluded.mockReset();
   markDragActive.mockReset();
   clearDragActive.mockReset();
   dragSpecRef.current = null;

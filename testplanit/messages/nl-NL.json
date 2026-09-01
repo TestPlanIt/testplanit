@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Project(en) {count, number} konden niet worden bereikt. Resultaten van project(en) {successCount, number} worden weergegeven.",
     "projectSelectorLabel": "Project",
     "searchFailedTitle": "Zoeken mislukt",
+    "useAsRequirement": "Als vereiste gebruiken",
+    "useAsRequirementSuccess": "Nu gebruikt als vereiste. Te vinden op de pagina Vereisten van het project.",
+    "resetRequirementOverride": "Terugzetten naar geconfigureerde classificatie",
+    "resetRequirementOverrideSuccess": "Classificatie teruggezet. Dit issue volgt weer de configuratie van het vereistetype.",
+    "requirementOverrideFailed": "Het bijwerken van de vereisteclassificatie is mislukt.",
     "authComplete": {
       "successTitle": "Autorisatie voltooid",
       "successDescription": "Uw account is nu verbonden. U kunt dit venster sluiten en teruggaan naar waar u mee bezig was.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Door te ontkoppelen wordt deze vereiste volledig bewerkbaar in TestPlanIt en wordt de koppeling met de verbonden tracker verbroken. Dit kan niet ongedaan worden gemaakt — opnieuw koppelen aan de tracker wordt nog niet ondersteund.",
       "detachConfirm": "Ontkoppelen",
       "detachSuccess": "Vereiste ontkoppeld.",
-      "detachFailed": "Het ontkoppelen van de vereiste is mislukt."
+      "detachFailed": "Het ontkoppelen van de vereiste is mislukt.",
+      "exclude": "Niet als vereiste gebruiken",
+      "excludeSuccess": "Niet langer gebruikt als vereiste. Het verschijnt op de pagina Issues van het project.",
+      "excludeFailed": "Het bijwerken van de vereisteclassificatie is mislukt."
+    },
+    "override": {
+      "promoteTitle": "Dit issue gebruiken als vereiste?",
+      "promoteDescription": "{issue} wordt toegevoegd aan de vereistenboom en verschijnt niet langer in de weergaven Issues. Het blijft een vereiste bij synchronisaties en wijzigingen in de configuratie van vereistetypen totdat je dit terugzet.",
+      "promoteConfirm": "Gebruiken als vereiste",
+      "excludeTitle": "Stoppen met het gebruik van deze vereiste?",
+      "excludeDescription": "{issue} verlaat de vereistenboom en verschijnt op de Issues-pagina van het project. De koppelingen naar testgevallen blijven behouden. Het blijft uitgesloten bij synchronisaties en wijzigingen in de configuratie van vereistetypen totdat je dit terugzet.",
+      "excludeConfirm": "Niet gebruiken als vereiste",
+      "resetTitle": "Terugzetten naar de geconfigureerde classificatie?",
+      "resetDescription": "{issue} volgt weer de configuratie van vereistetypen van het project, wat het kan toevoegen aan of verwijderen uit de vereistenboom.",
+      "resetConfirm": "Terugzetten"
     },
     "create": {
       "dialogTitle": "Vereiste aanmaken",
@@ -6745,7 +6764,18 @@
       "submit": "Vereiste aanmaken",
       "submitHint": "Druk op Enter om aan te maken",
       "success": "Vereiste aangemaakt.",
-      "failed": "Het aanmaken van de vereiste is mislukt."
+      "failed": "Het aanmaken van de vereiste is mislukt.",
+      "modeCreate": "Nieuwe vereiste",
+      "modePromote": "Een bestaand issue promoveren",
+      "promoteDescription": "Gebruik een issue dat al is gesynchroniseerd met dit project als vereiste. Het verdwijnt uit de weergaven Issues, behoudt zijn hiërarchie in de tracker en blijft een vereiste bij synchronisaties en configuratiewijzigingen.",
+      "promoteParentNote": "Volgt de hiërarchie van de tracker",
+      "promoteIssueLabel": "Probleem",
+      "promoteChooseIssue": "Probleem kiezen",
+      "promoteChangeIssue": "Wijzigen",
+      "promoteNoneSelected": "Geen probleem geselecteerd",
+      "promoteSubmit": "Gebruiken als vereiste",
+      "promoteSuccess": "Probleem is nu een vereiste.",
+      "promoteFailed": "Het is niet gelukt om het probleem te promoveren."
     },
     "edit": {
       "dialogTitle": "Vereiste bewerken",

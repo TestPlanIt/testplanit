@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Das/Die Projekt(e) {count, number} konnte/konnten nicht erreicht werden. Es werden Ergebnisse vom/von den Projekt(en) {successCount, number} angezeigt.",
     "projectSelectorLabel": "Projekt",
     "searchFailedTitle": "Suche fehlgeschlagen",
+    "useAsRequirement": "Als Anforderung verwenden",
+    "useAsRequirementSuccess": "Wird jetzt als Anforderung verwendet. Zu finden auf der Anforderungsseite des Projekts.",
+    "resetRequirementOverride": "Auf konfigurierte Klassifizierung zurücksetzen",
+    "resetRequirementOverrideSuccess": "Klassifizierung zurückgesetzt. Dieses Problem folgt wieder der Konfiguration des Anforderungstyps.",
+    "requirementOverrideFailed": "Die Aktualisierung der Anforderungsklassifizierung ist fehlgeschlagen.",
     "authComplete": {
       "successTitle": "Autorisierung abgeschlossen",
       "successDescription": "Ihr Konto ist jetzt verbunden. Sie können dieses Fenster schließen und zu Ihrer vorherigen Tätigkeit zurückkehren.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Durch das Trennen wird diese Anforderung in TestPlanIt vollständig bearbeitbar, und die Verknüpfung zum verbundenen Tracker wird aufgehoben. Dies kann nicht rückgängig gemacht werden – ein erneutes Verknüpfen mit dem Tracker wird derzeit noch nicht unterstützt.",
       "detachConfirm": "Trennen",
       "detachSuccess": "Anforderung getrennt.",
-      "detachFailed": "Anforderung konnte nicht getrennt werden."
+      "detachFailed": "Anforderung konnte nicht getrennt werden.",
+      "exclude": "Nicht als Anforderung verwenden",
+      "excludeSuccess": "Wird nicht mehr als Anforderung verwendet. Es erscheint auf der Problemseite des Projekts.",
+      "excludeFailed": "Die Aktualisierung der Anforderungsklassifizierung ist fehlgeschlagen."
+    },
+    "override": {
+      "promoteTitle": "Dieses Ticket als Anforderung verwenden?",
+      "promoteDescription": "{issue} wird dem Anforderungsbaum hinzugefügt und erscheint nicht mehr in den Ticket-Ansichten. Es bleibt eine Anforderung, auch bei Synchronisierungen und Änderungen der Anforderungstyp-Konfiguration, bis Sie dies wieder ändern.",
+      "promoteConfirm": "Als Anforderung verwenden",
+      "excludeTitle": "Diese Anforderung nicht mehr verwenden?",
+      "excludeDescription": "{issue} verlässt den Anforderungsbaum und erscheint auf der Ticket-Seite des Projekts. Die Verknüpfungen zu Testfällen bleiben erhalten. Es bleibt ausgeschlossen, auch bei Synchronisierungen und Änderungen der Anforderungstyp-Konfiguration, bis Sie dies wieder ändern.",
+      "excludeConfirm": "Nicht als Anforderung verwenden",
+      "resetTitle": "Auf die konfigurierte Klassifizierung zurücksetzen?",
+      "resetDescription": "{issue} folgt wieder der Anforderungstyp-Konfiguration des Projekts, wodurch es dem Anforderungsbaum hinzugefügt oder daraus entfernt werden kann.",
+      "resetConfirm": "Zurücksetzen"
     },
     "create": {
       "dialogTitle": "Anforderung erstellen",
@@ -6745,7 +6764,18 @@
       "submit": "Anforderung erstellen",
       "submitHint": "Eingabetaste drücken zum Erstellen",
       "success": "Anforderung erstellt.",
-      "failed": "Anforderung konnte nicht erstellt werden."
+      "failed": "Anforderung konnte nicht erstellt werden.",
+      "modeCreate": "Neue Anforderung",
+      "modePromote": "Ein vorhandenes Ticket hochstufen",
+      "promoteDescription": "Verwenden Sie ein bereits mit diesem Projekt synchronisiertes Ticket als Anforderung. Es verschwindet aus den Ticket-Ansichten, behält seine Tracker-Hierarchie und bleibt eine Anforderung, auch bei Synchronisierungen und Konfigurationsänderungen.",
+      "promoteParentNote": "Folgt der Hierarchie des Trackers",
+      "promoteIssueLabel": "Ticket",
+      "promoteChooseIssue": "Ticket auswählen",
+      "promoteChangeIssue": "Ändern",
+      "promoteNoneSelected": "Kein Ticket ausgewählt",
+      "promoteSubmit": "Als Anforderung verwenden",
+      "promoteSuccess": "Das Ticket ist jetzt eine Anforderung.",
+      "promoteFailed": "Das Ticket konnte nicht hochgestuft werden."
     },
     "edit": {
       "dialogTitle": "Anforderung bearbeiten",

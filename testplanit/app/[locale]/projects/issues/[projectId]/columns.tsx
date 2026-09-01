@@ -15,7 +15,8 @@ import {
 import type { Issue } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import DOMPurify from "dompurify";
-import { useMemo } from "react";
+import { Activity } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 
 function resolveIssueUrl(row: ExtendedIssues): string | null {
@@ -56,6 +57,7 @@ export function useIssueColumns({
   translations,
   isLoadingCounts = false,
   hideSyncedFields = false,
+  renderRowActions,
 }: {
   translations: {
     name: string;
@@ -69,11 +71,16 @@ export function useIssueColumns({
     testRuns: string;
     milestones: string;
     integration: string;
+    actions?: string;
   };
   isLoadingCounts?: boolean;
   /** Hide columns that come from external API sync (description, status, priority, lastSyncedAt)
    *  when the project only has SIMPLE_URL integrations — those columns never have values. */
   hideSyncedFields?: boolean;
+  /** When provided, appends a right-pinned per-row actions column (the
+   *  MemberIssuesColumns convention). Callers gate the callback itself —
+   *  no callback, no column. */
+  renderRowActions?: (row: ExtendedIssues) => ReactNode;
 }): ColumnDef<ExtendedIssues>[] {
   // Destructure to primitive deps so useMemo only re-runs when strings change (locale switch),
   // not on every parent render that creates a new translations object.
@@ -88,6 +95,7 @@ export function useIssueColumns({
     sessions: tSessions,
     testRuns: tTestRuns,
     milestones: tMilestones,
+    actions: tActions,
   } = translations;
 
   return useMemo(() => {
@@ -471,6 +479,34 @@ export function useIssueColumns({
       },
     ];
 
+    if (renderRowActions) {
+      columns.push({
+        id: "actions",
+        // Centered icon header, matching MemberIssuesColumns' Actions
+        // column (same virtualized DataTable, same TruncatedHeaderLabel
+        // width caveat — see that file's comment).
+        header: ({ column }) => (
+          <div
+            className="flex justify-center"
+            style={{ width: Math.max(column.getSize() - 24, 0) }}
+          >
+            <Activity
+              className="h-4 w-4 text-muted-foreground"
+              aria-label={tActions}
+            />
+          </div>
+        ),
+        enableSorting: false,
+        enableResizing: false,
+        enableHiding: false,
+        meta: { isPinned: "right" },
+        size: 60,
+        minSize: 50,
+        maxSize: 80,
+        cell: ({ row }) => renderRowActions(row.original),
+      });
+    }
+
     // Hide columns that are populated only via external API sync when the project
     // only has SIMPLE_URL integrations — those columns would always be empty.
     if (hideSyncedFields) {
@@ -497,5 +533,7 @@ export function useIssueColumns({
     tMilestones,
     hideSyncedFields,
     isLoadingCounts,
+    renderRowActions,
+    tActions,
   ]);
 }

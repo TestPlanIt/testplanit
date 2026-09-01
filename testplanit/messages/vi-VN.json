@@ -6673,6 +6673,11 @@
     "fanOutPartialFailure": "Không thể truy cập {count, number} dự án. Hiển thị kết quả từ {successCount, number} dự án.",
     "projectSelectorLabel": "Dự án",
     "searchFailedTitle": "Tìm kiếm thất bại",
+    "useAsRequirement": "Sử dụng làm yêu cầu",
+    "useAsRequirementSuccess": "Hiện đã được sử dụng làm yêu cầu. Tìm thấy trên trang Yêu cầu của dự án.",
+    "resetRequirementOverride": "Đặt lại về phân loại đã cấu hình",
+    "resetRequirementOverrideSuccess": "Đã đặt lại phân loại. Vấn đề này lại tuân theo cấu hình loại yêu cầu.",
+    "requirementOverrideFailed": "Không thể cập nhật phân loại yêu cầu.",
     "authComplete": {
       "successTitle": "Ủy quyền hoàn tất",
       "successDescription": "Tài khoản của bạn đã được kết nối. Bạn có thể đóng cửa sổ này và tiếp tục công việc đang làm.",
@@ -6733,7 +6738,21 @@
       "detachDialogDescription": "Tách rời sẽ khiến yêu cầu này có thể chỉnh sửa hoàn toàn trong TestPlanIt và phá vỡ liên kết với trình theo dõi đã kết nối. Thao tác này không thể hoàn tác — việc đính kèm lại với trình theo dõi hiện chưa được hỗ trợ.",
       "detachConfirm": "Tách rời",
       "detachSuccess": "Đã tách rời yêu cầu.",
-      "detachFailed": "Không thể tách rời yêu cầu."
+      "detachFailed": "Không thể tách rời yêu cầu.",
+      "exclude": "Không sử dụng làm yêu cầu",
+      "excludeSuccess": "Không còn được sử dụng làm yêu cầu nữa. Nó xuất hiện trên trang Vấn đề của dự án.",
+      "excludeFailed": "Không thể cập nhật phân loại yêu cầu."
+    },
+    "override": {
+      "promoteTitle": "Sử dụng vấn đề này làm yêu cầu?",
+      "promoteDescription": "{issue} sẽ được thêm vào cây yêu cầu và không còn xuất hiện trong khung nhìn Vấn đề. Nó vẫn là một yêu cầu qua các lần đồng bộ và thay đổi cấu hình loại yêu cầu cho đến khi bạn đổi lại.",
+      "promoteConfirm": "Dùng làm yêu cầu",
+      "excludeTitle": "Ngừng sử dụng yêu cầu này?",
+      "excludeDescription": "{issue} sẽ rời khỏi cây yêu cầu và xuất hiện trên trang Vấn đề của dự án. Các liên kết trường hợp kiểm thử của nó vẫn được giữ lại. Nó vẫn bị loại trừ qua các lần đồng bộ và thay đổi cấu hình loại yêu cầu cho đến khi bạn đổi lại.",
+      "excludeConfirm": "Không dùng làm yêu cầu",
+      "resetTitle": "Đặt lại về phân loại đã cấu hình?",
+      "resetDescription": "{issue} sẽ tuân theo cấu hình loại yêu cầu của dự án một lần nữa, có thể khiến nó được thêm vào hoặc xóa khỏi cây yêu cầu.",
+      "resetConfirm": "Đặt lại"
     },
     "create": {
       "dialogTitle": "Tạo yêu cầu",
@@ -6745,7 +6764,18 @@
       "submit": "Tạo yêu cầu",
       "submitHint": "Nhấn Enter để tạo",
       "success": "Đã tạo yêu cầu.",
-      "failed": "Không thể tạo yêu cầu."
+      "failed": "Không thể tạo yêu cầu.",
+      "modeCreate": "Yêu cầu mới",
+      "modePromote": "Nâng cấp một vấn đề hiện có",
+      "promoteDescription": "Sử dụng một vấn đề đã được đồng bộ với dự án này làm yêu cầu. Nó sẽ chuyển ra khỏi khung nhìn Vấn đề, giữ nguyên cấu trúc phân cấp của trình theo dõi, và vẫn là một yêu cầu qua các lần đồng bộ và thay đổi cấu hình.",
+      "promoteParentNote": "Tuân theo cấu trúc phân cấp của trình theo dõi",
+      "promoteIssueLabel": "Vấn đề",
+      "promoteChooseIssue": "Chọn vấn đề",
+      "promoteChangeIssue": "Thay đổi",
+      "promoteNoneSelected": "Chưa chọn vấn đề nào",
+      "promoteSubmit": "Dùng làm yêu cầu",
+      "promoteSuccess": "Vấn đề hiện đã là yêu cầu.",
+      "promoteFailed": "Không thể nâng cấp vấn đề."
     },
     "edit": {
       "dialogTitle": "Chỉnh sửa yêu cầu",
