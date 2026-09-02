@@ -52,33 +52,13 @@ import type { Issue } from "~/zenstack/models";
 interface LinkedRequirementsPanelProps {
   caseId: number;
   projectId?: number;
+  readOnly?: boolean;
 }
 
-/**
- * LINK-02's case-side direction: the deliberate inverse of
- * `LinkedRequirementCasesPanel.tsx` (25-13). That panel lists `RepositoryCases`
- * rows for a requirement; this one lists `Issue` rows for a case. Both
- * commit exclusively through `useRequirementCaseLinks` (25-13's shared
- * hook), which fixes the direction once -- the requirement's `issueId` is
- * always the path parameter, the case id is always `entityId` -- so this
- * panel only ever calls `link(requirementId, caseId)` / `unlink(requirementId,
- * caseId)` with its own case id and the picked requirement's id.
- *
- * Every query in this file spreads `REQUIREMENT_SCOPE_WHERE`
- * (`lib/services/issueRoleScope.ts`) -- the sole reviewed expression of "is
- * this Issue row a requirement." Phase 23 spent nine plans keeping
- * requirement rows out of defect-oriented pickers and lists; this panel is
- * the deliberate inverse, so an inline predicate here would be both a
- * scoping bug waiting to happen and a containment-gate failure.
- *
- * Deliberately not gated on `isRequirementLocked` -- linkage is not one of
- * the five locked fields, matching `LinkedRequirementCasesPanel.tsx`'s own
- * decision. No coverage number, status pip, or rollup is shown here --
- * that's Phase 26.
- */
 export function LinkedRequirementsPanel({
   caseId,
   projectId,
+  readOnly = false,
 }: LinkedRequirementsPanelProps) {
   const t = useTranslations("requirements.linkedRequirements");
   const tSuspect = useTranslations("requirements.suspect");
@@ -270,6 +250,13 @@ export function LinkedRequirementsPanel({
     }
   };
 
+  // Requirements are opt-in per project, so a read-only empty card would be
+  // permanent furniture on every run. The editable surface keeps its empty
+  // state, which is what tells an author the panel can be filled.
+  if (readOnly && rows.length === 0) {
+    return null;
+  }
+
   return (
     <Card shadow="none" data-testid="case-linked-requirements">
       <CardHeader className="flex flex-row items-center justify-between p-4">
@@ -277,15 +264,17 @@ export function LinkedRequirementsPanel({
           <Link2 className="w-5 h-5" />
           {t("title")}
         </CardTitle>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          data-testid="case-linked-requirements-add"
-          onClick={() => setIsAddOpen(true)}
-        >
-          <Plus className="w-4 h-4" /> {t("addLink")}
-        </Button>
+        {!readOnly && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="case-linked-requirements-add"
+            onClick={() => setIsAddOpen(true)}
+          >
+            <Plus className="w-4 h-4" /> {t("addLink")}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="p-0">
         {rows.length === 0 ? (
@@ -293,14 +282,20 @@ export function LinkedRequirementsPanel({
             {t("empty")}
           </div>
         ) : (
-          <Table>
+          // Fixed layout, or the name cell grows to its content and the
+          // truncate below never engages.
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead>{tGlobal("common.fields.requirements")}</TableHead>
-                <TableHead />
-                <TableHead className="w-[60px] text-end">
-                  {tGlobal("common.actions.remove")}
+                <TableHead className="truncate">
+                  {tGlobal("common.fields.requirements")}
                 </TableHead>
+                <TableHead className="w-[150px]" />
+                {!readOnly && (
+                  <TableHead className="w-[90px] truncate text-end">
+                    {tGlobal("common.actions.remove")}
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -341,7 +336,26 @@ export function LinkedRequirementsPanel({
                         >
                           {formatIssueDisplayText(row)}
                         </Link>
-                        {isSuspect && (
+                        {isSuspect && readOnly && (
+                          // The signal without the action: dismissing is a
+                          // review decision, and this surface has no review.
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant="outline"
+                                data-testid={`case-linked-requirement-suspect-${row.id}`}
+                                className="gap-2 shrink-0 border-dashed border-warning bg-warning/15 text-foreground"
+                              >
+                                <AlertTriangle className="h-3 w-3 text-warning" />
+                                {tSuspect("badgeLabel")}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {tSuspect("tooltipCaseSide")}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {isSuspect && !readOnly && (
                           // Gated on openDismissId, its own state -- never
                           // openUnlinkId, which gates the unrelated remove
                           // popover in this same row.
@@ -401,48 +415,50 @@ export function LinkedRequirementsPanel({
                         projectId={row.projectId ?? projectId ?? 0}
                       />
                     </TableCell>
-                    <TableCell className="w-[60px] text-end">
-                      <Popover
-                        open={openUnlinkId === row.id}
-                        onOpenChange={(open) =>
-                          setOpenUnlinkId(open ? row.id : null)
-                        }
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={tGlobal("common.actions.remove")}
-                            data-testid={`case-linked-requirement-remove-${row.id}`}
-                            onClick={() => setOpenUnlinkId(row.id)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-fit" side="bottom">
-                          <div className="mb-2">{t("unlinkConfirm")}</div>
-                          <div className="flex items-center gap-2">
+                    {!readOnly && (
+                      <TableCell className="w-[90px] text-end">
+                        <Popover
+                          open={openUnlinkId === row.id}
+                          onOpenChange={(open) =>
+                            setOpenUnlinkId(open ? row.id : null)
+                          }
+                        >
+                          <PopoverTrigger asChild>
                             <Button
                               type="button"
-                              variant="secondary"
-                              onClick={() => setOpenUnlinkId(null)}
+                              variant="ghost"
+                              size="icon"
+                              aria-label={tGlobal("common.actions.remove")}
+                              data-testid={`case-linked-requirement-remove-${row.id}`}
+                              onClick={() => setOpenUnlinkId(row.id)}
                             >
-                              {tGlobal("common.cancel")}
+                              <X className="w-4 h-4" />
                             </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              disabled={isMutating}
-                              data-testid={`case-linked-requirement-remove-confirm-${row.id}`}
-                              onClick={() => handleUnlink(row.id)}
-                            >
-                              {tGlobal("common.actions.remove")}
-                            </Button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </TableCell>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-fit" side="bottom">
+                            <div className="mb-2">{t("unlinkConfirm")}</div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setOpenUnlinkId(null)}
+                              >
+                                {tGlobal("common.cancel")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                disabled={isMutating}
+                                data-testid={`case-linked-requirement-remove-confirm-${row.id}`}
+                                onClick={() => handleUnlink(row.id)}
+                              >
+                                {tGlobal("common.actions.remove")}
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}

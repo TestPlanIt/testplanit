@@ -57,6 +57,15 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // TestRunCases.statusId, so the sheet falls back to it when the run-case
     // carries no status of its own.
     jUnitTestResult: { useFindMany: mockUseFindManyJUnitTestResult },
+    // The read-only LinkedRequirementsPanel this sheet now mounts reads
+    // both of these. Empty data renders nothing at all (the panel returns
+    // null when a read-only case covers no requirements), which is what
+    // every case fixture in this file describes.
+    issue: { useFindMany: () => ({ data: [], refetch: vi.fn() }) },
+    repositoryCaseIssue: {
+      useFindMany: () => ({ data: [], refetch: vi.fn() }),
+      useUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    },
   }),
 }));
 

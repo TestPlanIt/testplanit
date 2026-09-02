@@ -369,25 +369,27 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
             {tLinkedCases("noLinkedCases")}
           </div>
         ) : (
-          <Table>
+          // Fixed layout, or a long header grows its own column and runs
+          // off the card instead of truncating.
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[300px]">
+                <TableHead className="w-[34%] truncate">
                   {tLinkedCases("testCase")}
                 </TableHead>
-                <TableHead className="w-[180px]">
+                <TableHead className="w-[16%] truncate">
                   {tLinkedCases("linkType")}
                 </TableHead>
-                <TableHead className="w-[180px]">
+                <TableHead className="w-[16%] truncate">
                   {tLinkedCases("status")}
                 </TableHead>
-                <TableHead className="w-20">
+                <TableHead className="w-[13%] truncate">
                   {tLinkedCases("linkedBy")}
                 </TableHead>
-                <TableHead className="w-[180px]">
+                <TableHead className="w-[13%] truncate">
                   {tLinkedCases("on")}
                 </TableHead>
-                <TableHead className="w-[60px] text-end">
+                <TableHead className="w-[8%] truncate text-end">
                   {tGlobal("common.actions.remove")}
                 </TableHead>
               </TableRow>

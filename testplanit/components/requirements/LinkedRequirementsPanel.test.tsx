@@ -922,3 +922,101 @@ describe("LinkedRequirementsPanel coverage query invalidation (WR-04)", () => {
     ).toBe(false);
   });
 });
+
+// The execution surface (a run's case detail) mounts this same panel with
+// `readOnly`, so the case being run shows what it covers without offering
+// any way to change it. Every mutation affordance has to be gone, not just
+// disabled -- a disabled control still tells the tester an action exists
+// here, which is exactly the UX call Phase 26 deferred rather than guessed.
+describe("LinkedRequirementsPanel — read-only mode", () => {
+  const linkedRow = {
+    id: 42,
+    name: "Login must support SSO",
+    isRequirement: true,
+    integrationId: null,
+    requirementDetachedAt: null,
+    projectId: 7,
+  };
+
+  it("lists linked requirements but offers no add, remove, or Remove column", () => {
+    setLinkedRequirements([linkedRow]);
+    renderWithClient(
+      <LinkedRequirementsPanel caseId={99} projectId={7} readOnly />
+    );
+
+    // The information is still there...
+    expect(screen.getByTestId("case-linked-requirements")).toBeInTheDocument();
+    expect(screen.getByTestId("linked-requirement-name-42")).toHaveTextContent(
+      "Login must support SSO"
+    );
+
+    // ...and every way to change it is gone.
+    expect(
+      screen.queryByTestId("case-linked-requirements-add")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("case-linked-requirement-remove-42")
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("common.actions.remove")).not.toBeInTheDocument();
+  });
+
+  it("keeps the add and remove controls when not read-only", () => {
+    setLinkedRequirements([linkedRow]);
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    expect(
+      screen.getByTestId("case-linked-requirements-add")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("case-linked-requirement-remove-42")
+    ).toBeInTheDocument();
+  });
+
+  it("renders nothing at all when a read-only case covers no requirements", () => {
+    // Requirements are opt-in per project: with no rows and no action to
+    // offer, an empty card would be permanent furniture on every run.
+    setLinkedRequirements([]);
+    const { container } = renderWithClient(
+      <LinkedRequirementsPanel caseId={99} projectId={7} readOnly />
+    );
+
+    expect(
+      screen.queryByTestId("case-linked-requirements")
+    ).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("still shows the empty state when editable, so an author knows the panel exists", () => {
+    setLinkedRequirements([]);
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    expect(screen.getByTestId("case-linked-requirements")).toBeInTheDocument();
+  });
+
+  it("shows a suspect flag as a signal but drops its dismissal action", async () => {
+    // A suspect linkage: the requirement's content changed after the case's
+    // last execution.
+    setLinkedRequirements([
+      { ...linkedRow, contentUpdatedAt: "2026-02-01T00:00:00.000Z" },
+    ]);
+    setDismissals([{ caseId: 99, issueId: 42, suspectDismissedAt: null }]);
+    setLatestExecution("2026-01-01T00:00:00.000Z");
+
+    renderWithClient(
+      <LinkedRequirementsPanel caseId={99} projectId={7} readOnly />
+    );
+
+    // The badge still warns the tester the case may no longer match.
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("case-linked-requirement-suspect-42")
+      ).toBeInTheDocument();
+    });
+
+    // But dismissing it is a review decision that belongs on the authoring
+    // surface, so the confirm action is not rendered here.
+    expect(
+      screen.queryByTestId("case-linked-requirement-suspect-confirm-42")
+    ).not.toBeInTheDocument();
+  });
+});

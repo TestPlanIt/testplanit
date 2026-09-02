@@ -4,6 +4,7 @@ import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import LinkedRequirementsPanel from "@/components/requirements/LinkedRequirementsPanel";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
@@ -1140,6 +1141,16 @@ export function TestRunCaseDetails({
           projectId={projectId}
           session={session}
           canManageLinks={canManageLinks}
+        />
+
+        {/* What this case covers, as context for the person executing it.
+            Read-only on purpose: the execution surface answers "why am I
+            running this," while linking and unlinking stay on the
+            repository case detail where the case itself is edited. */}
+        <LinkedRequirementsPanel
+          caseId={caseId}
+          projectId={projectId}
+          readOnly
         />
 
         <TestResultHistory
