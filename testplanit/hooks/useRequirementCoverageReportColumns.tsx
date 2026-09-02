@@ -1,4 +1,5 @@
 import { ClipboardCheck, Sparkles } from "lucide-react";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,6 @@ import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
@@ -634,7 +634,7 @@ export function useRequirementTraceabilityColumns(
           const row = info.row.original;
           if (row.testCaseId == null) return null;
           return (
-            <TestCaseNameDisplay
+            <CaseDisplay
               testCase={{
                 id: row.testCaseId,
                 name: row.testCaseName ?? "",

@@ -1,3 +1,4 @@
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import { RecordId } from "@/components/RecordId";
 import SystemErrorPopover from "@/components/junit/SystemErrorPopover";
@@ -5,7 +6,6 @@ import SystemOutputPopover from "@/components/junit/SystemOutputPopover";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -45,7 +45,7 @@ export function getJunitColumns({
         const isDeleted = row.original.isDeleted;
         return (
           <span className="flex items-center group min-w-0">
-            <TestCaseNameDisplay
+            <CaseDisplay
               testCase={{
                 id: row.original.id,
                 name: row.original.name,

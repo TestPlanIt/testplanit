@@ -10,7 +10,6 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -362,7 +361,7 @@ export function LinkedRequirementCasesPanel({
                     >
                       <TableCell>
                         <div className="flex items-center gap-2 min-w-0">
-                          <TestCaseNameDisplay
+                          <CaseDisplay
                             testCase={{
                               id: row.id,
                               name: row.name,

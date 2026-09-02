@@ -89,7 +89,7 @@ const DECIDED_STATUSES = ["APPROVED", "CHANGES_REQUESTED", "REJECTED"] as const;
 const FILTER_PAGE_SIZE = 25;
 
 /** Entity-type option icons — the same glyphs the app uses for a test
- *  case (TestCaseNameDisplay), a run (TestRunNameDisplay / project menu),
+ *  case (CaseDisplay), a run (TestRunNameDisplay / project menu),
  *  and a session (project menu). */
 const ENTITY_TYPE_ICONS: Record<EntityTypeValue, LucideIcon> = {
   CASE: ListChecks,

@@ -18,7 +18,7 @@ import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { SessionNameDisplay } from "~/components/SessionNameDisplay";
 import StatusDotDisplay from "~/components/StatusDotDisplay";
 import { UserNameCell } from "~/components/tables/UserNameCell";
-import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
+import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Link } from "~/lib/navigation";
@@ -225,7 +225,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.repositoryCase?.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.repositoryCase?.id || row.repositoryCaseId || 0,
                   name: row.repositoryCase?.name || "",
@@ -352,7 +352,7 @@ export function useDrillDownColumns({
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
@@ -506,7 +506,7 @@ export function useDrillDownColumns({
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
@@ -610,7 +610,7 @@ export function useDrillDownColumns({
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
@@ -817,7 +817,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.id,
                   name: row.name,
@@ -864,7 +864,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.id,
                   name: row.name,
@@ -944,7 +944,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
             return (
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{
                   id: row.id,
                   name: row.name,
@@ -1469,7 +1469,7 @@ export function useDrillDownColumns({
           header: () => translations.name,
           cell: (info) => {
             const row = info.row.original as any;
-            // Try to use TestCaseNameDisplay if it looks like a test case
+            // Try to use CaseDisplay if it looks like a test case
             if (
               row.id &&
               (row.name ||
@@ -1493,7 +1493,7 @@ export function useDrillDownColumns({
                 row.testCase?.hasParameters ??
                 row.testRunCase?.repositoryCase?.hasParameters;
               return (
-                <TestCaseNameDisplay
+                <CaseDisplay
                   testCase={{
                     id: testCaseId,
                     name: testCaseName,

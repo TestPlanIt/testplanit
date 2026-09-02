@@ -119,15 +119,12 @@ vi.mock("@/components/ui/async-combobox", () => ({
 // Only needed for the bidirectionality test, which also renders
 // LinkedRequirementCasesPanel.tsx (25-13).
 vi.mock("@/components/tables/CaseDisplay", () => ({
-  CaseDisplay: ({ name }: any) => (
-    <span data-testid="case-display">{name}</span>
-  ),
-}));
-
-vi.mock("@/components/TestCaseNameDisplay", () => ({
-  TestCaseNameDisplay: ({ testCase }: any) => (
-    <span data-testid={`case-name-${testCase.id}`}>{testCase.name}</span>
-  ),
+  CaseDisplay: ({ name, testCase }: any) =>
+    testCase ? (
+      <span data-testid={`case-name-${testCase.id}`}>{testCase.name}</span>
+    ) : (
+      <span data-testid="case-display">{name}</span>
+    ),
 }));
 
 vi.mock("@/components/search/ProjectNameDisplay", () => ({

@@ -530,7 +530,7 @@ export interface RequirementCoveringCase {
   caseName: string;
   projectId: number;
   projectName: string;
-  /** Display metadata `TestCaseNameDisplay` keys its icon on — a case
+  /** Display metadata `CaseDisplay` keys its icon on — a case
    * served without these renders as a manual, parameterless case
    * regardless of what it is. */
   automated: boolean;

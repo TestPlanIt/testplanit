@@ -50,7 +50,7 @@ export interface ParamRowAxisItem {
  *
  * `source` matches the `RepositoryCaseSource` enum (kept as a string here
  * to keep this module Prisma-free); `automated` mirrors `RepositoryCases.automated`.
- * Both feed `CaseDisplay`/`TestCaseNameDisplay` so the rail icon picks the
+ * Both feed `CaseDisplay` so the rail icon picks the
  * right glyph (manual vs. automated).
  */
 export interface CaseAxisItem {

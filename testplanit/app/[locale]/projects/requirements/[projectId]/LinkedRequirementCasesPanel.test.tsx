@@ -129,15 +129,12 @@ vi.mock("@/components/ui/async-combobox", () => ({
 }));
 
 vi.mock("@/components/tables/CaseDisplay", () => ({
-  CaseDisplay: ({ name }: any) => (
-    <span data-testid="case-display">{name}</span>
-  ),
-}));
-
-vi.mock("@/components/TestCaseNameDisplay", () => ({
-  TestCaseNameDisplay: ({ testCase }: any) => (
-    <span data-testid={`case-name-${testCase.id}`}>{testCase.name}</span>
-  ),
+  CaseDisplay: ({ name, testCase }: any) =>
+    testCase ? (
+      <span data-testid={`case-name-${testCase.id}`}>{testCase.name}</span>
+    ) : (
+      <span data-testid="case-display">{name}</span>
+    ),
 }));
 
 // Enhanced beyond a plain text stub so criterion 5's assertion below can

@@ -103,7 +103,7 @@ export type RequirementTraceabilityRow = {
   requirementProjectName?: string | null;
   caseId: number | null; // null => coverage gap
   caseName: string | null;
-  /** TestCaseNameDisplay's icon inputs; absent on gap rows. */
+  /** CaseDisplay's icon inputs; absent on gap rows. */
   caseAutomated?: boolean;
   caseSource?: string | null;
   caseHasParameters?: boolean;

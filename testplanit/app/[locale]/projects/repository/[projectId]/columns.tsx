@@ -236,7 +236,7 @@ export interface ExtendedCases extends RepositoryCases {
  * tinted in primary. Same shape the Tiptap toolbar's
  * InsertParameterToolbarButton uses, so the association is already
  * familiar. Kept inline here because the cells-table render path
- * doesn't go through TestCaseNameDisplay.
+ * doesn't go through CaseDisplay.
  */
 function TypeIconWithParamBadge({
   isSoftDeletedInRun,

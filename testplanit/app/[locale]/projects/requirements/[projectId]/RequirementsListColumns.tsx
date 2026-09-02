@@ -21,6 +21,7 @@ import { useDrag } from "react-dnd";
 // match Milestone details > Issues in display model, so this cell now
 // mounts the same `CoverageChip` that table uses (26.2-10).
 import { CoverageChip } from "@/[locale]/projects/milestones/[projectId]/[milestoneId]/CoverageChip";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import { HighlightedMatch } from "@/components/HighlightedMatch";
 import { IterationStatusLegendPopover } from "@/components/iterations/IterationStatusLegendPopover";
@@ -29,7 +30,6 @@ import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -877,7 +877,7 @@ function CoveringCasesPopover({
               className="flex items-center justify-between gap-2 rounded px-2 py-1.5 hover:bg-muted"
               data-testid={`requirement-covering-case-option-${row.caseId}`}
             >
-              <TestCaseNameDisplay
+              <CaseDisplay
                 testCase={{ id: row.caseId, name: row.caseName }}
                 projectId={row.projectId}
                 className="text-sm"

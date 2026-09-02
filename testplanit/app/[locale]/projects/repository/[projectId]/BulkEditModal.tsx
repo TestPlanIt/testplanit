@@ -3,7 +3,7 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { formatSeconds } from "@/components/DurationDisplay";
-import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
+import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -373,7 +373,7 @@ export function BulkEditModal({
     }
     const caseById = new Map((casesData ?? []).map((c) => [c.id, c] as const));
     // Carry the case rows (not just names) so each bullet can render the
-    // shared TestCaseNameDisplay — same manual/automated/parameterized/
+    // shared CaseDisplay — same manual/automated/parameterized/
     // deleted glyph the repository grid uses.
     const toSample = (entityId: number) => {
       const c = caseById.get(entityId);
@@ -2374,7 +2374,7 @@ export function BulkEditModal({
                                                 key={c.id}
                                                 className="min-w-0 text-foreground"
                                               >
-                                                <TestCaseNameDisplay
+                                                <CaseDisplay
                                                   testCase={c}
                                                   showIcon
                                                   size="small"
@@ -2406,7 +2406,7 @@ export function BulkEditModal({
                                   </p>
                                   {/* Disc marker lives on the <li>; truncation
                                      stays on the name span INSIDE
-                                     TestCaseNameDisplay — overflow-hidden on the
+                                     CaseDisplay — overflow-hidden on the
                                      <li> itself would clip the outside marker.
                                      No marker: override, so each disc inherits
                                      its <li>'s text-foreground, matching the
@@ -2418,7 +2418,7 @@ export function BulkEditModal({
                                           key={c.id}
                                           className="min-w-0 text-foreground"
                                         >
-                                          <TestCaseNameDisplay
+                                          <CaseDisplay
                                             testCase={c}
                                             showIcon
                                             size="small"

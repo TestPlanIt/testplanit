@@ -2,11 +2,11 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { Filter } from "@/components/tables/Filter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -177,7 +177,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
       ? ""
       : `/projects/repository/${comment.projectId}/${comment.repositoryCaseId}`;
     entityNameDisplay = (
-      <TestCaseNameDisplay
+      <CaseDisplay
         testCase={{
           id: comment.repositoryCaseId,
           name: comment.repositoryCase.name,

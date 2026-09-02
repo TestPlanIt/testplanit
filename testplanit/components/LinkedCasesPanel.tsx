@@ -1,8 +1,9 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { CaseResultStatus } from "@/components/tables/CaseResultStatus";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -49,7 +50,7 @@ import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { z } from "zod/v4";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
+import { useLatestTestResults } from "~/hooks/useLatestTestResults";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { DateFormatter } from "./DateFormatter";
 import { UserNameCell } from "./tables/UserNameCell";
@@ -67,6 +68,18 @@ interface CaseOption {
   name: string;
   source: RepositoryCaseSource;
   // Add other properties if your fetchOptions returns more and they are needed
+}
+
+/** The linked case as this panel selects it — display fields only. Results are
+ *  fetched separately, from the server's own "latest result" definition. */
+interface LinkedCase {
+  id: number;
+  name: string;
+  source: RepositoryCaseSource;
+  isDeleted?: boolean;
+  automated?: boolean;
+  hasParameters?: boolean;
+  projectId?: number;
 }
 
 // Zod schema for add link form
@@ -115,32 +128,6 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           isDeleted: true,
           automated: true,
           hasParameters: true,
-          testRuns: {
-            select: {
-              results: {
-                orderBy: { executedAt: "desc" },
-                take: 1,
-                select: {
-                  id: true,
-                  status: {
-                    select: { name: true, color: { select: { value: true } } },
-                  },
-                  executedAt: true,
-                },
-              },
-            },
-          },
-          junitResults: {
-            orderBy: { executedAt: "desc" },
-            take: 1,
-            select: {
-              id: true,
-              status: {
-                select: { name: true, color: { select: { value: true } } },
-              },
-              executedAt: true,
-            },
-          },
         },
       },
       caseB: {
@@ -151,32 +138,6 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           isDeleted: true,
           automated: true,
           hasParameters: true,
-          testRuns: {
-            select: {
-              results: {
-                orderBy: { executedAt: "desc" },
-                take: 1,
-                select: {
-                  id: true,
-                  status: {
-                    select: { name: true, color: { select: { value: true } } },
-                  },
-                  executedAt: true,
-                },
-              },
-            },
-          },
-          junitResults: {
-            orderBy: { executedAt: "desc" },
-            take: 1,
-            select: {
-              id: true,
-              status: {
-                select: { name: true, color: { select: { value: true } } },
-              },
-              executedAt: true,
-            },
-          },
         },
       },
       createdBy: { select: { id: true, name: true } },
@@ -201,6 +162,17 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
       )
     );
   }, [links, caseId]);
+
+  const linkedCaseIdList = useMemo(
+    () => Array.from(linkedCaseIds),
+    [linkedCaseIds]
+  );
+
+  // "Latest result" is answered by the server, by the same query behind the
+  // repository list's Latest Results column — so a case's status reads the
+  // same here as it does one click away, instead of this panel deriving its
+  // own answer from a pair of raw result relations.
+  const latestResultsByCase = useLatestTestResults(linkedCaseIdList, 1);
 
   // Async fetch for test cases
   const fetchTestCases = async (
@@ -398,61 +370,18 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
               {links?.map(
                 (
                   link: RepositoryCaseLink & {
-                    caseA: {
-                      id: number;
-                      name: string;
-                      source: RepositoryCaseSource;
-                      testRuns: Array<{
-                        results: Array<{
-                          id: number;
-                          status: {
-                            name: string;
-                            color?: { value: string };
-                          } | null;
-                          executedAt: Date | null;
-                        }>;
-                      }>;
-                      junitResults: Array<{
-                        id: number;
-                        status: {
-                          name: string;
-                          color?: { value: string };
-                        } | null;
-                        executedAt: Date | null;
-                      }>;
-                    };
-                    caseB: {
-                      id: number;
-                      name: string;
-                      source: RepositoryCaseSource;
-                      testRuns: Array<{
-                        results: Array<{
-                          id: number;
-                          status: {
-                            name: string;
-                            color?: { value: string };
-                          } | null;
-                          executedAt: Date | null;
-                        }>;
-                      }>;
-                      junitResults: Array<{
-                        id: number;
-                        status: {
-                          name: string;
-                          color?: { value: string };
-                        } | null;
-                        executedAt: Date | null;
-                      }>;
-                    };
+                    caseA: LinkedCase;
+                    caseB: LinkedCase;
                     createdBy: { id: string; name: string };
                   }
                 ) => {
                   const otherCase = getOtherCase(link);
                   const otherCaseSource = otherCase.source;
+                  const latestResult = latestResultsByCase[otherCase.id]?.[0];
                   return (
                     <TableRow key={link.id}>
-                      <TableCell className="w-[300px]">
-                        <TestCaseNameDisplay
+                      <TableCell>
+                        <CaseDisplay
                           testCase={{
                             id: otherCase.id,
                             name: otherCase.name,
@@ -468,147 +397,46 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                           className="font-medium"
                         />
                       </TableCell>
-                      <TableCell className="w-[180px]">
-                        <span className="px-2 py-0.5 rounded-lg bg-muted text-xs text-muted-foreground font-semibold">
-                          {tLinkedCases(link.type as LinkType)}
-                        </span>
+                      <TableCell>
+                        <Badge variant="secondary" className="max-w-full">
+                          <span className="truncate">
+                            {tLinkedCases(link.type as LinkType)}
+                          </span>
+                        </Badge>
                       </TableCell>
-                      <TableCell className="w-[180px]">
-                        {/* Latest Result Badge and Date */}
-                        {(() => {
-                          let latestManualResult: {
-                            id: number;
-                            status: {
-                              name: string;
-                              color?: { value: string };
-                            } | null;
-                            executedAt: Date | null;
-                          } | null = null;
-                          if (
-                            otherCase.testRuns &&
-                            Array.isArray(otherCase.testRuns)
-                          ) {
-                            for (const trc of otherCase.testRuns) {
-                              if (trc.results && trc.results.length > 0) {
-                                const currentManualResultInTRC = trc.results[0];
-                                if (currentManualResultInTRC.executedAt) {
-                                  if (
-                                    !latestManualResult ||
-                                    !latestManualResult.executedAt ||
-                                    new Date(
-                                      currentManualResultInTRC.executedAt
-                                    ) > new Date(latestManualResult.executedAt)
-                                  ) {
-                                    latestManualResult =
-                                      currentManualResultInTRC;
-                                  }
+                      <TableCell>
+                        <div className="space-y-1">
+                          <CaseResultStatus
+                            caseId={otherCase.id}
+                            statusName={latestResult?.statusName}
+                            statusColor={latestResult?.statusColor}
+                            testRunId={latestResult?.testRunId}
+                            projectId={projectId ?? otherCase.projectId}
+                            className="flex items-center space-x-1 min-w-0"
+                            nameClassName="truncate text-xs"
+                          />
+                          {latestResult && (
+                            <span className="ms-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
+                              <Calendar className="w-4 h-4 shrink-0" />
+                              <DateFormatter
+                                date={latestResult.executedAt}
+                                formatString={
+                                  session?.user.preferences?.dateFormat +
+                                  " " +
+                                  session?.user.preferences?.timeFormat
                                 }
-                              }
-                            }
-                          }
-
-                          const latestJUnitResult = (
-                            otherCase.junitResults?.[0]?.executedAt
-                              ? otherCase.junitResults[0]
-                              : null
-                          ) as {
-                            id: number;
-                            status: {
-                              name: string;
-                              color?: { value: string };
-                            } | null;
-                            executedAt: Date | null;
-                          } | null;
-
-                          let finalLatestResult: {
-                            id: number;
-                            status: {
-                              name: string;
-                              color?: { value: string };
-                            } | null;
-                            executedAt: Date | null;
-                          } | null = null;
-
-                          if (
-                            latestManualResult &&
-                            latestManualResult.executedAt &&
-                            latestJUnitResult &&
-                            latestJUnitResult.executedAt
-                          ) {
-                            finalLatestResult =
-                              new Date(latestManualResult.executedAt) >
-                              new Date(latestJUnitResult.executedAt)
-                                ? latestManualResult
-                                : latestJUnitResult;
-                          } else if (
-                            latestManualResult &&
-                            latestManualResult.executedAt
-                          ) {
-                            finalLatestResult = latestManualResult;
-                          } else if (
-                            latestJUnitResult &&
-                            latestJUnitResult.executedAt
-                          ) {
-                            finalLatestResult = latestJUnitResult;
-                          }
-
-                          if (
-                            !finalLatestResult ||
-                            !finalLatestResult.executedAt
-                          )
-                            return null;
-
-                          const status = finalLatestResult.status; // status can be null here
-                          const date = finalLatestResult.executedAt;
-
-                          return (
-                            <div className="space-y-1">
-                              <span
-                                className="px-2 py-0.5 rounded-lg text-xs font-semibold"
-                                data-status-surface={
-                                  status?.color?.value ? true : undefined
-                                }
-                                style={{
-                                  ...statusSurfaceVars(
-                                    status?.color?.value || ""
-                                  ),
-                                  backgroundColor:
-                                    status?.color?.value || undefined, // Handles null status
-                                  color: status?.color?.value // Handles null status
-                                    ? "#fff"
-                                    : undefined,
-                                }}
-                              >
-                                {status?.name} {/* Handles null status */}
-                              </span>
-                              <div>
-                                {date && (
-                                  <span className="ms-1 text-xs text-muted-foreground font-normal flex items-start gap-1">
-                                    <Calendar className="w-4 h-4 shrink-0" />
-                                    <DateFormatter
-                                      date={date}
-                                      formatString={
-                                        session?.user.preferences?.dateFormat +
-                                        " " +
-                                        session?.user.preferences?.timeFormat
-                                      }
-                                      timezone={
-                                        session?.user.preferences?.timezone
-                                      }
-                                    />
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
+                                timezone={session?.user.preferences?.timezone}
+                              />
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="w-20">
+                      <TableCell>
                         <div className="truncate">
                           <UserNameCell userId={link.createdBy?.id} />
                         </div>
                       </TableCell>
-                      <TableCell className="w-[180px]">
+                      <TableCell>
                         <DateFormatter
                           date={link.createdAt}
                           formatString={
@@ -619,7 +447,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                           timezone={session?.user.preferences?.timezone}
                         />
                       </TableCell>
-                      <TableCell className="w-[60px] text-end">
+                      <TableCell className="text-end">
                         {canManageLinks && (
                           <Popover
                             open={openPopoverLinkId === link.id}

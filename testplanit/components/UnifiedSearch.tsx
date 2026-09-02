@@ -1196,7 +1196,7 @@ function SearchResultCard({
   onSelectToggle?: () => void;
 }) {
   const t = useTranslations();
-  // Deleted wins over everything (matching TestCaseNameDisplay); automated
+  // Deleted wins over everything (matching CaseDisplay); automated
   // repository cases get the bot icon; everything else uses the entity icon.
   const Icon = hit.source.isDeleted
     ? "trash-2"

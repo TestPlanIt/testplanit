@@ -6,11 +6,11 @@ import { ListChecks } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { CaseResultStatus } from "@/components/tables/CaseResultStatus";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +34,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
-import { Link } from "~/lib/navigation";
 
 interface RequirementCoveragePanelProps {
   projectId: string;
@@ -206,7 +205,7 @@ export function RequirementCoveragePanel({
                         {/* The case's OWN project, never the requirement's
                           -- a cross-project case must link into its own
                           repository. */}
-                        <TestCaseNameDisplay
+                        <CaseDisplay
                           testCase={{ id: row.caseId, name: row.caseName }}
                           projectId={row.projectId}
                           className="font-medium line-clamp-2"
@@ -245,30 +244,14 @@ export function RequirementCoveragePanel({
                           never point at a different execution than the status
                           beside it. A never-executed case has no run to open,
                           and renders the bare status. */}
-                        {row.lastTestRunId ? (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Link
-                                href={`/projects/runs/${row.projectId}/${row.lastTestRunId}?selectedCase=${row.caseId}`}
-                                className="inline-flex hover:underline"
-                                data-testid={`requirement-covering-case-run-link-${row.caseId}`}
-                              >
-                                <StatusDotDisplay
-                                  name={row.lastStatusName ?? t("notRunCell")}
-                                  color={row.lastStatusColor ?? undefined}
-                                />
-                              </Link>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {t("resultRunLink")}
-                            </TooltipContent>
-                          </Tooltip>
-                        ) : (
-                          <StatusDotDisplay
-                            name={row.lastStatusName ?? t("notRunCell")}
-                            color={row.lastStatusColor ?? undefined}
-                          />
-                        )}
+                        <CaseResultStatus
+                          caseId={row.caseId}
+                          statusName={row.lastStatusName}
+                          statusColor={row.lastStatusColor}
+                          testRunId={row.lastTestRunId}
+                          projectId={row.projectId}
+                          linkTestId={`requirement-covering-case-run-link-${row.caseId}`}
+                        />
                       </TableCell>
                       <TableCell className="w-[180px] whitespace-nowrap">
                         {row.lastExecutedAt ? (
