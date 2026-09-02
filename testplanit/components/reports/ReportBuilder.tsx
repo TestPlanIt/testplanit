@@ -117,6 +117,11 @@ import {
 } from "~/utils/reportUtils";
 import { sortPreBuiltReportRows } from "~/utils/preBuiltReportSort";
 import {
+  mergeSeenProjectOptions,
+  withLatestProjectCounts,
+  type ProjectFilterOption,
+} from "~/utils/reportProjectFilterOptions";
+import {
   buildCleanReportUrlParams,
   isUrlInSyncWithReportType,
   resolveSyncedActiveTab,
@@ -445,6 +450,15 @@ function ReportBuilderContent({
       : initialPerTypeParams.trendsFilterValues
   );
   const [filterOptions, setFilterOptions] = useState<any>(null);
+  // Every project this report has offered, in the order first seen. The trends
+  // filter options are re-fetched whenever a selection changes so the counts
+  // stay live, and the menu is rebuilt from the response — so without this the
+  // list could shrink as the viewer picks, hiding the very options they need
+  // to build a multi-project selection. Counts still come from the latest
+  // response; a project the current filters exclude simply shows zero.
+  const [seenProjectOptions, setSeenProjectOptions] = useState<
+    ProjectFilterOption[]
+  >([]);
   // The cross-project requirement reports source their Projects filter from
   // their OWN endpoint (requirements-enabled projects, requirement counts),
   // not from the repository-cases view-options the trends filter uses --
@@ -734,16 +748,15 @@ function ReportBuilderContent({
     const items: any[] = [];
 
     // Projects filter (cross-project only)
-    if (filterOptions.projects && filterOptions.projects.length > 0) {
+    if (seenProjectOptions.length > 0) {
       items.push({
         id: "projects",
         name: tCommon("fields.projects"),
         icon: FolderOpen,
-        options: filterOptions.projects.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          count: p.count,
-        })),
+        options: withLatestProjectCounts(
+          seenProjectOptions,
+          filterOptions.projects
+        ),
       });
     }
 
@@ -814,7 +827,26 @@ function ReportBuilderContent({
     }
 
     return items;
-  }, [filterOptions, tCommon, tCoverage, reportType, requirementFilterOptions]);
+  }, [
+    filterOptions,
+    seenProjectOptions,
+    tCommon,
+    tCoverage,
+    reportType,
+    requirementFilterOptions,
+  ]);
+
+  // Reset the remembered options whenever the report itself changes — a
+  // different report may cover a different set of projects entirely.
+  useEffect(() => {
+    setSeenProjectOptions([]);
+  }, [reportType, mode, projectId]);
+
+  useEffect(() => {
+    setSeenProjectOptions((previous) =>
+      mergeSeenProjectOptions(previous, filterOptions?.projects)
+    );
+  }, [filterOptions]);
 
   // Build active filter chips from selectedFilterValues
   const activeFilterChips = useMemo(() => {
