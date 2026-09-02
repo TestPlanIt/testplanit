@@ -21,6 +21,7 @@ import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import { safeExternalUrl } from "~/utils/externalUrl";
 
 interface IssueDisplayProps {
   id: number;
@@ -105,7 +106,7 @@ function pruneStaleSyncAttempts(now: number): void {
 export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   id,
   name,
-  externalId,
+  externalId: _externalId,
   externalUrl,
   title,
   description,
@@ -262,17 +263,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   // ~/utils/issueDisplayText so the requirements surface shares it verbatim.
   const displayText = formatIssueDisplayText({ name, title, externalUrl });
 
-  let linkHref: string | undefined | null = undefined;
-
-  // First priority: Use externalUrl if provided (for Jira and other external integrations)
-  if (externalUrl) {
-    linkHref = externalUrl;
-  }
-  // Second priority: Use externalId as fallback
-  else if (externalId) {
-    // If we have an externalId but no URL, just show the ID
-    linkHref = null;
-  }
+  // The tracker owns `externalUrl` and some sync paths write it through the
+  // raw db client, so it reaches here unvalidated. Only an http(s) value is
+  // ever used as an href; anything else renders as text. An issue with an
+  // externalId but no URL has nothing to link to.
+  const safeHref = safeExternalUrl(externalUrl);
 
   // Use Popover for external issues, Tooltip for internal
   // Show Jira popover if we have integration info, even if externalUrl is missing (we can still fetch details)
@@ -291,21 +286,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           className={iconClassName}
         />
         <div className="min-w-0 flex-1 overflow-hidden">
-          {linkHref && !/^https?:\/\//i.test(linkHref) ? (
-            <Link
-              href={linkHref}
-              className="truncate block hover:text-inherit"
-              target="_blank"
-              rel="noopener noreferrer"
-              title={displayText}
-            >
-              {displayText}
-            </Link>
-          ) : (
-            <span className="truncate block" title={displayText}>
-              {displayText}
-            </span>
-          )}
+          {/* Text only — every branch that has a destination wraps this badge
+              in its own anchor, and nesting one here would be invalid HTML. */}
+          <span className="truncate block" title={displayText}>
+            {displayText}
+          </span>
         </div>
       </div>
     </Badge>
@@ -335,10 +320,10 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         }}
       >
         <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
-          {linkHref ? (
+          {safeHref ? (
             <PopoverAnchor asChild>
               <a
-                href={linkHref}
+                href={safeHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center max-w-full no-underline"
@@ -388,9 +373,9 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                       iconUrl={jiraDetails.issueType?.iconUrl}
                       className="h-4 w-4"
                     />
-                    {linkHref ? (
+                    {safeHref ? (
                       <Link
-                        href={linkHref}
+                        href={safeHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-semibold hover:text-primary hover:underline"
@@ -481,9 +466,9 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                     {t("common.ui.issues.updated")}
                     {new Date(jiraDetails.updated).toLocaleDateString()}
                   </span>
-                  {linkHref && (
+                  {safeHref && (
                     <Link
-                      href={linkHref}
+                      href={safeHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 hover:text-primary"
@@ -497,15 +482,17 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             )}
           </PopoverContent>
         </Popover>
-        {linkHref && (
+        {safeHref && (
           <ExternalLink className="w-4 h-4 -ms-1 me-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
     );
   }
 
-  // For external non-Jira issues, use a hover popover matching Jira's layout
-  if (linkHref && integrationProvider) {
+  // For external non-Jira issues, use a hover popover matching Jira's layout.
+  // Gated on the sanitized href: an issue whose externalUrl is not http(s)
+  // has no destination to offer, so it falls through to the plain badge below.
+  if (safeHref && integrationProvider) {
     const providerLabel =
       integrationProvider === "GITHUB"
         ? "GitHub"
@@ -539,7 +526,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
           <PopoverAnchor asChild>
             <a
-              href={linkHref}
+              href={safeHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center max-w-full no-underline"
@@ -574,7 +561,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                     className="h-4 w-4 shrink-0"
                   />
                   <Link
-                    href={linkHref}
+                    href={safeHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-semibold hover:text-primary hover:underline"
@@ -643,7 +630,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                   <span />
                 )}
                 <Link
-                  href={linkHref}
+                  href={safeHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:text-primary"
@@ -662,13 +649,25 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     );
   }
 
-  // For internal issues, use a simple tooltip
+  // For internal issues, use a simple tooltip. An issue that carries a URL but
+  // no integration still gets an anchor here — nothing above wrapped it.
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <div className="flex items-center group max-w-full">
           <TooltipTrigger asChild className="cursor-default">
-            {badgeContent}
+            {safeHref ? (
+              <a
+                href={safeHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center max-w-full no-underline"
+              >
+                {badgeContent}
+              </a>
+            ) : (
+              badgeContent
+            )}
           </TooltipTrigger>
         </div>
         <TooltipContent className="max-w-sm bg-popover text-popover-foreground border">

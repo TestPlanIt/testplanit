@@ -30,16 +30,8 @@ import { useRouter } from "~/lib/navigation";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { isRequirementLocked } from "~/lib/services/linkedIssueUpsert";
+import { safeExternalUrl } from "~/utils/externalUrl";
 import { JiraGlyph } from "@/components/MilestoneSourceBadge";
-
-/**
- * A synced requirement's `externalUrl` is tracker-provided and some sync
- * paths write it through the raw db client, which bypasses the schema's
- * `@url` validation — so only treat http(s) URLs as linkable (never
- * `javascript:` etc.) and open without an opener reference to prevent
- * reverse tab-nabbing. Mirrors `MilestoneSourceBadge.tsx`'s identical guard.
- */
-const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
 
 /**
  * 26.2-09's gap-closure fix for the recurring "Maximum update depth
@@ -134,11 +126,7 @@ export function RequirementProvenanceBadge({
     requirement.integrationId != null &&
     requirement.requirementDetachedAt != null;
 
-  const trackerUrl =
-    requirement.externalUrl &&
-    SAFE_EXTERNAL_URL_RE.test(requirement.externalUrl)
-      ? requirement.externalUrl
-      : null;
+  const trackerUrl = safeExternalUrl(requirement.externalUrl);
   const canOpenInTracker = Boolean(trackerUrl);
 
   const openInTracker = () => {

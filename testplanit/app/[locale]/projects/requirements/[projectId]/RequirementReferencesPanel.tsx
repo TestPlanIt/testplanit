@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "~/lib/navigation";
+import { isSafeExternalUrl } from "~/utils/externalUrl";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { schema } from "~/zenstack/schema";
 
@@ -50,17 +51,6 @@ interface ReferencedIssueRow {
   projectId: number;
   integration: { provider: string } | null;
 }
-
-/**
- * A synced requirement's `externalUrl` is tracker-provided and some sync
- * paths write it through the raw db client, which bypasses the schema's
- * `@url` validation — so only treat http(s) URLs as linkable (never
- * `javascript:` etc.) and open without an opener reference to prevent
- * reverse tab-nabbing. NOTE: this cannot be delegated to IssuesDisplay --
- * that component renders a NON-http href as a link and an http one as
- * plain text, the opposite of what is needed here.
- */
-const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
 
 interface ReferenceRow {
   requirementId: number;
@@ -282,9 +272,9 @@ export function RequirementReferencesPanel({
                   // its key. A reference is something you identify at a
                   // glance, so both kinds keep the title.
                   const label = `${issue.externalKey || issue.name}: ${issue.title}`;
-                  const isSafeExternalLink =
-                    Boolean(issue.externalUrl) &&
-                    SAFE_EXTERNAL_URL_RE.test(issue.externalUrl!);
+                  const isSafeExternalLink = isSafeExternalUrl(
+                    issue.externalUrl
+                  );
 
                   return (
                     <TableRow

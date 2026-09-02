@@ -26,14 +26,7 @@ import { useRouter } from "~/lib/navigation";
 import { siJira } from "simple-icons";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-
-/**
- * A synced milestone's `externalUrl` is tracker-provided and written through
- * the raw db client, which bypasses the schema's `@url` validation — so only
- * treat http(s) URLs as linkable (never `javascript:` etc.) and open without
- * an opener reference to prevent reverse tab-nabbing.
- */
-const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
+import { safeExternalUrl } from "~/utils/externalUrl";
 
 export interface MilestoneSourceBadgeMilestone {
   id: number;
@@ -421,12 +414,9 @@ export function MilestoneSourceBadge({
   // hover link icon — otherwise they'd advertise an affordance they don't
   // have. Resolved once and used by BOTH copies so the measured width keeps
   // matching what actually renders.
-  const trackerUrl =
-    interactive &&
-    milestone.externalUrl &&
-    SAFE_EXTERNAL_URL_RE.test(milestone.externalUrl)
-      ? milestone.externalUrl
-      : null;
+  const trackerUrl = interactive
+    ? safeExternalUrl(milestone.externalUrl)
+    : null;
 
   const openInTracker = () => {
     if (!trackerUrl) return;
