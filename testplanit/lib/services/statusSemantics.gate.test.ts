@@ -25,6 +25,11 @@
 // display, sync mapping, or filtering by a status a user explicitly picked is
 // legitimate. The allowlist below separates the two, and each entry says
 // which it is.
+//
+// THE ONE SAFE NAME. `untested` is seeded and users cannot change it, so
+// naming it is guaranteed — and it is the only way to identify it, since the
+// flags cannot separate untested from blocked (both are all-false). Every
+// other systemName is admin-editable and must never be used to infer meaning.
 
 import { execSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
@@ -69,20 +74,28 @@ function isTestPath(filePath: string): boolean {
  * adding one needs a reason that survives review.
  */
 const REVIEWED: Record<string, string> = {
+  // These ask a different question: "exclude the seeded default so a case
+  // merely ADDED to a run is not counted as executed." `untested` is the one
+  // systemName that IS guaranteed -- it is seeded and users cannot change it
+  // (the admin Statuses screen disables edit, delete and enable on that row:
+  // app/[locale]/admin/statuses/columns.tsx and EditStatus.tsx). It is also
+  // the only way to identify it: the flags cannot separate untested from
+  // blocked, since both are (false, false, false). So naming it here is
+  // correct, not a shortcut. No other systemName carries that guarantee.
   "lib/services/milestoneMemberCoverage.ts":
-    "Excludes the seeded default so a case merely ADDED to a run is not counted as executed. This is the 'has anything happened' question, and the flags cannot express it: untested and blocked are both (false,false,false). Needs a product decision, tracked separately -- do not convert blindly.",
+    "Excludes the seeded, non-editable default from milestone member coverage.",
   "lib/services/requirementCoverage.ts":
-    "Same 'exclude the seeded default' question as milestoneMemberCoverage, in the covering-case count. Same flag ambiguity, same pending decision.",
+    "Excludes the seeded, non-editable default from the covering-case rollup.",
   "utils/resultUnion.ts":
-    "Same 'exclude the seeded default' question, applied to the unified result feed.",
+    "Excludes the seeded, non-editable default from the unified result feed.",
   "utils/reportUtils.ts":
-    "Same 'exclude the seeded default' question inside a report query.",
+    "Excludes the seeded, non-editable default from a report query.",
   "utils/drillDownQueryBuilders.ts":
-    "Same 'exclude the seeded default' question inside a drill-down query.",
+    "Excludes the seeded, non-editable default from a drill-down query.",
   "utils/executionLogUtils.ts":
-    "Same 'exclude the seeded default' question inside the execution-log query.",
+    "Excludes the seeded, non-editable default from the execution log.",
   "app/api/milestones/[milestoneId]/export/route.ts":
-    "Same 'exclude the seeded default' question inside the milestone export.",
+    "Excludes the seeded, non-editable default from the milestone export.",
   "lib/services/runCaseStatusSync.ts":
     "Reads systemName to MAP a status, not to classify a result. No verdict is inferred here.",
 };
