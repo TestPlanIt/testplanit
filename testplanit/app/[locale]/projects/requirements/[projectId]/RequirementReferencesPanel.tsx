@@ -1,9 +1,11 @@
 "use client";
+/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx). */
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { RequirementReferenceSearchDialog } from "@/components/issues/requirement-reference-search-dialog";
@@ -23,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Link } from "~/lib/navigation";
+import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 import { schema } from "~/zenstack/schema";
 
 interface RequirementReferencesPanelProps {
@@ -35,15 +38,17 @@ interface ReferencedIssueRow {
   name: string;
   title: string;
   status: string | null;
+  externalId: string | null;
   externalKey: string | null;
   externalUrl: string | null;
+  externalStatus: string | null;
+  issueTypeName: string | null;
+  issueTypeIconUrl: string | null;
+  integrationId: number | null;
+  lastSyncedAt: string | Date | null;
+  data: unknown;
   projectId: number;
-}
-
-interface ReferenceRow {
-  requirementId: number;
-  referencedIssueId: number;
-  referencedIssue: ReferencedIssueRow;
+  integration: { provider: string } | null;
 }
 
 /**
@@ -51,10 +56,17 @@ interface ReferenceRow {
  * paths write it through the raw db client, which bypasses the schema's
  * `@url` validation — so only treat http(s) URLs as linkable (never
  * `javascript:` etc.) and open without an opener reference to prevent
- * reverse tab-nabbing. Copied from RequirementProvenanceBadge.tsx's own
- * identical guard (that file does not export it).
+ * reverse tab-nabbing. NOTE: this cannot be delegated to IssuesDisplay --
+ * that component renders a NON-http href as a link and an http one as
+ * plain text, the opposite of what is needed here.
  */
 const SAFE_EXTERNAL_URL_RE = /^https?:\/\//i;
+
+interface ReferenceRow {
+  requirementId: number;
+  referencedIssueId: number;
+  referencedIssue: ReferencedIssueRow;
+}
 
 /**
  * LINK-03's References card (D-13/D-14/D-15): a dedicated card in
@@ -97,9 +109,17 @@ export function RequirementReferencesPanel({
           name: true,
           title: true,
           status: true,
+          externalId: true,
           externalKey: true,
           externalUrl: true,
+          externalStatus: true,
+          issueTypeName: true,
+          issueTypeIconUrl: true,
+          integrationId: true,
+          lastSyncedAt: true,
+          data: true,
           projectId: true,
+          integration: { select: { provider: true } },
         },
       },
     },
@@ -114,6 +134,21 @@ export function RequirementReferencesPanel({
     () => (referenceRows ?? []) as unknown as ReferenceRow[],
     [referenceRows]
   );
+
+  // Virtualized to match the two sibling panels on this page.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 45,
+    overscan: 12,
+  });
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
+      : 0;
 
   // Seeds the picker's already-linked marker. A picked row can be matched
   // either as an internal id or (for an external pick) by its tracker key
@@ -220,108 +255,145 @@ export function RequirementReferencesPanel({
             <div>{t("emptyHint")}</div>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("columnReference")}</TableHead>
-                <TableHead>{t("columnStatus")}</TableHead>
-                <TableHead className="w-[60px] text-end">
-                  {tGlobal("common.actions.remove")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => {
-                const issue = row.referencedIssue;
-                const label = `${issue.externalKey || issue.name}: ${issue.title}`;
-                const isSafeExternalLink =
-                  Boolean(issue.externalUrl) &&
-                  SAFE_EXTERNAL_URL_RE.test(issue.externalUrl!);
+          <div ref={scrollRef} className="max-h-[32rem] overflow-auto">
+            <Table className="table-fixed w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="truncate">
+                    {t("columnReference")}
+                  </TableHead>
+                  <TableHead className="w-[150px] truncate">
+                    {t("columnStatus")}
+                  </TableHead>
+                  <TableHead className="w-[90px] truncate text-end">
+                    {tGlobal("common.actions.remove")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paddingTop > 0 && (
+                  <tr aria-hidden style={{ height: paddingTop }} />
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  const issue = row.referencedIssue;
+                  // Not `formatIssueDisplayText`: that gates "KEY: Title" on
+                  // `externalUrl`, so an internal reference would show only
+                  // its key. A reference is something you identify at a
+                  // glance, so both kinds keep the title.
+                  const label = `${issue.externalKey || issue.name}: ${issue.title}`;
+                  const isSafeExternalLink =
+                    Boolean(issue.externalUrl) &&
+                    SAFE_EXTERNAL_URL_RE.test(issue.externalUrl!);
 
-                return (
-                  <TableRow key={`${requirementId}-${row.referencedIssueId}`}>
-                    <TableCell className="min-w-0">
-                      {isSafeExternalLink ? (
-                        <a
-                          href={issue.externalUrl!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block truncate font-medium min-w-0 hover:text-inherit"
-                          title={label}
-                          data-testid={`requirement-reference-link-${row.referencedIssueId}`}
-                        >
-                          {label}
-                        </a>
-                      ) : (
-                        <Link
-                          // The referenced issue's OWN project, not the
-                          // requirement's: the POST route permits
-                          // cross-project internal picks, and the issues
-                          // page can only resolve the id in its home
-                          // project.
-                          href={`/projects/issues/${issue.projectId}?issueId=${row.referencedIssueId}`}
-                          className="block truncate font-medium min-w-0"
-                          title={label}
-                          data-testid={`requirement-reference-link-${row.referencedIssueId}`}
-                        >
-                          {label}
-                        </Link>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <IssueStatusDisplay status={issue.status} />
-                    </TableCell>
-                    <TableCell className="w-[60px] text-end">
-                      <Popover
-                        open={openRemoveId === row.referencedIssueId}
-                        onOpenChange={(open) =>
-                          setOpenRemoveId(open ? row.referencedIssueId : null)
-                        }
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={tGlobal("common.actions.remove")}
-                            data-testid={`requirement-reference-remove-${row.referencedIssueId}`}
-                            onClick={() =>
-                              setOpenRemoveId(row.referencedIssueId)
-                            }
+                  return (
+                    <TableRow
+                      key={`${requirementId}-${row.referencedIssueId}`}
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                    >
+                      <TableCell className="min-w-0">
+                        {/* The shared issue PRIMITIVES -- type icon plus
+                          `formatIssueDisplayText` -- rather than the
+                          IssuesDisplay composite, which owns link semantics
+                          this panel cannot use: it renders a non-http href
+                          as a link (the XSS this guard blocks) and an http
+                          one as plain text. */}
+                        {isSafeExternalLink ? (
+                          <a
+                            href={issue.externalUrl!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 min-w-0 font-medium hover:text-inherit"
+                            title={label}
+                            data-testid={`requirement-reference-link-${row.referencedIssueId}`}
                           >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-fit" side="bottom">
-                          <div className="mb-2">{t("removeConfirm")}</div>
-                          <div className="flex items-center gap-2">
+                            <IssueTypeIcon
+                              issueTypeName={issue.issueTypeName}
+                              iconUrl={issue.issueTypeIconUrl}
+                              className="h-4 w-4 shrink-0"
+                            />
+                            <span className="truncate">{label}</span>
+                          </a>
+                        ) : (
+                          <Link
+                            // The referenced issue's OWN project, not the
+                            // requirement's: the POST route permits
+                            // cross-project internal picks, and the issues
+                            // page can only resolve the id in its home
+                            // project.
+                            href={`/projects/issues/${issue.projectId}?issueId=${row.referencedIssueId}`}
+                            className="flex items-center gap-1 min-w-0 font-medium"
+                            title={label}
+                            data-testid={`requirement-reference-link-${row.referencedIssueId}`}
+                          >
+                            <IssueTypeIcon
+                              issueTypeName={issue.issueTypeName}
+                              iconUrl={issue.issueTypeIconUrl}
+                              className="h-4 w-4 shrink-0"
+                            />
+                            <span className="truncate">{label}</span>
+                          </Link>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <IssueStatusDisplay status={issue.status} />
+                      </TableCell>
+                      <TableCell className="w-[90px] text-end">
+                        <Popover
+                          open={openRemoveId === row.referencedIssueId}
+                          onOpenChange={(open) =>
+                            setOpenRemoveId(open ? row.referencedIssueId : null)
+                          }
+                        >
+                          <PopoverTrigger asChild>
                             <Button
                               type="button"
-                              variant="secondary"
-                              onClick={() => setOpenRemoveId(null)}
-                            >
-                              {tGlobal("common.cancel")}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              disabled={isMutating}
-                              data-testid={`requirement-reference-remove-confirm-${row.referencedIssueId}`}
+                              variant="ghost"
+                              size="icon"
+                              aria-label={tGlobal("common.actions.remove")}
+                              data-testid={`requirement-reference-remove-${row.referencedIssueId}`}
                               onClick={() =>
-                                handleRemove(row.referencedIssueId)
+                                setOpenRemoveId(row.referencedIssueId)
                               }
                             >
-                              {tGlobal("common.actions.remove")}
+                              <X className="w-4 h-4" />
                             </Button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-fit" side="bottom">
+                            <div className="mb-2">{t("removeConfirm")}</div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setOpenRemoveId(null)}
+                              >
+                                {tGlobal("common.cancel")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                disabled={isMutating}
+                                data-testid={`requirement-reference-remove-confirm-${row.referencedIssueId}`}
+                                onClick={() =>
+                                  handleRemove(row.referencedIssueId)
+                                }
+                              >
+                                {tGlobal("common.actions.remove")}
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <tr aria-hidden style={{ height: paddingBottom }} />
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
 

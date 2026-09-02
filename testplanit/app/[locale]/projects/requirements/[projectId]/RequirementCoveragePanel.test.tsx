@@ -17,6 +17,40 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// The panel virtualizes its rows, and jsdom gives every element a zero
+// height -- a real `useVirtualizer` against a zero-height scroll container
+// mounts nothing, which would make every assertion below fail for a reason
+// that has nothing to do with the panel. Stubbed the same way
+// components/matrix/MatrixGrid.test.tsx stubs it: a deterministic window of
+// the first N rows, so "is this row rendered" stays testable AND the cap is
+// itself observable (the last test asserts a long list is windowed rather
+// than mounted whole).
+const VIRTUALIZER_RENDER_CAP = 20;
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: ({
+    count,
+    estimateSize,
+  }: {
+    count: number;
+    estimateSize: () => number;
+  }) => {
+    const size = estimateSize();
+    const visibleCount = Math.min(count, VIRTUALIZER_RENDER_CAP);
+    const items = Array.from({ length: visibleCount }, (_, i) => ({
+      index: i,
+      key: i,
+      start: i * size,
+      size,
+      end: (i + 1) * size,
+      lane: 0,
+    }));
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => count * size,
+    };
+  },
+}));
+
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, unknown>) =>
     params ? `${key}:${Object.values(params).join("·")}` : key,
@@ -533,5 +567,41 @@ describe("RequirementCoveragePanel", () => {
     expect(screen.getByTestId("requirement-covering-case-2")).toHaveTextContent(
       "Other Project"
     );
+  });
+  // The whole point of I8's fix: a root requirement's subtree can gather
+  // thousands of covering cases, and the pane used to mount every one of
+  // them on selection and again on every re-render.
+  it("windows a large covering set instead of mounting every row", async () => {
+    const many = Array.from({ length: 400 }, (_, i) => ({
+      caseId: 1000 + i,
+      caseName: `Case ${i}`,
+      projectId: 7,
+      projectName: "Project A",
+      lastStatusName: "Passed",
+      lastStatusColor: "#22c55e",
+      lastStatusIsSuccess: true,
+      lastStatusIsFailure: false,
+      lastExecutedAt: "2026-03-01T10:00:00.000Z",
+      lastTestRunId: 5,
+      direct: true,
+    }));
+    stubFetch({ cases: many });
+    renderPanel();
+
+    // The first row mounts...
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("requirement-covering-case-1000")
+      ).toBeInTheDocument();
+    });
+
+    // ...the rest of the set does not, and the count still tells the truth
+    // about the whole set rather than about what happens to be mounted.
+    const mounted = screen.getAllByTestId(/^requirement-covering-case-\d+$/);
+    expect(mounted).toHaveLength(VIRTUALIZER_RENDER_CAP);
+    expect(
+      screen.queryByTestId("requirement-covering-case-1399")
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("requirement-coverage")).toHaveTextContent("400");
   });
 });

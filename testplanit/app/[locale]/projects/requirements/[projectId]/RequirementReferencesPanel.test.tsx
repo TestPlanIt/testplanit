@@ -15,7 +15,39 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// jsdom gives the scroll container zero height, so a real useVirtualizer
+// mounts no rows. Stubbed to a fixed window, as MatrixGrid.test.tsx does.
+const VIRTUALIZER_RENDER_CAP = 20;
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: ({
+    count,
+    estimateSize,
+  }: {
+    count: number;
+    estimateSize: () => number;
+  }) => {
+    const size = estimateSize();
+    const items = Array.from(
+      { length: Math.min(count, VIRTUALIZER_RENDER_CAP) },
+      (_, i) => ({
+        index: i,
+        key: i,
+        start: i * size,
+        size,
+        end: (i + 1) * size,
+        lane: 0,
+      })
+    );
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => count * size,
+      measureElement: () => {},
+    };
+  },
+}));
 
 vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => (key: string, params?: any) => {
@@ -88,11 +120,32 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     requirementIssueReference: {
       useFindMany: (...args: any[]) => mockFindMany(...args),
     },
+    // The shared IssuesDisplay this panel now renders reads the colour
+    // palette through useIssueColors.
+    color: { useFindMany: () => ({ data: [], isLoading: false }) },
   }),
 }));
 
 import { toast } from "sonner";
 import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
+
+// IssuesDisplay (rendered per reference row) fetches tracker details through
+// react-query, so the panel now needs a client in scope.
+function renderPanel(
+  props: { projectId?: number; requirementId?: number } = {}
+) {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={client}>
+      <RequirementReferencesPanel
+        projectId={props.projectId ?? 7}
+        requirementId={props.requirementId ?? 42}
+      />
+    </QueryClientProvider>
+  );
+}
 
 const mockRefetch = vi.fn();
 function setReferenceRows(rows: any[]) {
@@ -146,13 +199,13 @@ describe("RequirementReferencesPanel", () => {
 
   it("renders the count-first pluralized card title", () => {
     setReferenceRows([internalRow, externalRow]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     expect(screen.getByText("2 References")).toBeInTheDocument();
   });
 
   it("renders the empty state when the requirement has no references", () => {
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     expect(screen.getByText("References")).toBeInTheDocument();
     expect(
@@ -166,7 +219,7 @@ describe("RequirementReferencesPanel", () => {
 
   it("renders key, title and a live status chip for each reference row", () => {
     setReferenceRows([internalRow, externalRow]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     expect(
       screen.getByTestId("requirement-reference-link-55")
@@ -184,7 +237,7 @@ describe("RequirementReferencesPanel", () => {
 
   it("opens an external reference in a new tab via externalUrl", () => {
     setReferenceRows([externalRow]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     const link = screen.getByTestId("requirement-reference-link-77");
     expect(link.tagName).toBe("A");
@@ -206,7 +259,7 @@ describe("RequirementReferencesPanel", () => {
         },
       },
     ]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     const link = screen.getByTestId("requirement-reference-link-77");
     expect(link.tagName).toBe("A");
@@ -219,7 +272,7 @@ describe("RequirementReferencesPanel", () => {
 
   it("navigates in-app for an internal reference", () => {
     setReferenceRows([internalRow]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     const link = screen.getByTestId("requirement-reference-link-55");
     expect(link.tagName).toBe("A");
@@ -238,7 +291,7 @@ describe("RequirementReferencesPanel", () => {
         referencedIssue: { ...internalRow.referencedIssue, projectId: 31 },
       },
     ]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     expect(screen.getByTestId("requirement-reference-link-55")).toHaveAttribute(
       "href",
@@ -250,7 +303,7 @@ describe("RequirementReferencesPanel", () => {
     setReferenceRows([internalRow]);
     const confirmSpy = vi.spyOn(window, "confirm");
 
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     fireEvent.click(screen.getByTestId("requirement-reference-remove-55"));
     fireEvent.click(
@@ -301,7 +354,7 @@ describe("RequirementReferencesPanel attach flow", () => {
   });
 
   it("posts internalIssueId for an internal pick", async () => {
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     fireEvent.click(screen.getByTestId("requirement-references-add"));
     expect(capturedOnIssuesSelected).not.toBeNull();
@@ -323,7 +376,7 @@ describe("RequirementReferencesPanel attach flow", () => {
   });
 
   it("posts an external payload for an external pick", async () => {
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     fireEvent.click(screen.getByTestId("requirement-references-add"));
     await act(async () => {
@@ -364,7 +417,7 @@ describe("RequirementReferencesPanel attach flow", () => {
 
   it("seeds linkedIssueIds with both the internal id and the external key", () => {
     setReferenceRows([internalRow, externalRow]);
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
 
     fireEvent.click(screen.getByTestId("requirement-references-add"));
 
@@ -381,7 +434,7 @@ describe("RequirementReferencesPanel attach flow", () => {
       json: async () => ({ error: "Failed to attach reference." }),
     })) as any;
 
-    render(<RequirementReferencesPanel projectId={7} requirementId={42} />);
+    renderPanel();
     fireEvent.click(screen.getByTestId("requirement-references-add"));
     await act(async () => {
       await capturedOnIssuesSelected!([{ isExternal: false, id: 88 }]);

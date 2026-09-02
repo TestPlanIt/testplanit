@@ -1,8 +1,11 @@
 "use client";
+/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx). */
 
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ListChecks } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useRef } from "react";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
@@ -76,6 +79,31 @@ export function RequirementCoveragePanel({
 
   const rows = data?.cases ?? [];
 
+  // Virtualized rows, the way the rest of the app handles a list with no
+  // natural ceiling (`components/matrix/MatrixGrid.tsx` is the
+  // container-scrolled precedent). A root requirement gathers every case in
+  // its whole subtree, so this set reaches the thousands on a real project,
+  // and rendering all of them in one pass is what froze this pane on
+  // selection and again on every later re-render. Nothing is held back --
+  // the scroll container owns the height, the virtualizer owns what is
+  // mounted, and the panel still lists the entire covering set.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 45,
+    overscan: 12,
+  });
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  // Spacer rows rather than absolute positioning: this keeps real <table>
+  // semantics and the auto column widths the table already relies on,
+  // instead of re-implementing both on positioned divs.
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
+      : 0;
+
   return (
     <Card shadow="none" data-testid="requirement-coverage">
       <CardHeader className="p-4">
@@ -125,75 +153,91 @@ export function RequirementCoveragePanel({
             {t("panelEmpty")}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("columnCase")}</TableHead>
-                {/* Reuses the badge's own `inherited` key rather than minting
+          // The virtualizer's viewport. Without a bounded, scrollable
+          // ancestor it would measure zero and mount nothing.
+          <div ref={scrollRef} className="max-h-[32rem] overflow-auto">
+            <Table className="table-fixed w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="truncate">{t("columnCase")}</TableHead>
+                  {/* Reuses the badge's own `inherited` key rather than minting
                     a second key holding the same word. Kept adjacent to the
                     case name, where the flag used to sit, so the association
                     survives the move out of that cell. */}
-                <TableHead className="w-[100px] text-center">
-                  {t("inherited")}
-                </TableHead>
-                <TableHead>{t("columnResult")}</TableHead>
-                {/* Date AND time now, so the column needs room for both --
+                  <TableHead className="w-[100px] truncate text-center">
+                    {t("inherited")}
+                  </TableHead>
+                  <TableHead className="w-[140px] truncate">
+                    {t("columnResult")}
+                  </TableHead>
+                  {/* Date AND time now, so the column needs room for both --
                     paired with `whitespace-nowrap` on the cell below, which
                     keeps the value on one line instead of wrapping. */}
-                <TableHead className="w-[180px]">
-                  {t("columnExecutedAt")}
-                </TableHead>
-                <TableHead>{t("columnProject")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => {
-                // Every row shows its case's OWN project (operator decision
-                // 2026-08-25): a uniform Project column reads better than the
-                // old cross-project-only badge, which left same-project cells
-                // empty. Cross-project rows stay distinct because their links
-                // lead out of this project.
-                return (
-                  <TableRow
-                    key={row.caseId}
-                    data-testid={`requirement-covering-case-${row.caseId}`}
-                  >
-                    <TableCell>
-                      {/* The case's OWN project, never the requirement's
+                  <TableHead className="w-[180px] truncate">
+                    {t("columnExecutedAt")}
+                  </TableHead>
+                  <TableHead className="w-[140px] truncate">
+                    {t("columnProject")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paddingTop > 0 && (
+                  <tr aria-hidden style={{ height: paddingTop }} />
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  // Every row shows its case's OWN project (operator decision
+                  // 2026-08-25): a uniform Project column reads better than the
+                  // old cross-project-only badge, which left same-project cells
+                  // empty. Cross-project rows stay distinct because their links
+                  // lead out of this project.
+                  return (
+                    <TableRow
+                      key={row.caseId}
+                      // Measured, not estimated: a clamped name still leaves
+                      // one- and two-line rows, so a fixed estimate makes the
+                      // scrollbar lie and the list settle at the bottom.
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                      data-testid={`requirement-covering-case-${row.caseId}`}
+                    >
+                      <TableCell>
+                        {/* The case's OWN project, never the requirement's
                           -- a cross-project case must link into its own
                           repository. */}
-                      <TestCaseNameDisplay
-                        testCase={{ id: row.caseId, name: row.caseName }}
-                        projectId={row.projectId}
-                        className="font-medium"
-                      />
-                    </TableCell>
-                    <TableCell className="w-[120px] text-center">
-                      {/* A direct row gets the same em dash the Executed At
+                        <TestCaseNameDisplay
+                          testCase={{ id: row.caseId, name: row.caseName }}
+                          projectId={row.projectId}
+                          className="font-medium line-clamp-2"
+                        />
+                      </TableCell>
+                      <TableCell className="w-[120px] text-center">
+                        {/* A direct row gets the same em dash the Executed At
                           column uses for "nothing to show here", rather than
                           a blank cell that reads as missing data or a
                           "Direct" badge competing with this one for
                           attention. */}
-                      {row.direct ? (
-                        "—"
-                      ) : (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge
-                              variant="outline"
-                              data-testid={`requirement-covering-case-inherited-${row.caseId}`}
-                            >
-                              {t("inherited")}
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {t("inheritedTooltip")}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {/* Links to the run this exact result was recorded
+                        {row.direct ? (
+                          "—"
+                        ) : (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge
+                                variant="outline"
+                                data-testid={`requirement-covering-case-inherited-${row.caseId}`}
+                              >
+                                {t("inherited")}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("inheritedTooltip")}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {/* Links to the run this exact result was recorded
                           against, the same destination (and `selectedCase`
                           param) the repository list's own Latest Results
                           squares use. The run id rides along on the row from
@@ -201,62 +245,68 @@ export function RequirementCoveragePanel({
                           never point at a different execution than the status
                           beside it. A never-executed case has no run to open,
                           and renders the bare status. */}
-                      {row.lastTestRunId ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link
-                              href={`/projects/runs/${row.projectId}/${row.lastTestRunId}?selectedCase=${row.caseId}`}
-                              className="inline-flex hover:underline"
-                              data-testid={`requirement-covering-case-run-link-${row.caseId}`}
-                            >
-                              <StatusDotDisplay
-                                name={row.lastStatusName ?? t("notRunCell")}
-                                color={row.lastStatusColor ?? undefined}
-                              />
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>{t("resultRunLink")}</TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <StatusDotDisplay
-                          name={row.lastStatusName ?? t("notRunCell")}
-                          color={row.lastStatusColor ?? undefined}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell className="w-[180px] whitespace-nowrap">
-                      {row.lastExecutedAt ? (
-                        <DateFormatter
-                          date={row.lastExecutedAt}
-                          formatString={preferredDateTimeFormat}
-                          timezone={preferredTimezone}
-                        />
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {/* Auto-layout table: no column width bounds this
+                        {row.lastTestRunId ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link
+                                href={`/projects/runs/${row.projectId}/${row.lastTestRunId}?selectedCase=${row.caseId}`}
+                                className="inline-flex hover:underline"
+                                data-testid={`requirement-covering-case-run-link-${row.caseId}`}
+                              >
+                                <StatusDotDisplay
+                                  name={row.lastStatusName ?? t("notRunCell")}
+                                  color={row.lastStatusColor ?? undefined}
+                                />
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("resultRunLink")}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <StatusDotDisplay
+                            name={row.lastStatusName ?? t("notRunCell")}
+                            color={row.lastStatusColor ?? undefined}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell className="w-[180px] whitespace-nowrap">
+                        {row.lastExecutedAt ? (
+                          <DateFormatter
+                            date={row.lastExecutedAt}
+                            formatString={preferredDateTimeFormat}
+                            timezone={preferredTimezone}
+                          />
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {/* Auto-layout table: no column width bounds this
                           cell, so `fitContainer`'s `max-w-full` resolves
                           against content and a long project name widens the
                           table instead of truncating. The cap is that bound;
                           the full name stays reachable via the display's own
                           tooltip. */}
-                      <div className="max-w-[180px]">
-                        <ProjectNameDisplay
-                          projectName={row.projectName}
-                          projectId={row.projectId}
-                          showLink
-                          fitContainer
-                          className="text-xs text-muted-foreground"
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        <div className="max-w-[180px]">
+                          <ProjectNameDisplay
+                            projectName={row.projectName}
+                            projectId={row.projectId}
+                            showLink
+                            fitContainer
+                            className="text-xs text-muted-foreground"
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <tr aria-hidden style={{ height: paddingBottom }} />
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>

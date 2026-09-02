@@ -8,6 +8,38 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+// jsdom gives the scroll container zero height, so a real useVirtualizer
+// mounts no rows at all. Stubbed to a fixed window, the same way
+// components/matrix/MatrixGrid.test.tsx stubs it.
+const VIRTUALIZER_RENDER_CAP = 20;
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: ({
+    count,
+    estimateSize,
+  }: {
+    count: number;
+    estimateSize: () => number;
+  }) => {
+    const size = estimateSize();
+    const items = Array.from(
+      { length: Math.min(count, VIRTUALIZER_RENDER_CAP) },
+      (_, i) => ({
+        index: i,
+        key: i,
+        start: i * size,
+        size,
+        end: (i + 1) * size,
+        lane: 0,
+      })
+    );
+    return {
+      getVirtualItems: () => items,
+      getTotalSize: () => count * size,
+      measureElement: () => {},
+    };
+  },
+}));
+
 vi.mock("next-intl", () => ({
   // Params are appended so a count-bearing title is provable, not just its
   // key -- the panel's only such call. Param-less keys render exactly as

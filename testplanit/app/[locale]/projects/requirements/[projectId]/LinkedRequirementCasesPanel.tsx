@@ -1,10 +1,12 @@
 "use client";
+/* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx). */
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { AlertTriangle, Bot, Link2, ListChecks, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
@@ -274,6 +276,23 @@ export function LinkedRequirementCasesPanel({
 
   const rows = (linkedCases ?? []) as LinkedCaseRow[];
 
+  // Virtualized like the sibling Covering Test Cases panel on this same
+  // page -- the two sit together and a requirement can gather enough direct
+  // links for the difference to show.
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 45,
+    overscan: 12,
+  });
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? rowVirtualizer.getTotalSize() - virtualRows[virtualRows.length - 1].end
+      : 0;
+
   return (
     <Card shadow="none" data-testid="requirement-linked-cases">
       <CardHeader className="flex flex-row items-center justify-between p-4">
@@ -302,171 +321,186 @@ export function LinkedRequirementCasesPanel({
             {t("empty")}
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("columnCase")}</TableHead>
-                <TableHead>{t("columnProject")}</TableHead>
-                <TableHead className="w-[60px] text-end">
-                  {tGlobal("common.actions.remove")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => {
-                // COV-05/D-03: computed, never stored -- composes the
-                // requirement's own contentUpdatedAt, this row's direct
-                // last-execution value (absent/undefined for an inherited,
-                // non-direct covering case, which the predicate then
-                // treats as "no badge" by construction), and this row's own
-                // dismissal state.
-                const isSuspect = isLinkageSuspect({
-                  contentUpdatedAt: requirementRow?.contentUpdatedAt,
-                  lastExecutedAt: directLastExecutedAt.get(row.id),
-                  suspectDismissedAt: dismissalsByCaseId.get(row.id) ?? null,
-                });
+          <div ref={scrollRef} className="max-h-[32rem] overflow-auto">
+            <Table className="table-fixed w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="truncate">{t("columnCase")}</TableHead>
+                  <TableHead className="w-[150px] truncate">
+                    {t("columnProject")}
+                  </TableHead>
+                  <TableHead className="w-[90px] truncate text-end">
+                    {tGlobal("common.actions.remove")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paddingTop > 0 && (
+                  <tr aria-hidden style={{ height: paddingTop }} />
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  // COV-05/D-03: computed, never stored -- composes the
+                  // requirement's own contentUpdatedAt, this row's direct
+                  // last-execution value (absent/undefined for an inherited,
+                  // non-direct covering case, which the predicate then
+                  // treats as "no badge" by construction), and this row's own
+                  // dismissal state.
+                  const isSuspect = isLinkageSuspect({
+                    contentUpdatedAt: requirementRow?.contentUpdatedAt,
+                    lastExecutedAt: directLastExecutedAt.get(row.id),
+                    suspectDismissedAt: dismissalsByCaseId.get(row.id) ?? null,
+                  });
 
-                return (
-                  // No numeric id on the join row (composite caseId/issueId
-                  // primary key) -- key on the pair, not a nonexistent link id.
-                  <TableRow key={`${requirementId}-${row.id}`}>
-                    <TableCell>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <TestCaseNameDisplay
-                          testCase={{
-                            id: row.id,
-                            name: row.name,
-                            source: row.source,
-                            isDeleted: row.isDeleted,
-                            hasParameters: row.hasParameters ?? undefined,
-                          }}
-                          projectId={row.projectId}
-                          className="font-medium"
-                        />
-                        {isSuspect && (
-                          // Gated on openDismissId, its own state -- never
-                          // openUnlinkId, which gates the unrelated remove
-                          // popover in this same row.
-                          <Popover
-                            open={openDismissId === row.id}
-                            onOpenChange={(open) =>
-                              setOpenDismissId(open ? row.id : null)
-                            }
-                          >
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <PopoverTrigger asChild>
-                                  <Badge
-                                    variant="outline"
-                                    data-testid={`requirement-linked-case-suspect-${row.id}`}
-                                    className="gap-2 shrink-0 cursor-pointer border-dashed border-warning bg-warning/15 text-foreground"
-                                    onClick={() => setOpenDismissId(row.id)}
+                  return (
+                    // No numeric id on the join row (composite caseId/issueId
+                    // primary key) -- key on the pair, not a nonexistent link id.
+                    <TableRow
+                      key={`${requirementId}-${row.id}`}
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <TestCaseNameDisplay
+                            testCase={{
+                              id: row.id,
+                              name: row.name,
+                              source: row.source,
+                              isDeleted: row.isDeleted,
+                              hasParameters: row.hasParameters ?? undefined,
+                            }}
+                            projectId={row.projectId}
+                            className="font-medium line-clamp-2"
+                          />
+                          {isSuspect && (
+                            // Gated on openDismissId, its own state -- never
+                            // openUnlinkId, which gates the unrelated remove
+                            // popover in this same row.
+                            <Popover
+                              open={openDismissId === row.id}
+                              onOpenChange={(open) =>
+                                setOpenDismissId(open ? row.id : null)
+                              }
+                            >
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <PopoverTrigger asChild>
+                                    <Badge
+                                      variant="outline"
+                                      data-testid={`requirement-linked-case-suspect-${row.id}`}
+                                      className="gap-2 shrink-0 cursor-pointer border-dashed border-warning bg-warning/15 text-foreground"
+                                      onClick={() => setOpenDismissId(row.id)}
+                                    >
+                                      <AlertTriangle className="h-3 w-3 text-warning" />
+                                      {tSuspect("badgeLabel")}
+                                    </Badge>
+                                  </PopoverTrigger>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {tSuspect("tooltipRequirementSide")}
+                                </TooltipContent>
+                              </Tooltip>
+                              <PopoverContent className="w-fit" side="bottom">
+                                <div className="mb-2">
+                                  {tSuspect("dismissConfirm")}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    onClick={() => setOpenDismissId(null)}
                                   >
-                                    <AlertTriangle className="h-3 w-3 text-warning" />
-                                    {tSuspect("badgeLabel")}
-                                  </Badge>
-                                </PopoverTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {tSuspect("tooltipRequirementSide")}
-                              </TooltipContent>
-                            </Tooltip>
-                            <PopoverContent className="w-fit" side="bottom">
-                              <div className="mb-2">
-                                {tSuspect("dismissConfirm")}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  type="button"
-                                  onClick={() => setOpenDismissId(null)}
-                                >
-                                  {tGlobal("common.cancel")}
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  disabled={isDismissing}
-                                  data-testid={`requirement-linked-case-suspect-confirm-${row.id}`}
-                                  onClick={() => handleDismissSuspect(row.id)}
-                                >
-                                  {tSuspect("dismissAction")}
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {/* Every row shows its case's OWN project (operator
+                                    {tGlobal("common.cancel")}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={isDismissing}
+                                    data-testid={`requirement-linked-case-suspect-confirm-${row.id}`}
+                                    onClick={() => handleDismissSuspect(row.id)}
+                                  >
+                                    {tSuspect("dismissAction")}
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {/* Every row shows its case's OWN project (operator
                           decision 2026-08-25) -- same convention as
                           `RequirementCoveragePanel`'s Project column. */}
-                      {row.project?.name && (
-                        // Auto-layout table: no column width bounds this
-                        // cell, so `fitContainer`'s `max-w-full` resolves
-                        // against content and a long project name widens the
-                        // table instead of truncating. The cap is that bound;
-                        // the full name stays reachable via the display's own
-                        // tooltip.
-                        <div className="max-w-[180px]">
-                          <ProjectNameDisplay
-                            projectName={row.project.name}
-                            projectId={row.projectId}
-                            iconUrl={row.project.iconUrl}
-                            showLink
-                            fitContainer
-                            className="text-xs text-muted-foreground"
-                          />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="w-[60px] text-end">
-                      <Popover
-                        open={openUnlinkId === row.id}
-                        onOpenChange={(open) =>
-                          setOpenUnlinkId(open ? row.id : null)
-                        }
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={tGlobal("common.actions.remove")}
-                            data-testid={`requirement-linked-case-remove-${row.id}`}
-                            onClick={() => setOpenUnlinkId(row.id)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-fit" side="bottom">
-                          <div className="mb-2">{t("unlinkConfirm")}</div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setOpenUnlinkId(null)}
-                            >
-                              {tGlobal("common.cancel")}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              disabled={isMutating}
-                              data-testid={`requirement-linked-case-remove-confirm-${row.id}`}
-                              onClick={() => handleUnlink(row.id)}
-                            >
-                              {tGlobal("common.actions.remove")}
-                            </Button>
+                        {row.project?.name && (
+                          // Auto-layout table: no column width bounds this
+                          // cell, so `fitContainer`'s `max-w-full` resolves
+                          // against content and a long project name widens the
+                          // table instead of truncating. The cap is that bound;
+                          // the full name stays reachable via the display's own
+                          // tooltip.
+                          <div className="max-w-[180px]">
+                            <ProjectNameDisplay
+                              projectName={row.project.name}
+                              projectId={row.projectId}
+                              iconUrl={row.project.iconUrl}
+                              showLink
+                              fitContainer
+                              className="text-xs text-muted-foreground"
+                            />
                           </div>
-                        </PopoverContent>
-                      </Popover>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                        )}
+                      </TableCell>
+                      <TableCell className="w-[90px] text-end">
+                        <Popover
+                          open={openUnlinkId === row.id}
+                          onOpenChange={(open) =>
+                            setOpenUnlinkId(open ? row.id : null)
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={tGlobal("common.actions.remove")}
+                              data-testid={`requirement-linked-case-remove-${row.id}`}
+                              onClick={() => setOpenUnlinkId(row.id)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-fit" side="bottom">
+                            <div className="mb-2">{t("unlinkConfirm")}</div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={() => setOpenUnlinkId(null)}
+                              >
+                                {tGlobal("common.cancel")}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                disabled={isMutating}
+                                data-testid={`requirement-linked-case-remove-confirm-${row.id}`}
+                                onClick={() => handleUnlink(row.id)}
+                              >
+                                {tGlobal("common.actions.remove")}
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <tr aria-hidden style={{ height: paddingBottom }} />
+                )}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
 
