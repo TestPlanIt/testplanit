@@ -1204,6 +1204,15 @@ model Status {
     @@index([isDeleted, isEnabled])
     @@index([order])
     @@deny('all', auth() == null)
+    // Seven queries identify the run default by systemName = 'untested', so the
+    // row must keep existing. Denies a clean 403 before the write reaches the
+    // database; the authoritative guarantee is the tpl_seeded_status_guard
+    // trigger, which also blocks a rename and a soft-delete and covers the raw
+    // client and manual SQL. Rename is deliberately NOT denied here: this
+    // language cannot compare against the post-update value, so a policy could
+    // only freeze the whole row and would wrongly block the display-name,
+    // colour and ordering edits the trigger allows.
+    @@deny('delete', systemName == 'untested')
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
 }

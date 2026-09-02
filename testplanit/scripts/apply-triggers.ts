@@ -352,6 +352,68 @@ CREATE TRIGGER tpl_composition_lock_guard_upd BEFORE UPDATE OF "order", "isDelet
 `;
 
 /**
+ * Seeded-status guard — the authoritative DB-level guarantee that the `untested`
+ * Status row keeps its identity and keeps existing.
+ *
+ * WHY THIS EXISTS. Seven queries identify the run-default status by
+ * `systemName = 'untested'` so a case merely ADDED to a run is not counted as
+ * executed (milestoneMemberCoverage, requirementCoverage, resultUnion,
+ * reportUtils, drillDownQueryBuilders, executionLogUtils, and the milestone
+ * export). That name check is correct and is the ONLY way to identify the row —
+ * the three semantic flags cannot separate "untested" from "blocked", both being
+ * (false, false, false). But before this guard the guarantee lived entirely in
+ * the admin Statuses screen, which disables edit/delete on that row: nothing
+ * stopped the raw client, the generated `/api/model` surface (Status is
+ * ADMIN-writable), a migration, or manual SQL from renaming or removing it, and
+ * every one of those queries would then silently start counting never-executed
+ * cases as executed.
+ *
+ * SCOPE, deliberately narrow. This locks IDENTITY and EXISTENCE only:
+ *   - `systemName` may not change on the untested row, and no other row may take
+ *     that name (the column is already `@unique`, so this closes the rename-away-
+ *     then-rename-another race rather than duplicating the unique constraint).
+ *   - the row may not be hard-deleted or soft-deleted.
+ * Everything else stays editable — name, colour, aliases, order, scope and project
+ * assignment are all legitimate admin operations on that row, and the seeded flags
+ * are left alone here because they are the UI's business, not an invariant any
+ * query depends on.
+ *
+ * The distinct tpl_seeded_status_* prefix keeps these out of the tpl_audit_% /
+ * tpl_composition_% / tpl_issue_* / tpl_single_default_% / tpl_stamp_% drift
+ * checks, exactly like the guards above.
+ */
+export const SEEDED_STATUS_GUARD_SQL = `
+CREATE OR REPLACE FUNCTION tpl_seeded_status_guard() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    IF OLD."systemName" = 'untested' THEN
+      RAISE EXCEPTION 'The seeded "untested" status cannot be deleted: % queries identify the run default by this systemName', 7 USING ERRCODE = 'check_violation'; -- 23514
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- UPDATE. Block renaming the seeded row away from 'untested' ...
+  IF OLD."systemName" = 'untested' AND NEW."systemName" IS DISTINCT FROM 'untested' THEN
+    RAISE EXCEPTION 'The seeded "untested" status cannot be renamed: queries identify the run default by this systemName' USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+  -- ... and block soft-deleting it out from under those same queries.
+  IF NEW."systemName" = 'untested' AND NEW."isDeleted" IS TRUE AND OLD."isDeleted" IS NOT TRUE THEN
+    RAISE EXCEPTION 'The seeded "untested" status cannot be soft-deleted: queries identify the run default by this systemName' USING ERRCODE = 'check_violation'; -- 23514
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_seeded_status_guard_upd ON "Status";
+CREATE TRIGGER tpl_seeded_status_guard_upd BEFORE UPDATE OF "systemName", "isDeleted" ON "Status"
+  FOR EACH ROW EXECUTE FUNCTION tpl_seeded_status_guard();
+
+DROP TRIGGER IF EXISTS tpl_seeded_status_guard_del ON "Status";
+CREATE TRIGGER tpl_seeded_status_guard_del BEFORE DELETE ON "Status"
+  FOR EACH ROW EXECUTE FUNCTION tpl_seeded_status_guard();
+`;
+
+/**
  * Issue hierarchy cycle guard (HIER-03) — the authoritative DB-level guard against a
  * parentId write that would make an issue its own descendant. Fires for ALL Issue rows
  * unconditionally, not gated on the requirement-classification flag: a cycle is
@@ -720,6 +782,13 @@ export async function applyAuditTriggers(
     //     re-run. Distinct tpl_issue_content_updated_at prefix keeps it out of every
     //     drift self-check below, exactly like tpl_issue_hierarchy_* above.
     await client.query(ISSUE_CONTENT_UPDATED_AT_TRIGGER_SQL);
+
+    // 3e. Seeded-status guard — the `untested` Status row keeps its systemName and
+    //     keeps existing, because seven queries identify the run default by that
+    //     name and the semantic flags cannot express it. Idempotent CREATE OR
+    //     REPLACE + DROP/CREATE TRIGGER pair. Distinct tpl_seeded_status_* prefix
+    //     keeps it out of every drift self-check below.
+    await client.query(SEEDED_STATUS_GUARD_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The
