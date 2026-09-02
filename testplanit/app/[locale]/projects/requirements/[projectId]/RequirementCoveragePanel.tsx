@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/incompatible-library -- TanStack Virtual's useVirtualizer() returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it (same as components/matrix/MatrixGrid.tsx). */
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ListChecks } from "lucide-react";
+import { HelpCircle, ListChecks } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
@@ -60,6 +60,7 @@ export function RequirementCoveragePanel({
   requirementId,
 }: RequirementCoveragePanelProps) {
   const t = useTranslations("requirements.coverage");
+  const tCommon = useTranslations("common");
 
   // "Executed At" is an instant, so it renders date AND time in the viewer's
   // preferred formats and zone -- the same session-preference recipe the
@@ -166,8 +167,35 @@ export function RequirementCoveragePanel({
                   <TableHead className="w-[100px] truncate text-center">
                     {t("inherited")}
                   </TableHead>
-                  <TableHead className="w-[140px] truncate">
-                    {t("columnResult")}
+                  {/* This column and the repository list's Latest Results
+                    answer two deliberately different questions
+                    (lib/services/latestCaseResults.ts vs
+                    latestTestResults.ts, each header says why): coverage
+                    takes the most recent execution even when its status
+                    carries no pass/fail, so a skipped run can never let an
+                    older pass stand as coverage; the other surfaces walk
+                    back to the newest result that did carry one. Same case,
+                    two readings — this tooltip is the one place the UI
+                    explains the difference. */}
+                  <TableHead className="w-[140px]">
+                    <span className="flex items-center gap-1">
+                      <span className="truncate">{t("columnResult")}</span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            tabIndex={0}
+                            aria-label={tCommon("aria.help")}
+                            className="inline-flex shrink-0"
+                            data-testid="requirement-coverage-result-help"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          {t("columnResultTooltip")}
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
                   </TableHead>
                   {/* Date AND time now, so the column needs room for both --
                     paired with `whitespace-nowrap` on the cell below, which

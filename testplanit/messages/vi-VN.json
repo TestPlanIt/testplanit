@@ -6872,6 +6872,7 @@
       "panelEmpty": "Chưa có trường hợp kiểm thử nào bao phủ yêu cầu này.",
       "columnCase": "Trường hợp kiểm thử",
       "columnResult": "Kết quả gần nhất",
+      "columnResultTooltip": "Lần thực thi gần nhất của trường hợp kiểm thử này, kể cả khi trạng thái không phải là đạt hay không đạt. Các màn hình khác, như Kết quả mới nhất trong bộ lưu trữ, hiển thị kết quả mới nhất là đạt hoặc không đạt, vì vậy cùng một trường hợp kiểm thử có thể hiển thị khác nhau ở đó.",
       "resultRunLink": "Xem lượt chạy thử nghiệm mà kết quả này bắt nguồn",
       "columnExecutedAt": "Được thực hiện lúc",
       "columnProject": "Dự án",

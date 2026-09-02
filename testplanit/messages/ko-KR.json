@@ -6872,6 +6872,7 @@
       "panelEmpty": "아직 이 요구 사항을 커버하는 테스트 케이스가 없습니다.",
       "columnCase": "테스트 케이스",
       "columnResult": "최신 결과",
+      "columnResultTooltip": "해당 케이스의 가장 최근 실행 결과이며, 상태가 통과나 실패가 아닌 경우도 포함됩니다. 저장소의 최신 결과와 같은 다른 화면에서는 통과 또는 실패한 가장 최근 결과를 표시하므로, 동일한 케이스가 다르게 보일 수 있습니다.",
       "resultRunLink": "이 결과가 나온 테스트 실행 보기",
       "columnExecutedAt": "실행됨",
       "columnProject": "프로젝트",

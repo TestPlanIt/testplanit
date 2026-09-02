@@ -6872,6 +6872,7 @@
       "panelEmpty": "Henüz bu gereksinimi kapsayan test senaryosu yok.",
       "columnCase": "Test Senaryosu",
       "columnResult": "Son Sonuç",
+      "columnResultTooltip": "Vakanın en son yürütülmesi, durumu geçti veya kaldı olmasa bile gösterilir. Depo'daki En Son Sonuçlar gibi diğer ekranlar ise geçen veya kalan en yeni sonucu gösterir; bu nedenle aynı vaka orada farklı görünebilir.",
       "resultRunLink": "Bu sonucun geldiği test çalıştırmasını görüntüle",
       "columnExecutedAt": "Çalıştırılma Zamanı",
       "columnProject": "Proje",

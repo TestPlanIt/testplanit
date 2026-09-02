@@ -6872,6 +6872,7 @@
       "panelEmpty": "Nenhum caso de teste cobre este requisito ainda.",
       "columnCase": "Caso de teste",
       "columnResult": "Último resultado",
+      "columnResultTooltip": "A execução mais recente do caso, mesmo que seu status não seja aprovado nem reprovado. Outras telas, como os Resultados Mais Recentes do repositório, exibem o resultado mais novo que foi aprovado ou reprovado, então o mesmo caso pode aparecer de forma diferente ali.",
       "resultRunLink": "Ver a execução de teste da qual este resultado veio",
       "columnExecutedAt": "Executado em",
       "columnProject": "Projeto",

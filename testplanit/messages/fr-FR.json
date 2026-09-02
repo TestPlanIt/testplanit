@@ -6872,6 +6872,7 @@
       "panelEmpty": "Aucun cas de test ne couvre encore cette exigence.",
       "columnCase": "Cas de test",
       "columnResult": "Dernier résultat",
+      "columnResultTooltip": "L'exécution la plus récente du cas, même si son statut n'est ni un succès ni un échec. D'autres écrans, comme les Derniers résultats du référentiel, affichent le résultat le plus récent ayant réussi ou échoué, ce qui peut donner une lecture différente pour le même cas.",
       "resultRunLink": "Afficher l'exécution de test dont provient ce résultat",
       "columnExecutedAt": "Exécuté à",
       "columnProject": "Projet",

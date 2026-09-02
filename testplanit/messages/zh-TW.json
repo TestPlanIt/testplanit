@@ -6872,6 +6872,7 @@
       "panelEmpty": "尚無測試用例涵蓋此需求。",
       "columnCase": "測試用例",
       "columnResult": "最新結果",
+      "columnResultTooltip": "該測試案例最近一次的執行結果，即使其狀態既非通過也非失敗。其他畫面，例如儲存庫中的「最新結果」，顯示的是最近一次通過或失敗的結果，因此同一個測試案例在那裡顯示的內容可能會有所不同。",
       "resultRunLink": "檢視此結果來自的測試執行",
       "columnExecutedAt": "執行於",
       "columnProject": "專案",

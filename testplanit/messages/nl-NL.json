@@ -6872,6 +6872,7 @@
       "panelEmpty": "Er zijn nog geen testcases die deze vereiste dekken.",
       "columnCase": "Testgeval",
       "columnResult": "Laatste resultaat",
+      "columnResultTooltip": "De meest recente uitvoering van de testcase, ook als de status noch geslaagd noch mislukt is. Andere schermen, zoals de Nieuwste Resultaten in de repository, tonen het nieuwste resultaat dat geslaagd of mislukt is, waardoor dezelfde testcase daar anders kan overkomen.",
       "resultRunLink": "Bekijk de testrun waarvan dit resultaat afkomstig is",
       "columnExecutedAt": "Uitgevoerd op",
       "columnProject": "Project",

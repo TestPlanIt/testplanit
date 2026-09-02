@@ -6872,6 +6872,7 @@
       "panelEmpty": "Noch keine Testfälle decken diese Anforderung ab.",
       "columnCase": "Testfall",
       "columnResult": "Neuestes Ergebnis",
+      "columnResultTooltip": "Die zuletzt durchgeführte Ausführung des Testfalls, selbst wenn deren Status weder bestanden noch nicht bestanden ist. Andere Ansichten, wie die „Neueste Ergebnisse“ im Repository, zeigen das neueste Ergebnis, das bestanden oder nicht bestanden wurde – daher kann derselbe Testfall dort anders aussehen.",
       "resultRunLink": "Den Testlauf anzeigen, aus dem dieses Ergebnis stammt",
       "columnExecutedAt": "Ausgeführt am",
       "columnProject": "Projekt",

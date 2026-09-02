@@ -6872,6 +6872,7 @@
       "panelEmpty": "Żaden przypadek testowy nie pokrywa jeszcze tego wymagania.",
       "columnCase": "Przypadek testowy",
       "columnResult": "Najnowszy wynik",
+      "columnResultTooltip": "Najnowsze wykonanie danego przypadku, nawet jeśli jego status nie jest ani zaliczony, ani niezaliczony. Inne ekrany, takie jak Najnowsze wyniki w repozytorium, pokazują najnowszy wynik, który był zaliczony lub niezaliczony, więc ten sam przypadek może wyglądać tam inaczej.",
       "resultRunLink": "Zobacz przebieg testu, z którego pochodzi ten wynik",
       "columnExecutedAt": "Wykonano w",
       "columnProject": "Projekt",

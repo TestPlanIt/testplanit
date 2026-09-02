@@ -6872,6 +6872,7 @@
       "panelEmpty": "Aún ningún caso de prueba cubre este requisito.",
       "columnCase": "Caso de prueba",
       "columnResult": "Último resultado",
+      "columnResultTooltip": "La ejecución más reciente del caso, incluso una cuyo estado no sea ni aprobado ni fallido. Otras pantallas, como los Últimos Resultados del repositorio, muestran el resultado más reciente que fue aprobado o fallido, por lo que el mismo caso puede leerse de forma diferente allí.",
       "resultRunLink": "Ver la ejecución de prueba de la que proviene este resultado",
       "columnExecutedAt": "Ejecutado en",
       "columnProject": "Proyecto",

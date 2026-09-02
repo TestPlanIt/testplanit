@@ -6872,6 +6872,7 @@
       "panelEmpty": "Nessun caso di test copre ancora questo requisito.",
       "columnCase": "Caso di test",
       "columnResult": "Ultimo risultato",
+      "columnResultTooltip": "L'esecuzione più recente del caso, anche se il suo stato non è né superato né non superato. Altre schermate, come gli Ultimi Risultati del repository, mostrano il risultato più recente che è stato superato o non superato, quindi lo stesso caso può apparire diverso lì.",
       "resultRunLink": "Visualizza l'esecuzione di test da cui proviene questo risultato",
       "columnExecutedAt": "Eseguito il",
       "columnProject": "Progetto",

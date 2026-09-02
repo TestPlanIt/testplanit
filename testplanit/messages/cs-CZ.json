@@ -6872,6 +6872,7 @@
       "panelEmpty": "Tento požadavek zatím nepokrývá žádný testovací případ.",
       "columnCase": "Testovací případ",
       "columnResult": "Poslední výsledek",
+      "columnResultTooltip": "Nejnovější spuštění případu, a to i takové, jehož stav není ani úspěch, ani neúspěch. Jiné obrazovky, například Nejnovější výsledky v repozitáři, zobrazují nejnovější výsledek, který byl úspěšný nebo neúspěšný, takže stejný případ se tam může zobrazovat jinak.",
       "resultRunLink": "Zobrazit testovací běh, ze kterého tento výsledek pochází",
       "columnExecutedAt": "Provedeno",
       "columnProject": "Projekt",

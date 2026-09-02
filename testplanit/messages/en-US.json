@@ -6872,6 +6872,7 @@
       "panelEmpty": "No test cases cover this requirement yet.",
       "columnCase": "Test Case",
       "columnResult": "Latest Result",
+      "columnResultTooltip": "The case's most recent execution, even one whose status is neither a pass nor a fail. Other screens, such as the repository's Latest Results, show the newest result that did pass or fail, so the same case can read differently there.",
       "resultRunLink": "View the test run this result came from",
       "columnExecutedAt": "Executed At",
       "columnProject": "Project",
