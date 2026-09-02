@@ -1,136 +1,77 @@
 **Beta pre-release of TestPlanIt 1.0 — source only.**
 
+> 🔒 **This is the release candidate for 1.0.** The beta channel is now
+> locked: barring showstoppers, this build is what graduates to `main` as
+> **v1.0.0**. Only critical fixes land between now and release — if you've
+> been waiting to try the beta, this is the one to test.
+
 There is no prebuilt Docker image for betas: official images bake
 `BASE_DOMAIN=testplanit.com` into the build and can't be reused by other
 installs. You build it yourself from the source attached below.
 
 > ⚠️ This is pre-release software. **Back up your database before trying it.**
 
-### What's new since beta.17
+### What's new since beta.18
 
-#### Milestone and report counting
+#### Issues
 
-- **Executed automated cases counted as never run.** Automated runs (JUnit,
-  TestNG, Mocha, …) record their outcomes in the result table and never write
-  a status onto the run-case row — and eight consumers assumed that row was
-  always populated. Each now reads manual and automated cases from their own
-  sources:
-  - **Milestone completion and burndown** counted every automated case as
-    permanently incomplete, and also counted cases that had been removed from
-    a run. A dozen-plus milestones were understated, several that were
-    actually at 100%; on the reference data set one milestone's open work was
-    94.7% removed-case phantom.
-  - The **Milestone Completion (%) project-health metric** read the run-case
-    status unconditionally — a milestone reporting 0% across 12,790 cases now
-    reports 100% from its 31,992 results — and its drill-down said
-    "Completed: No" for every automated case, contradicting the number it
-    drills into.
-  - The **export traceability matrix** wrote a blank status for
-    automated-only cases, which read as "Not run".
-  - **Member coverage** treated an empty automated run-case row as
-    authoritative, so its automated fallback never engaged and cases showed
-    falsely as "Not run".
-  - The duplicate scan's **Last Run** column showed a run name and date with
-    a blank status — the worst-hit surface, since automation-sourced cases
-    dominate duplicate scans.
-  - The **run-case detail sheet** fell back to "Untested" — reached directly
-    from Latest Results chips, so clicking a passing automated result opened
-    a sheet saying it never ran.
-  - The dashboard's **assigned-to-me list** kept cases that had been removed
-    from a run in the assignee's task list indefinitely.
-  - The **matrix report** still aggregated iterations, configurations, and
-    snapshots from removed run-cases.
-- **The rule now lives in one place.** Effective run-case status resolves
-  through a single database view used by all of these consumers, so the
-  manual-vs-automated split can't regress one surface at a time. The view is
-  also queryable from psql and BI tools, where the empty status columns were
-  most misleading, and a lint gate fails any new code that reads the raw
-  column directly.
-- No backfill is needed: results were always recorded correctly, so these
-  fixes correct historical and future data alike.
+- **Multi-select filters on every issue list.** Issue Type joins Status and
+  Priority on the global and project issue lists, and all three come to
+  Admin → Issues, which previously had only search. Each dropdown is
+  multi-select — values OR within a facet, facets AND across each other —
+  and Issue Type offers an explicit "No Issue Type" bucket, since several
+  providers never supply a type and untyped issues would otherwise drop out
+  of view the moment any type is picked. A dropdown is hidden when nothing
+  in view has a value for that field.
 
-#### Reviews
+#### Search
 
-- **Your own requests join the Pending queue.** The Pending tab only listed
-  reviews assigned to you, so a request you submitted was invisible until
-  someone decided it. It now also shows the reviews you requested, with a new
-  Assignee column saying who each one is parked with. Rows you submitted
-  carry **Send reminder** and **Cancel request** instead of the decision
-  actions; when you're both requester and eligible reviewer, the decision
-  actions win. Send reminder reuses the scheduled reminder pipeline — same
-  notification, same webhook, same cooldown — so a request nudged just after
-  the hourly scan is refused rather than double-notifying, and the button
-  says when the last reminder went out. The header badge stays scoped to
-  reviews awaiting *your* decision.
-- **A moved case no longer strands its reviews.** Moving cases between
-  projects soft-deletes the source rows through a path that skipped review
-  cleanup, so in-flight reviews stayed pending against cases the inbox hides
-  — the assignee saw an empty inbox while the reminder worker emailed them
-  every day. The move now cancels those reviews, and the reminder scan
-  retires any review whose subject is gone instead of nagging about it.
-
-#### Profile
-
-- **Mentioned in Comments becomes My Comments.** The section now lists both
-  comments you've written and comments that @-mention you, with a scope
-  filter (All Comments / Mentioning Me / Written by Me) and a text search —
-  @-mentioned names count as text, so searching a teammate's name finds the
-  comments that mention them. The list loads more as you scroll, with a
-  counter showing how many are loaded and, while searching, how many match.
+- **Result cards are real links.** Cards captured the click and pushed the
+  route, so a command-click or middle-click could not open a result in a new
+  tab. Cards are now anchors: plain clicks navigate in place, modified
+  clicks open a new tab or window with the search sheet left open, and an
+  open-in-new-tab button sits on the title row beside the entity type badge.
 
 #### Repository
 
-- The folder tree fills the full height of its panel instead of stopping
-  short of the bottom.
+- **Dynamic-field facet counts match what filtering returns.** Duplicate
+  field-value rows inflated per-option counts (they summed to 25,821
+  against 25,765 real cases on the reference data set) and collapsed the
+  "None" bucket to 0 — a None row read 0 while clicking it returned 56
+  cases. Every dynamic-field facet now counts distinct cases, mirroring the
+  filter semantics exactly. The duplicates themselves came from the import
+  route's create-or-restore branch, which resurrected a deleted case on top
+  of the field values surviving from its previous life; reusing an existing
+  case row now clears its old field values first.
+- **Folder drags survive tree re-renders.** Picking a folder up re-renders
+  the tree, and the tree remounted every row on each re-render — which
+  pulled the dragged row out of the document and ended the drag, so folders
+  could no longer be dropped onto other folders. The tree now gets a stable
+  row component and drags stay alive.
 
-#### Stored preferences and hydration
+#### Runs
 
-- **A saved preference no longer breaks the page that saved it.** Six
-  components read localStorage while initializing state, which renders one
-  way on the server and another on the client. With nothing stored both
-  agree — so everything worked in a fresh browser — but the first write broke
-  every load after it. Affected surfaces now render the default and adopt the
-  stored value on mount: sidebar sections no longer collapse the section
-  you're currently on (previously leaving you on a page with no link to it),
-  and a lint scanner fails the build if the pattern reappears.
-- **Resizable panels move again.** Panel groups with a saved layout hydrated
-  into a state where the divider dragged but nothing moved — invisible until
-  you resized once, since the failure needed a stored layout. Panel groups
-  now mount client-side behind a same-sized placeholder. Affects every
-  resizable surface.
+- **Deep links into automated runs land on the row.** A `selectedCase` link
+  into an automated run — from a Latest Results chip, for example — opened
+  the per-case details sheet, which doesn't apply to automated runs (their
+  rows are JUnit attempts, not run cases). The link now highlights and
+  scrolls to the row in the results table instead, and skips the sheet's
+  case-detail query entirely.
 
-#### Uploads
+#### Reports
 
-- **The per-file upload limit is configurable.** `UPLOAD_MAX_MB` (default 10,
-  the previous hardcoded value) sets the ceiling for attachments and inline
-  document images. It must be present at both build and run time — Compose
-  wires both from the one variable in `.env`, so raising it is an edit plus a
-  rebuild, not a restart. This also fixes at-limit uploads being rejected by
-  the framework's body cap with an opaque error before the friendly "File is
-  too large" message could run. Project icons and avatars stay fixed — they
-  are UI thumbnails, not operator-sized payloads.
+- **The last column is no longer frozen on report tables.** The automatic
+  last-column pin exists for action columns; the report results table and
+  the drill-down drawer end in ordinary data columns, which now scroll with
+  the rest of the table.
 
-#### API docs
+#### Parameters
 
-- **The /api/docs spec is generated again.** The OpenAPI spec had been
-  hand-patched since the ORM migration and drifted badly — it advertised
-  relation shapes that now return 422 and was missing the join models for
-  case issues, case tags, and milestone issues, `deletedAt` on ~40 models,
-  and the milestone external-sync fields. It is now regenerated from the live
-  schema, a parity test fails CI whenever the checked-in spec no longer
-  matches, and the broken examples in the API reference are corrected (reads
-  are GET with a `q` query parameter, not POST).
+- Long dataset values truncate with an ellipsis instead of clipping at the
+  cell edge.
 
-#### Deployment
+#### Dependencies
 
-- **The nginx container log is capped** at 10 files × 100 MB. It logs request
-  timing on every request and previously grew without bound — 3 GB in 9 days
-  on one deployment — with nothing reclaiming the space short of recreating
-  the container. The cap retains roughly three days of timing data for
-  latency debugging.
-
-#### Schema
-
-- Adds a migration creating the effective-case-status view described above.
-  Upgrading applies it normally via `migrate deploy`; databases built with
-  `db push` get it created at application startup.
+- A final dependency refresh ahead of the 1.0 cut: Next.js 16.3.3, ZenStack
+  3.9.2, TanStack Query/Virtual, Tiptap 3.30.5, BullMQ 5.81.4, the AWS SDK,
+  and the rest of the stack brought current.
