@@ -7766,6 +7766,7 @@
         "annually": "Yıllık"
       },
       "filters": {
+        "allValues": "Tüm değerler",
         "selectFilter": "Filtre türünü seçin",
         "allProjects": "Tüm Projeler"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Anlık görüntü silindi.",
         "snapshotDeleteFailed": "Anlık görüntü silinemedi.",
         "baselineLabel": "Temel anlık görüntü",
+        "requirementProject": "Gereksinim Projesi",
         "compareLabel": "Şununla karşılaştır",
         "baselineRequired": "Bu raporu çalıştırmak için bir temel anlık görüntü seçin.",
         "includeUnchanged": "Değişmeyen gereksinimleri dahil et",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Projeler Arası Sorun Test Kapsamı",
           "description": "Projeler genelinde bağlantılı test senaryoları ve en son yürütme durumlarıyla ilgili sorunları görüntüleyin."
+        },
+        "requirementCoverageGaps": {
+          "label": "Projeler Arası Gereksinim Kapsama Boşlukları",
+          "description": "Gereksinimlerin etkin olduğu her projede test kapsamı olmayan gereksinimler"
+        },
+        "requirementTraceability": {
+          "label": "Projeler Arası Gereksinim İzlenebilirliği",
+          "description": "Projeler genelinde her gereksinimin bağlantılı test senaryoları ve en son sonucuyla eşleştirilmiş hali"
         },
         "executionLog": {
           "label": "Projeler Arası Yürütme Günlüğü",

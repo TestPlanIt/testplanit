@@ -8,7 +8,7 @@ import {
   RequirementScopePicker,
   type RequirementScopeOption,
 } from "@/components/reports/RequirementScopePicker";
-import { RequirementCoverageStateFilter } from "@/components/reports/RequirementCoverageStateFilter";
+import { REQUIREMENT_COVERAGE_STATE_ORDER } from "@/components/reports/RequirementCoverageOverview";
 import { RequirementSnapshotPicker } from "@/components/reports/RequirementSnapshotPicker";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -29,9 +29,12 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleDashed,
+  CircleDot,
   Filter,
+  Flag,
   FolderOpen,
   LayoutTemplate,
+  ListChecks,
   Loader2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -160,14 +163,41 @@ function isCrossProjectReport(reportType: string): boolean {
   return reportType.startsWith("cross-project-");
 }
 
-// The requirement report ids (D-2, COV-04, plus the snapshot-diff report).
-// Never a "cross-project-" variant (carve-out 3) -- getRequirementCoverage
-// anchors its recursive closure on a single project id.
+// The requirement report ids (D-2, COV-04, plus the snapshot-diff report),
+// as BASE types -- `getBaseReportType` strips any "cross-project-" prefix
+// before these are consulted, so the gaps and traceability ids cover their
+// cross-project twins too. The changes report has no cross-project twin:
+// a snapshot is captured from one project and pinned to it.
 const REQUIREMENT_REPORT_TYPE_IDS = [
   "requirement-coverage-gaps",
   "requirement-traceability",
   "requirement-coverage-changes",
 ] as const;
+
+/** Coverage-state labels, the same mapping RequirementCoverageStateFilter
+ * used when it stood on its own. */
+const COVERAGE_STATE_LABEL_KEYS: Record<string, string> = {
+  PASSED: "statusPassed",
+  FAILED: "statusFailed",
+  NOT_RUN: "statusNotRun",
+  UNCOVERED: "uncovered",
+};
+
+/** The gaps/traceability reports, which share one filter menu. */
+function isFilterableRequirementReport(reportType: string): boolean {
+  return (
+    matchesReportType(reportType, "requirement-coverage-gaps") ||
+    matchesReportType(reportType, "requirement-traceability")
+  );
+}
+
+/** ...and the cross-project pair of them, which also filter by project. */
+function isCrossProjectRequirementReport(reportType: string): boolean {
+  return (
+    isCrossProjectReport(reportType) &&
+    isFilterableRequirementReport(reportType)
+  );
+}
 
 /**
  * Checks if a report type is a pre-built report (automation-trends, flaky-tests, test-case-health, issue-test-coverage)
@@ -215,7 +245,7 @@ export function filterReportTypesForRequirementsFlag(
   return reportTypes.filter(
     (reportType) =>
       !(REQUIREMENT_REPORT_TYPE_IDS as readonly string[]).includes(
-        reportType.id
+        getBaseReportType(reportType.id)
       )
   );
 }
@@ -246,6 +276,7 @@ function ReportBuilderContent({
   const { data: session } = useSession();
   const tReports = useTranslations("reports.ui");
   const tCommon = useTranslations("common");
+  const tCoverage = useTranslations("requirements.coverage");
   const tAdminMenu = useTranslations("admin.menu");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
@@ -286,8 +317,11 @@ function ReportBuilderContent({
         getCrossProjectReportTypes(tReports),
         appLocale
       );
-    // Requirement reports are project-scoped and never appear in
-    // cross-project mode, so the flag only ever filters the project list.
+    // The requirements flag is a PROJECT setting, so it only ever filters
+    // the project list. The cross-project requirement reports need no such
+    // filter: they anchor on whichever projects have requirements enabled,
+    // resolved server-side, so they stay offered and simply return nothing
+    // when no project has opted in.
     return sortReportTypesByLabel(
       filterReportTypesForRequirementsFlag(
         getProjectReportTypes(tReports),
@@ -402,8 +436,26 @@ function ReportBuilderContent({
   const [selectedFilterType, setSelectedFilterType] = useState<string>("");
   const [selectedFilterValues, setSelectedFilterValues] = useState<
     Record<string, Array<string | number>>
-  >(initialPerTypeParams.trendsFilterValues);
+  >(
+    initialPerTypeParams.requirementCoverageStates.length > 0
+      ? {
+          ...initialPerTypeParams.trendsFilterValues,
+          coverage: initialPerTypeParams.requirementCoverageStates,
+        }
+      : initialPerTypeParams.trendsFilterValues
+  );
   const [filterOptions, setFilterOptions] = useState<any>(null);
+  // The cross-project requirement reports source their Projects filter from
+  // their OWN endpoint (requirements-enabled projects, requirement counts),
+  // not from the repository-cases view-options the trends filter uses --
+  // that list is grouped from test cases, so it would omit a project that
+  // has requirements but no cases. It also does not depend on the current
+  // selection, so picking one project never removes the others.
+  const [requirementFilterOptions, setRequirementFilterOptions] = useState<{
+    projects: { id: number; name: string; count: number }[];
+    priorities: { id: string; name: string; count: number }[];
+    statuses: { id: string; name: string; count: number }[];
+  }>({ projects: [], priorities: [], statuses: [] });
 
   // Legacy state for builder tab priority filter
   const [selectedPriorityValues, setSelectedPriorityValues] = useState<
@@ -630,6 +682,53 @@ function ReportBuilderContent({
 
   // Build filter items for automation trends
   const filterItems = useMemo(() => {
+    // The requirement reports put every filter in ONE menu -- coverage
+    // included, rather than as a control standing apart from the rest.
+    if (isFilterableRequirementReport(reportType)) {
+      const items: any[] = [];
+      if (isCrossProjectRequirementReport(reportType)) {
+        if (requirementFilterOptions.projects.length > 0) {
+          items.push({
+            id: "projects",
+            name: tCommon("fields.projects"),
+            icon: FolderOpen,
+            options: requirementFilterOptions.projects,
+          });
+        }
+      }
+      // Coverage state applies to the matrix, where a row IS a
+      // requirement-case pair; the gaps report's two tiers are governed by
+      // its own include-never-run toggle instead.
+      if (matchesReportType(reportType, "requirement-traceability")) {
+        items.push({
+          id: "coverage",
+          name: tCoverage("title"),
+          icon: ListChecks,
+          options: REQUIREMENT_COVERAGE_STATE_ORDER.map((state) => ({
+            id: state,
+            name: tCoverage(COVERAGE_STATE_LABEL_KEYS[state]),
+          })),
+        });
+      }
+      if (requirementFilterOptions.priorities.length > 0) {
+        items.push({
+          id: "priority",
+          name: tCommon("fields.priority"),
+          icon: Flag,
+          options: requirementFilterOptions.priorities,
+        });
+      }
+      if (requirementFilterOptions.statuses.length > 0) {
+        items.push({
+          id: "status",
+          name: tCommon("actions.status"),
+          icon: CircleDot,
+          options: requirementFilterOptions.statuses,
+        });
+      }
+      return items;
+    }
+
     if (!filterOptions) return [];
 
     const items: any[] = [];
@@ -715,7 +814,7 @@ function ReportBuilderContent({
     }
 
     return items;
-  }, [filterOptions, tCommon]);
+  }, [filterOptions, tCommon, tCoverage, reportType, requirementFilterOptions]);
 
   // Build active filter chips from selectedFilterValues
   const activeFilterChips = useMemo(() => {
@@ -979,9 +1078,12 @@ function ReportBuilderContent({
   );
   const requirementCoverageGapColumns = useRequirementCoverageGapColumns(
     results,
-    canGenerateFromGap ? handleGenerateFromGap : undefined
+    canGenerateFromGap ? handleGenerateFromGap : undefined,
+    mode === "cross-project"
   );
-  const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
+  const requirementTraceabilityColumns = useRequirementTraceabilityColumns(
+    mode === "cross-project"
+  );
   const requirementCoverageChangeColumns =
     useRequirementCoverageChangeColumns();
 
@@ -1231,6 +1333,53 @@ function ReportBuilderContent({
       }
     }
   }, [reportType, projectId, mode, selectedFilterValues]);
+
+  // The requirement reports' filter options. Fetched once per report and
+  // project, and deliberately NOT re-fetched when a selection changes, so
+  // picking one option never removes the others from the menu.
+  useEffect(() => {
+    if (!isFilterableRequirementReport(reportType) || !currentReportEndpoint) {
+      setRequirementFilterOptions({
+        projects: [],
+        priorities: [],
+        statuses: [],
+      });
+      return;
+    }
+    const url = new URL(currentReportEndpoint, window.location.origin);
+    if (mode === "project" && projectId) {
+      url.searchParams.set("projectId", String(projectId));
+    }
+    let cancelled = false;
+    fetch(url.toString())
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setRequirementFilterOptions({
+          projects: Array.isArray(data.projects) ? data.projects : [],
+          priorities: Array.isArray(data.priorities) ? data.priorities : [],
+          statuses: Array.isArray(data.statuses) ? data.statuses : [],
+        });
+      })
+      .catch(() => {
+        // Filter options are optional; the report still runs unfiltered.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportType, currentReportEndpoint, mode, projectId]);
+
+  // Coverage moved into the shared filter menu, so the menu is its source of
+  // truth; this keeps the value the share link serializes in step.
+  useEffect(() => {
+    const picked = (selectedFilterValues.coverage ?? []) as string[];
+    setRequirementCoverageStates((current) =>
+      current.length === picked.length &&
+      current.every((state, i) => state === picked[i])
+        ? current
+        : picked
+    );
+  }, [selectedFilterValues]);
 
   // Note: No default filter type selection - user must explicitly choose a filter
 
@@ -1790,6 +1939,23 @@ function ReportBuilderContent({
         ) {
           if (requirementScope.length > 0) {
             body.requirementIds = requirementScope.map((option) => option.id);
+          }
+          // Cross-project only: narrow the anchor set to the picked
+          // projects. Empty = every requirements-enabled project, matching
+          // the scope picker's own empty-means-all convention.
+          if (mode === "cross-project") {
+            const picked = selectedFilterValues.projects;
+            if (picked && picked.length > 0) {
+              body.projectIds = picked;
+            }
+          }
+          const pickedPriorities = selectedFilterValues.priority;
+          if (pickedPriorities && pickedPriorities.length > 0) {
+            body.priorities = pickedPriorities;
+          }
+          const pickedStatuses = selectedFilterValues.status;
+          if (pickedStatuses && pickedStatuses.length > 0) {
+            body.statuses = pickedStatuses;
           }
         }
         if (
@@ -2629,10 +2795,8 @@ function ReportBuilderContent({
                       {/* Filters Section for Automation Trends */}
                       {(reportType === "automation-trends" ||
                         (isCrossProjectReport(reportType) &&
-                          matchesReportType(
-                            reportType,
-                            "automation-trends"
-                          ))) &&
+                          matchesReportType(reportType, "automation-trends")) ||
+                        isFilterableRequirementReport(reportType)) &&
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -2837,16 +3001,6 @@ function ReportBuilderContent({
                             testIdPrefix="requirement-snapshot"
                           />
                         )}
-
-                      {matchesReportType(
-                        reportType,
-                        "requirement-traceability"
-                      ) && (
-                        <RequirementCoverageStateFilter
-                          value={requirementCoverageStates}
-                          onValueChange={setRequirementCoverageStates}
-                        />
-                      )}
 
                       {/* Coverage changes: baseline (required) vs. comparison. */}
                       {matchesReportType(

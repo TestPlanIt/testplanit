@@ -7766,6 +7766,7 @@
         "annually": "Hàng năm"
       },
       "filters": {
+        "allValues": "Tất cả các giá trị",
         "selectFilter": "Chọn loại bộ lọc",
         "allProjects": "Tất cả các dự án"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Đã xóa ảnh chụp nhanh.",
         "snapshotDeleteFailed": "Không thể xóa ảnh chụp nhanh.",
         "baselineLabel": "Ảnh chụp nhanh cơ sở",
+        "requirementProject": "Dự án Yêu cầu",
         "compareLabel": "So sánh với",
         "baselineRequired": "Chọn một ảnh chụp nhanh cơ sở để chạy báo cáo này.",
         "includeUnchanged": "Bao gồm các yêu cầu không thay đổi",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Độ phủ kiểm thử vấn đề xuyên dự án",
           "description": "Xem các vấn đề liên quan đến các trường hợp kiểm thử được liên kết và trạng thái thực thi mới nhất trên các dự án."
+        },
+        "requirementCoverageGaps": {
+          "label": "Lỗ hổng Độ phủ Yêu cầu Xuyên Dự án",
+          "description": "Các yêu cầu không có độ phủ kiểm thử trên tất cả các dự án đã bật tính năng yêu cầu"
+        },
+        "requirementTraceability": {
+          "label": "Khả năng Truy xuất Yêu cầu Xuyên Dự án",
+          "description": "Mọi yêu cầu được ghép cặp với các trường hợp kiểm thử liên kết và kết quả mới nhất trên các dự án"
         },
         "executionLog": {
           "label": "Nhật ký thực thi liên dự án",

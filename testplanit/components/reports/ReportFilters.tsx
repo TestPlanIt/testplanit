@@ -58,6 +58,15 @@ interface ReportFiltersProps {
   totalCount?: number;
 }
 
+/** Filter ids with a bespoke branch below; everything else uses the
+ * generic renderer. */
+const KNOWN_FILTER_IDS = new Set([
+  "projects",
+  "templates",
+  "states",
+  "automated",
+]);
+
 export function ReportFilters({
   selectedFilter,
   onFilterChange,
@@ -429,6 +438,57 @@ export function ReportFilters({
                     ))}
                   </>
                 )}
+              </>
+            )}
+
+          {/* Every other filter renders from its own `options`. Without this
+              a new filter type shows an empty panel until someone adds a
+              fifth hardcoded branch above -- which is exactly how coverage,
+              priority and status arrived empty. */}
+          {!KNOWN_FILTER_IDS.has(selectedFilter) &&
+            !selectedFilter.startsWith("dynamic_") && (
+              <>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    isValueSelected(selectedFilter, null) &&
+                      "bg-primary/20 hover:bg-primary/30"
+                  )}
+                  onClick={() => toggleFilterValue(selectedFilter, null)}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="truncate">{tFilters("allValues")}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                    {selectedFilterItem.options?.reduce(
+                      (sum: number, option: any) => sum + (option.count || 0),
+                      0
+                    ) || ""}
+                  </span>
+                </div>
+                {selectedFilterItem.options?.map((option: any) => (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key={`option-${option.id}`}
+                    data-testid={`report-filter-option-${option.id}`}
+                    className={cn(
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected(selectedFilter, option.id) &&
+                        "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={() => toggleFilterValue(selectedFilter, option.id)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+                      <span className="truncate">{option.name}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
+                      {option.count || ""}
+                    </span>
+                  </div>
+                ))}
               </>
             )}
         </div>

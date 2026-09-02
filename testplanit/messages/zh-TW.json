@@ -7766,6 +7766,7 @@
         "annually": "每年"
       },
       "filters": {
+        "allValues": "所有值",
         "selectFilter": "選擇篩選類型",
         "allProjects": "所有項目"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "快照已刪除。",
         "snapshotDeleteFailed": "刪除快照失敗。",
         "baselineLabel": "基準快照",
+        "requirementProject": "需求專案",
         "compareLabel": "比較對象",
         "baselineRequired": "選擇一個基準快照以執行此報表。",
         "includeUnchanged": "包含未變更的需求",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "跨專案問題測試覆蓋率",
           "description": "查看專案中的問題及其關聯的測試案例和最新執行狀態"
+        },
+        "requirementCoverageGaps": {
+          "label": "跨專案需求覆蓋率缺口",
+          "description": "在所有已啟用需求功能的專案中，沒有測試覆蓋的需求"
+        },
+        "requirementTraceability": {
+          "label": "跨專案需求可追溯性",
+          "description": "每個需求與其連結的測試案例及跨專案最新結果配對"
         },
         "executionLog": {
           "label": "跨專案執行日誌",

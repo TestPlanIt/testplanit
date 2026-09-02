@@ -7766,6 +7766,7 @@
         "annually": "Annuellement"
       },
       "filters": {
+        "allValues": "Toutes les valeurs",
         "selectFilter": "Sélectionnez un type de filtre",
         "allProjects": "Tous les projets"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Instantané supprimé.",
         "snapshotDeleteFailed": "Impossible de supprimer l'instantané.",
         "baselineLabel": "Instantané de référence",
+        "requirementProject": "Projet de l'exigence",
         "compareLabel": "Comparer à",
         "baselineRequired": "Choisissez un instantané de référence pour exécuter ce rapport.",
         "includeUnchanged": "Inclure les exigences inchangées",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Couverture des tests de problèmes inter-projets",
           "description": "Consultez les problèmes, leurs cas de test associés et leur statut d'exécution le plus récent dans tous les projets."
+        },
+        "requirementCoverageGaps": {
+          "label": "Écarts de couverture des exigences inter-projets",
+          "description": "Exigences sans couverture de test dans tous les projets ayant les exigences activées"
+        },
+        "requirementTraceability": {
+          "label": "Traçabilité des exigences inter-projets",
+          "description": "Chaque exigence associée à ses cas de test liés et à son dernier résultat, tous projets confondus"
         },
         "executionLog": {
           "label": "Journal d'exécution inter-projets",

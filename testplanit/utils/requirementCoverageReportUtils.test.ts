@@ -17,6 +17,16 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateRequest: vi.fn(),
 }));
 
+// The cross-project variants resolve their anchor set from the projects
+// table (every project with requirements enabled); the project-scoped
+// variants never touch it.
+const mockedProjectsFindMany = vi.fn();
+vi.mock("~/lib/db", () => ({
+  baseDb: {
+    projects: { findMany: (...args: any[]) => mockedProjectsFindMany(...args) },
+  },
+}));
+
 vi.mock("~/lib/services/requirementTraceability", () => ({
   loadRequirementTraceability: vi.fn(),
 }));
@@ -736,5 +746,164 @@ describe("handleRequirementCoverageChangesPOST", () => {
     expect(
       json.data.map((row: any) => [row.requirementKey, row.changeKind])
     ).toEqual([["REQ-3", "REMOVED"]]);
+  });
+});
+
+// Phase 26 deliberately carved the cross-project variants out (carve-out
+// 3) because getRequirementCoverage anchored on a single project id. The
+// rollup now anchors on a LIST, so both variants have a cross-project
+// twin — ADMIN-gated, anchored on every requirements-enabled project, and
+// with no snapshot form at all.
+describe("requirement coverage reports — cross-project variants", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockedAuthorize.mockResolvedValue({ ok: true, bypass: false });
+    mockedSession.mockResolvedValue({
+      user: { id: "admin-1", access: "ADMIN" },
+    });
+    mockedAuthenticateRequest.mockResolvedValue({
+      authenticated: true,
+      user: { userId: "admin-1", access: "ADMIN" },
+    });
+    mockedProjectsFindMany.mockResolvedValue([{ id: 5 }, { id: 9 }]);
+    mockedLoad.mockResolvedValue(traceabilityData(fixtureRows()));
+  });
+
+  it("gates on ADMIN and asks for no single project", async () => {
+    await handleRequirementCoverageReportPOST(makeRequest({}), "gaps", true);
+
+    expect(mockedAuthorize).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ requiresAdmin: true, projectId: undefined })
+    );
+  });
+
+  it("runs without a projectId, which the project-scoped variant rejects", async () => {
+    const res = await handleRequirementCoverageReportPOST(
+      makeRequest({}),
+      "gaps",
+      true
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalled();
+  });
+
+  it("anchors on every requirements-enabled project, not on one", async () => {
+    await handleRequirementCoverageReportPOST(
+      makeRequest({}),
+      "traceability",
+      true
+    );
+
+    // The anchor list, not a scalar — this is the whole point of the
+    // rollup's multi-project closure.
+    expect(mockedLoad).toHaveBeenCalledWith([5, 9], expect.anything());
+    expect(mockedProjectsFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ requirementsEnabled: true }),
+      })
+    );
+  });
+
+  it("refuses a snapshotId instead of quietly returning live data", async () => {
+    // A snapshot is captured from one project and pinned to it, so there
+    // is no cross-project snapshot to load. Silently ignoring the
+    // parameter would serve live rows under a snapshot's name.
+    const res = await handleRequirementCoverageReportPOST(
+      makeRequest({ snapshotId: 7 }),
+      "gaps",
+      true
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockedLoad).not.toHaveBeenCalled();
+  });
+
+  it("names each row's own requirement project so a row's origin is visible", async () => {
+    mockedLoad.mockResolvedValue(
+      traceabilityData([
+        {
+          ...fixtureRows()[0],
+          requirementProjectId: 9,
+          requirementProjectName: "Project Nine",
+        },
+      ])
+    );
+
+    const res = await handleRequirementCoverageReportPOST(
+      makeRequest({}),
+      "traceability",
+      true
+    );
+    const json = await res.json();
+
+    expect(json.data[0].requirementProjectId).toBe(9);
+    expect(json.data[0].requirementProjectName).toBe("Project Nine");
+  });
+  it("narrows the anchor set to the picked projects, intersected with the enabled ones", async () => {
+    mockedProjectsFindMany.mockResolvedValue([{ id: 9 }]);
+
+    await handleRequirementCoverageReportPOST(
+      makeRequest({ projectIds: [9, 12345] }),
+      "traceability",
+      true
+    );
+
+    // The picked ids are a WHERE narrowing, never the anchor list itself --
+    // a crafted id cannot pull in a project with requirements switched off.
+    expect(mockedProjectsFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          requirementsEnabled: true,
+          id: { in: [9, 12345] },
+        }),
+      })
+    );
+    expect(mockedLoad).toHaveBeenCalledWith([9], expect.anything());
+  });
+
+  it("filters the shared matrix rows by priority and status before either variant shapes them", async () => {
+    mockedLoad.mockResolvedValue(
+      traceabilityData([
+        {
+          ...fixtureRows()[0],
+          requirementPriority: "High",
+          requirementStatus: "Open",
+        },
+        {
+          ...fixtureRows()[1],
+          requirementPriority: "Low",
+          requirementStatus: "Open",
+        },
+      ])
+    );
+
+    const res = await handleRequirementCoverageReportPOST(
+      makeRequest({ priorities: ["High"] }),
+      "traceability",
+      true
+    );
+    const json = await res.json();
+
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].requirementKey).toBe(fixtureRows()[0].requirementKey);
+  });
+
+  it("rejects a malformed priority or status filter rather than ignoring it", async () => {
+    const badPriority = await handleRequirementCoverageReportPOST(
+      makeRequest({ priorities: "High" }),
+      "gaps",
+      true
+    );
+    const badStatus = await handleRequirementCoverageReportPOST(
+      makeRequest({ statuses: [7] }),
+      "gaps",
+      true
+    );
+
+    expect(badPriority.status).toBe(400);
+    expect(badStatus.status).toBe(400);
+    expect(mockedLoad).not.toHaveBeenCalled();
   });
 });

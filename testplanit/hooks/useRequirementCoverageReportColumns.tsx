@@ -120,7 +120,13 @@ export function useRequirementCoverageGapColumns(
    * active LLM connection); the shared/static viewer calls this hook with
    * no callback, so the action can never reach a share-link viewer.
    */
-  onGenerateTestCases?: (row: RequirementCoverageGapReportRow) => void
+  onGenerateTestCases?: (row: RequirementCoverageGapReportRow) => void,
+  /**
+   * Cross-project variant: prepend the column naming the project each
+   * requirement came from. Off for the project-scoped report, where every
+   * row shares one project and the column would be a constant.
+   */
+  isCrossProject = false
 ): ColumnDef<RequirementCoverageGapReportRow, any>[] {
   const t = useTranslations("reports.ui.requirementCoverage");
   const tCoverage = useTranslations("requirements.coverage");
@@ -136,6 +142,37 @@ export function useRequirementCoverageGapColumns(
   return useMemo(() => {
     const columnHelper = createColumnHelper<RequirementCoverageGapReportRow>();
     const columns: ColumnDef<RequirementCoverageGapReportRow, any>[] = [];
+
+    if (isCrossProject) {
+      // The REQUIREMENT's own project. On the traceability variant this
+      // sits alongside a "project" column naming the covering case's
+      // project -- two different questions, so two different columns.
+      columns.push(
+        columnHelper.accessor("requirementProjectId", {
+          id: "requirementProject",
+          enableHiding: false,
+          enableGrouping: false,
+          header: () => <span>{t("requirementProject")}</span>,
+          cell: (info) => {
+            const row = info.row.original;
+            if (row.requirementProjectId == null) return null;
+            return (
+              <ProjectNameDisplay
+                projectName={row.requirementProjectName ?? ""}
+                projectId={row.requirementProjectId}
+                showLink
+                fitContainer
+                className="text-xs text-muted-foreground"
+              />
+            );
+          },
+          enableSorting: true,
+          size: 160,
+          minSize: 120,
+          maxSize: 260,
+        })
+      );
+    }
 
     columns.push(
       columnHelper.accessor("requirementKey", {
@@ -356,6 +393,7 @@ export function useRequirementCoverageGapColumns(
     dateFnsLocale,
     hasNotRunTier,
     onGenerateTestCases,
+    isCrossProject,
   ]);
 }
 
@@ -421,18 +459,54 @@ function RequirementCoverageStateCell({
   );
 }
 
-export function useRequirementTraceabilityColumns(): ColumnDef<
-  RequirementTraceabilityReportRow,
-  any
->[] {
+export function useRequirementTraceabilityColumns(
+  /**
+   * Cross-project variant: prepend the column naming the project each
+   * requirement came from. Distinct from the existing "project" column,
+   * which names the covering CASE's project.
+   */
+  isCrossProject = false
+): ColumnDef<RequirementTraceabilityReportRow, any>[] {
   const t = useTranslations("reports.ui.requirementCoverage");
   const tCoverage = useTranslations("requirements.coverage");
+  const tCommon = useTranslations("common");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
 
   return useMemo(() => {
     const columnHelper = createColumnHelper<RequirementTraceabilityReportRow>();
     const columns: ColumnDef<RequirementTraceabilityReportRow, any>[] = [];
+
+    if (isCrossProject) {
+      // The REQUIREMENT's own project. On the traceability variant this
+      // sits alongside a "project" column naming the covering case's
+      // project -- two different questions, so two different columns.
+      columns.push(
+        columnHelper.accessor("requirementProjectId", {
+          id: "requirementProject",
+          enableHiding: false,
+          enableGrouping: false,
+          header: () => <span>{t("requirementProject")}</span>,
+          cell: (info) => {
+            const row = info.row.original;
+            if (row.requirementProjectId == null) return null;
+            return (
+              <ProjectNameDisplay
+                projectName={row.requirementProjectName ?? ""}
+                projectId={row.requirementProjectId}
+                showLink
+                fitContainer
+                className="text-xs text-muted-foreground"
+              />
+            );
+          },
+          enableSorting: true,
+          size: 160,
+          minSize: 120,
+          maxSize: 260,
+        })
+      );
+    }
 
     columns.push(
       columnHelper.accessor("requirementKey", {
@@ -491,6 +565,47 @@ export function useRequirementTraceabilityColumns(): ColumnDef<
       })
     );
 
+    // Same requirement context the gaps report shows, in the same order and
+    // through the same display components -- and the columns behind the
+    // Priority and Status filters.
+    columns.push(
+      columnHelper.accessor("requirementPriority", {
+        id: "priority",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{tCommon("fields.priority")}</span>,
+        cell: (info) => (
+          <div className="whitespace-nowrap">
+            <IssuePriorityDisplay
+              priority={info.row.original.requirementPriority ?? null}
+            />
+          </div>
+        ),
+        enableSorting: true,
+        size: 120,
+        minSize: 90,
+        maxSize: 200,
+      })
+    );
+
+    columns.push(
+      columnHelper.accessor("requirementStatus", {
+        id: "status",
+        enableHiding: false,
+        enableGrouping: false,
+        header: () => <span>{tCommon("actions.status")}</span>,
+        cell: (info) => (
+          <IssueStatusDisplay
+            status={info.row.original.requirementStatus ?? null}
+            className="capitalize"
+          />
+        ),
+        enableSorting: true,
+        size: 130,
+        minSize: 100,
+        maxSize: 220,
+      })
+    );
     columns.push(
       columnHelper.accessor("coverageStatus", {
         id: "coverage",
@@ -613,7 +728,7 @@ export function useRequirementTraceabilityColumns(): ColumnDef<
     );
 
     return columns;
-  }, [t, tCoverage, dateFnsLocale]);
+  }, [t, tCoverage, tCommon, dateFnsLocale, isCrossProject]);
 }
 
 /**

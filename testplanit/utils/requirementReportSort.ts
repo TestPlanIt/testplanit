@@ -73,6 +73,10 @@ function sortValue(row: any, column: string): string | number | null {
       return row.lastExecutedAt ? Date.parse(row.lastExecutedAt) : 0;
     case "project":
       return row.caseProjectName ?? "";
+    case "requirementProject":
+      // The cross-project variants' origin column — the REQUIREMENT's own
+      // project, not the covering case's.
+      return row.requirementProjectName ?? "";
     case "linkedCases":
       return row.linkedCases ?? 0;
     case "priority":

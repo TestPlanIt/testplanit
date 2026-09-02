@@ -1,12 +1,13 @@
 import { NextRequest } from "next/server";
-import { handleRequirementCoverageReportPOST } from "~/utils/requirementCoverageReportUtils";
+import {
+  handleRequirementReportOptionsGET,
+  handleRequirementCoverageReportPOST,
+} from "~/utils/requirementCoverageReportUtils";
 
-export async function GET() {
-  // Return empty dimensions/metrics since this is a specialized report
-  return Response.json({
-    dimensions: [],
-    metrics: [],
-  });
+export async function GET(req: NextRequest) {
+  // Empty dimensions/metrics (specialized report), plus this report's
+  // filter options.
+  return handleRequirementReportOptionsGET(req, false);
 }
 
 export async function POST(req: NextRequest) {

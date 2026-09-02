@@ -7766,6 +7766,7 @@
         "annually": "매년"
       },
       "filters": {
+        "allValues": "모든 값",
         "selectFilter": "필터 유형을 선택하세요",
         "allProjects": "모든 프로젝트"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "스냅샷이 삭제되었습니다.",
         "snapshotDeleteFailed": "스냅샷을 삭제하지 못했습니다.",
         "baselineLabel": "기준선 스냅샷",
+        "requirementProject": "요구사항 프로젝트",
         "compareLabel": "비교 대상",
         "baselineRequired": "이 보고서를 실행하려면 기준선 스냅샷을 선택하세요.",
         "includeUnchanged": "변경되지 않은 요구사항 포함",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "프로젝트 간 이슈 테스트 범위",
           "description": "프로젝트 전반에 걸쳐 연결된 테스트 케이스 및 최신 실행 상태와 함께 문제를 확인하세요."
+        },
+        "requirementCoverageGaps": {
+          "label": "프로젝트 간 요구사항 커버리지 격차",
+          "description": "요구사항이 활성화된 모든 프로젝트에서 테스트 커버리지가 없는 요구사항"
+        },
+        "requirementTraceability": {
+          "label": "프로젝트 간 요구사항 추적성",
+          "description": "프로젝트 전체에서 연결된 테스트 케이스와 최신 결과가 짝지어진 모든 요구사항"
         },
         "executionLog": {
           "label": "프로젝트 간 실행 로그",

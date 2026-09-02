@@ -291,12 +291,17 @@ describe("useRequirementCoverageReportColumns", () => {
     expect(result.current.map((c: any) => c.id)).not.toContain("actions");
   });
 
-  it("orders the traceability columns with Coverage between Path and Test Case", () => {
+  it("orders the traceability columns: requirement context first, then the case", () => {
     const { result } = renderHook(() => useRequirementTraceabilityColumns());
 
+    // Priority and Status sit where the gaps report puts them — after Path,
+    // before Coverage — so the two reports describe a requirement in the
+    // same order, and so the Priority/Status filters have visible columns.
     expect(result.current.map((c: any) => c.id)).toEqual([
       "requirement",
       "requirementPath",
+      "priority",
+      "status",
       "coverage",
       "testCaseId",
       "result",

@@ -40,6 +40,9 @@ function breakdown(
   overrides: Partial<RequirementCoverageBreakdown> = {}
 ): RequirementCoverageBreakdown {
   return {
+    // The requirement's own project; only the cross-project reports
+    // read it, but the breakdown always carries it.
+    projectId: 1,
     linkedCaseCount: 0,
     crossProjectCaseCount: 0,
     directCaseCount: 0,
@@ -246,6 +249,12 @@ describe("requirementTraceabilityExport", () => {
       requirementPriority: undefined,
       requirementStatus: undefined,
       requirementCreatedAt: undefined,
+      requirementRootId: undefined,
+      // Carried through from the matrix row: the requirement's OWN project,
+      // which only the cross-project reports have more than one of. Null
+      // here because this fixture's rows predate the field.
+      requirementProjectId: null,
+      requirementProjectName: null,
       coverageStatus: "UNCOVERED",
       linkedCaseCount: 0,
     });

@@ -126,7 +126,15 @@ export function groupTraceabilityRows(
  * CSV, and PDF code as the live matrix.
  */
 export function expandSnapshotEntries(
-  entries: SnapshotEntryRecord[]
+  entries: SnapshotEntryRecord[],
+  /**
+   * The snapshot's own project, restored onto every row. A snapshot is
+   * always captured from exactly one project, so this is not persisted per
+   * entry — but the live loader stamps it on every row, and this function
+   * is that loader's exact inverse, so it has to be restored here or a
+   * snapshot's rows would differ from the live rows they were folded from.
+   */
+  project?: { id: number; name: string } | null
 ): RequirementTraceabilityRow[] {
   const rows: RequirementTraceabilityRow[] = [];
 
@@ -139,6 +147,11 @@ export function expandSnapshotEntries(
       requirementParentPath: entry.requirementParentPath,
       requirementIssueTypeName: entry.requirementIssueTypeName,
       requirementIssueTypeIconUrl: entry.requirementIssueTypeIconUrl,
+      // Always emitted, null when the caller supplied no project: the live
+      // builder always sets both keys, and this function is its exact
+      // inverse -- a missing key is not the same shape as a null one.
+      requirementProjectId: project?.id ?? null,
+      requirementProjectName: project?.name ?? null,
       requirementPriority: entry.requirementPriority,
       requirementStatus: entry.requirementStatus,
       requirementCreatedAt: entry.requirementCreatedAt,

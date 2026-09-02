@@ -7766,6 +7766,7 @@
         "annually": "سنوي"
       },
       "filters": {
+        "allValues": "جميع القيم",
         "selectFilter": "اختر نوع المرشح",
         "allProjects": "جميع المشاريع"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "تم حذف اللقطة.",
         "snapshotDeleteFailed": "فشل حذف اللقطة.",
         "baselineLabel": "لقطة خط الأساس",
+        "requirementProject": "مشروع المتطلب",
         "compareLabel": "مقارنة مع",
         "baselineRequired": "اختر لقطة خط أساس لتشغيل هذا التقرير.",
         "includeUnchanged": "تضمين المتطلبات غير المتغيرة",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "تغطية اختبار المشكلات عبر المشاريع",
           "description": "عرض المشكلات مع حالات الاختبار المرتبطة بها وأحدث حالة تنفيذ عبر المشاريع"
+        },
+        "requirementCoverageGaps": {
+          "label": "ثغرات تغطية المتطلبات عبر المشاريع",
+          "description": "المتطلبات التي لا تتوفر لها تغطية اختبار في جميع المشاريع التي تم تفعيل المتطلبات فيها"
+        },
+        "requirementTraceability": {
+          "label": "قابلية تتبع المتطلبات عبر المشاريع",
+          "description": "كل متطلب مقترن بحالات الاختبار المرتبطة به وآخر نتيجة له عبر المشاريع"
         },
         "executionLog": {
           "label": "سجل التنفيذ عبر المشاريع",

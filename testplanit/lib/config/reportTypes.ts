@@ -241,6 +241,26 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
+    id: "cross-project-requirement-coverage-gaps",
+    label: tReports("crossProjectReportTypes.requirementCoverageGaps.label"),
+    description: tReports(
+      "crossProjectReportTypes.requirementCoverageGaps.description"
+    ),
+    icon: ClipboardX,
+    endpoint: "/api/report-builder/cross-project-requirement-coverage-gaps",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-requirement-traceability",
+    label: tReports("crossProjectReportTypes.requirementTraceability.label"),
+    description: tReports(
+      "crossProjectReportTypes.requirementTraceability.description"
+    ),
+    icon: ClipboardList,
+    endpoint: "/api/report-builder/cross-project-requirement-traceability",
+    isPreBuilt: true,
+  },
+  {
     id: "cross-project-execution-log",
     label: tReports("crossProjectReportTypes.executionLog.label"),
     description: tReports("crossProjectReportTypes.executionLog.description"),

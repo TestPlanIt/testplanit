@@ -18,7 +18,9 @@ const PRE_BUILT_REPORT_TYPES = [
   "iteration-matrix",
   "automation-candidates",
   "requirement-coverage-gaps",
+  "cross-project-requirement-coverage-gaps",
   "requirement-traceability",
+  "cross-project-requirement-traceability",
   "requirement-coverage-changes",
 ] as const;
 

@@ -42,6 +42,9 @@ function breakdown(
   overrides: Partial<RequirementCoverageBreakdown> = {}
 ): RequirementCoverageBreakdown {
   return {
+    // The requirement's own project; only the cross-project reports read
+    // it, but the breakdown always carries it.
+    projectId: 1,
     linkedCaseCount: 2,
     crossProjectCaseCount: 0,
     directCaseCount: 2,

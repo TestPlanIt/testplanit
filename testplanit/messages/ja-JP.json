@@ -7766,6 +7766,7 @@
         "annually": "毎年"
       },
       "filters": {
+        "allValues": "すべての値",
         "selectFilter": "フィルターの種類を選択",
         "allProjects": "すべてのプロジェクト"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "スナップショットを削除しました。",
         "snapshotDeleteFailed": "スナップショットの削除に失敗しました。",
         "baselineLabel": "ベースラインスナップショット",
+        "requirementProject": "要件プロジェクト",
         "compareLabel": "比較対象",
         "baselineRequired": "このレポートを実行するには、ベースラインスナップショットを選択してください。",
         "includeUnchanged": "変更のない要件を含める",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "プロジェクト横断的な課題テストカバレッジ",
           "description": "プロジェクト全体にわたる、関連するテストケースと最新の実行状況とともに課題を表示します。"
+        },
+        "requirementCoverageGaps": {
+          "label": "プロジェクト横断的な要件カバレッジギャップ",
+          "description": "要件が有効なすべてのプロジェクトにおいて、テストカバレッジがない要件"
+        },
+        "requirementTraceability": {
+          "label": "プロジェクト横断的な要件トレーサビリティ",
+          "description": "プロジェクト全体で、各要件とそれに紐づくテストケースおよび最新の結果をペアにしたもの"
         },
         "executionLog": {
           "label": "プロジェクト横断実行ログ",

@@ -170,8 +170,9 @@ function buildIssueTestCoverage(p: BuildReportCsvParams): CsvRow[] {
 }
 
 function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
-  const { rows, t } = p;
+  const { rows, t, isCrossProject } = p;
   const h = {
+    requirementProject: t("reports.ui.requirementCoverage.requirementProject"),
     requirement: t("reports.ui.requirementCoverage.requirement"),
     path: t("reports.ui.requirementCoverage.path"),
     priority: t("common.fields.priority"),
@@ -186,6 +187,11 @@ function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
   };
   return rows.map((r: any) => {
     const row: CsvRow = {};
+    // Only the cross-project variant has more than one requirement project;
+    // on the project-scoped report the column would be a constant.
+    if (isCrossProject) {
+      row[h.requirementProject] = r.requirementProjectName ?? "";
+    }
     row[h.requirement] = formatRequirementCellText(r);
     row[h.path] = r.requirementParentPath ?? "";
     row[h.priority] = r.requirementPriority ?? "";
@@ -198,10 +204,13 @@ function buildRequirementCoverageGaps(p: BuildReportCsvParams): CsvRow[] {
 }
 
 function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
-  const { rows, t } = p;
+  const { rows, t, isCrossProject } = p;
   const h = {
+    requirementProject: t("reports.ui.requirementCoverage.requirementProject"),
     requirement: t("reports.ui.requirementCoverage.requirement"),
     path: t("reports.ui.requirementCoverage.path"),
+    priority: t("common.fields.priority"),
+    status: t("common.actions.status"),
     coverage: t("requirements.coverage.title"),
     testCase: t("reports.ui.requirementCoverage.testCase"),
     result: t("reports.ui.requirementCoverage.result"),
@@ -226,8 +235,16 @@ function buildRequirementTraceability(p: BuildReportCsvParams): CsvRow[] {
   // becomes indistinguishable from a case that merely hasn't executed yet.
   return rows.map((r: any) => {
     const row: CsvRow = {};
+    // The REQUIREMENT's project, only on the cross-project variant. The
+    // `project` column below is a different thing — the covering case's
+    // project — and ships on both variants.
+    if (isCrossProject) {
+      row[h.requirementProject] = r.requirementProjectName ?? "";
+    }
     row[h.requirement] = formatRequirementCellText(r);
     row[h.path] = r.requirementParentPath ?? "";
+    row[h.priority] = r.requirementPriority ?? "";
+    row[h.status] = r.requirementStatus ?? "";
     row[h.coverage] = coverageLabels[r.coverageStatus] ?? "";
     row[h.testCase] = r.testCaseName ?? "";
     row[h.result] =

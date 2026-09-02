@@ -39,6 +39,11 @@ export type RequirementNode = {
    * fixtures need not carry them. */
   issueTypeName?: string | null;
   issueTypeIconUrl?: string | null;
+  /** The requirement's own project. Only a cross-project load has more
+   * than one, so both are optional for every single-project caller and
+   * fixture that predates them. */
+  projectId?: number | null;
+  projectName?: string | null;
   /** Gap-report (coverage debt) enrichment — the fields
    * `resolveRequirementDisplayStatus` and the Uncovered-since column
    * read. Optional for the same fixture-compat reason as the icon pair. */
@@ -90,6 +95,12 @@ export type RequirementTraceabilityRow = {
    * top-level requirement) — what lets a persisted snapshot's rows be
    * re-scoped to a subtree later without re-reading the live tree. */
   requirementParentId?: number | null;
+  /** The project the REQUIREMENT itself belongs to — distinct from
+   * `caseProjectId`, which is the covering case's project. Redundant on a
+   * single-project report (every row shares it) and the only thing that
+   * identifies a row's origin on a cross-project one. */
+  requirementProjectId?: number | null;
+  requirementProjectName?: string | null;
   caseId: number | null; // null => coverage gap
   caseName: string | null;
   /** TestCaseNameDisplay's icon inputs; absent on gap rows. */
@@ -106,8 +117,15 @@ export type RequirementTraceabilityRow = {
 };
 
 export type RequirementTraceabilityData = {
-  projectId: number;
+  /** The one project this matrix covers, or `null` when it spans several
+   * (the cross-project reports) — no single id would be true there, and
+   * each row names its own requirement's project instead. */
+  projectId: number | null;
+  /** The single project's name; empty when the matrix spans several. */
   projectName: string;
+  /** Every project the matrix drew requirements from. One entry for a
+   * single-project load. */
+  projects?: { id: number; name: string }[];
   generatedAt: string;
   /** Present when the rows are a persisted snapshot rather than the live
    * matrix — `generatedAt` is then the capture instant. */
@@ -132,6 +150,8 @@ export type RequirementCoverageGapRow = Pick<
   | "requirementStatus"
   | "requirementCreatedAt"
   | "requirementRootId"
+  | "requirementProjectId"
+  | "requirementProjectName"
   | "linkedCaseCount"
 > & {
   /** UNCOVERED for a true gap; NOT_RUN for the opt-in never-ran tier —
@@ -322,6 +342,8 @@ export function buildTraceabilityRows(params: {
         requirementCreatedAt,
         requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
         requirementParentId: requirement.parentId,
+        requirementProjectId: requirement.projectId ?? null,
+        requirementProjectName: requirement.projectName ?? null,
         caseId: null,
         caseName: null,
         caseProjectId: null,
@@ -352,6 +374,8 @@ export function buildTraceabilityRows(params: {
         requirementCreatedAt,
         requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
         requirementParentId: requirement.parentId,
+        requirementProjectId: requirement.projectId ?? null,
+        requirementProjectName: requirement.projectName ?? null,
         caseId: coveringCase.caseId,
         caseName: coveringCase.caseName,
         caseAutomated: coveringCase.automated,
@@ -474,6 +498,8 @@ export function toNotRunRequirementRows(
       requirementStatus: row.requirementStatus,
       requirementCreatedAt: row.requirementCreatedAt,
       requirementRootId: row.requirementRootId,
+      requirementProjectId: row.requirementProjectId ?? null,
+      requirementProjectName: row.requirementProjectName ?? null,
       coverageStatus: row.coverageStatus,
       linkedCaseCount: row.linkedCaseCount,
     });
@@ -498,6 +524,8 @@ export function toGapRows(
       requirementStatus: row.requirementStatus,
       requirementCreatedAt: row.requirementCreatedAt,
       requirementRootId: row.requirementRootId,
+      requirementProjectId: row.requirementProjectId ?? null,
+      requirementProjectName: row.requirementProjectName ?? null,
       coverageStatus: row.coverageStatus,
       linkedCaseCount: row.linkedCaseCount,
     }));

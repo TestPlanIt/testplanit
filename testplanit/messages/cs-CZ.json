@@ -7766,6 +7766,7 @@
         "annually": "Ročně"
       },
       "filters": {
+        "allValues": "Všechny hodnoty",
         "selectFilter": "Vyberte typ filtru",
         "allProjects": "Všechny projekty"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Snímek byl odstraněn.",
         "snapshotDeleteFailed": "Odstranění snímku se nezdařilo.",
         "baselineLabel": "Základní snímek",
+        "requirementProject": "Projekt požadavku",
         "compareLabel": "Porovnat s",
         "baselineRequired": "Pro spuštění této zprávy vyberte základní snímek.",
         "includeUnchanged": "Zahrnout nezměněné požadavky",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Pokrytí problémů testy napříč projekty",
           "description": "Zobrazte problémy s jejich propojenými testovacími případy a posledním stavem provedení napříč projekty"
+        },
+        "requirementCoverageGaps": {
+          "label": "Mezery v pokrytí požadavků napříč projekty",
+          "description": "Požadavky bez testovacího pokrytí ve všech projektech, které mají požadavky povoleny"
+        },
+        "requirementTraceability": {
+          "label": "Sledovatelnost požadavků napříč projekty",
+          "description": "Každý požadavek spárovaný s propojenými testovacími případy a posledním výsledkem napříč projekty"
         },
         "executionLog": {
           "label": "Protokol provádění napříč projekty",

@@ -274,6 +274,9 @@ export function toSnapshotTraceabilityData(
       name: loaded.snapshot.name,
       capturedAt: loaded.snapshot.capturedAt.toISOString(),
     },
-    rows: expandSnapshotEntries(entries),
+    rows: expandSnapshotEntries(entries, {
+      id: loaded.snapshot.projectId,
+      name: loaded.projectName,
+    }),
   };
 }

@@ -7766,6 +7766,7 @@
         "annually": "Anualmente"
       },
       "filters": {
+        "allValues": "Todos os valores",
         "selectFilter": "Selecione um tipo de filtro",
         "allProjects": "Todos os projetos"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Instantâneo excluído.",
         "snapshotDeleteFailed": "Falha ao excluir o instantâneo.",
         "baselineLabel": "Instantâneo de referência",
+        "requirementProject": "Projeto do Requisito",
         "compareLabel": "Comparar com",
         "baselineRequired": "Escolha um instantâneo de referência para executar este relatório.",
         "includeUnchanged": "Incluir requisitos inalterados",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Cobertura de testes de problemas entre projetos",
           "description": "Visualize os problemas com seus respectivos casos de teste e o status de execução mais recente em todos os projetos."
+        },
+        "requirementCoverageGaps": {
+          "label": "Lacunas de Cobertura de Requisitos entre Projetos",
+          "description": "Requisitos sem cobertura de teste em todos os projetos que têm requisitos habilitados"
+        },
+        "requirementTraceability": {
+          "label": "Rastreabilidade de Requisitos entre Projetos",
+          "description": "Cada requisito pareado com seus casos de teste vinculados e o resultado mais recente entre projetos"
         },
         "executionLog": {
           "label": "Registro de Execução entre Projetos",

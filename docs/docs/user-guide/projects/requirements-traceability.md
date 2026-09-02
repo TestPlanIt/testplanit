@@ -84,6 +84,8 @@ The scope travels with the report's [share link](./reports/index.md#sharing), so
 
 Like the other tabular reports, all three offer an **Export CSV** button above the results — see [Exporting Results](./reports/index.md#exporting-results).
 
+The gaps and traceability reports also have cross-project variants for administrators, on **Administration → Reporting & Analytics** — the same reports run across every project with requirements enabled at once, with a **Requirement Project** column naming each requirement's own project. See [Cross-Project Reports](../cross-project-reports.md). Snapshots stay project-scoped, so the Coverage Changes report has no cross-project variant.
+
 :::note Shared copies and cross-project coverage
 A report opened through a share link is confined to the shared project. A covering case that lives in **another** project doesn't appear in the shared copy, and a requirement covered *only* by such cases shows as a gap there even though the signed-in view shows it covered. A shared **snapshot** is the exception: it shows the record exactly as it was captured.
 :::

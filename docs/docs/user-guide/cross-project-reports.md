@@ -21,7 +21,11 @@ The following pre-built reports have cross-project variants. The underlying sema
 - [Execution Log](./projects/reports/execution-log.md) — flat chronological log of every test result across the selected projects.
 - [Flaky Tests](./projects/reports/flaky-tests.md) — flaky cases identified across the selected projects.
 - [Issue Test Coverage](./projects/reports/issue-test-coverage.md) — coverage rolled up across each project's issue integrations.
+- [Requirement Coverage Gaps](./projects/requirements-traceability.md#reports) — coverage debt across every project that has [requirements enabled](./projects/requirements.md#enabling-requirements).
+- [Requirement Traceability](./projects/requirements-traceability.md#reports) — the traceability matrix across every project that has requirements enabled.
 - [Test Case Health](./projects/reports/test-case-health.md) — health scores aggregated across the portfolio.
+
+The two requirement reports add a **Requirement Project** column naming the project each requirement belongs to. On the traceability report that sits alongside the existing **Project** column, which names the *covering case's* project — a requirement in one project can be covered by a case in another, so the two answer different questions. Requirement [snapshots](./projects/requirements-traceability.md#snapshots) are captured from a single project and stay project-scoped, so there is no cross-project variant of the Requirement Coverage Changes report.
 
 ### Custom Reports
 

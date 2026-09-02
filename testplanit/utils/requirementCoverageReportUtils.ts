@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import { baseDb } from "~/lib/db";
+import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import type { RequirementCoverageStatus } from "~/lib/services/requirementCoverage";
 import {
   loadRequirementTraceability,
@@ -23,6 +25,10 @@ import {
   type SnapshotEntryRecord,
 } from "~/lib/services/requirementTraceabilitySnapshotShape";
 import { authOptions } from "~/server/auth";
+import {
+  resolveRequirementDisplayPriority,
+  resolveRequirementDisplayStatus,
+} from "~/utils/issueDisplayText";
 import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 /**
@@ -46,14 +52,135 @@ import { authorizeReportRequest } from "~/utils/reportApiUtils";
  *    so the gap report and the matrix can never disagree about what is
  *    uncovered. Calling the loader once per variant (twice total) would
  *    reopen exactly the drift this design exists to remove.
- * 3. No cross-project variant exists here — a deliberate, recorded carve-out
- *    (26-VALIDATION.md carve-out 3), not an oversight. `getRequirementCoverage`
- *    anchors its recursive closure on a single `projectId`; a cross-project
- *    rollup would be a change to that service, not a change to this report
- *    layer, and the phase's binding constraint is to consume the service
- *    as shipped. The accepted cost of adding a cross-project variant later
- *    is touching all six report-registration sites again.
+ * 3. Both variants ALSO ship a cross-project form (`isCrossProject`), which
+ *    Phase 26 deliberately carved out (26-VALIDATION.md carve-out 3) and
+ *    which was built later, as that carve-out anticipated. The change stayed
+ *    where the carve-out said it belonged: `getRequirementCoverage` now
+ *    anchors its closure on a LIST of project ids, and this layer only
+ *    chooses the list. Two properties are load-bearing there — the closure's
+ *    descendant arm binds each child to its own ancestor's project (a
+ *    subtree still cannot wander between projects), and "cross-project" on
+ *    a covering case is judged against the requirement's own project rather
+ *    than one report-wide id. Snapshots have no cross-project form: a
+ *    snapshot is captured from one project and pinned to it, so the
+ *    cross-project path refuses a `snapshotId` outright.
  */
+
+/**
+ * The projects a cross-project requirement report can be filtered to: those
+ * with requirements enabled, with their requirement counts. NOT the
+ * repository-cases view-options list the automation-trends filter uses --
+ * that one is grouped from test cases, so it omits a project that has
+ * requirements but no cases and counts the wrong thing.
+ */
+export async function handleRequirementReportOptionsGET(
+  req: NextRequest,
+  isCrossProject: boolean
+): Promise<Response> {
+  const authz = await authorizeReportRequest(req, {
+    requiresAdmin: isCrossProject,
+    projectId: isCrossProject
+      ? undefined
+      : Number(new URL(req.url).searchParams.get("projectId")) || undefined,
+  });
+  if (!authz.ok) return authz.response;
+
+  const projectIdParam = Number(new URL(req.url).searchParams.get("projectId"));
+  const enabledProjects = await baseDb.projects.findMany({
+    where: {
+      isDeleted: false,
+      ...(isCrossProject
+        ? { requirementsEnabled: true }
+        : { id: Number.isInteger(projectIdParam) ? projectIdParam : -1 }),
+    },
+    select: {
+      id: true,
+      name: true,
+      _count: {
+        select: {
+          issues: { where: { isDeleted: false, ...REQUIREMENT_SCOPE_WHERE } },
+        },
+      },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  // Resolved DISPLAY values, so an option always matches what the rows
+  // render (a locked requirement shows its tracker's priority/status).
+  // Computed over the unfiltered set, so picking one option never removes
+  // the others from the menu.
+  const requirements = await baseDb.issue.findMany({
+    where: {
+      isDeleted: false,
+      ...REQUIREMENT_SCOPE_WHERE,
+      projectId: { in: enabledProjects.map((project) => project.id) },
+    },
+    select: {
+      priority: true,
+      externalPriority: true,
+      status: true,
+      externalStatus: true,
+      isRequirement: true,
+      integrationId: true,
+      requirementDetachedAt: true,
+    },
+  });
+
+  // Grouped case-insensitively: trackers spell the same value differently
+  // across projects ("Low" and "low"), and two options that read identically
+  // are indistinguishable in a menu. The most common spelling wins the
+  // label; the option's id is the lowercased key the filter matches on.
+  const tally = (
+    counts: Map<string, { count: number; labels: Map<string, number> }>,
+    value: string | null
+  ) => {
+    if (!value) return;
+    const key = value.toLowerCase();
+    const entry = counts.get(key) ?? { count: 0, labels: new Map() };
+    entry.count += 1;
+    entry.labels.set(value, (entry.labels.get(value) ?? 0) + 1);
+    counts.set(key, entry);
+  };
+
+  const priorities = new Map<
+    string,
+    { count: number; labels: Map<string, number> }
+  >();
+  const statuses = new Map<
+    string,
+    { count: number; labels: Map<string, number> }
+  >();
+  for (const requirement of requirements) {
+    tally(priorities, resolveRequirementDisplayPriority(requirement));
+    tally(statuses, resolveRequirementDisplayStatus(requirement));
+  }
+  const toOptions = (
+    counts: Map<string, { count: number; labels: Map<string, number> }>
+  ) =>
+    [...counts.entries()]
+      .map(([key, { count, labels }]) => ({
+        id: key,
+        name: [...labels.entries()].sort((a, b) => b[1] - a[1])[0][0],
+        count,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+  return Response.json({
+    dimensions: [],
+    metrics: [],
+    // Only the cross-project reports pick projects; the project-scoped ones
+    // already are one project.
+    projects: isCrossProject
+      ? enabledProjects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          count: project._count.issues,
+        }))
+      : [],
+    priorities: toOptions(priorities),
+    statuses: toOptions(statuses),
+  });
+}
 
 export type RequirementCoverageReportVariant = "gaps" | "traceability";
 
@@ -72,6 +199,11 @@ export interface RequirementCoverageGapReportRow {
    * existed ("Uncovered since"). */
   requirementCreatedAt?: string | null;
   requirementRootId?: number;
+  /** The requirement's OWN project — the only thing that says where a row
+   * came from on the cross-project variant; redundant (and uniform) on the
+   * project-scoped one. */
+  requirementProjectId?: number | null;
+  requirementProjectName?: string | null;
   /** UNCOVERED (tier 1, zero linked cases) or NOT_RUN (opt-in tier 2,
    * cases exist but none ever executed). */
   coverageStatus: RequirementCoverageStatus;
@@ -93,7 +225,16 @@ export interface RequirementTraceabilityReportRow {
   requirementParentPath: string;
   requirementIssueTypeName?: string | null;
   requirementIssueTypeIconUrl?: string | null;
+  /** Same requirement-level context the gaps report shows, so the two
+   * reports describe a requirement the same way -- and so the Priority and
+   * Status filters have matching columns. */
+  requirementPriority?: string | null;
+  requirementStatus?: string | null;
   requirementRootId?: number;
+  /** The requirement's OWN project, distinct from `caseProjectId` (the
+   * covering case's). Carries the cross-project variant's origin column. */
+  requirementProjectId?: number | null;
+  requirementProjectName?: string | null;
   testCaseId: number | null; // null => coverage gap row
   testCaseAutomated?: boolean;
   testCaseSource?: string | null;
@@ -169,6 +310,32 @@ function parseCoverageStates(
   return {
     ok: true,
     states: raw.length > 0 ? new Set(raw as string[]) : undefined,
+  };
+}
+
+/**
+ * Parses an optional list-of-strings filter (`priorities`, `statuses`) —
+ * the resolved DISPLAY values the rows carry. Absent/null/empty means "no
+ * filter", the same empty-means-all convention every other control here
+ * uses.
+ */
+function parseDisplayValueFilter(
+  raw: unknown
+): { ok: true; values: Set<string> | undefined } | { ok: false } {
+  if (raw === undefined || raw === null) {
+    return { ok: true, values: undefined };
+  }
+  if (!Array.isArray(raw) || raw.some((v) => typeof v !== "string")) {
+    return { ok: false };
+  }
+  // Lowercased on both sides: the menu groups "Low" and "low" into one
+  // option, so the filter has to match both.
+  return {
+    ok: true,
+    values:
+      raw.length > 0
+        ? new Set((raw as string[]).map((value) => value.toLowerCase()))
+        : undefined,
   };
 }
 
@@ -254,19 +421,23 @@ async function resolveReportAccessibleProjectIds(
 
 export async function handleRequirementCoverageReportPOST(
   req: NextRequest,
-  variant: RequirementCoverageReportVariant
+  variant: RequirementCoverageReportVariant,
+  isCrossProject = false
 ): Promise<Response> {
   try {
     const body = await req.json();
     const projectId = body?.projectId ? Number(body.projectId) : undefined;
 
     const authz = await authorizeReportRequest(req, {
-      requiresAdmin: false,
-      projectId,
+      // Cross-project is ADMIN-only, exactly as the shipped cross-project
+      // report family is: there is no per-project gate to apply when the
+      // report deliberately spans every project.
+      requiresAdmin: isCrossProject,
+      projectId: isCrossProject ? undefined : projectId,
     });
     if (!authz.ok) return authz.response;
 
-    if (!projectId) {
+    if (!isCrossProject && !projectId) {
       return Response.json(
         { error: "Project ID is required" },
         { status: 400 }
@@ -297,13 +468,78 @@ export async function handleRequirementCoverageReportPOST(
       return Response.json({ error: "Invalid snapshotId" }, { status: 400 });
     }
 
-    const resolvedScope = await resolveReportAccessibleProjectIds(
-      req,
-      authz,
-      projectId
-    );
-    if (!resolvedScope.ok) return resolvedScope.response;
-    const { accessibleProjectIds } = resolvedScope;
+    const priorities = parseDisplayValueFilter(body?.priorities);
+    if (!priorities.ok) {
+      return Response.json({ error: "Invalid priorities" }, { status: 400 });
+    }
+    const statuses = parseDisplayValueFilter(body?.statuses);
+    if (!statuses.ok) {
+      return Response.json({ error: "Invalid statuses" }, { status: 400 });
+    }
+
+    // A snapshot is captured from one project and pinned to it, so there is
+    // no such thing as a cross-project snapshot to load. Refuse rather than
+    // silently ignoring the parameter and returning live data under a
+    // snapshot's name.
+    if (isCrossProject && snapshotId.id !== undefined) {
+      return Response.json(
+        { error: "Snapshots are not available on cross-project reports" },
+        { status: 400 }
+      );
+    }
+
+    // Case visibility.
+    //
+    // Cross-project is unrestricted (`null`), for two different reasons
+    // depending on how the request arrived. A signed-in caller had to pass
+    // the ADMIN gate above, and ADMIN is exactly what
+    // `resolveViewerProjectScope` answers `null` for — resolving it would
+    // be a round trip to re-derive a constant. A share-link replay
+    // short-circuits that gate (`authorizeReportRequest` honours the bypass
+    // header before `requiresAdmin`), so it gets the same unrestricted
+    // view: the link could only have been created by an admin looking at
+    // every project, and a cross-project report IS the portfolio view, so
+    // reproducing what its creator saw is the whole point. This is
+    // deliberately UNLIKE the project-scoped path below, whose bypass
+    // branch narrows to the single shared project precisely so a shared
+    // copy cannot name projects the creator never meant to expose.
+    let accessibleProjectIds: number[] | null = null;
+    if (!isCrossProject) {
+      const resolvedScope = await resolveReportAccessibleProjectIds(
+        req,
+        authz,
+        projectId!
+      );
+      if (!resolvedScope.ok) return resolvedScope.response;
+      accessibleProjectIds = resolvedScope.accessibleProjectIds;
+    }
+
+    // Which projects the matrix anchors on. Cross-project means every
+    // project that actually has requirements turned on — anchoring on all
+    // of them would make the closure walk projects that can hold no
+    // requirement row by construction.
+    let anchorProjectIds: number | number[] = projectId!;
+    if (isCrossProject) {
+      // The picker's optional narrowing, intersected with the enabled set --
+      // never trusted on its own, so a crafted id cannot pull in a project
+      // that has requirements switched off.
+      const requested = Array.isArray(body?.projectIds)
+        ? body.projectIds
+            .map(Number)
+            .filter((id: number) => Number.isInteger(id))
+        : null;
+      const enabled = await baseDb.projects.findMany({
+        where: {
+          isDeleted: false,
+          requirementsEnabled: true,
+          ...(requested && requested.length > 0
+            ? { id: { in: requested } }
+            : {}),
+        },
+        select: { id: true },
+      });
+      anchorProjectIds = enabled.map((project) => project.id);
+    }
 
     let data: RequirementTraceabilityData;
     if (snapshotId.id !== undefined) {
@@ -313,7 +549,7 @@ export async function handleRequirementCoverageReportPOST(
       // Scope is applied over the parent ids frozen at capture.
       const loaded = await loadRequirementTraceabilitySnapshot(
         snapshotId.id,
-        projectId
+        projectId!
       );
       if (!loaded) {
         return Response.json({ error: "Snapshot not found" }, { status: 404 });
@@ -332,14 +568,31 @@ export async function handleRequirementCoverageReportPOST(
       data =
         scopeIds.rootIds !== undefined
           ? await loadRequirementTraceability(
-              projectId,
+              anchorProjectIds,
               { accessibleProjectIds },
               undefined,
               { rootIds: scopeIds.rootIds }
             )
-          : await loadRequirementTraceability(projectId, {
+          : await loadRequirementTraceability(anchorProjectIds, {
               accessibleProjectIds,
             });
+    }
+
+    // Requirement-level filters, applied to the shared matrix rows before
+    // either variant shapes them -- same reason the coverage-state filter is
+    // server-side: the row count, the visualization, the CSV and any share
+    // link must all describe the same filtered set.
+    const matchesRequirementFilters = (row: {
+      requirementPriority?: string | null;
+      requirementStatus?: string | null;
+    }) =>
+      (!priorities.values ||
+        priorities.values.has((row.requirementPriority ?? "").toLowerCase())) &&
+      (!statuses.values ||
+        statuses.values.has((row.requirementStatus ?? "").toLowerCase()));
+
+    if (priorities.values || statuses.values) {
+      data = { ...data, rows: data.rows.filter(matchesRequirementFilters) };
     }
 
     if (variant === "gaps") {
@@ -364,6 +617,8 @@ export async function handleRequirementCoverageReportPOST(
           requirementStatus: row.requirementStatus,
           requirementCreatedAt: row.requirementCreatedAt,
           requirementRootId: row.requirementRootId,
+          requirementProjectId: row.requirementProjectId ?? null,
+          requirementProjectName: row.requirementProjectName ?? null,
           coverageStatus: row.coverageStatus,
           linkedCases: row.linkedCaseCount,
         })
@@ -386,7 +641,11 @@ export async function handleRequirementCoverageReportPOST(
         requirementParentPath: row.requirementParentPath,
         requirementIssueTypeName: row.requirementIssueTypeName,
         requirementIssueTypeIconUrl: row.requirementIssueTypeIconUrl,
+        requirementPriority: row.requirementPriority,
+        requirementStatus: row.requirementStatus,
         requirementRootId: row.requirementRootId,
+        requirementProjectId: row.requirementProjectId ?? null,
+        requirementProjectName: row.requirementProjectName ?? null,
         testCaseId: row.caseId,
         testCaseAutomated: row.caseAutomated,
         testCaseSource: row.caseSource,

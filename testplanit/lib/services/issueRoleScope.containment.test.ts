@@ -173,6 +173,13 @@ const SCOPED_FILES = [
   // direct read AND by RequirementsListView.test.tsx asserting on the
   // hook's actual `where` argument rather than by source grep alone.
   "app/[locale]/projects/requirements/[projectId]/RequirementsListView.tsx",
+  // The requirement reports' filter-options endpoint (9-2) reads requirements
+  // once to derive the Priority and Status menus. Spreads
+  // REQUIREMENT_SCOPE_WHERE — the same half of the mirror pair as
+  // RequirementsListView.tsx above — bounded to the projects the report can
+  // anchor on. The rest of this module composes the traceability loader and
+  // touches no db client; this options read is its only direct Issue query.
+  "utils/requirementCoverageReportUtils.ts",
   // 25-10's detail panel spreads REQUIREMENT_SCOPE_WHERE into its single
   // useFindFirst call (the panel's own read of the selected row) — same
   // predicate, same reasoning as RequirementsListView.tsx above. Verified

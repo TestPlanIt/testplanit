@@ -7766,6 +7766,7 @@
         "annually": "Rocznie"
       },
       "filters": {
+        "allValues": "Wszystkie wartości",
         "selectFilter": "Wybierz typ filtra",
         "allProjects": "Wszystkie projekty"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Migawka usunięta.",
         "snapshotDeleteFailed": "Nie udało się usunąć migawki.",
         "baselineLabel": "Migawka bazowa",
+        "requirementProject": "Projekt wymagania",
         "compareLabel": "Porównaj z",
         "baselineRequired": "Wybierz migawkę bazową, aby wygenerować ten raport.",
         "includeUnchanged": "Uwzględnij niezmienione wymagania",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Pokrycie testowe problemów w ramach wielu projektów",
           "description": "Przeglądaj problemy z powiązanymi przypadkami testowymi i najnowszym statusem wykonania w różnych projektach"
+        },
+        "requirementCoverageGaps": {
+          "label": "Luki w pokryciu wymagań między projektami",
+          "description": "Wymagania bez pokrycia testowego we wszystkich projektach, w których włączono wymagania"
+        },
+        "requirementTraceability": {
+          "label": "Identyfikowalność wymagań między projektami",
+          "description": "Każde wymaganie powiązane z przypisanymi przypadkami testowymi i najnowszym wynikiem we wszystkich projektach"
         },
         "executionLog": {
           "label": "Dziennik realizacji międzyprojektowej",

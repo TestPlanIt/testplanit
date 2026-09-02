@@ -204,4 +204,35 @@ describe("ReportBuilder (Phase 26 requirement report type gating)", () => {
     expect(ids).toContain("requirement-traceability");
     expect(ids).toContain("test-execution");
   });
+
+  it("filters by BASE type, so a cross-project requirement report is gated the same way", () => {
+    // The cross-project ids carry a "cross-project-" prefix; the filter
+    // strips it before matching, so the gate cannot be sidestepped by the
+    // prefix alone. (In practice the cross-project picker never calls this
+    // — the requirements flag is a per-project setting — but the filter
+    // must not silently pass a requirement report just because of a
+    // prefix.)
+    const withCrossProject: ReportType[] = [
+      ...reportTypesFixture,
+      {
+        id: "cross-project-requirement-traceability",
+        label: "Cross-Project Requirement Traceability",
+        description: "",
+        icon: (() => null) as any,
+        endpoint: "/api/report-builder/cross-project-requirement-traceability",
+        isPreBuilt: true,
+      },
+    ];
+
+    const off = filterReportTypesForRequirementsFlag(
+      withCrossProject,
+      false
+    ).map((rt) => rt.id);
+    expect(off).not.toContain("cross-project-requirement-traceability");
+
+    const on = filterReportTypesForRequirementsFlag(withCrossProject, true).map(
+      (rt) => rt.id
+    );
+    expect(on).toContain("cross-project-requirement-traceability");
+  });
 });

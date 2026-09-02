@@ -7766,6 +7766,7 @@
         "annually": "Jaarlijks"
       },
       "filters": {
+        "allValues": "Alle waarden",
         "selectFilter": "Selecteer een filtertype",
         "allProjects": "Alle projecten"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Momentopname verwijderd.",
         "snapshotDeleteFailed": "Het verwijderen van de momentopname is mislukt.",
         "baselineLabel": "Basislijnmomentopname",
+        "requirementProject": "Vereisteproject",
         "compareLabel": "Vergelijken met",
         "baselineRequired": "Kies een basislijnmomentopname om dit rapport uit te voeren.",
         "includeUnchanged": "Ongewijzigde vereisten opnemen",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Testdekking voor problemen die meerdere projecten omvatten",
           "description": "Bekijk problemen met de bijbehorende testcases en de meest recente uitvoeringsstatus in alle projecten."
+        },
+        "requirementCoverageGaps": {
+          "label": "Projectoverkoepelende hiaten in vereistedekking",
+          "description": "Vereisten zonder testdekking in alle projecten waarvoor vereisten zijn ingeschakeld"
+        },
+        "requirementTraceability": {
+          "label": "Projectoverkoepelende traceerbaarheid van vereisten",
+          "description": "Elke vereiste gekoppeld aan de bijbehorende testgevallen en het meest recente resultaat, over alle projecten"
         },
         "executionLog": {
           "label": "Uitvoeringslogboek voor meerdere projecten",

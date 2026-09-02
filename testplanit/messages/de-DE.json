@@ -7766,6 +7766,7 @@
         "annually": "Jährlich"
       },
       "filters": {
+        "allValues": "Alle Werte",
         "selectFilter": "Wählen Sie einen Filtertyp aus",
         "allProjects": "Alle Projekte"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Momentaufnahme gelöscht.",
         "snapshotDeleteFailed": "Die Momentaufnahme konnte nicht gelöscht werden.",
         "baselineLabel": "Basis-Momentaufnahme",
+        "requirementProject": "Anforderungsprojekt",
         "compareLabel": "Vergleichen mit",
         "baselineRequired": "Wählen Sie eine Basis-Momentaufnahme aus, um diesen Bericht auszuführen.",
         "includeUnchanged": "Unveränderte Anforderungen einbeziehen",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Projektübergreifende Testabdeckung",
           "description": "Probleme mit den zugehörigen Testfällen und dem aktuellen Ausführungsstatus projektübergreifend anzeigen"
+        },
+        "requirementCoverageGaps": {
+          "label": "Projektübergreifende Lücken in der Anforderungsabdeckung",
+          "description": "Anforderungen ohne Testabdeckung in allen Projekten, in denen Anforderungen aktiviert sind"
+        },
+        "requirementTraceability": {
+          "label": "Projektübergreifende Anforderungsverfolgbarkeit",
+          "description": "Jede Anforderung mit den verknüpften Testfällen und dem neuesten Ergebnis über alle Projekte hinweg"
         },
         "executionLog": {
           "label": "Projektübergreifendes Ausführungsprotokoll",

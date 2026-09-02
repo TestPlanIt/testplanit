@@ -65,6 +65,13 @@ export interface RequirementCoverageStatusCount {
 }
 
 export interface RequirementCoverageBreakdown {
+  /**
+   * The requirement's OWN project. Redundant when the rollup was asked for
+   * a single project, load-bearing when it was asked for several (the
+   * cross-project requirement reports), where it is the only thing that
+   * says which project a given requirement came from.
+   */
+  projectId: number;
   linkedCaseCount: number;
   /**
    * How many of `linkedCaseCount` live in projects other than the
@@ -184,12 +191,22 @@ const MAX_ROOT_IDS = 1000;
  * at exactly one occurrence in this file even as more than one statement
  * ends up consuming it.
  *
- * Emits three columns: `ancestor_id`, `node_id`, `depth`. When `rootIds`
- * is supplied, the anchor is additionally bounded to that id list — used
- * by a future drill-down caller that wants one requirement's rollup
- * rather than every requirement in the project.
+ * Emits four columns: `ancestor_id`, `ancestor_project_id`, `node_id`,
+ * `depth`. When `rootIds` is supplied, the anchor is additionally bounded
+ * to that id list — used by the drill-down caller that wants one
+ * requirement's rollup rather than every requirement in the project.
+ *
+ * `projectIds` is a LIST so one statement can anchor across several
+ * projects at once (the cross-project requirement reports). The descendant
+ * arm still binds each child to its own ancestor's project rather than to
+ * the list, so a subtree can never wander into another project just
+ * because that project happens to be in scope — exactly the guarantee the
+ * single-project form gave, preserved verbatim under a wider anchor.
+ * `ancestor_project_id` rides along so "cross-project" can be judged
+ * against each requirement's OWN project instead of against one report-wide
+ * project id.
  */
-function buildClosureFragment(projectId: number, rootIds?: number[]) {
+function buildClosureFragment(projectIds: number[], rootIds?: number[]) {
   const rootScope =
     rootIds && rootIds.length > 0
       ? sql`AND i.id = ANY(${rootIds}::int[])`
@@ -202,9 +219,9 @@ closure AS (
   -- line is reproduced character for character from this service
   -- family's shared raw-SQL mirror for that predicate — the ONE and
   -- only occurrence of it in this whole file.
-  SELECT i.id AS ancestor_id, i.id AS node_id, 0 AS depth
+  SELECT i.id AS ancestor_id, i."projectId" AS ancestor_project_id, i.id AS node_id, 0 AS depth
   FROM "Issue" i
-  WHERE i."projectId" = ${projectId} AND i."isDeleted" = false AND i."isRequirement" = true
+  WHERE i."projectId" = ANY(${projectIds}::int[]) AND i."isDeleted" = false AND i."isRequirement" = true
   ${rootScope}
 
   UNION ALL
@@ -216,12 +233,31 @@ closure AS (
   -- silently stop a whole class of rollups at the first such node in
   -- every subtree — a dedicated structural test elsewhere in this
   -- codebase exists specifically to catch that mistake.
-  SELECT c.ancestor_id, child.id AS node_id, c.depth + 1
+  SELECT c.ancestor_id, c.ancestor_project_id, child.id AS node_id, c.depth + 1
   FROM "Issue" child
   JOIN closure c ON child."parentId" = c.node_id
-  WHERE child."projectId" = ${projectId} AND child."isDeleted" = false AND c.depth < 100
+  WHERE child."projectId" = c.ancestor_project_id AND child."isDeleted" = false AND c.depth < 100
 )
 `;
+}
+
+/**
+ * Normalizes the one-or-many project argument every public entry point in
+ * this file accepts, and enforces the integer contract in one place.
+ */
+function normalizeProjectIds(
+  caller: string,
+  projectIds: number | number[]
+): number[] {
+  const list = Array.isArray(projectIds) ? projectIds : [projectIds];
+  for (const id of list) {
+    if (!Number.isInteger(id)) {
+      throw new Error(
+        `${caller}: projectId must be an integer, received ${String(id)}`
+      );
+    }
+  }
+  return list;
 }
 
 /** One element of the `statuses` JSON array before JS-side coercion — the
@@ -238,6 +274,7 @@ interface RequirementCoverageStatusRawEntry {
 /** Row shape returned by the rollup statement below, before JS-side coercion. */
 interface RequirementCoverageRow {
   id: number | bigint;
+  project_id: number | bigint;
   linked_case_count: number | bigint;
   cross_project_case_count: number | bigint;
   direct_case_count: number | bigint;
@@ -275,15 +312,16 @@ export interface GetRequirementCoverageOptions {
  * second round trip on data this statement already has in scope.
  */
 export async function getRequirementCoverage(
-  projectId: number,
+  projectId: number | number[],
   scope: RequirementCoverageScope,
   opts?: GetRequirementCoverageOptions,
   db: Pick<typeof baseDb, "$qb"> = baseDb
 ): Promise<Map<number, RequirementCoverageBreakdown>> {
-  if (!Number.isInteger(projectId)) {
-    throw new Error(
-      `getRequirementCoverage: projectId must be an integer, received ${String(projectId)}`
-    );
+  const projectIds = normalizeProjectIds("getRequirementCoverage", projectId);
+  if (projectIds.length === 0) {
+    // No project can contribute a requirement, so the statement would be a
+    // wasted round trip for an answer the caller already has.
+    return new Map();
   }
 
   if (opts?.rootIds !== undefined) {
@@ -306,7 +344,7 @@ export async function getRequirementCoverage(
   const unrestricted = scope.accessibleProjectIds === null;
   const accessibleProjectIds = scope.accessibleProjectIds ?? [];
 
-  const closure = buildClosureFragment(projectId, opts?.rootIds);
+  const closure = buildClosureFragment(projectIds, opts?.rootIds);
 
   const { rows } = await sql<RequirementCoverageRow>`
     WITH RECURSIVE ${closure},
@@ -321,6 +359,7 @@ export async function getRequirementCoverage(
       -- descendant — consumed below by the rollup's direct_* counters.
       SELECT
         cl.ancestor_id,
+        cl.ancestor_project_id,
         rci."caseId" AS case_id,
         rc."projectId" AS case_project_id,
         MIN(cl.depth) AS min_depth
@@ -336,7 +375,7 @@ export async function getRequirementCoverage(
       -- mirroring this service family's existing null-means-ADMIN
       -- convention.
       WHERE (${unrestricted} OR rc."projectId" = ANY(${accessibleProjectIds}::int[]))
-      GROUP BY cl.ancestor_id, rci."caseId", rc."projectId"
+      GROUP BY cl.ancestor_id, cl.ancestor_project_id, rci."caseId", rc."projectId"
     ),
     ${latestCaseResultsCte()},
     rollup AS (
@@ -349,11 +388,11 @@ export async function getRequirementCoverage(
         cc.ancestor_id,
         COUNT(*) AS linked_case_count,
         COUNT(*) FILTER (
-          WHERE cc.case_project_id <> ${projectId}
+          WHERE cc.case_project_id <> cc.ancestor_project_id
         ) AS cross_project_case_count,
         COUNT(*) FILTER (WHERE cc.min_depth = 0) AS direct_case_count,
         COUNT(*) FILTER (
-          WHERE cc.min_depth = 0 AND cc.case_project_id <> ${projectId}
+          WHERE cc.min_depth = 0 AND cc.case_project_id <> cc.ancestor_project_id
         ) AS direct_cross_project_case_count,
         COUNT(*) FILTER (WHERE lr.is_success = true) AS passed,
         COUNT(*) FILTER (WHERE lr.is_failure = true) AS failed,
@@ -422,6 +461,7 @@ export async function getRequirementCoverage(
     -- absence becomes '[]', never an application-code fill.
     SELECT
       cl.ancestor_id AS id,
+      cl.ancestor_project_id AS project_id,
       COALESCE(r.linked_case_count, 0) AS linked_case_count,
       COALESCE(r.cross_project_case_count, 0) AS cross_project_case_count,
       COALESCE(r.direct_case_count, 0) AS direct_case_count,
@@ -441,6 +481,7 @@ export async function getRequirementCoverage(
   const breakdowns = new Map<number, RequirementCoverageBreakdown>();
   for (const row of rows) {
     const counts = {
+      projectId: Number(row.project_id),
       linkedCaseCount: Number(row.linked_case_count ?? 0),
       crossProjectCaseCount: Number(row.cross_project_case_count ?? 0),
       passed: Number(row.passed ?? 0),
@@ -546,15 +587,17 @@ interface RequirementCoveringCaseRow {
  * while quietly contradicting the number sitting right above it.
  */
 export async function getRequirementCoveringCases(
-  projectId: number,
+  projectId: number | number[],
   requirementIds: number[],
   scope: RequirementCoverageScope,
   db: Pick<typeof baseDb, "$qb"> = baseDb
 ): Promise<Map<number, RequirementCoveringCase[]>> {
-  if (!Number.isInteger(projectId)) {
-    throw new Error(
-      `getRequirementCoveringCases: projectId must be an integer, received ${String(projectId)}`
-    );
+  const projectIds = normalizeProjectIds(
+    "getRequirementCoveringCases",
+    projectId
+  );
+  if (projectIds.length === 0) {
+    return new Map();
   }
 
   if (requirementIds.length === 0) {
@@ -576,7 +619,7 @@ export async function getRequirementCoveringCases(
   const unrestricted = scope.accessibleProjectIds === null;
   const accessibleProjectIds = scope.accessibleProjectIds ?? [];
 
-  const closure = buildClosureFragment(projectId, requirementIds);
+  const closure = buildClosureFragment(projectIds, requirementIds);
 
   const { rows } = await sql<RequirementCoveringCaseRow>`
     WITH RECURSIVE ${closure}, ${latestCaseResultsCte()}

@@ -36,7 +36,7 @@ export type { RequirementTraceabilityData };
 const MAX_ROOT_IDS = 1000;
 
 async function loadCoveringCasesChunked(
-  projectId: number,
+  projectId: number | number[],
   requirementIds: number[],
   scope: RequirementCoverageScope,
   db: Pick<typeof baseDb, "$qb">
@@ -68,7 +68,7 @@ async function loadCoveringCasesChunked(
  * path pays this loop — the whole-project path keeps its single
  * uncapped statement. */
 async function loadCoverageChunked(
-  projectId: number,
+  projectId: number | number[],
   requirementIds: number[],
   scope: RequirementCoverageScope,
   db: Pick<typeof baseDb, "$qb">
@@ -109,17 +109,22 @@ export interface LoadRequirementTraceabilityOptions {
  * neither can drift from the other.
  */
 export async function loadRequirementTraceability(
-  projectId: number,
+  projectId: number | number[],
   scope: RequirementCoverageScope,
   db: typeof baseDb = baseDb,
   opts?: LoadRequirementTraceabilityOptions
 ): Promise<RequirementTraceabilityData> {
   const scopedToRoots = opts?.rootIds !== undefined;
+  // One project or many: the cross-project reports anchor on a set, every
+  // other caller on one. `singleProjectId` is what the envelope reports —
+  // null when the load spans projects, because no single id would be true.
+  const projectIds = Array.isArray(projectId) ? projectId : [projectId];
+  const singleProjectId = projectIds.length === 1 ? projectIds[0] : null;
 
-  const [project, allRequirements, projectWideCoverage] = await Promise.all([
-    db.projects.findUnique({
-      where: { id: projectId },
-      select: { name: true },
+  const [projects, allRequirements, projectWideCoverage] = await Promise.all([
+    db.projects.findMany({
+      where: { id: { in: projectIds } },
+      select: { id: true, name: true },
     }),
     // The requirement read this loader owns: names and parents for the
     // whole project, scoped with the shared REQUIREMENT_SCOPE_WHERE
@@ -129,9 +134,14 @@ export async function loadRequirementTraceability(
     // even under root scoping: the membership walk below needs every
     // requirement edge to resolve the subtrees.
     db.issue.findMany({
-      where: { projectId, isDeleted: false, ...REQUIREMENT_SCOPE_WHERE },
+      where: {
+        projectId: { in: projectIds },
+        isDeleted: false,
+        ...REQUIREMENT_SCOPE_WHERE,
+      },
       select: {
         id: true,
+        projectId: true,
         name: true,
         title: true,
         externalUrl: true,
@@ -154,8 +164,18 @@ export async function loadRequirementTraceability(
     // lands.
     scopedToRoots
       ? Promise.resolve(null)
-      : getRequirementCoverage(projectId, scope, undefined, db),
+      : getRequirementCoverage(projectIds, scope, undefined, db),
   ]);
+
+  // Every row names its own requirement's project, which is redundant on a
+  // single-project load and the only origin marker on a cross-project one.
+  const projectNamesById = new Map(projects.map((p) => [p.id, p.name]));
+  for (const requirement of allRequirements) {
+    requirement.projectName =
+      requirement.projectId != null
+        ? (projectNamesById.get(requirement.projectId) ?? null)
+        : null;
+  }
 
   const requirements = scopedToRoots
     ? filterRequirementsToRoots(allRequirements, opts!.rootIds!)
@@ -168,8 +188,8 @@ export async function loadRequirementTraceability(
   const requirementIds = requirements.map((requirement) => requirement.id);
   const [coverage, coveringCases] = await Promise.all([
     projectWideCoverage ??
-      loadCoverageChunked(projectId, requirementIds, scope, db),
-    loadCoveringCasesChunked(projectId, requirementIds, scope, db),
+      loadCoverageChunked(projectIds, requirementIds, scope, db),
+    loadCoveringCasesChunked(projectIds, requirementIds, scope, db),
   ]);
 
   const rows = buildTraceabilityRows({
@@ -179,8 +199,12 @@ export async function loadRequirementTraceability(
   });
 
   return {
-    projectId,
-    projectName: project?.name ?? "",
+    projectId: singleProjectId,
+    projectName:
+      singleProjectId != null
+        ? (projectNamesById.get(singleProjectId) ?? "")
+        : "",
+    projects: projects.map((p) => ({ id: p.id, name: p.name })),
     generatedAt: new Date().toISOString(),
     rows,
   };

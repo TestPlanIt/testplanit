@@ -875,6 +875,50 @@ describeIntegration(
       expect(other.status).toBe("PASSED");
     });
 
+    it("anchors one rollup across several projects, and keeps each subtree inside its own", async () => {
+      // The cross-project reports' anchor. Phase 26 carved these out
+      // because the closure took a single project id; it now takes a list,
+      // and the two properties that make that safe are proven here against
+      // real Postgres recursion rather than argued.
+      // Both rollups are computed HERE, at the same instant, rather than
+      // comparing against a map captured in beforeAll: this file's later
+      // blocks attach and detach links, so a stored snapshot would make
+      // this test read a mutation as an anchor-width effect.
+      const [single, singleTwo, multi] = await Promise.all([
+        getRequirementCoverage(projectOneId, { accessibleProjectIds: null }),
+        getRequirementCoverage(projectTwoId, { accessibleProjectIds: null }),
+        getRequirementCoverage([projectOneId, projectTwoId], {
+          accessibleProjectIds: null,
+        }),
+      ]);
+
+      // 1. Both projects' requirements come back from ONE statement —
+      //    neither list is the other's.
+      expect(multi.has(reqRootId)).toBe(true);
+      expect(multi.has(reqOtherProjectId)).toBe(true);
+
+      // 2. Every requirement still carries its OWN project.
+      expect(multi.get(reqRootId)!.projectId).toBe(projectOneId);
+      expect(multi.get(reqOtherProjectId)!.projectId).toBe(projectTwoId);
+
+      // 3. Widening the anchor changes no requirement's numbers: a subtree
+      //    walk still cannot wander into a project that merely happens to
+      //    be in scope now, and "cross-project" is still judged against the
+      //    requirement's own project.
+      for (const id of [
+        reqRootId,
+        reqChildId,
+        reqGapId,
+        reqLatestId,
+        reqUntestedMixId,
+      ]) {
+        expect(multi.get(id)).toEqual(single.get(id));
+      }
+      expect(multi.get(reqOtherProjectId)).toEqual(
+        singleTwo.get(reqOtherProjectId)
+      );
+    });
+
     it("covering-case drill-down returns each case's project so a cross-project case can be badged", async () => {
       const rootUnrestricted = unrestrictedCovering.get(reqRootId) ?? [];
       const crossEntry = rootUnrestricted.find(

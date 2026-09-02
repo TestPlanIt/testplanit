@@ -7766,6 +7766,7 @@
         "annually": "Annually"
       },
       "filters": {
+        "allValues": "All values",
         "selectFilter": "Select a filter type",
         "allProjects": "All Projects"
       },
@@ -8137,6 +8138,7 @@
         "snapshotDeleted": "Snapshot deleted.",
         "snapshotDeleteFailed": "Failed to delete the snapshot.",
         "baselineLabel": "Baseline snapshot",
+        "requirementProject": "Requirement Project",
         "compareLabel": "Compare to",
         "baselineRequired": "Choose a baseline snapshot to run this report.",
         "includeUnchanged": "Include unchanged requirements",
@@ -8200,6 +8202,14 @@
         "issueTestCoverage": {
           "label": "Cross-Project Issue Test Coverage",
           "description": "View issues with their linked test cases and latest execution status across projects"
+        },
+        "requirementCoverageGaps": {
+          "label": "Cross-Project Requirement Coverage Gaps",
+          "description": "Requirements with no test coverage across every project that has requirements enabled"
+        },
+        "requirementTraceability": {
+          "label": "Cross-Project Requirement Traceability",
+          "description": "Every requirement paired with its linked test cases and latest result across projects"
         },
         "executionLog": {
           "label": "Cross-Project Execution Log",

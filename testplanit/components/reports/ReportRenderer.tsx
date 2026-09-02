@@ -261,13 +261,20 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
-  // Requirement report types (D-2, COV-04) are pre-built, flat, project-scoped
-  // tables — no dimension/metric picker, no grouping. Every covering case's
-  // row names its project (the report's own included), so the column set
-  // needs no project context.
-  const requirementCoverageGapColumns =
-    useRequirementCoverageGapColumns(results);
-  const requirementTraceabilityColumns = useRequirementTraceabilityColumns();
+  // Requirement report types (D-2, COV-04) are pre-built, flat tables — no
+  // dimension/metric picker, no grouping. Every covering case's row names
+  // its own project, so the only project context the column set needs is
+  // whether to add the column naming the REQUIREMENT's project, which only
+  // the cross-project variants have more than one of.
+  const isCrossProjectRequirementReport = mode === "cross-project";
+  const requirementCoverageGapColumns = useRequirementCoverageGapColumns(
+    results,
+    undefined,
+    isCrossProjectRequirementReport
+  );
+  const requirementTraceabilityColumns = useRequirementTraceabilityColumns(
+    isCrossProjectRequirementReport
+  );
   const requirementCoverageChangeColumns =
     useRequirementCoverageChangeColumns();
 
