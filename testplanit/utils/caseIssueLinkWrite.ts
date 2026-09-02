@@ -61,6 +61,62 @@ export function pickerOwnedIssueIds(
   return ownedIssueIds;
 }
 
+/** One entry of a version snapshot's `issues` JSON column. */
+export interface VersionSnapshotIssue {
+  id: number;
+  name: string;
+  externalId: string | null;
+}
+
+/** A link row carrying enough of the issue to snapshot it. */
+export interface VersionSnapshotLinkRow {
+  issue?: {
+    id: number;
+    name?: string | null;
+    externalId?: string | null;
+    isRequirement?: boolean | null;
+  } | null;
+}
+
+/**
+ * The issue list a version snapshot should record, given what the Issues
+ * form value produced and what the case actually links.
+ *
+ * The form value is the tracker picker's set and only that: it is seeded by
+ * `pickerOwnedIssueIds` above (integration-owned links only) and the picker
+ * republishes it from what the tracker returned. Requirement links are
+ * authored on a separate panel and are frequently native, with no
+ * integration at all, so they never appear in it. Using the form value as
+ * the snapshot's whole issue list is what made version history lossy — the
+ * links survive the save (`planCaseIssueLinkWrite` holds them out of the
+ * delete), but the snapshot recorded them as absent, so a diff showed a
+ * requirement link vanishing at a point in time when it was still there.
+ *
+ * The picker's own entries win on collision: a requirement synced from a
+ * tracker is integration-owned, so it can legitimately appear in both sets,
+ * and the picker's copy is the one the user just edited.
+ */
+export function mergeRequirementLinksIntoVersionIssues(
+  pickerIssues: readonly VersionSnapshotIssue[],
+  existingLinks: readonly VersionSnapshotLinkRow[] | null | undefined
+): VersionSnapshotIssue[] {
+  const merged = [...pickerIssues];
+  const seen = new Set(merged.map((issue) => issue.id));
+  for (const link of existingLinks ?? []) {
+    const issue = link?.issue;
+    if (!issue || !issue.isRequirement || seen.has(issue.id)) {
+      continue;
+    }
+    seen.add(issue.id);
+    merged.push({
+      id: issue.id,
+      name: issue.name ?? "",
+      externalId: issue.externalId ?? null,
+    });
+  }
+  return merged;
+}
+
 export interface CaseIssueLinkWrite {
   /**
    * Held out of the delete: existing links the picker cannot express. The

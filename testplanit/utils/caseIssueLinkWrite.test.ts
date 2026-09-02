@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
+  mergeRequirementLinksIntoVersionIssues,
   pickerOwnedIssueIds,
   planCaseIssueLinkWrite,
 } from "./caseIssueLinkWrite";
@@ -121,5 +122,77 @@ describe("the case detail page wires both halves", () => {
       );
     }
     expect(source).toContain("planCaseIssueLinkWrite(");
+  });
+});
+
+// A version snapshot's issue list used to be the Issues form value verbatim,
+// which is the tracker picker's set and nothing else -- so requirement links
+// were recorded as absent even while they were linked, and a version diff
+// showed one vanishing at a point in time when it was still there.
+describe("mergeRequirementLinksIntoVersionIssues", () => {
+  const pickerIssue = { id: 700, name: "BUG-1", externalId: "BUG-1" };
+
+  it("adds a native requirement link the picker's value never carried", () => {
+    const merged = mergeRequirementLinksIntoVersionIssues(
+      [pickerIssue],
+      [
+        { issue: { id: 700, name: "BUG-1", externalId: "BUG-1" } },
+        {
+          issue: {
+            id: 501,
+            name: "Login must support SSO",
+            externalId: null,
+            isRequirement: true,
+          },
+        },
+      ]
+    );
+
+    expect(merged).toEqual([
+      pickerIssue,
+      { id: 501, name: "Login must support SSO", externalId: null },
+    ]);
+  });
+
+  it("leaves defect links that the picker did not submit out of the snapshot", () => {
+    // A non-requirement link absent from the form value was removed by the
+    // user; re-adding it here would resurrect it in history.
+    const merged = mergeRequirementLinksIntoVersionIssues(
+      [pickerIssue],
+      [
+        { issue: { id: 700, name: "BUG-1", externalId: "BUG-1" } },
+        { issue: { id: 900, name: "BUG-9", externalId: "BUG-9" } },
+      ]
+    );
+
+    expect(merged).toEqual([pickerIssue]);
+  });
+
+  it("does not duplicate a tracker-synced requirement the picker already holds", () => {
+    // A synced requirement is integration-owned, so it legitimately appears
+    // in both sets; the picker's copy is the one the user just edited.
+    const merged = mergeRequirementLinksIntoVersionIssues(
+      [{ id: 501, name: "REQ-1", externalId: "REQ-1" }],
+      [
+        {
+          issue: {
+            id: 501,
+            name: "REQ-1 (stale name)",
+            externalId: "REQ-1",
+            isRequirement: true,
+          },
+        },
+      ]
+    );
+
+    expect(merged).toEqual([{ id: 501, name: "REQ-1", externalId: "REQ-1" }]);
+  });
+
+  it("survives a case with no links at all", () => {
+    expect(mergeRequirementLinksIntoVersionIssues([], null)).toEqual([]);
+    expect(mergeRequirementLinksIntoVersionIssues([], undefined)).toEqual([]);
+    expect(
+      mergeRequirementLinksIntoVersionIssues([], [{ issue: null }])
+    ).toEqual([]);
   });
 });

@@ -114,6 +114,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import {
+  mergeRequirementLinksIntoVersionIssues,
   pickerOwnedIssueIds,
   planCaseIssueLinkWrite,
 } from "~/utils/caseIssueLinkWrite";
@@ -638,6 +639,11 @@ export function TestCaseDetailsView({
                   externalStatus: true,
                   externalKey: true,
                   data: true,
+                  // Carried so a version snapshot can tell a requirement
+                  // link apart from a defect link -- the form value holds
+                  // only the tracker picker's own set, so requirement links
+                  // have to be re-united with it from here.
+                  isRequirement: true,
                   integrationId: true,
                   lastSyncedAt: true,
                   issueTypeName: true,
@@ -1716,7 +1722,7 @@ export function TestCaseDetailsView({
       }
 
       const allAvailableIssues = [...knownIssues, ...fetchedNewIssues];
-      const issuesDataForVersion = issuesArray
+      const pickerIssuesForVersion = issuesArray
         .filter((id: any) => id != null)
         .map((issueId: number) => {
           const issue = allAvailableIssues.find(
@@ -1727,6 +1733,19 @@ export function TestCaseDetailsView({
             : null;
         })
         .filter(Boolean);
+
+      // The form value carries the tracker picker's set only, so requirement
+      // links have to be re-united with it before the snapshot is written --
+      // see `mergeRequirementLinksIntoVersionIssues` for why leaving them out
+      // made version history lossy.
+      const issuesDataForVersion = mergeRequirementLinksIntoVersionIssues(
+        pickerIssuesForVersion as {
+          id: number;
+          name: string;
+          externalId: string | null;
+        }[],
+        testcase.caseIssues
+      );
 
       const resolvedStepsForVersion: any[] = [];
       if (data.steps && Array.isArray(data.steps)) {
