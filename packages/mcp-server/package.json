@@ -54,15 +54,15 @@
     "tag": "latest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.4.3"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@vitest/coverage-v8": "^4.1.10",
-    "@zenstackhq/orm": "^3.8.3",
+    "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@zenstackhq/orm": "^3.9.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }
