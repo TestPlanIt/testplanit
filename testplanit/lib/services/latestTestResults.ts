@@ -3,7 +3,7 @@ import { sql } from "kysely";
 import type { TestResultExecution } from "~/lib/types/latestTestResults";
 
 /**
- * The last N executions of a test case, newest first.
+ * The last N executions of a test case that carry a verdict, newest first.
  *
  * A case can be executed two ways — manually, recorded as TestRunResults against
  * a TestRunCase, and by an automated run, recorded as JUnitTestResult — and
@@ -11,8 +11,21 @@ import type { TestResultExecution } from "~/lib/types/latestTestResults";
  * shape, then ranked per case in the database with a window function so only
  * the rows that will actually be shown come back.
  *
- * Consumers: the Latest Results column in the repository case list, and the
- * Flaky Test Report's execution history.
+ * "Carries a verdict" is `isSuccess OR isFailure` on the joined Status row —
+ * NEVER a status name or system name. Statuses are admin-configurable, so a
+ * name check only ever recognises the seeded ones: this filter used to read
+ * `systemName NOT IN ('untested', 'skipped')`, which let an admin-defined
+ * status with no verdict at all (`status7`, `isSuccess`/`isFailure`/
+ * `isCompleted` all false) stand as a case's latest result while hiding a
+ * Skipped that at least completed.
+ *
+ * Note the three flags cannot tell "untested" from "blocked" — both are
+ * (false, false, false) — so this rule cannot keep one and drop the other.
+ * It keeps neither: a status that says nothing about how the software behaved
+ * cannot answer "how did this case last do", whoever configured it.
+ *
+ * Consumers: the Latest Results column in the repository case list, the Flaky
+ * Test Report's execution history, and the linked-cases panel.
  */
 
 export interface RawExecutionResult {
@@ -131,7 +144,7 @@ export async function queryLatestTestResults({
         INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
         LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
         INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-        INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
+        INNER JOIN "Status" s ON s.id = trr."statusId" AND (s."isSuccess" = true OR s."isFailure" = true)
         INNER JOIN "Color" c ON c.id = s."colorId"
         WHERE rc."isDeleted" = false
           ${caseFilter}
@@ -175,7 +188,10 @@ export async function queryLatestTestResults({
           ${projectFilter}
           ${sourceFilter}
           ${automatedFlagFilter}
-          AND jr.type != 'SKIPPED'
+          AND (
+            COALESCE(s."isSuccess", jr.type = 'PASSED') = true
+            OR COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) = true
+          )
           AND jr."executedAt" IS NOT NULL
           ${automatedDateFilter}
       ),

@@ -272,7 +272,7 @@ export async function handleTestCaseHealthPOST(
         INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
         INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id
         INNER JOIN "Status" s ON s.id = trr."statusId"
-          AND s."systemName" NOT IN ('untested', 'skipped')
+          AND (s."isSuccess" = true OR s."isFailure" = true)
         WHERE rc."isDeleted" = false
           AND rc."isArchived" = false
           ${manualLookbackFilter}
@@ -289,13 +289,16 @@ export async function handleTestCaseHealthPOST(
           COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure
         FROM "RepositoryCases" rc
         INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
-          AND jr.type != 'SKIPPED'
           AND jr."executedAt" IS NOT NULL
         INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
         INNER JOIN "TestRuns" tr ON tr.id = jts."testRunId" AND tr."isDeleted" = false
         LEFT JOIN "Status" s ON s.id = jr."statusId"
         WHERE rc."isDeleted" = false
           AND rc."isArchived" = false
+          AND (
+            COALESCE(s."isSuccess", jr.type = 'PASSED') = true
+            OR COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) = true
+          )
           ${junitLookbackFilter}
           ${sourceFilterSql}
           ${projectFilterSql}
@@ -321,16 +324,20 @@ export async function handleTestCaseHealthPOST(
           INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
           INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id
           INNER JOIN "Status" s ON s.id = trr."statusId"
-            AND s."systemName" NOT IN ('untested', 'skipped')
+            AND (s."isSuccess" = true OR s."isFailure" = true)
           WHERE trc."repositoryCaseId" = rc.id
           UNION ALL
           SELECT jr."executedAt"
           FROM "JUnitTestResult" jr
           INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
           INNER JOIN "TestRuns" tr ON tr.id = jts."testRunId" AND tr."isDeleted" = false
+          LEFT JOIN "Status" js ON js.id = jr."statusId"
           WHERE jr."repositoryCaseId" = rc.id
-            AND jr.type != 'SKIPPED'
             AND jr."executedAt" IS NOT NULL
+            AND (
+              COALESCE(js."isSuccess", jr.type = 'PASSED') = true
+              OR COALESCE(js."isFailure", jr.type IN ('FAILURE', 'ERROR')) = true
+            )
         ) x ON true
         WHERE rc."isDeleted" = false
           AND rc."isArchived" = false
