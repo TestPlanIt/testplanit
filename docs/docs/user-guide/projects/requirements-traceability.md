@@ -25,6 +25,15 @@ Each covering case contributes its single most recent execution result, across a
 
 The requirements list's **Coverage** column renders each requirement's rollup as per-status counts, with a dashed **Uncovered** badge for requirements with no covering cases. The **All coverage** filter above the list narrows the tree to **Uncovered** requirements, requirements that have untested cases, or requirements whose covering cases carry a specific result status.
 
+### Scoping coverage to milestones or configurations
+
+By default coverage is global: a case's latest execution counts no matter which run recorded it. The **All milestones** and **All configurations** pickers beside the list's filters narrow that — with a scope active, only executions from test runs in the selected milestones or with the selected configurations count, so the page answers *"is this covered **on this release**?"* or *"…**in this environment**?"* rather than *"was it ever covered?"*.
+
+* Selecting a milestone includes its child milestones automatically — scoping to a release counts its sprints' runs.
+* A case whose executions all fall outside the scope counts as **Not run**, exactly like a case that never ran.
+* The scope follows you into the detail panel: the coverage summary and the **Covering Test Cases** drill-down count with the same frame the list shows.
+* The same pickers appear in the **Requirement Traceability** and **Requirement Coverage Gaps** reports' filter menu.
+
 ### Covering Test Cases
 
 Two surfaces drill into the covering-case set:
@@ -42,11 +51,6 @@ What arms the flag:
 
 * A change to the requirement's **title**, **description**, or **Documentation** — whether edited in TestPlanIt or arriving through a sync from the tracker.
 * Status, priority, attachment, and hierarchy changes do **not** arm it.
-
-What clears it:
-
-* **Re-executing the case.** A new result at or after the content change clears the flag automatically — no bookkeeping needed.
-* **Dismissing it.** Click the **Suspect** badge and confirm **Dismiss flag** to record that you reviewed the change and the case is still valid: *"Dismiss this suspect flag? A newer edit to the requirement will re-flag it."* Dismissal is per link, and a newer content edit re-arms it.
 
 ## References
 
@@ -103,6 +107,8 @@ Two places save one:
 
 Give the snapshot a name (*"Release 2.4 sign-off"*) and, optionally, a note about what it is evidence for. From a report, the snapshot captures whatever is currently in the **Scope to requirements** picker — leave it empty to capture the whole project. Saving requires add/edit rights on the project's **Reporting** area.
 
+A snapshot saved while a milestone or configuration scope is active is captured **under that scope**: its numbers count only the in-scope executions, the scope is recorded on the snapshot, and the dialog says so. Scoped snapshots carry a **Scoped coverage** badge in the snapshot menus.
+
 ### Viewing a snapshot
 
 The **Snapshot** menu on the Requirement Traceability and Requirement Coverage Gaps reports switches between the **Live matrix** and any saved snapshot; each entry shows when it was captured and, where there is room, its requirement and uncovered counts. With a snapshot selected, the whole report — the rows, the visualization panel, the coverage-state filter, the CSV export, and any [share link](./reports/index.md#sharing) you create — describes that snapshot rather than the live data, and the lines under the menu show who captured it, when, and its counts. Scoping still works: the picker narrows the snapshot to the selected subtrees using the hierarchy as it was at capture time.
@@ -111,7 +117,7 @@ From the Requirements page, the **Snapshots** menu lists the same snapshots — 
 
 ### Comparing snapshots
 
-The **Requirement Coverage Changes** report answers *"what changed?"* Pick a **Baseline snapshot** and what to **Compare to** — the live matrix (the default) or a later snapshot — from their menus, then run the report. The baseline menu also offers **Save snapshot**, so you can capture the current state as a baseline without leaving the report. One row appears per requirement whose coverage differs between the two sides, classified by what changed:
+The **Requirement Coverage Changes** report answers *"what changed?"* Pick a **Baseline snapshot** and what to **Compare to** — the live matrix (the default) or a later snapshot — from their menus, then run the report. The comparison always happens inside the baseline's own execution scope: comparing against the live matrix applies the baseline's scope to the live side, and two snapshots captured under different scopes cannot be compared (the report refuses rather than reporting scope differences as coverage changes). The baseline menu also offers **Save snapshot**, so you can capture the current state as a baseline without leaving the report. One row appears per requirement whose coverage differs between the two sides, classified by what changed:
 
 | Change | Meaning |
 | --- | --- |

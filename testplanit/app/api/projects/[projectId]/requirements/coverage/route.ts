@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import { parseExecutionScopeQuery } from "~/lib/services/executionScopeParam";
 import {
   getRequirementCoverage,
   type RequirementCoverageBreakdown,
@@ -97,10 +98,26 @@ export async function GET(
       rootIds = parsed;
     }
 
+    // Optional execution scope (?milestoneIds=…&configIds=…): the same
+    // hybrid frame every other coverage surface accepts — see
+    // lib/services/executionScopeParam.ts. Absent keys keep the rollup
+    // global and byte-identical to the unscoped statement.
+    const executionScopeResult = parseExecutionScopeQuery(
+      request.nextUrl.searchParams
+    );
+    if (!executionScopeResult.ok) {
+      return NextResponse.json(
+        { error: "Invalid milestoneIds/configIds" },
+        { status: 400 }
+      );
+    }
+
     const coverage = await getRequirementCoverage(
       projectId,
       { accessibleProjectIds: scope },
-      rootIds === undefined ? undefined : { rootIds }
+      rootIds === undefined && executionScopeResult.scope === undefined
+        ? undefined
+        : { rootIds, executionScope: executionScopeResult.scope }
     );
 
     // `NextResponse.json` on a raw `Map` produces `{}` with a 200 and no

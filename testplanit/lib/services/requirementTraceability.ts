@@ -1,5 +1,6 @@
 import { baseDb } from "~/lib/db";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
+import type { LatestResultExecutionScope } from "~/lib/services/latestCaseResults";
 import {
   getRequirementCoverage,
   getRequirementCoveringCases,
@@ -39,6 +40,7 @@ async function loadCoveringCasesChunked(
   projectId: number | number[],
   requirementIds: number[],
   scope: RequirementCoverageScope,
+  executionScope: LatestResultExecutionScope | undefined,
   db: Pick<typeof baseDb, "$qb">
 ): Promise<Map<number, RequirementCoveringCase[]>> {
   if (requirementIds.length === 0) {
@@ -52,6 +54,7 @@ async function loadCoveringCasesChunked(
       projectId,
       chunk,
       scope,
+      { executionScope },
       db
     );
     for (const [requirementId, cases] of chunkResult) {
@@ -71,6 +74,7 @@ async function loadCoverageChunked(
   projectId: number | number[],
   requirementIds: number[],
   scope: RequirementCoverageScope,
+  executionScope: LatestResultExecutionScope | undefined,
   db: Pick<typeof baseDb, "$qb">
 ): Promise<Map<number, RequirementCoverageBreakdown>> {
   const merged = new Map<number, RequirementCoverageBreakdown>();
@@ -79,7 +83,7 @@ async function loadCoverageChunked(
     const chunkResult = await getRequirementCoverage(
       projectId,
       scope,
-      { rootIds: chunk },
+      { rootIds: chunk, executionScope },
       db
     );
     for (const [requirementId, breakdown] of chunkResult) {
@@ -97,6 +101,11 @@ export interface LoadRequirementTraceabilityOptions {
    * ignored; a list that resolves to nothing produces an empty matrix.
    * Omitted (or undefined) means the whole project, unchanged. */
   rootIds?: number[];
+  /** Narrow which EXECUTIONS count toward each case's "latest" (milestone
+   * and/or configuration) — `getRequirementCoverage`'s own option, threaded
+   * through both the rollup and the drill-down so a scoped matrix can never
+   * count with one rule and list with another. Omitted = global. */
+  executionScope?: LatestResultExecutionScope;
 }
 
 /**
@@ -164,7 +173,12 @@ export async function loadRequirementTraceability(
     // lands.
     scopedToRoots
       ? Promise.resolve(null)
-      : getRequirementCoverage(projectIds, scope, undefined, db),
+      : getRequirementCoverage(
+          projectIds,
+          scope,
+          { executionScope: opts?.executionScope },
+          db
+        ),
   ]);
 
   // Every row names its own requirement's project, which is redundant on a
@@ -188,8 +202,20 @@ export async function loadRequirementTraceability(
   const requirementIds = requirements.map((requirement) => requirement.id);
   const [coverage, coveringCases] = await Promise.all([
     projectWideCoverage ??
-      loadCoverageChunked(projectIds, requirementIds, scope, db),
-    loadCoveringCasesChunked(projectIds, requirementIds, scope, db),
+      loadCoverageChunked(
+        projectIds,
+        requirementIds,
+        scope,
+        opts?.executionScope,
+        db
+      ),
+    loadCoveringCasesChunked(
+      projectIds,
+      requirementIds,
+      scope,
+      opts?.executionScope,
+      db
+    ),
   ]);
 
   const rows = buildTraceabilityRows({

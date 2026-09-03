@@ -4,6 +4,11 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import type { RequirementCoveringCasesResponse } from "~/app/api/projects/[projectId]/requirements/[issueId]/covering-cases/route";
+import {
+  appendExecutionScopeParams,
+  executionScopeKey,
+  type RequirementExecutionScopeSelection,
+} from "~/utils/requirementExecutionScope";
 
 /** The literal first element of every query key this hook issues. Exported
  *  for the same reason `useRequirementCoverage.ts` exports its own root
@@ -69,13 +74,21 @@ export function invalidateRequirementCoveringCases(
  */
 export function useRequirementCoveringCases(
   projectId: number | undefined,
-  requirementId: number | undefined
+  requirementId: number | undefined,
+  executionScope?: RequirementExecutionScopeSelection
 ) {
+  // Key position 3 (after projectId/requirementId) so the invalidation
+  // predicate above — which reads positions 0..2 only — keeps matching
+  // every scoped variant of the same drill-down.
+  const scopeKey = executionScopeKey(executionScope);
   return useQuery<RequirementCoveringCasesResponse>({
-    queryKey: ["requirementCoveringCases", projectId, requirementId],
+    queryKey: ["requirementCoveringCases", projectId, requirementId, scopeKey],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      appendExecutionScopeParams(params, executionScope);
+      const query = params.toString();
       const response = await fetch(
-        `/api/projects/${projectId}/requirements/${requirementId}/covering-cases`
+        `/api/projects/${projectId}/requirements/${requirementId}/covering-cases${query ? `?${query}` : ""}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch requirement covering cases");

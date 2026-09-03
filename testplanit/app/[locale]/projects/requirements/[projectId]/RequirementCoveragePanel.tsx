@@ -34,10 +34,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useRequirementCoveringCases } from "~/hooks/useRequirementCoveringCases";
+import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 
 interface RequirementCoveragePanelProps {
   projectId: string;
   requirementId: number;
+  /** The workspace's coverage execution scope — the drill-down lists with
+   *  the same frame the rollup above it counted with. Absent = unscoped. */
+  executionScope?: RequirementExecutionScopeSelection;
 }
 
 /**
@@ -58,6 +62,7 @@ interface RequirementCoveragePanelProps {
 export function RequirementCoveragePanel({
   projectId,
   requirementId,
+  executionScope,
 }: RequirementCoveragePanelProps) {
   const t = useTranslations("requirements.coverage");
   const tCommon = useTranslations("common");
@@ -74,7 +79,8 @@ export function RequirementCoveragePanel({
 
   const { data, isLoading, isError, refetch } = useRequirementCoveringCases(
     Number(projectId),
-    requirementId
+    requirementId,
+    executionScope
   );
 
   const rows = data?.cases ?? [];

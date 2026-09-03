@@ -1525,10 +1525,10 @@
             "description": "Sincronize quais tipos de problema do rastreador contam como requisitos. Os problemas existentes são reclassificados para corresponder.",
             "enableLabel": "Ativar classificação de requisitos",
             "issueTypesLabel": "Tipos de problema",
-            "issueTypesPlaceholder": "Selecione os tipos de problema",
+            "issueTypesPlaceholder": "Selecionar tipos de problema",
             "issueTypesAriaLabel": "Tipos de problema de requisito",
             "labelsLabel": "Rótulos",
-            "labelsPlaceholder": "Selecione os rótulos",
+            "labelsPlaceholder": "Selecionar rótulos",
             "labelsAriaLabel": "Rótulos de requisito",
             "labelPreviewNote": "Problemas com qualquer rótulo selecionado se tornam requisitos ao salvar; problemas sem nenhum rótulo selecionado deixam de ser requisitos.",
             "previewHeading": "Impacto desta alteração",
@@ -1552,8 +1552,8 @@
             "importStopRequested": "Parada solicitada — a importação será interrompida após a página atual.",
             "importStopNotRunning": "Essa importação já foi concluída ou já foi interrompida.",
             "importCancelled": "Importação cancelada",
-            "settingsSaved": "Configurações do tipo de requisito salvas",
-            "saveError": "Falha ao salvar as configurações do tipo de requisito"
+            "settingsSaved": "Configurações de tipo de requisito salvas",
+            "saveError": "Falha ao salvar as configurações de tipo de requisito"
           }
         },
         "integrationAssigned": "Integração atribuída com sucesso",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Os requisitos não estão habilitados",
       "description": "Este projeto não ativou o recurso de requisitos. Peça a um administrador do projeto para habilitá-lo nas configurações do projeto para começar a construir árvores de requisitos."
+    },
+    "scope": {
+      "hint": "Restringir a cobertura às execuções das runs nos marcos e configurações selecionados",
+      "scopedBadge": "Cobertura com escopo",
+      "snapshotScoped": "Capturado sob um escopo de execução"
+    },
+    "history": {
+      "title": "Histórico de conteúdo",
+      "description": "Cada alteração no título, na documentação ou na nota deste requisito, com o que mudou",
+      "empty": "Nenhuma alteração de conteúdo registrada ainda — o texto atual é o original.",
+      "versionLabel": "Versão {version}",
+      "currentBadge": "Atual",
+      "bySync": "Sincronização ou sistema"
     }
   },
   "Pages": {

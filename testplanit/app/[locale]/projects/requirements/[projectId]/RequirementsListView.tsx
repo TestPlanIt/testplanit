@@ -2,7 +2,15 @@
 
 import type { Row } from "@tanstack/react-table";
 import { useQueryClient } from "@tanstack/react-query";
-import { ClipboardPlus, Search, X } from "lucide-react";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import {
+  flattenMilestoneTree,
+  MilestoneOptionContent,
+  transformMilestones,
+  type MilestoneSelectOption,
+} from "@/components/forms/MilestoneSelect";
+import { schema } from "~/zenstack/schema";
+import { ClipboardPlus, Combine, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   forwardRef,
@@ -40,6 +48,7 @@ import {
 } from "~/hooks/useRequirementsTree";
 import { ItemTypes } from "~/types/dndTypes";
 import { formatIssueDisplayText } from "~/utils/issueDisplayText";
+import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 import { CreateRequirementDialog } from "./CreateRequirementDialog";
 import { DeleteRequirementModal } from "./DeleteRequirementModal";
 import {
@@ -70,6 +79,11 @@ import {
 // immediately, by design (T-28-14-01).
 const REQUIREMENTS_FILTER_DEBOUNCE_MS = 300;
 
+/** The milestone scope picker's option shape: the filter combobox's
+ *  value/label contract plus everything `MilestoneOptionContent` renders
+ *  (type icon, nesting level, tracker-source badge fields). */
+type MilestoneScopeOption = RequirementFilterOption & MilestoneSelectOption;
+
 /** The exact shape plan 03's per-row `useDrag` produces (the name cell in
  * `RequirementsListColumns.tsx`). Both drop targets below read
  * `item.requirementId`. */
@@ -80,6 +94,12 @@ interface RequirementDragItem {
 
 interface RequirementsListViewProps extends RequirementSelection {
   projectId: string;
+  /** The coverage execution scope (milestone/configuration) — owned by the
+   *  workspace so the detail panel counts with the same frame; this list
+   *  renders the pickers and reports changes back up. Optional: a caller
+   *  without the workspace (a test harness) gets the unscoped rollup. */
+  executionScope?: RequirementExecutionScopeSelection;
+  onExecutionScopeChange?: (scope: RequirementExecutionScopeSelection) => void;
   /** Asks the workspace to open this requirement in the detail panel's
    *  edit mode -- the row menu's Edit action. Optional: absent (a caller
    *  without the workspace's panel, e.g. a test harness), the menu item
@@ -186,6 +206,8 @@ const RequirementsListView = forwardRef<
     onSelectRequirement,
     onRequestEdit,
     onRequirementNavChange,
+    executionScope,
+    onExecutionScopeChange,
   },
   ref
 ) {
@@ -296,8 +318,15 @@ const RequirementsListView = forwardRef<
       coverage: filters.coverage,
       status: filters.status,
       source: filters.source,
+      executionScope,
     }),
-    [debouncedSearch, filters.coverage, filters.status, filters.source]
+    [
+      debouncedSearch,
+      filters.coverage,
+      filters.status,
+      filters.source,
+      executionScope,
+    ]
   );
   // The sort travels to the server, which decides WHICH rows land in the
   // paged window. Client-side sorting stays exactly as it was and is not
@@ -401,7 +430,8 @@ const RequirementsListView = forwardRef<
   // exactly the loading state that null-mode window needs -- no second,
   // separate `mode === null` branch is needed for rendering purposes.
   const { data: coverage, isError: coverageError } = useRequirementCoverage(
-    Number(projectId)
+    Number(projectId),
+    executionScope
   );
   // The Coverage Select's own disabled gate -- generalized from the old
   // triangle toggle's identical rule. The Status and Source Selects stay
@@ -491,6 +521,58 @@ const RequirementsListView = forwardRef<
       { value: "DETACHED", label: t("requirements.provenance.detachedLabel") },
     ],
     [t]
+  );
+
+  // Execution-scope picker option sources. Completed milestones stay in the
+  // list on purpose — "coverage on the shipped 8.12" is the whole point of
+  // the milestone axis. Configurations follow the run-creation picker's own
+  // enabled+assigned convention, and both pickers render their options the
+  // way AddTestRunModal's step 1 does: the milestone-type icon, tree
+  // indentation and source badge for milestones, the Combine icon for
+  // configurations.
+  const { data: scopeMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: { projectId: Number(projectId), isDeleted: false },
+    select: {
+      id: true,
+      name: true,
+      parentId: true,
+      integrationId: true,
+      externalKind: true,
+      externalState: true,
+      externalUrl: true,
+      detachedAt: true,
+      mergedToExternalId: true,
+      milestoneType: { select: { icon: { select: { name: true } } } },
+    },
+    orderBy: { name: "asc" },
+  });
+  const { data: scopeConfigurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
+    where: {
+      isDeleted: false,
+      isEnabled: true,
+      projects: { some: { projectId: Number(projectId) } },
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  const milestoneScopeOptions = useMemo<MilestoneScopeOption[]>(
+    () =>
+      flattenMilestoneTree(
+        transformMilestones(scopeMilestones ?? [])
+      ) as MilestoneScopeOption[],
+    [scopeMilestones]
+  );
+  const configScopeOptions = useMemo<RequirementFilterOption[]>(
+    () =>
+      (scopeConfigurations ?? []).map((configuration) => ({
+        value: String(configuration.id),
+        label: configuration.name,
+      })),
+    [scopeConfigurations]
   );
 
   // The lazy sibling (28-12): the hook's `RequirementTreeRow` carries every
@@ -1336,6 +1418,62 @@ const RequirementsListView = forwardRef<
                   }))
                 }
               />
+              {/* The execution-scope pickers — visually part of the filter
+                  row but semantically different: they change what the
+                  coverage NUMBERS count (which executions qualify as
+                  "latest"), not which rows show. Rendered only when the
+                  workspace owns the scope (onExecutionScopeChange present),
+                  so a scope-less harness mount stays unchanged. */}
+              {onExecutionScopeChange && (
+                <>
+                  <div aria-hidden className="h-5 w-px bg-border" />
+                  <RequirementsFilterCombobox<MilestoneScopeOption>
+                    testId="requirements-scope-milestone"
+                    label={t("milestones.browser.kindAll")}
+                    title={t("requirements.scope.hint")}
+                    options={milestoneScopeOptions}
+                    selected={(executionScope?.milestoneIds ?? []).map(String)}
+                    onChange={(next) =>
+                      onExecutionScopeChange({
+                        milestoneIds: next.map(Number),
+                        configIds: executionScope?.configIds ?? [],
+                      })
+                    }
+                    renderOption={(option) => (
+                      <MilestoneOptionContent milestone={option} />
+                    )}
+                    // An active search renders matches flat — a child whose
+                    // parent didn't match would indent under nothing
+                    // (MilestoneSelect's own rule).
+                    mapSearchResult={(option) => ({ ...option, level: 0 })}
+                  />
+                  <RequirementsFilterCombobox
+                    testId="requirements-scope-configuration"
+                    label={t("runs.distribute.scopeAllConfigs")}
+                    title={t("requirements.scope.hint")}
+                    options={configScopeOptions}
+                    selected={(executionScope?.configIds ?? []).map(String)}
+                    onChange={(next) =>
+                      onExecutionScopeChange({
+                        milestoneIds: executionScope?.milestoneIds ?? [],
+                        configIds: next.map(Number),
+                      })
+                    }
+                    renderOption={(option) => (
+                      <div className="flex items-center gap-2">
+                        <Combine className="h-4 w-4" />
+                        {option.label}
+                      </div>
+                    )}
+                    renderSelectedOption={(option) => (
+                      <span className="flex min-w-0 items-center gap-1">
+                        <Combine className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{option.label}</span>
+                      </span>
+                    )}
+                  />
+                </>
+              )}
             </div>
           </div>
           {/* Its own row beneath the filters (operator UAT): the column

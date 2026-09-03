@@ -36,6 +36,7 @@ import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 import { deleteRequirementSnapshot } from "./requirementSnapshotActions";
 import { RequirementSnapshotSaveDialog } from "./RequirementSnapshotSaveDialog";
+import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 
 const ROW_CLASS =
   "flex w-full min-w-0 items-center gap-2 rounded-sm px-2 py-1.5 text-start text-sm hover:bg-accent hover:text-accent-foreground";
@@ -55,6 +56,7 @@ export function RequirementSnapshotHeaderMenu({
   canManage,
   canDelete,
   onOpen,
+  executionScope,
   testIdPrefix = "requirements-snapshots",
 }: {
   projectId: number;
@@ -64,6 +66,9 @@ export function RequirementSnapshotHeaderMenu({
   canDelete: boolean;
   /** Opens the chosen snapshot in the Requirement Traceability report. */
   onOpen: (snapshotId: number) => void;
+  /** The launching page's coverage execution scope, frozen onto a capture
+   *  started from here (see the save dialog). */
+  executionScope?: RequirementExecutionScopeSelection;
   testIdPrefix?: string;
 }) {
   const t = useTranslations("reports.ui.requirementCoverage");
@@ -219,6 +224,7 @@ export function RequirementSnapshotHeaderMenu({
           projectId={projectId}
           open={saveOpen}
           onOpenChange={setSaveOpen}
+          executionScope={executionScope}
         />
       ) : null}
 

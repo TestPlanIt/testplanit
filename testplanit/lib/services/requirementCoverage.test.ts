@@ -169,6 +169,7 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
       1,
       [10],
       { accessibleProjectIds: null },
+      undefined,
       mockDb as never
     );
 
@@ -215,6 +216,7 @@ describe("requirementCoverage (Phase 26 drill-down extension)", () => {
       1,
       [10],
       { accessibleProjectIds: null },
+      undefined,
       mockDb as never
     );
 

@@ -25,6 +25,10 @@ import { PanelImperativeHandle } from "react-resizable-panels";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  EMPTY_EXECUTION_SCOPE,
+  type RequirementExecutionScopeSelection,
+} from "~/utils/requirementExecutionScope";
 import { RequirementDetailsPanel } from "@/components/requirements/RequirementDetailsPanel";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 // `usePathname` comes from the i18n wrapper, never `next/navigation`: the
@@ -167,6 +171,14 @@ export default function RequirementsWorkspace({
   const [requirementNav, setRequirementNav] = useState<RequirementNav | null>(
     null
   );
+
+  // The coverage execution scope (milestone/configuration) — owned HERE,
+  // not by the list, because the detail panel's coverage chips and
+  // covering-case drill-down must count with the same frame the list's
+  // pickers set; two owners would let the two panes disagree about what
+  // the same requirement's numbers mean.
+  const [executionScope, setExecutionScope] =
+    useState<RequirementExecutionScopeSelection>(EMPTY_EXECUTION_SCOPE);
 
   // Full-width details, mirroring ProjectRepository's own three-part
   // mechanism: an explicit toggle, a responsive takeover under 1200px, and
@@ -337,6 +349,7 @@ export default function RequirementsWorkspace({
                   projectId={Number(projectId)}
                   canManage={canSaveSnapshot}
                   canDelete={canDeleteSnapshot}
+                  executionScope={executionScope}
                   onOpen={(snapshotId) =>
                     router.push(
                       `/projects/reports/${projectId}?reportType=requirement-traceability&snapshotId=${snapshotId}`
@@ -422,6 +435,8 @@ export default function RequirementsWorkspace({
                         onSelectRequirement={goToRequirement}
                         onRequestEdit={handleRequestEdit}
                         onRequirementNavChange={setRequirementNav}
+                        executionScope={executionScope}
+                        onExecutionScopeChange={setExecutionScope}
                       />
                     </SimpleDndProvider>
                   </div>
@@ -470,6 +485,7 @@ export default function RequirementsWorkspace({
                         <RequirementDetailsPanel
                           projectId={projectId}
                           requirementId={selectedRequirementId}
+                          executionScope={executionScope}
                           fullWidth={effectiveFullWidth}
                           onToggleFullWidth={toggleDetailsFullWidth}
                           onClose={closeDetails}

@@ -1,4 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
   SelectContent,
@@ -16,7 +17,8 @@ import {
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback } from "react";
+import { useCallback, useMemo, type ReactNode } from "react";
+import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 
@@ -33,6 +35,12 @@ interface FilterItem {
   name: string;
   icon: LucideIcon;
   options?: FilterOption[];
+  /** Custom row content for the generic renderer below — the requirement
+   *  reports' Milestone/Configuration entries use it to show options the
+   *  way the rest of the app's pickers do (type icon + source badge, the
+   *  Combine icon). The row chrome (selection state, count, click) stays
+   *  the generic renderer's. */
+  renderOptionContent?: (option: FilterOption) => ReactNode;
   field?: {
     type: string;
     fieldId: number;
@@ -157,7 +165,10 @@ export function ReportFilters({
       </Select>
 
       {selectedFilterItem && (
-        <div className="space-y-1 overflow-hidden">
+        // text-sm on the whole option list: the rows otherwise inherit the
+        // page's base size and read oversized next to every other picker
+        // (operator UAT).
+        <div className="space-y-1 overflow-hidden text-sm">
           {/* Projects filter */}
           {selectedFilter === "projects" && (
             <>
@@ -441,58 +452,108 @@ export function ReportFilters({
               </>
             )}
 
-          {/* Every other filter renders from its own `options`. Without this
-              a new filter type shows an empty panel until someone adds a
-              fifth hardcoded branch above -- which is exactly how coverage,
-              priority and status arrived empty. */}
+          {/* Every other filter picks its values through the shared
+              MultiAsyncCombobox — the same searchable multi-select every
+              picker in the app uses (operator direction) — instead of a
+              page-length inline list. Selection state still flows through
+              the exact `selectedValues`/`onValuesChange` contract; an
+              emptied selection clears the axis (the old "All values" row). */}
           {!KNOWN_FILTER_IDS.has(selectedFilter) &&
             !selectedFilter.startsWith("dynamic_") && (
-              <>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                    isValueSelected(selectedFilter, null) &&
-                      "bg-primary/20 hover:bg-primary/30"
-                  )}
-                  onClick={() => toggleFilterValue(selectedFilter, null)}
-                >
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="truncate">{tFilters("allValues")}</span>
-                  </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                    {selectedFilterItem.options?.reduce(
-                      (sum: number, option: any) => sum + (option.count || 0),
-                      0
-                    ) || ""}
-                  </span>
-                </div>
-                {selectedFilterItem.options?.map((option: any) => (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key={`option-${option.id}`}
-                    data-testid={`report-filter-option-${option.id}`}
-                    className={cn(
-                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(selectedFilter, option.id) &&
-                        "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={() => toggleFilterValue(selectedFilter, option.id)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
-                      <span className="truncate">{option.name}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
-                      {option.count || ""}
-                    </span>
-                  </div>
-                ))}
-              </>
+              <GenericFilterValuePicker
+                key={selectedFilter}
+                filterItem={selectedFilterItem}
+                selected={selectedValues[selectedFilter] ?? []}
+                onChange={(next) =>
+                  onValuesChange(selectedFilter, next.length > 0 ? next : null)
+                }
+                placeholder={tFilters("allValues")}
+              />
             )}
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The generic filter types' value picker: the shared MultiAsyncCombobox
+ * over the item's in-memory option list. Custom row content (the
+ * requirement reports' Milestone/Configuration presentation) comes
+ * through `FilterItem.renderOptionContent`; everything else renders the
+ * plain name with its right-aligned count, matching the combobox default
+ * everywhere else in the app.
+ */
+function GenericFilterValuePicker({
+  filterItem,
+  selected,
+  onChange,
+  placeholder,
+}: {
+  filterItem: FilterItem;
+  selected: Array<string | number>;
+  onChange: (next: Array<string | number>) => void;
+  placeholder: string;
+}) {
+  const options = useMemo(() => filterItem.options ?? [], [filterItem]);
+  const fetchOptions = useMemo<AsyncOptionsFetcher<FilterOption>>(
+    () => async (query, page, pageSize) => {
+      const lower = query.toLowerCase();
+      const filtered = lower
+        ? options.filter((option) => option.name.toLowerCase().includes(lower))
+        : options;
+      const start = page * pageSize;
+      return {
+        results: filtered.slice(start, start + pageSize),
+        total: filtered.length,
+      };
+    },
+    [options]
+  );
+  // A selected id whose option is gone (a value list that changed under a
+  // restored share) still renders as its raw value rather than vanishing
+  // from the trigger while staying active in the request.
+  const selectedOptions = useMemo(
+    () =>
+      selected.map(
+        (id) =>
+          options.find((option) => option.id === id) ?? {
+            id,
+            name: String(id),
+          }
+      ),
+    [selected, options]
+  );
+
+  return (
+    <span data-testid={`report-filter-values-${filterItem.id}`}>
+      <MultiAsyncCombobox<FilterOption>
+        value={selectedOptions}
+        onValueChange={(next) =>
+          onChange(next.map((option) => option.id as string | number))
+        }
+        fetchOptions={fetchOptions}
+        getOptionValue={(option) => option.id as string | number}
+        getOptionLabel={(option) => option.name}
+        renderOption={(option) =>
+          filterItem.renderOptionContent ? (
+            filterItem.renderOptionContent(option)
+          ) : (
+            <span className="flex min-w-0 flex-1 items-center">
+              <span className="min-w-0 flex-1 truncate">{option.name}</span>
+              {option.count !== undefined && (
+                <span className="ms-2 text-xs text-muted-foreground">
+                  {option.count}
+                </span>
+              )}
+            </span>
+          )
+        }
+        placeholder={placeholder}
+        ariaLabel={filterItem.name}
+        className="min-h-8 w-full text-sm"
+        dropdownClassName="p-0 min-w-[280px] max-w-[420px]"
+      />
+    </span>
   );
 }

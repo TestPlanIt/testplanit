@@ -376,6 +376,7 @@ describeIntegration(
         projectId,
         [reqRootId],
         { accessibleProjectIds: null },
+        undefined,
         db
       );
     });

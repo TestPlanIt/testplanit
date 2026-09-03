@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import RequirementDetailPanel from "@/projects/requirements/[projectId]/RequirementDetailPanel";
+import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -45,6 +46,9 @@ function focusWantsArrowKeys(el: Element | null): boolean {
 interface RequirementDetailsPanelProps {
   projectId: string;
   requirementId: number;
+  /** The workspace's coverage execution scope, forwarded to the body so
+   *  the panel's coverage numbers count with the same frame as the list. */
+  executionScope?: RequirementExecutionScopeSelection;
   fullWidth: boolean;
   onToggleFullWidth: () => void;
   onClose: () => void;
@@ -81,6 +85,7 @@ interface RequirementDetailsPanelProps {
 export function RequirementDetailsPanel({
   projectId,
   requirementId,
+  executionScope,
   fullWidth,
   onToggleFullWidth,
   onClose,
@@ -270,6 +275,7 @@ export function RequirementDetailsPanel({
           key={requirementId}
           projectId={projectId}
           requirementId={requirementId}
+          executionScope={executionScope}
           onRequestDelete={onRequestDelete}
           editRequest={editRequest}
           onExcluded={onExcluded}

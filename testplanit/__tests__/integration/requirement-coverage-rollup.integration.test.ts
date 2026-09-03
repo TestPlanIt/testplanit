@@ -683,12 +683,14 @@ describeIntegration(
           projectOneId,
           [reqRootId],
           { accessibleProjectIds: null },
+          undefined,
           db
         );
         scopedCovering = await getRequirementCoveringCases(
           projectOneId,
           [reqRootId],
           { accessibleProjectIds: [projectOneId] },
+          undefined,
           db
         );
       } finally {
@@ -1364,6 +1366,7 @@ describeIntegration("LINK-03 non-interference", () => {
       projectId,
       [reqUnderTestId],
       scope,
+      undefined,
       linkDb
     );
 
@@ -1390,6 +1393,7 @@ describeIntegration("LINK-03 non-interference", () => {
       projectId,
       [reqUnderTestId],
       scope,
+      undefined,
       linkDb
     );
 
@@ -1409,6 +1413,7 @@ describeIntegration("LINK-03 non-interference", () => {
       projectId,
       [reqUnderTestId],
       scope,
+      undefined,
       linkDb
     );
   });
@@ -1496,5 +1501,383 @@ describeIntegration("LINK-03 non-interference", () => {
     expect(coveringAfterDetach.get(reqUnderTestId)).toEqual(
       coveringBeforeAttach.get(reqUnderTestId)
     );
+  });
+});
+
+// Same fresh-pool rationale as the LINK-03 block above.
+const scopeDb = createRawDbClient();
+
+describeIntegration("execution scope (milestone/configuration)", () => {
+  let adminUserId: string;
+  let projectId: number;
+  let repositoryId: number;
+  let folderId: number;
+  let requirementId: number;
+  let caseId: number;
+  let milestoneParentId: number;
+  let milestoneChildId: number;
+  let milestoneEmptyId: number;
+  let configAId: number;
+  let configBId: number;
+  let runChildId: number;
+
+  const allRunIds: number[] = [];
+  const allMilestoneIds: number[] = [];
+  const allConfigIds: number[] = [];
+
+  const scope = { accessibleProjectIds: null };
+
+  beforeAll(async () => {
+    const [{ current_database: dbName }] = await scopeDb.$queryRaw<
+      Array<{ current_database: string }>
+    >`SELECT current_database()`;
+    if (dbName !== "tpi_req20" && dbName !== "tpi_test") {
+      throw new Error(
+        `refusing to run against database "${dbName}" — this suite only runs against the tpi_req20 scratch DB (or tpi_test in CI)`
+      );
+    }
+
+    const role = await scopeDb.roles.findFirst({
+      where: { isDefault: true, isDeleted: false },
+    });
+    if (!role) throw new Error("Test prerequisite: no default role row");
+    const admin = await scopeDb.user.create({
+      data: {
+        email: `${STAMP}-scope-admin@example.com`,
+        name: `Scope Coverage Admin ${STAMP}`,
+        authMethod: "INTERNAL",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+        roleId: role.id,
+        password: "$2a$10$placeholderplaceholderplaceholderplaceholder",
+      },
+      select: { id: true },
+    });
+    adminUserId = admin.id;
+
+    const project = await scopeDb.projects.create({
+      data: { name: `${STAMP}-scope-project`, createdBy: adminUserId },
+      select: { id: true },
+    });
+    projectId = project.id;
+    const repository = await scopeDb.repositories.create({
+      data: { projectId },
+      select: { id: true },
+    });
+    repositoryId = repository.id;
+    const folder = await scopeDb.repositoryFolders.create({
+      data: {
+        name: `${STAMP}-scope-folder`,
+        repositoryId,
+        projectId,
+        creatorId: adminUserId,
+      },
+      select: { id: true },
+    });
+    folderId = folder.id;
+
+    const template = await scopeDb.templates.findFirst({
+      select: { id: true },
+    });
+    const caseWorkflow = await scopeDb.workflows.findFirst({
+      where: { scope: "CASES", isDeleted: false, isEnabled: true },
+      select: { id: true },
+    });
+    const runWorkflow = await scopeDb.workflows.findFirst({
+      where: { scope: "RUNS", isDeleted: false, isEnabled: true },
+      select: { id: true },
+    });
+    const passingStatus = await scopeDb.status.findFirst({
+      where: { isSuccess: true, isDeleted: false },
+      select: { id: true },
+    });
+    const failingStatus = await scopeDb.status.findFirst({
+      where: { isFailure: true, isDeleted: false },
+      select: { id: true },
+    });
+    const milestoneType = await scopeDb.milestoneTypes.findFirst({
+      select: { id: true },
+    });
+    if (
+      !template ||
+      !caseWorkflow ||
+      !runWorkflow ||
+      !passingStatus ||
+      !failingStatus ||
+      !milestoneType
+    ) {
+      throw new Error(
+        "Test prerequisite rows missing (template/workflow/status/milestoneType)"
+      );
+    }
+
+    const requirement = await scopeDb.issue.create({
+      data: {
+        name: `${STAMP}-scope-req`,
+        title: `${STAMP}-scope-req`,
+        createdById: adminUserId,
+        projectId,
+        isRequirement: true,
+      },
+      select: { id: true },
+    });
+    requirementId = requirement.id;
+    const testCase = await scopeDb.repositoryCases.create({
+      data: {
+        projectId,
+        repositoryId,
+        folderId,
+        templateId: template.id,
+        name: `${STAMP}-scope-case`,
+        stateId: caseWorkflow.id,
+        creatorId: adminUserId,
+      },
+      select: { id: true },
+    });
+    caseId = testCase.id;
+    await scopeDb.repositoryCaseIssue.create({
+      data: { caseId, issueId: requirementId },
+    });
+
+    // A parent milestone with a child beneath it — "scope to the parent"
+    // must count the child's runs (the subtree expansion) — plus an empty
+    // control milestone no run ever attaches to.
+    const milestoneParent = await scopeDb.milestones.create({
+      data: {
+        name: `${STAMP}-scope-milestone-parent`,
+        projectId,
+        milestoneTypesId: milestoneType.id,
+        createdBy: adminUserId,
+      },
+      select: { id: true },
+    });
+    milestoneParentId = milestoneParent.id;
+    const milestoneChild = await scopeDb.milestones.create({
+      data: {
+        name: `${STAMP}-scope-milestone-child`,
+        projectId,
+        milestoneTypesId: milestoneType.id,
+        createdBy: adminUserId,
+        parentId: milestoneParentId,
+        rootId: milestoneParentId,
+      },
+      select: { id: true },
+    });
+    milestoneChildId = milestoneChild.id;
+    const milestoneEmpty = await scopeDb.milestones.create({
+      data: {
+        name: `${STAMP}-scope-milestone-empty`,
+        projectId,
+        milestoneTypesId: milestoneType.id,
+        createdBy: adminUserId,
+      },
+      select: { id: true },
+    });
+    milestoneEmptyId = milestoneEmpty.id;
+    allMilestoneIds.push(milestoneParentId, milestoneChildId, milestoneEmptyId);
+
+    const configA = await scopeDb.configurations.create({
+      data: { name: `${STAMP}-scope-config-a` },
+      select: { id: true },
+    });
+    configAId = configA.id;
+    const configB = await scopeDb.configurations.create({
+      data: { name: `${STAMP}-scope-config-b` },
+      select: { id: true },
+    });
+    configBId = configB.id;
+    allConfigIds.push(configAId, configBId);
+
+    async function createRun(
+      name: string,
+      milestoneId: number | null,
+      configId: number | null
+    ) {
+      const run = await scopeDb.testRuns.create({
+        data: {
+          projectId,
+          name: `${STAMP}-${name}`,
+          stateId: runWorkflow!.id,
+          createdById: adminUserId,
+          milestoneId,
+          configId,
+        },
+        select: { id: true },
+      });
+      allRunIds.push(run.id);
+      return run.id;
+    }
+    async function recordExecution(
+      runId: number,
+      statusId: number,
+      executedAt: Date
+    ) {
+      const runCase = await scopeDb.testRunCases.create({
+        data: { testRunId: runId, repositoryCaseId: caseId },
+        select: { id: true },
+      });
+      await scopeDb.testRunResults.create({
+        data: {
+          testRunId: runId,
+          testRunCaseId: runCase.id,
+          statusId,
+          executedById: adminUserId,
+          executedAt,
+        },
+      });
+    }
+
+    // Timeline (oldest → newest):
+    //  t1 manual FAILED  on runChild  (milestone = child,  config = A)
+    //  t2 manual PASSED  on runOther  (no milestone,       config = B)
+    //  t3 JUnit  PASSED  on runJunit  (milestone = child,  no config)
+    // Unscoped latest = the JUnit pass. Scoped views pick different rows,
+    // which is the whole point of every assertion below.
+    const t1 = new Date(Date.now() - 3 * 60 * 60 * 1000);
+    const t2 = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    const t3 = new Date(Date.now() - 1 * 60 * 60 * 1000);
+
+    runChildId = await createRun(
+      "scope-run-child",
+      milestoneChildId,
+      configAId
+    );
+    await recordExecution(runChildId, failingStatus.id, t1);
+    const runOtherId = await createRun("scope-run-other", null, configBId);
+    await recordExecution(runOtherId, passingStatus.id, t2);
+
+    const runJunitId = await createRun(
+      "scope-run-junit",
+      milestoneChildId,
+      null
+    );
+    const suite = await scopeDb.jUnitTestSuite.create({
+      data: {
+        name: `${STAMP}-scope-suite`,
+        testRunId: runJunitId,
+        createdById: adminUserId,
+      },
+      select: { id: true },
+    });
+    await scopeDb.jUnitTestResult.create({
+      data: {
+        type: "PASSED",
+        repositoryCaseId: caseId,
+        testSuiteId: suite.id,
+        createdById: adminUserId,
+        executedAt: t3,
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await scopeDb.jUnitTestResult.deleteMany({
+      where: { repositoryCaseId: caseId },
+    });
+    await scopeDb.jUnitTestSuite.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await scopeDb.testRunResults.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await scopeDb.testRunCases.deleteMany({
+      where: { testRunId: { in: allRunIds } },
+    });
+    await scopeDb.testRuns.deleteMany({ where: { id: { in: allRunIds } } });
+    await scopeDb.milestones.deleteMany({
+      where: { id: { in: allMilestoneIds } },
+    });
+    await scopeDb.configurations.deleteMany({
+      where: { id: { in: allConfigIds } },
+    });
+    await scopeDb.repositoryCaseIssue.deleteMany({ where: { caseId } });
+    await scopeDb.repositoryCases.deleteMany({ where: { id: caseId } });
+    await scopeDb.issue.deleteMany({ where: { id: requirementId } });
+    await scopeDb.repositoryFolders.delete({ where: { id: folderId } });
+    await scopeDb.repositories.delete({ where: { id: repositoryId } });
+    await scopeDb.projects.delete({ where: { id: projectId } });
+    await scopeDb.user.delete({ where: { id: adminUserId } });
+    await scopeDb.$disconnect();
+  });
+
+  async function coverageWith(executionScope?: {
+    milestoneIds?: number[];
+    configIds?: number[];
+  }) {
+    const map = await getRequirementCoverage(
+      projectId,
+      scope,
+      { executionScope },
+      scopeDb
+    );
+    const entry = map.get(requirementId);
+    if (!entry) throw new Error("rollup returned no entry for the requirement");
+    return entry;
+  }
+
+  it("stays global (the JUnit pass wins) with no scope", async () => {
+    const entry = await coverageWith(undefined);
+    expect(entry.status).toBe("PASSED");
+    expect(entry.passed).toBe(1);
+  });
+
+  it("scoped to the child milestone, the newest IN-SCOPE row wins — the JUnit pass on the child's own run", async () => {
+    const entry = await coverageWith({ milestoneIds: [milestoneChildId] });
+    expect(entry.status).toBe("PASSED");
+  });
+
+  it("scoped to the child milestone AND config A, only the manual failure qualifies", async () => {
+    const entry = await coverageWith({
+      milestoneIds: [milestoneChildId],
+      configIds: [configAId],
+    });
+    expect(entry.status).toBe("FAILED");
+    expect(entry.failed).toBe(1);
+  });
+
+  it("scoped to the PARENT milestone, the child's runs still count (subtree expansion)", async () => {
+    const entry = await coverageWith({ milestoneIds: [milestoneParentId] });
+    expect(entry.status).toBe("PASSED");
+    const scopedToParentAndConfigA = await coverageWith({
+      milestoneIds: [milestoneParentId],
+      configIds: [configAId],
+    });
+    expect(scopedToParentAndConfigA.status).toBe("FAILED");
+  });
+
+  it("scoped to config A alone, the older manual failure is the latest in scope", async () => {
+    const entry = await coverageWith({ configIds: [configAId] });
+    expect(entry.status).toBe("FAILED");
+  });
+
+  it("scoped to config B alone, the manual pass wins and the JUnit row (no config) is excluded", async () => {
+    const entry = await coverageWith({ configIds: [configBId] });
+    expect(entry.status).toBe("PASSED");
+  });
+
+  it("a frame with no executions classifies the case as not-run, exactly like never-executed", async () => {
+    const entry = await coverageWith({ milestoneIds: [milestoneEmptyId] });
+    expect(entry.status).toBe("NOT_RUN");
+    expect(entry.notRun).toBe(1);
+    expect(entry.linkedCaseCount).toBe(1);
+  });
+
+  it("the drill-down lists with the same frame the rollup counted with", async () => {
+    const covering = await getRequirementCoveringCases(
+      projectId,
+      [requirementId],
+      scope,
+      {
+        executionScope: {
+          milestoneIds: [milestoneChildId],
+          configIds: [configAId],
+        },
+      },
+      scopeDb
+    );
+    const rows = covering.get(requirementId) ?? [];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].lastStatusIsFailure).toBe(true);
+    expect(rows[0].lastTestRunId).toBe(runChildId);
   });
 });

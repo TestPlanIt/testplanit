@@ -1549,8 +1549,8 @@
             "importStopAction": "停止",
             "importStopConfirmTitle": "停止此匯入？",
             "importStopConfirmBody": "停止操作將在目前頁面匯入完成後生效。已匯入的問題將會保留。",
-            "importStopRequested": "已請求停止 — 匯入將在目前頁面完成後停止。",
-            "importStopNotRunning": "該匯入已完成或已停止。",
+            "importStopRequested": "已要求停止 — 匯入將在完成目前頁面後停止。",
+            "importStopNotRunning": "該匯入已完成或已被停止。",
             "importCancelled": "匯入已取消",
             "settingsSaved": "需求類型設定已儲存",
             "saveError": "儲存需求類型設定失敗"
@@ -2155,7 +2155,7 @@
           "label": "啟用需求",
           "description": "為此專案新增一個需求區域，用於建立系統應執行事項的階層結構，並將測試案例連結至這些需求以進行涵蓋率追蹤。如果您在此維護目前狀態的需求模型，請開啟此選項；如果您的需求完全存放在問題追蹤器中，則請保持關閉。",
           "enabledToast": "此專案已啟用需求",
-          "disabledToast": "此專案已停用需求",
+          "disabledToast": "此專案的需求已停用",
           "saveError": "無法更新需求設定"
         },
         "flipJustification": {
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "需求功能未啟用",
       "description": "此專案尚未啟用需求功能。請聯絡專案管理員在專案設定中啟用此功能，以開始建立需求樹。"
+    },
+    "scope": {
+      "hint": "將涵蓋範圍限定為所選里程碑與組態中測試執行的結果",
+      "scopedBadge": "限定範圍的涵蓋率",
+      "snapshotScoped": "在執行範圍內擷取"
+    },
+    "history": {
+      "title": "內容歷史",
+      "description": "此需求的標題、文件或備註的每次變更及其變更內容",
+      "empty": "尚未記錄內容變更——目前文字即為原始文字。",
+      "versionLabel": "版本 {version}",
+      "currentBadge": "目前",
+      "bySync": "同步或系統"
     }
   },
   "Pages": {

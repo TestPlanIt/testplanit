@@ -127,6 +127,13 @@ export function LinkedRequirementCasesPanel({
   // the same arguments -- a TanStack Query cache hit, not a second request.
   // Reduced to a Map of caseId -> lastExecutedAt for DIRECT rows only: only
   // a direct link has a RepositoryCaseIssue row to dismiss a flag on.
+  //
+  // Deliberately UNSCOPED even when the page has an execution scope active
+  // (the coverage panel then fetches its own scoped copy): this read feeds
+  // the SUSPECT evaluation, which compares content changes against a case's
+  // latest execution ANYWHERE -- the same rule getCaseLatestExecutedAt
+  // encodes server-side. Scoping it would un-suspect a link whenever its
+  // latest run fell outside the current frame.
   const { data: coveringCasesData } = useRequirementCoveringCases(
     projectIdNumber,
     requirementId

@@ -147,6 +147,10 @@ export interface PerTypeReportUrlState {
   healthStaleFilter: HealthStaleFilterValue;
   requirementIds: number[];
   requirementCoverageStates: RequirementCoverageStateValue[];
+  /** Gaps/traceability execution scope (milestone/configuration) — the
+   * frame the coverage numbers count under. Empty = axis inactive. */
+  requirementMilestoneIds: number[];
+  requirementConfigIds: number[];
   includeNotRunDebt: boolean;
   /** Gaps/traceability: the persisted snapshot to render; null = live. */
   requirementSnapshotId: number | null;
@@ -171,6 +175,8 @@ export const PER_TYPE_REPORT_PARAM_DEFAULTS: PerTypeReportUrlState = {
   healthStaleFilter: "all",
   requirementIds: [],
   requirementCoverageStates: [],
+  requirementMilestoneIds: [],
+  requirementConfigIds: [],
   // ON by default (operator direction 2026-08-30): never-run linked
   // cases are as evidence-free as true gaps, so the debt report opens
   // complete. The run body always sends the explicit boolean, so a
@@ -213,6 +219,10 @@ const REQUIREMENT_COVERAGE_STATE_VALUES: readonly RequirementCoverageStateValue[
 
 /** Mirrors the server's requirementIds cap (reportRequestSchema). */
 const MAX_REQUIREMENT_SCOPE_IDS = 1000;
+
+/** Mirrors the server's per-axis execution-scope cap
+ * (lib/services/executionScopeParam.ts). */
+const MAX_EXECUTION_SCOPE_IDS = 200;
 
 function positiveIntParam(
   params: ReadableSearchParams,
@@ -335,6 +345,8 @@ export function parsePerTypeReportParams(
     ...PER_TYPE_REPORT_PARAM_DEFAULTS,
     requirementIds: [],
     requirementCoverageStates: [],
+    requirementMilestoneIds: [],
+    requirementConfigIds: [],
     trendsFilterValues: {},
   };
   const base = baseReportType(reportType);
@@ -412,6 +424,19 @@ export function parsePerTypeReportParams(
     base === "requirement-traceability"
   ) {
     state.requirementSnapshotId = optionalIdParam(params, "snapshotId");
+    // The execution scope only ever rides a LIVE run's body (the server
+    // refuses it beside a snapshotId), so restoring both is safe: the
+    // builder ignores the scope while a snapshot is selected.
+    state.requirementMilestoneIds = idListParam(
+      params,
+      "milestoneIds",
+      MAX_EXECUTION_SCOPE_IDS
+    );
+    state.requirementConfigIds = idListParam(
+      params,
+      "configIds",
+      MAX_EXECUTION_SCOPE_IDS
+    );
   }
   if (base === "requirement-coverage-changes") {
     state.baselineSnapshotId = optionalIdParam(params, "baselineSnapshotId");

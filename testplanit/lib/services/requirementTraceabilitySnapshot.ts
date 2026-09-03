@@ -1,4 +1,5 @@
 import { baseDb } from "~/lib/db";
+import type { LatestResultExecutionScope } from "~/lib/services/latestCaseResults";
 import type { RequirementCoverageScope } from "~/lib/services/requirementCoverage";
 import {
   loadRequirementTraceability,
@@ -39,6 +40,10 @@ export interface CaptureRequirementTraceabilitySnapshotInput {
   /** Requirement roots to confine the capture to (the report's scope
    * semantics); omitted = the whole project. */
   rootIds?: number[];
+  /** Execution scope (milestone/configuration) the capture counts under —
+   * frozen onto the record so a scoped baseline can only ever be compared
+   * within the same frame. Omitted = global. */
+  executionScope?: LatestResultExecutionScope;
   capturedById: string;
 }
 
@@ -50,6 +55,8 @@ export interface RequirementTraceabilitySnapshotHeader extends SnapshotSummary {
   capturedById: string;
   capturedAt: Date;
   scopeRequirementIds: number[];
+  scopeMilestoneIds: number[];
+  scopeConfigIds: number[];
 }
 
 const HEADER_SELECT = {
@@ -60,6 +67,8 @@ const HEADER_SELECT = {
   capturedById: true,
   capturedAt: true,
   scopeRequirementIds: true,
+  scopeMilestoneIds: true,
+  scopeConfigIds: true,
   requirementCount: true,
   passedCount: true,
   failedCount: true,
@@ -83,6 +92,8 @@ function toHeader(row: {
   capturedById: string;
   capturedAt: Date;
   scopeRequirementIds: unknown;
+  scopeMilestoneIds: unknown;
+  scopeConfigIds: unknown;
   requirementCount: number;
   passedCount: number;
   failedCount: number;
@@ -98,6 +109,8 @@ function toHeader(row: {
     capturedById: row.capturedById,
     capturedAt: row.capturedAt,
     scopeRequirementIds: parseScopeIds(row.scopeRequirementIds),
+    scopeMilestoneIds: parseScopeIds(row.scopeMilestoneIds),
+    scopeConfigIds: parseScopeIds(row.scopeConfigIds),
     requirementCount: row.requirementCount,
     passedCount: row.passedCount,
     failedCount: row.failedCount,
@@ -179,12 +192,10 @@ export async function captureRequirementTraceabilitySnapshot(
   scope: RequirementCoverageScope,
   db: typeof baseDb = baseDb
 ): Promise<RequirementTraceabilitySnapshotHeader> {
-  const data = await loadRequirementTraceability(
-    input.projectId,
-    scope,
-    db,
-    input.rootIds !== undefined ? { rootIds: input.rootIds } : undefined
-  );
+  const data = await loadRequirementTraceability(input.projectId, scope, db, {
+    rootIds: input.rootIds,
+    executionScope: input.executionScope,
+  });
   const entries = groupTraceabilityRows(data.rows);
   const summary = summarizeSnapshotEntries(entries);
   const scopeRequirementIds = input.rootIds ?? [];
@@ -198,6 +209,8 @@ export async function captureRequirementTraceabilitySnapshot(
         capturedById: input.capturedById,
         capturedAt: new Date(data.generatedAt),
         scopeRequirementIds,
+        scopeMilestoneIds: input.executionScope?.milestoneIds ?? [],
+        scopeConfigIds: input.executionScope?.configIds ?? [],
         ...summary,
       },
       select: HEADER_SELECT,

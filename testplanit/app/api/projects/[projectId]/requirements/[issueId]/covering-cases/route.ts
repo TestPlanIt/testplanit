@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
+import { parseExecutionScopeQuery } from "~/lib/services/executionScopeParam";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import {
   getRequirementCoveringCases,
@@ -90,9 +91,25 @@ export async function GET(
       );
     }
 
-    const covering = await getRequirementCoveringCases(projectId, [issueId], {
-      accessibleProjectIds: scope,
-    });
+    // Same optional execution frame as the coverage rollup route, so the
+    // drill-down beneath a scoped chip lists with the rule the chip
+    // counted with.
+    const executionScopeResult = parseExecutionScopeQuery(
+      request.nextUrl.searchParams
+    );
+    if (!executionScopeResult.ok) {
+      return NextResponse.json(
+        { error: "Invalid milestoneIds/configIds" },
+        { status: 400 }
+      );
+    }
+
+    const covering = await getRequirementCoveringCases(
+      projectId,
+      [issueId],
+      { accessibleProjectIds: scope },
+      { executionScope: executionScopeResult.scope }
+    );
     // Absence is the normal, expected result for a requirement with no
     // covering cases — not an error, not "still loading."
     const cases = covering.get(issueId) ?? [];

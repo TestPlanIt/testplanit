@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import {
+  executionScopeBodyShape,
+  toExecutionScope,
+} from "~/lib/services/executionScopeParam";
 import { userHasAreaPermission } from "~/lib/services/areaPermission";
 import { captureRequirementTraceabilitySnapshot } from "~/lib/services/requirementTraceabilitySnapshot";
 import { authOptions } from "~/server/auth";
@@ -22,6 +26,11 @@ const bodySchema = z
       .array(z.number().int().positive())
       .max(MAX_REQUIREMENT_SCOPE_IDS)
       .nullish(),
+    // Execution scope (milestone/configuration) the capture counts under —
+    // frozen onto the record. An id that matches no run simply contributes
+    // no executions (scope only ever narrows), same forgiveness as
+    // requirementIds above.
+    ...executionScopeBodyShape,
   })
   .strict();
 
@@ -105,6 +114,7 @@ export const POST = withAuditContext(
           name: parsed.data.name,
           note: parsed.data.note ?? null,
           rootIds,
+          executionScope: toExecutionScope(parsed.data),
           capturedById: session.user.id,
         },
         { accessibleProjectIds: scope }

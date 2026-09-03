@@ -1529,13 +1529,13 @@
             "issueTypesAriaLabel": "Tipos de problema de requisito",
             "labelsLabel": "Etiquetas",
             "labelsPlaceholder": "Seleccionar etiquetas",
-            "labelsAriaLabel": "Etiquetas de requisitos",
-            "labelPreviewNote": "Los issues que tengan alguna etiqueta seleccionada se convierten en requisitos al guardar; los issues que se queden sin ninguna etiqueta seleccionada dejan de ser requisitos.",
+            "labelsAriaLabel": "Etiquetas de requisito",
+            "labelPreviewNote": "Los problemas que tengan alguna etiqueta seleccionada se convierten en requisitos al guardar; los problemas que se queden sin ninguna etiqueta seleccionada dejan de ser requisitos.",
             "previewHeading": "Impacto de este cambio",
             "becomingRequirements": "{count, plural, one {{count} problema se convertirá en un requisito} other {{count} problemas se convertirán en requisitos}}",
             "stoppingRequirements": "{count, plural, one {{count} problema dejará de ser un requisito} other {{count} problemas dejarán de ser requisitos}}",
             "detachedCallout": "{count, plural, one {{count} de esos está desconectado del rastreador o se editó localmente y perderá su estado de requisito} other {{count} de esos están desconectados del rastreador o se editaron localmente y perderán su estado de requisito}}",
-            "reversibilityNote": "Volver a agregar un tipo restaura la clasificación. No se elimina nada.",
+            "reversibilityNote": "Volver a añadir un tipo restaura la clasificación. No se elimina nada.",
             "noChanges": "No hay cambios de clasificación para aplicar.",
             "importOfferBodyExact": "{count, plural, one {{count} problema} other {{count} problemas}} de los tipos seleccionados están en el rastreador.",
             "importOfferBodyFloor": "Al menos {count, plural, one {{count} problema} other {{count} problemas}} de los tipos seleccionados están en el rastreador — la importación no está limitada a este número.",
@@ -1548,7 +1548,7 @@
             "importCountUnavailable": "No se pudo determinar cuántos problemas hay en el rastreador",
             "importStopAction": "Detener",
             "importStopConfirmTitle": "¿Detener esta importación?",
-            "importStopConfirmBody": "Detener tiene efecto después de que finalice la importación de la página actual. Los problemas ya importados permanecerán.",
+            "importStopConfirmBody": "Detener surte efecto después de que finalice la importación de la página actual. Los problemas ya importados permanecerán.",
             "importStopRequested": "Detención solicitada — la importación se detendrá después de su página actual.",
             "importStopNotRunning": "Esa importación ya finalizó o ya fue detenida.",
             "importCancelled": "Importación cancelada",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Los requisitos no están habilitados",
       "description": "Este proyecto no ha activado la función de requisitos. Pide a un administrador del proyecto que la habilite en la configuración del proyecto para empezar a construir árboles de requisitos."
+    },
+    "scope": {
+      "hint": "Limitar la cobertura a las ejecuciones de los hitos y configuraciones seleccionados",
+      "scopedBadge": "Cobertura acotada",
+      "snapshotScoped": "Capturada con un ámbito de ejecución"
+    },
+    "history": {
+      "title": "Historial de contenido",
+      "description": "Cada cambio en el título, la documentación o la nota de este requisito, con lo que cambió",
+      "empty": "Aún no hay cambios de contenido registrados: el texto actual es el original.",
+      "versionLabel": "Versión {version}",
+      "currentBadge": "Actual",
+      "bySync": "Sincronización o sistema"
     }
   },
   "Pages": {

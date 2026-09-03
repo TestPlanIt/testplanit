@@ -2,7 +2,10 @@ import { sql } from "kysely";
 
 import { baseDb } from "~/lib/db";
 
-import { latestCaseResultsCte } from "./latestCaseResults";
+import {
+  latestCaseResultsCte,
+  type LatestResultExecutionScope,
+} from "./latestCaseResults";
 
 /**
  * Requirement coverage rollup (COV-01/COV-02/COV-03) — computes each
@@ -25,10 +28,15 @@ import { latestCaseResultsCte } from "./latestCaseResults";
  * to the anchor requirement itself, never additive with the whole-subtree
  * totals.
  *
- * "Most recent" is global and unscoped: the single latest execution a
+ * "Most recent" is global BY DEFAULT: the single latest execution a
  * covering case has ever recorded, independent of any particular release
- * window or test cycle. This is a settled scope decision for this
- * service, not a default awaiting a future filter parameter.
+ * window or test cycle. An optional execution scope
+ * (`GetRequirementCoverageOptions.executionScope` — milestone and/or
+ * configuration) narrows which executions are candidates, turning the
+ * question into "coverage on this milestone / this configuration"; a case
+ * with no in-scope execution classifies as not-run, exactly like a
+ * never-executed one. This is the hybrid global+optional-filter model the
+ * v1.2 idea list named, promoted into v1.1 by decision 2026-09-02.
  *
  * A requirement's covering cases may live in projects other than the
  * requirement's own — those cases count toward the total and are also
@@ -291,6 +299,10 @@ export interface GetRequirementCoverageOptions {
    * requirement in the project. Rejected when empty (short-circuits to an
    * empty result with no query) or when it exceeds `MAX_ROOT_IDS`. */
   rootIds?: number[];
+  /** Narrow which EXECUTIONS count toward "latest" (milestone and/or
+   * configuration) — see the header comment. Absent or empty axes leave
+   * the rollup global, byte-identical to the unscoped statement. */
+  executionScope?: LatestResultExecutionScope;
 }
 
 /**
@@ -377,7 +389,7 @@ export async function getRequirementCoverage(
       WHERE (${unrestricted} OR rc."projectId" = ANY(${accessibleProjectIds}::int[]))
       GROUP BY cl.ancestor_id, cl.ancestor_project_id, rci."caseId", rc."projectId"
     ),
-    ${latestCaseResultsCte()},
+    ${latestCaseResultsCte(opts?.executionScope)},
     rollup AS (
       -- The four counters below are mutually exclusive and exhaustive
       -- over covering_cases: every row lands in exactly one of them, so
@@ -590,6 +602,7 @@ export async function getRequirementCoveringCases(
   projectId: number | number[],
   requirementIds: number[],
   scope: RequirementCoverageScope,
+  opts?: Pick<GetRequirementCoverageOptions, "executionScope">,
   db: Pick<typeof baseDb, "$qb"> = baseDb
 ): Promise<Map<number, RequirementCoveringCase[]>> {
   const projectIds = normalizeProjectIds(
@@ -622,7 +635,7 @@ export async function getRequirementCoveringCases(
   const closure = buildClosureFragment(projectIds, requirementIds);
 
   const { rows } = await sql<RequirementCoveringCaseRow>`
-    WITH RECURSIVE ${closure}, ${latestCaseResultsCte()}
+    WITH RECURSIVE ${closure}, ${latestCaseResultsCte(opts?.executionScope)}
     SELECT DISTINCT
       cl.ancestor_id,
       rc.id AS case_id,

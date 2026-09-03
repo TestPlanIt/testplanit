@@ -1528,10 +1528,10 @@
             "issueTypesPlaceholder": "Sélectionnez les types de problème",
             "issueTypesAriaLabel": "Types de problème d'exigence",
             "labelsLabel": "Étiquettes",
-            "labelsPlaceholder": "Sélectionner des étiquettes",
+            "labelsPlaceholder": "Sélectionner les étiquettes",
             "labelsAriaLabel": "Étiquettes des exigences",
             "labelPreviewNote": "Les tickets portant une étiquette sélectionnée deviennent des exigences lors de l'enregistrement ; les tickets sans étiquette sélectionnée cessent d'être des exigences.",
-            "previewHeading": "Impact de ce changement",
+            "previewHeading": "Impact de cette modification",
             "becomingRequirements": "{count, plural, one {{count} problème deviendra une exigence} other {{count} problèmes deviendront des exigences}}",
             "stoppingRequirements": "{count, plural, one {{count} problème cessera d'être une exigence} other {{count} problèmes cesseront d'être des exigences}}",
             "detachedCallout": "{count, plural, one {{count} d'entre eux est détaché du gestionnaire ou a été modifié localement et perdra son statut d'exigence} other {{count} d'entre eux sont détachés du gestionnaire ou ont été modifiés localement et perdront leur statut d'exigence}}",
@@ -1544,7 +1544,7 @@
             "importStarted": "Importation démarrée. Les problèmes apparaîtront au fur et à mesure de leur importation.",
             "importFailed": "Impossible de démarrer l'importation",
             "importAlreadyRunning": "Une importation est déjà en cours pour ce projet de gestionnaire",
-            "importNoTypes": "Sélectionnez et enregistrez au moins un type de problème avant d'importer",
+            "importNoTypes": "Sélectionnez et enregistrez au moins un type de problème avant l'importation",
             "importCountUnavailable": "Impossible de déterminer le nombre de problèmes présents dans le gestionnaire",
             "importStopAction": "Arrêter",
             "importStopConfirmTitle": "Arrêter cette importation ?",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Les exigences ne sont pas activées",
       "description": "Ce projet n'a pas activé la fonctionnalité des exigences. Demandez à un administrateur de projet de l'activer dans les paramètres du projet pour commencer à construire des arborescences d'exigences."
+    },
+    "scope": {
+      "hint": "Limiter la couverture aux exécutions provenant des jalons et configurations sélectionnés",
+      "scopedBadge": "Couverture restreinte",
+      "snapshotScoped": "Capturé avec une portée d'exécution"
+    },
+    "history": {
+      "title": "Historique du contenu",
+      "description": "Chaque modification du titre, de la documentation ou de la note de cette exigence, avec le détail des changements",
+      "empty": "Aucune modification du contenu enregistrée pour l'instant — le texte actuel est l'original.",
+      "versionLabel": "Version {version}",
+      "currentBadge": "Actuelle",
+      "bySync": "Synchronisation ou système"
     }
   },
   "Pages": {

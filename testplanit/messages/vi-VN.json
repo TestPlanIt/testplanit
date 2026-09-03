@@ -1521,7 +1521,7 @@
             "saveError": "Không thể lưu cài đặt đồng bộ cột mốc"
           },
           "requirementsConfig": {
-            "title": "Đồng bộ Yêu cầu",
+            "title": "Đồng bộ yêu cầu",
             "description": "Đồng bộ loại vấn đề nào trong công cụ theo dõi được tính là yêu cầu. Các vấn đề hiện có sẽ được phân loại lại để khớp.",
             "enableLabel": "Bật phân loại yêu cầu",
             "issueTypesLabel": "Loại vấn đề",
@@ -1546,10 +1546,10 @@
             "importAlreadyRunning": "Đã có một tiến trình nhập đang chạy cho dự án theo dõi này",
             "importNoTypes": "Chọn và lưu ít nhất một loại vấn đề trước khi nhập",
             "importCountUnavailable": "Không thể xác định có bao nhiêu vấn đề trong công cụ theo dõi",
-            "importStopAction": "Dừng",
+            "importStopAction": "Dừng lại",
             "importStopConfirmTitle": "Dừng việc nhập này?",
             "importStopConfirmBody": "Việc dừng sẽ có hiệu lực sau khi trang hiện tại hoàn tất nhập. Các vấn đề đã được nhập sẽ được giữ lại.",
-            "importStopRequested": "Đã yêu cầu dừng — việc nhập sẽ dừng lại sau trang hiện tại.",
+            "importStopRequested": "Đã yêu cầu dừng — việc nhập sẽ dừng sau khi hoàn tất trang hiện tại.",
             "importStopNotRunning": "Việc nhập đó đã hoàn tất hoặc đã bị dừng trước đó.",
             "importCancelled": "Đã hủy nhập",
             "settingsSaved": "Đã lưu cài đặt loại yêu cầu",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Tính năng yêu cầu chưa được bật",
       "description": "Dự án này chưa bật tính năng yêu cầu. Hãy nhờ quản trị viên dự án bật tính năng này trong cài đặt dự án để bắt đầu xây dựng cây yêu cầu."
+    },
+    "scope": {
+      "hint": "Giới hạn độ bao phủ ở các lần thực thi từ những lượt chạy thuộc các mốc và cấu hình đã chọn",
+      "scopedBadge": "Độ bao phủ theo phạm vi",
+      "snapshotScoped": "Được chụp trong một phạm vi thực thi"
+    },
+    "history": {
+      "title": "Lịch sử nội dung",
+      "description": "Mọi thay đổi về tiêu đề, tài liệu hoặc ghi chú của yêu cầu này, kèm nội dung đã thay đổi",
+      "empty": "Chưa có thay đổi nội dung nào được ghi nhận — văn bản hiện tại là bản gốc.",
+      "versionLabel": "Phiên bản {version}",
+      "currentBadge": "Hiện tại",
+      "bySync": "Đồng bộ hoặc hệ thống"
     }
   },
   "Pages": {

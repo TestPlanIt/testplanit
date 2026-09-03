@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "需求功能未启用",
       "description": "此项目尚未启用需求功能。请让项目管理员在项目设置中启用该功能，以开始构建需求树。"
+    },
+    "scope": {
+      "hint": "将覆盖范围限定为所选里程碑和配置中测试运行的执行结果",
+      "scopedBadge": "限定范围的覆盖",
+      "snapshotScoped": "在执行范围内捕获"
+    },
+    "history": {
+      "title": "内容历史",
+      "description": "此需求的标题、文档或备注的每次变更及其具体内容",
+      "empty": "尚未记录内容变更——当前文本即为原始文本。",
+      "versionLabel": "版本 {version}",
+      "currentBadge": "当前",
+      "bySync": "同步或系统"
     }
   },
   "Pages": {

@@ -5,6 +5,11 @@ import {
 } from "@tanstack/react-query";
 import type { RequirementCoverageResponse } from "~/app/api/projects/[projectId]/requirements/coverage/route";
 import type { RequirementCoverageBreakdown } from "~/lib/services/requirementCoverage";
+import {
+  appendExecutionScopeParams,
+  executionScopeKey,
+  type RequirementExecutionScopeSelection,
+} from "~/utils/requirementExecutionScope";
 
 /** The literal first element of every query key this hook issues. Exported
  *  so the predicate below and its test share one source of truth instead of
@@ -68,12 +73,22 @@ export function invalidateRequirementCoverage(
  * explicitly (see `LinkedRequirementCasesPanel.tsx` and
  * `RequirementsListView.tsx`).
  */
-export function useRequirementCoverage(projectId: number | undefined) {
+export function useRequirementCoverage(
+  projectId: number | undefined,
+  executionScope?: RequirementExecutionScopeSelection
+) {
+  // The scope rides the key as one sorted string ("" when inactive), so an
+  // unscoped read keeps its pre-scope cache entry and two orderings of the
+  // same picks share one.
+  const scopeKey = executionScopeKey(executionScope);
   return useQuery<RequirementCoverageResponse>({
-    queryKey: ["requirementCoverage", projectId],
+    queryKey: ["requirementCoverage", projectId, scopeKey],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      appendExecutionScopeParams(params, executionScope);
+      const query = params.toString();
       const response = await fetch(
-        `/api/projects/${projectId}/requirements/coverage`
+        `/api/projects/${projectId}/requirements/coverage${query ? `?${query}` : ""}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch requirement coverage");
@@ -98,14 +113,26 @@ export function useRequirementCoverage(projectId: number | undefined) {
  */
 export function useRequirementCoverageBreakdown(
   projectId: number | undefined,
-  requirementId: number | null | undefined
+  requirementId: number | null | undefined,
+  executionScope?: RequirementExecutionScopeSelection
 ) {
   const enabled = Number.isFinite(projectId) && Number.isFinite(requirementId);
+  const scopeKey = executionScopeKey(executionScope);
   const query = useQuery<RequirementCoverageResponse>({
-    queryKey: ["requirementCoverage", projectId, "one", requirementId],
+    queryKey: [
+      "requirementCoverage",
+      projectId,
+      "one",
+      requirementId,
+      scopeKey,
+    ],
     queryFn: async () => {
+      const params = new URLSearchParams({
+        requirementIds: String(requirementId),
+      });
+      appendExecutionScopeParams(params, executionScope);
       const response = await fetch(
-        `/api/projects/${projectId}/requirements/coverage?requirementIds=${requirementId}`
+        `/api/projects/${projectId}/requirements/coverage?${params.toString()}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch requirement coverage");

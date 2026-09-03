@@ -13,6 +13,13 @@ export interface RequirementSnapshotOption {
   uncoveredCount: number;
   /** Requirement–case pairs; with `uncoveredCount` this is the matrix row count. */
   caseLinkCount: number;
+  /** Execution scope frozen at capture (number[] JSON); non-empty means
+   * the snapshot's numbers count only executions inside that frame — the
+   * menus badge it (via `isSnapshotExecutionScoped` in
+   * `utils/requirementExecutionScope.ts`) so a scoped baseline is never
+   * mistaken for a global one. */
+  scopeMilestoneIds?: unknown;
+  scopeConfigIds?: unknown;
   capturedBy?: { name: string | null } | null;
 }
 
@@ -39,6 +46,8 @@ export function useRequirementSnapshotList(projectId: number): {
         requirementCount: true,
         uncoveredCount: true,
         caseLinkCount: true,
+        scopeMilestoneIds: true,
+        scopeConfigIds: true,
         capturedBy: { select: { name: true } },
       },
     },

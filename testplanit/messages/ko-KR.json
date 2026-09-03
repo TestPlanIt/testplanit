@@ -1500,7 +1500,7 @@
           "importAllHistory": "전체 기록",
           "importMax": "최대 가져오기 개수",
           "importCapHint": "{cap} 기본값을 사용하려면 비워 두세요.",
-          "importAllHistoryNoCapHint": "전체 기록은 제한 없이 일치하는 모든 이슈를 가져옵니다.",
+          "importAllHistoryNoCapHint": "전체 기록은 상한 없이 일치하는 모든 이슈를 가져옵니다.",
           "importPreview": "미리보기",
           "importPreviewResult": "이 필터와 일치하는 이슈가 약 {count, plural, other {#개}}입니다. 최대 {cap}개까지 가져옵니다.",
           "importOverCap": "이는 {cap}개의 한도를 초과합니다. 가장 최근에 업데이트된 {cap}개만 가져옵니다.",
@@ -1535,13 +1535,13 @@
             "becomingRequirements": "{count, plural, other {{count}개 항목이 요구 사항이 됩니다}}",
             "stoppingRequirements": "{count, plural, other {{count}개 항목이 더 이상 요구 사항이 아니게 됩니다}}",
             "detachedCallout": "{count, plural, other {그 중 {count}개는 트래커에서 분리되었거나 로컬에서 수정되어 요구 사항 상태를 잃게 됩니다}}",
-            "reversibilityNote": "유형을 다시 추가하면 분류가 복원됩니다. 아무것도 삭제되지 않습니다.",
+            "reversibilityNote": "유형을 다시 추가하면 분류가 복원됩니다. 삭제되는 것은 없습니다.",
             "noChanges": "적용할 분류 변경 사항이 없습니다.",
             "importOfferBodyExact": "선택한 유형의 항목 {count, plural, other {{count}개}}가 트래커에 있습니다.",
             "importOfferBodyFloor": "선택한 유형의 항목이 트래커에 최소 {count, plural, other {{count}개}} 있습니다 — 가져오기는 이 수로 제한되지 않습니다.",
             "importOfferBodyUnknown": "선택한 유형의 이슈가 트래커에 정확히 몇 개 있는지 확인할 수 없습니다. 그래도 가져오기를 진행하면 일치하는 모든 항목을 가져옵니다.",
             "importOfferConfirm": "지금 가져오기",
-            "importStarted": "가져오기가 시작되었습니다. 이슈는 가져오는 대로 표시됩니다.",
+            "importStarted": "가져오기가 시작되었습니다. 가져오는 대로 이슈가 표시됩니다.",
             "importFailed": "가져오기를 시작할 수 없습니다",
             "importAlreadyRunning": "이 트래커 프로젝트에 대한 가져오기가 이미 실행 중입니다",
             "importNoTypes": "가져오기 전에 이슈 유형을 하나 이상 선택하고 저장하세요",
@@ -1549,7 +1549,7 @@
             "importStopAction": "중지",
             "importStopConfirmTitle": "이 가져오기를 중지하시겠습니까?",
             "importStopConfirmBody": "중지는 현재 페이지의 가져오기가 완료된 후 적용됩니다. 이미 가져온 이슈는 그대로 유지됩니다.",
-            "importStopRequested": "중지가 요청되었습니다 — 현재 페이지가 끝난 후 가져오기가 중지됩니다.",
+            "importStopRequested": "중지가 요청되었습니다 — 현재 페이지 이후에 가져오기가 중지됩니다.",
             "importStopNotRunning": "해당 가져오기는 이미 완료되었거나 이미 중지되었습니다.",
             "importCancelled": "가져오기가 취소되었습니다",
             "settingsSaved": "요구 사항 유형 설정이 저장되었습니다",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "요구 사항이 활성화되지 않음",
       "description": "이 프로젝트는 요구 사항 기능을 활성화하지 않았습니다. 요구 사항 트리를 구성하려면 프로젝트 관리자에게 프로젝트 설정에서 이 기능을 활성화하도록 요청하세요."
+    },
+    "scope": {
+      "hint": "선택한 마일스톤과 구성의 실행만 커버리지에 포함",
+      "scopedBadge": "범위가 지정된 커버리지",
+      "snapshotScoped": "실행 범위와 함께 캡처됨"
+    },
+    "history": {
+      "title": "콘텐츠 이력",
+      "description": "이 요구 사항의 제목, 문서 또는 노트에 대한 모든 변경 사항과 변경 내용",
+      "empty": "아직 기록된 콘텐츠 변경이 없습니다. 현재 텍스트가 원본입니다.",
+      "versionLabel": "버전 {version}",
+      "currentBadge": "현재",
+      "bySync": "동기화 또는 시스템"
     }
   },
   "Pages": {

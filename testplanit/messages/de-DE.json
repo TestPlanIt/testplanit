@@ -1522,7 +1522,7 @@
           },
           "requirementsConfig": {
             "title": "Anforderungssynchronisierung",
-            "description": "Synchronisieren Sie, welche Tracker-Issue-Typen als Anforderungen zählen. Bestehende Issues werden entsprechend neu klassifiziert.",
+            "description": "Legt fest, welche Tracker-Issue-Typen als Anforderungen gelten. Bestehende Issues werden entsprechend neu klassifiziert.",
             "enableLabel": "Anforderungsklassifizierung aktivieren",
             "issueTypesLabel": "Issue-Typen",
             "issueTypesPlaceholder": "Issue-Typen auswählen",
@@ -1539,9 +1539,9 @@
             "noChanges": "Keine Klassifizierungsänderungen anzuwenden.",
             "importOfferBodyExact": "{count, plural, one {{count} Issue} other {{count} Issues}} der ausgewählten Typen befinden sich im Tracker.",
             "importOfferBodyFloor": "Mindestens {count, plural, one {{count} Issue} other {{count} Issues}} der ausgewählten Typen befinden sich im Tracker — der Import ist nicht auf diese Anzahl begrenzt.",
-            "importOfferBodyUnknown": "Es konnte nicht genau ermittelt werden, wie viele Issues der ausgewählten Typen sich im Tracker befinden. Der Import kann trotzdem fortgesetzt werden und importiert alle Treffer.",
+            "importOfferBodyUnknown": "Es konnte nicht genau ermittelt werden, wie viele Issues der ausgewählten Typen sich im Tracker befinden. Der Import kann trotzdem fortgesetzt werden und bringt jede Übereinstimmung mit.",
             "importOfferConfirm": "Jetzt importieren",
-            "importStarted": "Import gestartet. Issues werden angezeigt, sobald sie importiert wurden.",
+            "importStarted": "Import gestartet. Issues werden angezeigt, sobald sie importiert werden.",
             "importFailed": "Der Import konnte nicht gestartet werden",
             "importAlreadyRunning": "Für dieses Tracker-Projekt läuft bereits ein Import",
             "importNoTypes": "Wählen und speichern Sie mindestens einen Issue-Typ, bevor Sie importieren",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Anforderungen sind nicht aktiviert",
       "description": "Dieses Projekt hat die Anforderungsfunktion nicht aktiviert. Bitten Sie einen Projektadministrator, sie in den Projekteinstellungen zu aktivieren, um mit dem Aufbau von Anforderungsbäumen zu beginnen."
+    },
+    "scope": {
+      "hint": "Abdeckung auf Ausführungen aus Testläufen der ausgewählten Meilensteine und Konfigurationen begrenzen",
+      "scopedBadge": "Eingegrenzte Abdeckung",
+      "snapshotScoped": "Mit einem Ausführungsbereich erfasst"
+    },
+    "history": {
+      "title": "Inhaltsverlauf",
+      "description": "Jede Änderung an Titel, Dokumentation oder Notiz dieser Anforderung, mit den jeweiligen Änderungen",
+      "empty": "Noch keine Inhaltsänderungen erfasst — der aktuelle Text ist das Original.",
+      "versionLabel": "Version {version}",
+      "currentBadge": "Aktuell",
+      "bySync": "Synchronisierung oder System"
     }
   },
   "Pages": {

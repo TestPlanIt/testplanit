@@ -3,6 +3,11 @@ import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { resolveViewerProjectScope } from "~/lib/authContext";
 import { baseDb } from "~/lib/db";
+import {
+  parseExecutionScopeBody,
+  sameExecutionScope,
+  toExecutionScope,
+} from "~/lib/services/executionScopeParam";
 import { REQUIREMENT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import type { RequirementCoverageStatus } from "~/lib/services/requirementCoverage";
 import {
@@ -165,6 +170,46 @@ export async function handleRequirementReportOptionsGET(
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
+  // Execution-scope picker options — project-scoped reports only (a
+  // milestone belongs to one project, so a cross-project scope picker
+  // would be a grab-bag of same-named rows from different projects).
+  // Completed milestones stay listed on purpose: "coverage on the shipped
+  // release" is the milestone axis's whole point. Configurations follow
+  // the run-creation picker's enabled+assigned convention.
+  const [scopeMilestones, scopeConfigurations] = isCrossProject
+    ? [[], []]
+    : await Promise.all([
+        baseDb.milestones.findMany({
+          where: { projectId: projectIdParam, isDeleted: false },
+          // Everything the shared MilestoneOptionContent renders — the type
+          // icon, the tree position, and the tracker-source badge fields —
+          // so the report's filter menu can show milestones the way every
+          // other picker does.
+          select: {
+            id: true,
+            name: true,
+            parentId: true,
+            integrationId: true,
+            externalKind: true,
+            externalState: true,
+            externalUrl: true,
+            detachedAt: true,
+            mergedToExternalId: true,
+            milestoneType: { select: { icon: { select: { name: true } } } },
+          },
+          orderBy: { name: "asc" },
+        }),
+        baseDb.configurations.findMany({
+          where: {
+            isDeleted: false,
+            isEnabled: true,
+            projects: { some: { projectId: projectIdParam } },
+          },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        }),
+      ]);
+
   return Response.json({
     dimensions: [],
     metrics: [],
@@ -179,6 +224,8 @@ export async function handleRequirementReportOptionsGET(
       : [],
     priorities: toOptions(priorities),
     statuses: toOptions(statuses),
+    milestones: scopeMilestones,
+    configurations: scopeConfigurations,
   });
 }
 
@@ -477,6 +524,17 @@ export async function handleRequirementCoverageReportPOST(
       return Response.json({ error: "Invalid statuses" }, { status: 400 });
     }
 
+    const executionScope = parseExecutionScopeBody(
+      body?.milestoneIds,
+      body?.configIds
+    );
+    if (!executionScope.ok) {
+      return Response.json(
+        { error: "Invalid milestoneIds/configIds" },
+        { status: 400 }
+      );
+    }
+
     // A snapshot is captured from one project and pinned to it, so there is
     // no such thing as a cross-project snapshot to load. Refuse rather than
     // silently ignoring the parameter and returning live data under a
@@ -484,6 +542,18 @@ export async function handleRequirementCoverageReportPOST(
     if (isCrossProject && snapshotId.id !== undefined) {
       return Response.json(
         { error: "Snapshots are not available on cross-project reports" },
+        { status: 400 }
+      );
+    }
+
+    // A snapshot's execution scope was applied AT CAPTURE and its entries
+    // hold only the final rollup — a different scope cannot be applied to
+    // them after the fact (unlike `requirementIds`, which scopes over the
+    // frozen parent ids). Refuse the combination rather than silently
+    // returning the capture-time frame under a different label.
+    if (snapshotId.id !== undefined && executionScope.scope !== undefined) {
+      return Response.json(
+        { error: "Execution scope cannot be applied to a snapshot" },
         { status: 400 }
       );
     }
@@ -566,12 +636,15 @@ export async function handleRequirementCoverageReportPOST(
       // the default-parameter semantics identical to the two-argument call
       // the unscoped path (and its existing tests) rely on.
       data =
-        scopeIds.rootIds !== undefined
+        scopeIds.rootIds !== undefined || executionScope.scope !== undefined
           ? await loadRequirementTraceability(
               anchorProjectIds,
               { accessibleProjectIds },
               undefined,
-              { rootIds: scopeIds.rootIds }
+              {
+                rootIds: scopeIds.rootIds,
+                executionScope: executionScope.scope,
+              }
             )
           : await loadRequirementTraceability(anchorProjectIds, {
               accessibleProjectIds,
@@ -715,6 +788,20 @@ export async function handleRequirementCoverageChangesPOST(
       );
     }
 
+    // The changes report's execution frame is the BASELINE's frozen scope
+    // — request-level milestone/config keys would create a second,
+    // possibly-disagreeing source for the same frame, so they are refused
+    // outright rather than reconciled.
+    if (body?.milestoneIds != null || body?.configIds != null) {
+      return Response.json(
+        {
+          error:
+            "Execution scope on a changes report comes from the baseline snapshot",
+        },
+        { status: 400 }
+      );
+    }
+
     const baseline = parseOptionalSnapshotId(body?.baselineSnapshotId);
     if (!baseline.ok || baseline.id === undefined) {
       return Response.json(
@@ -750,6 +837,11 @@ export async function handleRequirementCoverageChangesPOST(
       );
     }
 
+    const baselineExecutionScope = toExecutionScope({
+      milestoneIds: baselineLoaded.snapshot.scopeMilestoneIds,
+      configIds: baselineLoaded.snapshot.scopeConfigIds,
+    });
+
     let comparisonEntries: SnapshotEntryRecord[];
     if (comparison.id !== undefined) {
       const comparisonLoaded = await loadRequirementTraceabilitySnapshot(
@@ -762,11 +854,34 @@ export async function handleRequirementCoverageChangesPOST(
           { status: 404 }
         );
       }
+      // Two snapshots diff meaningfully only inside the same execution
+      // frame: a scoped baseline against an unscoped (or differently
+      // scoped) comparison would report scope differences as coverage
+      // changes. Refused, never reconciled.
+      if (
+        !sameExecutionScope(baselineLoaded.snapshot, comparisonLoaded.snapshot)
+      ) {
+        return Response.json(
+          {
+            error: "Snapshots were captured under different execution scopes",
+          },
+          { status: 400 }
+        );
+      }
       comparisonEntries = comparisonLoaded.entries;
     } else {
-      const live = await loadRequirementTraceability(projectId, {
-        accessibleProjectIds,
-      });
+      // The live side inherits the baseline's frozen frame, so "what
+      // changed since the baseline" always compares like with like —
+      // an unscoped baseline diffs against the unscoped live matrix,
+      // exactly as before.
+      const live = await loadRequirementTraceability(
+        projectId,
+        { accessibleProjectIds },
+        undefined,
+        baselineExecutionScope !== undefined
+          ? { executionScope: baselineExecutionScope }
+          : undefined
+      );
       comparisonEntries = groupTraceabilityRows(live.rows);
     }
 

@@ -2,6 +2,12 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { resolveViewerProjectScope } from "~/lib/authContext";
+import {
+  executionScopeBodyShape,
+  parseExecutionScopeQuery,
+  toExecutionScope,
+} from "~/lib/services/executionScopeParam";
+import type { LatestResultExecutionScope } from "~/lib/services/latestCaseResults";
 import { getRequirementCoverage } from "~/lib/services/requirementCoverage";
 import {
   matchesRequirementCoverageFilters,
@@ -138,13 +144,16 @@ const requirementSortSchema = z.object({
 async function resolveCoverageSortValues(
   sort: RequirementTreeSort,
   projectId: number,
-  scope: number[] | null
+  scope: number[] | null,
+  executionScope: LatestResultExecutionScope | undefined
 ): Promise<RequirementCoverageSortValues | null> {
   if (!COVERAGE_DERIVED_SORT_COLUMNS.includes(sort.column)) return null;
   try {
-    const rollup = await getRequirementCoverage(projectId, {
-      accessibleProjectIds: scope,
-    });
+    const rollup = await getRequirementCoverage(
+      projectId,
+      { accessibleProjectIds: scope },
+      { executionScope }
+    );
     const ids: number[] = [];
     const values: number[] = [];
     for (const [requirementId, breakdown] of rollup) {
@@ -239,12 +248,23 @@ export async function GET(
     if (!sortResult.ok) {
       return NextResponse.json({ error: "Invalid sort" }, { status: 400 });
     }
+    // The page-level execution scope (milestone/configuration) — only the
+    // coverage-derived pieces of this route read it; the tree structure,
+    // counts and facets are execution-independent by construction.
+    const executionScopeResult = parseExecutionScopeQuery(searchParams);
+    if (!executionScopeResult.ok) {
+      return NextResponse.json(
+        { error: "Invalid milestoneIds/configIds" },
+        { status: 400 }
+      );
+    }
     const sort: RequirementTreeSort = {
       ...sortResult.sort,
       coverageValues: await resolveCoverageSortValues(
         sortResult.sort,
         projectId,
-        scope
+        scope,
+        executionScopeResult.scope
       ),
     };
 
@@ -310,6 +330,9 @@ const requirementTreeFilterBodySchema = z.object({
   // same way, or scrolling a filtered list would walk a different order
   // than the one on screen.
   sort: requirementSortSchema.nullish(),
+  // Execution scope: the coverage axis and coverage-derived sorts count
+  // under it; the search/status/source axes are execution-independent.
+  ...executionScopeBodyShape,
 });
 
 export async function POST(
@@ -365,13 +388,15 @@ export async function POST(
     } = parsedBody.data;
     const limit = Math.min(parsedBody.data.limit, REQUIREMENTS_TREE_MAX_LIMIT);
 
+    const executionScope = toExecutionScope(parsedBody.data);
     const baseSort = requestedSort ?? DEFAULT_REQUIREMENT_SORT;
     const sort: RequirementTreeSort = {
       ...baseSort,
       coverageValues: await resolveCoverageSortValues(
         baseSort,
         projectId,
-        scope
+        scope,
+        executionScope
       ),
     };
 
@@ -386,9 +411,11 @@ export async function POST(
     let coverageMatchIds: number[] | null = null;
     if (coverageAxisActive) {
       try {
-        const rollup = await getRequirementCoverage(projectId, {
-          accessibleProjectIds: scope,
-        });
+        const rollup = await getRequirementCoverage(
+          projectId,
+          { accessibleProjectIds: scope },
+          { executionScope }
+        );
         coverageMatchIds = [];
         for (const [requirementId, breakdown] of rollup) {
           if (

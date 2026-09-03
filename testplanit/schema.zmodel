@@ -5563,6 +5563,10 @@ model RequirementTraceabilitySnapshot {
     capturedAt          DateTime                               @default(now()) @db.Timestamptz(6) @deny('update', true)
     /// Requirement root ids (number[]) the capture was scoped to; empty = the whole project.
     scopeRequirementIds Json                                   @default("[]") @deny('update', true)
+    /// Milestone ids (number[]) the capture's execution scope counted; empty = axis inactive.
+    scopeMilestoneIds   Json                                   @default("[]") @deny('update', true)
+    /// Configuration ids (number[]) the capture's execution scope counted; empty = axis inactive.
+    scopeConfigIds      Json                                   @default("[]") @deny('update', true)
     requirementCount    Int                                    @deny('update', true)
     passedCount         Int                                    @deny('update', true)
     failedCount         Int                                    @deny('update', true)

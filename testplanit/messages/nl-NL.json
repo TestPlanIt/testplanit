@@ -1523,10 +1523,10 @@
           "requirementsConfig": {
             "title": "Vereistensynchronisatie",
             "description": "Synchroniseer welke issuetypen van de tracker als vereisten tellen. Bestaande issues worden dienovereenkomstig opnieuw geclassificeerd.",
-            "enableLabel": "Vereistenclassificatie inschakelen",
+            "enableLabel": "Vereisteclassificatie inschakelen",
             "issueTypesLabel": "Issuetypen",
             "issueTypesPlaceholder": "Selecteer issuetypen",
-            "issueTypesAriaLabel": "Issuetypen voor vereisten",
+            "issueTypesAriaLabel": "Vereiste-issuetypen",
             "labelsLabel": "Labels",
             "labelsPlaceholder": "Selecteer labels",
             "labelsAriaLabel": "Vereiste labels",
@@ -1552,8 +1552,8 @@
             "importStopRequested": "Stopverzoek ontvangen — de import stopt na de huidige pagina.",
             "importStopNotRunning": "Die import is al voltooid of al gestopt.",
             "importCancelled": "Import geannuleerd",
-            "settingsSaved": "Instellingen voor vereistentype opgeslagen",
-            "saveError": "Instellingen voor vereistentype konden niet worden opgeslagen"
+            "settingsSaved": "Instellingen voor vereistetype opgeslagen",
+            "saveError": "Instellingen voor vereistetype konden niet worden opgeslagen"
           }
         },
         "integrationAssigned": "Integratie succesvol toegewezen",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Vereisten zijn niet ingeschakeld",
       "description": "Dit project heeft de functie Vereisten niet ingeschakeld. Vraag een projectbeheerder om deze in de projectinstellingen in te schakelen om vereistenbomen te kunnen opbouwen."
+    },
+    "scope": {
+      "hint": "Beperk de dekking tot uitvoeringen uit runs in de geselecteerde mijlpalen en configuraties",
+      "scopedBadge": "Afgebakende dekking",
+      "snapshotScoped": "Vastgelegd met een uitvoeringsbereik"
+    },
+    "history": {
+      "title": "Inhoudsgeschiedenis",
+      "description": "Elke wijziging aan de titel, documentatie of notitie van deze requirement, met wat er is veranderd",
+      "empty": "Nog geen inhoudswijzigingen vastgelegd — de huidige tekst is het origineel.",
+      "versionLabel": "Versie {version}",
+      "currentBadge": "Huidig",
+      "bySync": "Synchronisatie of systeem"
     }
   },
   "Pages": {

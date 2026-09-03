@@ -16,6 +16,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  executionScopeBodyFields,
+  isExecutionScopeSelectionActive,
+  type RequirementExecutionScopeSelection,
+} from "~/utils/requirementExecutionScope";
 
 export interface SavedRequirementSnapshot {
   id: number;
@@ -36,16 +41,22 @@ export function RequirementSnapshotSaveDialog({
   open,
   onOpenChange,
   requirementIds,
+  executionScope,
   onSaved,
 }: {
   projectId: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   requirementIds?: number[];
+  /** The launching surface's coverage execution scope — frozen onto the
+   *  capture, and said out loud in the dialog (a scoped baseline can only
+   *  ever be compared within the same frame). */
+  executionScope?: RequirementExecutionScopeSelection;
   onSaved?: (snapshot: SavedRequirementSnapshot) => void;
 }) {
   const t = useTranslations("reports.ui.requirementCoverage");
   const tCommon = useTranslations("common");
+  const tRequirements = useTranslations("requirements.scope");
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
@@ -62,6 +73,7 @@ export function RequirementSnapshotSaveDialog({
   }, [open]);
 
   const scoped = (requirementIds?.length ?? 0) > 0;
+  const executionScoped = isExecutionScopeSelectionActive(executionScope);
   const trimmedName = name.trim();
 
   const handleSave = async () => {
@@ -77,6 +89,7 @@ export function RequirementSnapshotSaveDialog({
             name: trimmedName,
             note: note.trim() ? note.trim() : null,
             ...(scoped ? { requirementIds } : {}),
+            ...executionScopeBodyFields(executionScope),
           }),
         }
       );
@@ -109,6 +122,7 @@ export function RequirementSnapshotSaveDialog({
           <DialogDescription>
             {t("saveSnapshotDescription")}
             {scoped ? ` ${t("saveSnapshotScoped")}` : null}
+            {executionScoped ? ` ${tRequirements("snapshotScoped")}` : null}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">

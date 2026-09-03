@@ -516,9 +516,13 @@ describe("POST /api/projects/[projectId]/requirements/tree", () => {
     );
 
     expect(res.status).toBe(200);
-    expect(mockedGetCoverage).toHaveBeenCalledWith(5, {
-      accessibleProjectIds: [5],
-    });
+    // Third argument: the options bag now always rides along, carrying the
+    // request's execution scope — undefined here, since none was sent.
+    expect(mockedGetCoverage).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      { executionScope: undefined }
+    );
     expect(mockedResolveRequirementMatches).toHaveBeenCalledWith(
       expect.objectContaining({ coverageMatchIds: [1] })
     );

@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Requirements Aren't Enabled",
       "description": "This project hasn't turned on the requirements feature. Ask a project administrator to enable it in project settings to start building requirement trees."
+    },
+    "scope": {
+      "hint": "Scope coverage to executions from runs in the selected milestones and configurations",
+      "scopedBadge": "Scoped coverage",
+      "snapshotScoped": "Captured under an execution scope"
+    },
+    "history": {
+      "title": "Content History",
+      "description": "Every change to this requirement's title, documentation, or note, with what changed",
+      "empty": "No content changes recorded yet — the current text is the original.",
+      "versionLabel": "Version {version}",
+      "currentBadge": "Current",
+      "bySync": "Sync or system"
     }
   },
   "Pages": {

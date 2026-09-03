@@ -1,7 +1,7 @@
 "use client";
 
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import type { AsyncOptionsFetcher } from "~/hooks/useAsyncComboboxOptions";
 
 /**
@@ -29,13 +29,19 @@ export interface RequirementFilterOption {
  * `makeLocalFetcher`, matching on the LABEL because that is the text the
  * user can actually see in the row (`status:12` is never typed at this box).
  */
-function makeLocalFetcher(
-  options: RequirementFilterOption[]
-): AsyncOptionsFetcher<RequirementFilterOption> {
+function makeLocalFetcher<Option extends RequirementFilterOption>(
+  options: Option[],
+  mapSearchResult?: (option: Option) => Option
+): AsyncOptionsFetcher<Option> {
   return async (query, page, pageSize) => {
     const lower = query.toLowerCase();
     const filtered = lower
-      ? options.filter((option) => option.label.toLowerCase().includes(lower))
+      ? options
+          .filter((option) => option.label.toLowerCase().includes(lower))
+          // e.g. the milestone scope picker drops its tree indentation on
+          // an active search, exactly as MilestoneSelect does — a child
+          // whose parent didn't match would indent under nothing.
+          .map((option) => (mapSearchResult ? mapSearchResult(option) : option))
       : options;
     const start = page * pageSize;
     return {
@@ -45,12 +51,14 @@ function makeLocalFetcher(
   };
 }
 
-interface RequirementsFilterComboboxProps {
+interface RequirementsFilterComboboxProps<
+  Option extends RequirementFilterOption,
+> {
   /** Placeholder AND accessible name -- the trigger is a button whose
    *  selected badges do not name it, so tests and screen readers both
    *  reach these comboboxes by this string. */
   label: string;
-  options: RequirementFilterOption[];
+  options: Option[];
   selected: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
@@ -58,9 +66,19 @@ interface RequirementsFilterComboboxProps {
    *  disabled button fires no pointer events of its own. */
   title?: string;
   testId: string;
+  /** Custom dropdown-row and selected-chip renderers — the execution-scope
+   *  pickers use these to show options the way the rest of the app does
+   *  (milestone-type icon + indentation, the Combine configuration icon);
+   *  the three filter axes keep the plain label default. */
+  renderOption?: (option: Option) => ReactNode;
+  renderSelectedOption?: (option: Option) => ReactNode;
+  /** Applied to each match while a search is active (see makeLocalFetcher). */
+  mapSearchResult?: (option: Option) => Option;
 }
 
-export function RequirementsFilterCombobox({
+export function RequirementsFilterCombobox<
+  Option extends RequirementFilterOption,
+>({
   label,
   options,
   selected,
@@ -68,8 +86,14 @@ export function RequirementsFilterCombobox({
   disabled = false,
   title,
   testId,
-}: RequirementsFilterComboboxProps) {
-  const fetchOptions = useMemo(() => makeLocalFetcher(options), [options]);
+  renderOption,
+  renderSelectedOption,
+  mapSearchResult,
+}: RequirementsFilterComboboxProps<Option>) {
+  const fetchOptions = useMemo(
+    () => makeLocalFetcher(options, mapSearchResult),
+    [options, mapSearchResult]
+  );
   // A selected value whose option has since disappeared (a status no loaded
   // row carries any more) still renders as its own raw value rather than
   // vanishing from the trigger while remaining active in the query.
@@ -77,33 +101,36 @@ export function RequirementsFilterCombobox({
     () =>
       selected.map(
         (value) =>
-          options.find((option) => option.value === value) ?? {
-            value,
-            label: value,
-          }
+          options.find((option) => option.value === value) ??
+          ({ value, label: value } as Option)
       ),
     [selected, options]
   );
 
   return (
     <span data-testid={testId} title={title}>
-      <MultiAsyncCombobox<RequirementFilterOption>
+      <MultiAsyncCombobox<Option>
         value={selectedOptions}
         onValueChange={(next) => onChange(next.map((option) => option.value))}
         fetchOptions={fetchOptions}
         getOptionValue={(option) => option.value}
         getOptionLabel={(option) => option.label}
-        renderOption={(option) => (
-          <span className="flex min-w-0 flex-1 items-center">
-            <span className="min-w-0 flex-1 truncate">{option.label}</span>
-            {option.count !== undefined && (
-              <span className="ms-2 text-xs text-muted-foreground">
-                {option.count}
-              </span>
-            )}
-          </span>
-        )}
-        renderSelectedOption={(option) => option.label}
+        renderOption={
+          renderOption ??
+          ((option) => (
+            <span className="flex min-w-0 flex-1 items-center">
+              <span className="min-w-0 flex-1 truncate">{option.label}</span>
+              {option.count !== undefined && (
+                <span className="ms-2 text-xs text-muted-foreground">
+                  {option.count}
+                </span>
+              )}
+            </span>
+          ))
+        }
+        renderSelectedOption={
+          renderSelectedOption ?? ((option) => option.label)
+        }
         placeholder={label}
         ariaLabel={label}
         disabled={disabled}

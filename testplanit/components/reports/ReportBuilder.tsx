@@ -1,5 +1,10 @@
 "use client";
 import { DraggableList } from "@/components/DraggableCaseFields";
+import {
+  flattenMilestoneTree,
+  MilestoneOptionContent,
+  transformMilestones,
+} from "@/components/forms/MilestoneSelect";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
@@ -30,12 +35,14 @@ import {
   ChevronRight,
   CircleDashed,
   CircleDot,
+  Combine,
   Filter,
   Flag,
   FolderOpen,
   LayoutTemplate,
   ListChecks,
   Loader2,
+  Milestone,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations, useLocale } from "next-intl";
@@ -181,6 +188,22 @@ const REQUIREMENT_REPORT_TYPE_IDS = [
 
 /** Coverage-state labels, the same mapping RequirementCoverageStateFilter
  * used when it stood on its own. */
+/** The options endpoint's milestone row: id/name for the filter contract
+ * plus everything the shared MilestoneOptionContent renders (type icon,
+ * tree position, tracker-source badge fields). */
+interface RequirementMilestoneFilterOption {
+  id: number;
+  name: string;
+  parentId: number | null;
+  integrationId?: number | null;
+  externalKind?: string | null;
+  externalState?: string | null;
+  externalUrl?: string | null;
+  detachedAt?: Date | string | null;
+  mergedToExternalId?: string | null;
+  milestoneType?: { icon?: { name: string } | null };
+}
+
 const COVERAGE_STATE_LABEL_KEYS: Record<string, string> = {
   PASSED: "statusPassed",
   FAILED: "statusFailed",
@@ -441,14 +464,20 @@ function ReportBuilderContent({
   const [selectedFilterType, setSelectedFilterType] = useState<string>("");
   const [selectedFilterValues, setSelectedFilterValues] = useState<
     Record<string, Array<string | number>>
-  >(
-    initialPerTypeParams.requirementCoverageStates.length > 0
-      ? {
-          ...initialPerTypeParams.trendsFilterValues,
-          coverage: initialPerTypeParams.requirementCoverageStates,
-        }
-      : initialPerTypeParams.trendsFilterValues
-  );
+  >(() => ({
+    ...initialPerTypeParams.trendsFilterValues,
+    ...(initialPerTypeParams.requirementCoverageStates.length > 0
+      ? { coverage: initialPerTypeParams.requirementCoverageStates }
+      : {}),
+    // Execution scope restored from a share redirect — hydrated into the
+    // same consolidated filter menu the run body reads it back out of.
+    ...(initialPerTypeParams.requirementMilestoneIds.length > 0
+      ? { milestone: initialPerTypeParams.requirementMilestoneIds }
+      : {}),
+    ...(initialPerTypeParams.requirementConfigIds.length > 0
+      ? { configuration: initialPerTypeParams.requirementConfigIds }
+      : {}),
+  }));
   const [filterOptions, setFilterOptions] = useState<any>(null);
   // Every project this report has offered, in the order first seen. The trends
   // filter options are re-fetched whenever a selection changes so the counts
@@ -469,7 +498,15 @@ function ReportBuilderContent({
     projects: { id: number; name: string; count: number }[];
     priorities: { id: string; name: string; count: number }[];
     statuses: { id: string; name: string; count: number }[];
-  }>({ projects: [], priorities: [], statuses: [] });
+    milestones: RequirementMilestoneFilterOption[];
+    configurations: { id: number; name: string }[];
+  }>({
+    projects: [],
+    priorities: [],
+    statuses: [],
+    milestones: [],
+    configurations: [],
+  });
 
   // Legacy state for builder tab priority filter
   const [selectedPriorityValues, setSelectedPriorityValues] = useState<
@@ -739,6 +776,54 @@ function ReportBuilderContent({
           icon: CircleDot,
           options: requirementFilterOptions.statuses,
         });
+      }
+      // The execution scope (which runs' executions count as "latest") —
+      // gaps/traceability only: the changes report inherits its frame from
+      // the baseline snapshot, and the cross-project reports have no
+      // single project to list milestones for.
+      if (
+        !isCrossProjectRequirementReport(reportType) &&
+        (matchesReportType(reportType, "requirement-coverage-gaps") ||
+          matchesReportType(reportType, "requirement-traceability"))
+      ) {
+        if (requirementFilterOptions.milestones.length > 0) {
+          // Options browse as the same indented parent → child tree every
+          // milestone picker renders, each row through the shared
+          // MilestoneOptionContent (type icon + tracker-source badge).
+          const flattened = flattenMilestoneTree(
+            transformMilestones(requirementFilterOptions.milestones)
+          );
+          items.push({
+            id: "milestone",
+            name: tCommon("fields.milestone"),
+            icon: Milestone,
+            options: flattened.map((milestone) => ({
+              id: Number(milestone.value),
+              name: milestone.label,
+              milestoneOption: milestone,
+            })),
+            renderOptionContent: (option: any) =>
+              option.milestoneOption ? (
+                <MilestoneOptionContent milestone={option.milestoneOption} />
+              ) : (
+                <span className="truncate">{option.name}</span>
+              ),
+          });
+        }
+        if (requirementFilterOptions.configurations.length > 0) {
+          items.push({
+            id: "configuration",
+            name: tCommon("fields.configuration"),
+            icon: Combine,
+            options: requirementFilterOptions.configurations,
+            renderOptionContent: (option: any) => (
+              <span className="flex min-w-0 items-center gap-2">
+                <Combine className="h-4 w-4 shrink-0" />
+                <span className="truncate">{option.name}</span>
+              </span>
+            ),
+          });
+        }
       }
       return items;
     }
@@ -1375,6 +1460,8 @@ function ReportBuilderContent({
         projects: [],
         priorities: [],
         statuses: [],
+        milestones: [],
+        configurations: [],
       });
       return;
     }
@@ -1391,6 +1478,10 @@ function ReportBuilderContent({
           projects: Array.isArray(data.projects) ? data.projects : [],
           priorities: Array.isArray(data.priorities) ? data.priorities : [],
           statuses: Array.isArray(data.statuses) ? data.statuses : [],
+          milestones: Array.isArray(data.milestones) ? data.milestones : [],
+          configurations: Array.isArray(data.configurations)
+            ? data.configurations
+            : [],
         });
       })
       .catch(() => {
@@ -1998,6 +2089,20 @@ function ReportBuilderContent({
           // share of the live report.
           if (requirementSnapshotId !== null) {
             body.snapshotId = requirementSnapshotId;
+          }
+          // The execution scope rides only a LIVE run: a snapshot's frame
+          // was frozen at capture and the server refuses the combination.
+          // Project-scoped only — the cross-project forms render no scope
+          // pickers.
+          if (requirementSnapshotId === null && mode !== "cross-project") {
+            const pickedMilestones = selectedFilterValues.milestone;
+            if (pickedMilestones && pickedMilestones.length > 0) {
+              body.milestoneIds = pickedMilestones.map(Number);
+            }
+            const pickedConfigurations = selectedFilterValues.configuration;
+            if (pickedConfigurations && pickedConfigurations.length > 0) {
+              body.configIds = pickedConfigurations.map(Number);
+            }
           }
         }
         if (matchesReportType(reportType, "requirement-traceability")) {

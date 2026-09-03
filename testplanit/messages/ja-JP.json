@@ -1526,7 +1526,7 @@
             "enableLabel": "要件分類を有効にする",
             "issueTypesLabel": "問題の種類",
             "issueTypesPlaceholder": "問題の種類を選択",
-            "issueTypesAriaLabel": "要件の問題タイプ",
+            "issueTypesAriaLabel": "要件の問題の種類",
             "labelsLabel": "ラベル",
             "labelsPlaceholder": "ラベルを選択",
             "labelsAriaLabel": "要件ラベル",
@@ -1535,16 +1535,16 @@
             "becomingRequirements": "{count, plural, other {{count}件の問題が要件になります}}",
             "stoppingRequirements": "{count, plural, other {{count}件の問題が要件ではなくなります}}",
             "detachedCallout": "{count, plural, other {そのうち{count}件はトラッカーから切断されているか、ローカルで編集されているため、要件のステータスが失われます}}",
-            "reversibilityNote": "タイプを再度追加すると、分類が復元されます。何も削除されません。",
+            "reversibilityNote": "タイプを再追加すると、分類が復元されます。何も削除されません。",
             "noChanges": "適用する分類の変更はありません。",
-            "importOfferBodyExact": "{count, plural, other {選択したタイプの{count}件の問題がトラッカーにあります。}}",
-            "importOfferBodyFloor": "{count, plural, other {選択したタイプの問題が少なくとも{count}件トラッカーにあります — インポートはこの数に制限されません。}}",
+            "importOfferBodyExact": "{count, plural, other {選択したタイプの{count}件の問題がトラッカーにあります}}",
+            "importOfferBodyFloor": "{count, plural, other {選択したタイプの問題が少なくとも{count}件トラッカーにあります — インポートはこの数に制限されません}}",
             "importOfferBodyUnknown": "選択したタイプの問題がトラッカーに何件あるか正確には判断できませんでした。それでもインポートは続行でき、一致するすべての項目が取り込まれます。",
             "importOfferConfirm": "今すぐインポート",
             "importStarted": "インポートを開始しました。問題はインポートされると表示されます。",
             "importFailed": "インポートを開始できませんでした",
             "importAlreadyRunning": "このトラッカープロジェクトでは、インポートが既に実行中です",
-            "importNoTypes": "インポートする前に、少なくとも1つの問題タイプを選択して保存してください",
+            "importNoTypes": "インポートする前に、少なくとも1つの問題の種類を選択して保存してください",
             "importCountUnavailable": "トラッカーに何件の問題があるか判断できませんでした",
             "importStopAction": "停止",
             "importStopConfirmTitle": "このインポートを停止しますか？",
@@ -2156,7 +2156,7 @@
           "description": "このプロジェクトに要件エリアを追加し、システムが実行すべきことの階層を構築して、カバレッジのためにテストケースをリンクできるようにします。ここで現在の要件モデルを維持する場合はこれを有効にしてください。要件が完全に問題トラッカーにある場合は無効のままにしてください。",
           "enabledToast": "このプロジェクトでは要件が有効になっています",
           "disabledToast": "このプロジェクトでは要件が無効になっています",
-          "saveError": "要件の設定を更新できませんでした"
+          "saveError": "要件設定を更新できませんでした"
         },
         "flipJustification": {
           "label": "結果反転の正当化が必要",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "要件が有効になっていません",
       "description": "このプロジェクトでは要件機能が有効になっていません。要件ツリーの構築を始めるには、プロジェクト管理者にプロジェクト設定で有効にするよう依頼してください。"
+    },
+    "scope": {
+      "hint": "選択したマイルストーンと構成のテスト実行のみをカバレッジの対象にする",
+      "scopedBadge": "スコープ付きカバレッジ",
+      "snapshotScoped": "実行スコープ付きでキャプチャされました"
+    },
+    "history": {
+      "title": "内容の履歴",
+      "description": "この要件のタイトル・ドキュメント・ノートに対するすべての変更と、その変更内容",
+      "empty": "記録された内容の変更はまだありません。現在のテキストが原本です。",
+      "versionLabel": "バージョン {version}",
+      "currentBadge": "現在",
+      "bySync": "同期またはシステム"
     }
   },
   "Pages": {

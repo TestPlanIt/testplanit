@@ -1535,9 +1535,9 @@
             "becomingRequirements": "{count, plural, one {{count} položka se stane požadavkem} few {{count} položky se stanou požadavky} many {{count} položky se stanou požadavky} other {{count} položek se stane požadavky}}",
             "stoppingRequirements": "{count, plural, one {{count} položka přestane být požadavkem} few {{count} položky přestanou být požadavky} many {{count} položky přestanou být požadavky} other {{count} položek přestane být požadavky}}",
             "detachedCallout": "{count, plural, one {Z toho {count} je odpojena od trackeru nebo byla upravena lokálně a ztratí stav požadavku} few {Z toho {count} jsou odpojeny od trackeru nebo byly upraveny lokálně a ztratí stav požadavku} many {Z toho {count} jsou odpojeny od trackeru nebo byly upraveny lokálně a ztratí stav požadavku} other {Z toho {count} je odpojeno od trackeru nebo bylo upraveno lokálně a ztratí stav požadavku}}",
-            "reversibilityNote": "Opětovné přidání typu obnoví klasifikaci. Nic se nesmaže.",
-            "noChanges": "Žádné změny klasifikace k použití.",
-            "importOfferBodyExact": "{count, plural, one {{count} položka vybraného typu je v trackeru.} few {{count} položky vybraných typů jsou v trackeru.} many {{count} položky vybraných typů jsou v trackeru.} other {{count} položek vybraných typů je v trackeru.}}",
+            "reversibilityNote": "Opětovné přidání typu obnoví klasifikaci. Nic se neodstraní.",
+            "noChanges": "Nejsou k dispozici žádné změny klasifikace k použití.",
+            "importOfferBodyExact": "{count, plural, one {{count} položka} few {{count} položky} many {{count} položky} other {{count} položek}} vybraných typů je v trackeru.",
             "importOfferBodyFloor": "{count, plural, one {V trackeru je alespoň {count} položka vybraného typu} few {V trackeru jsou alespoň {count} položky vybraných typů} many {V trackeru jsou alespoň {count} položky vybraných typů} other {V trackeru je alespoň {count} položek vybraných typů}} — import není omezen na tento počet.",
             "importOfferBodyUnknown": "Nelze přesně určit, kolik položek vybraných typů se nachází v trackeru. Import může stále proběhnout a přinese všechny shody.",
             "importOfferConfirm": "Importovat nyní",
@@ -1550,10 +1550,10 @@
             "importStopConfirmTitle": "Zastavit tento import?",
             "importStopConfirmBody": "Zastavení se projeví po dokončení importu aktuální stránky. Již importované položky zůstanou zachovány.",
             "importStopRequested": "Zastavení bylo vyžádáno — import se zastaví po dokončení aktuální stránky.",
-            "importStopNotRunning": "Tento import již skončil nebo byl již zastaven.",
-            "importCancelled": "Import zrušen",
+            "importStopNotRunning": "Tento import již byl dokončen nebo zastaven.",
+            "importCancelled": "Import byl zrušen",
             "settingsSaved": "Nastavení typů požadavků bylo uloženo",
-            "saveError": "Uložení nastavení typů požadavků se nezdařilo"
+            "saveError": "Nepodařilo se uložit nastavení typů požadavků"
           }
         },
         "integrationAssigned": "Integrace byla úspěšně přiřazena",
@@ -2156,7 +2156,7 @@
           "description": "Přidá do tohoto projektu oblast Požadavky pro vytváření hierarchií toho, co má systém dělat, a propojování testovacích případů s nimi pro pokrytí. Zapněte tuto možnost, pokud zde udržujete aktuální model požadavků; vypněte ji, pokud vaše požadavky žijí výhradně ve vašem trackeru.",
           "enabledToast": "Požadavky byly pro tento projekt povoleny",
           "disabledToast": "Požadavky byly pro tento projekt zakázány",
-          "saveError": "Nastavení požadavků se nepodařilo aktualizovat"
+          "saveError": "Nepodařilo se aktualizovat nastavení požadavků"
         },
         "flipJustification": {
           "label": "Vyžadovat zdůvodnění při obrácení výsledku",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Požadavky nejsou aktivovány",
       "description": "Tento projekt nemá aktivovanou funkci požadavků. Požádejte správce projektu, aby ji aktivoval v nastavení projektu, abyste mohli začít vytvářet stromy požadavků."
+    },
+    "scope": {
+      "hint": "Omezit pokrytí na provedení z běhů ve vybraných milnících a konfiguracích",
+      "scopedBadge": "Omezené pokrytí",
+      "snapshotScoped": "Zachyceno v rámci rozsahu provedení"
+    },
+    "history": {
+      "title": "Historie obsahu",
+      "description": "Každá změna názvu, dokumentace nebo poznámky tohoto požadavku, včetně toho, co se změnilo",
+      "empty": "Zatím nejsou zaznamenány žádné změny obsahu — aktuální text je původní.",
+      "versionLabel": "Verze {version}",
+      "currentBadge": "Aktuální",
+      "bySync": "Synchronizace nebo systém"
     }
   },
   "Pages": {

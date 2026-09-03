@@ -1500,7 +1500,7 @@
           "importAllHistory": "Tüm geçmiş",
           "importMax": "İçe aktarılacak maksimum sayı",
           "importCapHint": "Varsayılan olan {cap} değerini kullanmak için boş bırakın.",
-          "importAllHistoryNoCapHint": "Tüm geçmiş, sınır olmaksızın eşleşen tüm sorunları içe aktarır.",
+          "importAllHistoryNoCapHint": "Tüm geçmiş, eşleşen her sorunu sınır olmaksızın içe aktarır.",
           "importPreview": "Önizleme",
           "importPreviewResult": "~{count, plural, one {# sorun} other {# sorun}} bu filtreyle eşleşiyor. En fazla {cap} tanesi içe aktarılacak.",
           "importOverCap": "Bu, {cap} sınırını aşıyor; yalnızca en son güncellenen {cap} tanesi içe aktarılacak.",
@@ -1522,7 +1522,7 @@
           },
           "requirementsConfig": {
             "title": "Gereksinim Senkronizasyonu",
-            "description": "Hangi izleyici sorun türlerinin gereksinim olarak sayılacağını senkronize edin. Mevcut sorunlar buna göre yeniden sınıflandırılır.",
+            "description": "Hangi izleyici sorun türlerinin gereksinim sayılacağını senkronize edin. Mevcut sorunlar buna uyacak şekilde yeniden sınıflandırılır.",
             "enableLabel": "Gereksinim sınıflandırmasını etkinleştir",
             "issueTypesLabel": "Sorun türleri",
             "issueTypesPlaceholder": "Sorun türlerini seçin",
@@ -1537,14 +1537,14 @@
             "detachedCallout": "{count, plural, one {Bunlardan {count} tanesi izleyiciden ayrılmış veya yerel olarak düzenlenmiş olup gereksinim durumunu kaybedecek} other {Bunlardan {count} tanesi izleyiciden ayrılmış veya yerel olarak düzenlenmiş olup gereksinim durumunu kaybedecek}}",
             "reversibilityNote": "Bir türü yeniden eklemek sınıflandırmayı geri yükler. Hiçbir şey silinmez.",
             "noChanges": "Uygulanacak sınıflandırma değişikliği yok.",
-            "importOfferBodyExact": "{count, plural, one {{count} sorun izleyicide bulunuyor.} other {{count} sorun izleyicide bulunuyor.}}",
+            "importOfferBodyExact": "Seçilen türlerden {count, plural, one {{count} sorun} other {{count} sorun}} izleyicide bulunuyor.",
             "importOfferBodyFloor": "Seçilen türlerden en az {count, plural, one {{count} sorun} other {{count} sorun}} izleyicide bulunuyor — içe aktarma bu sayıyla sınırlı değildir.",
             "importOfferBodyUnknown": "Seçilen türlerden izleyicide kaç sorun bulunduğu kesin olarak belirlenemedi. İçe aktarma işlemi yine de devam edebilir ve eşleşen tüm sorunları getirir.",
             "importOfferConfirm": "Şimdi içe aktar",
             "importStarted": "İçe aktarma başladı. Sorunlar içe aktarıldıkça görünecektir.",
             "importFailed": "İçe aktarma başlatılamadı",
             "importAlreadyRunning": "Bu izleyici projesi için zaten bir içe aktarma işlemi çalışıyor",
-            "importNoTypes": "İçe aktarmadan önce en az bir sorun türü seçip kaydedin",
+            "importNoTypes": "İçe aktarmadan önce en az bir sorun türü seçin ve kaydedin",
             "importCountUnavailable": "İzleyicide kaç sorun bulunduğu belirlenemedi",
             "importStopAction": "Durdur",
             "importStopConfirmTitle": "Bu içe aktarma işlemi durdurulsun mu?",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Gereksinimler Etkin Değil",
       "description": "Bu proje gereksinimler özelliğini etkinleştirmemiş. Gereksinim ağaçları oluşturmaya başlamak için bir proje yöneticisinden proje ayarlarında bu özelliği etkinleştirmesini isteyin."
+    },
+    "scope": {
+      "hint": "Kapsamı, seçilen kilometre taşları ve yapılandırmalardaki koşulardan gelen yürütmelerle sınırla",
+      "scopedBadge": "Daraltılmış kapsam",
+      "snapshotScoped": "Bir yürütme kapsamıyla yakalandı"
+    },
+    "history": {
+      "title": "İçerik Geçmişi",
+      "description": "Bu gereksinimin başlığında, dokümantasyonunda veya notunda yapılan her değişiklik ve neyin değiştiği",
+      "empty": "Henüz kaydedilmiş içerik değişikliği yok — mevcut metin orijinaldir.",
+      "versionLabel": "Sürüm {version}",
+      "currentBadge": "Güncel",
+      "bySync": "Senkronizasyon veya sistem"
     }
   },
   "Pages": {

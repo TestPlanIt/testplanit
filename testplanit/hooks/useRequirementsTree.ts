@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RequirementSourceValue } from "~/app/[locale]/projects/requirements/[projectId]/requirementsListRows";
 import type { RequirementCoverageFilter } from "~/lib/services/requirementCoverageFilter";
+import {
+  appendExecutionScopeParams,
+  executionScopeBodyFields,
+  executionScopeKey,
+  type RequirementExecutionScopeSelection,
+} from "~/utils/requirementExecutionScope";
 // TYPE-ONLY, and it must stay that way: `lib/services/requirementTree`
 // imports `~/lib/db` and builds raw Kysely SQL. A value import here pulls
 // the whole database layer into the client bundle, which Turbopack cannot
@@ -50,12 +56,18 @@ const DEFAULT_TREE_SORT: RequirementsTreeSort = {
 
 /** Status, source and coverage are multi-select (`[]` = axis inactive);
  *  `search` is the one text box, so it stays a single string. Mirrors
- *  `RequirementListFilters` in `requirementsListRows.ts`. */
+ *  `RequirementListFilters` in `requirementsListRows.ts`.
+ *
+ *  `executionScope` is NOT a filter axis: it never activates the match
+ *  path on its own — it changes what the coverage numbers COUNT (which
+ *  executions qualify as "latest"), so it rides the reset key and both
+ *  fetch paths but stays out of `isFiltering`. */
 export interface RequirementsTreeFilters {
   search: string;
   coverage: RequirementCoverageFilter[];
   status: string[];
   source: RequirementSourceValue[];
+  executionScope?: RequirementExecutionScopeSelection;
 }
 
 /**
@@ -203,13 +215,17 @@ async function fetchTreeCount(
 async function fetchRootsPage(
   projectId: number,
   cursor: RequirementRootsCursor | null,
-  sort: RequirementsTreeSort
+  sort: RequirementsTreeSort,
+  executionScope?: RequirementExecutionScopeSelection
 ): Promise<RequirementRootsPageResponse> {
   const params = new URLSearchParams({
     limit: String(REQUIREMENTS_TREE_PAGE_SIZE),
     sortColumn: sort.column,
     sortDirection: sort.direction,
   });
+  // Only the coverage-derived sort columns read this server-side, but it is
+  // sent whenever active so a scoped page and its cursor always agree.
+  appendExecutionScopeParams(params, executionScope);
   if (cursor) {
     // Stringified on the wire whatever its type; the server casts it back
     // to the sort column's own type (see `parseRootsCursor`).
@@ -259,6 +275,7 @@ async function fetchMatches(
       status: args.filters.status,
       source: args.filters.source,
       coverage: args.filters.coverage,
+      ...executionScopeBodyFields(args.filters.executionScope),
       limit: REQUIREMENTS_TREE_PAGE_SIZE,
       cursor: args.cursor,
       include: args.include,
@@ -378,6 +395,10 @@ export function useRequirementsTree({
     [...filters.status].sort().join(","),
     [...filters.source].sort().join(","),
     [...filters.coverage].sort().join(","),
+    // A scope change re-derives every coverage number and every
+    // coverage-derived order, so it invalidates loaded pages exactly like
+    // a filter change does — even though it is not a filter axis.
+    executionScopeKey(filters.executionScope),
     sort.column,
     sort.direction,
   ].join("|");
@@ -442,7 +463,12 @@ export function useRequirementsTree({
   const loadRootsPageAndApply = useCallback(
     async (generation: number, cursor: RequirementRootsCursor | null) => {
       try {
-        const page = await fetchRootsPage(projectId, cursor, sort);
+        const page = await fetchRootsPage(
+          projectId,
+          cursor,
+          sort,
+          filters.executionScope
+        );
         if (fetchGenerationRef.current !== generation) return;
         setRowsMap((prev) => mergeRowsInto(prev, page.rows));
         setRootIdsLoaded((prev) => {
@@ -470,7 +496,7 @@ export function useRequirementsTree({
         }
       }
     },
-    [projectId, sort]
+    [projectId, sort, filters.executionScope]
   );
 
   // --- Filtered match pager (lazy: one window at a time; all: sweeps to

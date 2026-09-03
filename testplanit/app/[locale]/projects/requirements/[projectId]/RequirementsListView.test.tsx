@@ -70,6 +70,11 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useCreate: useCreateIssueMock,
       useUpdate: useUpdateIssueMock,
     },
+    // The execution-scope pickers' option sources — this file's scope is
+    // the list behavior, not the pickers' option lists, so both serve
+    // empty (the pickers render, with no options).
+    milestones: { useFindMany: () => ({ data: [] }) },
+    configurations: { useFindMany: () => ({ data: [] }) },
   }),
 }));
 

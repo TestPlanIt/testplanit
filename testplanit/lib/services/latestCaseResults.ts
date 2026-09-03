@@ -43,6 +43,39 @@ import { baseDb } from "~/lib/db";
  */
 
 /**
+ * Optional execution scope for the fragment below: when present, only
+ * executions recorded against runs matching EVERY active axis are
+ * candidates for "latest" — the requirement coverage family's hybrid
+ * scoping (global by default, an opt-in filter when the caller asks
+ * "coverage on this milestone / this configuration"). Within an axis the
+ * ids are OR'd (`= ANY`), across axes AND'd. An absent or empty axis is
+ * inactive. Manual and JUnit executions both attribute through their run,
+ * so one predicate pair scopes both branches identically.
+ *
+ * Consumers that must stay UNscoped keep calling the zero-argument form:
+ * the suspect flag (`getCaseLatestExecutedAt` below) compares content
+ * changes against a case's latest execution anywhere, and the defect
+ * issue-coverage reports made no scoping decision at all.
+ */
+export interface LatestResultExecutionScope {
+  milestoneIds?: number[];
+  configIds?: number[];
+}
+
+/** True when the scope would actually change the fragment — the single
+ * definition every layer above uses to decide "is a scope active", so a
+ * `{ milestoneIds: [] }` shell never reads as scoped in one place and
+ * unscoped in another. */
+export function isExecutionScopeActive(
+  scope: LatestResultExecutionScope | undefined | null
+): scope is LatestResultExecutionScope {
+  return Boolean(
+    (scope?.milestoneIds && scope.milestoneIds.length > 0) ||
+    (scope?.configIds && scope.configIds.length > 0)
+  );
+}
+
+/**
  * Returns the shared CTE fragment as a Kysely `sql` template, ready to be
  * interpolated directly after the caller's own `WITH` keyword.
  *
@@ -61,13 +94,44 @@ import { baseDb } from "~/lib/db";
  *   so a consumer can link a status straight back to its source run. Both
  *   branches already join `TestRuns` to exclude deleted runs, so it is
  *   never null on a row that exists.
+ * - With an active `scope`, both branches additionally require the run to
+ *   match every active axis, so "latest" means "latest IN SCOPE" and a
+ *   case with no in-scope execution has no row at all (it classifies as
+ *   not-run, exactly like a never-executed case).
+ * - An active MILESTONE axis prepends one more CTE (`scope_milestones`)
+ *   that expands the picked ids to their whole subtrees — milestones nest
+ *   (a release's runs often hang off its child sprints), so "coverage on
+ *   the release" must count the sprints' executions too. `UNION` (not
+ *   `UNION ALL`) so a parent cycle can never recurse forever. This CTE is
+ *   recursive, so a caller passing a milestone scope must open with `WITH
+ *   RECURSIVE` — both scoped consumers (the requirement coverage rollup
+ *   and drill-down) already do; the zero-argument callers never emit it.
  *
- * A zero-argument function rather than a module-level constant, so every
- * call site gets its own fragment instance and no shared builder object
+ * A per-call function rather than a module-level constant, so every call
+ * site gets its own fragment instance and no shared builder object
  * travels between two independent statements.
  */
-export function latestCaseResultsCte() {
+export function latestCaseResultsCte(scope?: LatestResultExecutionScope) {
+  const milestoneActive =
+    (scope?.milestoneIds && scope.milestoneIds.length > 0) === true;
+  const milestoneCte = milestoneActive
+    ? sql`scope_milestones AS (
+  SELECT m.id FROM "Milestones" m WHERE m.id = ANY(${scope!.milestoneIds}::int[])
+  UNION
+  SELECT child.id FROM "Milestones" child
+  JOIN scope_milestones sm ON child."parentId" = sm.id
+),
+`
+    : sql``;
+  const milestoneScope = milestoneActive
+    ? sql`AND tr."milestoneId" IN (SELECT id FROM scope_milestones)`
+    : sql``;
+  const configScope =
+    scope?.configIds && scope.configIds.length > 0
+      ? sql`AND tr."configId" = ANY(${scope.configIds}::int[])`
+      : sql``;
   return sql`
+${milestoneCte}
 latest_manual_results AS (
   -- Get the latest manual test result for each repository case
   SELECT DISTINCT ON (rc.id)
@@ -89,6 +153,8 @@ latest_manual_results AS (
   WHERE rc."isDeleted" = false
     AND rc."isArchived" = false
     AND trr."executedAt" IS NOT NULL
+    ${milestoneScope}
+    ${configScope}
   ORDER BY rc.id, trr."executedAt" DESC
 ),
 latest_junit_results AS (
@@ -127,6 +193,8 @@ latest_junit_results AS (
     AND rc."isArchived" = false
     AND jr."executedAt" IS NOT NULL
     AND jr.type != 'SKIPPED'
+    ${milestoneScope}
+    ${configScope}
   ORDER BY rc.id, jr."executedAt" DESC
 ),
 latest_results AS (

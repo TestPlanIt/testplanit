@@ -483,7 +483,13 @@ describe("requirementCoverageReportUtils", () => {
 
 function loadedSnapshot(
   rows: RequirementTraceabilityRow[],
-  overrides: Partial<{ id: number; name: string; projectId: number }> = {}
+  overrides: Partial<{
+    id: number;
+    name: string;
+    projectId: number;
+    scopeMilestoneIds: number[];
+    scopeConfigIds: number[];
+  }> = {}
 ) {
   const entries = groupTraceabilityRows(rows);
   return {
@@ -495,6 +501,8 @@ function loadedSnapshot(
       capturedById: "user-1",
       capturedAt: new Date("2026-08-15T09:00:00.000Z"),
       scopeRequirementIds: [],
+      scopeMilestoneIds: overrides.scopeMilestoneIds ?? [],
+      scopeConfigIds: overrides.scopeConfigIds ?? [],
       requirementCount: entries.length,
       passedCount: 0,
       failedCount: 0,
@@ -583,6 +591,32 @@ describe("snapshot rendering (gaps/traceability)", () => {
     expect(mockedLoadSnapshot).not.toHaveBeenCalled();
   });
 
+  it("refuses an execution scope beside a snapshotId — the capture froze its own frame", async () => {
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, snapshotId: 77, milestoneIds: [9] }),
+      "traceability"
+    );
+    expect(response.status).toBe(400);
+    expect(mockedLoadSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("threads a live request's execution scope into the loader", async () => {
+    const response = await handleRequirementCoverageReportPOST(
+      makeRequest({ projectId: 5, milestoneIds: [9], configIds: [4] }),
+      "traceability"
+    );
+    expect(response.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      undefined,
+      {
+        rootIds: undefined,
+        executionScope: { milestoneIds: [9], configIds: [4] },
+      }
+    );
+  });
+
   it("applies the coverage-state filter and the scope to the snapshot's rows", async () => {
     const filtered = await handleRequirementCoverageReportPOST(
       makeRequest({ projectId: 5, snapshotId: 77, coverageStates: ["PASSED"] }),
@@ -669,7 +703,15 @@ describe("handleRequirementCoverageChangesPOST", () => {
       makeRequest({ projectId: 5, baselineSnapshotId: 77 })
     );
     expect(response.status).toBe(200);
-    expect(mockedLoad).toHaveBeenCalledWith(5, { accessibleProjectIds: [5] });
+    // Third/fourth arguments: the db default and the options bag — both
+    // undefined here because an UNscoped baseline inherits no execution
+    // frame onto the live side.
+    expect(mockedLoad).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      undefined,
+      undefined
+    );
     const json = await response.json();
     expect(
       json.data.map((row: any) => [row.requirementKey, row.changeKind])
@@ -746,6 +788,56 @@ describe("handleRequirementCoverageChangesPOST", () => {
     expect(
       json.data.map((row: any) => [row.requirementKey, row.changeKind])
     ).toEqual([["REQ-3", "REMOVED"]]);
+  });
+
+  it("refuses request-level execution-scope keys — the frame comes from the baseline", async () => {
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({ projectId: 5, baselineSnapshotId: 77, milestoneIds: [9] })
+    );
+    expect(response.status).toBe(400);
+    expect(mockedLoadSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("applies a scoped baseline's frozen frame to the live side", async () => {
+    mockedLoadSnapshot.mockResolvedValue(
+      loadedSnapshot(fixtureRows(), {
+        scopeMilestoneIds: [9],
+        scopeConfigIds: [4],
+      })
+    );
+    mockedLoad.mockResolvedValue(traceabilityData(laterRows()));
+
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({ projectId: 5, baselineSnapshotId: 77 })
+    );
+    expect(response.status).toBe(200);
+    expect(mockedLoad).toHaveBeenCalledWith(
+      5,
+      { accessibleProjectIds: [5] },
+      undefined,
+      { executionScope: { milestoneIds: [9], configIds: [4] } }
+    );
+  });
+
+  it("refuses to diff two snapshots captured under different execution scopes", async () => {
+    mockedLoadSnapshot
+      .mockResolvedValueOnce(
+        loadedSnapshot(fixtureRows(), { scopeMilestoneIds: [9] })
+      )
+      .mockResolvedValueOnce(
+        loadedSnapshot(laterRows(), { id: 78, scopeMilestoneIds: [12] })
+      );
+
+    const response = await handleRequirementCoverageChangesPOST(
+      makeRequest({
+        projectId: 5,
+        baselineSnapshotId: 77,
+        compareSnapshotId: 78,
+      })
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/different execution scopes/);
   });
 });
 

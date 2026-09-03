@@ -23,10 +23,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import {
   useRequirementSnapshotList,
   type RequirementSnapshotOption,
 } from "~/hooks/useRequirementSnapshotList";
+import { isSnapshotExecutionScoped } from "~/utils/requirementExecutionScope";
 import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 import { deleteRequirementSnapshot } from "./requirementSnapshotActions";
@@ -79,6 +81,7 @@ export function RequirementSnapshotPicker({
 }) {
   const t = useTranslations("reports.ui.requirementCoverage");
   const tCommon = useTranslations("common");
+  const tScope = useTranslations("requirements.scope");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
   const queryClient = useQueryClient();
@@ -218,7 +221,19 @@ export function RequirementSnapshotPicker({
                     data-testid={`${testIdPrefix}-option-${option.id}`}
                   >
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate">{option.name}</span>
+                      <span className="flex min-w-0 items-center gap-1">
+                        <span className="truncate">{option.name}</span>
+                        {isSnapshotExecutionScoped(option) && (
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 px-1 py-0 text-[10px] font-normal"
+                            title={tScope("snapshotScoped")}
+                            data-testid={`${testIdPrefix}-scoped-${option.id}`}
+                          >
+                            {tScope("scopedBadge")}
+                          </Badge>
+                        )}
+                      </span>
                       {/* One visible line that wraps whatever no longer
                           fits onto a hidden second line, so a part
                           collapses exactly when it stops fitting — last

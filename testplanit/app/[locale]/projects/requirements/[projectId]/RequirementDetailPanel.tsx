@@ -68,10 +68,16 @@ import {
   type RequirementProvenanceBadgeRow,
 } from "./RequirementProvenanceBadge";
 import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
+import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 
 interface RequirementDetailPanelProps {
   projectId: string;
   requirementId: number;
+  /** The workspace's coverage execution scope (milestone/configuration) —
+   *  this panel's coverage breakdown and drill-down count under it so the
+   *  numbers here always agree with the list beside it. Absent on the
+   *  standalone route, which has no scope pickers: unscoped, unchanged. */
+  executionScope?: RequirementExecutionScopeSelection;
   /** Opens the list's own Delete Requirement dialog for this requirement,
    *  the same one its row action already offers. This panel
    *  holds no delete logic of its own -- no fetch, no mutation, no
@@ -211,6 +217,7 @@ function buildResetValues(row: RequirementRow): RequirementDetailFormData {
 export default function RequirementDetailPanel({
   projectId,
   requirementId,
+  executionScope,
   onRequestDelete,
   editRequest,
   backHref,
@@ -251,7 +258,11 @@ export default function RequirementDetailPanel({
   // Scoped to this one requirement -- see the hook's own doc for why it does
   // not reuse the list's whole-project rollup.
   const { breakdown: coverageBreakdown, isLoading: coverageIsLoading } =
-    useRequirementCoverageBreakdown(Number(projectId), requirementId);
+    useRequirementCoverageBreakdown(
+      Number(projectId),
+      requirementId,
+      executionScope
+    );
 
   const { mutateAsync: updateRequirement } =
     useClientQueries(schema).issue.useUpdate();
@@ -867,6 +878,7 @@ export default function RequirementDetailPanel({
       <RequirementCoveragePanel
         projectId={projectId}
         requirementId={requirement.id}
+        executionScope={executionScope}
       />
       <LinkedRequirementCasesPanel
         projectId={projectId}

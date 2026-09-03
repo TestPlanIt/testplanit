@@ -1526,7 +1526,7 @@
             "enableLabel": "Włącz klasyfikację wymagań",
             "issueTypesLabel": "Typy problemów",
             "issueTypesPlaceholder": "Wybierz typy problemów",
-            "issueTypesAriaLabel": "Typy problemów będących wymaganiami",
+            "issueTypesAriaLabel": "Typy problemów wymagań",
             "labelsLabel": "Etykiety",
             "labelsPlaceholder": "Wybierz etykiety",
             "labelsAriaLabel": "Etykiety wymagań",
@@ -6883,6 +6883,19 @@
     "disabled": {
       "title": "Wymagania nie są włączone",
       "description": "Ten projekt nie ma włączonej funkcji wymagań. Poproś administratora projektu o jej włączenie w ustawieniach projektu, aby zacząć budować drzewa wymagań."
+    },
+    "scope": {
+      "hint": "Ogranicz pokrycie do wykonań z przebiegów w wybranych kamieniach milowych i konfiguracjach",
+      "scopedBadge": "Zawężone pokrycie",
+      "snapshotScoped": "Zarejestrowano z zakresem wykonań"
+    },
+    "history": {
+      "title": "Historia treści",
+      "description": "Każda zmiana tytułu, dokumentacji lub notatki tego wymagania wraz z tym, co się zmieniło",
+      "empty": "Nie zarejestrowano jeszcze zmian treści — obecny tekst jest oryginałem.",
+      "versionLabel": "Wersja {version}",
+      "currentBadge": "Bieżąca",
+      "bySync": "Synchronizacja lub system"
     }
   },
   "Pages": {
