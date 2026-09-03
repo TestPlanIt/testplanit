@@ -48,7 +48,7 @@ Navigate to **Administration** → **Prompt Configurations** in the admin menu (
    - **System Prompt** — Instructions that set the AI's behavior and context (required)
    - **User Prompt** — The template sent with each request, supporting `{{variable}}` placeholders
    - **Temperature** — Controls randomness (0 = deterministic, 2 = most creative, default: 0.7)
-   - **Max Output Tokens** — Maximum length of AI responses (default: 2048)
+   - **Max Output Tokens** — Maximum length of AI responses (default: 2048). Used by Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report. Test Case Generation, Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection use the AI model's **Default Max Tokens** instead (see [Token Limits](./llm-integrations.md#token-limits))
 4. Click **Save** to create the configuration
 
 Default prompts are pre-filled for each feature when creating a new configuration.
