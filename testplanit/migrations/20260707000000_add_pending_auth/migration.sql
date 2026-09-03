@@ -9,12 +9,17 @@
 -- (Microsoft Safe Links, Mimecast, Proofpoint, Barracuda).
 --
 -- Purely additive: new enum + table + indexes, no existing data touched.
+-- Guarded: 0.x releases created these same objects via db push, so upgraded
+-- databases already have them.
 
 -- CreateEnum
-CREATE TYPE "PendingAuthStatus" AS ENUM ('PENDING', 'CONSUMED', 'SUPERSEDED', 'LOCKED');
+DO $$ BEGIN
+    CREATE TYPE "PendingAuthStatus" AS ENUM ('PENDING', 'CONSUMED', 'SUPERSEDED', 'LOCKED');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
 
 -- CreateTable
-CREATE TABLE "PendingAuth" (
+CREATE TABLE IF NOT EXISTS "PendingAuth" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "verifierHash" TEXT NOT NULL,
@@ -33,10 +38,10 @@ CREATE TABLE "PendingAuth" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PendingAuth_linkTokenHash_key" ON "PendingAuth"("linkTokenHash");
+CREATE UNIQUE INDEX IF NOT EXISTS "PendingAuth_linkTokenHash_key" ON "PendingAuth"("linkTokenHash");
 
 -- CreateIndex
-CREATE INDEX "PendingAuth_email_status_idx" ON "PendingAuth"("email", "status");
+CREATE INDEX IF NOT EXISTS "PendingAuth_email_status_idx" ON "PendingAuth"("email", "status");
 
 -- CreateIndex
-CREATE INDEX "PendingAuth_expiresAt_idx" ON "PendingAuth"("expiresAt");
+CREATE INDEX IF NOT EXISTS "PendingAuth_expiresAt_idx" ON "PendingAuth"("expiresAt");
