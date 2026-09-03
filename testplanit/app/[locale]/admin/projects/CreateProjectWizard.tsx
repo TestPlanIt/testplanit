@@ -21,7 +21,7 @@ import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1599,7 +1599,7 @@ export function CreateProjectWizard({
                           checked={selectedStatuses.includes(status.id)}
                           onCheckedChange={() => toggleStatus(status.id)}
                         />
-                        <StatusDotDisplay
+                        <StatusDisplay
                           name={status.name}
                           color={status.color?.value}
                           dotClassName="w-3 h-3 rounded-full"

@@ -16,7 +16,7 @@ import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
 import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { SessionNameDisplay } from "~/components/SessionNameDisplay";
-import StatusDotDisplay from "~/components/StatusDotDisplay";
+import StatusDisplay from "~/components/StatusDisplay";
 import { UserNameCell } from "~/components/tables/UserNameCell";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
@@ -274,7 +274,7 @@ export function useDrillDownColumns({
               );
             }
             return (
-              <StatusDotDisplay
+              <StatusDisplay
                 name={row.status.name}
                 color={row.status.color?.value}
               />
@@ -398,7 +398,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const row = info.row.original as any;
             return (
-              <StatusDotDisplay
+              <StatusDisplay
                 name={row.status?.name || ""}
                 color={row.status?.color?.value}
               />
@@ -720,7 +720,7 @@ export function useDrillDownColumns({
           cell: (info) => {
             const row = info.row.original as any;
             return (
-              <StatusDotDisplay
+              <StatusDisplay
                 name={row.state?.name || ""}
                 color={row.state?.color?.value}
               />
@@ -1542,7 +1542,7 @@ export function useDrillDownColumns({
             const row = info.row.original as any;
             if (row.status) {
               return (
-                <StatusDotDisplay
+                <StatusDisplay
                   name={row.status.name}
                   color={row.status.color?.value}
                 />
@@ -1550,7 +1550,7 @@ export function useDrillDownColumns({
             }
             if (row.state) {
               return (
-                <StatusDotDisplay
+                <StatusDisplay
                   name={row.state.name}
                   color={row.state.color?.value}
                 />

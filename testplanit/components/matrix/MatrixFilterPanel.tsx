@@ -7,7 +7,7 @@ import { useCallback, useMemo } from "react";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import DatasetNameDisplay from "@/components/parameters/DatasetNameDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { searchProjectDataSets } from "~/app/actions/searchProjectDataSets";
 import { searchProjectMatrixConfigurations } from "~/app/actions/searchProjectMatrixConfigurations";
@@ -39,7 +39,7 @@ interface DatasetOptionRow {
  *
  * Filter sources:
  *   - Statuses: scoped to the current project via `ProjectStatusAssignment`,
- *     rendered with `StatusDotDisplay` so users recognize statuses by
+ *     rendered with `StatusDisplay` so users recognize statuses by
  *     their color swatch (matches the dropdowns in Test Runs).
  *   - Configurations: global (Configurations is a system-wide model — its
  *     project relevance is implicit via the runs that consume it).
@@ -216,10 +216,10 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           }
           fetchOptions={fetchStatusOptions}
           renderOption={(opt) => (
-            <StatusDotDisplay name={opt.name} color={opt.color} />
+            <StatusDisplay name={opt.name} color={opt.color} />
           )}
           renderSelectedOption={(opt) => (
-            <StatusDotDisplay name={opt.name} color={opt.color} />
+            <StatusDisplay name={opt.name} color={opt.color} />
           )}
           getOptionValue={(opt) => opt.id}
           getOptionLabel={(opt) => opt.name}

@@ -21,7 +21,7 @@ import { IssueTypeNameDisplay } from "~/components/IssueTypeNameDisplay";
 import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
-import StatusDotDisplay from "~/components/StatusDotDisplay";
+import StatusDisplay from "~/components/StatusDisplay";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { TagsDisplay } from "~/components/tables/TagDisplay";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
@@ -229,7 +229,7 @@ export function useReportColumns(
                 // Get the full status object from the row data
                 const statusData = info.row.original[dimensionId];
                 return (
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={statusData?.name || tCommon("labels.unknown")}
                     color={statusData?.color}
                   />
@@ -540,7 +540,7 @@ export function useReportColumns(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
                 (status) => (
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={status?.name || tCommon("labels.unknown")}
                     color={status?.color}
                   />

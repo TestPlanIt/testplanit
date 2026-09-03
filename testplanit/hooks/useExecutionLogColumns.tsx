@@ -1,6 +1,6 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { DurationDisplay } from "@/components/DurationDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
@@ -210,7 +210,7 @@ export function useExecutionLogColumns(
         cell: (info) => {
           const { status } = info.row.original;
           if (!status?.name) return null;
-          return <StatusDotDisplay name={status.name} color={status.color} />;
+          return <StatusDisplay name={status.name} color={status.color} />;
         },
         enableSorting: true,
         size: 140,

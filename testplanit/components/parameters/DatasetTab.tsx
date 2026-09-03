@@ -9,7 +9,7 @@ import { DatasetRowActions } from "@/components/parameters/DatasetRowActions";
 import { PasteCsvDialog } from "@/components/parameters/PasteCsvDialog";
 import { SheetEditingContext } from "@/components/parameters/ConfigureParametersSheet";
 import { SortableDatasetRow } from "@/components/parameters/SortableDatasetRow";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1309,7 +1309,7 @@ export function DatasetTab({
               data-testid={`dataset-row-result-link-${row.original.rowIndex}`}
               className="text-sm hover:underline focus-visible:underline focus-visible:outline-none"
             >
-              <StatusDotDisplay
+              <StatusDisplay
                 name={entry.status.name}
                 color={entry.status.color?.value}
               />

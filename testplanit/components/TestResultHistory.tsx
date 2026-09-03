@@ -5,6 +5,7 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { formatSeconds } from "@/components/DurationDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
+import StatusDisplay from "@/components/StatusDisplay";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
@@ -84,7 +85,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link, useRouter } from "~/lib/navigation";
-import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import TipTapEditor from "./tiptap/TipTapEditor";
@@ -531,19 +531,12 @@ const StepResultsDisplay = ({
                     <ListOrdered className="h-4 w-4 shrink-0" />
                     {tCommon("fields.step")} {stepCounter}
                   </div>
-                  <Badge
-                    variant="outline"
-                    data-status-surface
-                    style={{
-                      ...statusSurfaceVars(stepResult.status.color.value),
-                      backgroundColor: stepResult.status.color.value,
-                      color: "white",
-                      borderColor: stepResult.status.color.value,
-                    }}
+                  <StatusDisplay
+                    variant="filled"
+                    name={stepResult.status.name}
+                    color={stepResult.status.color.value}
                     className="shrink-0"
-                  >
-                    {stepResult.status.name}
-                  </Badge>
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="bg-muted/30 rounded-lg p-2">
@@ -697,19 +690,12 @@ const RenderSharedGroupInHistoryList: React.FC<{
                 </div>
               </div>
               {itemResult && (
-                <Badge
-                  variant="outline"
-                  data-status-surface
-                  style={{
-                    ...statusSurfaceVars(itemResult.status.color.value),
-                    backgroundColor: itemResult.status.color.value,
-                    color: "white",
-                    borderColor: itemResult.status.color.value,
-                  }}
+                <StatusDisplay
+                  variant="filled"
+                  name={itemResult.status.name}
+                  color={itemResult.status.color.value}
                   className="ms-2 shrink-0"
-                >
-                  {itemResult.status.name}
-                </Badge>
+                />
               )}
             </div>
             {itemResult?.notes && !isTiptapEmpty(itemResult.notes) && (
@@ -1661,7 +1647,6 @@ export default function TestResultHistory({
     nonPendingResults.every((r) => expandedResults.has(r.displayId));
 
   const renderResultRow = (result: UnifiedTestResult) => {
-    const statusColor = result.status?.color?.value || "transparent";
     const isExpanded = expandedResults.has(result.displayId);
     const isCurrentRun =
       currentTestRunId != null &&
@@ -1819,18 +1804,11 @@ export default function TestResultHistory({
             </div>
           </TableCell>
           <TableCell className="max-w-[120px]">
-            <Badge
-              variant="outline"
-              data-status-surface
-              style={{
-                ...statusSurfaceVars(statusColor),
-                backgroundColor: statusColor,
-                color: "white",
-                borderColor: statusColor,
-              }}
-            >
-              {result.status.name}
-            </Badge>
+            <StatusDisplay
+              variant="filled"
+              name={result.status.name}
+              color={result.status?.color?.value}
+            />
           </TableCell>
           <TableCell className="max-w-[150px]">
             {result.executedBy && result.executedBy.id ? (

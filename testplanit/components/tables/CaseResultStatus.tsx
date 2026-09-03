@@ -1,6 +1,6 @@
 "use client";
 
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import {
   Tooltip,
   TooltipContent,
@@ -53,7 +53,7 @@ export function CaseResultStatus({
   const t = useTranslations();
 
   const status = (
-    <StatusDotDisplay
+    <StatusDisplay
       name={statusName ?? t("requirements.coverage.notRunCell")}
       color={statusColor ?? undefined}
       className={className}

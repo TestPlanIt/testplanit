@@ -47,7 +47,7 @@ vi.mock("~/components/UserNameCell", () => ({
   UserNameCell: ({ userId }: { userId: string }) => <span>User: {userId}</span>,
 }));
 
-vi.mock("~/components/StatusDotDisplay", () => ({
+vi.mock("~/components/StatusDisplay", () => ({
   default: ({ name, color }: { name: string; color?: string }) => (
     <span>
       Status: {name} ({color})

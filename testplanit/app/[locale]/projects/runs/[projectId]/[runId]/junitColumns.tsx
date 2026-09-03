@@ -6,7 +6,7 @@ import SystemOutputPopover from "@/components/junit/SystemOutputPopover";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Badge } from "@/components/ui/badge";
+import StatusDisplay from "@/components/StatusDisplay";
 import {
   Tooltip,
   TooltipContent,
@@ -16,10 +16,6 @@ import type { Attachments } from "~/zenstack/models";
 import { LinkIcon, Zap } from "lucide-react";
 import type { Session } from "next-auth";
 import { RECORD_TYPES } from "~/lib/recordKey";
-import {
-  perceptualTextColor,
-  statusSurfaceVars,
-} from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 
 export function getJunitColumns({
@@ -290,18 +286,12 @@ export function getJunitColumns({
       meta: { isPinned: "right" },
       cell: ({ row }: { row: { original: any } }) => (
         <div className="flex items-center justify-end h-full">
-          <Badge
-            variant="default"
-            className="font-semibold h-full"
-            data-status-surface
-            style={{
-              ...statusSurfaceVars(row.original.resultColor),
-              backgroundColor: row.original.resultColor,
-              color: perceptualTextColor(row.original.resultColor),
-            }}
-          >
-            {row.original.resultStatus}
-          </Badge>
+          <StatusDisplay
+            variant="filled"
+            name={row.original.resultStatus}
+            color={row.original.resultColor}
+            className="h-full"
+          />
         </div>
       ),
       size: 120,

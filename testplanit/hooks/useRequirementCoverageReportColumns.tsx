@@ -10,7 +10,7 @@ import {
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
@@ -86,7 +86,7 @@ function RequirementResultCell({
 
   if (row.lastStatusName) {
     return (
-      <StatusDotDisplay
+      <StatusDisplay
         name={row.lastStatusName}
         color={row.lastStatusColor ?? undefined}
       />

@@ -15,7 +15,7 @@ vi.mock("~/lib/navigation", () => ({
   ),
 }));
 
-vi.mock("@/components/StatusDotDisplay", () => ({
+vi.mock("@/components/StatusDisplay", () => ({
   default: ({ name }: { name: string }) => <span>{name}</span>,
 }));
 

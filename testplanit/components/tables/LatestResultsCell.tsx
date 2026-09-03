@@ -1,6 +1,6 @@
 "use client";
 
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import {
   Tooltip,
   TooltipContent,
@@ -76,7 +76,7 @@ export function LatestResultsCell({
               <TooltipTrigger asChild>{box}</TooltipTrigger>
               <TooltipContent>
                 <div className="space-y-1 text-xs">
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={execution.statusName}
                     color={execution.statusColor}
                   />

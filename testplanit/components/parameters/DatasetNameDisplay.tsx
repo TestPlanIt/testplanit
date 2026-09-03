@@ -30,7 +30,7 @@ interface DatasetNameDisplayProps {
  * Consistent dataset-name + type-icon row used wherever the app lists
  * datasets (filter pickers, assignment dialogs, project settings).
  *
- * Mirrors the pattern of `StatusDotDisplay` — a tiny presentation
+ * Mirrors the pattern of `StatusDisplay` — a tiny presentation
  * component so all surfaces show the same icon for the same dataset
  * type, and a future icon swap is a one-file change.
  */

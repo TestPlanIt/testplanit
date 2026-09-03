@@ -14,7 +14,7 @@ import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay"
 import { DateFormatter } from "@/components/DateFormatter";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
+import StatusDisplay from "@/components/StatusDisplay";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { CommentsListDisplay } from "@/components/tables/CommentsListDisplay";
@@ -769,7 +769,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             data-testid={`testrun-status-cell-parameterized-${caseId}`}
             title={t("repository.cases.parameterizedStatusReadOnly")}
           >
-            <StatusDotDisplay
+            <StatusDisplay
               name={displayStatus.name}
               color={
                 hasColor(displayStatus) ? displayStatus.color.value : undefined
@@ -787,7 +787,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                 className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
                 disabled={isDisabled}
               >
-                <StatusDotDisplay
+                <StatusDisplay
                   name={displayStatus.name}
                   color={
                     hasColor(displayStatus)
@@ -808,7 +808,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     statusOption.id === displayStatus.id ? "bg-muted" : ""
                   }`}
                 >
-                  <StatusDotDisplay
+                  <StatusDisplay
                     name={statusOption.name}
                     color={statusOption.color?.value}
                     dotClassName="w-3 h-3 rounded-full me-2"
