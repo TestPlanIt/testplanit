@@ -125,7 +125,7 @@ test.describe("Admin Status Management", () => {
       // Cleanup: soft-delete via API
       if (createdStatusId) {
         try {
-          await request.post(`${baseURL}/api/model/status/update`, {
+          await request.patch(`${baseURL}/api/model/status/update`, {
             data: {
               where: { id: createdStatusId },
               data: { isDeleted: true },
@@ -241,7 +241,7 @@ test.describe("Admin Status Management", () => {
     } finally {
       if (createdStatusId) {
         try {
-          await request.post(`${baseURL}/api/model/status/update`, {
+          await request.patch(`${baseURL}/api/model/status/update`, {
             data: {
               where: { id: createdStatusId },
               data: { isDeleted: true },
@@ -368,7 +368,7 @@ test.describe("Admin Status Management", () => {
     } finally {
       if (createdStatusId) {
         try {
-          await request.post(`${baseURL}/api/model/status/update`, {
+          await request.patch(`${baseURL}/api/model/status/update`, {
             data: {
               where: { id: createdStatusId },
               data: { isDeleted: true },
@@ -498,7 +498,7 @@ test.describe("Admin Status Management", () => {
     } finally {
       if (createdStatusId) {
         try {
-          await request.post(`${baseURL}/api/model/status/update`, {
+          await request.patch(`${baseURL}/api/model/status/update`, {
             data: {
               where: { id: createdStatusId },
               data: { isDeleted: true },
@@ -598,7 +598,7 @@ test.describe("Admin Status Management", () => {
     } finally {
       if (createdStatusId) {
         try {
-          await request.post(`${baseURL}/api/model/status/update`, {
+          await request.patch(`${baseURL}/api/model/status/update`, {
             data: {
               where: { id: createdStatusId },
               data: { isDeleted: true },

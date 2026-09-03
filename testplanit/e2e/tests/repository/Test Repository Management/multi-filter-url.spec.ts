@@ -64,9 +64,19 @@ async function pickDimension(page: Page, dimensionKey: string): Promise<void> {
   // Only click Add while the dropdown is closed - clicking it with the menu
   // open would toggle it shut again.
   const option = page.getByTestId(`filter-dimension-option-${dimensionKey}`);
-  const editor = page.getByTestId("filter-chip-editor");
+  const anyEditor = page.getByTestId("filter-chip-editor");
+  // Only an editor for THIS dimension counts: a chip committed a moment ago
+  // re-opens its own editor once the URL round-trip lands, and treating that
+  // as "done" would skip the Add click and leave the wrong editor open.
+  const editor = anyEditor.and(
+    page.locator(`[data-dimension="${dimensionKey}"]`)
+  );
   await expect(async () => {
     if (await editor.isVisible().catch(() => false)) return;
+    if (await anyEditor.isVisible().catch(() => false)) {
+      await page.keyboard.press("Escape");
+      await expect(anyEditor).toBeHidden({ timeout: 3000 });
+    }
     if (!(await option.isVisible().catch(() => false))) {
       await addButton.click({ timeout: 2000 });
       await expect(option).toBeVisible({ timeout: 3000 });

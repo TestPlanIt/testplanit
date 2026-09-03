@@ -95,7 +95,7 @@ test.describe("Role Management", () => {
       }
     } finally {
       if (createdRoleId) {
-        await page.request.post(`/api/model/roles/update`, {
+        await page.request.patch(`/api/model/roles/update`, {
           data: {
             where: { id: createdRoleId },
             data: { isDeleted: true },
@@ -158,7 +158,7 @@ test.describe("Role Management", () => {
       await expect(updatedRow).toBeVisible({ timeout: 10000 });
     } finally {
       if (createdRoleId) {
-        await page.request.post(`/api/model/roles/update`, {
+        await page.request.patch(`/api/model/roles/update`, {
           data: {
             where: { id: createdRoleId },
             data: { isDeleted: true },
@@ -224,7 +224,7 @@ test.describe("Role Management", () => {
       createdRoleId = undefined;
     } finally {
       if (createdRoleId) {
-        await page.request.post(`/api/model/roles/update`, {
+        await page.request.patch(`/api/model/roles/update`, {
           data: {
             where: { id: createdRoleId },
             data: { isDeleted: true },
@@ -290,13 +290,13 @@ test.describe("Role Management", () => {
           const userRoleData = await userRoleResp.json();
           const userRoleId = userRoleData?.data?.id;
           if (userRoleId) {
-            await page.request.post(`/api/model/roles/updateMany`, {
+            await page.request.patch(`/api/model/roles/updateMany`, {
               data: {
                 where: { isDefault: true },
                 data: { isDefault: false },
               },
             });
-            await page.request.post(`/api/model/roles/update`, {
+            await page.request.patch(`/api/model/roles/update`, {
               data: {
                 where: { id: userRoleId },
                 data: { isDefault: true },
@@ -306,7 +306,7 @@ test.describe("Role Management", () => {
         }
 
         // Now delete the test role
-        await page.request.post(`/api/model/roles/update`, {
+        await page.request.patch(`/api/model/roles/update`, {
           data: {
             where: { id: createdRoleId },
             data: { isDeleted: true },
@@ -383,7 +383,7 @@ test.describe("Role Management", () => {
       await expect(page).not.toHaveURL(/error/);
     } finally {
       if (createdRoleId) {
-        await page.request.post(`/api/model/roles/update`, {
+        await page.request.patch(`/api/model/roles/update`, {
           data: {
             where: { id: createdRoleId },
             data: { isDeleted: true },

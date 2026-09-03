@@ -399,7 +399,14 @@ test.describe("Configuration Management - Variant CRUD", () => {
           .getByRole("button", { name: /^save$/i })
           .first();
         await saveButton.click();
-        await page.waitForLoadState("networkidle");
+
+        // The inline form closes only after the create mutation resolves and
+        // the refetched list renders the new variant. Waiting for both keeps
+        // the reload below from aborting the in-flight request.
+        await expect(variantInput).not.toBeVisible({ timeout: 10000 });
+        await expect(
+          page.locator("tr").filter({ hasText: variantName }).first()
+        ).toBeVisible({ timeout: 10000 });
       });
 
       await test.step("Reload, re-expand the category, and verify the new variant", async () => {

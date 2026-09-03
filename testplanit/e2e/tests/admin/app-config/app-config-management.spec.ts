@@ -164,10 +164,8 @@ test.describe("App Config Management - Create Operations", () => {
 
     // Cleanup via API
     try {
-      await request.post(`${apiBase}/api/model/appConfig/delete`, {
-        data: {
-          where: { key: configKey },
-        },
+      await request.delete(`${apiBase}/api/model/appConfig/delete`, {
+        params: { q: JSON.stringify({ where: { key: configKey } }) },
       });
     } catch (e) {
       console.warn("Cleanup failed:", e);
@@ -285,10 +283,8 @@ test.describe("App Config Management - Edit Operations", () => {
     } finally {
       // Cleanup
       await request
-        .post(`${apiBase}/api/model/appConfig/delete`, {
-          data: {
-            where: { key: configKey },
-          },
+        .delete(`${apiBase}/api/model/appConfig/delete`, {
+          params: { q: JSON.stringify({ where: { key: configKey } }) },
         })
         .catch(() => {});
     }
@@ -410,10 +406,8 @@ test.describe("App Config Management - Search and Filter", () => {
       // Cleanup
       if (createResponse.ok()) {
         await request
-          .post(`${apiBase}/api/model/appConfig/delete`, {
-            data: {
-              where: { key: uniqueKey },
-            },
+          .delete(`${apiBase}/api/model/appConfig/delete`, {
+            params: { q: JSON.stringify({ where: { key: uniqueKey } }) },
           })
           .catch(() => {});
       }

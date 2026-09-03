@@ -15,6 +15,11 @@ import { TemplatesFieldsPage } from "../../../page-objects/admin/templates-field
  * "Changing default unsets previous default" cascade test below.
  */
 
+// Every test here sets or reads the single global default-template flag, and
+// the single-default DB trigger flips the previous default off, so run them
+// in order on one worker instead of letting fullyParallel interleave them.
+test.describe.configure({ mode: "default" });
+
 test.describe("Default Template - Basic Behavior", () => {
   let templatesPage: TemplatesFieldsPage;
 

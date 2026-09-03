@@ -28,6 +28,11 @@ function makeStep(text: string, expectedResult: string, order: number) {
   };
 }
 
+// The results table is virtualized: rows are `step-duplicate-row-<id>` divs
+// (each with a sibling `-ring` focus element), not <tbody><tr>.
+const STEP_DUPLICATE_ROW =
+  '[data-testid^="step-duplicate-row-"]:not([data-testid$="-ring"])';
+
 test.describe("Step Duplicate Detection Workflow", () => {
   test("View step-duplicate results page with seeded data", async ({
     api,
@@ -91,7 +96,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
       await expect(table).toBeVisible({ timeout: 10000 });
 
       // Should show at least one row with step count and case count
-      const tableBody = table.locator("tbody tr");
+      const tableBody = table.locator(STEP_DUPLICATE_ROW);
       await expect(tableBody.first()).toBeVisible({ timeout: 10000 });
     });
   });
@@ -148,7 +153,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await test.step("Open the conversion dialog from the first result row", async () => {
       // Click the first row to open the conversion dialog
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const firstRow = table.locator("tbody tr").first();
+      const firstRow = table.locator(STEP_DUPLICATE_ROW).first();
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await firstRow.click();
 
@@ -224,7 +229,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await test.step("Open the conversion dialog from the first result row", async () => {
       // Click row to open dialog
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const firstRow = table.locator("tbody tr").first();
+      const firstRow = table.locator(STEP_DUPLICATE_ROW).first();
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await firstRow.click();
 
@@ -299,7 +304,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
     await test.step("Open the conversion dialog from the first result row", async () => {
       // Click row to open dialog
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const firstRow = table.locator("tbody tr").first();
+      const firstRow = table.locator(STEP_DUPLICATE_ROW).first();
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await firstRow.click();
 
@@ -410,13 +415,13 @@ test.describe("Step Duplicate Detection Workflow", () => {
       await page.waitForLoadState("networkidle");
 
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const rows = table.locator("tbody tr");
+      const rows = table.locator(STEP_DUPLICATE_ROW);
       await expect(rows).toHaveCount(2, { timeout: 10000 });
     });
 
     await test.step("Select both rows and bulk dismiss the matches", async () => {
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const rows = table.locator("tbody tr");
+      const rows = table.locator(STEP_DUPLICATE_ROW);
 
       // Select both rows using checkboxes
       const checkbox1 = rows
@@ -501,7 +506,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
 
     await test.step("First open shows the three matched steps", async () => {
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const firstRow = table.locator("tbody tr").first();
+      const firstRow = table.locator(STEP_DUPLICATE_ROW).first();
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await firstRow.click();
 
@@ -518,7 +523,7 @@ test.describe("Step Duplicate Detection Workflow", () => {
     // leave it empty.
     await test.step("Second open still shows the three matched steps", async () => {
       const table = page.locator('[data-testid="step-duplicates-table"]');
-      const firstRow = table.locator("tbody tr").first();
+      const firstRow = table.locator(STEP_DUPLICATE_ROW).first();
       await expect(firstRow).toBeVisible({ timeout: 10000 });
       await firstRow.click();
 

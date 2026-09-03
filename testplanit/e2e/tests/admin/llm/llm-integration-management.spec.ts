@@ -204,7 +204,7 @@ test.describe("LLM Integration Management - Add Integration", () => {
         const found = await findResponse.json();
         const integrationId = found?.data?.id || found?.id;
         if (integrationId) {
-          await request.post(`${apiBase}/api/model/llmIntegration/update`, {
+          await request.patch(`${apiBase}/api/model/llmIntegration/update`, {
             data: {
               where: { id: integrationId },
               data: { isDeleted: true },
@@ -307,7 +307,7 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
       // Cleanup
       if (integrationId) {
         await request
-          .post(`${apiBase}/api/model/llmIntegration/update`, {
+          .patch(`${apiBase}/api/model/llmIntegration/update`, {
             data: {
               where: { id: integrationId },
               data: { isDeleted: true },
@@ -393,7 +393,7 @@ test.describe("LLM Integration Management - Edit and Delete Operations", () => {
         // Dialog didn't open, clean up via API
         if (integrationId) {
           await request
-            .post(`${apiBase}/api/model/llmIntegration/update`, {
+            .patch(`${apiBase}/api/model/llmIntegration/update`, {
               data: {
                 where: { id: integrationId },
                 data: { isDeleted: true },
@@ -499,7 +499,7 @@ test.describe("LLM Integration Management - Test Connection", () => {
       // Cleanup
       if (integrationId) {
         await request
-          .post(`${apiBase}/api/model/llmIntegration/update`, {
+          .patch(`${apiBase}/api/model/llmIntegration/update`, {
             data: {
               where: { id: integrationId },
               data: { isDeleted: true },

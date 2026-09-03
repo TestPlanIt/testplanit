@@ -134,8 +134,8 @@ test.describe("AddUser optional password (magic link configured)", () => {
       }
       if (createdProvider && providerId) {
         await page.request
-          .post(`${baseURL}/api/model/ssoProvider/delete`, {
-            data: { where: { id: providerId } },
+          .delete(`${baseURL}/api/model/ssoProvider/delete`, {
+            params: { q: JSON.stringify({ where: { id: providerId } }) },
           })
           .catch(() => {});
       }

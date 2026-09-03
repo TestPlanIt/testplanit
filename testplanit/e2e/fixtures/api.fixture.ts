@@ -3013,10 +3013,8 @@ export class ApiHelper {
     }>
   ): Promise<void> {
     // Delete existing steps
-    await this.request.post(`${this.baseURL}/api/model/steps/deleteMany`, {
-      data: {
-        where: { testCaseId },
-      },
+    await this.request.delete(`${this.baseURL}/api/model/steps/deleteMany`, {
+      params: { q: JSON.stringify({ where: { testCaseId } }) },
     });
 
     // Add new steps

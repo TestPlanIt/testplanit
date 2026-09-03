@@ -156,7 +156,7 @@ test.describe("Admin Workflow Management", () => {
       // Clean up: soft-delete the workflow
       if (createdWorkflowId) {
         try {
-          await request.post(`${baseURL}/api/model/workflows/update`, {
+          await request.patch(`${baseURL}/api/model/workflows/update`, {
             data: {
               where: { id: createdWorkflowId },
               data: { isDeleted: true },
@@ -289,7 +289,7 @@ test.describe("Admin Workflow Management", () => {
       // Soft-delete workflow
       if (createdWorkflowId) {
         try {
-          await request.post(`${baseURL}/api/model/workflows/update`, {
+          await request.patch(`${baseURL}/api/model/workflows/update`, {
             data: {
               where: { id: createdWorkflowId },
               data: { isDeleted: true },
@@ -424,7 +424,7 @@ test.describe("Admin Workflow Management", () => {
     } finally {
       if (createdWorkflowId) {
         try {
-          await request.post(`${baseURL}/api/model/workflows/update`, {
+          await request.patch(`${baseURL}/api/model/workflows/update`, {
             data: {
               where: { id: createdWorkflowId },
               data: { isDeleted: true },
@@ -540,10 +540,10 @@ test.describe("Admin Workflow Management", () => {
       await test.step("Swap the workflow order values and confirm both remain visible after reload", async () => {
         // Verify order via API — swap the order values
         if (wf1Id && wf2Id) {
-          await request.post(`${baseURL}/api/model/workflows/update`, {
+          await request.patch(`${baseURL}/api/model/workflows/update`, {
             data: { where: { id: wf1Id }, data: { order: 101 } },
           });
-          await request.post(`${baseURL}/api/model/workflows/update`, {
+          await request.patch(`${baseURL}/api/model/workflows/update`, {
             data: { where: { id: wf2Id }, data: { order: 100 } },
           });
 
@@ -563,7 +563,7 @@ test.describe("Admin Workflow Management", () => {
       for (const wfId of [wf1Id, wf2Id]) {
         if (wfId) {
           try {
-            await request.post(`${baseURL}/api/model/workflows/update`, {
+            await request.patch(`${baseURL}/api/model/workflows/update`, {
               data: { where: { id: wfId }, data: { isDeleted: true } },
             });
           } catch {
