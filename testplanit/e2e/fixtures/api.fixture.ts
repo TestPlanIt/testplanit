@@ -934,6 +934,52 @@ export class ApiHelper {
   }
 
   /**
+   * Create a locally-owned requirement — an Issue flagged `isRequirement` —
+   * via the model API (the admin policy allows setting the flag directly).
+   * Tracked with the issues for cleanup.
+   */
+  async createRequirement(
+    projectId: number,
+    name: string,
+    title: string,
+    options: { parentId?: number; description?: string } = {}
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/issue/create`,
+      {
+        data: {
+          data: {
+            name,
+            title,
+            isRequirement: true,
+            isDeleted: false,
+            ...(options.description
+              ? { description: options.description }
+              : {}),
+            project: { connect: { id: projectId } },
+            createdBy: { connect: { id: userId } },
+            ...(options.parentId
+              ? { parent: { connect: { id: options.parentId } } }
+              : {}),
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create requirement: ${error}`);
+    }
+
+    const result = await response.json();
+    const issueId = result.data.id;
+    this.tracked.issueIds.push(issueId);
+    return issueId;
+  }
+
+  /**
    * Link an issue to a test case via API
    * Uses the many-to-many relationship between Issues and RepositoryCases
    */
@@ -3493,6 +3539,27 @@ export class ApiHelper {
   /**
    * Enable QuickScript on a project.
    */
+  /**
+   * Turn on the Requirements feature for a project (a per-project opt-in
+   * that gates the workspace, the nav item and the requirement report types).
+   */
+  async enableRequirements(projectId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/projects/update`,
+      {
+        data: {
+          where: { id: projectId },
+          data: { requirementsEnabled: true },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to enable requirements: ${error}`);
+    }
+  }
+
   async enableQuickScript(projectId: number): Promise<void> {
     const response = await this.request.patch(
       `${this.baseURL}/api/model/projects/update`,
