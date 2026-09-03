@@ -68,8 +68,10 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     const expandFetchIdx = src.indexOf('"/api/llm/generate-test-cases/expand"');
     expect(expandFetchIdx).toBeGreaterThan(-1);
     const expandSnippet = src.slice(expandFetchIdx, expandFetchIdx + 1500);
+    // The expand call reads its payload from `expandPayloadRef` so a single
+    // card can be retried; both flags must still travel together.
     expect(expandSnippet).toMatch(
-      /autoGenerateTags,\s*\n\s*includeParameters,/
+      /autoGenerateTags: payload\.autoGenerateTags,\s*\n\s*includeParameters: payload\.includeParameters,/
     );
   });
 
