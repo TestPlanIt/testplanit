@@ -693,10 +693,7 @@ export function StepDuplicateResultsTable({
         </div>
       )}
 
-      <div
-        data-testid="step-duplicates-table"
-        className="h-[calc(100vh-22rem)] min-h-[400px] w-full"
-      >
+      <div className="h-[calc(100vh-22rem)] min-h-[400px] w-full">
         <DataTable
           virtualized
           columns={columns}

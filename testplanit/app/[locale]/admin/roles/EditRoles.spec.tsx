@@ -74,7 +74,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     rolePermission: {
       useFindMany: () => ({
-        data: stableExistingPermissions,
+        data: stableLoadingState.isLoading
+          ? undefined
+          : stableExistingPermissions,
         isLoading: stableLoadingState.isLoading,
       }),
       useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }),
@@ -239,6 +241,43 @@ describe("EditRole", () => {
       // Check for skeleton elements (h-5 class skeleton divs)
       const skeletons = document.querySelectorAll('[class*="animate-pulse"]');
       expect(skeletons.length).toBeGreaterThan(0);
+    });
+  });
+
+  test("name typed while permissions are still loading survives the seed reset", async () => {
+    stableLoadingState.isLoading = true;
+    const queryClient = makeQueryClient();
+    const makeTree = () => (
+      <QueryClientProvider client={queryClient}>
+        <EditRole role={testRole as any} open={true} onClose={vi.fn()} />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(makeTree());
+    const user = userEvent.setup();
+
+    const nameInput = screen.getByDisplayValue("Tester");
+    await user.clear(nameInput);
+    await user.type(nameInput, "Renamed");
+
+    // Permissions resolve after the user has already typed a new name.
+    stableLoadingState.isLoading = false;
+    rerender(makeTree());
+
+    await waitFor(() => {
+      expect(screen.getByRole("table")).toBeInTheDocument();
+    });
+    expect(screen.getByDisplayValue("Renamed")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", { name: "common.actions.submit" })
+    );
+    await waitFor(() => {
+      expect(mockUpdateRole).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: testRole.id },
+          data: expect.objectContaining({ name: "Renamed" }),
+        })
+      );
     });
   });
 

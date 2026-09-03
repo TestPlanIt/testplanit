@@ -147,11 +147,12 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
   // resolves. Re-running reset on every defaultFormValues identity change
   // wipes mid-edit input if React Query refetches in the background and
   // returns a new array reference (same values, fresh ref). A ref guard
-  // ensures we only seed the form once per mount.
+  // ensures we only seed the form once per mount, and keepDirtyValues keeps
+  // anything the user typed (e.g. a new name) while permissions were loading.
   const hasSeededRef = useRef(false);
   useEffect(() => {
     if (!isLoadingPermissions && !hasSeededRef.current) {
-      reset(defaultFormValues);
+      reset(defaultFormValues, { keepDirtyValues: true });
       hasSeededRef.current = true;
     }
   }, [defaultFormValues, reset, isLoadingPermissions]);
