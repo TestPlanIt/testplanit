@@ -76,6 +76,7 @@ import {
   Info,
   ListChecks,
   Loader2,
+  RefreshCw,
   Search,
   Settings,
   Sparkles,
@@ -1521,6 +1522,15 @@ export function GenerateTestCasesWizard({
   const expandAbortControllersRef = useRef<Map<number, AbortController>>(
     new Map()
   );
+  // Kept so a single failed card can be retried without redoing the outline.
+  const expandPayloadRef = useRef<{
+    issue: unknown;
+    template: unknown;
+    context: unknown;
+    autoGenerateTags: boolean;
+    includeParameters: boolean;
+    contextImagesId?: string;
+  } | null>(null);
   const [urlStreamingPageInfo, setUrlStreamingPageInfo] = useState<{
     current: number;
     total: number;
@@ -3072,36 +3082,6 @@ export function GenerateTestCasesWizard({
             }
           : undefined;
 
-      // Helper: convert option names → IDs for a single test case
-      const convertFieldOptionIds = (
-        tc: GeneratedTestCase
-      ): GeneratedTestCase => {
-        if (!template) return tc;
-        const converted: Record<string, any> = { ...tc.fieldValues };
-        template.caseFields.forEach((cf: any) => {
-          const name = cf.caseField.displayName;
-          const type = cf.caseField.type.type;
-          const val = converted[name];
-          if (!val) return;
-          if (type === "Dropdown" && typeof val === "string") {
-            const opt = cf.caseField.fieldOptions?.find(
-              (fo: any) => fo.fieldOption.name === val
-            );
-            if (opt) converted[name] = opt.fieldOption.id;
-          } else if (type === "Multi-Select" && Array.isArray(val)) {
-            converted[name] = val
-              .map((n: string) => {
-                const opt = cf.caseField.fieldOptions?.find(
-                  (fo: any) => fo.fieldOption.name === n
-                );
-                return opt?.fieldOption.id;
-              })
-              .filter((id: number | undefined) => id !== undefined);
-          }
-        });
-        return { ...tc, fieldValues: converted };
-      };
-
       const templatePayload = {
         id: template?.id,
         name: template?.templateName,
@@ -3253,128 +3233,17 @@ export function GenerateTestCasesWizard({
       setGeneratingStatus("streaming");
 
       // Phase 2: Expand each outline in parallel
+      expandPayloadRef.current = {
+        issue: enrichedIssueData,
+        template: templatePayload,
+        context: expandContextPayload,
+        autoGenerateTags,
+        includeParameters,
+        contextImagesId,
+      };
       await Promise.all(
-        outlines.map(
-          async (outline: { title: string; summary: string }, i: number) => {
-            if (abortController.signal.aborted) return;
-
-            const ac = new AbortController();
-            expandAbortControllersRef.current.set(i, ac);
-            abortController.signal.addEventListener("abort", () => ac.abort());
-
-            setCaseOutlines((prev) => {
-              const next = [...prev];
-              next[i] = { ...next[i], status: "generating" };
-              return next;
-            });
-
-            try {
-              const expandRes = await fetch(
-                "/api/llm/generate-test-cases/expand",
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    projectId,
-                    issue: enrichedIssueData,
-                    template: templatePayload,
-                    context: expandContextPayload,
-                    outline,
-                    autoGenerateTags,
-                    includeParameters,
-                    ...(contextImagesId ? { contextImagesId } : {}),
-                  }),
-                  signal: ac.signal,
-                }
-              );
-
-              if (!expandRes.ok) {
-                const errData = await expandRes.json().catch(() => ({}));
-                setCaseOutlines((prev) => {
-                  const next = [...prev];
-                  next[i] = {
-                    ...next[i],
-                    status: "error",
-                    errorMessage:
-                      errData.error ||
-                      t("generateTestCases.errors.generateFailed"),
-                  };
-                  return next;
-                });
-                return;
-              }
-
-              // Consume the SSE stream — we only care about the final "done" event
-              const reader = expandRes.body!.getReader();
-              const decoder = new TextDecoder();
-              let buffer = "";
-
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                buffer += decoder.decode(value, { stream: true });
-                const parts = buffer.split("\n\n");
-                buffer = parts.pop() ?? "";
-                for (const part of parts) {
-                  const line = part.trim();
-                  if (!line.startsWith("data: ")) continue;
-                  try {
-                    const data = JSON.parse(line.slice(6));
-                    if (data.type === "done" && data.testCase) {
-                      const tc = convertFieldOptionIds({
-                        ...data.testCase,
-                        id: `expand_${i}_${data.testCase.id ?? i}`,
-                      });
-                      setExpandedCases((prev) => {
-                        const next = [...prev];
-                        next[i] = tc;
-                        return next;
-                      });
-                      setGeneratedTestCases((prev) => [...prev, tc]);
-                      setSelectedTestCases((prev) => new Set([...prev, tc.id]));
-                      setCaseOutlines((prev) => {
-                        const next = [...prev];
-                        next[i] = { ...next[i], status: "done" };
-                        return next;
-                      });
-                    } else if (data.type === "error") {
-                      setCaseOutlines((prev) => {
-                        const next = [...prev];
-                        next[i] = {
-                          ...next[i],
-                          status: "error",
-                          errorMessage: data.message,
-                        };
-                        return next;
-                      });
-                    }
-                  } catch (e) {
-                    if (e instanceof SyntaxError) continue;
-                  }
-                }
-              }
-            } catch (err: any) {
-              if (err.name === "AbortError") {
-                setCaseOutlines((prev) => {
-                  const next = [...prev];
-                  if (next[i]?.status !== "cancelled") {
-                    next[i] = { ...next[i], status: "cancelled" };
-                  }
-                  return next;
-                });
-                return;
-              }
-              setCaseOutlines((prev) => {
-                const next = [...prev];
-                next[i] = {
-                  ...next[i],
-                  status: "error",
-                  errorMessage: err.message,
-                };
-                return next;
-              });
-            }
-          }
+        outlines.map((outline: { title: string; summary: string }, i: number) =>
+          expandOutline(i, outline, abortController.signal)
         )
       );
 
@@ -3652,6 +3521,140 @@ export function GenerateTestCasesWizard({
 
   const handleRetryGeneration = () => {
     void generateTestCases();
+  };
+
+  // Shared by the initial fan-out and the per-card Retry button.
+  const expandOutline = async (
+    i: number,
+    outline: { title: string; summary: string },
+    parentSignal?: AbortSignal
+  ) => {
+    const payload = expandPayloadRef.current;
+    if (!payload || parentSignal?.aborted) return;
+
+    const ac = new AbortController();
+    expandAbortControllersRef.current.set(i, ac);
+    parentSignal?.addEventListener("abort", () => ac.abort());
+
+    setCaseOutlines((prev) => {
+      const next = [...prev];
+      next[i] = { ...next[i], status: "generating", errorMessage: undefined };
+      return next;
+    });
+
+    try {
+      const expandRes = await fetch("/api/llm/generate-test-cases/expand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          issue: payload.issue,
+          template: payload.template,
+          context: payload.context,
+          outline,
+          autoGenerateTags: payload.autoGenerateTags,
+          includeParameters: payload.includeParameters,
+          ...(payload.contextImagesId
+            ? { contextImagesId: payload.contextImagesId }
+            : {}),
+        }),
+        signal: ac.signal,
+      });
+
+      if (!expandRes.ok) {
+        const errData = await expandRes.json().catch(() => ({}));
+        setCaseOutlines((prev) => {
+          const next = [...prev];
+          next[i] = {
+            ...next[i],
+            status: "error",
+            errorMessage:
+              errData.error || t("generateTestCases.errors.generateFailed"),
+          };
+          return next;
+        });
+        return;
+      }
+
+      // Consume the SSE stream — we only care about the final "done" event
+      const reader = expandRes.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          const line = part.trim();
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.type === "done" && data.testCase) {
+              const tc = convertFieldOptionIds({
+                ...data.testCase,
+                id: `expand_${i}_${data.testCase.id ?? i}`,
+              });
+              setExpandedCases((prev) => {
+                const next = [...prev];
+                next[i] = tc;
+                return next;
+              });
+              setGeneratedTestCases((prev) => [...prev, tc]);
+              setSelectedTestCases((prev) => new Set([...prev, tc.id]));
+              setCaseOutlines((prev) => {
+                const next = [...prev];
+                next[i] = { ...next[i], status: "done" };
+                return next;
+              });
+            } else if (data.type === "error") {
+              setCaseOutlines((prev) => {
+                const next = [...prev];
+                next[i] = {
+                  ...next[i],
+                  status: "error",
+                  errorMessage: data.message,
+                };
+                return next;
+              });
+            }
+          } catch (e) {
+            if (e instanceof SyntaxError) continue;
+          }
+        }
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") {
+        setCaseOutlines((prev) => {
+          const next = [...prev];
+          if (next[i]?.status !== "cancelled") {
+            next[i] = { ...next[i], status: "cancelled" };
+          }
+          return next;
+        });
+        return;
+      }
+      setCaseOutlines((prev) => {
+        const next = [...prev];
+        next[i] = {
+          ...next[i],
+          status: "error",
+          errorMessage: err.message,
+        };
+        return next;
+      });
+    }
+  };
+
+  const handleRetryExpand = (index: number) => {
+    const outline = caseOutlines[index];
+    if (!outline) return;
+    void expandOutline(index, {
+      title: outline.title,
+      summary: outline.summary,
+    });
   };
 
   const handleCancelExpand = (index: number) => {
@@ -5648,17 +5651,31 @@ export function GenerateTestCasesWizard({
                                   return (
                                     <div
                                       key={`outline-${i}`}
-                                      className="rounded-lg border border-destructive/50 bg-destructive/5 p-4"
+                                      className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 flex items-start justify-between gap-3"
                                     >
-                                      <p className="text-sm font-medium">
-                                        {outline.title}
-                                      </p>
-                                      <p className="text-xs text-destructive mt-1">
-                                        {outline.errorMessage ||
-                                          t(
-                                            "generateTestCases.errors.generateFailed"
-                                          )}
-                                      </p>
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-medium">
+                                          {outline.title}
+                                        </p>
+                                        <p className="text-xs text-destructive mt-1">
+                                          {outline.errorMessage ||
+                                            t(
+                                              "generateTestCases.errors.generateFailed"
+                                            )}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="shrink-0"
+                                        onClick={() => handleRetryExpand(i)}
+                                        data-testid={`retry-expand-${i}`}
+                                      >
+                                        <RefreshCw className="h-3.5 w-3.5" />
+                                        {t(
+                                          "generateTestCases.errors.llm.retryButton"
+                                        )}
+                                      </Button>
                                     </div>
                                   );
                                 }
@@ -5667,11 +5684,23 @@ export function GenerateTestCasesWizard({
                                 return (
                                   <div
                                     key={`outline-${i}`}
-                                    className="rounded-lg border bg-muted/30 p-4 opacity-50"
+                                    className="rounded-lg border bg-muted/30 p-4 flex items-center justify-between gap-3"
                                   >
-                                    <p className="text-sm font-medium line-through text-muted-foreground">
+                                    <p className="text-sm font-medium line-through text-muted-foreground opacity-50 min-w-0 truncate">
                                       {outline.title}
                                     </p>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="shrink-0"
+                                      onClick={() => handleRetryExpand(i)}
+                                      data-testid={`retry-expand-${i}`}
+                                    >
+                                      <RefreshCw className="h-3.5 w-3.5" />
+                                      {t(
+                                        "generateTestCases.errors.llm.retryButton"
+                                      )}
+                                    </Button>
                                   </div>
                                 );
                               })
