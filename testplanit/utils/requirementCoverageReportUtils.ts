@@ -277,6 +277,9 @@ export interface RequirementTraceabilityReportRow {
    * Status filters have matching columns. */
   requirementPriority?: string | null;
   requirementStatus?: string | null;
+  /** The text revision the coverage was computed against — live rows carry
+   * the current version, snapshot rows the version frozen at capture. */
+  requirementVersion?: number | null;
   requirementRootId?: number;
   /** The requirement's OWN project, distinct from `caseProjectId` (the
    * covering case's). Carries the cross-project variant's origin column. */
@@ -716,6 +719,7 @@ export async function handleRequirementCoverageReportPOST(
         requirementIssueTypeIconUrl: row.requirementIssueTypeIconUrl,
         requirementPriority: row.requirementPriority,
         requirementStatus: row.requirementStatus,
+        requirementVersion: row.requirementVersion ?? null,
         requirementRootId: row.requirementRootId,
         requirementProjectId: row.requirementProjectId ?? null,
         requirementProjectName: row.requirementProjectName ?? null,

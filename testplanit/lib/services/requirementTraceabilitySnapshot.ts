@@ -137,6 +137,7 @@ function toEntryRow(snapshotId: number, entry: SnapshotEntryRecord) {
     requirementCreatedAt: entry.requirementCreatedAt
       ? new Date(entry.requirementCreatedAt)
       : null,
+    requirementVersion: entry.requirementVersion,
     coverageStatus: entry.coverageStatus,
     linkedCaseCount: entry.linkedCaseCount,
     cases: entry.cases,
@@ -156,6 +157,7 @@ function fromEntryRow(row: {
   requirementPriority: string | null;
   requirementStatus: string | null;
   requirementCreatedAt: Date | null;
+  requirementVersion: number | null;
   coverageStatus: string;
   linkedCaseCount: number;
   cases: unknown;
@@ -175,6 +177,7 @@ function fromEntryRow(row: {
     requirementCreatedAt: row.requirementCreatedAt
       ? row.requirementCreatedAt.toISOString()
       : null,
+    requirementVersion: row.requirementVersion,
     coverageStatus: row.coverageStatus as SnapshotEntryRecord["coverageStatus"],
     linkedCaseCount: row.linkedCaseCount,
     cases: Array.isArray(row.cases) ? (row.cases as SnapshotCaseRecord[]) : [],

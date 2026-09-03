@@ -54,6 +54,9 @@ export type RequirementNode = {
   integrationId?: number | null;
   requirementDetachedAt?: Date | string | null;
   createdAt?: Date | string | null;
+  /** Issue.currentVersion — stamped onto snapshot entries so a baseline
+   * records which text revision it saw. Optional for older fixtures. */
+  currentVersion?: number | null;
   /** The sync-maintained metadata blob (`buildSyncedIssueData`) — read
    * here only for `data.createdAt`, the tracker's own creation instant. */
   data?: unknown;
@@ -87,6 +90,9 @@ export type RequirementTraceabilityRow = {
   requirementPriority?: string | null;
   requirementStatus?: string | null;
   requirementCreatedAt?: string | null;
+  /** Issue.currentVersion as loaded (or as frozen in a snapshot entry) —
+   * which text revision the coverage was computed against. */
+  requirementVersion?: number | null;
   /** The id of the requirement's top-level root (itself when top-level)
    * — what makes a hierarchy bar's label clickable even when the root
    * has no row of its own in the result set. */
@@ -340,6 +346,7 @@ export function buildTraceabilityRows(params: {
         requirementPriority,
         requirementStatus,
         requirementCreatedAt,
+        requirementVersion: requirement.currentVersion ?? null,
         requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
         requirementParentId: requirement.parentId,
         requirementProjectId: requirement.projectId ?? null,
@@ -372,6 +379,7 @@ export function buildTraceabilityRows(params: {
         requirementPriority,
         requirementStatus,
         requirementCreatedAt,
+        requirementVersion: requirement.currentVersion ?? null,
         requirementRootId: rootIds.get(requirement.id) ?? requirement.id,
         requirementParentId: requirement.parentId,
         requirementProjectId: requirement.projectId ?? null,

@@ -170,6 +170,7 @@ model User {
     createdSharedDataSetAssignments          CaseSharedDataSetAssignment[]     @relation("CaseSharedDataSetAssignmentCreatedBy")
     createdIssues                            Issue[]                           @relation("IssueCreator")
     createdRequirementReferences             RequirementIssueReference[]       @relation("RequirementIssueReferenceCreator")
+    issueVersionChanges                      IssueVersions[]
     projectPermissions                       UserProjectPermission[]
     junitTestSuites                          JUnitTestSuite[]
     junitTestResults                         JUnitTestResult[]
@@ -1739,6 +1740,31 @@ model RequirementIssueReference {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+}
+
+/// One historical state of a requirement's content (title/description/note) —
+/// rows are written ONLY by the tpl_issue_version_capture DB trigger.
+model IssueVersions {
+    id          Int      @id @default(autoincrement())
+    issueId     Int
+    issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+    version     Int
+    title       String
+    description String?
+    note        Json?
+    /// Best-effort actor from the audit GUC; null for writers outside an
+    /// audited transaction (sync polls, raw SQL). AuditLog stays authoritative.
+    changedById String?
+    changedBy   User?    @relation(fields: [changedById], references: [id], onDelete: SetNull)
+    changedAt   DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([issueId, version])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    // History is trigger-written and immutable — no app writer, ADMIN included.
+    @@deny('create, update, delete', true)
+    @@allow('read', auth().access != null)
 }
 
 enum DuplicateScanResultStatus {
@@ -3463,6 +3489,7 @@ model Issue {
     // and never set alongside isRequirement (D-09).
     outgoingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceSource")
     incomingReferences    RequirementIssueReference[] @relation("RequirementIssueReferenceTarget")
+    versions              IssueVersions[]
     sessions              Sessions[]
     sessionResults        SessionResults[]
     testRuns              TestRuns[]
@@ -5658,6 +5685,8 @@ model RequirementTraceabilitySnapshotEntry {
     requirementPriority         String?
     requirementStatus           String?
     requirementCreatedAt        DateTime?                       @db.Timestamptz(6)
+    /// Issue.currentVersion at capture — which text revision this baseline saw.
+    requirementVersion          Int?
     coverageStatus              String
     linkedCaseCount             Int
     cases                       Json

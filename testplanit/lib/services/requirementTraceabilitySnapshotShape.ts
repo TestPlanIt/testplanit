@@ -52,6 +52,9 @@ export type SnapshotEntryRecord = {
   requirementPriority: string | null;
   requirementStatus: string | null;
   requirementCreatedAt: string | null;
+  /** Issue.currentVersion at capture — which text revision this baseline
+   * saw (null for entries captured before versioning shipped). */
+  requirementVersion: number | null;
   coverageStatus: RequirementCoverageStatus;
   linkedCaseCount: number;
   cases: SnapshotCaseRecord[];
@@ -94,6 +97,7 @@ export function groupTraceabilityRows(
         requirementPriority: row.requirementPriority ?? null,
         requirementStatus: row.requirementStatus ?? null,
         requirementCreatedAt: row.requirementCreatedAt ?? null,
+        requirementVersion: row.requirementVersion ?? null,
         coverageStatus: row.coverageStatus,
         linkedCaseCount: row.linkedCaseCount,
         cases: [],
@@ -155,6 +159,7 @@ export function expandSnapshotEntries(
       requirementPriority: entry.requirementPriority,
       requirementStatus: entry.requirementStatus,
       requirementCreatedAt: entry.requirementCreatedAt,
+      requirementVersion: entry.requirementVersion,
       requirementRootId: entry.requirementRootId,
       requirementParentId: entry.requirementParentId,
       linkedCaseCount: entry.linkedCaseCount,

@@ -241,6 +241,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       useCreate: () => ({ mutateAsync: mockCreateAttachmentMutateAsync }),
       useUpdate: () => ({ mutateAsync: mockUpdateAttachmentMutateAsync }),
     },
+    // The Content History card's version list — this file's scope is the
+    // detail panel's own behavior; the history renders its empty state.
+    issueVersions: { useFindMany: () => ({ data: [], isLoading: false }) },
     // LinkedRequirementCasesPanel's own read -- its full behavior is
     // covered by LinkedRequirementCasesPanel.test.tsx; this file only needs
     // it to render without crashing (empty list, matching every fixture

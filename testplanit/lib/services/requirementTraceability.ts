@@ -164,6 +164,7 @@ export async function loadRequirementTraceability(
         integrationId: true,
         requirementDetachedAt: true,
         createdAt: true,
+        currentVersion: true,
         data: true,
       },
     }) as Promise<RequirementNode[]>,

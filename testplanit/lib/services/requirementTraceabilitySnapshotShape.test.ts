@@ -334,6 +334,7 @@ describe("diffSnapshotEntries", () => {
           requirementPriority: null,
           requirementStatus: null,
           requirementCreatedAt: null,
+          requirementVersion: null,
           coverageStatus: "UNCOVERED",
           linkedCaseCount: 0,
           cases: [],

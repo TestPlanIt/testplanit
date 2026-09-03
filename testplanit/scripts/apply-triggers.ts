@@ -533,6 +533,67 @@ CREATE TRIGGER tpl_issue_content_updated_at_upd BEFORE UPDATE OF "title", "descr
 `;
 
 /**
+ * Requirement content versioning (v1.1) — every content change to a requirement
+ * (title/description/note, the same three columns the content stamp above
+ * watches) captures a row in "IssueVersions" and bumps Issue.currentVersion.
+ *
+ * A BEFORE trigger, not AFTER, because it assigns NEW."currentVersion". Fires
+ * only for isRequirement rows: defects and plain synced issues stay
+ * unversioned (an Issue table holds tens of thousands of tracker shells whose
+ * sync churn would otherwise version-bomb the table). The first content change
+ * backfills version 1 from the OLD row, so history always starts with the
+ * text as it stood before any change — a lone v2 with no v1 would make the
+ * first diff unrenderable.
+ *
+ * Actor attribution is best-effort from the audit GUC (`app.audit_context`,
+ * the CDC substrate's own transaction-local context): present for audited app
+ * writes, NULL for sync polls and raw SQL. AuditLog remains the authoritative
+ * actor record; this column only saves the history view a join.
+ *
+ * The distinct tpl_issue_version_* prefix keeps it out of every drift
+ * self-check below, exactly like tpl_issue_content_* above.
+ */
+export const ISSUE_VERSION_CAPTURE_TRIGGER_SQL = `
+CREATE OR REPLACE FUNCTION tpl_issue_version_capture() RETURNS TRIGGER AS $$
+DECLARE
+  actor text;
+BEGIN
+  BEGIN
+    actor := NULLIF(current_setting('app.audit_context', true), '')::jsonb->>'userId';
+  EXCEPTION WHEN others THEN
+    actor := NULL;
+  END;
+  -- Backfill the pre-change text as its own version the first time this row
+  -- (or this counter value) changes. changedById is unknowable for a
+  -- backfilled state; its changedAt is the best available stamp for when
+  -- that text last changed.
+  INSERT INTO "IssueVersions" ("issueId", version, title, description, note, "changedById", "changedAt")
+  SELECT OLD.id, OLD."currentVersion", OLD.title, OLD.description, OLD.note, NULL,
+         COALESCE(OLD."contentUpdatedAt", OLD."createdAt", now())
+  WHERE NOT EXISTS (
+    SELECT 1 FROM "IssueVersions" v
+    WHERE v."issueId" = OLD.id AND v.version = OLD."currentVersion"
+  );
+  NEW."currentVersion" := OLD."currentVersion" + 1;
+  INSERT INTO "IssueVersions" ("issueId", version, title, description, note, "changedById", "changedAt")
+  VALUES (OLD.id, NEW."currentVersion", NEW.title, NEW.description, NEW.note, actor, now());
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tpl_issue_version_capture_upd ON "Issue";
+CREATE TRIGGER tpl_issue_version_capture_upd BEFORE UPDATE OF "title", "description", "note" ON "Issue"
+  FOR EACH ROW WHEN (
+    NEW."isRequirement" = true AND (
+      NEW."title" IS DISTINCT FROM OLD."title" OR
+      NEW."description" IS DISTINCT FROM OLD."description" OR
+      NEW."note" IS DISTINCT FROM OLD."note"
+    )
+  )
+  EXECUTE FUNCTION tpl_issue_version_capture();
+`;
+
+/**
  * Apply the full audit-trigger substrate to one database, idempotently. Importable so the app can
  * self-install on boot (see lib/audit/ensureAuditTriggers + instrumentation.ts) in addition to the
  * CLI / deploy-entrypoint paths — `db push` silently drops these triggers, so they must be
@@ -789,6 +850,14 @@ export async function applyAuditTriggers(
     //     REPLACE + DROP/CREATE TRIGGER pair. Distinct tpl_seeded_status_* prefix
     //     keeps it out of every drift self-check below.
     await client.query(SEEDED_STATUS_GUARD_SQL);
+
+    // 3f. Requirement content versioning — BEFORE UPDATE capture into
+    //     "IssueVersions" + currentVersion bump for isRequirement rows whose
+    //     title/description/note actually changed (the same distinct-ness the
+    //     content stamp in 3d tests). Idempotent CREATE OR REPLACE +
+    //     DROP/CREATE TRIGGER pair. Distinct tpl_issue_version_* prefix keeps
+    //     it out of every drift self-check below.
+    await client.query(ISSUE_VERSION_CAPTURE_TRIGGER_SQL);
 
     // 4. GRANT/REVOKE defense-in-depth: the connecting role keeps INSERT/SELECT/UPDATE/DELETE (the
     //    worker cursor + retention purge need UPDATE/DELETE); UPDATE/DELETE revoked from PUBLIC. The

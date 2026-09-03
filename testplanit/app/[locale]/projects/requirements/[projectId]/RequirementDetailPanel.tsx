@@ -68,6 +68,7 @@ import {
   type RequirementProvenanceBadgeRow,
 } from "./RequirementProvenanceBadge";
 import { RequirementReferencesPanel } from "./RequirementReferencesPanel";
+import { RequirementVersionHistory } from "./RequirementVersionHistory";
 import type { RequirementExecutionScopeSelection } from "~/utils/requirementExecutionScope";
 
 interface RequirementDetailPanelProps {
@@ -891,6 +892,9 @@ export default function RequirementDetailPanel({
         projectId={projectId}
         requirementId={requirement.id}
       />
+      {/* Content history last: the audit trail of the text itself, the
+          trigger-written IssueVersions rows with per-version diffs. */}
+      <RequirementVersionHistory requirementId={requirement.id} />
     </div>
   );
 }

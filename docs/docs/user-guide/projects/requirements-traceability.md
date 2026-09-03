@@ -52,6 +52,19 @@ What arms the flag:
 * A change to the requirement's **title**, **description**, or **Documentation** — whether edited in TestPlanIt or arriving through a sync from the tracker.
 * Status, priority, attachment, and hierarchy changes do **not** arm it.
 
+## Content History
+
+Every change to a requirement's **title**, **description**, or **Documentation** — the same changes that arm suspect flags — is recorded as a numbered content version, whether it was edited in TestPlanIt or arrived through a tracker sync. The **Content History** card at the bottom of the requirement's detail panel lists them newest first, each with when it changed and who changed it (**Sync or system** when the change came from a tracker sync).
+
+Expanding a version shows exactly what changed against the version before it, as an inline word diff per field. Version 1 is the requirement's text as it stood before its first recorded change, shown in full rather than as a diff.
+
+A requirement that has never had a content change shows an empty history — its current text is the original. Traceability snapshots record which content version each requirement was at when captured, so a baseline ties its coverage evidence to the exact text it verified.
+
+What clears it:
+
+* **Re-executing the case.** A new result at or after the content change clears the flag automatically — no bookkeeping needed.
+* **Dismissing it.** Click the **Suspect** badge and confirm **Dismiss flag** to record that you reviewed the change and the case is still valid: *"Dismiss this suspect flag? A newer edit to the requirement will re-flag it."* Dismissal is per link, and a newer content edit re-arms it.
+
 ## References
 
 The **References** card at the bottom of the requirement's detail panel records the tickets that shaped a requirement — a change request, a customer report, a design discussion. Click **Add Reference** to search and attach issues: internal TestPlanIt issues or issues fetched from the connected tracker. Each reference shows its status; external references link out to the tracker, internal ones to the issue in TestPlanIt. The **Remove** action detaches a reference after confirmation.
@@ -107,7 +120,7 @@ Two places save one:
 
 Give the snapshot a name (*"Release 2.4 sign-off"*) and, optionally, a note about what it is evidence for. From a report, the snapshot captures whatever is currently in the **Scope to requirements** picker — leave it empty to capture the whole project. Saving requires add/edit rights on the project's **Reporting** area.
 
-A snapshot saved while a milestone or configuration scope is active is captured **under that scope**: its numbers count only the in-scope executions, the scope is recorded on the snapshot, and the dialog says so. Scoped snapshots carry a **Scoped coverage** badge in the snapshot menus.
+A snapshot saved while a milestone or configuration scope is active is captured **under that scope**: its numbers count only the in-scope executions, the scope is recorded on the snapshot, and the dialog says so. Scoped snapshots carry a **Scoped coverage** badge in the snapshot menus. Each snapshot also records which content revision of every requirement it saw (see [Content History](#content-history)).
 
 ### Viewing a snapshot
 
