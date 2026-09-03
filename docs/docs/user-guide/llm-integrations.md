@@ -135,7 +135,7 @@ Temperature: 0.7
 The Add/Edit AI model dialog exposes two separate **output-token** fields rather than a single generic limit:
 
 - **Max Tokens Per Request** — the hard ceiling on the number of *output* tokens the model may generate in one response. Set it to the model's real maximum output (for example, `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o). It does not limit how much context you send.
-- **Default Max Tokens** — the fallback output length a request asks for when a feature doesn't set its own (bounded by Max Tokens Per Request). Most features set their own value in their [Prompt Configuration](../prompt-configurations).
+- **Default Max Tokens** — the output length requests on this model ask for (bounded by Max Tokens Per Request). Test Case Generation (every source, including the Jira issue panel), Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection always use this value. Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report use the **Max Output Tokens** from their [Prompt Configuration](../prompt-configurations) instead. Models that think before answering (for example, Claude Opus 5) spend part of this budget on reasoning, so leave room for the reply.
 
 Neither field controls how much source material is *sent* to the model. For QuickScript, the amount of connected-repository code included with each generation is shown read-only as the **Repository Context Budget (QuickScript)** — auto-sized from the selected model's input context window, so larger-context models get more and small local models get a safe amount that won't overflow. There is nothing to configure here.
 
