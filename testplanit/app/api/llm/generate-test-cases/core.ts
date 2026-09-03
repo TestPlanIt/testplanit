@@ -248,7 +248,8 @@ export async function generateTestCasesForProject(
     template,
     issue,
     autoGenerateTags,
-    quantity
+    quantity,
+    response.finishReason
   );
 
   if (parseError) {

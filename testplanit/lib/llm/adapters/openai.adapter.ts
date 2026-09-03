@@ -38,7 +38,9 @@ interface OpenAIChatResponse {
     index: number;
     message: {
       role: string;
-      content: string;
+      /** `null` when the model refused or produced no visible text. */
+      content: string | null;
+      refusal?: string | null;
     };
     finish_reason: string;
   }>;
@@ -148,14 +150,21 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       }
 
       const data = (await response.json()) as OpenAIChatResponse;
+      const choice = data.choices[0];
+      // `content` is null on refusals and some filtered completions.
+      const content = choice.message.content ?? "";
+      const finishReason =
+        !content && choice.message.refusal
+          ? "content_filter"
+          : this.mapFinishReason(choice.finish_reason);
 
       return {
-        content: data.choices[0].message.content,
+        content,
         model: data.model,
         promptTokens: data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
         totalTokens: data.usage.total_tokens,
-        finishReason: this.mapFinishReason(data.choices[0].finish_reason),
+        finishReason,
       };
     } catch (error) {
       if (

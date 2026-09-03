@@ -31,6 +31,7 @@ import {
   isTimeoutError,
   recordWorkingBudget,
 } from "./adaptive-budget";
+import { classifyLlmParseFailure } from "../classify-parse-failure";
 import { randomUUID } from "crypto";
 import {
   contextImageTokens,
@@ -397,7 +398,8 @@ export async function POST(request: NextRequest) {
     // (then grows on subsequent successes via getStartingBudget).
     recordWorkingBudget(integrationId, finalBudget);
 
-    const raw = response.content.trim();
+    const raw =
+      typeof response.content === "string" ? response.content.trim() : "";
     const finishReason = response.finishReason;
     let parsed: { outlines: TestCaseOutline[] };
 
@@ -417,7 +419,7 @@ export async function POST(request: NextRequest) {
       console.error("Response length:", responseLength);
       console.error("Response preview:", responsePreview);
 
-      const { code, details, suggestions } = classifyOutlineParseFailure({
+      const { code, details, suggestions } = classifyLlmParseFailure({
         raw,
         finishReason,
         errMsg,
@@ -503,82 +505,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to generate outlines",
+        code: "generic",
         details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 }
     );
   }
-}
-
-function classifyOutlineParseFailure(input: {
-  raw: string;
-  finishReason: string | undefined;
-  errMsg: string;
-}): { code: string; details: string; suggestions: string[] } {
-  const { raw, finishReason, errMsg } = input;
-  const trimmed = raw.trim();
-
-  if (!trimmed) {
-    return {
-      code: "generic",
-      details:
-        "The model returned an empty response. This is usually transient or a connectivity issue with the provider.",
-      suggestions: [
-        "Try again — empty responses are typically transient",
-        "Check the LLM integration's status page",
-        "Verify the model and API key in LLM settings",
-      ],
-    };
-  }
-
-  if (
-    finishReason === "length" ||
-    errMsg.includes("Unexpected end") ||
-    (!trimmed.endsWith("}") && !trimmed.endsWith("]"))
-  ) {
-    return {
-      code: "generic",
-      details: `The model's response was cut off before it finished${
-        finishReason === "length" ? " (hit the max-tokens limit)" : ""
-      }. The JSON was incomplete and could not be parsed.`,
-      suggestions: [
-        'Try a smaller quantity (e.g. "Few" instead of "Many")',
-        "Shorten the issue description or testing guidance",
-        "Raise the model's max-output-tokens in LLM settings",
-      ],
-    };
-  }
-
-  const refusalMarkers = [
-    "i cannot",
-    "i can't",
-    "i am unable",
-    "i'm unable",
-    "i'm not able",
-    "sorry,",
-    "as an ai",
-  ];
-  const lower = trimmed.toLowerCase();
-  if (refusalMarkers.some((m) => lower.includes(m)) && !lower.includes("{")) {
-    return {
-      code: "generic",
-      details:
-        "The model returned a refusal or explanatory text instead of JSON. The issue content may have triggered safety filters or the prompt may be unclear.",
-      suggestions: [
-        "Rephrase the issue description or testing guidance",
-        "Try a different model — providers have different safety thresholds",
-        "Remove any content that might look like instructions to the model",
-      ],
-    };
-  }
-
-  return {
-    code: "generic",
-    details: `The model returned text but its JSON could not be parsed (${errMsg}). The response preview is included for debugging.`,
-    suggestions: [
-      "Try again — JSON-format slips are often transient",
-      "Switch to a model with stronger JSON adherence (e.g. with native JSON mode)",
-      "Check server logs for the full raw response",
-    ],
-  };
 }

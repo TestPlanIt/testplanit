@@ -33,14 +33,20 @@ interface AnthropicRequest {
   system?: string;
 }
 
+/**
+ * A block in a Messages API response. Only `text` blocks carry `text`;
+ * `thinking` / `redacted_thinking` / `tool_use` blocks do not.
+ */
+interface AnthropicResponseBlock {
+  type: string;
+  text?: string;
+}
+
 interface AnthropicResponse {
   id: string;
   type: string;
   role: string;
-  content: Array<{
-    type: string;
-    text: string;
-  }>;
+  content: AnthropicResponseBlock[];
   model: string;
   stop_reason: string;
   stop_sequence: string | null;
@@ -64,6 +70,24 @@ interface AnthropicStreamEvent {
     input_tokens: number;
     output_tokens: number;
   };
+}
+
+/**
+ * Concatenate the `text` blocks of a response. Thinking-enabled models
+ * (Claude Opus 5 and later) return a `thinking` block first, so the text is
+ * not `content[0]`; no text blocks yields "" and callers read `finishReason`.
+ */
+export function extractTextContent(
+  content: AnthropicResponseBlock[] | undefined
+): string {
+  if (!Array.isArray(content)) return "";
+  return content
+    .filter(
+      (block): block is AnthropicResponseBlock & { text: string } =>
+        block?.type === "text" && typeof block.text === "string"
+    )
+    .map((block) => block.text)
+    .join("");
 }
 
 export class AnthropicAdapter extends BaseLlmAdapter {
@@ -225,7 +249,8 @@ export class AnthropicAdapter extends BaseLlmAdapter {
                 currentModel = event.message.model;
               } else if (
                 event.type === "content_block_delta" &&
-                event.delta?.text
+                event.delta?.type === "text_delta" &&
+                event.delta.text
               ) {
                 yield {
                   delta: event.delta.text,
@@ -371,7 +396,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     const data = (await response.json()) as AnthropicResponse;
 
     return {
-      content: data.content[0].text,
+      content: extractTextContent(data.content),
       model: data.model,
       promptTokens: data.usage.input_tokens,
       completionTokens: data.usage.output_tokens,
@@ -579,6 +604,8 @@ export class AnthropicAdapter extends BaseLlmAdapter {
         return "stop";
       case "max_tokens":
         return "length";
+      case "refusal":
+        return "content_filter";
       default:
         return "error";
     }

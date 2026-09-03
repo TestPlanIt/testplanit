@@ -1439,3 +1439,75 @@ describe("issue enrichment sections — comments + linked issues", () => {
     });
   });
 });
+
+describe("parseAndValidateTestCases — finish-reason-aware truncation classification", () => {
+  // Malformed on purpose: a trailing comma makes JSON.parse throw with an
+  // "Expected ... JSON" message, which the heuristics alone read as truncation.
+  const malformedButComplete =
+    '{"testCases": [{"id": "tc_1", "name": "A", "fieldValues": {},}]}';
+  const cutOff =
+    '{"testCases": [{"id": "tc_1", "name": "A", "fieldValues": {"Steps": [{"step": "Open';
+
+  it("reports a completed response with a JSON slip as invalid format, not truncation", () => {
+    const { parseError } = parseAndValidateTestCases(
+      malformedButComplete,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few",
+      "stop"
+    );
+
+    expect(parseError).toBeDefined();
+    expect(parseError!.seemsTruncated).toBe(false);
+    expect(parseError!.userError).toBe("AI generated invalid response format");
+  });
+
+  it("keeps the truncation verdict when the provider reports length", () => {
+    const { parseError } = parseAndValidateTestCases(
+      malformedButComplete,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few",
+      "length"
+    );
+
+    expect(parseError).toBeDefined();
+    expect(parseError!.seemsTruncated).toBe(true);
+    expect(parseError!.userError).toBe(
+      "AI response was too long and got truncated"
+    );
+  });
+
+  it("still calls a visibly cut-off completed response truncated", () => {
+    const { parseError, testCases } = parseAndValidateTestCases(
+      cutOff,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few",
+      "stop"
+    );
+
+    // Either the repair path recovers it, or the classifier must say truncated.
+    if (parseError) {
+      expect(parseError.seemsTruncated).toBe(true);
+    } else {
+      expect(testCases.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("falls back to the heuristics when no finish reason is known", () => {
+    const { parseError } = parseAndValidateTestCases(
+      malformedButComplete,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(parseError).toBeDefined();
+    expect(parseError!.seemsTruncated).toBe(true);
+  });
+});

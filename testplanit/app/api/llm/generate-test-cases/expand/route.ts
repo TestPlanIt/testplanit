@@ -20,6 +20,7 @@ import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
 } from "../error-codes";
+import { classifyLlmParseFailure } from "../classify-parse-failure";
 import {
   contextImageTokens,
   toImageParts,
@@ -309,12 +310,40 @@ export async function POST(req: NextRequest) {
           return;
         }
 
+        // The parser turns an empty response into a placeholder case.
+        if (!accumulated.trim()) {
+          const classified = classifyLlmParseFailure({
+            raw: accumulated,
+            finishReason,
+            errMsg: "empty response",
+          });
+          console.error("\n=== EXPAND EMPTY RESPONSE ===");
+          console.error("Finish reason:", finishReason ?? "<none>");
+          send(controller, {
+            type: "error",
+            code: classified.code satisfies LlmStreamErrorCode,
+            message:
+              finishReason === "length"
+                ? "AI ran out of output tokens before producing this test case"
+                : finishReason === "content_filter"
+                  ? "AI declined to generate this test case"
+                  : "AI returned an empty response",
+            details: classified.details,
+            suggestions: classified.suggestions,
+            finishReason,
+            responseLength: 0,
+            seemsTruncated: finishReason === "length",
+          });
+          return;
+        }
+
         const { testCases, parseError } = parseAndValidateTestCases(
           accumulated,
           template,
           issue,
           autoGenerateTags,
-          "just_one"
+          "just_one",
+          finishReason
         );
 
         if (parseError || testCases.length === 0) {

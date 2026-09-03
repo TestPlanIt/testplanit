@@ -495,3 +495,54 @@ describe("OpenAIAdapter", () => {
     });
   });
 });
+
+describe("OpenAIAdapter non-string message content", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const completion = (
+    message: Record<string, unknown>,
+    finish_reason: string
+  ) => ({
+    ok: true,
+    json: async () => ({
+      id: "chatcmpl-123",
+      object: "chat.completion",
+      created: 1234567890,
+      model: "gpt-5",
+      choices: [
+        { index: 0, message: { role: "assistant", ...message }, finish_reason },
+      ],
+      usage: { prompt_tokens: 10, completion_tokens: 0, total_tokens: 10 },
+    }),
+  });
+
+  const request: LlmRequest = {
+    messages: [{ role: "user", content: "Hello" }],
+    userId: "user-123",
+    feature: "test",
+  };
+
+  it("returns empty content and content_filter for a refusal with null content", async () => {
+    const adapter = new OpenAIAdapter(createTestConfig());
+    mockFetch.mockResolvedValueOnce(
+      completion({ content: null, refusal: "I can't help with that." }, "stop")
+    );
+
+    const response = await adapter.chat(request);
+
+    expect(response.content).toBe("");
+    expect(response.finishReason).toBe("content_filter");
+  });
+
+  it("returns empty content and length when the completion has no content field", async () => {
+    const adapter = new OpenAIAdapter(createTestConfig());
+    mockFetch.mockResolvedValueOnce(completion({}, "length"));
+
+    const response = await adapter.chat(request);
+
+    expect(response.content).toBe("");
+    expect(response.finishReason).toBe("length");
+  });
+});

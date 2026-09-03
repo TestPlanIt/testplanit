@@ -1357,7 +1357,8 @@ export function parseAndValidateTestCases(
   template: TemplateData,
   issue: IssueData,
   autoGenerateTags?: boolean,
-  quantity?: string
+  quantity?: string,
+  finishReason?: string
 ): {
   testCases: GeneratedTestCase[];
   warnings?: ParseWarning[];
@@ -1504,11 +1505,24 @@ export function parseAndValidateTestCases(
       parseError instanceof Error ? parseError.message : String(parseError);
 
     const responseLength = rawContent.length;
-    const seemsTruncated =
-      responseLength > 20000 ||
-      !rawContent.trim().endsWith("}") ||
+    // A trailing code fence is formatting, not a truncation signal.
+    const trimmedRaw = rawContent
+      .trim()
+      .replace(/```\s*$/, "")
+      .trim();
+    const structurallyCut =
       errorMessage.includes("Unexpected end") ||
-      (errorMessage.includes("Expected") && errorMessage.includes("JSON"));
+      (!trimmedRaw.endsWith("}") && !trimmedRaw.endsWith("]"));
+    // The provider's finish reason wins when known: "length" is a truncation,
+    // and a completed ("stop") response only counts as one when the JSON is
+    // visibly cut off.
+    const seemsTruncated =
+      finishReason === "length" ||
+      (finishReason === "stop"
+        ? structurallyCut
+        : responseLength > 20000 ||
+          structurallyCut ||
+          (errorMessage.includes("Expected") && errorMessage.includes("JSON")));
 
     let userError: string;
     let userSuggestions: string[];
