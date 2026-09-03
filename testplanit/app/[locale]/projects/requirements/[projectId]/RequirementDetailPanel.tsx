@@ -1,6 +1,7 @@
 "use client";
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CircleSlash2,
@@ -225,6 +226,7 @@ export default function RequirementDetailPanel({
   onExcluded,
 }: RequirementDetailPanelProps) {
   const t = useTranslations("requirements.detail");
+  const queryClient = useQueryClient();
   const tCommon = useTranslations("common");
   // Scoped separately from `t` (requirements.detail) -- the upload-failure
   // message reuses the attachments section's own existing key rather than
@@ -478,6 +480,12 @@ export default function RequirementDetailPanel({
         await updateRequirement({
           where: { id: requirement.id },
           data: updateData,
+        });
+        // Content versions are written by a DB trigger, not by this client,
+        // so the auto-invalidation that follows the update never reaches the
+        // version-history query; refresh it so the new entry shows at once.
+        void queryClient.invalidateQueries({
+          queryKey: ["zenstack", "IssueVersions"],
         });
       }
 

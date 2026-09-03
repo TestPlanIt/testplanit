@@ -637,6 +637,27 @@ describe("RequirementDetailPanel", () => {
     expect(payload.title).toBe("Req Renamed");
   });
 
+  it("refreshes the version history after a content save", async () => {
+    // Versions are written by a DB trigger the client never sees, so the
+    // save must invalidate the IssueVersions query itself.
+    setRequirement(nativeRequirement);
+    renderPanel(<RequirementDetailPanel projectId="7" requirementId={1} />);
+    fireEvent.click(screen.getByTestId("requirement-detail-edit"));
+    fireEvent.change(screen.getByTestId("requirement-field-title"), {
+      target: { value: "Req Versioned" },
+    });
+    fireEvent.click(screen.getByTestId("requirement-detail-save"));
+
+    await waitFor(() => {
+      expect(mockUpdateMutateAsync).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(mockInvalidateQueries).toHaveBeenCalledWith({
+        queryKey: ["zenstack", "IssueVersions"],
+      });
+    });
+  });
+
   it("keeps a detached requirement's tracker key intact when its distinct title is edited", async () => {
     setRequirement(detachedRequirement);
     renderPanel(<RequirementDetailPanel projectId="7" requirementId={3} />);

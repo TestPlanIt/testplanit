@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Plus, Save, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface JunitIterationPropertyFormProps {
@@ -41,8 +41,15 @@ export function JunitIterationPropertyForm({
   const [input, setInput] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Keep state in sync if the parent re-fetches the project row.
+  // Keep state in sync if the parent re-fetches the project row, but only
+  // when the stored list actually changed: a parent re-render that hands
+  // down an equal array (e.g. `?? []` on every render) must not wipe
+  // unsaved additions.
+  const lastSyncedRef = useRef(initialNames.join("\u0000"));
   useEffect(() => {
+    const key = initialNames.join("\u0000");
+    if (key === lastSyncedRef.current) return;
+    lastSyncedRef.current = key;
     setNames([...initialNames]);
   }, [initialNames]);
 

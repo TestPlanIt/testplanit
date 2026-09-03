@@ -192,6 +192,36 @@ describe("JunitIterationPropertyForm", () => {
     });
   });
 
+  it("keeps an unsaved addition when the parent re-renders with an equal initial list", () => {
+    const { rerender } = render(
+      <JunitIterationPropertyForm projectId={1} initialNames={[]} />
+    );
+    fireEvent.change(screen.getByTestId("junit-iteration-property-input"), {
+      target: { value: "browser" },
+    });
+    fireEvent.click(screen.getByTestId("junit-iteration-property-add"));
+    expect(
+      screen.getByTestId("junit-iteration-property-tag-browser")
+    ).toBeInTheDocument();
+
+    // A fresh but equal array, as a parent's `?? []` produces on every render.
+    rerender(<JunitIterationPropertyForm projectId={1} initialNames={[]} />);
+    expect(
+      screen.getByTestId("junit-iteration-property-tag-browser")
+    ).toBeInTheDocument();
+
+    // A genuinely different stored list still replaces the local one.
+    rerender(
+      <JunitIterationPropertyForm projectId={1} initialNames={["suite"]} />
+    );
+    expect(
+      screen.queryByTestId("junit-iteration-property-tag-browser")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("junit-iteration-property-tag-suite")
+    ).toBeInTheDocument();
+  });
+
   it("dedupes when adding an existing tag (no duplicate badge)", () => {
     render(
       <JunitIterationPropertyForm projectId={42} initialNames={["iteration"]} />
