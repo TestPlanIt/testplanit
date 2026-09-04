@@ -57,11 +57,17 @@ const mockIssueFindUnique = vi.fn();
 const mockRepositoryCasesFindMany = vi.fn();
 const mockRepositoryCaseIssueFindMany = vi.fn();
 const mockRepositoryCaseIssueUseUpdate = vi.fn();
+const mockProjectsFindUnique = vi.fn();
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     issue: {
       useFindMany: (...args: any[]) => mockIssueFindMany(...args),
       useFindUnique: (...args: any[]) => mockIssueFindUnique(...args),
+    },
+    // The case-side panel's Requirements opt-in gate
+    // (`Projects.requirementsEnabled`).
+    projects: {
+      useFindUnique: (...args: any[]) => mockProjectsFindUnique(...args),
     },
     repositoryCases: {
       useFindMany: (...args: any[]) => mockRepositoryCasesFindMany(...args),
@@ -173,6 +179,21 @@ function setLinkedCases(rows: any[]) {
   });
 }
 
+// The Requirements opt-in gate (`Projects.requirementsEnabled`). Every other
+// test in this file runs with it ON, which is what `beforeEach` sets.
+function setRequirementsEnabled(enabled: boolean) {
+  mockProjectsFindUnique.mockReturnValue({
+    data: { requirementsEnabled: enabled },
+    isPending: false,
+  });
+}
+
+// The third state: the flag query still in flight, where neither answer is
+// known to be correct yet.
+function setRequirementsGatePending() {
+  mockProjectsFindUnique.mockReturnValue({ data: undefined, isPending: true });
+}
+
 // COV-05's per-linkage dismissal state (`repositoryCaseIssue.useFindMany`),
 // keyed by issueId on the case-side panel.
 const mockRefetchDismissals = vi.fn();
@@ -224,6 +245,7 @@ describe("LinkedRequirementsPanel", () => {
     vi.clearAllMocks();
     capturedFetchOptions = null;
     capturedPick = null;
+    setRequirementsEnabled(true);
     setLinkedRequirements([]);
     setLinkedCases([]);
     setDismissals([]);
@@ -454,6 +476,7 @@ describe("LinkedRequirementsPanel", () => {
     vi.clearAllMocks();
     capturedFetchOptions = null;
     capturedPick = null;
+    setRequirementsEnabled(true);
     setLinkedRequirements([]);
     setLinkedCases([]);
     setDismissals([]);
@@ -703,6 +726,7 @@ describe("LinkedRequirementsPanel coverage query invalidation (WR-04)", () => {
     vi.clearAllMocks();
     capturedFetchOptions = null;
     capturedPick = null;
+    setRequirementsEnabled(true);
     setLinkedRequirements([]);
     setLinkedCases([]);
     setDismissals([]);
@@ -926,6 +950,13 @@ describe("LinkedRequirementsPanel coverage query invalidation (WR-04)", () => {
 // disabled -- a disabled control still tells the tester an action exists
 // here, which is exactly the UX call Phase 26 deferred rather than guessed.
 describe("LinkedRequirementsPanel — read-only mode", () => {
+  // Explicit rather than inherited: this block is a sibling of the two above,
+  // so their `beforeEach` never runs for it, and the panel is gated on the
+  // flag before it renders anything at all.
+  beforeEach(() => {
+    setRequirementsEnabled(true);
+  });
+
   const linkedRow = {
     id: 42,
     name: "Login must support SSO",
@@ -1015,5 +1046,107 @@ describe("LinkedRequirementsPanel — read-only mode", () => {
     expect(
       screen.queryByTestId("case-linked-requirement-suspect-confirm-42")
     ).not.toBeInTheDocument();
+  });
+});
+
+// Requirements is opt-in per project (`Projects.requirementsEnabled`), and
+// this panel is the feature's only surface outside the requirements
+// workspace. It shipped ungated, so a project that never turned the feature
+// on still carried a "Linked Requirements" card -- empty and unfillable --
+// on every test case.
+describe("LinkedRequirementsPanel — requirementsEnabled gate", () => {
+  const linkedRow = {
+    id: 42,
+    name: "Login must support SSO",
+    isRequirement: true,
+    integrationId: null,
+    requirementDetachedAt: null,
+    projectId: 7,
+  };
+
+  beforeEach(() => {
+    setLinkedRequirements([]);
+    setDismissals([]);
+    setDismissMutation();
+    setLatestExecution(null);
+    setRequirementsEnabled(true);
+  });
+
+  it("renders nothing when the project has Requirements turned off", () => {
+    setRequirementsEnabled(false);
+
+    const { container } = renderWithClient(
+      <LinkedRequirementsPanel caseId={99} projectId={7} />
+    );
+
+    expect(
+      screen.queryByTestId("case-linked-requirements")
+    ).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  // The gate outranks the rows: a project can turn the feature off after
+  // links already exist, and those links must not keep the panel alive.
+  it("renders nothing with the flag off even when the case has linked requirements", () => {
+    setLinkedRequirements([linkedRow]);
+    setRequirementsEnabled(false);
+
+    const { container } = renderWithClient(
+      <LinkedRequirementsPanel caseId={99} projectId={7} />
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  // Fails CLOSED, like RequirementsWorkspace.tsx's own gate: while the flag
+  // query is in flight the answer is not known, and rendering the panel and
+  // then pulling it away is worse than showing it a beat late.
+  it("renders nothing while the flag query is still in flight", () => {
+    setLinkedRequirements([linkedRow]);
+    setRequirementsGatePending();
+
+    const { container } = renderWithClient(
+      <LinkedRequirementsPanel caseId={99} projectId={7} />
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("renders the panel once the flag resolves on", () => {
+    setLinkedRequirements([linkedRow]);
+
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    expect(screen.getByTestId("case-linked-requirements")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("linked-requirement-name-42")
+    ).toBeInTheDocument();
+  });
+
+  // The gate reads the project the same narrow way ProjectMenu.tsx does, so
+  // the two share one query cache entry instead of issuing two requests.
+  it("reads the flag with the same narrow select ProjectMenu uses", () => {
+    renderWithClient(<LinkedRequirementsPanel caseId={99} projectId={7} />);
+
+    expect(mockProjectsFindUnique).toHaveBeenCalledWith(
+      { where: { id: 7 }, select: { requirementsEnabled: true } },
+      expect.objectContaining({ enabled: true })
+    );
+  });
+
+  // No projectId, no gate -- and an ungatable panel must not render.
+  it("renders nothing when no projectId is supplied to resolve the gate", () => {
+    setLinkedRequirements([linkedRow]);
+    setRequirementsGatePending();
+
+    const { container } = renderWithClient(
+      <LinkedRequirementsPanel caseId={99} />
+    );
+
+    expect(container).toBeEmptyDOMElement();
+    expect(mockProjectsFindUnique).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ enabled: false })
+    );
   });
 });

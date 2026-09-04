@@ -67,29 +67,57 @@ export function LinkedRequirementsPanel({
     useRequirementCaseLinks();
   const queryClient = useQueryClient();
 
+  // Requirements is opt-in per project, and this panel is the feature's only
+  // surface outside the requirements workspace -- a project with the feature
+  // off was still carrying it (empty) on every case detail. The narrow
+  // select + `=== true` read is deliberately IDENTICAL in shape to
+  // `ProjectMenu.tsx`'s flag read, so on a project page the two share one
+  // query cache entry rather than issuing a second request.
+  //
+  // The gate lives here rather than at the two mount sites (the repository
+  // case detail and the run-mode sheet) because it is a property of the
+  // feature, not of either page -- the same reason RequirementsWorkspace.tsx
+  // and the requirement detail page gate themselves.
+  const { data: gateProject, isPending: isFlagPending } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    {
+      where: { id: Number(projectId) },
+      select: { requirementsEnabled: true },
+    },
+    { enabled: projectId != null && !isNaN(Number(projectId)) }
+  );
+  const requirementsEnabled = gateProject?.requirementsEnabled === true;
+
   const { data: linkedRequirements, refetch } = useClientQueries(
     schema
-  ).issue.useFindMany({
-    where: {
-      caseIssues: { some: { caseId } },
-      isDeleted: false,
-      // Spread, never inline -- issueRoleScope.ts's own doc comment warns
-      // this is not an access-control boundary, and this repo's structural
-      // containment gate reviews every raw predicate that skips it.
-      ...REQUIREMENT_SCOPE_WHERE,
+  ).issue.useFindMany(
+    {
+      where: {
+        caseIssues: { some: { caseId } },
+        isDeleted: false,
+        // Spread, never inline -- issueRoleScope.ts's own doc comment warns
+        // this is not an access-control boundary, and this repo's structural
+        // containment gate reviews every raw predicate that skips it.
+        ...REQUIREMENT_SCOPE_WHERE,
+      },
+      orderBy: { name: "asc" },
     },
-    orderBy: { name: "asc" },
-  });
+    { enabled: requirementsEnabled }
+  );
 
   // COV-05's per-linkage dismissal state, reduced to a Map keyed by the
   // requirement's issueId -- every row in this panel is a requirement
   // linked to the SAME case, so `caseId` is the only where-clause needed.
   const { data: dismissals, refetch: refetchDismissals } = useClientQueries(
     schema
-  ).repositoryCaseIssue.useFindMany({
-    where: { caseId },
-    select: { issueId: true, suspectDismissedAt: true },
-  });
+  ).repositoryCaseIssue.useFindMany(
+    {
+      where: { caseId },
+      select: { issueId: true, suspectDismissedAt: true },
+    },
+    { enabled: requirementsEnabled }
+  );
 
   const dismissalsByIssueId = useMemo(() => {
     const map = new Map<number, Date | string | null>();
@@ -103,7 +131,12 @@ export function LinkedRequirementsPanel({
   // row in this panel, since every row is a requirement linked to the SAME
   // case (unlike the requirement-side panel, where each row is a different
   // case).
-  const { data: caseLatestExecution } = useCaseLatestExecution(caseId);
+  // `undefined` while the feature is off -- the hook's own `enabled` is
+  // `Number.isFinite(caseId)`, so passing undefined suppresses the request
+  // the same way an unselected case does.
+  const { data: caseLatestExecution } = useCaseLatestExecution(
+    requirementsEnabled ? caseId : undefined
+  );
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [openUnlinkId, setOpenUnlinkId] = useState<number | null>(null);
@@ -249,6 +282,15 @@ export function LinkedRequirementsPanel({
       );
     }
   };
+
+  // Fails CLOSED, exactly like RequirementsWorkspace.tsx's own gate: while
+  // the flag query is in flight the answer is not known yet, and rendering
+  // the panel first and pulling it away is worse than showing it a beat
+  // late. A caller that passes no `projectId` never resolves the gate and
+  // so never gets the panel -- both mount sites pass the case's project.
+  if (isFlagPending || !requirementsEnabled) {
+    return null;
+  }
 
   // Requirements are opt-in per project, so a read-only empty card would be
   // permanent furniture on every run. The editable surface keeps its empty
