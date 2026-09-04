@@ -19,7 +19,7 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
     super();
     this.personalAccessToken = credentials.personalAccessToken;
     this.projectPath = settings?.projectPath ?? "";
-    this.baseUrl = (settings?.baseUrl ?? "https://gitlab.com").replace(
+    this.baseUrl = (settings?.baseUrl || "https://gitlab.com").replace(
       /\/$/,
       ""
     );

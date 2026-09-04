@@ -155,6 +155,23 @@ describe("GitHubRepoAdapter", () => {
   });
 
   describe("GitHub Enterprise Server (custom base URL)", () => {
+    it("falls back to api.github.com when the baseUrl setting is an empty string", async () => {
+      const ghesAdapter = new GitHubRepoAdapter(
+        { personalAccessToken: "ghp_test123" },
+        { owner: "myorg", repo: "myrepo", baseUrl: "" }
+      );
+      (ghesAdapter as any).rateLimitDelay = 0;
+      (ghesAdapter as any).lastRequestTime = 0;
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+      await expect(ghesAdapter.getDefaultBranch()).resolves.toBe("main");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/repos/myorg/myrepo",
+        expect.any(Object)
+      );
+    });
+
     it("hits the configured baseUrl instead of api.github.com", async () => {
       const ghesAdapter = new GitHubRepoAdapter(
         { personalAccessToken: "ghp_test123" },

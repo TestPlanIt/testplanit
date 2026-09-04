@@ -21,7 +21,7 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
     this.personalAccessToken = credentials.personalAccessToken;
     this.owner = settings?.owner ?? "";
     this.repo = settings?.repo ?? "";
-    this.baseUrl = (settings?.baseUrl ?? "https://api.github.com").replace(
+    this.baseUrl = (settings?.baseUrl || "https://api.github.com").replace(
       /\/$/,
       ""
     );

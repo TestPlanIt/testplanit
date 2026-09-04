@@ -49,12 +49,24 @@ const PROVIDERS = [
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   provider: z.enum(["GITHUB", "GITLAB", "BITBUCKET", "AZURE_DEVOPS", "GITEA"]),
-  credentials: z.record(z.string(), z.string()).optional(),
-  settings: z.record(z.string(), z.string()).optional(),
+  credentials: z.record(z.string(), z.string().optional()).optional(),
+  settings: z.record(z.string(), z.string().optional()).optional(),
   isActive: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+/** Optional provider fields left blank must not be stored as empty strings. */
+function compactRecord(
+  record: Record<string, string | undefined> | undefined
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(record ?? {}).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].trim() !== ""
+    )
+  );
+}
 
 interface CodeRepositoryModalProps {
   repository?: {
@@ -119,8 +131,8 @@ export function CodeRepositoryModal({
     try {
       const body: Record<string, unknown> = {
         provider: values.provider,
-        credentials: values.credentials,
-        settings: values.settings,
+        credentials: compactRecord(values.credentials),
+        settings: compactRecord(values.settings),
       };
       if (repository?.id) body.repositoryId = repository.id;
 
@@ -148,8 +160,8 @@ export function CodeRepositoryModal({
           where: { id: repository.id },
           data: {
             name: values.name,
-            settings: values.settings ?? {},
-            credentials: values.credentials ?? {},
+            settings: compactRecord(values.settings),
+            credentials: compactRecord(values.credentials),
             status: newStatus as any,
           },
         });
@@ -159,14 +171,14 @@ export function CodeRepositoryModal({
           create: {
             name: values.name,
             provider: values.provider,
-            credentials: values.credentials ?? {},
-            settings: values.settings ?? {},
+            credentials: compactRecord(values.credentials),
+            settings: compactRecord(values.settings),
             isDeleted: false,
           },
           update: {
             provider: values.provider,
-            credentials: values.credentials ?? {},
-            settings: values.settings ?? {},
+            credentials: compactRecord(values.credentials),
+            settings: compactRecord(values.settings),
             isDeleted: false,
           },
         });
