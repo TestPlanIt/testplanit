@@ -24,7 +24,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { Link } from "~/lib/navigation";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
@@ -308,6 +308,9 @@ export function UserComments({ userId }: UserCommentsProps) {
   const t = useTranslations("users.profile.myComments");
   const tGlobal = useTranslations();
   const locale = useLocale();
+  // Generated rather than hardcoded so a second instance on one page cannot
+  // point both triggers at the same label element.
+  const scopeLabelId = useId();
   const [scope, setScope] = useState<CommentScope>("all");
   // Already debounced by the Filter component before it lands here.
   const [searchText, setSearchText] = useState("");
@@ -413,12 +416,22 @@ export function UserComments({ userId }: UserCommentsProps) {
           dataTestId="user-comments-search"
         />
         <div className="w-[200px]">
-          <Label className="sr-only">{t("filterLabel")}</Label>
+          {/* The label has to be wired to the trigger, not merely rendered
+              beside it: a bare <Label> names nothing, and Radix renders the
+              trigger as a role="combobox" button whose only content is the
+              selected value — so without this the control reaches screen
+              readers with no name at all (axe button-name, 4.1.2). */}
+          <Label id={scopeLabelId} className="sr-only">
+            {t("filterLabel")}
+          </Label>
           <Select
             value={scope}
             onValueChange={(value) => setScope(value as CommentScope)}
           >
-            <SelectTrigger data-testid="user-comments-scope-select">
+            <SelectTrigger
+              aria-labelledby={scopeLabelId}
+              data-testid="user-comments-scope-select"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
