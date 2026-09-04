@@ -1,7 +1,7 @@
 "use server";
 
 import { randomBytes } from "crypto";
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
 import { db } from "~/server/db";
 
 export const generateEmailVerificationToken = async () => {
@@ -9,14 +9,13 @@ export const generateEmailVerificationToken = async () => {
 };
 
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const transporter: nodemailer.Transporter = nodemailer.createTransport({
+  const transporter: Transporter = nodemailer.createTransport({
     host: process.env.EMAIL_SERVER_HOST,
     port: Number(process.env.EMAIL_SERVER_PORT) || 0,
     auth: {
       user: process.env.EMAIL_SERVER_USER,
       pass: process.env.EMAIL_SERVER_PASSWORD,
     },
-    from: `"TestPlanIt" <${process.env.EMAIL_FROM}>`,
   });
 
   const emailData = {
