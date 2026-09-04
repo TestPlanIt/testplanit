@@ -1522,7 +1522,7 @@
           },
           "requirementsConfig": {
             "title": "Anforderungssynchronisierung",
-            "description": "Legt fest, welche Tracker-Issue-Typen als Anforderungen gelten. Bestehende Issues werden entsprechend neu klassifiziert.",
+            "description": "Synchronisieren Sie, welche Tracker-Issue-Typen als Anforderungen zählen. Bestehende Issues werden entsprechend neu klassifiziert.",
             "enableLabel": "Anforderungsklassifizierung aktivieren",
             "issueTypesLabel": "Issue-Typen",
             "issueTypesPlaceholder": "Issue-Typen auswählen",
@@ -1539,9 +1539,9 @@
             "noChanges": "Keine Klassifizierungsänderungen anzuwenden.",
             "importOfferBodyExact": "{count, plural, one {{count} Issue} other {{count} Issues}} der ausgewählten Typen befinden sich im Tracker.",
             "importOfferBodyFloor": "Mindestens {count, plural, one {{count} Issue} other {{count} Issues}} der ausgewählten Typen befinden sich im Tracker — der Import ist nicht auf diese Anzahl begrenzt.",
-            "importOfferBodyUnknown": "Es konnte nicht genau ermittelt werden, wie viele Issues der ausgewählten Typen sich im Tracker befinden. Der Import kann trotzdem fortgesetzt werden und bringt jede Übereinstimmung mit.",
+            "importOfferBodyUnknown": "Es konnte nicht genau ermittelt werden, wie viele Issues der ausgewählten Typen sich im Tracker befinden. Der Import kann trotzdem fortgesetzt werden und importiert alle Treffer.",
             "importOfferConfirm": "Jetzt importieren",
-            "importStarted": "Import gestartet. Issues werden angezeigt, sobald sie importiert werden.",
+            "importStarted": "Import gestartet. Issues werden angezeigt, sobald sie importiert wurden.",
             "importFailed": "Der Import konnte nicht gestartet werden",
             "importAlreadyRunning": "Für dieses Tracker-Projekt läuft bereits ein Import",
             "importNoTypes": "Wählen und speichern Sie mindestens einen Issue-Typ, bevor Sie importieren",
@@ -6006,6 +6006,7 @@
         "anthropic": "Anthropisch",
         "azureOpenai": "Azure OpenAI",
         "gemini": "Google Gemini",
+        "deepseek": "DeepSeek",
         "ollama": "Ollama",
         "customLlm": "Kundenspezifisches LLM",
         "apiKeyPlaceholder": "Geben Sie Ihren API-Schlüssel ein...",
@@ -6704,7 +6705,7 @@
       "dragDisabled": "Diese Anforderung kann derzeit nicht verschoben werden."
     },
     "list": {
-      "columnName": "Name",
+      "columnName": "Namen",
       "columnStatus": "Status",
       "columnSource": "Quelle",
       "expandRow": "{name} erweitern",
@@ -6757,7 +6758,7 @@
     "create": {
       "dialogTitle": "Anforderung erstellen",
       "dialogDescription": "Fügen Sie dem Anforderungsbaum dieses Projekts eine neue Anforderung hinzu.",
-      "nameLabel": "Name",
+      "nameLabel": "Namen",
       "namePlaceholder": "Geben Sie einen Anforderungsnamen ein...",
       "parentLabel": "Übergeordnet",
       "parentNone": "Kein übergeordnetes Element (oberste Ebene)",
@@ -7180,12 +7181,12 @@
       "name": "## Integrationsname\nEine beschreibende Bezeichnung für diese LLM-Integration.\n\n- Wird verwendet, um sie in Listen und Einstellungen zu identifizieren.\n- Beispiel: \"OpenAI GPT-4o\" oder \"Internes Ollama\"",
       "provider": "## Provider\nDer LLM-Dienst, der diese Integration ermöglicht.\n\n- Bestimmt das API-Protokoll und die verfügbaren Modelle.\n- Kann nach der Erstellung nicht mehr geändert werden.",
       "apiKey": "## API-Schlüssel\nIhr Authentifizierungsschlüssel für die API des LLM-Anbieters.\n\n- Diesen erhalten Sie in der Entwicklerkonsole Ihres Anbieters.\n- Wird verschlüsselt gespeichert und nach dem Speichern nicht mehr angezeigt.\n- Für Ollama (lokale Bereitstellung) nicht erforderlich.",
-      "endpoint": "## API-Endpunkt\nDie Basis-URL für die API des LLM-Anbieters.\n\n- Für OpenAI, Anthropic und Gemini leer lassen – offizielle URLs werden automatisch verwendet.\n- Erforderlich für Ollama (z. B. `http://localhost:11434`), Azure OpenAI und benutzerdefiniertes LLM.\n- Optional für jeden Anbieter – geben Sie einen OpenAI-kompatiblen Proxy (z. B. LiteLLM) an, indem Sie dessen URL eingeben.\n- **Private/interne Adressen** (localhost, 127.0.0.1, private IPs, Cloud-Metadaten) sind blockiert, sofern sie nicht explizit über die Umgebungsvariable `ALLOWED_PRIVATE_HOSTS` zugelassen werden.",
+      "endpoint": "## API-Endpunkt\nDie Basis-URL für die API des LLM-Anbieters.\n\n- Für OpenAI, Anthropic, Gemini und DeepSeek leer lassen – offizielle URLs werden automatisch verwendet\n- Erforderlich für Ollama (z. B. `http://localhost:11434`), Azure OpenAI und benutzerdefiniertes LLM\n- Optional für jeden Anbieter – geben Sie einen OpenAI-kompatiblen Proxy (z. B. LiteLLM) an, indem Sie dessen URL eingeben\n- **Private/interne Adressen** (localhost, 127.0.0.1, private IPs, Cloud-Metadaten) sind blockiert, sofern sie nicht explizit über die Umgebungsvariable `ALLOWED_PRIVATE_HOSTS` zugelassen werden",
       "deploymentName": "## Azure-Bereitstellungsname\nDer Name Ihrer Azure OpenAI-Modellbereitstellung.\n\n- Zu finden in Azure OpenAI Studio unter Bereitstellungen.\n- Unterscheidet sich vom Modellnamen – z. B. wird `my-gpt4-deploy` auf `gpt-4` abgebildet.\n- Nur für Azure OpenAI erforderlich.",
-      "defaultModel": "## Standardmodell\nDas für KI-Anfragen mit dieser Integration verwendete Modell.\n\n- Für OpenAI, Anthropic, Gemini, Ollama und OpenAI-kompatible benutzerdefinierte Endpunkte (z. B. LiteLLM) — verfügbare Modelle werden automatisch abgerufen\n- Wenn der Anbieter auch Modellpreise meldet, werden die Kostenfelder bei der Auswahl automatisch ausgefüllt\n- Stellen Sie sicher, dass das Modell in Ihrem Anbieterkonto aktiviert ist\n- Beispiel: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "defaultModel": "## Standardmodell\nDas für KI-Anfragen mit dieser Integration verwendete Modell.\n\n- Für OpenAI, Anthropic, Gemini, DeepSeek, Ollama und OpenAI-kompatible benutzerdefinierte Endpunkte (z. B. LiteLLM) werden verfügbare Modelle automatisch abgerufen.\n- Wenn der Anbieter auch die Modellpreise meldet, werden die Kostenfelder bei der Auswahl automatisch ausgefüllt.\n- Stellen Sie sicher, dass das Modell in Ihrem Anbieterkonto aktiviert ist.\n- Beispiel: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
       "maxTokensPerRequest": "## Max Tokens Per Request\nDie **feste Obergrenze für _Ausgabe_-Tokens**, die das Modell in einer einzelnen Antwort erzeugen darf.\n\n- Begrenzt die Länge der **Antwort** des Modells — nicht, wie viel Kontext du ihm sendest\n- Anfragen, die mehr als dieses Limit verlangen, werden **abgelehnt, bevor sie das Modell erreichen**\n- Setze es auf das tatsächliche maximale Ausgabelimit deines Modells — z. B. `128000` für Claude Opus/Sonnet, `64000` für Claude Haiku, `65536` für Gemini, `16384` für GPT-4o\n- Zu niedrig → KI-Funktionen schlagen fehl oder erzeugen abgeschnittene Ausgaben",
       "defaultMaxTokens": "## Standard-Max-Tokens\nDie **Standard-_Ausgabe_-Länge**, die eine Anfrage anfordert, wenn eine Funktion keinen eigenen Wert festlegt.\n\n- Steuert, wie lang die **Antwort** des Modells sein kann, begrenzt durch _Max Tokens Per Request_\n- Die meisten KI-Funktionen legen ihren eigenen Wert unter **Admin → Prompt Config** fest; dies ist nur der Fallback-Wert\n- Es steuert **nicht**, wie viel Repository-Code QuickScript an das Modell sendet – dieses Budget wird automatisch aus dem Kontextfenster des Modells abgeleitet\n- Halte es ≤ _Max Tokens Per Request_",
-      "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code deines verbundenen Repositorys QuickScript dem Modell bei der Skriptgenerierung zuführt.\n\n- **Wird automatisch festgelegt** anhand des Eingabekontextfensters des ausgewählten Modells — hier gibt es nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die nicht überläuft\n- Mehr Kontext verankert das Skript in deinen echten Page Objects und Fixtures – es ändert nicht, wie lang das generierte Skript ist",
+      "repoContextBudget": "## Repository-Kontextbudget\nWie viel Code deines verbundenen Repositorys QuickScript dem Modell bei der Skriptgenerierung zuführt.\n\n- **Wird automatisch festgelegt** anhand des Eingabekontextfensters des ausgewählten Modells — hier gibt es nichts zu konfigurieren\n- Modelle mit größerem Kontext (Claude, Gemini, DeepSeek) erhalten mehr; kleine lokale Modelle erhalten eine sichere Menge, die nicht überläuft\n- Mehr Kontext verankert das Skript in deinen echten Page Objects und Fixtures – es ändert nicht, wie lang das generierte Skript ist",
       "maxRequestsPerMinute": "## Maximale Anfragen pro Minute\nBegrenzt die Anzahl der API-Aufrufe, die pro Minute an diesen Anbieter gesendet werden können.\n\n- Entsprechend dem Ratenlimit Ihres Anbietertarifs einstellen.\n- Überschüssige Anfragen werden in eine Warteschlange gestellt, nicht abgelehnt.\n- Informationen zum Limit Ihres Tarifs finden Sie in der Dokumentation Ihres Anbieters.",
       "costPerInputToken": "## Kosten pro 1 Million Input-Token (USD)\nDie Kosten in USD pro **Million** gesendeter Input- (Prompt-) Token an das Modell.\n\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet\n- Wird automatisch ausgefüllt, wenn Ihr Anbieter die Modellpreise meldet (LiteLLM, OpenRouter, Together AI) — angewendet, wenn Sie ein Modell auswählen oder eine Testverbindung durchführen\n- Andernfalls finden Sie diese Angabe auf der Preisseite Ihres Anbieters\n- Beispiel: `0.15` = 0,15 $ pro Million Input-Token",
       "costPerOutputToken": "## Kosten pro 1 Million Output-Token (USD)\nDie Kosten in USD pro **Million** vom Modell generierter Output- (Completion-) Token.\n\n- In der Regel höher als die Kosten für Input-Token\n- Wird zur Kostenverfolgung und für Budgetwarnungen verwendet\n- Wird automatisch ausgefüllt, wenn Ihr Anbieter die Modellpreise meldet (LiteLLM, OpenRouter, Together AI) — angewendet, wenn Sie ein Modell auswählen oder eine Testverbindung durchführen\n- Andernfalls finden Sie diese Angabe auf der Preisseite Ihres Anbieters\n- Beispiel: `0.60` = 0,60 $ pro Million Output-Token",
@@ -7449,7 +7450,7 @@
       "systemPrompt": "## Systemaufforderung\nAnweisungen, die vor jeder Benutzereingabe an das KI-Modell gesendet werden. Definiert die Rolle, das Ausgabeformat und die Einschränkungen des Modells.\n\n- Unterstützt Platzhalter in doppelten geschweiften Klammern (z. B. FRAMEWORK, LANGUAGE, CASE_NAME), die zur Laufzeit ersetzt werden.\n- Änderungen hier wirken sich auf alle Projekte aus, die diese Konfiguration verwenden.",
       "userPrompt": "## Benutzereingabe\nDie Nachricht, die im Namen des Benutzers an die KI gesendet wird. Lassen Sie dieses Feld leer, wenn die Funktion die Benutzernachricht vollständig im Code erstellt.\n\n- Unterstützt Platzhalter in doppelten geschweiften Klammern (z. B. ISSUE_TITLE, CASE_NAME, CODE_CONTEXT), die zur Laufzeit ersetzt werden.\n- Die verfügbaren Platzhalter für jede Funktion sind im Abschnitt „Variablen“ unten aufgeführt.",
       "temperature": "## Temperatur\nSteuert die Zufälligkeit der KI-Ausgabe. Bereich: 0–2.\n\n- **0,0–0,3** — Sehr deterministisch, am besten geeignet für strukturierte Ausgaben (JSON, Code).\n- **0,4–0,7** — Ausgewogen, gut für die Generierung von Testfällen.\n- **0,8–2,0** — Kreativer und abwechslungsreicher, geeignet für offene Texte.",
-      "maxOutputTokens": "## Maximale Anzahl Ausgabetoken\nDie maximale Anzahl an Token, die das Modell in einer einzelnen Antwort generiert.\n\n– Höhere Werte ermöglichen längere Antworten, erhöhen aber Kosten und Latenz.\n– Typische Bereiche: 2048 für kurze Texte, 4096 für Codegenerierung, 6000+ für die Ausgabe mit mehreren Groß-/Kleinschreibung."
+      "maxOutputTokens": "## Maximale Ausgabe-Token\nDie maximale Anzahl an Token, die das Modell in einer einzelnen Antwort generiert.\n\n- Höhere Werte ermöglichen längere Antworten, erhöhen jedoch Kosten und Latenz.\n- Typische Bereiche: 2048 für kurze Texte, 4096 für Codegenerierung, 6000+ für Ausgaben mit mehreren Testfällen."
     },
     "menu": {
       "startTour": "Geführte Willkommenstour",

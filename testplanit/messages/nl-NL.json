@@ -1523,10 +1523,10 @@
           "requirementsConfig": {
             "title": "Vereistensynchronisatie",
             "description": "Synchroniseer welke issuetypen van de tracker als vereisten tellen. Bestaande issues worden dienovereenkomstig opnieuw geclassificeerd.",
-            "enableLabel": "Vereisteclassificatie inschakelen",
+            "enableLabel": "Vereistenclassificatie inschakelen",
             "issueTypesLabel": "Issuetypen",
             "issueTypesPlaceholder": "Selecteer issuetypen",
-            "issueTypesAriaLabel": "Vereiste-issuetypen",
+            "issueTypesAriaLabel": "Issuetypen voor vereisten",
             "labelsLabel": "Labels",
             "labelsPlaceholder": "Selecteer labels",
             "labelsAriaLabel": "Vereiste labels",
@@ -1552,8 +1552,8 @@
             "importStopRequested": "Stopverzoek ontvangen — de import stopt na de huidige pagina.",
             "importStopNotRunning": "Die import is al voltooid of al gestopt.",
             "importCancelled": "Import geannuleerd",
-            "settingsSaved": "Instellingen voor vereistetype opgeslagen",
-            "saveError": "Instellingen voor vereistetype konden niet worden opgeslagen"
+            "settingsSaved": "Instellingen voor vereistentype opgeslagen",
+            "saveError": "Instellingen voor vereistentype konden niet worden opgeslagen"
           }
         },
         "integrationAssigned": "Integratie succesvol toegewezen",
@@ -6006,6 +6006,7 @@
         "anthropic": "Antropisch",
         "azureOpenai": "Azure OpenAI",
         "gemini": "Google Gemini",
+        "deepseek": "DeepSeek",
         "ollama": "Ollama",
         "customLlm": "Aangepaste LLM",
         "apiKeyPlaceholder": "Voer uw API-sleutel in...",
@@ -6746,10 +6747,10 @@
     "override": {
       "promoteTitle": "Dit issue gebruiken als vereiste?",
       "promoteDescription": "{issue} wordt toegevoegd aan de vereistenboom en verschijnt niet langer in de weergaven Issues. Het blijft een vereiste bij synchronisaties en wijzigingen in de configuratie van vereistetypen totdat je dit terugzet.",
-      "promoteConfirm": "Gebruiken als vereiste",
+      "promoteConfirm": "Als vereiste gebruiken",
       "excludeTitle": "Stoppen met het gebruik van deze vereiste?",
       "excludeDescription": "{issue} verlaat de vereistenboom en verschijnt op de Issues-pagina van het project. De koppelingen naar testgevallen blijven behouden. Het blijft uitgesloten bij synchronisaties en wijzigingen in de configuratie van vereistetypen totdat je dit terugzet.",
-      "excludeConfirm": "Niet gebruiken als vereiste",
+      "excludeConfirm": "Niet als vereiste gebruiken",
       "resetTitle": "Terugzetten naar de geconfigureerde classificatie?",
       "resetDescription": "{issue} volgt weer de configuratie van vereistetypen van het project, wat het kan toevoegen aan of verwijderen uit de vereistenboom.",
       "resetConfirm": "Terugzetten"
@@ -6773,7 +6774,7 @@
       "promoteChooseIssue": "Probleem kiezen",
       "promoteChangeIssue": "Wijzigen",
       "promoteNoneSelected": "Geen probleem geselecteerd",
-      "promoteSubmit": "Gebruiken als vereiste",
+      "promoteSubmit": "Als vereiste gebruiken",
       "promoteSuccess": "Probleem is nu een vereiste.",
       "promoteFailed": "Het is niet gelukt om het probleem te promoveren."
     },
@@ -6891,7 +6892,7 @@
     },
     "history": {
       "title": "Inhoudsgeschiedenis",
-      "description": "Elke wijziging aan de titel, documentatie of notitie van deze requirement, met wat er is veranderd",
+      "description": "Elke wijziging aan de titel, documentatie of notitie van deze vereiste, met wat er is veranderd",
       "empty": "Nog geen inhoudswijzigingen vastgelegd — de huidige tekst is het origineel.",
       "versionLabel": "Versie {version}",
       "currentBadge": "Huidig",
@@ -7180,12 +7181,12 @@
       "name": "## Integratienaam\nEen beschrijvend label voor deze LLM-integratie.\n\n- Wordt gebruikt om deze te identificeren in lijsten en instellingen.\n- Voorbeeld: \"OpenAI GPT-4o\" of \"Interne Ollama\"",
       "provider": "## Provider\nDe LLM-service die deze integratie mogelijk maakt.\n\n- Bepaalt het API-protocol en de beschikbare modellen.\n- Kan na aanmaak niet meer worden gewijzigd.",
       "apiKey": "## API-sleutel\nUw authenticatiesleutel voor de API van de LLM-provider.\n\n- Deze kunt u verkrijgen via de ontwikkelaarsconsole van uw provider.\n- Deze wordt versleuteld bewaard en na opslag nooit weergegeven.\n- Niet vereist voor Ollama (lokale implementatie).",
-      "endpoint": "## API-eindpunt\nDe basis-URL voor de API van de LLM-provider.\n\n- Laat leeg voor OpenAI, Anthropic en Gemini — officiële URL's worden automatisch gebruikt\n- Vereist voor Ollama (bijv. `http://localhost:11434`), Azure OpenAI en Custom LLM\n- Optioneel voor elke provider — verwijs naar een OpenAI-compatibele proxy (bijv. LiteLLM) door de URL in te voeren\n- **Privé-/interne adressen** (localhost, 127.0.0.1, privé-IP's, cloudmetadata) worden geblokkeerd, tenzij expliciet toegestaan via de omgevingsvariabele `ALLOWED_PRIVATE_HOSTS`",
+      "endpoint": "## API-eindpunt\nDe basis-URL voor de API van de LLM-provider.\n\n- Laat leeg voor OpenAI, Anthropic, Gemini en DeepSeek — officiële URL's worden automatisch gebruikt\n- Vereist voor Ollama (bijv. `http://localhost:11434`), Azure OpenAI en Custom LLM\n- Optioneel voor elke provider — verwijs naar een OpenAI-compatibele proxy (bijv. LiteLLM) door de URL in te voeren\n- **Privé-/interne adressen** (localhost, 127.0.0.1, privé-IP's, cloudmetadata) worden geblokkeerd, tenzij expliciet toegestaan via de omgevingsvariabele `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Azure-implementatienaam\nDe naam van uw Azure OpenAI-modelimplementatie.\n\n- Te vinden in Azure OpenAI Studio onder Implementaties\n- Verschilt van de modelnaam — bijvoorbeeld `my-gpt4-deploy` komt overeen met `gpt-4`\n- Alleen vereist voor Azure OpenAI",
-      "defaultModel": "## Standaardmodel\nHet model dat wordt gebruikt voor AI-verzoeken met deze integratie.\n\n- Voor OpenAI, Anthropic, Gemini, Ollama en OpenAI-compatibele aangepaste eindpunten (bijv. LiteLLM) worden beschikbare modellen automatisch opgehaald\n- Wanneer de provider ook modelprijzen rapporteert, worden de kostenvelden automatisch ingevuld bij selectie\n- Zorg ervoor dat het model is ingeschakeld in uw provideraccount\n- Voorbeeld: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "defaultModel": "## Standaardmodel\nHet model dat wordt gebruikt voor AI-verzoeken met deze integratie.\n\n- Voor OpenAI, Anthropic, Gemini, DeepSeek, Ollama en OpenAI-compatibele aangepaste eindpunten (bijv. LiteLLM) worden beschikbare modellen automatisch opgehaald\n- Wanneer de provider ook modelprijzen doorgeeft, worden de kostenvelden automatisch ingevuld bij selectie\n- Zorg ervoor dat het model is ingeschakeld in uw provideraccount\n- Voorbeeld: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
       "maxTokensPerRequest": "## Maximum tokens per verzoek\nDe **absolute limiet op _output_-tokens** die het model in één antwoord mag genereren.\n\n- Beperkt de lengte van het **antwoord** van het model — niet hoeveel context u verstuurt\n- Verzoeken die om meer vragen dan deze limiet worden **geweigerd voordat ze het model bereiken**\n- Stel dit in op de werkelijke maximale output van uw model — bijv. `128000` voor Claude Opus/Sonnet, `64000` voor Claude Haiku, `65536` voor Gemini, `16384` voor GPT-4o\n- Te laag → AI-functies mislukken of produceren afgekapte output",
       "defaultMaxTokens": "## Standaard maximum tokens\nDe **standaard _output_-lengte** die een verzoek aanvraagt wanneer een functie geen eigen waarde instelt.\n\n- Bepaalt hoe lang het **antwoord** van het model kan zijn, begrensd door _Maximum tokens per verzoek_\n- De meeste AI-functies stellen hun eigen waarde in bij **Beheer → Promptconfiguratie**; dit is alleen de terugval-optie\n- Het bepaalt **niet** hoeveel repositorycode QuickScript naar het model stuurt — dat budget wordt automatisch afgeleid van het contextvenster van het model\n- Houd dit ≤ _Maximum tokens per verzoek_",
-      "repoContextBudget": "## Repository-contextbudget\nHoeveel code van uw verbonden repository QuickScript naar het model stuurt bij het genereren van een script.\n\n- **Automatisch ingesteld** op basis van het invoercontextvenster van het geselecteerde model — er is hier niets te configureren\n- Modellen met een groter contextvenster (Claude, Gemini) krijgen meer; kleine lokale modellen krijgen een veilige hoeveelheid die niet zal overlopen\n- Meer context zorgt ervoor dat het script beter aansluit op uw werkelijke page objects en fixtures — het verandert niet hoe lang het gegenereerde script is",
+      "repoContextBudget": "## Repository-contextbudget\nHoeveel code van uw verbonden repository QuickScript naar het model stuurt bij het genereren van een script.\n\n- **Automatisch ingesteld** op basis van het invoercontextvenster van het geselecteerde model — er is hier niets te configureren\n- Modellen met een groter contextvenster (Claude, Gemini, DeepSeek) krijgen meer; kleine lokale modellen krijgen een veilige hoeveelheid die niet zal overlopen\n- Meer context zorgt ervoor dat het script beter aansluit op uw werkelijke page objects en fixtures — het verandert niet hoe lang het gegenereerde script is",
       "maxRequestsPerMinute": "## Maximaal aantal verzoeken per minuut\nBeperkt het aantal API-aanroepen dat per minuut naar deze provider kan worden gedaan.\n\n- Stel dit in op de limiet van uw providerabonnement.\n- Overtollige verzoeken worden in de wachtrij geplaatst, niet geweigerd.\n- Raadpleeg de documentatie van uw provider voor de limiet van uw abonnement.",
       "costPerInputToken": "## Kosten per 1M invoertokens (USD)\nDe kosten in USD per **miljoen** invoer- (prompt) tokens die naar het model worden verzonden.\n\n- Gebruikt voor kostenbewaking en budgetwaarschuwingen\n- Wordt automatisch ingevuld wanneer uw provider modelprijzen rapporteert (LiteLLM, OpenRouter, Together AI) — toegepast wanneer u een model selecteert of Verbinding testen uitvoert\n- Zoek het anders op de prijzenpagina van uw provider\n- Voorbeeld: `0.15` = $0,15 per miljoen invoertokens",
       "costPerOutputToken": "## Kosten per 1M uitvoertokens (USD)\nDe kosten in USD per **miljoen** uitvoer- (voltooiing) tokens die door het model worden gegenereerd.\n\n- Meestal hoger dan de kosten voor invoertokens\n- Gebruikt voor kostenbewaking en budgetwaarschuwingen\n- Wordt automatisch ingevuld wanneer uw provider modelprijzen rapporteert (LiteLLM, OpenRouter, Together AI) — toegepast wanneer u een model selecteert of Verbinding testen uitvoert\n- Zoek het anders op de prijzenpagina van uw provider\n- Voorbeeld: `0.60` = $0,60 per miljoen uitvoertokens",
@@ -7449,7 +7450,7 @@
       "systemPrompt": "## Systeemprompt\nInstructies die naar het AI-model worden gestuurd vóórdat er gebruikersinvoer plaatsvindt. Definieert de rol van het model, het uitvoerformaat en de beperkingen.\n\n- Ondersteunt placeholders met dubbele accolades (bijv. FRAMEWORK, LANGUAGE, CASE_NAME) die tijdens de uitvoering worden vervangen.\n- Wijzigingen hier zijn van invloed op elk project dat deze configuratie gebruikt.",
       "userPrompt": "## Gebruikersprompt\nHet bericht dat namens de gebruiker naar de AI wordt verzonden. Laat dit veld leeg als de functie het gebruikersbericht volledig in code construeert.\n\n- Ondersteunt placeholders met dubbele accolades (bijv. ISSUE_TITLE, CASE_NAME, CODE_CONTEXT) die tijdens de uitvoering worden vervangen.\n- De beschikbare placeholders voor elke functie staan vermeld in het gedeelte Variabelen hieronder.",
       "temperature": "## Temperatuur\nRegelt de willekeurigheid van de AI-uitvoer. Bereik: 0–2.\n\n- **0,0–0,3** — Zeer deterministisch, het beste voor gestructureerde uitvoer (JSON, code).\n- **0,4–0,7** — Evenwichtig, goed voor het genereren van testgevallen.\n- **0,8–2,0** — Creatiever en gevarieerder, geschikt voor open tekst.",
-      "maxOutputTokens": "## Maximaal aantal uitvoertokens\nHet maximale aantal tokens dat het model in één reactie genereert.\n\n- Hogere waarden maken langere reacties mogelijk, maar verhogen de kosten en latentie.\n- Typische bereiken: 2048 voor korte tekst, 4096 voor codegeneratie, 6000+ voor uitvoer met meerdere hoofd- en kleine letters."
+      "maxOutputTokens": "## Maximaal aantal outputtokens\nHet maximale aantal tokens dat het model in één reactie genereert.\n\n- Hogere waarden maken langere reacties mogelijk, maar verhogen de kosten en latentie.\n- Typische bereiken: 2048 voor korte tekst, 4096 voor het genereren van code, 6000+ voor uitvoer met meerdere testgevallen."
     },
     "menu": {
       "startTour": "Rondleiding Welkom",

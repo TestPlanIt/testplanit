@@ -1525,10 +1525,10 @@
             "description": "Sincronize quais tipos de problema do rastreador contam como requisitos. Os problemas existentes são reclassificados para corresponder.",
             "enableLabel": "Ativar classificação de requisitos",
             "issueTypesLabel": "Tipos de problema",
-            "issueTypesPlaceholder": "Selecionar tipos de problema",
+            "issueTypesPlaceholder": "Selecione os tipos de problema",
             "issueTypesAriaLabel": "Tipos de problema de requisito",
             "labelsLabel": "Rótulos",
-            "labelsPlaceholder": "Selecionar rótulos",
+            "labelsPlaceholder": "Selecione os rótulos",
             "labelsAriaLabel": "Rótulos de requisito",
             "labelPreviewNote": "Problemas com qualquer rótulo selecionado se tornam requisitos ao salvar; problemas sem nenhum rótulo selecionado deixam de ser requisitos.",
             "previewHeading": "Impacto desta alteração",
@@ -1552,8 +1552,8 @@
             "importStopRequested": "Parada solicitada — a importação será interrompida após a página atual.",
             "importStopNotRunning": "Essa importação já foi concluída ou já foi interrompida.",
             "importCancelled": "Importação cancelada",
-            "settingsSaved": "Configurações de tipo de requisito salvas",
-            "saveError": "Falha ao salvar as configurações de tipo de requisito"
+            "settingsSaved": "Configurações do tipo de requisito salvas",
+            "saveError": "Falha ao salvar as configurações do tipo de requisito"
           }
         },
         "integrationAssigned": "Integração atribuída com sucesso",
@@ -6006,6 +6006,7 @@
         "anthropic": "Antrópico",
         "azureOpenai": "Azure OpenAI",
         "gemini": "Google Gemini",
+        "deepseek": "DeepSeek",
         "ollama": "Ollama",
         "customLlm": "LLM personalizado",
         "apiKeyPlaceholder": "Insira sua chave de API...",
@@ -6705,7 +6706,7 @@
     },
     "list": {
       "columnName": "Nome",
-      "columnStatus": "Status",
+      "columnStatus": "Situação",
       "columnSource": "Fonte",
       "expandRow": "Expandir {name}",
       "collapseRow": "Recolher {name}",
@@ -6740,7 +6741,7 @@
       "detachSuccess": "Requisito desanexado.",
       "detachFailed": "Falha ao desanexar o requisito.",
       "exclude": "Não usar como requisito",
-      "excludeSuccess": "Não é mais usado como requisito. Ele aparece na página de Issues do projeto.",
+      "excludeSuccess": "Não é mais usado como requisito. Ele aparece na página de Problemas do projeto.",
       "excludeFailed": "Falha ao atualizar a classificação do requisito."
     },
     "override": {
@@ -6815,7 +6816,7 @@
       "unlinkConfirm": "Tem certeza de que deseja desvincular este caso de teste?",
       "unlinkSuccess": "Caso de teste desvinculado.",
       "unlinkFailed": "Falha ao desvincular o caso de teste.",
-      "columnCase": "Caso de teste",
+      "columnCase": "Caso de Teste",
       "columnProject": "Projeto"
     },
     "linkedRequirements": {
@@ -6851,7 +6852,7 @@
       "removeSuccess": "Referência removida.",
       "removeFailed": "Falha ao remover a referência.",
       "columnReference": "Referência",
-      "columnStatus": "Status"
+      "columnStatus": "Situação"
     },
     "coverage": {
       "title": "Cobertura",
@@ -6870,7 +6871,7 @@
       "panelTitleWithCount": "{count, plural, =0 {Casos de Teste de Cobertura} =1 {Cobrindo # Caso de Teste} other {Cobrindo # Casos de Teste}}",
       "panelDescription": "Todos os casos de teste contabilizados na cobertura deste requisito — casos vinculados diretamente a ele, além de casos vinculados a qualquer requisito abaixo dele. Para adicionar ou remover vínculos, use Casos de Teste Vinculados.",
       "panelEmpty": "Nenhum caso de teste cobre este requisito ainda.",
-      "columnCase": "Caso de teste",
+      "columnCase": "Caso de Teste",
       "columnResult": "Último resultado",
       "columnResultTooltip": "A execução mais recente do caso, mesmo que seu status não seja aprovado nem reprovado. Outras telas, como os Resultados Mais Recentes do repositório, exibem o resultado mais novo que foi aprovado ou reprovado, então o mesmo caso pode aparecer de forma diferente ali.",
       "resultRunLink": "Ver a execução de teste da qual este resultado veio",
@@ -7180,12 +7181,12 @@
       "name": "## Nome da integração\nUm rótulo descritivo para esta integração do LLM.\n\n- Usado para identificá-la em listas e configurações\n- Exemplo: \"OpenAI GPT-4o\" ou \"Internal Ollama\"",
       "provider": "## Provedor\nO serviço LLM que viabiliza esta integração.\n\n- Determina o protocolo da API e os modelos disponíveis\n- Não pode ser alterado após a criação",
       "apiKey": "## Chave da API\nSua chave de autenticação para a API do provedor LLM.\n\n- Obtenha-a no console do desenvolvedor do seu provedor.\n- Mantida criptografada e nunca exibida após o salvamento.\n- Não é necessária para o Ollama (implantação local).",
-      "endpoint": "## Endpoint da API\nA URL base para a API do provedor LLM.\n\n- Deixe em branco para OpenAI, Anthropic e Gemini — as URLs oficiais são usadas automaticamente\n- Obrigatório para Ollama (ex.: `http://localhost:11434`), Azure OpenAI e LLM personalizado\n- Opcional para qualquer provedor — aponte para um proxy compatível com OpenAI (ex.: LiteLLM) inserindo sua URL\n- **Endereços privados/internos** (localhost, 127.0.0.1, IPs privados, metadados da nuvem) são bloqueados, a menos que sejam explicitamente permitidos por meio da variável de ambiente `ALLOWED_PRIVATE_HOSTS`",
+      "endpoint": "## Endpoint da API\nA URL base para a API do provedor LLM.\n\n- Deixe em branco para OpenAI, Anthropic, Gemini e DeepSeek — as URLs oficiais são usadas automaticamente\n- Obrigatório para Ollama (ex.: `http://localhost:11434`), Azure OpenAI e LLM personalizado\n- Opcional para qualquer provedor — aponte para um proxy compatível com OpenAI (ex.: LiteLLM) inserindo sua URL\n- **Endereços privados/internos** (localhost, 127.0.0.1, IPs privados, metadados da nuvem) são bloqueados, a menos que sejam explicitamente permitidos por meio da variável de ambiente `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## Nome da Implantação do Azure\nO nome da sua implantação do modelo do Azure OpenAI.\n\n- Encontrado no Azure OpenAI Studio em Implantações\n- Diferente do nome do modelo — por exemplo, `my-gpt4-deploy` corresponde a `gpt-4`\n- Necessário apenas para o Azure OpenAI",
-      "defaultModel": "## Modelo Padrão\nO modelo usado para solicitações de IA com esta integração.\n\n- Para OpenAI, Anthropic, Gemini, Ollama e endpoints personalizados compatíveis com OpenAI (ex.: LiteLLM) — os modelos disponíveis são obtidos automaticamente\n- Quando o provedor também informa o preço do modelo, os campos de custo são preenchidos automaticamente na seleção\n- Certifique-se de que o modelo esteja habilitado na sua conta de provedor\n- Exemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "defaultModel": "## Modelo Padrão\nO modelo usado para solicitações de IA com esta integração.\n\n- Para OpenAI, Anthropic, Gemini, DeepSeek, Ollama e endpoints personalizados compatíveis com OpenAI (ex.: LiteLLM) — os modelos disponíveis são obtidos automaticamente\n- Quando o provedor também informa o preço do modelo, os campos de custo são preenchidos automaticamente na seleção\n- Certifique-se de que o modelo esteja habilitado na sua conta de provedor\n- Exemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`, `deepseek-v4-flash`",
       "maxTokensPerRequest": "## Máximo de Tokens por Requisição\nO **limite máximo de tokens de _saída_** que o modelo pode gerar em uma única resposta.\n\n- Limita o tamanho da **resposta** do modelo — não a quantidade de contexto que você envia a ele\n- Requisições que solicitam mais do que isso são **rejeitadas antes de chegar ao modelo**\n- Defina-o para a saída máxima real do seu modelo — por exemplo, `128000` para Claude Opus/Sonnet, `64000` para Claude Haiku, `65536` para Gemini, `16384` para GPT-4o\n- Muito baixo → os recursos de IA falham ou produzem saída truncada",
       "defaultMaxTokens": "## Máximo de Tokens Padrão\nO **tamanho de _saída_ padrão** que uma requisição solicita quando um recurso não define o seu próprio.\n\n- Controla o quão longa a **resposta** do modelo pode ser, limitada pelo _Máximo de Tokens por Requisição_\n- A maioria dos recursos de IA define seu próprio valor em **Admin → Configuração de Prompt**; isso é apenas o valor de fallback\n- Isso **não** controla quanto código do repositório o QuickScript envia ao modelo — esse orçamento é derivado automaticamente da janela de contexto do modelo\n- Mantenha-o ≤ _Máximo de Tokens por Requisição_",
-      "repoContextBudget": "## Orçamento de Contexto do Repositório\nQuanto do código do seu repositório conectado o QuickScript envia ao modelo ao gerar um script.\n\n- **Definido automaticamente** com base na janela de contexto de entrada do modelo selecionado — não há nada para configurar aqui\n- Modelos com contexto maior (Claude, Gemini) recebem mais; modelos locais pequenos recebem uma quantidade segura que não excederá o limite\n- Mais contexto fundamenta o script em seus objetos de página e fixtures reais — não altera o tamanho do script gerado",
+      "repoContextBudget": "## Orçamento de Contexto do Repositório\nQuanto do código do seu repositório conectado o QuickScript envia ao modelo ao gerar um script.\n\n- **Definido automaticamente** com base na janela de contexto de entrada do modelo selecionado — não há nada para configurar aqui\n- Modelos com contexto maior (Claude, Gemini, DeepSeek) recebem mais; modelos locais pequenos recebem uma quantidade segura que não excederá o limite\n- Mais contexto fundamenta o script em seus objetos de página e fixtures reais — não altera o tamanho do script gerado",
       "maxRequestsPerMinute": "## Número máximo de solicitações por minuto\nLimita quantas chamadas de API podem ser feitas para este provedor por minuto.\n\n- Defina para corresponder ao limite de taxa do seu plano de provedor.\n- Solicitações excedentes são enfileiradas, não rejeitadas.\n- Consulte a documentação do seu provedor para verificar o limite do seu plano.",
       "costPerInputToken": "## Custo por 1 Milhão de Tokens de Entrada (USD)\nO custo em USD por **milhão** de tokens de entrada (prompt) enviados ao modelo.\n\n- Usado para rastreamento de custos e alertas de orçamento\n- Preenchido automaticamente quando seu provedor informa o preço do modelo (LiteLLM, OpenRouter, Together AI) — aplicado quando você seleciona um modelo ou executa o Teste de Conexão\n- Caso contrário, encontre-o na página de preços do seu provedor\n- Exemplo: `0.15` = $0.15 por milhão de tokens de entrada",
       "costPerOutputToken": "## Custo por 1 Milhão de Tokens de Saída (USD)\nO custo em USD por **milhão** de tokens de saída (conclusão) gerados pelo modelo.\n\n- Geralmente maior que o custo dos tokens de entrada\n- Usado para rastreamento de custos e alertas de orçamento\n- Preenchido automaticamente quando seu provedor informa o preço do modelo (LiteLLM, OpenRouter, Together AI) — aplicado quando você seleciona um modelo ou executa o Teste de Conexão\n- Caso contrário, encontre-o na página de preços do seu provedor\n- Exemplo: `0.60` = $0.60 por milhão de tokens de saída",
@@ -7449,7 +7450,7 @@
       "systemPrompt": "## Prompt do Sistema\nInstruções enviadas ao modelo de IA antes de qualquer entrada do usuário. Define a função, o formato de saída e as restrições do modelo.\n\n- Suporta marcadores de posição entre chaves duplas (por exemplo, FRAMEWORK, LANGUAGE, CASE_NAME) que são substituídos em tempo de execução.\n- As alterações aqui afetam todos os projetos que usam esta configuração.",
       "userPrompt": "## Mensagem do Usuário\nA mensagem enviada à IA em nome do usuário. Deixe em branco se o recurso construir a mensagem do usuário inteiramente em código.\n\n- Suporta marcadores de posição entre chaves duplas (por exemplo, ISSUE_TITLE, CASE_NAME, CODE_CONTEXT) que são substituídos em tempo de execução.\n- Os marcadores de posição disponíveis para cada recurso estão listados na seção Variáveis abaixo.",
       "temperature": "## Temperatura\nControla a aleatoriedade da saída da IA. Intervalo: 0–2.\n\n- **0,0–0,3** — Altamente determinístico, ideal para saídas estruturadas (JSON, código).\n- **0,4–0,7** — Equilibrado, bom para geração de casos de teste.\n- **0,8–2,0** — Mais criativo e variado, adequado para textos abertos.",
-      "maxOutputTokens": "## Tokens de Saída Máxima\nO número máximo de tokens que o modelo irá gerar em uma única resposta.\n\n- Valores mais altos permitem respostas mais longas, mas aumentam o custo e a latência.\n- Valores típicos: 2048 para texto curto, 4096 para geração de código, 6000+ para saída com múltiplas maiúsculas e minúsculas."
+      "maxOutputTokens": "## Máximo de Tokens de Saída\nO número máximo de tokens que o modelo irá gerar em uma única resposta.\n\n- Valores mais altos permitem respostas mais longas, mas aumentam o custo e a latência.\n- Intervalos típicos: 2048 para texto curto, 4096 para geração de código, 6000+ para saída de múltiplos casos."
     },
     "menu": {
       "startTour": "Visita guiada de boas-vindas",
