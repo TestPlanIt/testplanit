@@ -41,6 +41,19 @@ describeIntegration("Seeded status guard trigger (live DB)", () => {
   let untestedId: number;
   let otherId: number;
 
+  // `Status.systemName` is unique, so on any database that has been seeded
+  // there is already exactly one `untested` row — and it is the very row this
+  // guard exists to protect. Adopt it rather than inserting a second one
+  // (which cannot succeed) and restore it afterwards, instead of deleting it
+  // (which cannot succeed either: the seed assigns statuses to a project, so
+  // the delete trips ProjectStatusAssignment's foreign key). Only a database
+  // with no seeded status at all takes the create/delete path.
+  let adoptedUntested: {
+    name: string;
+    order: number;
+    isCompleted: boolean;
+  } | null = null;
+
   beforeAll(async () => {
     client = new Client({ connectionString: DB_URL });
     await client.connect();
@@ -96,9 +109,19 @@ describeIntegration("Seeded status guard trigger (live DB)", () => {
       `DROP TRIGGER IF EXISTS tpl_seeded_status_guard_upd ON "Status";
        DROP TRIGGER IF EXISTS tpl_seeded_status_guard_del ON "Status";`
     );
+    // Only rows this suite created. The previous sweep also removed any
+    // SEEDED `untested` row, which a seeded database will not allow —
+    // db/seed.ts assigns statuses to a project, so the delete trips
+    // ProjectStatusAssignment's foreign key and takes the whole suite down in
+    // teardown. `dropPair` has already restored an adopted row.
     await client.query(
-      `DELETE FROM "Status" WHERE "systemName" = 'untested' OR "systemName" LIKE 'blocked-%'`
+      `DELETE FROM "Status" WHERE "systemName" LIKE 'blocked-%'`
     );
+    if (!adoptedUntested) {
+      await client.query(
+        `DELETE FROM "Status" WHERE "systemName" = 'untested'`
+      );
+    }
     if (createdColor) {
       await client.query(`DELETE FROM "Color" WHERE id = $1`, [colorId]);
     }
@@ -110,19 +133,38 @@ describeIntegration("Seeded status guard trigger (live DB)", () => {
     // `order` is an Int column, so it is derived from the table rather than a
     // timestamp — Date.now() overflows int4.
     const tag = Math.random().toString(36).slice(2, 10);
-    const untested = await client.query<{ id: number }>(
-      `INSERT INTO "Status" (name, "systemName", "colorId", "isEnabled", "isSuccess", "isFailure", "isCompleted", "order")
-       VALUES ('Untested', 'untested', $1, true, false, false, false,
-               (SELECT COALESCE(MAX("order"), 0) + 1 FROM "Status")) RETURNING id`,
-      [colorId]
+    const seeded = await client.query<{
+      id: number;
+      name: string;
+      order: number;
+      isCompleted: boolean;
+    }>(
+      `SELECT id, name, "order", "isCompleted" FROM "Status" WHERE "systemName" = 'untested'`
     );
+    if (seeded.rows.length > 0) {
+      const row = seeded.rows[0];
+      adoptedUntested = {
+        name: row.name,
+        order: row.order,
+        isCompleted: row.isCompleted,
+      };
+      untestedId = row.id;
+    } else {
+      adoptedUntested = null;
+      const untested = await client.query<{ id: number }>(
+        `INSERT INTO "Status" (name, "systemName", "colorId", "isEnabled", "isSuccess", "isFailure", "isCompleted", "order")
+         VALUES ('Untested', 'untested', $1, true, false, false, false,
+                 (SELECT COALESCE(MAX("order"), 0) + 1 FROM "Status")) RETURNING id`,
+        [colorId]
+      );
+      untestedId = untested.rows[0].id;
+    }
     const other = await client.query<{ id: number }>(
       `INSERT INTO "Status" (name, "systemName", "colorId", "isEnabled", "isSuccess", "isFailure", "isCompleted", "order")
        VALUES ('Blocked', $1, $2, true, false, false, false,
                (SELECT COALESCE(MAX("order"), 0) + 1 FROM "Status")) RETURNING id`,
       [`blocked-${tag}`, colorId]
     );
-    untestedId = untested.rows[0].id;
     otherId = other.rows[0].id;
   }
 
@@ -130,9 +172,25 @@ describeIntegration("Seeded status guard trigger (live DB)", () => {
     await client.query(
       `DROP TRIGGER IF EXISTS tpl_seeded_status_guard_del ON "Status"`
     );
-    await client.query(`DELETE FROM "Status" WHERE id = ANY($1::int[])`, [
-      [untestedId, otherId],
-    ]);
+    if (adoptedUntested) {
+      // Put the seeded row back exactly as it was: the negative cases above
+      // deliberately mutate the three columns the guard permits, and this row
+      // outlives the suite.
+      await client.query(
+        `UPDATE "Status" SET name = $1, "order" = $2, "isCompleted" = $3 WHERE id = $4`,
+        [
+          adoptedUntested.name,
+          adoptedUntested.order,
+          adoptedUntested.isCompleted,
+          untestedId,
+        ]
+      );
+      await client.query(`DELETE FROM "Status" WHERE id = $1`, [otherId]);
+    } else {
+      await client.query(`DELETE FROM "Status" WHERE id = ANY($1::int[])`, [
+        [untestedId, otherId],
+      ]);
+    }
     await client.query(SEEDED_STATUS_GUARD_SQL);
   }
 
