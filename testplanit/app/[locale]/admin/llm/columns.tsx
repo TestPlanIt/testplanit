@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import type { LlmIntegration, LlmProviderConfig } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle, Edit, Sparkles, Trash2, XCircle } from "lucide-react";
+import { CheckCircle, Edit, Sparkles, Trash, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, type MutableRefObject } from "react";
 import { Button } from "@/components/ui/button";
@@ -316,7 +316,7 @@ export const useColumns = (
               data-testid="llm-delete-button"
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-8 w-8 shrink-0" />
+              <Trash className="h-8 w-8 shrink-0" />
             </Button>
           </div>
         ),

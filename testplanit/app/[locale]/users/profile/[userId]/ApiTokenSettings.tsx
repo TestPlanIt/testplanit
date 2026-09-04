@@ -42,7 +42,7 @@ import {
   KeyRound,
   Loader2,
   Plus,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -288,7 +288,7 @@ export function ApiTokenSettings({
                       onClick={() => openDeleteDialog(token.id)}
                       className="h-8 w-8 text-destructive hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, EyeIcon, Trash2 } from "lucide-react";
+import { Bell, EyeIcon, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -348,7 +348,7 @@ export function NotificationBell({
             )}
             data-testid="delete-all-notifications-button"
           >
-            <Trash2 className="w-4 h-4 shrink-0" />
+            <Trash className="w-4 h-4 shrink-0" />
             {t("actions.deleteAll")}
           </Button>
         </div>

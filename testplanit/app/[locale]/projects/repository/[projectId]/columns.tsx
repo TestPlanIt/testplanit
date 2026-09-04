@@ -88,7 +88,7 @@ import {
   ScrollText,
   SquarePen,
   SquareStack,
-  Trash2,
+  Trash,
   UserCog,
 } from "lucide-react";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
@@ -231,7 +231,7 @@ export interface ExtendedCases extends RepositoryCases {
 }
 
 /**
- * Renders the case-type icon (Bot / ListChecks / Trash2) and, when the
+ * Renders the case-type icon (Bot / ListChecks / Trash) and, when the
  * case carries parameterized steps, an adjacent SquareStack glyph
  * tinted in primary. Same shape the Tiptap toolbar's
  * InsertParameterToolbarButton uses, so the association is already
@@ -253,7 +253,7 @@ function TypeIconWithParamBadge({
 }) {
   const t = useTranslations("parameters");
   if (isSoftDeletedInRun) {
-    return <Trash2 className="w-4 h-4 me-1 text-muted-foreground shrink-0" />;
+    return <Trash className="w-4 h-4 me-1 text-muted-foreground shrink-0" />;
   }
   const Base = automated || isAutomatedCaseSource(source) ? Bot : ListChecks;
   return (
@@ -1175,7 +1175,7 @@ const ActionsCell = React.memo(function ActionsCell({
               }}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="me-2 h-4 w-4" />
+              <Trash className="me-2 h-4 w-4" />
               <span>{t("common.actions.delete")}</span>
             </DropdownMenuItem>
           )}

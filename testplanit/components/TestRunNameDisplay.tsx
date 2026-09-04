@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CirclePlay, Combine, Lock, Trash2 } from "lucide-react";
+import { CirclePlay, Combine, Lock, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "~/lib/navigation";
@@ -70,7 +70,7 @@ export function TestRunNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash2 className="h-4 w-4 shrink-0" />;
+      icon = <Trash className="h-4 w-4 shrink-0" />;
     } else {
       icon = <CirclePlay className="h-4 w-4 shrink-0" />;
     }

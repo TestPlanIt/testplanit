@@ -22,7 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { GripVertical, Sparkles, Trash2 } from "lucide-react";
+import { GripVertical, Sparkles, Trash } from "lucide-react";
 import { siJira } from "simple-icons";
 
 import { CSS } from "@dnd-kit/utilities";
@@ -153,7 +153,7 @@ const DraggableItem = ({
             onClick={handleClick}
             className="text-destructive p-0 -my-1"
           >
-            <Trash2 size={20} />
+            <Trash size={20} />
           </Button>
         </div>
       </div>

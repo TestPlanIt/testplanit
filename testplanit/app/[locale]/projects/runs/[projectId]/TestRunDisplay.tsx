@@ -16,7 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
 import { useCoalescedWakeUp } from "~/hooks/useCoalescedWakeUp";
 import { testRunCasesQueryMatchesRuns } from "./wakeUpInvalidation";
-import { CheckCircle, CirclePlus, SquarePen, Trash2 } from "lucide-react";
+import { CheckCircle, CirclePlus, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
@@ -674,7 +674,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     },
     {
       key: "delete",
-      icon: Trash2,
+      icon: Trash,
       label: tCommon("bulk.deleteAction", { count: deleteEligibleIds.length }),
       onClick: () => setBulkDialog("delete"),
       disabled: deleteEligibleIds.length === 0,

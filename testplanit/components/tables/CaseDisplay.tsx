@@ -9,7 +9,7 @@ import {
   LinkIcon,
   ListChecks,
   SquareStack,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { type ReactNode } from "react";
@@ -154,7 +154,7 @@ export const CaseDisplay: React.FC<CaseDisplayProps> = ({
   if (showIcon) {
     if (resolvedIsDeleted) {
       icon = (
-        <Trash2
+        <Trash
           className={cn("shrink-0 mt-0.5 text-muted-foreground", iconSize)}
         />
       );

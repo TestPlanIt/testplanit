@@ -10,7 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CircleSlash2, Trash2, X } from "lucide-react";
+import { CircleSlash2, Trash, X } from "lucide-react";
 
 interface RemoveAvatarProps {
   user: User;
@@ -91,7 +91,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               className="ms-auto"
               disabled={isLoading}
             >
-              <Trash2 className="h-4 w-4" /> {tCommon("actions.delete")}
+              <Trash className="h-4 w-4" /> {tCommon("actions.delete")}
             </Button>
           </div>
         </div>

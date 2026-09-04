@@ -60,7 +60,7 @@ import {
   Plus,
   RefreshCw,
   Save,
-  Trash2,
+  Trash,
   Unlink,
   XCircle,
 } from "lucide-react";
@@ -720,7 +720,7 @@ export default function ImpactSettingsPage() {
                           disabled={fields.length === 1}
                           aria-label={tCommon("actions.delete")}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}

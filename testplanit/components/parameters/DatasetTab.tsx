@@ -80,7 +80,7 @@ import {
   MoreVertical,
   Plus,
   Table2,
-  Trash2,
+  Trash,
   Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -1226,7 +1226,7 @@ export function DatasetTab({
                       }
                       data-testid={`dataset-column-delete-${p.name}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                       {t("datasetColumnDelete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -2181,7 +2181,7 @@ export function DatasetTab({
                   onClick={commitDeleteColumn}
                   data-testid="dataset-column-delete-confirm"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
                   {t("datasetColumnDeleteConfirm")}
                 </Button>
               )}

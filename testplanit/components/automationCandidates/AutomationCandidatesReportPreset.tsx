@@ -26,7 +26,7 @@ import {
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ApplicationArea, RepositoryCaseSource } from "~/zenstack/models";
 import { keepPreviousData, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Bot, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Bot, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -689,7 +689,7 @@ export function AutomationCandidatesReportPreset({
               {deleting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
               )}
               {t("delete.confirm")}
             </AlertDialogAction>
@@ -998,7 +998,7 @@ function SnapshotMetaBar({
           onClick={onDeleteRequest}
           data-testid="automation-candidates-delete"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash className="h-4 w-4" />
           {t("delete.button")}
         </Button>
       )}

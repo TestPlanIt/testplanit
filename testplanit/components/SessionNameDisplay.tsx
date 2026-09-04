@@ -1,4 +1,4 @@
-import { Compass, Trash2 } from "lucide-react";
+import { Compass, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "~/utils";
 
@@ -37,7 +37,7 @@ export function SessionNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash2 className="h-4 w-4 shrink-0 mt-1" />;
+      icon = <Trash className="h-4 w-4 shrink-0 mt-1" />;
     } else {
       icon = <Compass className="h-4 w-4 shrink-0 mt-1" />;
     }

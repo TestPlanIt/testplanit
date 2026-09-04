@@ -7,7 +7,7 @@ import {
   CircleSlash2,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
   ClipboardCheck,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -739,7 +739,7 @@ export default function RequirementDetailPanel({
                   onClick={onRequestDelete}
                   disabled={isSubmitting}
                 >
-                  {renderActionButtonContent(Trash2, tCommon("actions.delete"))}
+                  {renderActionButtonContent(Trash, tCommon("actions.delete"))}
                 </Button>
               )}
             </>

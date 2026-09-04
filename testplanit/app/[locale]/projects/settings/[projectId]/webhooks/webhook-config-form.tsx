@@ -43,7 +43,7 @@ import {
   Power,
   RotateCw,
   Send,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -1099,7 +1099,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 data-testid="webhook-delete-button"
                 onClick={() => setDeleteDialogConfigId(config.id)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
                 <span>{tActions("delete")}</span>
               </Button>
               {isRevealedHere && (

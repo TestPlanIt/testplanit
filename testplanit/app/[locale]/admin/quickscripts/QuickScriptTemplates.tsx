@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import type { CaseExportTemplate } from "~/zenstack/models";
-import { CirclePlus, Search, Trash2, Edit } from "lucide-react";
+import { CirclePlus, Search, Trash, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -401,7 +401,7 @@ export default function QuickScriptTemplates() {
                                         className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
                                         disabled
                                       >
-                                        <Trash2 className="h-5 w-5" />
+                                        <Trash className="h-5 w-5" />
                                       </Button>
                                     ) : (
                                       <Button
@@ -412,7 +412,7 @@ export default function QuickScriptTemplates() {
                                           setDeletingTemplate(tmpl)
                                         }
                                       >
-                                        <Trash2 className="h-5 w-5" />
+                                        <Trash className="h-5 w-5" />
                                       </Button>
                                     )}
                                   </div>

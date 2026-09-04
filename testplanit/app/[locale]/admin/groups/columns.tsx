@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { Groups } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
@@ -132,7 +132,7 @@ export const useColumns = (
               disabled={isScimManaged}
               aria-label={t("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           );
           return (

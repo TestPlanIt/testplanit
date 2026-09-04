@@ -43,7 +43,7 @@ import {
   Power,
   RotateCw,
   Send,
-  Trash2,
+  Trash,
 } from "lucide-react";
 
 import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
@@ -1202,7 +1202,7 @@ export function WebhookOutboundForm({
               data-testid={`webhook-outbound-delete-button-${config.id}`}
               onClick={() => setDeleteDialogConfigId(config.id)}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
               <span>{t("outboundDeleteButton")}</span>
             </Button>
           </div>

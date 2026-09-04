@@ -55,7 +55,7 @@ import {
   Edit,
   FileText,
   LinkIcon,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -1492,7 +1492,7 @@ export function SessionResultsList({
                         onClick={() => handleDeleteClick(result.id)}
                         title={tCommon("actions.delete")}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     )}
                   </span>

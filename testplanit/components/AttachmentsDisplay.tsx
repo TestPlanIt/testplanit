@@ -22,7 +22,7 @@ import {
   Download,
   Minus,
   Plus,
-  Trash2,
+  Trash,
   Undo2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -228,7 +228,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
             >
               <div className="p-2 w-full overflow-hidden">
                 <div className="flex items-center gap-2 p-2">
-                  <Trash2 className="h-5 w-5 text-destructive shrink-0" />
+                  <Trash className="h-5 w-5 text-destructive shrink-0" />
                   <span className="line-through text-muted-foreground truncate min-w-0 flex-1">
                     {attachment.name}
                   </span>
@@ -437,7 +437,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 variant="destructive"
                                 size="sm"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash className="h-4 w-4" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-fit" side="bottom">
@@ -460,7 +460,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                   size="sm"
                                   onClick={(e) => handleDelete(index, e)}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash className="h-4 w-4" />
                                   {t("common.actions.delete")}
                                 </Button>
                               </div>

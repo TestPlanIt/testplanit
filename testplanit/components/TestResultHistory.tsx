@@ -71,7 +71,7 @@ import {
   PlayCircle,
   PlusSquare,
   SearchCheck,
-  Trash2,
+  Trash,
   SquareStack,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -1744,7 +1744,7 @@ export default function TestResultHistory({
                   <div className="font-medium truncate flex items-center">
                     {result.associatedTestRun.isDeleted ? (
                       <>
-                        <Trash2 className="w-4 h-4 inline me-1 shrink-0 text-muted-foreground/50" />
+                        <Trash className="w-4 h-4 inline me-1 shrink-0 text-muted-foreground/50" />
                         <span className="truncate text-muted-foreground/50 line-through">
                           {result.associatedTestRun.name}
                         </span>

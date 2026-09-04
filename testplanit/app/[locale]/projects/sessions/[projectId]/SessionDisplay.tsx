@@ -16,7 +16,7 @@ import type {
   User,
   Workflows,
 } from "~/zenstack/models";
-import { CheckCircle, CirclePlus, SquarePen, Trash2 } from "lucide-react";
+import { CheckCircle, CirclePlus, SquarePen, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -790,7 +790,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
     },
     {
       key: "delete",
-      icon: Trash2,
+      icon: Trash,
       label: tCommon("bulk.deleteAction", { count: deleteEligibleIds.length }),
       onClick: () => setBulkDialog("delete"),
       disabled: deleteEligibleIds.length === 0,

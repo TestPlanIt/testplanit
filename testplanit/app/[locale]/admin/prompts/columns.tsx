@@ -11,7 +11,7 @@ import type {
   PromptConfigPrompt,
 } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, MessageSquareCode, Trash2 } from "lucide-react";
+import { Edit, MessageSquareCode, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -254,7 +254,7 @@ export const useColumns = (
               }
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
           </div>
         ),

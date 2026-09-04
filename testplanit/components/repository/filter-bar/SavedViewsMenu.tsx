@@ -6,7 +6,7 @@ import {
   Loader2,
   Pencil,
   SlidersHorizontal,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useRef, useState } from "react";
@@ -358,7 +358,7 @@ export function SavedViewsMenu({
                     }}
                     data-testid="saved-view-delete"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash className="h-3.5 w-3.5" />
                   </Button>
                 </li>
               ))}

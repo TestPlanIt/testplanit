@@ -45,7 +45,7 @@ import {
   Save,
   Search,
   SquarePen,
-  Trash2,
+  Trash,
   Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -504,7 +504,7 @@ export default function SharedStepsPage() {
                                 }}
                                 data-testid="delete-group-btn"
                               >
-                                <Trash2 className="w-4 h-4 text-destructive" />
+                                <Trash className="w-4 h-4 text-destructive" />
                               </Button>
                             )}
                         </li>
@@ -570,7 +570,7 @@ export default function SharedStepsPage() {
                                 variant="destructive"
                                 data-testid="delete-group-btn-main"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash className="w-4 h-4" />
                                 {tCommon("actions.delete")}
                               </Button>
                             )}

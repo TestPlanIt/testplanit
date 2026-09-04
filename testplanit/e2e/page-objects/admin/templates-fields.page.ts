@@ -676,7 +676,7 @@ export class TemplatesFieldsPage extends BasePage {
       })
       .first();
 
-    // Click the remove button (the Trash2 icon button with destructive class)
+    // Click the remove button (the Trash icon button with destructive class)
     const removeButton = optionRow.locator("button.text-destructive").first();
     await removeButton.click();
     await this.page.waitForTimeout(200);

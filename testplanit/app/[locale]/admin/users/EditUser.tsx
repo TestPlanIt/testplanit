@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 
 import { Badge } from "@/components/ui/badge";
-import { CircleSlash2, Cloud, ShieldAlert, Trash2 } from "lucide-react";
+import { CircleSlash2, Cloud, ShieldAlert, Trash } from "lucide-react";
 
 import {
   Form,
@@ -412,7 +412,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                       >
                         <PopoverTrigger asChild>
                           <Button type="button" variant="destructive" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                            <Trash className="h-4 w-4" />
                             {tUserEdit("deleteAvatar")}
                           </Button>
                         </PopoverTrigger>
@@ -440,7 +440,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                                 setShowDeleteAvatarConfirm(false);
                               }}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash className="h-4 w-4" />
                               {tUserEdit("deleteAvatar")}
                             </Button>
                           </div>

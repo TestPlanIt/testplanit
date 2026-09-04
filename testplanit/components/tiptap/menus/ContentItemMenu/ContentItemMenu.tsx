@@ -104,7 +104,7 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
                     onClick={actions.deleteNode}
                     className="text-destructive! hover:bg-destructive! hover:text-destructive-foreground!"
                   >
-                    <Icon name="Trash2" />
+                    <Icon name="Trash" />
                     {tActions("delete")}
                   </DropdownButton>
                 </Popover.Close>

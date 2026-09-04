@@ -233,7 +233,7 @@ test.describe("Configuration Management - Category CRUD", () => {
         const categoryRow = getCategoryRow(page, originalName);
         await expect(categoryRow).toBeVisible({ timeout: 10000 });
 
-        // Actions column has two buttons: ghost SquarePen (edit) and destructive Trash2 (delete)
+        // Actions column has two buttons: ghost SquarePen (edit) and destructive Trash (delete)
         // We click the edit button (first button in the last td)
         const lastCell = categoryRow.locator("td").last();
         const editButton = lastCell.getByRole("button").first();
@@ -308,7 +308,7 @@ test.describe("Configuration Management - Category CRUD", () => {
       const categoryRow = getCategoryRow(page, categoryName);
       await expect(categoryRow).toBeVisible({ timeout: 10000 });
 
-      // Delete button is the last button in the last td (destructive variant Trash2)
+      // Delete button is the last button in the last td (destructive variant Trash)
       const lastCell = categoryRow.locator("td").last();
       const deleteButton = lastCell.getByRole("button").last();
       await deleteButton.click();

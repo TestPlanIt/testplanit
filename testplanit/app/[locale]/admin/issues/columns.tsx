@@ -18,7 +18,7 @@ import type { Issue } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import DOMPurify from "dompurify";
-import { Plug, SquarePen, Trash2 } from "lucide-react";
+import { Plug, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SyncIssue } from "./SyncIssue";
 
@@ -479,7 +479,7 @@ export function useIssueColumns({
               onClick={() => onDeleteIssue?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           </div>
         ),

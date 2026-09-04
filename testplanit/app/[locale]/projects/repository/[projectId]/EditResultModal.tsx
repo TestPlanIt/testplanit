@@ -14,7 +14,7 @@ import { ApplicationArea } from "~/zenstack/models";
 import type { Attachments } from "~/zenstack/models";
 import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bug, ListChecks, LockIcon, SearchCheck, Trash2 } from "lucide-react";
+import { Bug, ListChecks, LockIcon, SearchCheck, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -1838,7 +1838,7 @@ export function EditResultModal({
                       disabled={isDeleting || isLoadingPermissions}
                       className="flex items-center gap-2"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                       {tCommon("actions.delete")}
                     </Button>
                   </AlertDialogTrigger>

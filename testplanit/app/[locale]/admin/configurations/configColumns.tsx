@@ -23,7 +23,7 @@ import {
   CircleSlash2,
   Component,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useMemo, useState } from "react";
@@ -339,7 +339,7 @@ export const useColumns = (
               onClick={() => onDeleteConfiguration?.(row.original)}
               aria-label={t("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           </div>
         ),
