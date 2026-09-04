@@ -367,6 +367,15 @@ test.describe("Project Member Management", () => {
       const saveButton = dialog.getByRole("button", { name: /save/i });
       await expect(saveButton).toBeVisible({ timeout: 10000 });
 
+      // Record every project update response so a failed save reports the
+      // server's status and body instead of just "dialog still open".
+      const updateResponses: string[] = [];
+      page.on("response", async (response) => {
+        if (!response.url().includes("/api/model/projects/update")) return;
+        const body = await response.text().catch(() => "");
+        updateResponses.push(`${response.status()} ${body.slice(0, 500)}`);
+      });
+
       // The dialog keeps reflowing while its async data (permissions
       // queries) lands, so a one-shot click can be swallowed mid-re-render.
       // Click Save while the dialog is open and retry until it closes — a
@@ -375,7 +384,10 @@ test.describe("Project Member Management", () => {
         if (await dialog.isVisible()) {
           await saveButton.click({ timeout: 2000 });
         }
-        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+        await expect(
+          dialog,
+          `project update responses: ${updateResponses.join(" | ") || "none"}`
+        ).not.toBeVisible({ timeout: 5000 });
       }).toPass({ timeout: 30000 });
     });
   });

@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-import { APIRequestContext } from "@playwright/test";
+import { APIRequestContext, APIResponse } from "@playwright/test";
 
 /**
  * The CASES-scope workflow names seeded by db/seed.ts. State-lookup helpers
@@ -102,6 +102,29 @@ export class ApiHelper {
   }
 
   /**
+   * GET with a retry on a reset keep-alive socket. Under parallel load the
+   * server occasionally closes an idle connection just as the client reuses
+   * it (ECONNRESET); the request never reached a handler, so repeating an
+   * idempotent GET is safe.
+   */
+  private async get(
+    url: string,
+    options?: Parameters<APIRequestContext["get"]>[1]
+  ): Promise<APIResponse> {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await this.request.get(url, options);
+      } catch (error: any) {
+        if (attempt < 2 && String(error?.message).includes("ECONNRESET")) {
+          await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
+  /**
    * Remove resources from the auto-cleanup tracking lists. Auto-cleanup is
    * file-scoped (the shared TrackedResources store flushes only after the
    * worker leaves the spec file), so this is only needed when a resource
@@ -144,7 +167,7 @@ export class ApiHelper {
     // their own templates with isDefault: true would otherwise race this
     // lookup, handing back a fields-less template that has no Configure
     // Parameters button.
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
@@ -190,7 +213,7 @@ export class ApiHelper {
     // Restrict to the seeded CASES workflows (see SEEDED_CASES_WORKFLOW_NAMES
     // below) so a parallel test that creates its own workflow can't slip in
     // ahead of "Draft" and hand back a state with a non-matching `order`.
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/workflows/findFirst`,
       {
         params: {
@@ -227,7 +250,7 @@ export class ApiHelper {
    * Get multiple workflow IDs for the project (used for creating test cases with different states)
    */
   async getStateIds(projectId: number, count: number = 2): Promise<number[]> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/workflows/findMany`,
       {
         params: {
@@ -327,7 +350,7 @@ export class ApiHelper {
       return this.cachedRepositoryIds.get(projectId)!;
     }
 
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/repositories/findMany`,
       {
         params: {
@@ -577,7 +600,7 @@ export class ApiHelper {
   private async getFolderInfo(
     folderId: number
   ): Promise<{ id: number; name: string }> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/repositoryFolders/findFirst`,
       {
         params: {
@@ -601,7 +624,7 @@ export class ApiHelper {
   private async getTemplateInfo(
     templateId: number
   ): Promise<{ id: number; name: string }> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
@@ -628,7 +651,7 @@ export class ApiHelper {
   private async getWorkflowInfo(
     workflowId: number
   ): Promise<{ id: number; name: string }> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/workflows/findFirst`,
       {
         params: {
@@ -652,7 +675,7 @@ export class ApiHelper {
   private async getProjectInfo(
     projectId: number
   ): Promise<{ id: number; name: string }> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/projects/findFirst`,
       {
         params: {
@@ -674,7 +697,7 @@ export class ApiHelper {
    * Helper: Get current user info
    */
   private async getCurrentUserInfo(): Promise<{ id: string; name: string }> {
-    const response = await this.request.get(`${this.baseURL}/api/auth/session`);
+    const response = await this.get(`${this.baseURL}/api/auth/session`);
     if (!response.ok()) {
       return { id: "", name: "Unknown" };
     }
@@ -718,7 +741,7 @@ export class ApiHelper {
    */
   async updateTestCaseName(caseId: number, newName: string): Promise<void> {
     // First, fetch the current test case to get all required data including tags
-    const caseResponse = await this.request.get(
+    const caseResponse = await this.get(
       `${this.baseURL}/api/model/repositoryCases/findFirst`,
       {
         params: {
@@ -1170,7 +1193,7 @@ export class ApiHelper {
     // the seeded name rather than isDefault: true — parallel tests that
     // create their own templates as default would otherwise win this lookup
     // (and ship a fields-less template to every fresh project).
-    const templateResponse = await this.request.get(
+    const templateResponse = await this.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
@@ -1294,7 +1317,7 @@ export class ApiHelper {
     // here, otherwise unrelated specs (add-case, sessions, api/steps) end
     // up with extra workflows assigned to their project and either pick
     // the wrong default state or fail downstream invariants.
-    const workflowsResponse = await this.request.get(
+    const workflowsResponse = await this.get(
       `${this.baseURL}/api/model/workflows/findMany`,
       {
         params: {
@@ -1335,7 +1358,7 @@ export class ApiHelper {
     }
 
     // Assign all statuses to project (required for test runs, sessions, etc.)
-    const statusesResponse = await this.request.get(
+    const statusesResponse = await this.get(
       `${this.baseURL}/api/model/status/findMany`,
       {
         params: {
@@ -1372,7 +1395,7 @@ export class ApiHelper {
     }
 
     // Assign all milestone types to project (required for milestones)
-    const milestoneTypesResponse = await this.request.get(
+    const milestoneTypesResponse = await this.get(
       `${this.baseURL}/api/model/milestoneTypes/findMany`,
       {
         params: {
@@ -1439,7 +1462,7 @@ export class ApiHelper {
    * Get projects list
    */
   async getProjects(): Promise<Array<{ id: number; name: string }>> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/projects/findMany`,
       {
         params: { q: JSON.stringify({}) },
@@ -1460,7 +1483,7 @@ export class ApiHelper {
   async getFolders(
     projectId: number
   ): Promise<Array<{ id: number; name: string; parentId: number | null }>> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/repositoryFolders/findMany`,
       {
         params: {
@@ -1516,7 +1539,7 @@ export class ApiHelper {
     // parallel E2E load (ZenStack user-fetch deadlock → policy denial), so
     // retry a few times and surface the real HTTP status if it ultimately fails.
     const fetchStatuses = () =>
-      this.request.get(`${this.baseURL}/api/model/status/findMany`, {
+      this.get(`${this.baseURL}/api/model/status/findMany`, {
         params: { q: JSON.stringify({ where: whereClause, take: 1 }) },
       });
     let response = await fetchStatuses();
@@ -1547,7 +1570,7 @@ export class ApiHelper {
    * Useful for testing different status scenarios
    */
   async getStatusIds(count: number = 3): Promise<number[]> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/status/findMany`,
       {
         params: {
@@ -1898,7 +1921,7 @@ export class ApiHelper {
     testRunId: number,
     projectId: number
   ): Promise<void> {
-    const stateResponse = await this.request.get(
+    const stateResponse = await this.get(
       `${this.baseURL}/api/model/workflows/findFirst`,
       {
         params: {
@@ -2015,7 +2038,7 @@ export class ApiHelper {
       assignedToId: string | null;
     }>
   > {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/testRunCases/findMany`,
       {
         params: {
@@ -2091,7 +2114,7 @@ export class ApiHelper {
     isRevoked: boolean;
     viewCount: number;
   } | null> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/shareLink/findFirst`,
       {
         params: {
@@ -2145,7 +2168,7 @@ export class ApiHelper {
    * Get available case field types
    */
   async getCaseFieldTypes(): Promise<Array<{ id: number; type: string }>> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/caseFieldTypes/findMany`,
       {
         params: {
@@ -2332,7 +2355,7 @@ export class ApiHelper {
    */
   async getStandardCaseFieldIds(): Promise<number[]> {
     const standardFieldNames = ["Priority", "Description", "Steps", "Expected"];
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/caseFields/findMany`,
       {
         params: {
@@ -2357,7 +2380,7 @@ export class ApiHelper {
    */
   async getStandardResultFieldIds(): Promise<number[]> {
     const standardFieldNames = ["Notes"];
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/resultFields/findMany`,
       {
         params: {
@@ -2587,7 +2610,7 @@ export class ApiHelper {
   async verifyTemplate(
     templateId: number
   ): Promise<{ exists: boolean; isDefault: boolean }> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/templates/findUnique`,
       {
         params: {
@@ -2619,7 +2642,7 @@ export class ApiHelper {
    * Get case field ID by display name
    */
   async getCaseFieldId(displayName: string): Promise<number | null> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/caseFields/findFirst`,
       {
         params: {
@@ -2646,7 +2669,7 @@ export class ApiHelper {
     caseFieldId: number
   ): Promise<boolean> {
     // Check if already assigned
-    const existingResponse = await this.request.get(
+    const existingResponse = await this.get(
       `${this.baseURL}/api/model/templateCaseAssignment/findFirst`,
       {
         params: {
@@ -2669,7 +2692,7 @@ export class ApiHelper {
     }
 
     // Get the highest order number for this template
-    const assignmentsResponse = await this.request.get(
+    const assignmentsResponse = await this.get(
       `${this.baseURL}/api/model/templateCaseAssignment/findMany`,
       {
         params: {
@@ -2713,7 +2736,7 @@ export class ApiHelper {
   async getCaseFieldOptions(
     caseFieldId: number
   ): Promise<Array<{ id: number; name: string; isDefault: boolean }>> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/caseFieldAssignment/findMany`,
       {
         params: {
@@ -2752,7 +2775,7 @@ export class ApiHelper {
       isEnabled: boolean;
     }>
   > {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/templates/findMany`,
       {
         params: {
@@ -2782,7 +2805,7 @@ export class ApiHelper {
     // Get current count to determine order if not provided
     let fieldOrder = order;
     if (fieldOrder === undefined) {
-      const response = await this.request.get(
+      const response = await this.get(
         `${this.baseURL}/api/model/templateCaseAssignment/findMany`,
         {
           params: {
@@ -2830,7 +2853,7 @@ export class ApiHelper {
     // Get current count to determine order if not provided
     let fieldOrder = order;
     if (fieldOrder === undefined) {
-      const response = await this.request.get(
+      const response = await this.get(
         `${this.baseURL}/api/model/templateResultAssignment/findMany`,
         {
           params: {
@@ -2874,7 +2897,7 @@ export class ApiHelper {
     id: number;
     templateName: string;
   } | null> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
@@ -2904,7 +2927,7 @@ export class ApiHelper {
       typeId: number;
     }>
   > {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/caseFields/findMany`,
       {
         params: {
@@ -2934,7 +2957,7 @@ export class ApiHelper {
       typeId: number;
     }>
   > {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/resultFields/findMany`,
       {
         params: {
@@ -3007,7 +3030,7 @@ export class ApiHelper {
   async assignStatusesToProject(projectId: number): Promise<void> {
     try {
       // Check if project already has statuses assigned (avoid duplicate work)
-      const existingAssignments = await this.request.get(
+      const existingAssignments = await this.get(
         `${this.baseURL}/api/model/projectStatusAssignment/findMany`,
         {
           params: {
@@ -3028,7 +3051,7 @@ export class ApiHelper {
       }
 
       // Get all statuses
-      const response = await this.request.get(
+      const response = await this.get(
         `${this.baseURL}/api/model/status/findMany`,
         {
           params: {
@@ -3080,7 +3103,7 @@ export class ApiHelper {
    * Get a test case with its steps (for debugging)
    */
   async getTestCaseWithSteps(testCaseId: number): Promise<any> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/repositoryCases/findFirst`,
       {
         params: {
@@ -3373,7 +3396,7 @@ export class ApiHelper {
    * Get a milestone by ID
    */
   async getMilestone(milestoneId: number): Promise<any> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/milestones/findFirst`,
       {
         params: {
@@ -3396,7 +3419,7 @@ export class ApiHelper {
    * Get a session by ID
    */
   async getSession(sessionId: number): Promise<any> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/sessions/findFirst`,
       {
         params: {
@@ -3419,7 +3442,7 @@ export class ApiHelper {
    * Get a test run by ID
    */
   async getTestRun(testRunId: number): Promise<any> {
-    const response = await this.request.get(
+    const response = await this.get(
       `${this.baseURL}/api/model/testRuns/findFirst`,
       {
         params: {
@@ -3811,7 +3834,7 @@ export class ApiHelper {
     // Template whenever a flush leaves the catalog defaultless.
     if (deletedTemplates) {
       try {
-        const liveDefault = await this.request.get(
+        const liveDefault = await this.get(
           `${this.baseURL}/api/model/templates/findFirst`,
           {
             params: {
@@ -3825,7 +3848,7 @@ export class ApiHelper {
         const hasDefault =
           liveDefault.ok() && !!(await liveDefault.json())?.data;
         if (!hasDefault) {
-          const seeded = await this.request.get(
+          const seeded = await this.get(
             `${this.baseURL}/api/model/templates/findFirst`,
             {
               params: {

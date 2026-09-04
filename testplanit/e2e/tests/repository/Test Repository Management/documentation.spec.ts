@@ -563,13 +563,28 @@ test.describe("Documentation", () => {
     });
 
     await test.step("Save the changes", async () => {
-      // Save
       const saveButton = page
         .locator("button")
         .filter({ hasText: /^save$/i })
         .first();
+
+      // Wait for the save request itself: the document is already at
+      // networkidle here, so waitForLoadState would resolve immediately and
+      // the reload below would abort the in-flight PUT.
+      const responsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/model/projects/update") &&
+          response.request().method() === "PUT",
+        { timeout: 15000 }
+      );
       await saveButton.click();
-      await page.waitForLoadState("networkidle");
+      const response = await responsePromise;
+      expect(response.ok()).toBeTruthy();
+
+      // The page leaves edit mode only after the save resolves
+      await expect(editor).toHaveAttribute("contenteditable", "false", {
+        timeout: 10000,
+      });
     });
 
     await test.step("Reload and verify content persisted", async () => {
