@@ -45,7 +45,17 @@ test.describe("Record keys", () => {
         await expect(
           page.getByTestId("record-keys-preview-TEST_CASE")
         ).toContainText("-TCX-");
+
+        // Wait for the upsert itself. The page is already at networkidle, so
+        // a load-state wait would resolve immediately and the reload below
+        // would abort the in-flight save.
+        const saved = page.waitForResponse(
+          (r) =>
+            r.url().includes("/api/model/appConfig/upsert") &&
+            r.request().method() === "POST"
+        );
         await page.getByTestId("record-keys-save").click();
+        expect((await saved).ok()).toBeTruthy();
       });
 
       await test.step("The saved token survives a reload", async () => {

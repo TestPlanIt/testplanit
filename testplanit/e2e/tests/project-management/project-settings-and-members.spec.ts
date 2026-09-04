@@ -215,11 +215,18 @@ test.describe("Project Settings Pages", () => {
 });
 
 test.describe("Project Member Management", () => {
-  let _testProjectId: number;
+  let testProjectName: string;
   const projectPrefix = "E2E Members";
 
   test.beforeEach(async ({ api }) => {
-    _testProjectId = await api.createProject(`${projectPrefix} ${Date.now()}`);
+    // Filter the table by THIS test's project, not by the shared prefix:
+    // `.first()` on the prefix picks whichever "E2E Members" project sorts
+    // first, which belongs to a concurrent test whose cleanup soft-deletes it
+    // mid-edit — the save then fails with 422 "Record not found".
+    testProjectName = `${projectPrefix} ${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`;
+    await api.createProject(testProjectName);
   });
 
   /**
@@ -234,11 +241,11 @@ test.describe("Project Member Management", () => {
     // Use the Filter component's input (placeholder "Filter projects...")
     const filterInput = page.getByPlaceholder(/filter projects/i);
     await expect(filterInput).toBeVisible({ timeout: 10000 });
-    await filterInput.fill(projectPrefix);
+    await filterInput.fill(testProjectName);
 
     // Wait for the debounced search to filter results
     const projectRow = page.getByRole("row").filter({
-      hasText: new RegExp(projectPrefix, "i"),
+      hasText: testProjectName,
     });
     await expect(projectRow.first()).toBeVisible({ timeout: 15000 });
     return projectRow.first();
