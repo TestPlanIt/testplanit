@@ -48,7 +48,6 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import MultiSelect from "react-select";
 import { z } from "zod/v4";
-import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { IconName } from "~/types/globals";
@@ -56,6 +55,7 @@ import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
 import { editorMinHeightStyle } from "~/utils/editorHeight";
 import StepsForm from "./StepsForm";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 interface FieldValueInputProps {
   fieldDefinition?: FieldDefinition["field"];
@@ -434,12 +434,11 @@ export function FieldValueInput({
       );
 
     case "Text Long":
-      let initialTextContent;
-      try {
-        initialTextContent = value ? JSON.parse(value) : emptyEditorContent;
-      } catch {
-        initialTextContent = emptyEditorContent;
-      }
+      // Accepts every stored shape: a document object, a JSON string of one
+      // (what the web UI writes), or plain text. Parsing by hand here dropped
+      // an object-shaped value into the catch and rendered the field empty,
+      // which the next save then persisted over the real content.
+      const initialTextContent = ensureTipTapJSON(value);
 
       const handleEditorUpdate = (content: any) => {
         try {

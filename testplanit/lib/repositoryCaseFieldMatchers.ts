@@ -47,16 +47,14 @@ export function matchesTextOperator(
 ): boolean {
   if (!value) return false;
 
-  // Handle TipTap JSON documents (Text Long fields) and plain strings (Text String fields)
-  let textValue: string;
-  if (typeof value === "string") {
-    textValue = value;
-  } else if (typeof value === "object") {
-    textValue = extractTextFromNode(value);
-    if (!textValue) return false;
-  } else {
-    return false;
-  }
+  // Text Long holds a rich-text document, which the web UI stores as a JSON
+  // string and other writers store as an object. Matching the raw string
+  // would search the document's markup — "paragraph" or "doc" would hit every
+  // case — so both shapes go through the extractor, which returns a genuine
+  // plain string (a Text String field) unchanged.
+  if (typeof value !== "string" && typeof value !== "object") return false;
+  const textValue = extractTextFromNode(value);
+  if (!textValue) return false;
 
   const lowerValue = textValue.toLowerCase();
   const lowerSearch = searchValue.toLowerCase();

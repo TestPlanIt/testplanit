@@ -128,6 +128,7 @@ import FieldValueRenderer from "./FieldValueRenderer";
 import { StepsDisplay } from "./StepsDisplay";
 import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
+import { tipTapJSONEquals } from "~/utils/tiptapConversion";
 
 // Type Definitions (ensure these are present and correct)
 // Helper function to parse JsonValue to TipTap content (ensure this is present)
@@ -1479,11 +1480,21 @@ export function TestCaseDetailsView({
                   requiresUpdate = true;
                 }
                 const emptyContentStr = JSON.stringify(emptyEditorContent);
-                if (existingDatabaseStep?.step !== emptyContentStr) {
+                // Compare documents, not their serializations: the stored
+                // value is a jsonb object whose key order Postgres does not
+                // preserve, so a string compare reports a change every time.
+                if (
+                  !tipTapJSONEquals(existingDatabaseStep?.step, emptyContentStr)
+                ) {
                   updateData.step = emptyContentStr;
                   requiresUpdate = true;
                 }
-                if (existingDatabaseStep?.expectedResult !== emptyContentStr) {
+                if (
+                  !tipTapJSONEquals(
+                    existingDatabaseStep?.expectedResult,
+                    emptyContentStr
+                  )
+                ) {
                   updateData.expectedResult = emptyContentStr;
                   requiresUpdate = true;
                 }
@@ -1496,7 +1507,10 @@ export function TestCaseDetailsView({
                   step.step || emptyEditorContent
                 );
                 if (
-                  existingDatabaseStep?.step !== currentStepContent ||
+                  !tipTapJSONEquals(
+                    existingDatabaseStep?.step,
+                    currentStepContent
+                  ) ||
                   updateData.sharedStepGroup?.disconnect
                 ) {
                   updateData.step = currentStepContent;
@@ -1506,8 +1520,10 @@ export function TestCaseDetailsView({
                   step.expectedResult || emptyEditorContent
                 );
                 if (
-                  existingDatabaseStep?.expectedResult !==
-                    currentExpectedResultContent ||
+                  !tipTapJSONEquals(
+                    existingDatabaseStep?.expectedResult,
+                    currentExpectedResultContent
+                  ) ||
                   updateData.sharedStepGroup?.disconnect
                 ) {
                   updateData.expectedResult = currentExpectedResultContent;

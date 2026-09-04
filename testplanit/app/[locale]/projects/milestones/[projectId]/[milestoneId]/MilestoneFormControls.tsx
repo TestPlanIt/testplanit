@@ -34,7 +34,6 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { safeExternalUrl } from "~/utils/externalUrl";
 import { IconName } from "~/types/globals";
@@ -45,6 +44,7 @@ import {
   hasCalendarDates,
   getStatusStyle,
 } from "~/utils/milestoneUtils";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 interface MilestoneFormControlsProps {
   isEditMode: boolean;
@@ -398,9 +398,7 @@ export default function MilestoneFormControls({
               <FormControl>
                 <TipTapEditor
                   key={`editing-note-${isEditMode}`}
-                  content={
-                    field.value ? JSON.parse(field.value) : emptyEditorContent
-                  }
+                  content={ensureTipTapJSON(field.value)}
                   onUpdate={(newContent) => {
                     if (isEditMode && !isSynced) {
                       field.onChange(JSON.stringify(newContent));

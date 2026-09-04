@@ -36,6 +36,19 @@
 // iterate (v2 only hooked single-row operations).
 import { definePlugin } from "@zenstackhq/orm";
 import { schema } from "~/zenstack/schema";
+
+import { normalizeRichTextWrite } from "~/lib/richTextColumns";
+
+/** Write operations whose args can carry a rich-text column value. */
+const RICH_TEXT_WRITE_OPERATIONS = new Set([
+  "create",
+  "createMany",
+  "createManyAndReturn",
+  "update",
+  "updateMany",
+  "updateManyAndReturn",
+  "upsert",
+]);
 import type { TxClient } from "~/lib/zenstack";
 import { injectAuditGuc } from "~/lib/audit/gucContext";
 import { auditTxStore } from "~/lib/audit/auditTxStore";
@@ -272,6 +285,15 @@ export const sideEffectsPlugin = definePlugin(schema, {
 
   // Arg-rewriting business logic that must run before the write SQL.
   onQuery: async ({ model, operation, args, proceed }) => {
+    // One storage shape for rich text. The web UI serializes Tiptap documents
+    // before writing, so the same Json column held either a document object or
+    // a JSON string of one depending on the client. Normalizing here covers
+    // every writer that goes through the ORM instead of trusting each call
+    // site. See lib/richTextColumns.ts.
+    if (RICH_TEXT_WRITE_OPERATIONS.has(operation)) {
+      normalizeRichTextWrite(model, args);
+    }
+
     if (
       model === "TestRuns" &&
       (operation === "update" || operation === "upsert")

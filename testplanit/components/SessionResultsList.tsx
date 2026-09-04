@@ -83,6 +83,7 @@ import { UserNameCell } from "./tables/UserNameCell";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "./UploadAttachments";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 // Define the ExtendedSessionResults interface to match the query structure
 interface ExtendedSessionResults extends SessionResults {
@@ -1268,7 +1269,8 @@ export function SessionResultsList({
         // For Text Long, parse the value and render it in a read-only TipTapEditor
         let content;
         try {
-          const parsed = JSON.parse(fieldValue);
+          // Accepts a document object, a JSON string of one, or plain text.
+          const parsed = ensureTipTapJSON(fieldValue);
           // Validate that it's a proper TipTap document structure
           if (parsed && typeof parsed === "object" && parsed.type === "doc") {
             content = parsed;
