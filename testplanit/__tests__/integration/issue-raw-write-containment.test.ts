@@ -232,7 +232,19 @@ describeIntegration("Issue raw-write containment (PROV-06, behavioral)", () => {
     expect(row?.externalUrl).toBe(`https://jira.example.com/${STAMP}-new-url`);
   });
 
-  it("a detached requirement accepts a title write through the shell", async () => {
+  // The two ownership states strip the same five fields for opposite reasons,
+  // and this is the second one. While a requirement is LOCKED the tracker owns
+  // its content and a local writer must not land a stale copy; once DETACHED
+  // the USER owns it, and every caller of this shell is tracker-sourced, so a
+  // refresh must not clobber what they wrote.
+  //
+  // This assertion used to read the other way, because until 8722b2606 ("keep
+  // a detached requirement's local edits across sync polls") the shell stripped
+  // only for the locked state. That commit extended the strip to detached rows
+  // and updated the unit test beside the implementation, but not this live-DB
+  // one — which nothing ran, because the job that runs it did not watch the
+  // branch it lives on.
+  it("a detached requirement keeps its title when written through the shell", async () => {
     await upsertLinkedIssueShell(db, {
       externalId: detachedExternalId,
       integrationId,
@@ -245,15 +257,23 @@ describeIntegration("Issue raw-write containment (PROV-06, behavioral)", () => {
         integrationId,
       },
       update: {
-        title: `${STAMP}-detached-title-updated`,
+        title: `${STAMP}-detached-title-overwrite-attempt`,
+        externalUrl: `https://jira.example.com/${STAMP}-detached-new-url`,
       },
     });
 
     const row = await db.issue.findUnique({
       where: { id: detachedRequirementId },
-      select: { title: true },
+      select: { title: true, externalUrl: true },
     });
-    expect(row?.title).toBe(`${STAMP}-detached-title-updated`);
+    // Both halves matter, exactly as in the locked case above: the title
+    // staying put proves the user's edit survived, and the externalUrl landing
+    // proves the shell refreshed the mirror columns rather than degrading into
+    // a no-op.
+    expect(row?.title).toBe(`${STAMP}-detached-requirement`);
+    expect(row?.externalUrl).toBe(
+      `https://jira.example.com/${STAMP}-detached-new-url`
+    );
   });
 
   it("a locked requirement keeps its title when linked through JiraLinkService.linkTestCaseToJiraIssue", async () => {
