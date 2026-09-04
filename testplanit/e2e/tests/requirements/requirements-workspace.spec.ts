@@ -37,6 +37,12 @@ test.describe("Requirements workspace", () => {
     page,
   }) => {
     const projectId = await api.createProject(`E2E Req Gate ${uid()}`);
+    const folderId = await api.getRootFolderId(projectId);
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Gated case ${uid()}`
+    );
 
     await test.step("A project without the flag shows the disabled notice and no nav item", async () => {
       await page.goto(`/en-US/projects/requirements/${projectId}`);
@@ -46,14 +52,36 @@ test.describe("Requirements workspace", () => {
       await expect(page.locator("#project-requirements-link")).toHaveCount(0);
     });
 
+    // The case-side Linked Requirements panel is the feature's only surface
+    // outside this workspace, so it answers to the same flag -- it shipped
+    // ungated and put an empty, unfillable card on every case of every
+    // project that never turned Requirements on.
+    await test.step("A case in that project carries no Linked Requirements panel", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+      // #result-history renders BELOW where the panel would be, so waiting
+      // on it proves the panel's own region has already rendered rather
+      // than asserting absence against a half-loaded page.
+      await expect(page.locator("#result-history")).toBeVisible({
+        timeout: 20000,
+      });
+      await expect(page.getByTestId("case-linked-requirements")).toHaveCount(0);
+    });
+
     await test.step("Enabling the flag renders the empty workspace and the nav item", async () => {
       await api.enableRequirements(projectId);
-      await page.reload();
+      await page.goto(`/en-US/projects/requirements/${projectId}`);
       await expect(page.getByTestId("requirements-page-header")).toBeVisible({
         timeout: 15000,
       });
       await expect(page.getByTestId("requirements-tree-empty")).toBeVisible();
       await expect(page.locator("#project-requirements-link")).toBeVisible();
+    });
+
+    await test.step("...and the same case now carries the panel", async () => {
+      await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+      await expect(page.getByTestId("case-linked-requirements")).toBeVisible({
+        timeout: 20000,
+      });
     });
   });
 

@@ -121,6 +121,7 @@ import {
   canEditConfigurationGroup,
   configurationGroupUpdateData,
 } from "~/lib/configurationGroupLink";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import {
   buildConfigurationGroupMemberLabels,
   buildConfigurationGroupWhere,
@@ -1475,24 +1476,14 @@ export default function SessionPage() {
   useEffect(() => {
     if (sessionData) {
       // Initialize note content
-      const noteData = sessionData.note || JSON.stringify(emptyEditorContent);
-      try {
-        const parsedNote = JSON.parse(noteData as string);
-        if (parsedNote && parsedNote.type === "doc") {
-          setNoteContent(parsedNote);
-        } else {
-          setNoteContent(emptyEditorContent);
-        }
-      } catch (e) {
-        console.error("Failed to parse note content:", e);
-        setNoteContent(emptyEditorContent);
-      }
+      // Accepts a document object, a JSON string of one, or plain text.
+      setNoteContent(ensureTipTapJSON(sessionData.note));
 
       // Initialize mission content
       const missionData =
         sessionData.mission || JSON.stringify(emptyEditorContent);
       try {
-        const parsedMission = JSON.parse(missionData as string);
+        const parsedMission = ensureTipTapJSON(missionData);
         if (parsedMission && parsedMission.type === "doc") {
           setMissionContent(parsedMission);
         } else {
@@ -1755,19 +1746,8 @@ export default function SessionPage() {
   const handleCancel = () => {
     if (initialValues) {
       form.reset(initialValues);
-      const noteData = initialValues.note || JSON.stringify(emptyEditorContent);
-      try {
-        setNoteContent(JSON.parse(noteData as string));
-      } catch {
-        setNoteContent(emptyEditorContent);
-      }
-      const missionData =
-        initialValues.mission || JSON.stringify(emptyEditorContent);
-      try {
-        setMissionContent(JSON.parse(missionData as string));
-      } catch {
-        setMissionContent(emptyEditorContent);
-      }
+      setNoteContent(ensureTipTapJSON(initialValues.note));
+      setMissionContent(ensureTipTapJSON(initialValues.mission));
       setSelectedTags(initialValues.tags || []);
     }
     // Reset pending attachment changes

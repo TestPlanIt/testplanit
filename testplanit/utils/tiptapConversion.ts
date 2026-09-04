@@ -27,7 +27,7 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const applyInlineFormatting = (text: string): string => {
+export const applyInlineFormatting = (text: string): string => {
   const matches: Array<{
     start: number;
     end: number;
@@ -40,6 +40,9 @@ const applyInlineFormatting = (text: string): string => {
 
   let boldMatch: RegExpExecArray | null;
   while ((boldMatch = boldPattern.exec(text)) !== null) {
+    // `****` carries no text; emitting an empty <strong> would only drop the
+    // literal asterisks the author typed.
+    if (boldMatch[1] === "") continue;
     matches.push({
       start: boldMatch.index,
       end: boldMatch.index + boldMatch[0].length,
@@ -51,17 +54,27 @@ const applyInlineFormatting = (text: string): string => {
   italicPattern.lastIndex = 0;
   let italicMatch: RegExpExecArray | null;
   while ((italicMatch = italicPattern.exec(text)) !== null) {
-    const insideBold = matches.some(
-      (bold) => italicMatch!.index > bold.start && italicMatch!.index < bold.end
+    // The italic pattern matches the EMPTY string between the two opening
+    // asterisks of a bold span, at the same index the bold match starts. An
+    // empty <em> emitted there rewound the write cursor to just past the
+    // asterisks, so everything after it was written a second time —
+    // "must **never** open" became "must <strong>never</strong><em></em>never**
+    // open". Skipping empty captures removes that match, and it costs nothing
+    // otherwise: an empty emphasis span has no text to mark up.
+    if (italicMatch[1] === "") continue;
+
+    const start = italicMatch.index;
+    const end = start + italicMatch[0].length;
+    // Overlap, not just "starts inside": an italic that begins before a bold
+    // span and runs into it would otherwise survive and produce interleaved
+    // tags. Nested emphasis (`*a **b** c*`) is left as literal asterisks
+    // rather than half-applied.
+    const overlapsBold = matches.some(
+      (bold) => start < bold.end && end > bold.start
     );
-    if (!insideBold) {
-      matches.push({
-        start: italicMatch.index,
-        end: italicMatch.index + italicMatch[0].length,
-        type: "italic",
-        content: italicMatch[1],
-      });
-    }
+    if (overlapsBold) continue;
+
+    matches.push({ start, end, type: "italic", content: italicMatch[1] });
   }
 
   matches.sort((a, b) => a.start - b.start);
@@ -70,6 +83,11 @@ const applyInlineFormatting = (text: string): string => {
   let currentIndex = 0;
 
   matches.forEach((match) => {
+    // Never move the cursor backwards. The guards above already keep the
+    // matches disjoint; this makes the duplication bug above structurally
+    // impossible rather than merely fixed.
+    if (match.start < currentIndex) return;
+
     if (currentIndex < match.start) {
       output += escapeHtml(text.substring(currentIndex, match.start));
     }

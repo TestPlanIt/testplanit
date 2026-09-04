@@ -712,11 +712,14 @@ describe("GitHubRepoAdapter", () => {
         { owner: "myorg", repo: "myrepo", baseUrl: "" }
       );
       (ghesAdapter as any).rateLimitDelay = 0;
+      (ghesAdapter as any).lastRequestTime = 0;
       mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
 
       await expect(ghesAdapter.getDefaultBranch()).resolves.toBe("main");
-      expect(mockFetch.mock.calls[0][0]).toBe(
-        "https://api.github.com/repos/myorg/myrepo"
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/repos/myorg/myrepo",
+        expect.any(Object)
       );
     });
 

@@ -81,6 +81,55 @@ describe("extractProseMirrorText", () => {
     expect(extractProseMirrorText("plain text step")).toBe("plain text step");
   });
 
+  // Issue #594: the web UI stores rich text as `JSON.stringify(doc)`, so the
+  // same column comes back as a document object or as a string of one
+  // depending on which client saved the row last.
+  it("extracts text from a document the web UI stored as a JSON string", () => {
+    const serialized = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Open the login page in a private window." },
+          ],
+        },
+      ],
+    });
+    expect(extractProseMirrorText(serialized)).toBe(
+      "Open the login page in a private window.",
+    );
+  });
+
+  it("joins block nodes with newlines when the document arrives as a JSON string", () => {
+    const serialized = JSON.stringify({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "First" }] },
+        { type: "paragraph", content: [{ type: "text", text: "Second" }] },
+      ],
+    });
+    expect(extractProseMirrorText(serialized)).toBe("First\nSecond");
+  });
+
+  it("extracts an array of nodes stored as a JSON string", () => {
+    const serialized = JSON.stringify([
+      { type: "paragraph", content: [{ type: "text", text: "Line A" }] },
+      { type: "paragraph", content: [{ type: "text", text: "Line B" }] },
+    ]);
+    expect(extractProseMirrorText(serialized)).toBe("Line A\nLine B");
+  });
+
+  it("returns plain text that merely looks like JSON verbatim", () => {
+    // Flattening this to "" would silently destroy the user's content.
+    expect(extractProseMirrorText('{"foo": 1}')).toBe('{"foo": 1}');
+    expect(extractProseMirrorText("[1, 2, 3]")).toBe("[1, 2, 3]");
+  });
+
+  it("returns malformed JSON verbatim", () => {
+    expect(extractProseMirrorText('{"type": "doc"')).toBe('{"type": "doc"');
+  });
+
   it("extracts from array of nodes (no doc wrapper)", () => {
     const nodes = [
       { type: "paragraph", content: [{ type: "text", text: "Line A" }] },
@@ -184,6 +233,43 @@ describe("denormalizeCustomFields", () => {
 
   it("returns empty object for empty array", () => {
     expect(denormalizeCustomFields([])).toEqual({});
+  });
+
+  // Issue #594: Text Long is a rich-text document — the UI stores a JSON
+  // string, this server stores plain text. Readers get text either way.
+  it("flattens a Text Long value the web UI stored as a JSON string", () => {
+    const rows = [
+      {
+        value: JSON.stringify({
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: "Notes here" }] },
+          ],
+        }),
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Description: "Notes here" });
+  });
+
+  it("passes a Text Long value this server stored as plain text through unchanged", () => {
+    const rows = [
+      {
+        value: "Notes here",
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Description: "Notes here" });
+  });
+
+  it("leaves an unset Text Long value null rather than turning it into an empty string", () => {
+    const rows = [
+      {
+        value: null,
+        field: { displayName: "Description", type: { type: "Text Long" } },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Description: null });
   });
 
   it("skips rows with missing field metadata", () => {

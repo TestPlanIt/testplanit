@@ -113,6 +113,11 @@ async function signInAsAdmin(
  * some tests need to make admin API calls. Instead, each test clears
  * browser cookies as needed after the setup phase.
  */
+// Run this file's tests in order on one worker: ensureSsoProvider reuses an
+// enabled provider of the same type, so a parallel test's cleanup could
+// delete the provider this one is about to sign in with.
+test.describe.configure({ mode: "default" });
+
 test.describe("SSO and Magic Link", () => {
   test("SSO Google login via mocked OAuth callback", async ({
     page,

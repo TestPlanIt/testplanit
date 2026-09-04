@@ -62,6 +62,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
     // null when a read-only case covers no requirements), which is what
     // every case fixture in this file describes.
     issue: { useFindMany: () => ({ data: [], refetch: vi.fn() }) },
+    // ...and its Requirements opt-in gate. Left ON so these fixtures keep
+    // exercising the read-only empty-case path above rather than the gate.
+    projects: {
+      useFindUnique: () => ({
+        data: { requirementsEnabled: true },
+        isPending: false,
+      }),
+    },
     repositoryCaseIssue: {
       useFindMany: () => ({ data: [], refetch: vi.fn() }),
       useUpdate: () => ({ mutateAsync: vi.fn(), isPending: false }),

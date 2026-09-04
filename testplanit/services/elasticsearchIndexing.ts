@@ -4,6 +4,8 @@ import {
   RepositoryCaseDocument,
 } from "./elasticsearchService";
 
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
+
 /**
  * Extract human-readable text from custom fields for searchable content
  */
@@ -48,8 +50,11 @@ function buildCustomFieldSearchableText(
         case "Text String":
         case "Text Long":
         case "Link":
-          // Include text value
-          return cf.value || cf.valueKeyword || "";
+          // Text Long holds a rich-text document — stored as a JSON string by
+          // the web UI and as an object by other writers. Indexing it raw put
+          // the document's markup in the search index instead of the prose;
+          // the extractor returns a genuine plain string unchanged.
+          return extractTextFromNode(cf.value) || cf.valueKeyword || "";
 
         case "Date":
           // Include date value

@@ -62,12 +62,23 @@ const BLOCK_TYPES = new Set([
  * where a code block with two text runs gets a stray newline injected
  * between the runs (WR-05).
  *
- * Defensive: returns `""` on null/undefined, or the string itself if
- * input is already a primitive string.
+ * Defensive: returns `""` on null/undefined, and returns a plain string
+ * unchanged when it does not hold a serialized document (see
+ * `parseSerializedDoc`).
  */
 export function extractProseMirrorText(doc: unknown): string {
   if (doc == null) return "";
-  if (typeof doc === "string") return doc;
+
+  // The web UI writes rich text as `JSON.stringify(doc)` while this server
+  // writes the document object, so the same column comes back in either
+  // shape depending on which client saved the row last. Parse the
+  // serialized form so readers get the same text either way.
+  let value: unknown = doc;
+  if (typeof value === "string") {
+    const parsed = parseSerializedDoc(value);
+    if (parsed === null) return value;
+    value = parsed;
+  }
 
   const collectFromNode = (node: unknown): string => {
     if (!node || typeof node !== "object") return "";
@@ -84,14 +95,49 @@ export function extractProseMirrorText(doc: unknown): string {
     return "";
   };
 
-  const root = doc as { type?: string; content?: unknown[] };
+  const root = value as { type?: string; content?: unknown[] };
   if (Array.isArray(root)) {
     return (root as unknown[]).map(collectFromNode).join("\n");
   }
   if (root.type === "doc" && Array.isArray(root.content)) {
     return root.content.map(collectFromNode).join("\n");
   }
-  return collectFromNode(doc);
+  return collectFromNode(value);
+}
+
+/**
+ * Recognise a rich-text document that was stored as a JSON string.
+ *
+ * Only the two shapes the walker above understands count: a `doc` node, or a
+ * bare array of nodes. Anything else — a JSON object that is not a document,
+ * a JSON scalar, malformed JSON — is a plain-text value that happens to look
+ * like JSON, so it is returned as `null` and passes through untouched rather
+ * than being flattened to "".
+ */
+function parseSerializedDoc(value: string): unknown | null {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+
+  if (Array.isArray(parsed)) {
+    return parsed.length > 0 && parsed.every(isProseMirrorNode) ? parsed : null;
+  }
+  if (!isProseMirrorNode(parsed)) return null;
+  return (parsed as { type?: string }).type === "doc" ? parsed : null;
+}
+
+function isProseMirrorNode(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { type?: unknown }).type === "string"
+  );
 }
 
 interface RawFieldOptionAssignment {
@@ -134,6 +180,14 @@ function resolveCustomFieldValue(
   field: RawCaseFieldValueRow["field"],
 ): unknown {
   const type = field?.type?.type;
+
+  // Text Long holds a rich-text document, stored as a JSON string by the web
+  // UI and as plain text by this server. Flatten both to text so a reader
+  // never has to detect the shape (issue #594).
+  if (type === "Text Long" && value != null) {
+    return extractProseMirrorText(value);
+  }
+
   const options = (field?.fieldOptions ?? [])
     .map((a) => a.fieldOption)
     .filter((o): o is { id: number; name: string } => o != null);
