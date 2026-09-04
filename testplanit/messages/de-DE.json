@@ -3085,6 +3085,10 @@
           "partialTitle": "Einige Testfälle wurden nicht importiert",
           "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
         },
+        "warnings": {
+          "partialTitle": "Einige Issue-Verknüpfungen wurden nicht erstellt",
+          "summary": "{count, plural, one {# Issue-Zelle konnte} other {# Issue-Zellen konnten}} nicht verknüpft werden. Die Testfälle wurden importiert."
+        },
         "page1": {
           "fileType": {
             "label": "Dateityp",

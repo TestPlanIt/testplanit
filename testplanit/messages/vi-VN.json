@@ -3085,6 +3085,10 @@
           "partialTitle": "Một số trường hợp kiểm thử không được nhập",
           "partialSummary": "{failed, plural, other {# dòng}} không thể nhập được. {imported, plural, other {# trường hợp kiểm thử}} đã được nhập thành công."
         },
+        "warnings": {
+          "partialTitle": "Một số liên kết sự cố không được tạo",
+          "summary": "{count, plural, other {# ô sự cố}} không thể liên kết. Các trường hợp kiểm thử đã được nhập."
+        },
         "page1": {
           "fileType": {
             "label": "Loại tệp",

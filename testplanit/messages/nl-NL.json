@@ -3085,6 +3085,10 @@
           "partialTitle": "Sommige testgevallen zijn niet geïmporteerd",
           "partialSummary": "{failed, plural, one {# rij kon} other {# rijen konden}} niet worden geïmporteerd. {imported, plural, one {# testgeval is} other {# testgevallen zijn}} succesvol geïmporteerd."
         },
+        "warnings": {
+          "partialTitle": "Sommige issuekoppelingen zijn niet aangemaakt",
+          "summary": "{count, plural, one {# issuecel} other {# issuecellen}} konden niet worden gekoppeld. De testgevallen zijn geïmporteerd."
+        },
         "page1": {
           "fileType": {
             "label": "Bestandstype",

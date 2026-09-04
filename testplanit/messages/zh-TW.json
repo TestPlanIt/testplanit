@@ -3085,6 +3085,10 @@
           "partialTitle": "部分測試案例未匯入",
           "partialSummary": "{failed, plural, other {# 列}} 無法匯入。{imported, plural, other {# 個測試案例}} 已成功匯入。"
         },
+        "warnings": {
+          "partialTitle": "部分問題連結未建立",
+          "summary": "{count, plural, other {# 個問題儲存格}} 無法連結。測試案例已匯入。"
+        },
         "page1": {
           "fileType": {
             "label": "文件類型",

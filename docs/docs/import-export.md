@@ -59,7 +59,7 @@ The fields available for mapping depend on the template you select. You'll alway
 | Estimate | No | Time estimate in minutes |
 | Forecast | No | Forecasted time in minutes |
 | Attachments | No | File attachments |
-| Issues | No | Linked issues |
+| Issues | No | Linked issues, by issue name or tracker key |
 | Linked Cases | No | Related test cases |
 | Workflow State | No | Current workflow state |
 | Created At | No | Creation date/time |
@@ -209,6 +209,23 @@ The preview page tells you how many CSV rows were grouped into how many test cas
    - View import statistics
    - Review any errors or warnings
    - Access imported test cases
+
+#### Linking Issues on Import
+
+The **Issues** column accepts a comma-separated list of issue names or tracker
+keys, such as `PROJ-123`.
+
+A value that matches an existing issue in the project links to it. A value that
+does not is looked up as a key in the project's issue-tracker integration, and
+the issue is created in TestPlanIt when the tracker returns it — no one has to
+open the ticket in TestPlanIt first. Keys are looked up once per import no
+matter how many rows cite them.
+
+The column links defects. A key that resolves to a requirement is reported
+rather than linked; link requirements from the requirements pages instead.
+
+Values that match nothing are listed after the import finishes, alongside the
+row and test case they came from. The test cases still import.
 
 #### Field Mapping Options
 

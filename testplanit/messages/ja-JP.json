@@ -3085,6 +3085,10 @@
           "partialTitle": "一部のテストケースはインポートされませんでした",
           "partialSummary": "{failed, plural, other {#行}}をインポートできませんでした。{imported, plural, other {#件のテストケース}}が正常にインポートされました。"
         },
+        "warnings": {
+          "partialTitle": "一部の課題リンクが作成されませんでした",
+          "summary": "{count, plural, other {#件の課題セル}}をリンクできませんでした。テストケースはインポートされました。"
+        },
         "page1": {
           "fileType": {
             "label": "ファイルの種類",

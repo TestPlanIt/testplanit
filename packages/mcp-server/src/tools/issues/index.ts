@@ -14,15 +14,18 @@ import {
   registerIssuesUnlink,
   type IssuesLinkDeps,
 } from "./link.js";
+import { registerIssuesResolve, type IssuesResolveDeps } from "./resolve.js";
 
 export type IssuesDeps = IssuesFindByKeyDeps &
   IssuesListDeps &
   IssuesGetDeps &
   IssuesListLinksDeps &
-  IssuesLinkDeps;
+  IssuesLinkDeps &
+  IssuesResolveDeps;
 
 export function registerIssues(server: McpServer, deps: IssuesDeps): void {
   registerIssuesFindByKey(server, deps);
+  registerIssuesResolve(server, deps);
   registerIssuesList(server, deps);
   registerIssuesGet(server, deps);
   registerIssuesListLinks(server, deps);
@@ -37,6 +40,7 @@ export {
   registerIssuesListLinks,
   registerIssuesLink,
   registerIssuesUnlink,
+  registerIssuesResolve,
 };
 export type {
   IssuesFindByKeyDeps,
@@ -44,4 +48,5 @@ export type {
   IssuesGetDeps,
   IssuesListLinksDeps,
   IssuesLinkDeps,
+  IssuesResolveDeps,
 };

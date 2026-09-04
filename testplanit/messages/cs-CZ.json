@@ -3085,6 +3085,10 @@
           "partialTitle": "Některé testovací případy nebyly importovány",
           "partialSummary": "{failed, plural, one {# řádek} few {# řádky} many {# řádku} other {# řádků}} se nepodařilo importovat. {imported, plural, one {# testovací případ byl} few {# testovací případy byly} many {# testovacího případu bylo} other {# testovacích případů bylo}} úspěšně importováno."
         },
+        "warnings": {
+          "partialTitle": "Některé odkazy na issues nebyly vytvořeny",
+          "summary": "{count, plural, one {# buňku issue} few {# buňky issue} many {# buňky issue} other {# buněk issue}} se nepodařilo propojit. Testovací případy byly importovány."
+        },
         "page1": {
           "fileType": {
             "label": "Typ souboru",

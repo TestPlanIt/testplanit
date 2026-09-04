@@ -3085,6 +3085,10 @@
           "partialTitle": "Niektóre przypadki testowe nie zostały zaimportowane",
           "partialSummary": "Nie udało się zaimportować {failed, plural, one {# wiersza} few {# wierszy} many {# wierszy} other {# wiersza}}. Zaimportowano pomyślnie {imported, plural, one {# przypadek testowy} few {# przypadki testowe} many {# przypadków testowych} other {# przypadku testowego}}."
         },
+        "warnings": {
+          "partialTitle": "Niektóre linki do zgłoszeń nie zostały utworzone",
+          "summary": "{count, plural, one {# komórka z problemem nie mogła zostać połączona} few {# komórki z problemem nie mogły zostać połączone} many {# komórek z problemem nie mogło zostać połączonych} other {# komórki z problemem nie mogły zostać połączone}}. Przypadki testowe zostały zaimportowane."
+        },
         "page1": {
           "fileType": {
             "label": "Typ pliku",

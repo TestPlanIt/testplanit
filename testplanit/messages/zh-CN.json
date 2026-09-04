@@ -3085,6 +3085,10 @@
           "partialTitle": "部分测试用例未导入",
           "partialSummary": "{failed, plural, other {# 行}}无法导入。{imported, plural, other {# 个测试用例}}导入成功。"
         },
+        "warnings": {
+          "partialTitle": "部分问题链接未能创建",
+          "summary": "{count, plural, other {# 个问题单元格}}无法链接。测试用例已导入。"
+        },
         "page1": {
           "fileType": {
             "label": "文件类型",
