@@ -2,6 +2,7 @@ import {
   AnthropicAdapter,
   AzureOpenAIAdapter,
   CustomLlmAdapter,
+  DeepSeekAdapter,
   GeminiAdapter,
   OllamaAdapter,
   OpenAIAdapter,
@@ -99,6 +100,9 @@ export async function POST(request: NextRequest) {
         case "GEMINI":
           adapter = new GeminiAdapter(testConfig);
           break;
+        case "DEEPSEEK":
+          adapter = new DeepSeekAdapter(testConfig);
+          break;
         case "OLLAMA":
           adapter = new OllamaAdapter(testConfig);
           break;
@@ -137,6 +141,8 @@ export async function POST(request: NextRequest) {
             "API key and deployment name are required for Azure OpenAI";
         } else if (provider === "GEMINI" && !apiKey) {
           errorMessage = "API key is required for Google Gemini";
+        } else if (provider === "DEEPSEEK" && !apiKey) {
+          errorMessage = "API key is required for DeepSeek";
         } else if (provider === "OLLAMA") {
           errorMessage = `Failed to connect to Ollama at ${endpoint || "http://localhost:11434"}. Make sure Ollama is running.`;
         } else if (!endpoint) {

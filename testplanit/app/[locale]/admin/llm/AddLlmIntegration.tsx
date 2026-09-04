@@ -69,6 +69,7 @@ const createFormSchema = (t: any, existingNames: string[]) =>
       "ANTHROPIC",
       "AZURE_OPENAI",
       "GEMINI",
+      "DEEPSEEK",
       "OLLAMA",
       "CUSTOM_LLM",
     ] as const),
@@ -105,6 +106,7 @@ const PROVIDERS_WITH_DYNAMIC_MODELS = [
   "OPENAI",
   "ANTHROPIC",
   "GEMINI",
+  "DEEPSEEK",
   "OLLAMA",
   "CUSTOM_LLM",
 ];
@@ -174,6 +176,17 @@ const providerDefaults: Record<string, Partial<FormData>> = {
     defaultTemperature: 0.7,
     defaultMaxTokens: 8192,
     timeout: 30000, // 30 seconds
+  },
+  DEEPSEEK: {
+    defaultModel: "deepseek-v4-flash",
+    endpoint: "https://api.deepseek.com",
+    maxTokensPerRequest: 65536,
+    maxRequestsPerMinute: 60,
+    costPerInputToken: 0.44,
+    costPerOutputToken: 1.32,
+    defaultTemperature: 0.7,
+    defaultMaxTokens: 8192,
+    timeout: 60000, // 1 minute — thinking mode is on by default
   },
   OLLAMA: {
     defaultModel: "llama3.2",
@@ -289,6 +302,7 @@ export function AddLlmIntegration({
         ANTHROPIC: t("anthropic"),
         AZURE_OPENAI: t("azureOpenai"),
         GEMINI: t("gemini"),
+        DEEPSEEK: t("deepseek"),
         OLLAMA: t("ollama"),
         CUSTOM_LLM: t("customLlm"),
       } as Record<string, string>
@@ -422,7 +436,10 @@ export function AddLlmIntegration({
     }
 
     // For providers that require an API key, wait until one is provided
-    if (["OPENAI", "ANTHROPIC", "GEMINI"].includes(provider) && !apiKey) {
+    if (
+      ["OPENAI", "ANTHROPIC", "GEMINI", "DEEPSEEK"].includes(provider) &&
+      !apiKey
+    ) {
       return;
     }
 
@@ -749,6 +766,9 @@ export function AddLlmIntegration({
                               <SelectItem value="GEMINI">
                                 {t("gemini")}
                               </SelectItem>
+                              <SelectItem value="DEEPSEEK">
+                                {t("deepseek")}
+                              </SelectItem>
                               <SelectItem value="OLLAMA">
                                 {t("ollama")}
                               </SelectItem>
@@ -872,7 +892,8 @@ export function AddLlmIntegration({
                                 {provider === "GEMINI"
                                   ? "Enter your API key and endpoint. Models will be fetched automatically."
                                   : provider === "OPENAI" ||
-                                      provider === "ANTHROPIC"
+                                      provider === "ANTHROPIC" ||
+                                      provider === "DEEPSEEK"
                                     ? "Enter your API key. We'll fetch the available models automatically."
                                     : provider === "CUSTOM_LLM"
                                       ? t("customLlmModelsHint")

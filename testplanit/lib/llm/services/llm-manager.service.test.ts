@@ -79,6 +79,24 @@ vi.mock("../adapters", () => ({
     getAvailableModels = vi.fn().mockResolvedValue([]);
     constructor(public config: any) {}
   },
+  DeepSeekAdapter: class DeepSeekAdapter {
+    chat = vi.fn().mockResolvedValue({
+      content: "DeepSeek response",
+      model: "deepseek-v4-flash",
+      promptTokens: 10,
+      completionTokens: 20,
+      totalTokens: 30,
+      finishReason: "stop",
+    });
+    chatStream = vi.fn().mockImplementation(async function* () {
+      yield { delta: "Hello", done: false };
+      yield { delta: " world", done: true };
+    });
+    testConnection = vi.fn().mockResolvedValue(true);
+    getAvailableModels = vi.fn().mockResolvedValue([]);
+    getProviderName = vi.fn().mockReturnValue("DeepSeek");
+    constructor(public config: any) {}
+  },
   OllamaAdapter: class OllamaAdapter {
     chat = vi.fn().mockResolvedValue({
       content: "Ollama response",
@@ -268,6 +286,32 @@ describe("LlmManager", () => {
       const adapter = await manager.getAdapter(1);
 
       expect(adapter).toBeDefined();
+    });
+
+    it("should create DeepSeek adapter", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
+        ...mockLlmIntegration,
+        provider: "DEEPSEEK",
+      });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(adapter.getProviderName()).toBe("DeepSeek");
+    });
+
+    it("should create DeepSeek adapter with custom proxy URL", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
+        ...mockLlmIntegration,
+        provider: "DEEPSEEK",
+        credentials: {
+          apiKey: "test-api-key",
+          endpoint: "https://litellm.example.com/v1",
+        },
+      });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(adapter.getProviderName()).toBe("DeepSeek");
     });
 
     it("should create Ollama adapter with public URL", async () => {

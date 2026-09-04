@@ -176,7 +176,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Duplicate Detection** - LLM-scored semantic similarity layered on top of the syntactic scan so near-duplicates with reworded steps are surfaced too
 - **Automation Candidates ranking** - The Automation Candidates report (under [Reports](#reports)) is LLM-ranked over manual cases + their custom fields + drilled-down issue metadata
 - **Prompt Configurations** - Per-feature prompt templates that admins can override system-wide or per project
-- **Multiple providers** - Support for OpenAI, Azure OpenAI, Anthropic, Google Gemini, Ollama, plus a generic OpenAI-compatible custom endpoint, with per-feature provider routing
+- **Multiple providers** - Support for OpenAI, Azure OpenAI, Anthropic, Google Gemini, DeepSeek, Ollama, plus a generic OpenAI-compatible custom endpoint, with per-feature provider routing
 - **Privacy options** - Use local models for sensitive data with Ollama integration
 - **Capability probing + billing periods** - Admin UI surfaces each provider's available capabilities and tracks usage against custom billing periods
 

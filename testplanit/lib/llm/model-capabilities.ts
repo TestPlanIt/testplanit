@@ -35,6 +35,11 @@ export function getModelContextWindow(
       return 200_000;
     case "GEMINI":
       return 1_048_576; // 1.5 / 2.x / 3.x all expose ~1M input
+    case "DEEPSEEK":
+      // V4 (deepseek-v4-*) exposes ~1M input; the legacy deepseek-chat /
+      // deepseek-reasoner aliases were 128K.
+      if (m.includes("v4")) return 1_000_000;
+      return 128_000;
     case "OPENAI":
     case "AZURE_OPENAI":
       if (m.includes("gpt-4.1") || m.includes("gpt-4-1")) return 1_000_000;
@@ -106,6 +111,9 @@ export function modelSupportsVision(
       return true; // every claude-3+ model is multimodal
     case "GEMINI":
       return true; // 1.5/2.x/3.x are all multimodal
+    case "DEEPSEEK":
+      // Only the experimental vision variant accepts images.
+      return m.includes("vision");
     case "OPENAI":
     case "AZURE_OPENAI":
       // Vision-capable families; embeddings/audio/gpt-3.5 are not.

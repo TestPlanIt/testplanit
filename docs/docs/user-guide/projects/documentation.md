@@ -145,7 +145,7 @@ If your project has LLM integrations configured, AI features become available:
 **Requirements for AI:**
 - Project must have an LLM integration configured
 - See [LLM Integrations](../llm-integrations.md) for setup instructions
-- Supported providers: OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, Ollama, Custom LLM
+- Supported providers: OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Azure OpenAI, Ollama, Custom LLM
 
 ### Saving and Canceling
 

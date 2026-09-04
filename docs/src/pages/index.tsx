@@ -192,7 +192,7 @@ function HomepageFeaturesSection() {
       icon: Wand2,
       title: 'AI-Powered Test Generation',
       description:
-        'Generate comprehensive test cases automatically from issues, requirements, or documentation using cutting-edge AI models including OpenAI GPT-4, Google Gemini, Anthropic Claude, and local Ollama models.',
+        'Generate comprehensive test cases automatically from issues, requirements, or documentation using cutting-edge AI models including OpenAI GPT-4, Google Gemini, Anthropic Claude, DeepSeek, and local Ollama models.',
       link: '/docs/user-guide/llm-integrations',
       color: 'purple',
     },

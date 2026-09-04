@@ -77,6 +77,7 @@ const createFormSchema = (
       "ANTHROPIC",
       "AZURE_OPENAI",
       "GEMINI",
+      "DEEPSEEK",
       "OLLAMA",
       "CUSTOM_LLM",
     ] as const),
@@ -108,6 +109,7 @@ const PROVIDERS_WITH_DYNAMIC_MODELS = [
   "OPENAI",
   "ANTHROPIC",
   "GEMINI",
+  "DEEPSEEK",
   "OLLAMA",
   "CUSTOM_LLM",
 ];
@@ -237,6 +239,7 @@ export function EditLlmIntegration({
         ANTHROPIC: tAdd("anthropic"),
         AZURE_OPENAI: tAdd("azureOpenai"),
         GEMINI: tAdd("gemini"),
+        DEEPSEEK: tAdd("deepseek"),
         OLLAMA: tAdd("ollama"),
         CUSTOM_LLM: tAdd("customLlm"),
       } as Record<string, string>
@@ -347,7 +350,10 @@ export function EditLlmIntegration({
     }
 
     // For providers that require an API key, wait until one is provided
-    if (["OPENAI", "ANTHROPIC", "GEMINI"].includes(provider) && !apiKey) {
+    if (
+      ["OPENAI", "ANTHROPIC", "GEMINI", "DEEPSEEK"].includes(provider) &&
+      !apiKey
+    ) {
       return;
     }
 
@@ -783,6 +789,9 @@ export function EditLlmIntegration({
                                   <SelectItem value="GEMINI">
                                     {tAdd("gemini")}
                                   </SelectItem>
+                                  <SelectItem value="DEEPSEEK">
+                                    {tAdd("deepseek")}
+                                  </SelectItem>
                                   <SelectItem value="OLLAMA">
                                     {tAdd("ollama")}
                                   </SelectItem>
@@ -914,7 +923,8 @@ export function EditLlmIntegration({
                                     {provider === "GEMINI"
                                       ? "Enter your API key and endpoint. Models will be fetched automatically."
                                       : provider === "OPENAI" ||
-                                          provider === "ANTHROPIC"
+                                          provider === "ANTHROPIC" ||
+                                          provider === "DEEPSEEK"
                                         ? "Enter your API key. We'll fetch the available models automatically."
                                         : provider === "CUSTOM_LLM"
                                           ? tAdd("customLlmModelsHint")

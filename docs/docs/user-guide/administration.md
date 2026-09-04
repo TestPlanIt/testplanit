@@ -90,7 +90,7 @@ For detailed search configuration, see the [Search Configuration Documentation](
 
 **AI Models** (`/admin/llm`)
 
-- Connect AI providers (OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, Ollama, or a custom OpenAI-compatible endpoint)
+- Connect AI providers (OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Azure OpenAI, Ollama, or a custom OpenAI-compatible endpoint)
 - Set per-model token limits, rate limits, cost, and monthly budgets
 - Test connections and probe model capabilities
 

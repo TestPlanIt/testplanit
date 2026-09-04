@@ -3631,6 +3631,7 @@ enum LlmProvider {
     GEMINI
     OLLAMA
     CUSTOM_LLM
+    DEEPSEEK
 
     @@deny('all', auth() == null)
     @@allow('update', auth().access == 'ADMIN')

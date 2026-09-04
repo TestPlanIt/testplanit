@@ -13,12 +13,12 @@ type OpenAIContentPart =
   | { type: "text"; text: string }
   | { type: "image_url"; image_url: { url: string } };
 
-interface OpenAIMessage {
+export interface OpenAIMessage {
   role: "system" | "user" | "assistant";
   content: string | OpenAIContentPart[];
 }
 
-interface OpenAIChatRequest {
+export interface OpenAIChatRequest {
   model: string;
   messages: OpenAIMessage[];
   temperature?: number;
@@ -38,7 +38,7 @@ interface OpenAIChatResponse {
     index: number;
     message: {
       role: string;
-      content: string;
+      content: string | null;
     };
     finish_reason: string;
   }>;
@@ -75,7 +75,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
 
     if (!this.apiKey) {
       throw this.createError(
-        "OpenAI API key is required",
+        `${this.getProviderName()} API key is required`,
         "MISSING_API_KEY",
         401
       );
@@ -118,17 +118,30 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     });
   }
 
-  async chat(request: LlmRequest): Promise<LlmResponse> {
-    this.validateRequest(request);
-
-    const openAIRequest: OpenAIChatRequest = {
+  /**
+   * Build the chat.completions request body. OpenAI-compatible providers with
+   * a slightly different parameter surface (DeepSeek: `max_tokens`,
+   * `thinking`) override this instead of `chat` / `chatStream`, so transport,
+   * error mapping, and SSE parsing stay shared.
+   */
+  protected buildChatRequest(
+    request: LlmRequest,
+    stream: boolean
+  ): OpenAIChatRequest {
+    return {
       model: request.model || this.getDefaultModel(),
       messages: this.toOpenAIMessages(request.messages),
       temperature: request.temperature ?? this.config.config.defaultTemperature,
       max_completion_tokens:
         request.maxTokens ?? this.config.config.defaultMaxTokens,
-      stream: false,
+      stream,
     };
+  }
+
+  async chat(request: LlmRequest): Promise<LlmResponse> {
+    this.validateRequest(request);
+
+    const openAIRequest = this.buildChatRequest(request, false);
 
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
@@ -150,7 +163,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       const data = (await response.json()) as OpenAIChatResponse;
 
       return {
-        content: data.choices[0].message.content,
+        content: data.choices[0].message.content ?? "",
         model: data.model,
         promptTokens: data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
@@ -173,14 +186,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
   ): AsyncGenerator<LlmStreamResponse, void, unknown> {
     this.validateRequest(request);
 
-    const openAIRequest: OpenAIChatRequest = {
-      model: request.model || this.getDefaultModel(),
-      messages: this.toOpenAIMessages(request.messages),
-      temperature: request.temperature ?? this.config.config.defaultTemperature,
-      max_completion_tokens:
-        request.maxTokens ?? this.config.config.defaultMaxTokens,
-      stream: true,
-    };
+    const openAIRequest = this.buildChatRequest(request, true);
 
     // Use request timeout if provided, otherwise fall back to config timeout.
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).

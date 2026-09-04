@@ -14,6 +14,7 @@ export const LLM_PROVIDER_COLORS: Record<string, string> = {
   AZURE_OPENAI: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   GEMINI:
     "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+  DEEPSEEK: "bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200",
   OLLAMA:
     "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
   CUSTOM_LLM: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
@@ -39,6 +40,8 @@ export function getProviderIcon(
       return <Zap className={`${className} text-blue-600`} />;
     case "GEMINI":
       return <Sparkles className={`${className} text-indigo-500`} />;
+    case "DEEPSEEK":
+      return <Brain className={`${className} text-sky-600`} />;
     case "OLLAMA":
       return <Sparkles className={`${className} text-purple-600`} />;
     case "CUSTOM_LLM":
