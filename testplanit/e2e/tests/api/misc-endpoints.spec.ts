@@ -147,6 +147,7 @@ test.describe("Miscellaneous API endpoints", () => {
 
   test("GET /api/forecast/update refreshes a case forecast synchronously", async ({
     api,
+    browser,
     request,
     baseURL,
   }) => {
@@ -158,6 +159,18 @@ test.describe("Miscellaneous API endpoints", () => {
       folderId,
       `Forecast ${ts}`
     );
+
+    // The recompute is not public: an anonymous caller gets 401.
+    const anonymous = await browser.newContext({ storageState: undefined });
+    try {
+      const denied = await anonymous.request.get(
+        `${baseURL}/api/forecast/update`,
+        { params: { caseId: String(caseId) } }
+      );
+      expect(denied.status()).toBe(401);
+    } finally {
+      await anonymous.close();
+    }
 
     const bad = await request.get(`${baseURL}/api/forecast/update`, {
       params: { caseId: "abc" },
