@@ -11,7 +11,12 @@ name: DB Integration Tests
 on:
   workflow_dispatch:
   push:
-    branches: [main, beta]
+    # release/* included deliberately. Every suite this job newly exercises was
+    # written on a release branch, and because the job only watched main and
+    # beta it had never once run against them — six suites had been failing
+    # since the day they landed, invisible until an unrelated PR happened to
+    # touch a matching path.
+    branches: [main, beta, "release/**"]
     paths:
       - "testplanit/__tests__/integration/**"
       - "testplanit/lib/**"
@@ -74,11 +79,38 @@ jobs:
       - name: Generate ZenStack/Prisma client
         run: pnpm generate
 
-      - name: Push schema
-        # ZenStack v3 pushes directly from schema.zmodel (there is no prisma
-        # binary in this workspace); the CI database is ephemeral, so accept
-        # destructive changes without prompting.
-        run: pnpm exec zenstack db push --schema schema.zmodel --accept-data-loss --no-version-check
+      - name: Apply migrations
+        # `migrate deploy`, not `db push`. This suite asserts against database
+        # objects that exist ONLY in migrations/, and that a push cannot build
+        # because they are not expressible in schema.zmodel: the ICU collations
+        # the requirements-tree sort tests compare the server's ORDER BY
+        # against, the DataChangeLog partial poll index, the
+        # effective-case-status view. A pushed database looks right and sorts
+        # wrong — on the musl-based postgres:15-alpine image above, an
+        # un-collated text column sorts in byte order (every capital before
+        # every lowercase), which is exactly what the collation migration
+        # exists to fix.
+        #
+        # The two cannot be combined: schema.zmodel declares dcl_unprocessed_seq
+        # as a plain index where the migration creates it partial, so a push
+        # after a deploy fails with `relation "dcl_unprocessed_seq" already
+        # exists`. Deploying alone is also what production does, so this job now
+        # exercises the schema the app actually ships on.
+        run: pnpm exec zenstack migrate deploy --schema schema.zmodel
+
+      - name: Apply database triggers
+        # A large share of the behaviour under test is enforced by Postgres
+        # triggers rather than by the ORM — the issue-hierarchy cycle guard,
+        # the seeded-status guard, deletedAt stamping, the single-default
+        # guards — and nothing else in this job creates them, so those suites
+        # were asserting against a database that could not enforce what they
+        # were checking.
+        #
+        # Order is load-bearing: this must follow the migrations. The collation
+        # migration ALTERs column types, and Postgres refuses that once a
+        # trigger references the column ("cannot alter type of a column used in
+        # a trigger definition").
+        run: pnpm triggers:apply
 
       - name: Seed baseline data (roles, workflows, admin)
         run: pnpm exec tsx db/seed.ts
