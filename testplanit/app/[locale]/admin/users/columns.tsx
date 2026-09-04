@@ -17,7 +17,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { Ban, KeyRound, MoreVertical, SquarePen, Trash2 } from "lucide-react";
+import { Ban, KeyRound, MoreVertical, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
@@ -359,7 +359,7 @@ export const useColumns = (
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDeleteUser?.(row.original)}
                     >
-                      <Trash2 className="me-2 h-4 w-4" />
+                      <Trash className="me-2 h-4 w-4" />
                       {tCommon("actions.delete")}
                     </DropdownMenuItem>
                   ) : null}

@@ -43,7 +43,7 @@ import {
   Link2,
   ListChecks,
   Plus,
-  Trash2,
+  Trash,
   X,
 } from "lucide-react";
 import type { Session } from "next-auth";
@@ -483,7 +483,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                   variant="destructive"
                                   onClick={() => handleUnlink(link.id)}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash className="w-4 h-4" />
                                   {tGlobal("common.actions.remove")}
                                 </Button>
                               </div>

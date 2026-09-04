@@ -265,7 +265,7 @@ describe("QueueManagement", () => {
       ).toBeInTheDocument();
     });
 
-    // Find the small destructive Trash2 button in actions column
+    // Find the small destructive Trash button in actions column
     const destructiveSmallButtons = screen
       .getAllByRole("button")
       .filter(

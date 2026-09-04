@@ -70,7 +70,7 @@ describe("CaseDisplay", () => {
     });
 
     it("suppresses the badge when the case is soft-deleted", () => {
-      // Soft-deleted cases render the Trash2 icon and shouldn't carry the
+      // Soft-deleted cases render the Trash icon and shouldn't carry the
       // params indicator — the row is being represented as gone.
       render(
         <CaseDisplay

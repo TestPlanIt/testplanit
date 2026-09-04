@@ -36,7 +36,7 @@ import {
   ShieldUser,
   Sparkles,
   Tags,
-  Trash2,
+  Trash,
   User,
   Users,
   Webhook,
@@ -273,7 +273,7 @@ const menuOptions: MenuOption[] = [
     section: "system",
   },
   {
-    icon: Trash2,
+    icon: Trash,
     translationKey: "trash",
     path: "trash",
     section: "system",

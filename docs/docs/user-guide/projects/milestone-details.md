@@ -166,7 +166,7 @@ If nothing matches, the card says so rather than showing the generic "no test ru
 Clicking the **Edit** button (or accessing via an edit link) activates Edit Mode:
 
 - The **Back Arrow** is replaced with **Save** and **Cancel** buttons.
-- A **Delete** button (icon: Trash2) appears.
+- A **Delete** button (icon: Trash) appears.
 - Fields in both panels become editable:
   - **Left Panel**: Milestone Name (Textarea), Documentation (`TipTapEditor`).
   - **Right Panel**: Status Toggles (Started/Completed), Dates (`DatePickerField`), Description (`TipTapEditor`), Type (Select), Parent (searchable milestone picker), Auto-Complete, and Notification settings.

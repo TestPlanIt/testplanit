@@ -106,7 +106,7 @@ import {
   PlayCircle,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
   TriangleAlert,
   UsersRound,
 } from "lucide-react";
@@ -1877,7 +1877,7 @@ export default function TestRunPage() {
                             },
                             {
                               key: "delete",
-                              icon: Trash2,
+                              icon: Trash,
                               label: t("common.actions.delete"),
                               onClick: () => setIsDeleteDialogOpen(true),
                               destructive: true,
@@ -2153,7 +2153,7 @@ export default function TestRunPage() {
                               )}
                             >
                               <ActionButtonContent
-                                icon={Trash2}
+                                icon={Trash}
                                 label={t("common.actions.delete")}
                               />
                             </Button>

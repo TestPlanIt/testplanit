@@ -58,7 +58,7 @@ vi.mock("@dnd-kit/utilities", () => ({
 vi.mock("lucide-react", () => ({
   GripVertical: () => <svg data-testid="grip-vertical-icon" />,
   Sparkles: () => <svg data-testid="sparkles-icon" />,
-  Trash2: () => <svg data-testid="trash2-icon" />,
+  Trash: () => <svg data-testid="trash-icon" />,
 }));
 
 // Mock UI button
@@ -131,7 +131,7 @@ describe("DraggableCaseFields", () => {
         <DraggableList items={items} setItems={setItems} onRemove={onRemove} />
       );
 
-      const trashIcons = screen.getAllByTestId("trash2-icon");
+      const trashIcons = screen.getAllByTestId("trash-icon");
       expect(trashIcons).toHaveLength(3);
     });
 
@@ -189,7 +189,7 @@ describe("DraggableCaseFields", () => {
         <DraggableList items={items} setItems={setItems} onRemove={onRemove} />
       );
 
-      const trashButtons = screen.getAllByTestId("trash2-icon");
+      const trashButtons = screen.getAllByTestId("trash-icon");
       // Click the first trash button (for "Field Alpha")
       fireEvent.click(trashButtons[0].closest("button")!);
 
@@ -205,7 +205,7 @@ describe("DraggableCaseFields", () => {
         <DraggableList items={items} setItems={setItems} onRemove={onRemove} />
       );
 
-      const trashButtons = screen.getAllByTestId("trash2-icon");
+      const trashButtons = screen.getAllByTestId("trash-icon");
       fireEvent.click(trashButtons[1].closest("button")!);
 
       expect(onRemove).toHaveBeenCalledWith("2");

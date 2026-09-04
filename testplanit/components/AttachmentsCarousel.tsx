@@ -26,7 +26,7 @@ import {
   Download,
   ExternalLink,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -289,7 +289,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                   variant="destructive"
                                   className="ms-auto w-fit"
                                 >
-                                  <Trash2 className="h-5 w-5" />
+                                  <Trash className="h-5 w-5" />
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent className="w-fit" side="bottom">
@@ -315,7 +315,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                       onClick={() => handleDelete(index)}
                                       className="ms-auto"
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <Trash className="h-4 w-4" />
                                       {t("common.actions.delete")}
                                     </Button>
                                   </div>

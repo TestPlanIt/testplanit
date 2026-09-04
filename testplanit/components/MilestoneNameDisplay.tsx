@@ -1,5 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
-import { Trash2 } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconName } from "~/types/globals";
 
@@ -31,7 +31,7 @@ export function MilestoneNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash2 className="h-4 w-4 shrink-0 mt-1" />;
+      icon = <Trash className="h-4 w-4 shrink-0 mt-1" />;
     } else {
       icon = (
         <DynamicIcon

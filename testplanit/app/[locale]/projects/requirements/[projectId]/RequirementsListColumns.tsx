@@ -9,7 +9,7 @@ import {
   ListChecks,
   MoreVertical,
   SquarePenIcon,
-  Trash2Icon,
+  TrashIcon,
   ClipboardCheck,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -1144,7 +1144,7 @@ function RequirementRowActionsMenu({
           data-testid={`requirement-action-delete-${requirement.id}`}
         >
           <div className="flex items-center gap-2">
-            <Trash2Icon className="h-4 w-4" />
+            <TrashIcon className="h-4 w-4" />
             {t("requirements.tree.delete")}
           </div>
         </DropdownMenuItem>

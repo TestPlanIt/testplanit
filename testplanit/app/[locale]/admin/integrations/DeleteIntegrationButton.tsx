@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import type { Integration } from "~/zenstack/models";
-import { Trash2 } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface DeleteIntegrationButtonProps {
@@ -23,7 +23,7 @@ export function DeleteIntegrationButton({
       className="px-2 py-1 h-auto"
       title={tCommon("actions.delete")}
     >
-      <Trash2 className="h-4 w-4" />
+      <Trash className="h-4 w-4" />
       <span className="sr-only">{tCommon("actions.delete")}</span>
     </Button>
   );
