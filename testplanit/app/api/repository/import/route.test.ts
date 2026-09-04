@@ -1,3 +1,4 @@
+import { DbNull } from "@zenstackhq/orm";
 import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
@@ -864,7 +865,7 @@ describe("CSV Import API Route", () => {
               }),
             ]),
           }),
-          expectedResult: null,
+          expectedResult: DbNull,
           order: 0,
         }),
       });
@@ -1665,6 +1666,53 @@ describe("CSV Import API Route", () => {
       // Invalid dates are ignored, so import should succeed
       expect(result.complete).toBeDefined();
       expect(result.complete?.importedCount).toBe(2);
+    });
+  });
+
+  describe("Restoring soft-deleted cases", () => {
+    it("allocates the next version when the restored case already has snapshots", async () => {
+      // The soft-deleted lookup finds an earlier life of this case; its
+      // version 1 snapshot still exists, so the restore must not re-create it.
+      mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue({ id: 77 });
+      mockEnhancedDb.repositoryCases.update.mockImplementation(
+        ({ where, data }: any) => ({ id: where.id, ...data })
+      );
+      mockEnhancedDb.repositoryCaseVersions.findFirst.mockResolvedValue({
+        version: 1,
+      });
+
+      const request = createRequest({
+        projectId: 1,
+        file: "Name,Description\nRestored case,Desc",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.errors).toEqual([]);
+      expect(result.complete?.importedCount).toBe(1);
+      expect(mockEnhancedDb.repositoryCases.create).not.toHaveBeenCalled();
+      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 77 },
+        data: expect.objectContaining({ isDeleted: false }),
+      });
+      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 77 },
+        data: { currentVersion: 2 },
+      });
+      expect(mockEnhancedDb.repositoryCaseVersions.create).toHaveBeenCalledWith(
+        { data: expect.objectContaining({ version: 2 }) }
+      );
     });
   });
 });

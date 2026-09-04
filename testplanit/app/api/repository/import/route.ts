@@ -1,6 +1,6 @@
 import { RepositoryCaseSource, WorkflowScope } from "~/zenstack/models";
 import type { CaseFields, CaseFieldTypes } from "~/zenstack/models";
-import type { JsonValue } from "@zenstackhq/orm";
+import { DbNull, type JsonValue } from "@zenstackhq/orm";
 import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -815,7 +815,8 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   data: {
                     testCaseId: newCase.id,
                     step: stepData.step,
-                    expectedResult: stepData.expectedResult,
+                    // v3 rejects raw `null` for nullable Json columns on create.
+                    expectedResult: stepData.expectedResult ?? DbNull,
                     order: stepData.order,
                   },
                 });
@@ -844,6 +845,25 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   : highestVersion + 1;
 
               // Update the case's currentVersion
+              await enhancedDb.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { currentVersion: versionNumber },
+              });
+            } else if (reusedCaseId !== null) {
+              // A restored soft-deleted case keeps its earlier version
+              // snapshots, so move past them instead of colliding on
+              // @@unique([repositoryCaseId, version]).
+              const latestVersion =
+                await enhancedDb.repositoryCaseVersions.findFirst({
+                  where: { repositoryCaseId: newCase.id },
+                  orderBy: { version: "desc" },
+                });
+              const highestVersion = latestVersion?.version || 0;
+              versionNumber =
+                caseData.version && caseData.version > highestVersion
+                  ? caseData.version
+                  : highestVersion + 1;
+
               await enhancedDb.repositoryCases.update({
                 where: { id: newCase.id },
                 data: { currentVersion: versionNumber },
