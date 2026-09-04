@@ -980,6 +980,59 @@ export class ApiHelper {
   }
 
   /**
+   * Fabricate a tracker-synced issue without a live tracker: an Issue row
+   * connected to an integration with an external key and URL, so the UI
+   * treats it as synced (and, when flagged, as a locked requirement).
+   */
+  async createSyncedIssue(
+    projectId: number,
+    integrationId: number,
+    options: {
+      name: string;
+      title?: string;
+      isRequirement?: boolean;
+      externalKey?: string;
+      externalUrl?: string;
+      issueTypeName?: string;
+    }
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+    const externalKey = options.externalKey ?? options.name;
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/issue/create`,
+      {
+        data: {
+          data: {
+            name: options.name,
+            title: options.title ?? options.name,
+            isRequirement: options.isRequirement ?? false,
+            isDeleted: false,
+            externalId: `e2e-${externalKey}-${Date.now()}`,
+            externalKey,
+            externalUrl:
+              options.externalUrl ??
+              `https://example.atlassian.net/browse/${externalKey}`,
+            issueTypeName: options.issueTypeName ?? "Story",
+            project: { connect: { id: projectId } },
+            createdBy: { connect: { id: userId } },
+            integration: { connect: { id: integrationId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create synced issue: ${error}`);
+    }
+
+    const result = await response.json();
+    const issueId = result.data.id;
+    this.tracked.issueIds.push(issueId);
+    return issueId;
+  }
+
+  /**
    * Link an issue to a test case via API
    * Uses the many-to-many relationship between Issues and RepositoryCases
    */

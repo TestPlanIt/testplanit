@@ -676,6 +676,13 @@ export default function RequirementDetailPanel({
             requirement={requirement}
             projectId={Number(projectId)}
             onExcluded={onExcluded}
+            // A router refresh alone leaves the cached Issue row (and so the
+            // badge and the field locks) on the pre-detach state.
+            onDetached={() =>
+              void queryClient.invalidateQueries({
+                queryKey: ["zenstack", "Issue"],
+              })
+            }
           />
           {!isEditMode ? (
             <Button
