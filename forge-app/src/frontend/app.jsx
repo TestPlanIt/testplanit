@@ -429,7 +429,7 @@ const TestCaseRow = ({ testCase, onOpen }) => {
   const visibleFields = (testCase.fields || []).filter(fieldHasValue);
 
   const getIcon = (source, isDeleted) => {
-    if (isDeleted) return <DynamicIcon name="Trash2" className="h-4 w-4 shrink-0" />;
+    if (isDeleted) return <DynamicIcon name="Trash" className="h-4 w-4 shrink-0" />;
     if (source === 'JUNIT') return <DynamicIcon name="Bot" className="h-4 w-4 shrink-0" />;
     return <DynamicIcon name="ListChecks" className="h-4 w-4 shrink-0" />;
   };

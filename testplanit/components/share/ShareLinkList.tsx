@@ -37,7 +37,7 @@ import {
   Loader2,
   MoreVertical,
   Pencil,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -522,7 +522,7 @@ export function ShareLinkList({
                         }}
                         className="text-destructive"
                       >
-                        <Trash2 className="me-1 h-4 w-4" />
+                        <Trash className="me-1 h-4 w-4" />
                         {tCommon("actions.delete")}
                       </DropdownMenuItem>
                     </>
@@ -535,7 +535,7 @@ export function ShareLinkList({
                       }}
                       className="text-destructive"
                     >
-                      <Trash2 className="me-1 h-4 w-4" />
+                      <Trash className="me-1 h-4 w-4" />
                       {tCommon("actions.delete")}
                     </DropdownMenuItem>
                   )}

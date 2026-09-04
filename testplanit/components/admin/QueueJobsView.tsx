@@ -37,7 +37,7 @@ import {
   Loader2,
   RefreshCw,
   RotateCcw,
-  Trash2,
+  Trash,
   X,
   XCircle,
 } from "lucide-react";
@@ -355,7 +355,7 @@ export function QueueJobsView({
               onClick={() => performJobAction(job.id, "remove")}
               disabled={actionInProgress === job.id}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
           </div>
         );

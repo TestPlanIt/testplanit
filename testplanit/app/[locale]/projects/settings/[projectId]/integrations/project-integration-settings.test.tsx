@@ -369,7 +369,7 @@ describe("ProjectIntegrationSettings", () => {
   });
 
   // --- Test 5: Remove button triggers confirmation ---
-  it("clicking Trash2 remove button shows inline confirmation text", () => {
+  it("clicking Trash remove button shows inline confirmation text", () => {
     render(<ProjectIntegrationSettings {...defaultProps} />);
 
     // The remove buttons are destructive icon buttons (no accessible name — icon only)

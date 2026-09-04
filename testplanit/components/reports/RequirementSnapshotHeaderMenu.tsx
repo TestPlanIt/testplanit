@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Camera, ClipboardList, Loader2, Trash2 } from "lucide-react";
+import { Camera, ClipboardList, Loader2, Trash } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -209,7 +209,7 @@ export function RequirementSnapshotHeaderMenu({
                       }}
                       data-testid={`${testIdPrefix}-delete-${option.id}`}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash className="h-3.5 w-3.5" />
                     </Button>
                   ) : null}
                 </li>

@@ -109,7 +109,7 @@ import {
   History,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -2006,7 +2006,7 @@ export default function SessionPage() {
                           },
                           {
                             key: "delete",
-                            icon: Trash2,
+                            icon: Trash,
                             label: t("actions.delete"),
                             onClick: () => setIsDeleteDialogOpen(true),
                             destructive: true,
@@ -2172,7 +2172,7 @@ export default function SessionPage() {
                               )}
                             >
                               <ActionButtonContent
-                                icon={Trash2}
+                                icon={Trash}
                                 label={tCommon("actions.delete")}
                               />
                             </Button>

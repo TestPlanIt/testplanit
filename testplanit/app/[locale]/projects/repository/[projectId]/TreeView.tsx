@@ -32,7 +32,7 @@ import {
   MoreVertical,
   Search,
   SquarePenIcon,
-  Trash2Icon,
+  TrashIcon,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -1640,7 +1640,7 @@ const TreeView: React.FC<{
                   className="text-destructive"
                 >
                   <div className="flex items-center gap-2">
-                    <Trash2Icon className="h-4 w-4" />
+                    <TrashIcon className="h-4 w-4" />
                     {t("repository.folderActions.delete")}
                   </div>
                 </DropdownMenuItem>

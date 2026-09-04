@@ -15,7 +15,7 @@ import {
   Component,
   PlusCircle,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -323,7 +323,7 @@ export const useColumns = (
                 onClick={onDelete}
                 aria-label={tCommon("actions.delete")}
               >
-                <Trash2 className="h-5 w-5" />
+                <Trash className="h-5 w-5" />
               </Button>
             </div>
           );

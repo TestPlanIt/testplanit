@@ -45,7 +45,7 @@ import {
   MoveVertical,
   PlusCircle,
   SearchCheck,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -259,7 +259,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       className="ms-auto"
                       data-testid={`delete-step-${index}`}
                     >
-                      <Trash2 className="h-5 w-5" />
+                      <Trash className="h-5 w-5" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-fit max-w-md" side="bottom">
@@ -283,7 +283,7 @@ const StepItem: React.FC<StepItemProps> = ({
                           handlePopoverOpenChange(index, false);
                         }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                         {t("removeBlockButton")}
                       </Button>
                     </div>
@@ -437,7 +437,7 @@ const StepItem: React.FC<StepItemProps> = ({
                     className="ms-auto"
                     data-testid={`delete-step-${index}`}
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash className="h-5 w-5" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-fit" side="bottom">
@@ -464,7 +464,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         }}
                         className="ms-auto"
                       >
-                        <Trash2 className="h-4 w-4" /> {t("delete")}
+                        <Trash className="h-4 w-4" /> {t("delete")}
                       </Button>
                     </div>
                   </div>

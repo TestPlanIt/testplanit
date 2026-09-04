@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { Templates } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -146,7 +146,7 @@ export const useColumns = (
                 disabled
                 aria-label={tCommon("actions.delete")}
               >
-                <Trash2 className="h-5 w-5" />
+                <Trash className="h-5 w-5" />
               </Button>
             ) : (
               <Button
@@ -155,7 +155,7 @@ export const useColumns = (
                 data-testid="delete-template-button"
                 onClick={() => onDeleteTemplate?.(row.original)}
               >
-                <Trash2 className="h-5 w-5" />
+                <Trash className="h-5 w-5" />
               </Button>
             )}
           </div>

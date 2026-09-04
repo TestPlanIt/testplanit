@@ -4,7 +4,7 @@ import { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { formatDistanceToNow } from "date-fns";
-import { Clock, Edit, MoreVertical, Trash2 } from "lucide-react";
+import { Clock, Edit, MoreVertical, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { UserNameCell } from "~/components/tables/UserNameCell";
@@ -207,7 +207,7 @@ export function CommentItem({
                       onClick={handleDeleteClick}
                       className="text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="me-2 h-4 w-4" />
+                      <Trash className="me-2 h-4 w-4" />
                       {t("common.actions.delete")}
                     </DropdownMenuItem>
                   )}

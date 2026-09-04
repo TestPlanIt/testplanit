@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { TestRunsWhereInput } from "~/zenstack/input";
-import { Combine, Lock, PlayCircle, Trash2 } from "lucide-react";
+import { Combine, Lock, PlayCircle, Trash } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useMemo } from "react";
 import { Link } from "~/lib/navigation";
@@ -114,7 +114,7 @@ export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
           "text-muted-foreground/50 cursor-default"
         )}
       >
-        <Trash2 className="w-4 h-4 shrink-0 mt-0.5" />
+        <Trash className="w-4 h-4 shrink-0 mt-0.5" />
         <span className={textClass}>{name}</span>
         {configurationGroupId && (
           <Combine className="w-3 h-3 shrink-0 mt-0.5" />

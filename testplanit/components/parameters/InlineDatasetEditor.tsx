@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 
@@ -302,7 +302,7 @@ export function InlineDatasetEditor({
                         aria-label={t("deleteAria")}
                         data-testid={`${testIdPrefix}-remove-parameter-${i}`}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -425,7 +425,7 @@ export function InlineDatasetEditor({
                       aria-label={t("deleteAria")}
                       data-testid={`${testIdPrefix}-remove-row-${rowIdx}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

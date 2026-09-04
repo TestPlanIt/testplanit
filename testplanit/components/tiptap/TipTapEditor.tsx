@@ -93,7 +93,7 @@ import {
   Smile,
   StrikethroughIcon,
   Table2,
-  Trash2,
+  Trash,
   Underline as UnderlineIcon,
   Undo2,
   Upload,
@@ -1065,7 +1065,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     onClick={() => editor.chain().focus().deleteTable().run()}
                     data-testid="tiptap-delete-table"
                   >
-                    <Trash2 size={16} />
+                    <Trash size={16} />
                     {t("table.deleteTable")}
                   </Button>
                 </>
@@ -1216,7 +1216,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   onClick={removeLink}
                   className="flex-1"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash className="w-4 h-4" />
                 </Button>
               </div>
             </PopoverContent>
