@@ -1,14 +1,52 @@
 import {
+  ChangedFile,
+  ChangedFileStatus,
+  CompareOptions,
+  CompareResult,
   GitRepoAdapter,
+  ListCommitsOptions,
+  ListCommitsResult,
   ListFilesResult,
+  RepoBranch,
+  RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
 } from "./GitRepoAdapter";
+import {
+  MAX_COMPARE_COMMITS,
+  MAX_COMPARE_FILES,
+  MAX_FILES_WITH_PATCH,
+  MAX_PATCH_BYTES_PER_FILE,
+  MAX_TOTAL_PATCH_BYTES,
+} from "../diff/limits";
+import {
+  MultiFileDiffChunk,
+  parseUnifiedDiff,
+  splitMultiFileDiff,
+  stripDiffHeaders,
+} from "../diff/parseUnifiedDiff";
 
 const MAX_FILES = 10000;
+const MAX_BRANCHES = 500;
+
+const DIFFSTAT_STATUS: Record<string, ChangedFileStatus> = {
+  added: "added",
+  modified: "modified",
+  removed: "deleted",
+  renamed: "renamed",
+};
 
 function isRateLimitError(err: unknown): boolean {
   return err instanceof Error && /rate limit/i.test(err.message);
+}
+
+function parseRawAuthor(raw: string | undefined): {
+  name: string;
+  email?: string;
+} {
+  const match = /^(.*?)\s*<([^>]*)>\s*$/.exec(raw ?? "");
+  if (!match) return { name: (raw ?? "").trim() };
+  return { name: match[1].trim(), email: match[2].trim() || undefined };
 }
 
 export class BitbucketRepoAdapter extends GitRepoAdapter {
@@ -34,6 +72,169 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
       "base64"
     );
     return { Authorization: `Basic ${encoded}` };
+  }
+
+  private get repoUrl() {
+    return `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}`;
+  }
+
+  private async fetchPages<T>(
+    url: string,
+    limit: number
+  ): Promise<{ values: T[]; hasMore: boolean; size?: number }> {
+    const values: T[] = [];
+    let size: number | undefined;
+    let next: string | null = url;
+    while (next && values.length < limit) {
+      const data: any = await this.makeRequest<any>(next, {
+        headers: this.authHeaders,
+      });
+      if (size === undefined && typeof data.size === "number") size = data.size;
+      for (const value of data.values ?? []) values.push(value as T);
+      next = data.next ?? null;
+    }
+    return {
+      values: values.slice(0, limit),
+      hasMore: values.length > limit || Boolean(next),
+      size,
+    };
+  }
+
+  private toCommit(c: any): RepoCommit {
+    const sha = c.hash as string;
+    const raw = parseRawAuthor(c.author?.raw);
+    return {
+      sha,
+      shortSha: sha.slice(0, 7),
+      message: (c.message as string) ?? "",
+      authorName: c.author?.user?.display_name ?? raw.name,
+      authorEmail: raw.email,
+      authoredAt: (c.date as string) ?? "",
+      parents: ((c.parents ?? []) as any[]).map((p) => p.hash as string),
+      url: c.links?.html?.href,
+    };
+  }
+
+  async listBranches(): Promise<RepoBranch[]> {
+    const defaultBranch = await this.getDefaultBranch();
+    const { values } = await this.fetchPages<any>(
+      `${this.repoUrl}/refs/branches?pagelen=100`,
+      MAX_BRANCHES
+    );
+    return values.map((b) => ({
+      name: b.name as string,
+      sha: b.target?.hash as string,
+      isDefault: b.name === defaultBranch,
+    }));
+  }
+
+  async listCommits(
+    ref: string,
+    opts: ListCommitsOptions = {}
+  ): Promise<ListCommitsResult> {
+    const params = new URLSearchParams({
+      pagelen: String(Math.min(100, Math.max(1, opts.perPage ?? 30))),
+      page: String(Math.max(1, opts.page ?? 1)),
+    });
+    if (opts.path) params.set("path", opts.path);
+    const data = await this.makeRequest<any>(
+      `${this.repoUrl}/commits/${encodeURIComponent(ref)}?${params}`,
+      { headers: this.authHeaders }
+    );
+    return {
+      commits: ((data.values ?? []) as any[]).map((c) => this.toCommit(c)),
+      hasMore: Boolean(data.next),
+    };
+  }
+
+  async compareCommits(
+    baseSha: string,
+    headSha: string,
+    opts: CompareOptions = {}
+  ): Promise<CompareResult> {
+    const maxFiles = opts.maxFiles ?? MAX_COMPARE_FILES;
+    const maxFilesWithPatch = opts.maxFilesWithPatch ?? MAX_FILES_WITH_PATCH;
+    const maxPatchBytesPerFile =
+      opts.maxPatchBytesPerFile ?? MAX_PATCH_BYTES_PER_FILE;
+    const maxTotalPatchBytes = opts.maxTotalPatchBytes ?? MAX_TOTAL_PATCH_BYTES;
+    const maxCommits = opts.maxCommits ?? MAX_COMPARE_COMMITS;
+    const spec = `${encodeURIComponent(headSha)}..${encodeURIComponent(baseSha)}`;
+
+    const diffstat = await this.fetchPages<any>(
+      `${this.repoUrl}/diffstat/${spec}?pagelen=500`,
+      maxFiles
+    );
+    let truncated = diffstat.hasMore;
+
+    const raw = await this.makeTextRequest(`${this.repoUrl}/diff/${spec}`, {
+      headers: this.authHeaders,
+    });
+    const chunks = new Map<string, MultiFileDiffChunk>();
+    for (const chunk of splitMultiFileDiff(raw)) {
+      const key = chunk.newPath ?? chunk.oldPath;
+      if (key !== undefined) chunks.set(key, chunk);
+    }
+
+    const files: ChangedFile[] = [];
+    let filesWithPatch = 0;
+    let totalPatchBytes = 0;
+    for (const row of diffstat.values) {
+      const path: string | undefined = row.new?.path ?? row.old?.path;
+      if (!path) continue;
+      const status = DIFFSTAT_STATUS[row.status] ?? "modified";
+      const chunk = chunks.get(path);
+      const parsed = chunk ? parseUnifiedDiff(chunk.body) : undefined;
+      const additions = (row.lines_added as number) ?? parsed?.additions ?? 0;
+      const deletions = (row.lines_removed as number) ?? parsed?.deletions ?? 0;
+      const isBinary = parsed
+        ? parsed.isBinary
+        : additions === 0 && deletions === 0;
+
+      const file: ChangedFile = {
+        path,
+        status,
+        additions,
+        deletions,
+        isBinary,
+      };
+      if (status === "renamed" && row.old?.path) {
+        file.previousPath = row.old.path;
+      }
+
+      const body = chunk && !isBinary ? stripDiffHeaders(chunk.body) : "";
+      if (body) {
+        const bytes = Buffer.byteLength(body);
+        if (
+          filesWithPatch >= maxFilesWithPatch ||
+          bytes > maxPatchBytesPerFile ||
+          totalPatchBytes + bytes > maxTotalPatchBytes
+        ) {
+          file.patchTruncated = true;
+          truncated = true;
+        } else {
+          file.patch = body;
+          filesWithPatch++;
+          totalPatchBytes += bytes;
+        }
+      }
+      files.push(file);
+    }
+
+    const commits = await this.fetchPages<any>(
+      `${this.repoUrl}/commits/${encodeURIComponent(headSha)}?exclude=${encodeURIComponent(baseSha)}&pagelen=100`,
+      maxCommits
+    );
+    if (commits.hasMore) truncated = true;
+
+    return {
+      baseSha,
+      headSha,
+      files,
+      commits: commits.values.map((c) => this.toCommit(c)),
+      truncated,
+      totalFiles:
+        diffstat.size ?? (diffstat.hasMore ? undefined : files.length),
+    };
   }
 
   async getDefaultBranch(): Promise<string> {

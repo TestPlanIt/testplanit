@@ -153,6 +153,19 @@ describe("rollupMap (COR-02) — child/join table → owning root entity attribu
     });
   });
 
+  it("code pins roll up to the owning case; impact-analysis cases roll up to their analysis", async () => {
+    const map = await loadMap();
+    expect(map.RepositoryCaseCodePin).toMatchObject({
+      ownerTable: "RepositoryCases",
+      fkCol: "caseId",
+    });
+    expect(map.ImpactAnalysisCase).toMatchObject({
+      ownerTable: "ImpactAnalysis",
+      fkCol: "analysisId",
+    });
+    expect(map.ImpactAnalysis).toBeUndefined();
+  });
+
   it("root entities RepositoryCases / TestRuns / Sessions are ABSENT (they attribute to themselves)", async () => {
     const map = await loadMap();
     expect(map.RepositoryCases).toBeUndefined();

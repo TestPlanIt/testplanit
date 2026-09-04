@@ -830,15 +830,15 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
 
   const breadcrumb = [{ id: 12, name: "Auth" }];
 
-  it("returns codeRepository: null when project.codeRepositoryConfig is null", () => {
+  it("returns codeRepository: null when project.codeRepositoryConfigs is empty", () => {
     const detail = makeDetail({
-      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
     });
     const result = mapCaseDetail(detail as never, breadcrumb);
     expect(result.codeRepository).toBeNull();
   });
 
-  it("returns codeRepository: null when project has no codeRepositoryConfig at all", () => {
+  it("returns codeRepository: null when project has no codeRepositoryConfigs at all", () => {
     const detail = makeDetail();
     const result = mapCaseDetail(detail as never, breadcrumb);
     expect(result.codeRepository).toBeNull();
@@ -849,20 +849,22 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
       project: {
         id: 7,
         name: "TestProject",
-        codeRepositoryConfig: {
-          repository: {
-            id: 5,
-            name: "acme/tools",
-            provider: "GITHUB",
-            status: "ACTIVE",
-            lastTestedAt: null,
-            settings: {
-              owner: "acme",
-              repo: "tools",
-              personalAccessToken: "pat_secret",
+        codeRepositoryConfigs: [
+          {
+            repository: {
+              id: 5,
+              name: "acme/tools",
+              provider: "GITHUB",
+              status: "ACTIVE",
+              lastTestedAt: null,
+              settings: {
+                owner: "acme",
+                repo: "tools",
+                personalAccessToken: "pat_secret",
+              },
             },
           },
-        },
+        ],
       },
     });
     const result = mapCaseDetail(detail as never, breadcrumb);
@@ -876,7 +878,7 @@ describe("mapCaseDetail Phase-8 codeRepository extension", () => {
 
   it("regression: existing detail fields still present when codeRepository null", () => {
     const detail = makeDetail({
-      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      project: { id: 7, name: "TestProject", codeRepositoryConfigs: [] },
       caseFieldValues: [{ value: "High", field: { displayName: "Priority" } }],
       // Raw issues now arrive through the caseIssues join model.
       caseIssues: [

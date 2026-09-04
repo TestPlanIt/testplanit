@@ -21,6 +21,7 @@ import {
   ChartNoAxesCombined,
   Compass as SessionsIcon,
   FolderKanban,
+  Radio,
   Home,
   Layers,
   // ClipboardList, not ListChecks — ListChecks is already in use elsewhere in
@@ -345,6 +346,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.quickScript"),
             path: "settings/quickscript",
             id: "settings-quickscript-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Radio,
+            label: t("admin.menu.impact"),
+            path: "settings/impact",
+            id: "settings-impact-link",
             section: "settings" as MenuSection,
           },
           {

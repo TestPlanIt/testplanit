@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { Redis } from "ioredis";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import valkeyConnection from "../../valkey";
+import type { CompareResult } from "../adapters/GitRepoAdapter";
 
 // RepoFileEntry is defined here (not imported from adapter layer) to avoid
 // circular dependency concerns. Both definitions must stay in sync.
@@ -16,6 +17,10 @@ export interface RepoFileEntry {
 // so caching it briefly turns N previews into a single provider listing call —
 // the main lever against hitting provider rate limits during pattern tuning.
 const PREVIEW_LIST_TTL_SECONDS = 300; // 5 minutes
+// Compare results and file contents at an exact commit never change; the TTL
+// only bounds memory. Branch and commit listings are mutable and stay short.
+const IMMUTABLE_TTL_SECONDS = 24 * 60 * 60;
+const REF_LIST_TTL_SECONDS = 60;
 
 export interface PreviewListCacheEntry {
   files: RepoFileEntry[];
@@ -309,6 +314,137 @@ export class RepoFileCache {
         `[RepoFileCache] Failed to cache preview list for repo ${repoId}:`,
         err
       );
+    }
+  }
+
+  private getCompareKey(
+    projectConfigId: number,
+    baseSha: string,
+    headSha: string
+  ): string {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    return `repo-compare:${prefix}config:${projectConfigId}:${baseSha}:${headSha}`;
+  }
+
+  /** Cached commit compare (immutable content; TTL only bounds memory). */
+  async getCompare(
+    projectConfigId: number,
+    baseSha: string,
+    headSha: string
+  ): Promise<CompareResult | null> {
+    if (!this.valkey) return null;
+    const key = this.getCompareKey(projectConfigId, baseSha, headSha);
+    try {
+      const cached = await this.valkey.get(key);
+      return cached ? (JSON.parse(cached) as CompareResult) : null;
+    } catch (err) {
+      console.error(`[RepoFileCache] Failed to read compare ${key}:`, err);
+      await this.valkey.del(key).catch(() => {});
+      return null;
+    }
+  }
+
+  async setCompare(
+    projectConfigId: number,
+    baseSha: string,
+    headSha: string,
+    result: CompareResult,
+    ttlSeconds: number = IMMUTABLE_TTL_SECONDS
+  ): Promise<void> {
+    if (!this.valkey) return;
+    const key = this.getCompareKey(projectConfigId, baseSha, headSha);
+    try {
+      await this.valkey.setex(key, ttlSeconds, JSON.stringify(result));
+    } catch (err) {
+      console.error(`[RepoFileCache] Failed to cache compare ${key}:`, err);
+    }
+  }
+
+  private getFileAtCommitKey(
+    projectConfigId: number,
+    sha: string,
+    path: string
+  ): string {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    const pathHash = createHash("sha1").update(path).digest("hex").slice(0, 16);
+    return `repo-file-at:${prefix}config:${projectConfigId}:${sha}:${pathHash}`;
+  }
+
+  /** Cached single-file content at an exact commit. */
+  async getFileAtCommit(
+    projectConfigId: number,
+    sha: string,
+    path: string
+  ): Promise<string | null> {
+    if (!this.valkey) return null;
+    try {
+      return await this.valkey.get(
+        this.getFileAtCommitKey(projectConfigId, sha, path)
+      );
+    } catch (err) {
+      console.error(`[RepoFileCache] Failed to read file-at-commit:`, err);
+      return null;
+    }
+  }
+
+  async setFileAtCommit(
+    projectConfigId: number,
+    sha: string,
+    path: string,
+    content: string,
+    ttlSeconds: number = IMMUTABLE_TTL_SECONDS
+  ): Promise<void> {
+    if (!this.valkey) return;
+    try {
+      await this.valkey.setex(
+        this.getFileAtCommitKey(projectConfigId, sha, path),
+        ttlSeconds,
+        content
+      );
+    } catch (err) {
+      console.error(`[RepoFileCache] Failed to cache file-at-commit:`, err);
+    }
+  }
+
+  private getRefListKey(repoId: number, kind: string, hash: string): string {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    return `repo-refs:${prefix}repo:${repoId}:${kind}:${hash}`;
+  }
+
+  /** Short-lived cache for mutable ref listings (branches, commit pages). */
+  async getRefList<T>(
+    repoId: number,
+    kind: string,
+    hash: string
+  ): Promise<T | null> {
+    if (!this.valkey) return null;
+    const key = this.getRefListKey(repoId, kind, hash);
+    try {
+      const cached = await this.valkey.get(key);
+      return cached ? (JSON.parse(cached) as T) : null;
+    } catch (err) {
+      console.error(`[RepoFileCache] Failed to read ref list ${key}:`, err);
+      await this.valkey.del(key).catch(() => {});
+      return null;
+    }
+  }
+
+  async setRefList<T>(
+    repoId: number,
+    kind: string,
+    hash: string,
+    value: T,
+    ttlSeconds: number = REF_LIST_TTL_SECONDS
+  ): Promise<void> {
+    if (!this.valkey) return;
+    const key = this.getRefListKey(repoId, kind, hash);
+    try {
+      await this.valkey.setex(key, ttlSeconds, JSON.stringify(value));
+    } catch (err) {
+      console.error(`[RepoFileCache] Failed to cache ref list ${key}:`, err);
     }
   }
 

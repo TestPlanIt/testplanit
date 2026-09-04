@@ -15,6 +15,7 @@ export const LLM_FEATURES = {
   GENERATE_FROM_URL_APP: "generate_from_url_app",
   AUTOMATION_CANDIDATES: "automation_candidates",
   DERIVE_CASE_STEPS: "derive_case_steps",
+  IMPACT_ANALYSIS: "impact_analysis",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -166,6 +167,47 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
         "Ordered low-level automation commands the test executed (navigation, clicks, input, assertions), if captured — may be empty",
     },
   ],
+  [LLM_FEATURES.IMPACT_ANALYSIS]: [
+    { name: "BASE_SHA", description: "Short SHA of the base commit" },
+    { name: "HEAD_SHA", description: "Short SHA of the head commit" },
+    {
+      name: "USER_NOTES_SECTION",
+      description: "Tester-provided notes about the change (may be empty)",
+    },
+    {
+      name: "CHANGED_FILE_COUNT",
+      description: "Number of changed files included in the diff summary",
+    },
+    {
+      name: "EXCLUDED_FILE_NOTE",
+      description:
+        "Note about files left out of the summary (lockfiles, generated, binary) — empty when none",
+    },
+    {
+      name: "DIFF_SUMMARY",
+      description:
+        "Per-file summary of the diff: path, status, changed symbols, and patch excerpts within budget",
+    },
+    {
+      name: "PINNED_CASES_NOTE",
+      description:
+        "Case ids already selected by Code Pins so the model does not re-select them — empty when none",
+    },
+    {
+      name: "CANDIDATE_COUNT",
+      description: "Number of candidate cases in this batch",
+    },
+    {
+      name: "BATCH_NOTE",
+      description:
+        "Batch position when candidates span several batches (e.g. ', batch 2 of 3') — empty for a single batch",
+    },
+    {
+      name: "CANDIDATE_CASES",
+      description:
+        "Newline-delimited positional JSON rows: [id, name, folder?, tags[]?, fields?]",
+    },
+  ],
 };
 
 /**
@@ -186,4 +228,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
     "Generate Test Cases from URL (Application Testing)",
   [LLM_FEATURES.AUTOMATION_CANDIDATES]: "Automation Candidates Report",
   [LLM_FEATURES.DERIVE_CASE_STEPS]: "AI Step Derivation",
+  [LLM_FEATURES.IMPACT_ANALYSIS]: "Impact: Affected Test Selection",
 };

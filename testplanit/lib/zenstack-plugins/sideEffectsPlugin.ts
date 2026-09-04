@@ -104,6 +104,7 @@ export const GUC_MODELS = new Set<string>([
   "Comment",
   "SharedStepGroup",
   "WebhookConfig",
+  "ImpactAnalysis",
   // Admin-config catalog — CDC-only, no semantic (captureAuditEvent /
   // auditSystemConfigChange) coverage for general edits, so no double-logging.
   "Workflows",
@@ -139,6 +140,8 @@ export const GUC_MODELS = new Set<string>([
   "TestCaseParameter",
   "RepositoryCaseTag",
   "RepositoryCaseIssue",
+  "RepositoryCaseCodePin",
+  "ImpactAnalysisCase",
   "Attachments",
   "TestRunCases",
   "TestRunCaseIteration",

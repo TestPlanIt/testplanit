@@ -349,6 +349,21 @@ describe("ProjectsMenu", () => {
       );
     });
 
+    it("renders the Impact settings link after QuickScript for admin", () => {
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const link = document.getElementById("settings-impact-link");
+      expect(link).not.toBeNull();
+      expect(link?.getAttribute("href")).toContain(
+        "/projects/settings/42/impact"
+      );
+      const quickScript = document.getElementById("settings-quickscript-link");
+      expect(quickScript).not.toBeNull();
+      expect(
+        quickScript!.compareDocumentPosition(link!) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    });
+
     it("renders milestones link", () => {
       render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
       const link = document.getElementById("milestones-link");

@@ -16,9 +16,12 @@
  * by rollupMap.test.ts.
  */
 
+type OwnerTable =
+  "RepositoryCases" | "TestRuns" | "Sessions" | "Projects" | "ImpactAnalysis";
+
 /** Direct: the row's owning entity id is `<fkCol>` on the row itself. */
 interface DirectRollup {
-  ownerTable: "RepositoryCases" | "TestRuns" | "Sessions" | "Projects";
+  ownerTable: OwnerTable;
   fkCol: string;
   twoHop?: false;
 }
@@ -28,7 +31,7 @@ interface DirectRollup {
  * holds the owning entity id. The worker batches the hop (one query per distinct fk value).
  */
 interface TwoHopRollup {
-  ownerTable: "RepositoryCases" | "TestRuns" | "Sessions" | "Projects";
+  ownerTable: OwnerTable;
   fkCol: string;
   twoHop: true;
   hopTable: string;
@@ -65,6 +68,10 @@ export const ROLLUP_MAP: Record<string, RollupConfig> = {
   // Cases <-> Tags/Issue explicit join tables roll up to the owning case.
   RepositoryCaseTag: { ownerTable: "RepositoryCases", fkCol: "caseId" },
   RepositoryCaseIssue: { ownerTable: "RepositoryCases", fkCol: "caseId" },
+  RepositoryCaseCodePin: { ownerTable: "RepositoryCases", fkCol: "caseId" },
+
+  // ── Impact family ───────────────────────────────────────────────────────────
+  ImpactAnalysisCase: { ownerTable: "ImpactAnalysis", fkCol: "analysisId" },
 
   // ── Runs family ─────────────────────────────────────────────────────────────
   TestRunCases: { ownerTable: "TestRuns", fkCol: "testRunId" },

@@ -316,13 +316,13 @@ interface RawCaseRow {
   automated: boolean;
   createdAt: string | Date;
   // Phase-8 (D8-02) widens project to optionally carry the
-  // codeRepositoryConfig chain. Phase-6 row callers don't include this
+  // codeRepositoryConfigs chain. Phase-6 row callers don't include this
   // sub-select so the field is optional; Phase-8 cases_get adds it via
   // CASE_DETAIL_INCLUDE.
   project: {
     id: number;
     name: string;
-    codeRepositoryConfig?: {
+    codeRepositoryConfigs?: Array<{
       repository: {
         id: number;
         name: string;
@@ -331,7 +331,7 @@ interface RawCaseRow {
         lastTestedAt: Date | string | null;
         settings: unknown;
       } | null;
-    } | null;
+    }>;
   };
   // WR-04: folderId is non-nullable in schema.zmodel — folder is always
   // present on a hydrated row. Call sites in get.ts / fetchDetail.ts
@@ -437,11 +437,11 @@ export function mapCaseDetail(
     .map((c) => ({ id: c.id, name: c.name, source: c.source }));
 
   // Phase-8 D8-02: derive inline codeRepository from the chained
-  // project.codeRepositoryConfig.repository select. Reuses the 08-01
+  // project.codeRepositoryConfigs[0].repository select. Reuses the 08-01
   // helpers (SETTINGS_ALLOW_LIST + stripSettings + deriveWebUrl) — never
   // forks them — so the per-provider public-key allow-list and URL
   // derivation stay in one place.
-  const repo = raw.project?.codeRepositoryConfig?.repository;
+  const repo = raw.project?.codeRepositoryConfigs?.[0]?.repository;
   const codeRepository = repo
     ? (() => {
         const settings = stripSettings(repo.provider, repo.settings);

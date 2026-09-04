@@ -69,25 +69,11 @@ import { toast } from "sonner";
 import * as z from "zod/v4";
 import { ApplicationArea } from "~/zenstack/models";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useRepoCacheRefresh } from "~/hooks/useRepoCacheRefresh";
+import { useRepoPreviewFiles } from "~/hooks/useRepoPreviewFiles";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
-
-interface PreviewFile {
-  path: string;
-  size: number;
-}
-
-interface PreviewResult {
-  files: PreviewFile[];
-  fileCount: number;
-  totalSize: number;
-  totalSizeFormatted: string;
-  exceedsLimit: boolean;
-  overflowBytes: number;
-  truncated: boolean;
-  error?: string;
-}
 
 interface CodeRepository {
   id: number;
@@ -127,25 +113,13 @@ export default function QuickScriptPage() {
 
   type FormData = z.infer<typeof formSchema>;
 
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  const [preview, setPreview] = useState<PreviewResult | null>(null);
-  const [previewProgress, setPreviewProgress] = useState<{
-    step: string;
-    filesFound?: number;
-    scope?: string;
-    totalFiles?: number;
-    waitSeconds?: number;
-  } | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [refreshStep, setRefreshStep] = useState<string>("");
-  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   // Load existing config
   const { data: existingConfig, refetch: refetchConfig } = useClientQueries(
     schema
   ).projectCodeRepositoryConfig.useFindFirst({
-    where: { projectId },
+    where: { projectId, purpose: "QUICKSCRIPT" },
     include: {
       repository: {
         select: { id: true, name: true, provider: true },
@@ -211,6 +185,25 @@ export default function QuickScriptPage() {
   const { isProjectAdmin, isLoading: permissionsLoading } =
     useProjectPermissions(projectId, ApplicationArea.Settings);
 
+  const { isPreviewing, preview, previewProgress, runPreview, clearPreview } =
+    useRepoPreviewFiles({ networkErrorMessage: t("networkError") });
+
+  const { isRefreshing, refreshStep, refreshError, refreshCache } =
+    useRepoCacheRefresh({
+      refetchConfig,
+      messages: {
+        pending: t("cache.statusPending"),
+        listingFiles: t("cache.listingFiles"),
+        cachingFiles: (count) =>
+          t("cache.cachingFiles", { count: String(count) }),
+        contentsError: t("contentsError"),
+        networkError: t("networkError"),
+        refreshComplete: (fileCount) =>
+          t("refreshComplete", { fileCount: String(fileCount) }),
+        refreshInProgress: t("refreshInProgress"),
+      },
+    });
+
   // Access control check - must hold project-admin authority here
   useEffect(() => {
     if (projectLoading || permissionsLoading || !session?.user) return;
@@ -241,7 +234,7 @@ export default function QuickScriptPage() {
         cacheEnabled: true,
         cacheTtlDays: 7,
       });
-      setPreview(null);
+      clearPreview();
       toast.success(t("disconnectSuccess"));
       void refetchConfig();
     } catch {
@@ -284,176 +277,22 @@ export default function QuickScriptPage() {
   const selectedRepositoryId = form.watch("repositoryId");
   const cacheEnabled = form.watch("cacheEnabled");
 
-  const handlePreview = async () => {
+  const handlePreview = () => {
     const values = form.getValues();
     if (!values.repositoryId) return;
-
-    setIsPreviewing(true);
-    setPreview(null);
-    setPreviewProgress(null);
-
-    try {
-      const response = await fetch(
-        `/api/code-repositories/${values.repositoryId}/preview-files`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            branch: values.branch || undefined,
-            pathPatterns: values.pathPatterns,
-            cacheEnabled: values.cacheEnabled,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response
-          .json()
-          .catch(() => ({ error: "Request failed" }));
-        setPreview({
-          files: [],
-          fileCount: 0,
-          totalSize: 0,
-          totalSizeFormatted: "0 B",
-          exceedsLimit: false,
-          overflowBytes: 0,
-          truncated: false,
-          error: data.error,
-        });
-        return;
-      }
-
-      // Read SSE stream
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error("No response body");
-
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        // Keep the last partial line in the buffer
-        buffer = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6);
-          try {
-            const event = JSON.parse(json);
-            if (event.type === "progress") {
-              setPreviewProgress({
-                step: event.step,
-                filesFound: event.filesFound,
-                scope: event.scope,
-                totalFiles: event.totalFiles,
-                waitSeconds: event.waitSeconds,
-              });
-            } else if (event.type === "complete") {
-              setPreview(event);
-            } else if (event.type === "error") {
-              setPreview({
-                files: [],
-                fileCount: 0,
-                totalSize: 0,
-                totalSizeFormatted: "0 B",
-                exceedsLimit: false,
-                overflowBytes: 0,
-                truncated: false,
-                error: event.error,
-              });
-            }
-          } catch {
-            // Skip malformed SSE lines
-          }
-        }
-      }
-    } catch {
-      setPreview({
-        files: [],
-        fileCount: 0,
-        totalSize: 0,
-        totalSizeFormatted: "0 B",
-        exceedsLimit: false,
-        overflowBytes: 0,
-        truncated: false,
-        error: t("networkError"),
-      });
-    } finally {
-      setIsPreviewing(false);
-      setPreviewProgress(null);
-    }
+    void runPreview(values.repositoryId, {
+      branch: values.branch || undefined,
+      pathPatterns: values.pathPatterns,
+      cacheEnabled: values.cacheEnabled,
+    });
   };
 
-  const handleRefreshCache = async () => {
+  const handleRefreshCache = () => {
     if (!existingConfig) return;
-    setIsRefreshing(true);
-    setRefreshError(null);
-    setRefreshStep(t("cache.statusPending"));
-
-    try {
-      // Enqueue a background refresh. The list+content fetch runs in the
-      // repo-cache worker so a rate-limited provider can't time out the
-      // request; we poll the config's cacheStatus for completion.
-      const res = await fetch(
-        `/api/code-repositories/${existingConfig.repositoryId}/refresh-cache`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectConfigId: existingConfig.id }),
-        }
-      );
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || data.error) {
-        setRefreshError(data.error ?? t("networkError"));
-        void refetchConfig();
-        return;
-      }
-
-      // Poll until the worker finishes (cacheStatus leaves "pending").
-      const POLL_MS = 2500;
-      const MAX_POLLS = 144; // ~6 minutes
-      for (let polls = 0; polls < MAX_POLLS; polls++) {
-        await new Promise((r) => setTimeout(r, POLL_MS));
-        const { data: fresh } = await refetchConfig();
-        const status = (fresh as { cacheStatus?: string } | null)?.cacheStatus;
-        const fileCount = (fresh as { cacheFileCount?: number } | null)
-          ?.cacheFileCount;
-
-        if (status == null || status === "pending") {
-          setRefreshStep(
-            fileCount != null
-              ? t("cache.cachingFiles", { count: String(fileCount) })
-              : t("cache.listingFiles")
-          );
-          continue;
-        }
-
-        if (status === "error") {
-          setRefreshError(
-            (fresh as { cacheError?: string } | null)?.cacheError ??
-              t("contentsError")
-          );
-        } else {
-          toast.success(
-            t("refreshComplete", { fileCount: String(fileCount ?? 0) })
-          );
-        }
-        return;
-      }
-
-      // Still running after the poll window — it continues in the background.
-      toast.info(t("refreshInProgress"));
-    } catch (err) {
-      setRefreshError(err instanceof Error ? err.message : t("networkError"));
-    } finally {
-      setIsRefreshing(false);
-      setRefreshStep("");
-    }
+    void refreshCache({
+      repositoryId: existingConfig.repositoryId,
+      configId: existingConfig.id,
+    });
   };
 
   const onSubmit = async (values: FormData) => {
@@ -499,6 +338,7 @@ export default function QuickScriptPage() {
         await createConfig.mutateAsync({
           data: {
             ...sharedData,
+            purpose: "QUICKSCRIPT",
             repository: { connect: { id: repositoryId } },
             project: { connect: { id: projectId } },
           },

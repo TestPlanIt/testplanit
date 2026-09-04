@@ -127,6 +127,11 @@ const softDeletedItemTypes: Array<{
     iconName: "link-2",
   },
   {
+    name: "RepositoryCaseCodePin",
+    translationKey: "admin.trash.itemTypes.codePins",
+    iconName: "pin",
+  },
+  {
     name: "RepositoryCaseVersions",
     translationKey: "admin.trash.itemTypes.repositoryCaseVersions",
     iconName: "history",
@@ -175,6 +180,11 @@ const softDeletedItemTypes: Array<{
     name: "CodeRepository",
     translationKey: "admin.menu.codeRepositories",
     iconName: "git-branch",
+  },
+  {
+    name: "ImpactAnalysis",
+    translationKey: "admin.trash.itemTypes.impactAnalyses",
+    iconName: "radio",
   },
   {
     name: "DataSet",

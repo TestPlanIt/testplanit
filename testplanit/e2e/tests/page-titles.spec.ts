@@ -98,6 +98,12 @@ test.describe("Page Titles", () => {
         await expect(page).toHaveTitle(expected);
       });
     }
+
+    test("settings/impact has correct title", async ({ page }) => {
+      await page.goto(`/projects/settings/${projectId}/impact`);
+      await page.waitForLoadState("load");
+      await expect(page).toHaveTitle(/Impact.*TestPlanIt/);
+    });
   });
 
   test.describe("Does not show default title on named pages", () => {

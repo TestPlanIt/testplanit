@@ -95,6 +95,9 @@ const CATALOG_BY_COLUMN: Record<
   TestRunCases: {
     repositoryCaseId: { table: "RepositoryCases", field: "name" },
   },
+  ImpactAnalysisCase: {
+    caseId: { table: "RepositoryCases", field: "name" },
+  },
   default: {
     statusId: { table: "Status", field: "name" },
     workflowId: { table: "Workflows", field: "name" },

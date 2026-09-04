@@ -107,6 +107,10 @@ vi.mock("@/components/TestResultHistory", () => ({
   ),
 }));
 
+vi.mock("@/components/impact/CodePinsPanel", () => ({
+  CodePinsPanel: () => null,
+}));
+
 vi.mock("@/projects/repository/[projectId]/AddResultModal", () => ({
   AddResultModal: ({ isOpen }: { isOpen: boolean }) =>
     isOpen ? <div data-testid="add-result-modal">Add Result Modal</div> : null,

@@ -246,6 +246,21 @@ module.exports = {
       },
     },
     {
+      name: "impact-analysis-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/impactAnalysisWorker.ts"
+        : "dist/workers/impactAnalysisWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "512M",
+      node_args: "--max-old-space-size=384",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "step-scan-worker",
       script: isDev ? "tsx" : "node",
       args: isDev

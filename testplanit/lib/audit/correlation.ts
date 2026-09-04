@@ -547,6 +547,7 @@ const PROJECT_SCOPED_ROOT_TABLES: Record<string, "int" | "text"> = {
   Issue: "int",
   DuplicateScanResult: "int",
   StepSequenceMatch: "int",
+  ImpactAnalysis: "int",
   ReviewRequest: "text",
   ProjectIntegration: "text",
   WebhookConfig: "text",

@@ -18,6 +18,7 @@ export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";
 export const MAGIC_SELECT_QUEUE_NAME = "magic-select";
+export const IMPACT_ANALYSIS_QUEUE_NAME = "impact-analysis";
 export const GENERATE_FROM_URL_QUEUE_NAME = "generate-from-url";
 export const ITERATION_GENERATION_QUEUE_NAME = "iteration-generation";
 export const WEBHOOK_DISPATCH_QUEUE_NAME = "webhook-dispatch";

@@ -12,9 +12,15 @@ import {
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
 import { bfsRank, buildImportGraph, isBarrelFile } from "./import-analyzer";
+import { extractTerms, scoreFileRelevance } from "./relevance-terms";
 
 // Re-exported for backwards compatibility with existing importers/tests.
 export { applyPathPatterns };
+export {
+  extractTerms,
+  scoreFileRelevance,
+  STOP_WORDS,
+} from "./relevance-terms";
 
 // Same heuristic as LlmManager.chatStream (line 261): ~4 chars per token
 const CHARS_PER_TOKEN = 4;
@@ -28,98 +34,11 @@ function isRateLimitError(err: unknown): boolean {
   return msg.includes("rate limit") || msg.includes("429");
 }
 
-// Words too generic to be useful for relevance scoring
-const STOP_WORDS = new Set([
-  "the",
-  "a",
-  "an",
-  "and",
-  "or",
-  "but",
-  "in",
-  "on",
-  "at",
-  "to",
-  "for",
-  "of",
-  "with",
-  "by",
-  "from",
-  "as",
-  "is",
-  "was",
-  "are",
-  "were",
-  "be",
-  "been",
-  "have",
-  "has",
-  "had",
-  "do",
-  "does",
-  "did",
-  "will",
-  "would",
-  "could",
-  "should",
-  "may",
-  "might",
-  "shall",
-  "can",
-  "that",
-  "this",
-  "it",
-  "its",
-  "click",
-  "enter",
-  "verify",
-  "check",
-  "then",
-  "when",
-  "given",
-  "user",
-  "page",
-  "test",
-  "into",
-  "that",
-  "with",
-  "from",
-]);
-
 export interface AssembledContext {
   context: string; // Concatenated file contents with path headers
   filesUsed: string[]; // Paths of files included
   tokenEstimate: number; // Estimated tokens used
   truncated: boolean; // true if some files were skipped due to budget
-}
-
-/**
- * Extract meaningful terms from free text for relevance scoring.
- * Splits on non-alphanumeric, lowercases, removes stop words and short tokens.
- */
-export function extractTerms(text: string): Set<string> {
-  return new Set(
-    text
-      .toLowerCase()
-      .split(/\W+/)
-      .filter((t) => t.length > 3 && !STOP_WORDS.has(t))
-  );
-}
-
-/**
- * Score a file path by how many case-derived terms appear in its segments.
- * e.g. "tests/e2e/login-page.spec.ts" scores higher if "login" is in terms.
- */
-export function scoreFileRelevance(
-  filePath: string,
-  terms: Set<string>
-): number {
-  if (terms.size === 0) return 0;
-  const segments = filePath
-    .toLowerCase()
-    .split(/[\/.\-_]+/)
-    .filter((s) => s.length > 2);
-  return segments.filter((s) => terms.has(s)).length;
 }
 
 /**
@@ -427,7 +346,7 @@ export class CodeContextService {
    */
   static async checkProjectHasCodeContext(projectId: number): Promise<boolean> {
     const config = await baseDb.projectCodeRepositoryConfig.findUnique({
-      where: { projectId },
+      where: { projectId_purpose: { projectId, purpose: "QUICKSCRIPT" } },
       select: { id: true, cacheEnabled: true } as any,
     });
 

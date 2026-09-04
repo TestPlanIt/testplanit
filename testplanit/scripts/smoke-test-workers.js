@@ -52,6 +52,7 @@ const WORKERS = [
   "copyMoveWorker",
   "duplicateScanWorker",
   "magicSelectWorker",
+  "impactAnalysisWorker",
   "stepSequenceScanWorker",
   "generateFromUrlWorker",
 ];

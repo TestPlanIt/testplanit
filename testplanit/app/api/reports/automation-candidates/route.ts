@@ -28,6 +28,7 @@
 
 import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
+import { stripCodeFence } from "@/lib/llm/services/json-extract";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
 import { baseDb } from "@/lib/db";
@@ -679,29 +680,4 @@ async function persistFailure(
         err: err instanceof Error ? err.message : String(err),
       });
     });
-}
-
-/**
- * Coerce the LLM's text response into a parseable JSON object string.
- *
- * Models routinely:
- *   - Wrap the JSON in ```json fences``` (Gemini, sometimes Claude).
- *   - Emit a fence open but no matching close.
- *   - Add a sentence of prose before or after the JSON.
- *   - Mix in trailing whitespace / newlines.
- *
- * Any of those break a strict `JSON.parse(input)`. Rather than chase every
- * combination with regex, slice from the first `{` to the last `}` — the
- * JSON object we asked for is in there somewhere, and everything outside
- * that range is noise we don't need. Falls back to the trimmed input if no
- * brace pair is found so the parse error surfaces with a useful preview.
- */
-function stripCodeFence(input: string): string {
-  const trimmed = input.trim();
-  const firstBrace = trimmed.indexOf("{");
-  const lastBrace = trimmed.lastIndexOf("}");
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    return trimmed.slice(firstBrace, lastBrace + 1);
-  }
-  return trimmed;
 }

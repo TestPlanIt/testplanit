@@ -83,3 +83,30 @@ describe("quickscript prompt — bracketed case ids for importer matching", () =
     expect(names).toContain("CASE_ID");
   });
 });
+
+describe("impact analysis prompt — seed and fallback in step", () => {
+  const fallback = FALLBACK_PROMPTS[LLM_FEATURES.IMPACT_ANALYSIS];
+
+  it("seeds the identical prompt text and settings", () => {
+    const seed = readSource("db/seedPromptConfig.ts");
+    expect(seed).toContain(fallback.systemPrompt);
+    expect(seed).toContain(fallback.userPrompt);
+    expect(seed).toContain(
+      `feature: LLM_FEATURES.IMPACT_ANALYSIS,\n      systemPrompt: \`${fallback.systemPrompt}\`,\n      userPrompt: \`${fallback.userPrompt}\`,\n      temperature: ${fallback.temperature},\n      maxOutputTokens: ${fallback.maxOutputTokens},`
+    );
+  });
+
+  it("renders every registered variable in the user template", () => {
+    const names = PROMPT_FEATURE_VARIABLES[LLM_FEATURES.IMPACT_ANALYSIS].map(
+      (v) => v.name
+    );
+    expect(names).toHaveLength(10);
+    for (const name of names) {
+      expect(fallback.userPrompt).toContain(`{{${name}}}`);
+    }
+    const referenced = fallback.userPrompt.match(/\{\{[A-Z0-9_]+\}\}/g) ?? [];
+    expect(new Set(referenced.map((m) => m.slice(2, -2)))).toEqual(
+      new Set(names)
+    );
+  });
+});

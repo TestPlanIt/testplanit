@@ -18,7 +18,8 @@ export const CASE_DETAIL_INCLUDE = {
     select: {
       id: true,
       name: true,
-      codeRepositoryConfig: {
+      codeRepositoryConfigs: {
+        where: { purpose: "QUICKSCRIPT" },
         select: {
           repository: {
             select: {

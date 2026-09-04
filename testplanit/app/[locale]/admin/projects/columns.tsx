@@ -39,10 +39,10 @@ export interface ExtendedProjects extends Projects {
   groupPermissions: {
     groupId: number;
   }[];
-  codeRepositoryConfig: {
+  codeRepositoryConfigs: {
     id: number;
     repository: { name: string };
-  } | null;
+  }[];
   projectLlmIntegrations: {
     isActive: boolean;
     llmIntegration: { name: string; provider: string };
@@ -170,13 +170,13 @@ export const useColumns = (
       },
       {
         id: "codeRepository",
-        accessorKey: "codeRepositoryConfig",
+        accessorKey: "codeRepositoryConfigs",
         header: tCommon("fields.codeRepository"),
         enableSorting: false,
         enableResizing: true,
         size: 150,
         cell: ({ row }) => {
-          const config = row.original.codeRepositoryConfig;
+          const config = row.original.codeRepositoryConfigs?.[0];
           return (
             <div
               className="flex items-center gap-1"
