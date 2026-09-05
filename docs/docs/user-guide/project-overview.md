@@ -13,6 +13,8 @@ Below this header information, the page content is organized into several summar
 
 Each section header carries its own "see all" link on the right, which opens the full page for that section.
 
+![The Project Overview page showing the project header and the summary sections laid out in two columns, each with its own "see all" link](/img/screenshots/user-guide/projects/project-overview.png)
+
 ## Current Milestones
 
 _(Icon: Milestone)_

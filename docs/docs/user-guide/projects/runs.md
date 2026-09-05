@@ -23,6 +23,8 @@ The page is structured within a card layout and features:
     - **Active**: Shows test runs that are currently in progress (not marked as completed).
     - **Completed**: Shows test runs that have been marked as completed.
 
+![The Test Runs page with the summary cards above the run list, showing each run's progress and result breakdown](/img/screenshots/user-guide/projects/runs/runs-list.png)
+
 ## Summary Cards
 
 The top of the page shows a row of summary cards inside a collapsible **Summary** section. Each card appears only when it has data to show, so the row adapts to the project's activity. Collapse the section with its header to give the run list the full page; the choice is remembered per project in your browser, like the [filter chips](#filtering).

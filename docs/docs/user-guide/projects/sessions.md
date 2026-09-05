@@ -25,6 +25,8 @@ Similar to the Test Runs page, this page is structured within a card layout and 
    - **Active**: Shows sessions that are currently in progress (not marked as completed).
    - **Completed**: Shows sessions that have been marked as completed.
 
+![The Sessions page with the summary charts above the session list, split into Active and Completed tabs](/img/screenshots/user-guide/projects/sessions/sessions-list.png)
+
 ## Filtering
 
 Above the tabs sits a row of filter chips. Click a chip to switch it on, click it again to switch it off. Filters apply to **both** the Active and Completed tabs, so switching tabs keeps your view narrowed.

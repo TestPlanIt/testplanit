@@ -140,6 +140,8 @@ Control how you're notified about comments:
 
 ### Test Case Comments
 
+![The comments panel on a test case detail page, showing a threaded discussion between four people with @mention chips rendered inline](/img/screenshots/user-guide/comments/case-comment-thread.png)
+
 Use comments on test cases for:
 
 - **Clarifications** - Ask questions about test steps or expected results
