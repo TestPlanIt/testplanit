@@ -93,9 +93,9 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_cases_list` | List and filter test cases in a project (by folder — optionally with all its descendants — tag, name, state, custom field, linked issue, automation flag, automated-result evidence, and more). Rows can inline the full folder path for leaf-to-area mapping. |
 | `testplanit_cases_count` | Count test cases server-side under the same filters as `cases_list`, optionally grouped by folder, top-level folder, tag, state, source, or creator — coverage rollups in one call instead of paginating. |
 | `testplanit_cases_get` | Get a single test case with its fields and steps. |
-| `testplanit_cases_create` | Create a test case. Optionally pass `templateId` to choose a template (defaults to the project's first enabled template); custom fields are validated against the chosen template. |
+| `testplanit_cases_create` | Create a test case. Optionally pass `templateId` to choose a template (defaults to the project's first enabled template); custom fields are validated against the chosen template. Records the version 1 snapshot, so the case has history from the start. |
 | `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates. Each case takes the same fields as a single create plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
-| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. |
+| `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. Bumps the case version and records a snapshot, the same as saving in the web UI. |
 | `testplanit_cases_delete` | Delete a test case. |
 | `testplanit_cases_generate_script` | Generate a QuickScript (AI automation test script) from one or more test cases. Resolves the project's export template and, when a code repository is connected, follows the repo's existing framework/fixtures/page objects. Requires QuickScript to be enabled for the project. Returns the generated file(s) plus the resolved framework/language/fileExtension. |
 

@@ -301,6 +301,74 @@ export async function generateQuickScript(
   return JSON.parse(text) as GenerateQuickScriptResponse;
 }
 
+export interface CreateCaseVersionOptions {
+  /**
+   * Increment the case's `currentVersion` on the host and snapshot at the new
+   * number, in one transaction. Set on EDIT; leave unset on CREATE, where the
+   * fresh case is already at version 1 with no snapshot yet.
+   */
+  bumpVersion?: boolean;
+}
+
+/**
+ * Record a version snapshot of a case's current state via
+ * `/api/repository/cases/{caseId}/versions`.
+ *
+ * Writing a case through the ZenStack RPC surface does NOT produce a version
+ * row on its own — the host builds the snapshot only when asked (see #598).
+ * Without this call a case authored or edited over the API has no history,
+ * and a run result recorded against it links to a version page that has no
+ * snapshot to show.
+ *
+ * `copyFieldValues` is always on: the host's in-app save path writes the
+ * per-version custom-field rows itself afterwards, but we have no equivalent
+ * step, so the host must mirror them or the version renders with every custom
+ * field blank.
+ */
+export async function createCaseVersion(
+  caseId: number,
+  options: CreateCaseVersionOptions,
+  env: EnvConfig,
+): Promise<void> {
+  const path = `/api/repository/cases/${caseId}/versions`;
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "POST",
+    headers: bearerHeaders(env),
+    body: JSON.stringify({
+      copyFieldValues: true,
+      ...(options.bumpVersion ? { bumpVersion: true } : {}),
+    }),
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    // Mirror the zenstack()/lookup() error parser so a host validation
+    // message reaches the agent instead of a bare status line.
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      } else if (typeof errField === "string") {
+        parsedMessage = errField;
+      }
+    } catch {
+      // body is not JSON; leave parsedMessage / code undefined
+    }
+    // T-06-05 / T-05-06b: NEVER include the bearer token in error messages.
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      { statusCode: response.status, code },
+    );
+  }
+}
+
 /**
  * Resolve the single active repository for a project. Cases and folders
  * require `repositoryId` on create; the active repository is selected by

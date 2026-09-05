@@ -8,6 +8,7 @@ import type { EnvConfig } from "../../env.js";
 // ── Module mocks ─────────────────────────────────────────────────────────────
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  createCaseVersion: vi.fn(),
   lookup: vi.fn(),
   resolveActiveRepository: vi.fn(),
   resolveTemplateForProject: vi.fn(),
@@ -44,6 +45,7 @@ const resolveCustomFieldsMock = vi.mocked(customFieldsModule.resolveCustomFields
 const writeCustomFieldValuesMock = vi.mocked(customFieldsModule.writeCustomFieldValues);
 const createStepsForCaseMock = vi.mocked(stepsModule.createStepsForCase);
 const fetchCaseDetailMock = vi.mocked(fetchDetailModule.fetchCaseDetail);
+const createCaseVersionMock = vi.mocked(apiModule.createCaseVersion);
 
 const env: EnvConfig = { apiUrl: "https://host.example.com", apiToken: "tpi_testtoken" };
 
@@ -95,6 +97,7 @@ beforeEach(() => {
   resolveCustomFieldsMock.mockResolvedValue([]);
   writeCustomFieldValuesMock.mockResolvedValue(undefined);
   createStepsForCaseMock.mockResolvedValue(undefined);
+  createCaseVersionMock.mockResolvedValue(undefined);
   zenstackMock.mockResolvedValue({ id: 99 });
   fetchCaseDetailMock.mockResolvedValue(FULL_DETAIL);
 });
@@ -364,6 +367,59 @@ describe("testplanit_cases_create", () => {
     expect(createCall).toBeDefined();
     const data = (createCall![2] as { data: Record<string, unknown> }).data;
     expect(data).not.toHaveProperty("creatorId");
+  });
+
+  it("records the version 1 snapshot after the case is fully wired (#598)", async () => {
+    resolveCustomFieldsMock.mockResolvedValueOnce([
+      { fieldId: 1, value: "High", name: "Priority" },
+    ]);
+
+    await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "Login - Valid creds",
+      steps: [{ text: "a" }],
+      customFields: { Priority: "High" },
+    });
+
+    // No bump on create: the fresh case is already at currentVersion 1 and
+    // has no snapshot yet.
+    expect(createCaseVersionMock).toHaveBeenCalledWith(99, {}, env);
+    // The snapshot is written LAST so it captures steps + custom fields.
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      createStepsForCaseMock.mock.invocationCallOrder[0]!,
+    );
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      writeCustomFieldValuesMock.mock.invocationCallOrder[0]!,
+    );
+    // And before the detail re-fetch, so the returned detail is post-version.
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeLessThan(
+      fetchCaseDetailMock.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("BL-03: a failed version snapshot triggers the compensating soft-delete", async () => {
+    zenstackMock.mockResolvedValueOnce({ id: 99 });
+    createCaseVersionMock.mockRejectedValueOnce(
+      new TestPlanItHttpError("version write failed", { statusCode: 500 }),
+    );
+    zenstackMock.mockResolvedValueOnce({ id: 99, isDeleted: true });
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "Login",
+    });
+
+    expect(result.isError).toBe(true);
+    const cleanup = zenstackMock.mock.calls.find(
+      (c) =>
+        c[0] === "repositoryCases" &&
+        c[1] === "update" &&
+        ((c[2] as { data?: { isDeleted?: boolean } }).data?.isDeleted === true),
+    );
+    expect(cleanup).toBeDefined();
+    expect(fetchCaseDetailMock).not.toHaveBeenCalled();
   });
 
   it("tool is registered as 'testplanit_cases_create' with correct description prefix", () => {

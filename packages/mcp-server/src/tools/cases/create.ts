@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import {
   zenstack,
+  createCaseVersion,
   resolveActiveRepository,
   resolveTemplateForProject,
   resolveCaseWorkflowState,
@@ -147,6 +148,13 @@ export function registerCasesCreate(
           if (resolvedCustomFields.length > 0) {
             await writeCustomFieldValues(created.id, resolvedCustomFields, deps.env);
           }
+
+          // Version 1 snapshot, written LAST so it captures the steps, tags
+          // and custom fields wired above. A case with `currentVersion: 1`
+          // and no version row can't be read back as it was executed, so a
+          // failure here is a failure of the whole create and rolls the case
+          // back through the compensating soft-delete below.
+          await createCaseVersion(created.id, {}, deps.env);
 
           // Re-fetch with full D-10 denormalized shape.
           const detail = await fetchCaseDetail(created.id, deps.env);

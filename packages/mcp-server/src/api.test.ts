@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import {
   zenstack,
+  createCaseVersion,
   lookup,
   resolveActiveRepository,
   resolveDefaultTemplate,
@@ -266,6 +267,61 @@ describe("lookup()", () => {
         const e = err as TestPlanItHttpError;
         expect(e.statusCode).toBe(422);
         expect(e.message).toContain("invalid type");
+        return true;
+      },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createCaseVersion()
+// ---------------------------------------------------------------------------
+
+describe("createCaseVersion()", () => {
+  it("POSTs the case version endpoint with copyFieldValues and no bump", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { success: true }));
+
+    await createCaseVersion(42, {}, ENV);
+
+    const call = fetchMock.mock.calls[0];
+    expect(call[0]).toBe(
+      "https://app.testplanit.com/api/repository/cases/42/versions",
+    );
+    const opts = call[1] as RequestInit;
+    expect(opts.method).toBe("POST");
+    expect(JSON.parse(opts.body as string)).toEqual({ copyFieldValues: true });
+    expect((opts.headers as Record<string, string>)["Authorization"]).toBe(
+      HEADERS.Authorization,
+    );
+  });
+
+  it("asks the host to bump currentVersion when editing", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { success: true }));
+
+    await createCaseVersion(42, { bumpVersion: true }, ENV);
+
+    const opts = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(opts.body as string)).toEqual({
+      copyFieldValues: true,
+      bumpVersion: true,
+    });
+  });
+
+  it("surfaces the host error message and never the raw token", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(403, {
+        error: "Token is read-only; write operations are not permitted.",
+        code: "READ_ONLY_TOKEN",
+      }),
+    );
+
+    await expect(createCaseVersion(42, {}, ENV)).rejects.toSatisfy(
+      (err: unknown) => {
+        const e = err as TestPlanItHttpError;
+        expect(e.statusCode).toBe(403);
+        expect(e.code).toBe("READ_ONLY_TOKEN");
+        expect(e.message).toContain("read-only");
+        expect(e.message).not.toContain("tpi_");
         return true;
       },
     );

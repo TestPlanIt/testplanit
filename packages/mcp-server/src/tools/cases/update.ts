@@ -3,7 +3,11 @@ import type {
   RepositoryCasesSelect,
 } from "@db/input";
 import * as z from "zod/v4";
-import { zenstack, resolveCaseWorkflowState } from "../../api.js";
+import {
+  zenstack,
+  createCaseVersion,
+  resolveCaseWorkflowState,
+} from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { resolveCustomFields, writeCustomFieldValues } from "./customFields.js";
@@ -128,6 +132,7 @@ export function registerCasesUpdate(
         }
 
         // Only write if there are scalar/relation fields to update.
+        let changed = false;
         if (Object.keys(data).length > 0) {
           await zenstack(
             "repositoryCases",
@@ -135,6 +140,7 @@ export function registerCasesUpdate(
             { where: { id: input.caseId }, data },
             deps.env,
           );
+          changed = true;
         }
 
         // Steps replacement: soft-delete existing + create new (T-06-06).
@@ -144,6 +150,7 @@ export function registerCasesUpdate(
             input.steps as StepInput[],
             deps.env,
           );
+          changed = true;
         }
 
         // Custom field upserts — resolved against the case's own template so an
@@ -155,6 +162,15 @@ export function registerCasesUpdate(
             deps.env,
           );
           await writeCustomFieldValues(input.caseId, resolved, deps.env);
+          changed = true;
+        }
+
+        // An edit through this tool has to leave the same history a UI save
+        // does: bump currentVersion and snapshot the case as it now stands
+        // (#598). Skipped when the call carried no writable field, so a
+        // read-shaped update doesn't invent a version.
+        if (changed) {
+          await createCaseVersion(input.caseId, { bumpVersion: true }, deps.env);
         }
 
         // Re-fetch with full D-10 denormalized shape.

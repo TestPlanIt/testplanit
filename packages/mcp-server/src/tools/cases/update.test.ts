@@ -8,6 +8,7 @@ import type { EnvConfig } from "../../env.js";
 // ── Module mocks ─────────────────────────────────────────────────────────────
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  createCaseVersion: vi.fn(),
   lookup: vi.fn(),
   resolveActiveRepository: vi.fn(),
   resolveDefaultTemplate: vi.fn(),
@@ -41,6 +42,7 @@ const resolveCustomFieldsMock = vi.mocked(customFieldsModule.resolveCustomFields
 const writeCustomFieldValuesMock = vi.mocked(customFieldsModule.writeCustomFieldValues);
 const replaceStepsForCaseMock = vi.mocked(stepsModule.replaceStepsForCase);
 const fetchCaseDetailMock = vi.mocked(fetchDetailModule.fetchCaseDetail);
+const createCaseVersionMock = vi.mocked(apiModule.createCaseVersion);
 
 const env: EnvConfig = { apiUrl: "https://host.example.com", apiToken: "tpi_testtoken" };
 
@@ -101,6 +103,7 @@ beforeEach(() => {
   resolveCustomFieldsMock.mockResolvedValue([]);
   writeCustomFieldValuesMock.mockResolvedValue(undefined);
   replaceStepsForCaseMock.mockResolvedValue(undefined);
+  createCaseVersionMock.mockResolvedValue(undefined);
   fetchCaseDetailMock.mockResolvedValue(FULL_DETAIL);
 });
 
@@ -246,6 +249,47 @@ describe("testplanit_cases_update", () => {
       steps: expect.any(Array),
       customFields: expect.any(Object),
     });
+  });
+
+  it("bumps the case version and snapshots it after an edit (#598)", async () => {
+    await callTool({ caseId: 99, name: "new name" });
+
+    expect(createCaseVersionMock).toHaveBeenCalledWith(
+      99,
+      { bumpVersion: true },
+      env,
+    );
+    // Written after the case write and before the detail re-fetch.
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeLessThan(
+      fetchCaseDetailMock.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("snapshots after a steps-only edit and after a custom-fields-only edit", async () => {
+    await callTool({ caseId: 99, steps: [{ text: "s" }] });
+    expect(createCaseVersionMock).toHaveBeenCalledWith(
+      99,
+      { bumpVersion: true },
+      env,
+    );
+    expect(createCaseVersionMock.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      replaceStepsForCaseMock.mock.invocationCallOrder[0]!,
+    );
+
+    createCaseVersionMock.mockClear();
+    await callTool({ caseId: 99, customFields: { F: "v" } });
+    expect(createCaseVersionMock).toHaveBeenCalledWith(
+      99,
+      { bumpVersion: true },
+      env,
+    );
+  });
+
+  it("does not invent a version when the call carries no writable field", async () => {
+    const result = await callTool({ caseId: 99 });
+
+    expect(result.isError).toBeFalsy();
+    expect(createCaseVersionMock).not.toHaveBeenCalled();
   });
 
   it("tool is registered as 'testplanit_cases_update' with correct description prefix", () => {
