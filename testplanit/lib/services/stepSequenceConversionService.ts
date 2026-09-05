@@ -89,6 +89,10 @@ export async function convertMatch(
         });
         await createTestCaseVersionInTransaction(tx, affectedCase.caseId, {
           creatorId: userId,
+          // Without this the pre-conversion snapshot records no custom field
+          // values, so the version history shows every field as cleared at the
+          // point the shared steps were extracted.
+          copyFieldValues: true,
         });
       }
 

@@ -823,8 +823,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               }
             }
 
-            // Create or update version using centralized helper
-            // First, ensure currentVersion is set correctly on the case
+            // Settle the version number now (it depends only on the case's
+            // own history), but DON'T snapshot yet: the helper re-reads the
+            // case, and tags / issues / attachments are attached further
+            // down. Snapshotting here recorded every imported case as having
+            // none of them.
             let versionNumber: number;
             if (isUpdate) {
               // For updates, calculate next version
@@ -878,27 +881,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 data: { currentVersion: versionNumber },
               });
             }
-
-            // Create version snapshot using centralized helper
-            await createTestCaseVersionInTransaction(enhancedDb, newCase.id, {
-              version: versionNumber,
-              creatorId: isUpdate ? session.user.id : creatorId,
-              creatorName: isUpdate
-                ? session.user.name || session.user.email || ""
-                : caseData.createdByName ||
-                  session.user.name ||
-                  session.user.email ||
-                  "",
-              createdAt: isUpdate ? new Date() : createdAt || new Date(),
-              overrides: {
-                name: caseData.name,
-                stateId: stateId,
-                stateName: resolvedWorkflowStateName || defaultWorkflow.name,
-                estimate: caseData.estimate,
-                forecastManual: caseData.forecastManual,
-                automated: caseData.automated,
-              },
-            });
 
             // Handle tags if present
             if (caseData.tags && Array.isArray(caseData.tags)) {
@@ -984,6 +966,33 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 }
               }
             }
+
+            // Create the version snapshot LAST, once steps, field values,
+            // tags, issues and attachments are all attached, so the helper's
+            // re-read of the case captures the imported case in full.
+            // `copyFieldValues` mirrors the case's CaseFieldValues onto the
+            // version — without it the version page renders as though every
+            // custom field was empty at import time.
+            await createTestCaseVersionInTransaction(enhancedDb, newCase.id, {
+              version: versionNumber,
+              creatorId: isUpdate ? session.user.id : creatorId,
+              creatorName: isUpdate
+                ? session.user.name || session.user.email || ""
+                : caseData.createdByName ||
+                  session.user.name ||
+                  session.user.email ||
+                  "",
+              createdAt: isUpdate ? new Date() : createdAt || new Date(),
+              copyFieldValues: true,
+              overrides: {
+                name: caseData.name,
+                stateId: stateId,
+                stateName: resolvedWorkflowStateName || defaultWorkflow.name,
+                estimate: caseData.estimate,
+                forecastManual: caseData.forecastManual,
+                automated: caseData.automated,
+              },
+            });
 
             // Handle test runs if present
             if (caseData.testRuns) {

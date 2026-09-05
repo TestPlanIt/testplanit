@@ -217,21 +217,6 @@ function convertStepToTipTap(value: any) {
   return value || emptyEditorContent;
 }
 
-function convertStepToTipTapForVersion(value: any) {
-  if (typeof value === "string") {
-    return {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: value }],
-        },
-      ],
-    };
-  }
-  return value || emptyEditorContent;
-}
-
 /**
  * Find-or-create-or-restore a repository folder by (project, repo, parent,
  * name). `parentId` may be null (repository root), so this uses `findFirst`
@@ -671,31 +656,52 @@ export async function persistGeneratedTestCases(
           }
 
           // 3. Prepare version data
+          // Version 1 must equal the case as imported, so the snapshot runs
+          // the SAME conversion as the Steps rows written in step 6. The
+          // version used to have its own wrapper that turned a serialized
+          // `{"type":"doc"…}` string into literal paragraph text, so a caller
+          // that passed Tiptap JSON as a string got a readable case and a
+          // version page full of raw JSON.
           const resolvedStepsForVersion =
             testCase.steps?.map((step) => ({
-              step: convertStepToTipTapForVersion(step.step),
-              expectedResult: convertStepToTipTapForVersion(
-                step.expectedResult
-              ),
+              step: convertStepToTipTap(step.step),
+              expectedResult: convertStepToTipTap(step.expectedResult),
             })) || [];
+
+          // Tags and issues are read back from the join rows created above
+          // rather than re-derived from the input. The old derivation only
+          // saw `versionTags` / `versionIssues` (modal-add) or the
+          // `autoGenerateTags` name list, so a caller passing resolved
+          // `tagIds` / `issueIds` — which is what bulk-create does — got a
+          // case with tags and a snapshot claiming it had none.
+          const linkedTags = await tx.repositoryCaseTag.findMany({
+            where: { caseId: newCase.id },
+            select: { tag: { select: { name: true } } },
+          });
+          const linkedIssues = await tx.repositoryCaseIssue.findMany({
+            where: { caseId: newCase.id },
+            select: {
+              issue: { select: { id: true, name: true, externalId: true } },
+            },
+          });
 
           const issuesDataForVersion = testCase.versionIssues?.length
             ? testCase.versionIssues
-            : sharedIssue
-              ? [
-                  {
-                    id: sharedIssue.id,
-                    name: sharedIssue.name,
-                    externalId: sharedIssue.externalId,
-                  },
-                ]
-              : [];
+            : linkedIssues.map(
+                (link: {
+                  issue: {
+                    id: number;
+                    name: string;
+                    externalId: string | null;
+                  };
+                }) => link.issue
+              );
 
           const tagNamesForVersion = testCase.versionTags?.length
             ? testCase.versionTags
-            : data.autoGenerateTags && testCase.tags
-              ? testCase.tags
-              : [];
+            : linkedTags.map(
+                (link: { tag: { name: string } }) => link.tag.name
+              );
 
           // 4. Create version
           const newVersion = await tx.repositoryCaseVersions.create({

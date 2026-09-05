@@ -1,5 +1,5 @@
 import { Job, Worker } from "bullmq";
-import { DbNull } from "@zenstackhq/orm";
+import { DbNull, JsonNull } from "@zenstackhq/orm";
 import { getAuditContext, runWithAuditContext } from "../lib/auditContext";
 import { buildGucPayload, withAuditGuc } from "../lib/audit/gucContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
@@ -768,6 +768,13 @@ const processor = async (
         const versions = await db.repositoryCaseVersions.findMany({
           where: { repositoryCaseId: sc.id },
           orderBy: { version: "asc" },
+          // Each snapshot's own custom field values travel with it. They hang
+          // off the version by id, so the rebuilt rows below need their own
+          // copies — without this a moved case keeps its history but every
+          // version in it reads as though the custom fields were empty.
+          include: {
+            caseFieldVersionValues: { select: { field: true, value: true } },
+          },
         });
         sourceVersionsMap.set(sc.id, versions);
       }
@@ -1086,6 +1093,10 @@ const processor = async (
               await createTestCaseVersionInTransaction(tx, newCase.id, {
                 version: 1,
                 creatorId: job.data.userId,
+                // Step c created the copy's CaseFieldValues above, so this
+                // mirrors them onto version 1. Without it a copied case opens
+                // its own history with every custom field blank.
+                copyFieldValues: true,
               });
             } else {
               // Move: preserve full version history with updated FKs
@@ -1104,7 +1115,7 @@ const processor = async (
                 );
                 const effectiveVerStateName =
                   stateMapper.targetName(effectiveVerStateId) ?? ver.stateName;
-                await tx.repositoryCaseVersions.create({
+                const movedVersion = await tx.repositoryCaseVersions.create({
                   data: {
                     repositoryCaseId: newCase.id,
                     // Update location FKs to target
@@ -1141,6 +1152,21 @@ const processor = async (
                     attachments: ver.attachments ?? DbNull,
                   },
                 });
+                // Carry THIS snapshot's own field values across, not the live
+                // case's — copying the current values onto every historical
+                // version would rewrite the history the move is preserving.
+                const versionFieldValues = ver.caseFieldVersionValues ?? [];
+                if (versionFieldValues.length > 0) {
+                  await tx.caseFieldVersionValues.createMany({
+                    data: versionFieldValues.map(
+                      (fvv: { field: string; value: unknown }) => ({
+                        versionId: movedVersion.id,
+                        field: fvv.field,
+                        value: fvv.value ?? JsonNull,
+                      })
+                    ),
+                  });
+                }
                 lastVersionNumber = ver.version;
               }
               await tx.repositoryCases.update({

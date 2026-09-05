@@ -27,6 +27,12 @@ vi.mock("~/lib/db", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      // The version snapshot mirrors the case's field values onto the version
+      // (`copyFieldValues`), so the helper reads them back here.
+      findMany: vi.fn(() => Promise.resolve([])),
+    },
+    caseFieldVersionValues: {
+      createMany: vi.fn(() => Promise.resolve({ count: 0 })),
     },
     steps: {
       create: vi.fn(),
@@ -136,6 +142,11 @@ describe("Bulk Edit API Route", () => {
           create: vi.fn(),
           update: vi.fn(),
           delete: vi.fn(),
+          // Read back by the version snapshot's copyFieldValues.
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        caseFieldVersionValues: {
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         steps: {
           create: vi.fn(),
@@ -283,6 +294,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: {
             create: vi.fn(),
@@ -341,6 +357,11 @@ describe("Bulk Edit API Route", () => {
           create: vi.fn(),
           update: vi.fn(),
           delete: vi.fn(),
+          // Read back by the version snapshot's copyFieldValues.
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        caseFieldVersionValues: {
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         steps: {
           create: vi.fn(),
@@ -401,6 +422,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: {
             create: vi.fn(),
@@ -455,6 +481,11 @@ describe("Bulk Edit API Route", () => {
           create: vi.fn(),
           update: vi.fn(),
           delete: vi.fn(),
+          // Read back by the version snapshot's copyFieldValues.
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        caseFieldVersionValues: {
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         steps: {
           create: vi.fn(),
@@ -509,6 +540,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -565,6 +601,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -617,6 +658,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -669,6 +715,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -735,6 +786,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -802,6 +858,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -868,6 +929,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -931,6 +997,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -994,6 +1065,11 @@ describe("Bulk Edit API Route", () => {
             create: mockTxCreate,
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1061,6 +1137,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: mockTxUpdate,
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1125,6 +1206,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: mockTxDelete,
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1179,6 +1265,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1252,6 +1343,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1321,6 +1417,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1369,6 +1470,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1424,6 +1530,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: {
             create: mockCreate,
@@ -1514,6 +1625,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: {
             create: vi.fn(),
@@ -1577,6 +1693,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1651,6 +1772,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1710,6 +1836,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -1764,6 +1895,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           // Strict transitive gate setup:
@@ -1830,6 +1966,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: {
@@ -1910,6 +2051,11 @@ describe("Bulk Edit API Route", () => {
             create: vi.fn(),
             update: vi.fn(),
             delete: vi.fn(),
+            // Read back by the version snapshot's copyFieldValues.
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          caseFieldVersionValues: {
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: findUniqueMock },

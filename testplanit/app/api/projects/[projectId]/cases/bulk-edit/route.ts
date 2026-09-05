@@ -461,6 +461,11 @@ export const POST = withAuditContext(
                 creatorId: caseItem.creatorId,
                 creatorName: caseItem.creator?.name || "",
                 createdAt: caseItem.createdAt,
+                // The field-value writes above land earlier in this same
+                // transaction, so the copy picks up this edit's values. Without
+                // it the snapshot carries none and the history UI reads as
+                // though the bulk edit had cleared every custom field.
+                copyFieldValues: true,
                 overrides: {
                   // Apply any changes from the bulk edit
                   name: updateData.name ?? caseItem.name,

@@ -80,7 +80,14 @@ async function bumpVersionAndSnapshot(
     where: { id: caseId },
     data: { currentVersion: { increment: 1 } },
   });
-  await createTestCaseVersionInTransaction(tx, caseId, creatorMeta(session));
+  // copyFieldValues: the case's custom field values are untouched by a
+  // parameter edit, but the snapshot still has to carry them — a version
+  // without CaseFieldVersionValues renders in the history UI as though every
+  // custom field had been cleared at that version.
+  await createTestCaseVersionInTransaction(tx, caseId, {
+    ...creatorMeta(session),
+    copyFieldValues: true,
+  });
 }
 
 export async function createParameterInTransaction(

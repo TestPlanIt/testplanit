@@ -281,6 +281,75 @@ describe("createTestCaseVersionInTransaction", () => {
     ]);
   });
 
+  // AddCase builds `versionFieldValues` from the case's dynamic fields and
+  // explicitly skips the Steps field, because the version renders steps from
+  // its own `steps` JSON. `copyFieldValues` has to honour the same rule — a
+  // Steps-type field copied onto the version draws the steps a second time.
+  it("copies field values onto the version but never a Steps-type field", async () => {
+    const fixture = buildTestCaseFixture();
+    const { tx, create } = buildTx(fixture);
+    const createManyFieldVersionValues = vi.fn(async () => ({ count: 0 }));
+    (tx as any).caseFieldValues = {
+      findMany: vi.fn(async () => [
+        {
+          value: 3,
+          field: {
+            displayName: "Priority",
+            systemName: "priority",
+            type: { type: "Dropdown" },
+          },
+        },
+        {
+          value: "step blob",
+          field: {
+            displayName: "Steps",
+            systemName: "steps",
+            type: { type: "Steps" },
+          },
+        },
+      ]),
+    };
+    (tx as any).caseFieldVersionValues = {
+      createMany: createManyFieldVersionValues,
+    };
+
+    await createTestCaseVersionInTransaction(tx as any, 1, {
+      copyFieldValues: true,
+    });
+
+    const versionId = (await create.mock.results[0]!.value).id;
+    expect(createManyFieldVersionValues).toHaveBeenCalledWith({
+      data: [{ versionId, field: "Priority", value: 3 }],
+    });
+  });
+
+  it("writes no field version values when the only field is a Steps field", async () => {
+    const fixture = buildTestCaseFixture();
+    const { tx } = buildTx(fixture);
+    const createManyFieldVersionValues = vi.fn(async () => ({ count: 0 }));
+    (tx as any).caseFieldValues = {
+      findMany: vi.fn(async () => [
+        {
+          value: "step blob",
+          field: {
+            displayName: "Steps",
+            systemName: "steps",
+            type: { type: "Steps" },
+          },
+        },
+      ]),
+    };
+    (tx as any).caseFieldVersionValues = {
+      createMany: createManyFieldVersionValues,
+    };
+
+    await createTestCaseVersionInTransaction(tx as any, 1, {
+      copyFieldValues: true,
+    });
+
+    expect(createManyFieldVersionValues).not.toHaveBeenCalled();
+  });
+
   it("still honours an explicit attachments override", async () => {
     const fixture = buildTestCaseFixture({
       attachments: [

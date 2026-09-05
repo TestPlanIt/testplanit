@@ -57,7 +57,7 @@ export interface CreateVersionOptions {
     issues?: Array<{
       id: number;
       name: string;
-      externalId?: string;
+      externalId?: string | null;
     }>;
     attachments?: any; // JSON field
     links?: any; // JSON field
@@ -403,12 +403,27 @@ export async function createTestCaseVersionInTransaction(
     const fieldValues = await tx.caseFieldValues.findMany({
       where: { testCaseId: caseId },
       include: {
-        field: { select: { displayName: true, systemName: true } },
+        field: {
+          select: {
+            displayName: true,
+            systemName: true,
+            type: { select: { type: true } },
+          },
+        },
       },
     });
-    if (fieldValues.length > 0) {
+    // A Steps-type field NEVER becomes a version field value. Steps live in
+    // the version's own `steps` JSON, and the version page renders them from
+    // there; a snapshot that also carried them as a field value would draw
+    // the steps twice. This mirrors the AddCase save path, which skips the
+    // Steps field when it builds `versionFieldValues`.
+    const copyable = fieldValues.filter(
+      (fieldValue: { field: { type: { type: string } } }) =>
+        fieldValue.field.type.type !== "Steps"
+    );
+    if (copyable.length > 0) {
       await tx.caseFieldVersionValues.createMany({
-        data: fieldValues.map(
+        data: copyable.map(
           (fieldValue: {
             value: unknown;
             field: { displayName: string | null; systemName: string };

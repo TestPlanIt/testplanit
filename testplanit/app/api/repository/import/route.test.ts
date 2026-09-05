@@ -201,6 +201,10 @@ describe("CSV Import API Route", () => {
     caseFieldValues: {
       create: vi.fn(),
       deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
+    caseFieldVersionValues: {
+      createMany: vi.fn(),
     },
     repositoryCaseVersions: {
       create: vi.fn(),
@@ -314,6 +318,14 @@ describe("CSV Import API Route", () => {
     );
     mockEnhancedDb.repositoryCaseVersions.create.mockResolvedValue({
       id: 1,
+    });
+    // The version snapshot copies the case's CaseFieldValues onto the version
+    // (`copyFieldValues`), so the helper reads them back and writes the
+    // per-version rows. Default to "no field values" — the tests that care
+    // override it.
+    mockEnhancedDb.caseFieldValues.findMany.mockResolvedValue([]);
+    mockEnhancedDb.caseFieldVersionValues.createMany.mockResolvedValue({
+      count: 0,
     });
     mockEnhancedDb.steps.create.mockResolvedValue({ id: 1 });
   });
@@ -1411,6 +1423,52 @@ describe("CSV Import API Route", () => {
             creatorId: mockSession.user.id, // Current user for updates
           }),
         }
+      );
+    });
+
+    // #600: the version helper re-reads the case to build the snapshot, so it
+    // has to run AFTER tags / issues / attachments are attached. It used to
+    // run before them, and every imported case got a version 1 recording no
+    // tags, no issues, no attachments and no custom field values.
+    it("snapshots the version only after tags, issues and attachments land", async () => {
+      mockEnhancedDb.tags.findFirst.mockResolvedValue({
+        id: 55,
+        name: "smoke",
+      });
+
+      const request = createRequest({
+        projectId: 1,
+        file: "Name,Description,Tags\nTagged Case,Test Description,smoke",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Tags", templateField: "tags" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete?.importedCount).toBe(1);
+
+      const versionCall =
+        mockEnhancedDb.repositoryCaseVersions.create.mock
+          .invocationCallOrder[0];
+      const tagLinkCall =
+        mockEnhancedDb.repositoryCaseTag.create.mock.invocationCallOrder[0];
+      expect(tagLinkCall).toBeDefined();
+      expect(versionCall).toBeGreaterThan(tagLinkCall);
+
+      // And the snapshot mirrors the case's custom field values onto the
+      // version, which the wizard never did.
+      expect(mockEnhancedDb.caseFieldValues.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { testCaseId: expect.any(Number) } })
       );
     });
 
