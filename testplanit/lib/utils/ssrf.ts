@@ -90,14 +90,41 @@ export function isCloudMetadataHostname(hostname: string): boolean {
 // ─── IP Validation ────────────────────────────────────────────────────────────
 
 /**
+ * Collapse an IPv4-mapped IPv6 literal to the IPv4 address it carries, so the
+ * IPv4 range checks below actually see it.
+ *
+ * Without this, `::ffff:127.0.0.1` walks past every check here: it is not any
+ * of the IPv6 literals matched above, it does not start with `fe80:`/`fc`/`fd`,
+ * and the IPv4 regexes are anchored so they never match the `::ffff:` prefix.
+ * The WHATWG URL parser also canonicalizes the tail to hex — `::ffff:7f00:1` —
+ * so both spellings have to collapse. Anything that is not a mapped literal is
+ * returned untouched.
+ */
+function unmapIpv4MappedIpv6(ip: string): string {
+  const dotted = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(ip);
+  if (dotted) return dotted[1];
+
+  const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(ip);
+  if (hex) {
+    const high = parseInt(hex[1], 16);
+    const low = parseInt(hex[2], 16);
+    return [high >> 8, high & 0xff, low >> 8, low & 0xff].join(".");
+  }
+
+  return ip;
+}
+
+/**
  * Returns true if the given IP address is in a private, loopback, link-local,
  * or cloud-metadata range that should never be reached from the public internet.
  *
- * Accepts both IPv4 and IPv6 addresses (as strings). Does NOT accept hostnames —
- * always resolve DNS first and pass the resolved IP address.
+ * Accepts both IPv4 and IPv6 addresses (as strings), including IPv4-mapped IPv6
+ * literals. Does NOT accept hostnames — always resolve DNS first and pass the
+ * resolved IP address.
  */
 export function isPrivateOrInternalIp(ip: string): boolean {
-  const lower = ip.toLowerCase();
+  // Bracketed IPv6 literals ("[::1]") reach here from URL parsing.
+  const lower = unmapIpv4MappedIpv6(ip.toLowerCase().replace(/^\[|\]$/g, ""));
 
   // IPv4 exact matches
   if (lower === "127.0.0.1" || lower === "0.0.0.0") {
