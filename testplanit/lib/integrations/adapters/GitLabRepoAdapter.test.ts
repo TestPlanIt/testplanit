@@ -670,4 +670,142 @@ describe("GitLabRepoAdapter", () => {
       expect(result.files).toHaveLength(1);
     });
   });
+  describe("listPullRequests", () => {
+    function makeRawMr(iid: number, overrides: Record<string, any> = {}) {
+      return {
+        iid,
+        title: `MR ${iid}`,
+        state: "opened",
+        author: { username: "ada", name: "Ada Lovelace" },
+        source_branch: `feature-${iid}`,
+        target_branch: "main",
+        sha: `head${iid}`,
+        web_url: `https://gitlab.com/mygroup/myproject/-/merge_requests/${iid}`,
+        updated_at: "2026-09-01T10:00:00Z",
+        ...overrides,
+      };
+    }
+
+    it("reads merge requests and maps opened to open", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([makeRawMr(4)]));
+
+      const result = await adapter.listPullRequests();
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/merge_requests?");
+      expect(url).toContain("order_by=updated_at&sort=desc");
+      expect(result.pullRequests).toEqual([
+        {
+          number: 4,
+          title: "MR 4",
+          state: "open",
+          authorName: "ada",
+          sourceBranch: "feature-4",
+          targetBranch: "main",
+          headSha: "head4",
+          baseSha: undefined,
+          url: "https://gitlab.com/mygroup/myproject/-/merge_requests/4",
+          updatedAt: "2026-09-01T10:00:00Z",
+        },
+      ]);
+    });
+
+    it("treats a locked merge request as closed", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          makeRawMr(1, { state: "locked" }),
+          makeRawMr(2, { state: "merged" }),
+          makeRawMr(3, { state: "closed" }),
+        ])
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests.map((pr) => pr.state)).toEqual([
+        "closed",
+        "merged",
+        "closed",
+      ]);
+    });
+
+    it("uses GitLab's own spelling of the open state", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+
+      await adapter.listPullRequests({ state: "open" });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("state=opened");
+    });
+
+    it("sends no state parameter for all, which GitLab reads as unfiltered", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+
+      await adapter.listPullRequests({ state: "all" });
+
+      expect(mockFetch.mock.calls[0][0]).not.toContain("state=");
+    });
+
+    it("filters merged and closed at the API, since GitLab distinguishes them", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+      await adapter.listPullRequests({ state: "merged" });
+      expect(mockFetch.mock.calls[0][0]).toContain("state=merged");
+
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+      await adapter.listPullRequests({ state: "closed" });
+      expect(mockFetch.mock.calls[1][0]).toContain("state=closed");
+    });
+
+    it("falls back to the numeric id when a merge request has no iid", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([{ ...makeRawMr(0), iid: undefined, id: 99 }])
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests[0].number).toBe(99);
+    });
+
+    it("takes the base sha only when diff_refs is present", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([makeRawMr(5, { diff_refs: { base_sha: "base5" } })])
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests[0].baseSha).toBe("base5");
+    });
+
+    it("reports hasMore only when the page came back full", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([makeRawMr(1), makeRawMr(2)])
+      );
+      await expect(
+        adapter.listPullRequests({ perPage: 2 })
+      ).resolves.toMatchObject({ hasMore: true });
+
+      mockFetch.mockResolvedValueOnce(makeResponse([makeRawMr(3)]));
+      await expect(
+        adapter.listPullRequests({ perPage: 2 })
+      ).resolves.toMatchObject({ hasMore: false });
+    });
+  });
+
+  describe("getMergeBase", () => {
+    it("passes both refs as a repeated refs[] parameter", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ id: "m".repeat(40) }));
+
+      const sha = await adapter.getMergeBase("main", "feature");
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/repository/merge_base?");
+      expect(url).toContain("refs%5B%5D=main");
+      expect(url).toContain("refs%5B%5D=feature");
+      expect(sha).toBe("m".repeat(40));
+    });
+
+    it("returns null rather than throwing when the provider refuses", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ message: "404" }, 404));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+  });
 });

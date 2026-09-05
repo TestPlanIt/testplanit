@@ -560,4 +560,148 @@ describe("AzureDevOpsRepoAdapter", () => {
       ).toHaveLength(1);
     });
   });
+  describe("listPullRequests", () => {
+    function makeRawPr(id: number, overrides: Record<string, any> = {}) {
+      return {
+        pullRequestId: id,
+        title: `PR ${id}`,
+        status: "active",
+        createdBy: { displayName: "Ada Lovelace" },
+        sourceRefName: `refs/heads/feature-${id}`,
+        targetRefName: "refs/heads/main",
+        lastMergeSourceCommit: { commitId: `head${id}` },
+        lastMergeTargetCommit: { commitId: `base${id}` },
+        _links: {
+          web: {
+            href: `https://dev.azure.com/myorg/_git/myrepo/pullrequest/${id}`,
+          },
+        },
+        creationDate: "2026-09-01T10:00:00Z",
+        ...overrides,
+      };
+    }
+
+    it("strips refs/heads/ from both branch names", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ value: [makeRawPr(21)] }));
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests).toEqual([
+        {
+          number: 21,
+          title: "PR 21",
+          state: "open",
+          authorName: "Ada Lovelace",
+          sourceBranch: "feature-21",
+          targetBranch: "main",
+          headSha: "head21",
+          baseSha: "base21",
+          url: "https://dev.azure.com/myorg/_git/myrepo/pullrequest/21",
+          updatedAt: "2026-09-01T10:00:00Z",
+        },
+      ]);
+    });
+
+    it("reads completed as merged and abandoned as closed", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          value: [
+            makeRawPr(1, { status: "completed" }),
+            makeRawPr(2, { status: "abandoned" }),
+            makeRawPr(3, { status: "active" }),
+          ],
+        })
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests.map((pr) => pr.state)).toEqual([
+        "merged",
+        "closed",
+        "open",
+      ]);
+    });
+
+    it("maps each state onto Azure's own status vocabulary", async () => {
+      const cases: Array<[any, string]> = [
+        ["open", "active"],
+        ["merged", "completed"],
+        ["closed", "abandoned"],
+        ["all", "all"],
+      ];
+      for (const [state, expected] of cases) {
+        mockFetch.mockResolvedValueOnce(makeResponse({ value: [] }));
+        await adapter.listPullRequests({ state });
+        const url = mockFetch.mock.calls.at(-1)![0] as string;
+        expect(url).toContain(`searchCriteria.status=${expected}`);
+      }
+    });
+
+    it("pages by skip, because Azure has no page number", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ value: [] }));
+
+      await adapter.listPullRequests({ page: 3, perPage: 20 });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("$top=20");
+      expect(url).toContain("$skip=40");
+    });
+
+    it("asks for the first page without skipping anything", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ value: [] }));
+
+      await adapter.listPullRequests({ page: 1, perPage: 50 });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("$skip=0");
+    });
+
+    it("reports hasMore only when the page came back full", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ value: [makeRawPr(1), makeRawPr(2)] })
+      );
+      await expect(
+        adapter.listPullRequests({ perPage: 2 })
+      ).resolves.toMatchObject({ hasMore: true });
+
+      mockFetch.mockResolvedValueOnce(makeResponse({ value: [makeRawPr(3)] }));
+      await expect(
+        adapter.listPullRequests({ perPage: 2 })
+      ).resolves.toMatchObject({ hasMore: false });
+    });
+
+    it("survives a payload with no value array", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ count: 0 }));
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests).toEqual([]);
+    });
+  });
+
+  describe("getMergeBase", () => {
+    it("reads the first entry of the mergebases collection", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ value: [{ commitId: "m".repeat(40) }] })
+      );
+
+      const sha = await adapter.getMergeBase("main", "feature");
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/commits/main/mergebases");
+      expect(url).toContain("otherCommitId=feature");
+      expect(sha).toBe("m".repeat(40));
+    });
+
+    it("returns null when the collection is empty", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ value: [] }));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+
+    it("returns null rather than throwing when the preview API is unavailable", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ message: "gone" }, 404));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+  });
 });

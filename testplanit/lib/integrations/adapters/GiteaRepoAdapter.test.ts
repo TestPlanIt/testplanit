@@ -669,4 +669,127 @@ describe("GiteaRepoAdapter", () => {
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
+  describe("listPullRequests", () => {
+    function makeRawPull(number: number, overrides: Record<string, any> = {}) {
+      return {
+        number,
+        title: `PR ${number}`,
+        state: "open",
+        merged: false,
+        user: { login: "ada" },
+        head: { ref: `feature-${number}`, sha: `head${number}` },
+        base: { ref: "main", sha: `base${number}` },
+        html_url: `https://gitea.example.com/myorg/myrepo/pulls/${number}`,
+        updated_at: "2026-09-01T10:00:00Z",
+        ...overrides,
+      };
+    }
+
+    it("maps a pull request and sorts by recent update", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([makeRawPull(31)]));
+
+      const result = await adapter.listPullRequests();
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/pulls?state=all");
+      expect(url).toContain("sort=recentupdate");
+      expect(url).toContain("limit=50&page=1");
+      expect(result.pullRequests).toEqual([
+        {
+          number: 31,
+          title: "PR 31",
+          state: "open",
+          authorName: "ada",
+          sourceBranch: "feature-31",
+          targetBranch: "main",
+          headSha: "head31",
+          baseSha: "base31",
+          url: "https://gitea.example.com/myorg/myrepo/pulls/31",
+          updatedAt: "2026-09-01T10:00:00Z",
+        },
+      ]);
+    });
+
+    it("narrows merged and closed itself, as Gitea folds merged into closed", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          makeRawPull(1, { state: "closed", merged: true }),
+          makeRawPull(2, { state: "closed", merged: false }),
+          makeRawPull(3),
+        ])
+      );
+
+      const result = await adapter.listPullRequests({ state: "merged" });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("state=all");
+      expect(result.pullRequests.map((pr) => pr.number)).toEqual([1]);
+    });
+
+    it("asks the API only for open, the one state it filters natively", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+
+      await adapter.listPullRequests({ state: "open" });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("state=open");
+    });
+
+    it("clamps the page size to Gitea's lower maximum", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+
+      await adapter.listPullRequests({ perPage: 500 });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("limit=50");
+    });
+
+    it("reports hasMore from the unfiltered page, not the narrowed list", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          makeRawPull(1, { state: "closed", merged: true }),
+          makeRawPull(2),
+        ])
+      );
+
+      const result = await adapter.listPullRequests({
+        state: "merged",
+        perPage: 2,
+      });
+
+      expect(result.pullRequests).toHaveLength(1);
+      expect(result.hasMore).toBe(true);
+    });
+
+    it("survives a payload that is not an array", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ message: "Not Found" }));
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests).toEqual([]);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("getMergeBase", () => {
+    it("reads the merge base from the compare payload, as GitHub does", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ merge_base_commit: { sha: "m".repeat(40) } })
+      );
+
+      const sha = await adapter.getMergeBase("main", "feature");
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/compare/main...feature");
+      expect(sha).toBe("m".repeat(40));
+    });
+
+    it("returns null on a server whose compare endpoint is missing", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ errors: ["nope"] }, 404));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+
+    it("returns null when the payload carries no merge base", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ commits: [] }));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+  });
 });

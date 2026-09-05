@@ -268,3 +268,55 @@ describe("GitRepoAdapter rate-limit retry", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("GitRepoAdapter pull request defaults", () => {
+  const creds = { personalAccessToken: "test-token" };
+
+  function everyAdapter() {
+    return [
+      new GitHubRepoAdapter(creds, { owner: "o", repo: "r" }),
+      new GitLabRepoAdapter(creds, { projectPath: "g/p" }),
+      new BitbucketRepoAdapter(
+        { email: "a@b.c", apiToken: "t" },
+        { workspace: "w", repoSlug: "r" }
+      ),
+      new AzureDevOpsRepoAdapter(creds, {
+        organizationUrl: "https://dev.azure.com/o",
+        project: "p",
+        repositoryId: "r",
+      }),
+      new GiteaRepoAdapter(creds, {
+        baseUrl: "https://gitea.example.com",
+        owner: "o",
+        repo: "r",
+      }),
+    ];
+  }
+
+  it("every provider overrides the unsupported default, so the picker is never hidden by accident", () => {
+    for (const adapter of everyAdapter()) {
+      expect(
+        Object.getPrototypeOf(adapter).hasOwnProperty("listPullRequests")
+      ).toBe(true);
+      expect(
+        Object.getPrototypeOf(adapter).hasOwnProperty("getMergeBase")
+      ).toBe(true);
+    }
+  });
+
+  it("the base listPullRequests reports itself unsupported, which the route turns into a 501", async () => {
+    const adapter = new GitHubRepoAdapter(creds, { owner: "o", repo: "r" });
+    const base = Object.getPrototypeOf(GitHubRepoAdapter.prototype);
+
+    await expect(base.listPullRequests.call(adapter)).rejects.toThrow(
+      /pull requests/i
+    );
+  });
+
+  it("the base getMergeBase answers null, so callers fall back to the provider's base", async () => {
+    const adapter = new GitHubRepoAdapter(creds, { owner: "o", repo: "r" });
+    const base = Object.getPrototypeOf(GitHubRepoAdapter.prototype);
+
+    await expect(base.getMergeBase.call(adapter, "a", "b")).resolves.toBeNull();
+  });
+});

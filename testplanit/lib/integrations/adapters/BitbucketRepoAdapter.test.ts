@@ -926,4 +926,145 @@ describe("BitbucketRepoAdapter", () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
+  describe("listPullRequests", () => {
+    function makeRawPr(id: number, overrides: Record<string, any> = {}) {
+      return {
+        id,
+        title: `PR ${id}`,
+        state: "OPEN",
+        author: { nickname: "ada", display_name: "Ada Lovelace" },
+        source: {
+          branch: { name: `feature-${id}` },
+          commit: { hash: `head${id}` },
+        },
+        destination: {
+          branch: { name: "main" },
+          commit: { hash: `base${id}` },
+        },
+        links: {
+          html: {
+            href: `https://bitbucket.org/myworkspace/myrepo/pull-requests/${id}`,
+          },
+        },
+        updated_on: "2026-09-01T10:00:00Z",
+        ...overrides,
+      };
+    }
+
+    it("maps a pull request from the values array", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ values: [makeRawPr(11)] })
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/pullrequests?");
+      expect(result.pullRequests).toEqual([
+        {
+          number: 11,
+          title: "PR 11",
+          state: "open",
+          authorName: "ada",
+          sourceBranch: "feature-11",
+          targetBranch: "main",
+          headSha: "head11",
+          baseSha: "base11",
+          url: "https://bitbucket.org/myworkspace/myrepo/pull-requests/11",
+          updatedAt: "2026-09-01T10:00:00Z",
+        },
+      ]);
+    });
+
+    it("repeats the state parameter, which is how Bitbucket takes a set", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listPullRequests({ state: "all" });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("state=OPEN");
+      expect(url).toContain("state=MERGED");
+      expect(url).toContain("state=DECLINED");
+      expect(url).toContain("state=SUPERSEDED");
+    });
+
+    it("asks for both closed spellings, since Bitbucket has two", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listPullRequests({ state: "closed" });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("state=DECLINED");
+      expect(url).toContain("state=SUPERSEDED");
+      expect(url).not.toContain("state=OPEN");
+      expect(url).not.toContain("state=MERGED");
+    });
+
+    it("reads SUPERSEDED and DECLINED as closed", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            makeRawPr(1, { state: "SUPERSEDED" }),
+            makeRawPr(2, { state: "DECLINED" }),
+            makeRawPr(3, { state: "MERGED" }),
+          ],
+        })
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests.map((pr) => pr.state)).toEqual([
+        "closed",
+        "closed",
+        "merged",
+      ]);
+    });
+
+    it("takes hasMore from the provider's next link, not the page size", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ values: [makeRawPr(1)], next: "https://api/next" })
+      );
+      await expect(adapter.listPullRequests()).resolves.toMatchObject({
+        hasMore: true,
+      });
+
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [makeRawPr(2)] }));
+      await expect(adapter.listPullRequests()).resolves.toMatchObject({
+        hasMore: false,
+      });
+    });
+
+    it("clamps the page size to Bitbucket's lower maximum", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listPullRequests({ perPage: 100 });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("pagelen=50");
+    });
+
+    it("survives a payload with no values array", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ type: "error" }));
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests).toEqual([]);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("getMergeBase", () => {
+    it("asks for the revspec as a single encoded segment", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ hash: "m".repeat(40) }));
+
+      const sha = await adapter.getMergeBase("main", "feature");
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/merge-base/main..feature");
+      expect(sha).toBe("m".repeat(40));
+    });
+
+    it("returns null rather than throwing when the endpoint is unavailable", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ error: "nope" }, 404));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+  });
 });
