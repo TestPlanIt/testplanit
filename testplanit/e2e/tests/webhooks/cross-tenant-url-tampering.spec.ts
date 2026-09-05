@@ -1,4 +1,4 @@
-import type { BrowserContext } from "@playwright/test";
+import type { APIResponse, BrowserContext } from "@playwright/test";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -197,7 +197,7 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // assigned. Project A has none of those for this user, so the result
     // must be an empty array (200, not 422 — silent filter, per ACL-03
     // pattern).
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Probe webhookConfig findMany scoped to Project A", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookConfig/findMany`,
@@ -228,7 +228,7 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
     // rows. We don't seed delivery rows for this assertion — the clause is
     // identical regardless of count, and the empty result is the
     // observable contract.
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Probe webhookDelivery findMany scoped to Project A", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookDelivery/findMany`,

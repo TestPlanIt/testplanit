@@ -1,4 +1,4 @@
-import { type APIRequestContext } from "@playwright/test";
+import { type APIResponse, type APIRequestContext } from "@playwright/test";
 import { expect, test } from "../../fixtures/index";
 
 /**
@@ -113,7 +113,7 @@ test.describe("Case duplication", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Send within-project copy request", async () => {
       response = await request.post(`${baseURL}/api/repository/copy-move`, {
@@ -258,7 +258,7 @@ test.describe("Case duplication", () => {
     request,
     baseURL,
   }) => {
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Send copy request with an inaccessible source project", async () => {
       response = await request.post(`${baseURL}/api/repository/copy-move`, {

@@ -1,4 +1,4 @@
-import { type APIRequestContext } from "@playwright/test";
+import { type APIResponse, type APIRequestContext } from "@playwright/test";
 import { expect, test } from "../../fixtures/index";
 
 /**
@@ -98,7 +98,7 @@ test.describe("Copy-Move API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send preflight request without authentication", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -122,7 +122,7 @@ test.describe("Copy-Move API Endpoints", () => {
     });
 
     test("returns 400 for missing caseIds", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send preflight request without caseIds", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -149,7 +149,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send preflight request with empty caseIds", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -269,7 +269,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request preflight for copy from source to target", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -320,7 +320,7 @@ test.describe("Copy-Move API Endpoints", () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       });
 
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request preflight for copy from source to target", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -354,7 +354,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request preflight for copy from source to target", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -380,7 +380,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request preflight for copy from source to target", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -415,7 +415,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request preflight for copy from source to target", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/preflight`,
@@ -462,7 +462,7 @@ test.describe("Copy-Move API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit copy-move request without authentication", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/repository/copy-move`,
@@ -489,7 +489,7 @@ test.describe("Copy-Move API Endpoints", () => {
     });
 
     test("returns 400 for invalid body", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit copy-move request missing required fields", async () => {
         response = await request.post(`${baseURL}/api/repository/copy-move`, {
           data: {
@@ -511,7 +511,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit copy-move request with unsupported operation", async () => {
         response = await request.post(`${baseURL}/api/repository/copy-move`, {
           data: {
@@ -537,7 +537,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit valid copy request", async () => {
         response = await request.post(`${baseURL}/api/repository/copy-move`, {
           data: {
@@ -628,7 +628,7 @@ test.describe("Copy-Move API Endpoints", () => {
         "Queue unavailable — skipping data verification"
       );
 
-      let stepsResponse: Awaited<ReturnType<typeof request.get>> | undefined;
+      let stepsResponse: APIResponse | undefined;
       await test.step("Read steps for the copied case", async () => {
         stepsResponse = await request.get(
           `${baseURL}/api/model/steps/findMany`,
@@ -657,7 +657,7 @@ test.describe("Copy-Move API Endpoints", () => {
     }) => {
       test.skip(!copyJobId, "Queue unavailable — skipping data verification");
 
-      let readResponse: Awaited<ReturnType<typeof request.get>> | undefined;
+      let readResponse: APIResponse | undefined;
       await test.step("Read source case after copy", async () => {
         readResponse = await request.get(
           `${baseURL}/api/model/repositoryCases/findFirst`,
@@ -702,7 +702,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit valid move request", async () => {
         response = await request.post(`${baseURL}/api/repository/copy-move`, {
           data: {
@@ -741,7 +741,7 @@ test.describe("Copy-Move API Endpoints", () => {
         expect(jobResult.state).toBe("completed");
       });
 
-      let readResponse: Awaited<ReturnType<typeof request.get>> | undefined;
+      let readResponse: APIResponse | undefined;
       await test.step("Read moved source case filtered to non-deleted", async () => {
         // After move, the source case should not be visible via standard (policy-filtered) API
         // because it is soft-deleted (isDeleted: true)
@@ -780,7 +780,7 @@ test.describe("Copy-Move API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.get>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request job status without authentication", async () => {
         response = await unauthRequest.get(
           `${baseURL}/api/repository/copy-move/status/nonexistent-job-123`
@@ -799,7 +799,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.get>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request status for a non-existent job ID", async () => {
         response = await request.get(
           `${baseURL}/api/repository/copy-move/status/nonexistent-copy-move-job-e2e-99999`
@@ -825,7 +825,7 @@ test.describe("Copy-Move API Endpoints", () => {
     }) => {
       test.skip(!copyJobId, "Queue unavailable — no jobId to check");
 
-      let response: Awaited<ReturnType<typeof request.get>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request status for the existing copy job", async () => {
         response = await request.get(
           `${baseURL}/api/repository/copy-move/status/${copyJobId}`
@@ -857,7 +857,7 @@ test.describe("Copy-Move API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request job cancel without authentication", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/repository/copy-move/cancel/nonexistent-job-123`
@@ -876,7 +876,7 @@ test.describe("Copy-Move API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request cancel for a non-existent job ID", async () => {
         response = await request.post(
           `${baseURL}/api/repository/copy-move/cancel/nonexistent-copy-move-job-e2e-99999`
@@ -952,7 +952,7 @@ test.describe("Copy-Move API Endpoints", () => {
         );
       });
 
-      let submitRes: Awaited<ReturnType<typeof request.post>> | undefined;
+      let submitRes: APIResponse | undefined;
       await test.step("Submit copy with folderTree and verify it is accepted", async () => {
         // Build the folderTree in BFS order
         const folderTree = [
@@ -1085,7 +1085,7 @@ test.describe("Copy-Move API Endpoints", () => {
         );
       });
 
-      let submitRes: Awaited<ReturnType<typeof request.post>> | undefined;
+      let submitRes: APIResponse | undefined;
       await test.step("Submit move with folderTree and verify it is accepted", async () => {
         const folderTree = [
           {

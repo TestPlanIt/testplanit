@@ -1,4 +1,4 @@
-import type { BrowserContext } from "@playwright/test";
+import type { APIResponse, BrowserContext } from "@playwright/test";
 import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
@@ -152,7 +152,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // operate on. This is the necessary precondition for K-02: if a
     // cross-tenant caller cannot even discover A's delivery IDs via the
     // RPC surface, they cannot construct a replay request against them.
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Query Project A's failed deliveries via the RPC surface", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookDelivery/findMany`,
@@ -186,7 +186,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // useFindFirstProjects(A) which returns null for B-only, AND the
     // WebhookConfig read policy filters to A=invisible, there is no UI
     // surface that ever holds the deliveryId.
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Query Project A's outbound config via the RPC surface", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookConfig/findMany`,
@@ -289,7 +289,7 @@ test.describe("Webhook cross-tenant — replay/bulk-replay UI + data path blocke
     // Sanity check: the previous assertions would also pass if the
     // policy globally denied B-only — that would mask a bug where the
     // policy is over-broad. Project B's config must be visible.
-    let response: Awaited<ReturnType<typeof bOnlyCtx.request.get>> | undefined;
+    let response: APIResponse | undefined;
     await test.step("Query Project B's outbound config via the RPC surface", async () => {
       response = await bOnlyCtx.request.get(
         `${baseURL}/api/model/webhookConfig/findMany`,

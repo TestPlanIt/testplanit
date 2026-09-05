@@ -1,5 +1,5 @@
 import { expect, test } from "../../fixtures/index";
-import type { APIRequestContext } from "@playwright/test";
+import type { APIResponse, APIRequestContext } from "@playwright/test";
 
 test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
@@ -254,7 +254,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     // we attempt a where clause carrying testCaseId and document the host's
     // response. ZenStack v3 typically rejects unknown columns with 4xx; if it
     // silently ignores, this test still serves as a documentation marker.
-    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+    let r: APIResponse | undefined;
     await test.step("Query sessionResults with unknown testCaseId filter", async () => {
       const q = encodeURIComponent(
         JSON.stringify({

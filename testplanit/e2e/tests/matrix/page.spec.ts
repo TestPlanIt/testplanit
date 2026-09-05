@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * E2E spec — Matrix view.
@@ -17,7 +18,7 @@ test.describe("Matrix view — happy path @matrix", () => {
     baseURL,
   }) => {
     let projectId: number | undefined;
-    let exportRes: Awaited<ReturnType<typeof request.get>> | undefined;
+    let exportRes: APIResponse | undefined;
 
     // Seed a project, case, configuration, and test run for the export
     await test.step("Seed project, case, configuration, and test run", async () => {

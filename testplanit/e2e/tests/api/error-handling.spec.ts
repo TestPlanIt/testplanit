@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Error Handling E2E Tests
@@ -71,7 +72,7 @@ test.describe("Error Handling - ZenStack v3 Error Format", () => {
     request,
     baseURL,
   }) => {
-    let fkResponse: Awaited<ReturnType<typeof request.post>> | undefined;
+    let fkResponse: APIResponse | undefined;
 
     await test.step("Create a case with nonexistent foreign keys", async () => {
       // Attempt to create a RepositoryCase with nonexistent IDs
@@ -117,8 +118,7 @@ test.describe("Error Handling - ZenStack v3 Error Format", () => {
     request,
     baseURL,
   }) => {
-    let validationResponse:
-      Awaited<ReturnType<typeof request.post>> | undefined;
+    let validationResponse: APIResponse | undefined;
 
     await test.step("Create a case with empty data", async () => {
       // Attempt to create a RepositoryCase with empty data

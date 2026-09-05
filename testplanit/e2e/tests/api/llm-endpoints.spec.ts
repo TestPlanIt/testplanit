@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * LLM API Endpoint Tests
@@ -25,7 +26,7 @@ test.describe("LLM API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send unauthenticated generate-test-cases request", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/llm/generate-test-cases`,
@@ -52,7 +53,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send generate-test-cases request without issue", async () => {
         response = await request.post(
           `${baseURL}/api/llm/generate-test-cases`,
@@ -78,7 +79,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send generate-test-cases request without template", async () => {
         response = await request.post(
           `${baseURL}/api/llm/generate-test-cases`,
@@ -109,7 +110,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send generate-test-cases request for a non-existent project", async () => {
         response = await request.post(
           `${baseURL}/api/llm/generate-test-cases`,
@@ -160,7 +161,7 @@ test.describe("LLM API Endpoints", () => {
         );
       });
 
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send generate-test-cases request for the project", async () => {
         response = await request.post(
           `${baseURL}/api/llm/generate-test-cases`,
@@ -212,7 +213,7 @@ test.describe("LLM API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send unauthenticated magic-select-cases request", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/llm/magic-select-cases`,
@@ -242,7 +243,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send magic-select-cases request with missing name", async () => {
         response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
           data: {
@@ -269,7 +270,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send magic-select-cases request with missing projectId", async () => {
         response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
           data: {
@@ -295,7 +296,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send magic-select-cases request for a non-existent project", async () => {
         response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
           data: {
@@ -329,7 +330,7 @@ test.describe("LLM API Endpoints", () => {
         );
       });
 
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send full-analysis magic-select-cases request", async () => {
         response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
           data: {
@@ -363,7 +364,7 @@ test.describe("LLM API Endpoints", () => {
         );
       });
 
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send countOnly magic-select-cases request", async () => {
         response = await request.post(`${baseURL}/api/llm/magic-select-cases`, {
           data: {
@@ -411,7 +412,7 @@ test.describe("LLM API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send unauthenticated chat request", async () => {
         response = await unauthRequest.post(`${baseURL}/api/llm/chat`, {
           data: {
@@ -434,7 +435,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send chat request without llmIntegrationId", async () => {
         response = await request.post(`${baseURL}/api/llm/chat`, {
           data: {
@@ -453,7 +454,7 @@ test.describe("LLM API Endpoints", () => {
     });
 
     test("returns 400 for missing message", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send chat request without message", async () => {
         response = await request.post(`${baseURL}/api/llm/chat`, {
           data: {
@@ -475,7 +476,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send chat request for a non-existent project", async () => {
         response = await request.post(`${baseURL}/api/llm/chat`, {
           data: {
@@ -503,7 +504,7 @@ test.describe("LLM API Endpoints", () => {
         projectId = await api.createProject(`E2E LLM Chat Test ${Date.now()}`);
       });
 
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send chat request with a non-existent integration ID", async () => {
         response = await request.post(`${baseURL}/api/llm/chat`, {
           data: {
@@ -533,7 +534,7 @@ test.describe("LLM API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send unauthenticated parse-markdown-test-cases request", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/llm/parse-markdown-test-cases`,
@@ -556,7 +557,7 @@ test.describe("LLM API Endpoints", () => {
     });
 
     test("returns 400 for missing markdown", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send parse-markdown-test-cases request without markdown", async () => {
         response = await request.post(
           `${baseURL}/api/llm/parse-markdown-test-cases`,
@@ -579,7 +580,7 @@ test.describe("LLM API Endpoints", () => {
     });
 
     test("returns 400 for missing projectId", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send parse-markdown-test-cases request without projectId", async () => {
         response = await request.post(
           `${baseURL}/api/llm/parse-markdown-test-cases`,
@@ -605,7 +606,7 @@ test.describe("LLM API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send parse-markdown-test-cases request for a non-existent project", async () => {
         response = await request.post(
           `${baseURL}/api/llm/parse-markdown-test-cases`,
@@ -638,7 +639,7 @@ test.describe("LLM API Endpoints", () => {
         );
       });
 
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Send parse-markdown-test-cases request for the project", async () => {
         response = await request.post(
           `${baseURL}/api/llm/parse-markdown-test-cases`,
