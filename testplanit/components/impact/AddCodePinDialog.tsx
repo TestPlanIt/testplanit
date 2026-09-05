@@ -454,7 +454,10 @@ export function AddCodePinDialog({
     >
       <DialogContent
         className={cn(
-          "sm:max-w-2xl flex flex-col overflow-y-hidden",
+          "flex flex-col overflow-y-hidden transition-[max-width] duration-200",
+          // Only the line viewer needs the extra room; the other kinds are a
+          // couple of fields and would sit in empty space.
+          kind === "RANGE" ? "sm:max-w-5xl" : "sm:max-w-2xl",
           // One height for every pin kind: the dialog no longer grows and
           // shrinks as the kind changes, and the body scrolls instead.
           !fullScreen && "h-[90vh]"

@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { FolderKanban, History, Link2, Pin, Sparkles } from "lucide-react";
+import { History, Link2, Pin, SearchCode, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ComponentType } from "react";
 import type {
@@ -40,7 +40,7 @@ const REASON_LABEL_KEY: Record<ReasonKind, string> = {
 
 const REASON_ICON: Record<ReasonKind, ComponentType<{ className?: string }>> = {
   PIN: Pin,
-  PATH: FolderKanban,
+  PATH: SearchCode,
   HISTORY: History,
   AI: Sparkles,
   LINKED: Link2,

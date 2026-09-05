@@ -91,7 +91,7 @@ export function ImpactButton({
               data-testid="impact-button"
             >
               <Radio className="h-4 w-4" />
-              {t("viewImpact")}
+              {t("analyzeImpact")}
             </Button>
           </span>
         </TooltipTrigger>
@@ -111,7 +111,7 @@ export function ImpactButton({
         data-testid="impact-button"
       >
         <Radio className="h-4 w-4" />
-        {t("viewImpact")}
+        {t("analyzeImpact")}
       </Button>
 
       {dialogOpen && (

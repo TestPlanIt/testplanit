@@ -163,7 +163,7 @@ const sidebars: SidebarsConfig = {
                   items: [
                     'user-guide/llm-test-generation', // AI test case generation
                     'user-guide/llm-magic-select', // AI-powered test case selection
-                    'user-guide/impact', // Test impact analysis: View impact, Affected Tests, Code Pins
+                    'user-guide/impact', // Test impact analysis: Analyze impact, Affected Tests, Code Pins
                     'user-guide/llm-quickscript', // AI-powered QuickScript generation
                     'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                     'user-guide/llm-markdown-import', // AI-assisted markdown import
@@ -173,7 +173,7 @@ const sidebars: SidebarsConfig = {
                 },
                 'user-guide/prompt-configurations', // AI prompt configuration management
                 'user-guide/quickscript-templates', // QuickScript templates for test case export
-                'user-guide/code-repositories', // Git repository connections for QuickScript context and Impact
+                'user-guide/code-repositories', // Git repository connections for QuickScript context and Impact Analysis
               ],
             },
             // System
@@ -348,7 +348,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/webhooks', // Inbound and outbound webhooks (configured per project)
                 'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides
                 'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
-                'user-guide/projects/settings/impact', // Project Impact: application repository, cache, repository markers
+                'user-guide/projects/settings/impact', // Project Impact Analysis: application repository, cache, repository markers
                 'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
                 'user-guide/projects/settings/advanced', // Per-project feature toggles
                 'user-guide/projects/settings/shares', // Project-scoped share link management

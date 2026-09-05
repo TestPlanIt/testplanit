@@ -11,6 +11,10 @@ import {
   RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ListPullRequestsOptions,
+  type ListPullRequestsResult,
+  type PullRequestState,
+  type RepoPullRequest,
 } from "./GitRepoAdapter";
 import {
   MAX_COMPARE_COMMITS,
@@ -145,6 +149,60 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
       commits: ((data.values ?? []) as any[]).map((c) => this.toCommit(c)),
       hasMore: Boolean(data.next),
     };
+  }
+
+  async getMergeBase(baseRef: string, headRef: string): Promise<string | null> {
+    try {
+      const data = await this.makeRequest<any>(
+        `${this.repoUrl}/merge-base/${encodeURIComponent(`${baseRef}..${headRef}`)}`,
+        { headers: this.authHeaders }
+      );
+      return data?.hash ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async listPullRequests(
+    opts: ListPullRequestsOptions = {}
+  ): Promise<ListPullRequestsResult> {
+    const page = Math.max(1, Math.floor(opts.page ?? 1));
+    const perPage = Math.min(50, Math.max(1, Math.floor(opts.perPage ?? 50)));
+    // Bitbucket repeats the parameter rather than taking a list, and its
+    // DECLINED/SUPERSEDED both read as closed to us.
+    const states =
+      opts.state === "open"
+        ? ["OPEN"]
+        : opts.state === "merged"
+          ? ["MERGED"]
+          : opts.state === "closed"
+            ? ["DECLINED", "SUPERSEDED"]
+            : ["OPEN", "MERGED", "DECLINED", "SUPERSEDED"];
+    const stateQuery = states.map((v) => `state=${v}`).join("&");
+    const data = await this.makeRequest<any>(
+      `${this.repoUrl}/pullrequests?${stateQuery}&pagelen=${perPage}&page=${page}&sort=-updated_on`,
+      { headers: this.authHeaders }
+    );
+    const items: any[] = Array.isArray(data?.values) ? data.values : [];
+    const pullRequests = items.map((item): RepoPullRequest => {
+      const raw = String(item?.state ?? "").toUpperCase();
+      const state: PullRequestState =
+        raw === "MERGED" ? "merged" : raw === "OPEN" ? "open" : "closed";
+      return {
+        number: Number(item?.id) || 0,
+        title: String(item?.title ?? ""),
+        state,
+        authorName:
+          item?.author?.nickname ?? item?.author?.display_name ?? undefined,
+        sourceBranch: String(item?.source?.branch?.name ?? ""),
+        targetBranch: String(item?.destination?.branch?.name ?? ""),
+        headSha: item?.source?.commit?.hash ?? undefined,
+        baseSha: item?.destination?.commit?.hash ?? undefined,
+        url: item?.links?.html?.href ?? undefined,
+        updatedAt: item?.updated_on ?? undefined,
+      };
+    });
+    return { pullRequests, hasMore: Boolean(data?.next) };
   }
 
   async compareCommits(

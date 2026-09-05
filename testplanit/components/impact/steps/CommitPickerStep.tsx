@@ -13,8 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertCircle, ArrowUpToLine, GitBranch } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CommitPicker,
   commitsUrl,
@@ -24,6 +25,7 @@ import {
   type CommitsResponse,
 } from "../CommitPicker";
 import type { ImpactRepoConfig } from "../ImpactDialog";
+import { PullRequestPicker, type RepoPullRequest } from "../PullRequestPicker";
 
 interface RepoBranch {
   name: string;
@@ -92,28 +94,58 @@ function RefInput({
     "idle" | "resolving" | "notFound" | "failed"
   >("idle");
   const [lastResolved, setLastResolved] = useState("");
+  const requestRef = useRef(0);
 
-  const resolve = useCallback(async () => {
-    const ref = value.trim();
-    if (!ref || ref === lastResolved) return;
-    setStatus("resolving");
-    try {
-      const { commit, notFound } = await resolveRef(
-        repositoryId,
-        configId,
-        ref
-      );
-      if (notFound || !commit) {
-        setStatus("notFound");
-        return;
+  const resolve = useCallback(
+    async (ref: string, { quiet }: { quiet: boolean }) => {
+      const trimmed = ref.trim();
+      if (!trimmed || trimmed === lastResolved) return;
+      const requestId = ++requestRef.current;
+      setStatus("resolving");
+      try {
+        const { commit, notFound } = await resolveRef(
+          repositoryId,
+          configId,
+          trimmed
+        );
+        // A later keystroke started its own lookup; that one owns the field.
+        if (requestId !== requestRef.current) return;
+        if (notFound || !commit) {
+          setStatus(quiet ? "idle" : "notFound");
+          return;
+        }
+        setLastResolved(trimmed);
+        setStatus("idle");
+        onResolved(commit);
+      } catch {
+        if (requestId === requestRef.current) {
+          setStatus(quiet ? "idle" : "failed");
+        }
       }
-      setLastResolved(ref);
-      setStatus("idle");
-      onResolved(commit);
-    } catch {
-      setStatus("failed");
-    }
-  }, [value, lastResolved, repositoryId, configId, onResolved]);
+    },
+    [lastResolved, repositoryId, configId, onResolved]
+  );
+
+  // `resolve` is rebuilt whenever the parent re-renders, so the debounce reads
+  // it through a ref: depending on it directly would restart the timer on every
+  // render and race the explicit blur and Enter lookups.
+  const latestResolve = useRef(resolve);
+  useEffect(() => {
+    latestResolve.current = resolve;
+  });
+
+  // Resolve while typing so the picker above never lags behind this box. A ref
+  // half-typed is not an error yet, so only an explicit blur or Enter reports
+  // one; the debounce keeps a paused sha from firing a request per character.
+  useEffect(() => {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === lastResolved) return;
+    const timer = setTimeout(
+      () => void latestResolve.current(trimmed, { quiet: true }),
+      500
+    );
+    return () => clearTimeout(timer);
+  }, [value, lastResolved]);
 
   return (
     <div className="space-y-1">
@@ -128,11 +160,11 @@ function RefInput({
           setValue(event.target.value);
           if (status !== "idle") setStatus("idle");
         }}
-        onBlur={() => void resolve()}
+        onBlur={() => void resolve(value, { quiet: false })}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            void resolve();
+            void resolve(value, { quiet: false });
           }
         }}
         aria-invalid={status === "notFound" || status === "failed"}
@@ -257,6 +289,73 @@ export function CommitPickerStep({
     }
   }, [branch, config.repositoryId, config.id, onHeadChange]);
 
+  const [mode, setMode] = useState<"commits" | "pull">("commits");
+  const [pullRequest, setPullRequest] = useState<RepoPullRequest | null>(null);
+  const [pullSupported, setPullSupported] = useState(true);
+  const [pullError, setPullError] = useState(false);
+
+  /**
+   * A pull request stands in for the two commits. Providers that omit the base
+   * sha from their list call leave the branch name, which resolves the same
+   * way a typed ref does.
+   */
+  const handlePullRequest = useCallback(
+    async (next: RepoPullRequest | null) => {
+      setPullRequest(next);
+      setPullError(false);
+      if (!next) return;
+      try {
+        // Judge the branch from where it diverged, not from the target tip, so
+        // the diff is what this pull request did. Providers that cannot say
+        // return null and we keep the base they gave us.
+        let baseRef = next.baseSha ?? next.targetBranch;
+        try {
+          const mergeBaseResponse = await fetch(
+            `/api/code-repositories/${config.repositoryId}/merge-base` +
+              `?configId=${config.id}&base=${encodeURIComponent(baseRef)}` +
+              `&head=${encodeURIComponent(next.headSha ?? next.sourceBranch)}`
+          );
+          if (mergeBaseResponse.ok) {
+            const { sha } = (await mergeBaseResponse.json()) as {
+              sha: string | null;
+            };
+            if (sha) baseRef = sha;
+          }
+        } catch {
+          // The provider's own base still gives a usable comparison.
+        }
+
+        const [baseCommit, headCommit] = await Promise.all([
+          /^[0-9a-f]{7,40}$/i.test(baseRef)
+            ? Promise.resolve({
+                commit: {
+                  sha: baseRef,
+                  shortSha: baseRef.slice(0, 7),
+                } as CommitRef,
+              })
+            : resolveRef(config.repositoryId, config.id, baseRef),
+          next.headSha
+            ? Promise.resolve({
+                commit: {
+                  sha: next.headSha,
+                  shortSha: next.headSha.slice(0, 7),
+                } as CommitRef,
+              })
+            : resolveRef(config.repositoryId, config.id, next.sourceBranch),
+        ]);
+        if (!baseCommit.commit || !headCommit.commit) {
+          setPullError(true);
+          return;
+        }
+        onBaseChange(baseCommit.commit);
+        onHeadChange(headCommit.commit);
+      } catch {
+        setPullError(true);
+      }
+    },
+    [config.repositoryId, config.id, onBaseChange, onHeadChange]
+  );
+
   const handlePrevious = useCallback(
     (value: string) => {
       setPreviousValue(value);
@@ -269,6 +368,37 @@ export function CommitPickerStep({
 
   return (
     <div className="space-y-4 py-2">
+      {pullSupported && (
+        <ToggleGroup
+          type="single"
+          value={mode}
+          onValueChange={(next) => {
+            if (next) setMode(next as "commits" | "pull");
+          }}
+          variant="outline"
+          size="sm"
+          className="justify-start"
+          aria-label={t("pick.modeLabel")}
+        >
+          <ToggleGroupItem value="commits" data-testid="impact-mode-commits">
+            {t("pick.modeCommits")}
+          </ToggleGroupItem>
+          <ToggleGroupItem value="pull" data-testid="impact-mode-pull">
+            {t("pick.modePull")}
+          </ToggleGroupItem>
+        </ToggleGroup>
+      )}
+
+      {pullSupported && (
+        // Say which question the mode answers, so nobody has to infer it from
+        // the results.
+        <p
+          className="text-xs text-muted-foreground"
+          data-testid="impact-mode-hint"
+        >
+          {t(mode === "pull" ? "pick.modePullHint" : "pick.modeCommitsHint")}
+        </p>
+      )}
       {branchesError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -307,9 +437,45 @@ export function CommitPickerStep({
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      {mode === "pull" && (
         <div className="space-y-2">
-          <Label>{t("pick.baseLabel")}</Label>
+          <PullRequestPicker
+            repositoryId={config.repositoryId}
+            configId={config.id}
+            value={pullRequest}
+            onValueChange={(next) => void handlePullRequest(next)}
+            onUnsupported={() => {
+              setPullSupported(false);
+              setMode("commits");
+            }}
+          />
+          {pullError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{t("errors.pullFailed")}</AlertDescription>
+            </Alert>
+          )}
+          {pullRequest && base && head && !pullError && (
+            <p
+              className="text-xs text-muted-foreground"
+              data-testid="impact-pull-request-range"
+            >
+              {t("pull.resolved", {
+                base: base.shortSha,
+                head: head.shortSha,
+                target: pullRequest.targetBranch,
+                source: pullRequest.sourceBranch,
+              })}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className={mode === "pull" ? "hidden" : "grid gap-4 md:grid-cols-2"}>
+        <div className="space-y-2">
+          <div className="flex h-8 items-center">
+            <Label>{t("pick.baseLabel")}</Label>
+          </div>
           <CommitPicker
             repositoryId={config.repositoryId}
             configId={config.id}
@@ -361,7 +527,7 @@ export function CommitPickerStep({
         </div>
 
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex h-8 items-center justify-between">
             <Label>{t("pick.headLabel")}</Label>
             <Button
               type="button"
@@ -394,7 +560,9 @@ export function CommitPickerStep({
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">{t("pick.searchHint")}</p>
+      {mode === "commits" && (
+        <p className="text-xs text-muted-foreground">{t("pick.searchHint")}</p>
+      )}
 
       {sameCommit && (
         <Alert variant="destructive" data-testid="impact-same-commit">

@@ -737,7 +737,7 @@
       "adminSamlConfig": "Admin - SAML Configuration",
       "apiDocumentation": "API Documentation",
       "sharedContent": "Shared Content",
-      "impact": "Impact"
+      "impact": "Impact Analysis"
     },
     "aria": {
       "userMenu": "User menu",
@@ -2227,12 +2227,12 @@
         }
       },
       "impact": {
-        "title": "Impact",
+        "title": "Impact Analysis",
         "description": "Enable test impact analysis and connect the repository of the application under test.",
-        "enableLabel": "Enable Impact",
+        "enableLabel": "Enable Impact Analysis",
         "enableDescription": "Allow team members to select affected tests from code changes when composing a test run.",
-        "enabledToast": "Impact enabled",
-        "disabledToast": "Impact disabled",
+        "enabledToast": "Impact Analysis enabled",
+        "disabledToast": "Impact Analysis disabled",
         "noRepos": {
           "title": "No code repositories configured",
           "adminDescription": "Set up a repository connection before configuring Impact for this project.",
@@ -2301,7 +2301,7 @@
           "error": "Scan failed: {error}"
         },
         "save": "Save Configuration",
-        "saved": "Impact configuration saved",
+        "saved": "Impact Analysis configuration saved",
         "saveError": "Failed to save configuration",
         "listError": "Failed to list repository files",
         "contentsError": "Failed to cache file contents",
@@ -4293,18 +4293,32 @@
     },
     "impact": {
       "title": "Impact",
-      "viewImpact": "View impact",
+      "analyzeImpact": "Analyze impact",
       "description": "Pick two commits of the application under test and select the test cases the changes affect.",
       "noRepository": "Connect the application repository in project settings to use Impact.",
-      "tokenUsage": "{total, number} tokens used",
-      "aiUnavailable": "No active LLM integration: results come from Code Pins, path matching and run history only.",
+      "aiUnavailable": "No active LLM integration: results come from Code Pins, keyword matching and run history only.",
       "steps": {
         "pick": "Commits",
         "diff": "Changes",
         "analyze": "Analyze",
         "review": "Affected Tests"
       },
+      "pull": {
+        "label": "Pull request",
+        "selectPlaceholder": "Select a pull request...",
+        "searchPlaceholder": "Search by number, title, author or branch...",
+        "stateAll": "All",
+        "stateOpen": "Open",
+        "stateMerged": "Merged",
+        "stateClosed": "Closed",
+        "resolved": "Comparing {base} on {target} with {head} on {source}."
+      },
       "pick": {
+        "modeLabel": "Choose changes by",
+        "modeCommits": "Commits",
+        "modePull": "Pull request",
+        "modeCommitsHint": "What changed between two builds, so you can retest everything that landed since the one you last verified.",
+        "modePullHint": "What this pull request changes, measured from where its branch split off, so work that landed on the target branch meanwhile is left out.",
         "branchLabel": "Branch",
         "baseLabel": "Base commit",
         "headLabel": "Head commit",
@@ -4345,16 +4359,17 @@
         "resolving_config": "Resolving repository configuration…",
         "fetching_diff": "Fetching the diff…",
         "matching_pins": "Matching Code Pins…",
-        "searching_cases": "Searching test cases by changed paths…",
+        "searching_cases": "Searching test cases by keyword…",
         "scoring_history": "Scoring run history…",
         "waiting_for_ai": "Waiting for AI…",
         "merging": "Combining results…",
-        "batch": "AI batch {current} of {total}",
+        "ranking": "Ranked {current} of {total} candidate test cases",
         "reused": "Reusing a recent analysis of the same commits."
       },
       "affected": {
         "title": "{count, plural, =0 {No affected tests} one {# affected test} other {# affected tests}}",
         "description": "Sorted by score. Every test shows why it was selected.",
+        "relatedCount": "{count, plural, one {# related test} other {# related tests}} scored lower and are unchecked.",
         "summary": "Summary",
         "score": "Score",
         "case": "Test case",
@@ -4374,7 +4389,7 @@
       },
       "reasons": {
         "pin": "Pin",
-        "path": "Path",
+        "path": "Keyword",
         "history": "History",
         "ai": "AI",
         "linked": "Related",
@@ -4407,8 +4422,8 @@
         "diff_truncated_by_provider": "The provider returned a partial diff.",
         "diff_truncated_by_budget": "Only part of the diff fit the AI context; {count, plural, one {# file was} other {# files were}} summarized by path only.",
         "llm_not_configured": "No active LLM integration: AI ranking was skipped.",
-        "search_fallback_db": "Search index unavailable: path matching used the database.",
-        "search_index_empty": "This project has no cases in the search index, so path matching used the database. Ask an admin to reindex for better matches.",
+        "search_fallback_db": "Search index unavailable: keyword matching used the database.",
+        "search_index_empty": "This project has no cases in the search index, so keyword matching used the database. Ask an admin to reindex for better matches.",
         "ai_partial": "Some AI batches failed; results may be incomplete.",
         "ai_truncated": "{count, plural, one {# AI batch was} other {# AI batches were}} cut off by the model.",
         "no_candidates": "No test case matched.",
@@ -4427,6 +4442,7 @@
       "errors": {
         "title": "Analysis failed",
         "generic": "Something went wrong while analyzing the changes. Please try again.",
+        "pullFailed": "Could not read that pull request's commits. Pick another, or name the commits yourself.",
         "compareFailed": "Could not compare the commits.",
         "analysisFailed": "The analysis failed: {error}",
         "cancelled": "The analysis was cancelled.",
@@ -4486,7 +4502,7 @@
       "toolsAndIntegrations": "Tools & Integrations",
       "aiTools": "AI Tools",
       "system": "System",
-      "impact": "Impact"
+      "impact": "Impact Analysis"
     },
     "imports": {
       "description": "Bring data from external test management tools into TestPlanIt.",
@@ -7334,7 +7350,7 @@
     "projectSessions": "## Sessions\nExploratory testing sessions — time-boxed, unscripted testing captured as notes and results across active and completed states.",
     "projectTags": "## Tags\nTags label and group this project's test cases, sessions, and runs so related work is easy to find.",
     "projectIssues": "## Issues\nIssues from this project's connected trackers, linked to the test cases, runs, and sessions where they were found or referenced.",
-    "projectRequirements": "## Requirements\nThe project's requirements in a hierarchy \u2014 authored natively in TestPlanIt or synced from a connected tracker \u2014 with linked test cases and coverage rolled up through the tree.",
+    "projectRequirements": "## Requirements\nThe project's requirements in a hierarchy — authored natively in TestPlanIt or synced from a connected tracker — with linked test cases and coverage rolled up through the tree.",
     "projectReports": "## Reports\nReports summarize this project's testing — test runs, sessions, and results — as charts and tables you can filter and export.",
     "projectAuditLogs": "## Audit Logs\nThe audit trail of actions performed in this project — who changed what, and when — for security and compliance tracking.",
     "projectIntegrations": "## Issue Integrations\nConnect this project to an issue tracker so its test cases, runs, and sessions can link to and sync with external issues and milestones.",
@@ -8458,9 +8474,9 @@
         "debtByHierarchy": "Debt by top-level requirement",
         "debtAging": "Debt aging",
         "ageUnder30": "Under 30 days",
-        "age30to90": "30\u201390 days",
-        "age90to180": "90\u2013180 days",
-        "age180to365": "180\u2013365 days",
+        "age30to90": "30–90 days",
+        "age90to180": "90–180 days",
+        "age180to365": "180–365 days",
         "ageOver365": "Over a year",
         "includeNotRun": "Include requirements whose tests have never run",
         "otherRoots": "Other ({count, plural, one {# hierarchy} other {# hierarchies}})",

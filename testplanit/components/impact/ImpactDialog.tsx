@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { WizardStepIndicator } from "@/components/ui/WizardStepIndicator";
-import { Radio, Sparkles, XCircle } from "lucide-react";
+import { GitCompareArrows, Radar, Radio, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useReducer } from "react";
 import {
@@ -417,7 +417,6 @@ export function ImpactDialog({
   }, [analysis.analysisId, state.selectedCaseIds, onAccept, handleOpenChange]);
 
   const stepIndex = IMPACT_STEPS.indexOf(state.step);
-  const tokenTotal = analysis.result?.analysis.result?.stats?.ai?.tokens?.total;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -444,7 +443,7 @@ export function ImpactDialog({
           ]}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto pe-1">
+        <div className="min-h-0 flex-1 overflow-y-auto px-1">
           {state.step === "pick" && (
             <CommitPickerStep
               projectId={projectId}
@@ -502,13 +501,7 @@ export function ImpactDialog({
           )}
         </div>
 
-        <DialogFooter className="items-center gap-2 sm:justify-between">
-          <div className="text-xs text-muted-foreground">
-            {state.step === "review" &&
-              typeof tokenTotal === "number" &&
-              tokenTotal > 0 &&
-              t("tokenUsage", { total: tokenTotal })}
-          </div>
+        <DialogFooter className="items-center gap-2">
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => handleOpenChange(false)}>
               {tCommon("cancel")}
@@ -519,7 +512,7 @@ export function ImpactDialog({
                 disabled={!canCompare(state)}
                 data-testid="impact-compare"
               >
-                <Radio className="h-4 w-4" />
+                <GitCompareArrows className="h-4 w-4" />
                 {t("actions.compare")}
               </Button>
             )}
@@ -535,7 +528,7 @@ export function ImpactDialog({
                   }
                   data-testid="impact-analyze"
                 >
-                  <Sparkles className="h-4 w-4" />
+                  <Radar className="h-4 w-4" />
                   {t("actions.analyze")}
                 </Button>
               </>

@@ -11,6 +11,10 @@ import {
   RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ListPullRequestsOptions,
+  type ListPullRequestsResult,
+  type PullRequestState,
+  type RepoPullRequest,
 } from "./GitRepoAdapter";
 
 export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
@@ -115,6 +119,64 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
     });
     const commits = (data.value ?? []).map((c: any) => this.mapCommit(c));
     return { commits, hasMore: commits.length === perPage };
+  }
+
+  async getMergeBase(baseRef: string, headRef: string): Promise<string | null> {
+    try {
+      const data = await this.makeRequest<any>(
+        `${this.repoApiUrl}/commits/${encodeURIComponent(baseRef)}/mergebases` +
+          `?otherCommitId=${encodeURIComponent(headRef)}&api-version=7.0-preview.1`,
+        { headers: this.authHeaders }
+      );
+      const first = Array.isArray(data?.value) ? data.value[0] : null;
+      return first?.commitId ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async listPullRequests(
+    opts: ListPullRequestsOptions = {}
+  ): Promise<ListPullRequestsResult> {
+    const page = Math.max(1, Math.floor(opts.page ?? 1));
+    const perPage = Math.min(100, Math.max(1, Math.floor(opts.perPage ?? 50)));
+    // Azure pages by skip rather than page number, and calls a closed PR
+    // "abandoned" unless it merged.
+    const status =
+      opts.state === "open"
+        ? "active"
+        : opts.state === "merged"
+          ? "completed"
+          : opts.state === "closed"
+            ? "abandoned"
+            : "all";
+    const skip = (page - 1) * perPage;
+    const data = await this.makeRequest<any>(
+      `${this.repoApiUrl}/pullrequests?searchCriteria.status=${status}` +
+        `&$top=${perPage}&$skip=${skip}&api-version=7.0`,
+      { headers: this.authHeaders }
+    );
+    const items: any[] = Array.isArray(data?.value) ? data.value : [];
+    const stripRef = (ref: unknown) =>
+      String(ref ?? "").replace(/^refs\/heads\//, "");
+    const pullRequests = items.map((item): RepoPullRequest => {
+      const raw = String(item?.status ?? "").toLowerCase();
+      const state: PullRequestState =
+        raw === "completed" ? "merged" : raw === "active" ? "open" : "closed";
+      return {
+        number: Number(item?.pullRequestId) || 0,
+        title: String(item?.title ?? ""),
+        state,
+        authorName: item?.createdBy?.displayName ?? undefined,
+        sourceBranch: stripRef(item?.sourceRefName),
+        targetBranch: stripRef(item?.targetRefName),
+        headSha: item?.lastMergeSourceCommit?.commitId ?? undefined,
+        baseSha: item?.lastMergeTargetCommit?.commitId ?? undefined,
+        url: item?._links?.web?.href ?? undefined,
+        updatedAt: item?.creationDate ?? undefined,
+      };
+    });
+    return { pullRequests, hasMore: items.length === perPage };
   }
 
   async compareCommits(

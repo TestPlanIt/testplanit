@@ -46,9 +46,12 @@ export function isRouteResponse(
 }
 
 /** Provider failures surface as 502 with the adapter's message (it already
- * carries rate-limit "retry in N" hints and never echoes credentials). */
+ * carries rate-limit "retry in N" hints and never echoes credentials). The one
+ * exception is a 404: the ref or path the caller named does not exist, which is
+ * the caller's answer to give, not a gateway failure to report. */
 export function providerErrorResponse(error: unknown): NextResponse {
   const message =
     error instanceof Error ? error.message : "Repository request failed";
-  return NextResponse.json({ error: message }, { status: 502 });
+  const status = /^HTTP 404\b/.test(message) ? 404 : 502;
+  return NextResponse.json({ error: message }, { status });
 }

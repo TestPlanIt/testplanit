@@ -11,6 +11,10 @@ import {
   RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ListPullRequestsOptions,
+  type ListPullRequestsResult,
+  type PullRequestState,
+  type RepoPullRequest,
 } from "./GitRepoAdapter";
 import {
   MAX_COMPARE_COMMITS,
@@ -181,6 +185,60 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
     const items: any[] = Array.isArray(data) ? data : [];
     const commits = items.map((item) => this.mapCommit(item));
     return { commits, hasMore: commits.length === perPage };
+  }
+
+  async getMergeBase(baseRef: string, headRef: string): Promise<string | null> {
+    // The compare payload names the divergence point outright.
+    const data = await this.makeRequest<any>(
+      `${this.repoUrl}/compare/${encodeURIComponent(baseRef)}...${encodeURIComponent(headRef)}`,
+      { headers: this.authHeaders }
+    );
+    return data?.merge_base_commit?.sha ?? null;
+  }
+
+  async listPullRequests(
+    opts: ListPullRequestsOptions = {}
+  ): Promise<ListPullRequestsResult> {
+    const page = Math.max(1, Math.floor(opts.page ?? 1));
+    const perPage = Math.min(100, Math.max(1, Math.floor(opts.perPage ?? 50)));
+    // GitHub has no "merged" state filter: a merged PR is closed with a
+    // merged_at, so ask for the wider set and narrow it here.
+    const apiState = opts.state === "open" ? "open" : "all";
+    const url =
+      `${this.repoUrl}/pulls?state=${apiState}` +
+      `&sort=updated&direction=desc&per_page=${perPage}&page=${page}`;
+    const data = await this.makeRequest<any>(url, {
+      headers: this.authHeaders,
+    });
+    const items: any[] = Array.isArray(data) ? data : [];
+    const mapped = items.map((item) => this.mapPullRequest(item));
+    // The wider fetch above has to be narrowed here: the API has no "merged"
+    // state, so merged and closed would otherwise return the same list.
+    const pullRequests =
+      opts.state && opts.state !== "all"
+        ? mapped.filter((pr) => pr.state === opts.state)
+        : mapped;
+    return { pullRequests, hasMore: items.length === perPage };
+  }
+
+  private mapPullRequest(item: any): RepoPullRequest {
+    const state: PullRequestState = item?.merged_at
+      ? "merged"
+      : item?.state === "closed"
+        ? "closed"
+        : "open";
+    return {
+      number: Number(item?.number) || 0,
+      title: String(item?.title ?? ""),
+      state,
+      authorName: item?.user?.login ?? undefined,
+      sourceBranch: String(item?.head?.ref ?? ""),
+      targetBranch: String(item?.base?.ref ?? ""),
+      headSha: item?.head?.sha ?? undefined,
+      baseSha: item?.base?.sha ?? undefined,
+      url: item?.html_url ?? undefined,
+      updatedAt: item?.updated_at ?? undefined,
+    };
   }
 
   async compareCommits(

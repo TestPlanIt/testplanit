@@ -96,6 +96,7 @@ export function AffectedTestsStep({
   const locale = useLocale();
   const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
 
+  const relatedCount = cases.filter((row) => row.tier === "related").length;
   const affectedCount = cases.filter(
     (row) => row.tier === "pinned" || row.tier === "affected"
   ).length;
@@ -127,6 +128,12 @@ export function AffectedTestsStep({
         </h3>
         <p className="text-xs text-muted-foreground">
           {t("affected.description")}
+          {relatedCount > 0 && (
+            <span data-testid="impact-related-count">
+              {" "}
+              {t("affected.relatedCount", { count: relatedCount })}
+            </span>
+          )}
         </p>
       </div>
 

@@ -1181,19 +1181,21 @@ export default function ImpactSettingsPage() {
               <AlertTriangle className="h-5 w-5 text-destructive" />
               {t("disconnect")}
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                {t("confirmDisconnect", {
-                  name: existingConfig?.repository?.name ?? "",
-                })}
-              </p>
+            <AlertDialogDescription asChild className="space-y-2">
               <div>
-                <p className="font-medium">{t("disconnectWarningTitle")}</p>
-                <ul className="list-disc ps-5 mt-1">
-                  <li>{t("disconnectWarning1", { count: pinCount ?? 0 })}</li>
-                  <li>{t("disconnectWarning2")}</li>
-                  <li>{t("disconnectWarning3")}</li>
-                </ul>
+                <p>
+                  {t("confirmDisconnect", {
+                    name: existingConfig?.repository?.name ?? "",
+                  })}
+                </p>
+                <div>
+                  <p className="font-medium">{t("disconnectWarningTitle")}</p>
+                  <ul className="list-disc ps-5 mt-1">
+                    <li>{t("disconnectWarning1", { count: pinCount ?? 0 })}</li>
+                    <li>{t("disconnectWarning2")}</li>
+                    <li>{t("disconnectWarning3")}</li>
+                  </ul>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>

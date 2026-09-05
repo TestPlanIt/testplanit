@@ -705,6 +705,161 @@ describe("GitHubRepoAdapter", () => {
     });
   });
 
+  describe("listPullRequests", () => {
+    function makeRawPull(number: number, overrides: Record<string, any> = {}) {
+      return {
+        number,
+        title: `PR ${number}`,
+        state: "open",
+        merged_at: null,
+        user: { login: "ada" },
+        head: { ref: `feature-${number}`, sha: `head${number}` },
+        base: { ref: "main", sha: `base${number}` },
+        html_url: `https://github.com/myorg/myrepo/pull/${number}`,
+        updated_at: "2026-09-01T10:00:00Z",
+        ...overrides,
+      };
+    }
+
+    it("maps a pull request and requests the newest first", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([makeRawPull(7)]));
+
+      const result = await adapter.listPullRequests();
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("/pulls?state=all");
+      expect(url).toContain("sort=updated&direction=desc");
+      expect(url).toContain("per_page=50&page=1");
+      expect(result.pullRequests).toEqual([
+        {
+          number: 7,
+          title: "PR 7",
+          state: "open",
+          authorName: "ada",
+          sourceBranch: "feature-7",
+          targetBranch: "main",
+          headSha: "head7",
+          baseSha: "base7",
+          url: "https://github.com/myorg/myrepo/pull/7",
+          updatedAt: "2026-09-01T10:00:00Z",
+        },
+      ]);
+      expect(result.hasMore).toBe(false);
+    });
+
+    it("reads a merged pull request from merged_at, which GitHub reports as closed", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          makeRawPull(1, {
+            state: "closed",
+            merged_at: "2026-09-02T09:00:00Z",
+          }),
+          makeRawPull(2, { state: "closed", merged_at: null }),
+        ])
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests.map((pr) => pr.state)).toEqual([
+        "merged",
+        "closed",
+      ]);
+    });
+
+    it("asks the API only for open, since that is the one state it filters natively", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([makeRawPull(3)]));
+
+      await adapter.listPullRequests({ state: "open" });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/pulls?state=open");
+    });
+
+    it("narrows merged and closed itself, because the API cannot tell them apart", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([
+          makeRawPull(1, {
+            state: "closed",
+            merged_at: "2026-09-02T09:00:00Z",
+          }),
+          makeRawPull(2, { state: "closed", merged_at: null }),
+          makeRawPull(3),
+        ])
+      );
+
+      const result = await adapter.listPullRequests({ state: "merged" });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("state=all");
+      expect(result.pullRequests.map((pr) => pr.number)).toEqual([1]);
+    });
+
+    it("reports hasMore only when the page came back full", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse([makeRawPull(1), makeRawPull(2)])
+      );
+
+      const full = await adapter.listPullRequests({ perPage: 2 });
+      expect(full.hasMore).toBe(true);
+
+      mockFetch.mockResolvedValueOnce(makeResponse([makeRawPull(3)]));
+      const partial = await adapter.listPullRequests({ perPage: 2 });
+      expect(partial.hasMore).toBe(false);
+    });
+
+    it("clamps the page size to the provider's maximum and the page to a positive integer", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse([]));
+
+      await adapter.listPullRequests({ perPage: 5000, page: 0 });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("per_page=100");
+      expect(url).toContain("page=1");
+    });
+
+    it("survives a payload that is not an array", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ message: "Not Found" }));
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests).toEqual([]);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("getMergeBase", () => {
+    it("returns the divergence point the compare payload names", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          merge_base_commit: { sha: "m".repeat(40) },
+          files: [],
+          commits: [],
+        })
+      );
+
+      const sha = await adapter.getMergeBase("main", "feature");
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/compare/main...feature");
+      expect(sha).toBe("m".repeat(40));
+    });
+
+    it("returns null when the provider does not name one", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ files: [], commits: [] }));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+
+    it("encodes refs that contain slashes", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ merge_base_commit: { sha: "abc" } })
+      );
+
+      await adapter.getMergeBase("release/1.0", "feature/login");
+
+      expect(mockFetch.mock.calls[0][0]).toContain(
+        "/compare/release%2F1.0...feature%2Flogin"
+      );
+    });
+  });
+
   describe("GitHub Enterprise Server (custom base URL)", () => {
     it("falls back to api.github.com when the baseUrl setting is an empty string", async () => {
       const ghesAdapter = new GitHubRepoAdapter(

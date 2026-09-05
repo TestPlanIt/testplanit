@@ -1,27 +1,27 @@
 ---
-sidebar_label: 'Impact'
-title: 'Impact (Project Settings)'
+sidebar_label: 'Impact Analysis'
+title: 'Impact Analysis (Project Settings)'
 description: Enable test impact analysis for a project and connect the repository of the application under test — branch, path patterns, cache, and repository markers
 ---
 
-# Impact
+# Impact Analysis
 
-The project-level **Settings → Impact** page enables [test impact analysis](../../impact.md) for a project and connects the **application repository** behind it — the repository of the application under test, whose commits are compared and whose files test cases are pinned to.
+The project-level **Settings → Impact Analysis** page enables [test impact analysis](../../impact.md) for a project and connects the **application repository** behind it — the repository of the application under test, whose commits are compared and whose files test cases are pinned to.
 
 :::note
 Only system administrators and project administrators can open this page. Repositories are registered globally by a system administrator; this page selects and configures one for the project.
 :::
 
-This is a separate connection from the one on the [QuickScript](quickscript.md) page: QuickScript points at test automation code, Impact points at the application under test. A project can use the same repository for both, or different ones.
+This is a separate connection from the one on the [QuickScript](quickscript.md) page: QuickScript points at test automation code, Impact Analysis points at the application under test. A project can use the same repository for both, or different ones.
 
 ## How to access
 
 1. Open the project and expand **Settings** in the project menu.
-2. Select **Impact**.
+2. Select **Impact Analysis**.
 
-## Enable Impact
+## Enable Impact Analysis
 
-The **Enable Impact** toggle controls whether team members see **View impact** when composing a test run and the **Code Pins** panel on test case pages. The toggle applies immediately; the rest of the page is saved with **Save Configuration**.
+The **Enable Impact Analysis** toggle controls whether team members see **Analyze impact** when composing a test run and the **Code Pins** panel on test case pages. The toggle applies immediately; the rest of the page is saved with **Save Configuration**.
 
 ## Application Repository
 

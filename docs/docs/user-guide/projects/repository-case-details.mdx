@@ -55,20 +55,20 @@ When the header is too narrow for labeled buttons (for example in the docked sid
 
 ## Code Pins
 
-When the project has [Impact](../impact.md) enabled and an application repository connected, a **Code Pins** panel follows the result history. It lists the code this case covers — a change inside a pinned block pulls the case into Impact analyses with the **Pin** reason. The panel header names the connected repository and branch and offers **Add pin**.
+When the project has [Impact Analysis](../impact.md) enabled and an application repository connected, a **Code Pins** panel follows the result history. It lists the code this case covers — a change inside a pinned block pulls the case into an analysis with the **Pin** reason. The panel header names the connected repository, and its branch when one is configured, and offers **Add pin**.
 
-Each pin shows its **Location** (the file path with a line range such as `L12–L40`, a symbol name, a glob pattern, or **Whole file**), its **Kind**, its **Source** — **Manual**, **AI**, **Annotation**, or **Map file** — its note, and the commit it is anchored at. A pin whose file, lines, or symbol can no longer be found at the branch tip carries a **Stale** badge with **Re-anchor** and **Dismiss** actions. Pins added here can be removed after a confirmation; pins that come from the repository (**Annotation** and **Map file**) are read-only and are edited in the repository itself.
+Each pin is a row with its **File** and note, its **Location** (a line range such as `L12–L40`, a symbol name, a glob pattern, or **Whole file**), its **Kind**, and its **Source** — **Manual**, **AI**, **Annotation**, or **Map file**. Hovering the location names the commit the pin is anchored at. A pin whose file, lines, or symbol can no longer be found at the branch tip carries a **Stale** badge with **Re-anchor** and **Dismiss** actions. Pins added here can be edited, or removed after a confirmation; pins that come from the repository (**Annotation** and **Map file**) have both actions disabled and are edited in the repository itself.
 
 **Add pin** opens the **Pin this case to code** dialog:
 
 *   **Pin to:** choose **Whole file**, **Lines**, **Symbol**, or **Glob pattern**.
 *   **File:** for the first three kinds, pick the file from the repository's cached file list (type to filter). If no list is cached yet, a project admin needs to refresh the repository cache; with caching turned off, files are listed live from the provider.
 *   **Lines:** the file opens with numbered lines — click a line number to start the range and shift-click another to end it, or type the **Start line** and **End line**. Files too large to display accept line numbers only.
-*   **Symbol:** type the name of the function, class, or other declaration; it is located by name in the file.
+*   **Symbol:** pick from the declarations found in the file, or type a name the list does not offer.
 *   **Glob pattern:** type a pattern such as `src/payments/**`; a live count shows how many cached files match.
 *   **Note:** optional text explaining why this case covers the code.
 
-Pins are anchored at the current tip of the configured branch. The same panel appears read-only when the case is opened from within a test run. See [Code Pins](../impact.md#code-pins) for the kinds, staleness, and repository markers in detail.
+Pins are anchored at the current tip of the configured branch. **Edit pin** reopens the dialog with the kind and file fixed, so a pin's range, symbol, pattern, or note can change but its target file cannot. The same panel appears read-only when the case is opened from within a test run. See [Code Pins](../impact.md#code-pins) for the kinds, staleness, and repository markers in detail.
 
 ## Versions
 

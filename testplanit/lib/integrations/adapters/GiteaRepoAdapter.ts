@@ -16,6 +16,10 @@ import {
   RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ListPullRequestsOptions,
+  type ListPullRequestsResult,
+  type PullRequestState,
+  type RepoPullRequest,
 } from "./GitRepoAdapter";
 
 const MAX_FILES = 10000;
@@ -190,6 +194,59 @@ export class GiteaRepoAdapter extends GitRepoAdapter {
     );
     const commits = (data ?? []).map((c) => this.toRepoCommit(c));
     return { commits, hasMore: commits.length === perPage };
+  }
+
+  async getMergeBase(baseRef: string, headRef: string): Promise<string | null> {
+    // Gitea mirrors GitHub's compare payload where it supports the endpoint.
+    try {
+      const data = await this.makeRequest<any>(
+        `${this.repoUrl}/compare/${encodeURIComponent(baseRef)}...${encodeURIComponent(headRef)}`,
+        { headers: this.authHeaders }
+      );
+      return data?.merge_base_commit?.sha ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async listPullRequests(
+    opts: ListPullRequestsOptions = {}
+  ): Promise<ListPullRequestsResult> {
+    const page = Math.max(1, Math.floor(opts.page ?? 1));
+    const perPage = Math.min(50, Math.max(1, Math.floor(opts.perPage ?? 50)));
+    // Gitea mirrors GitHub here, including folding merged into closed.
+    const apiState = opts.state === "open" ? "open" : "all";
+    const url =
+      `${this.repoUrl}/pulls?state=${apiState}` +
+      `&sort=recentupdate&limit=${perPage}&page=${page}`;
+    const data = await this.makeRequest<any>(url, {
+      headers: this.authHeaders,
+    });
+    const items: any[] = Array.isArray(data) ? data : [];
+    const pullRequests = items.map((item): RepoPullRequest => {
+      const state: PullRequestState = item?.merged
+        ? "merged"
+        : item?.state === "closed"
+          ? "closed"
+          : "open";
+      return {
+        number: Number(item?.number) || 0,
+        title: String(item?.title ?? ""),
+        state,
+        authorName: item?.user?.login ?? undefined,
+        sourceBranch: String(item?.head?.ref ?? ""),
+        targetBranch: String(item?.base?.ref ?? ""),
+        headSha: item?.head?.sha ?? undefined,
+        baseSha: item?.base?.sha ?? undefined,
+        url: item?.html_url ?? undefined,
+        updatedAt: item?.updated_at ?? undefined,
+      };
+    });
+    const narrowed =
+      opts.state && opts.state !== "all"
+        ? pullRequests.filter((pr) => pr.state === opts.state)
+        : pullRequests;
+    return { pullRequests: narrowed, hasMore: items.length === perPage };
   }
 
   async compareCommits(

@@ -11,6 +11,10 @@ import {
   RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ListPullRequestsOptions,
+  type ListPullRequestsResult,
+  type PullRequestState,
+  type RepoPullRequest,
 } from "./GitRepoAdapter";
 import {
   MAX_COMPARE_COMMITS,
@@ -163,6 +167,69 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
     });
     const commits = items.map((item) => this.toRepoCommit(item));
     return { commits, hasMore: commits.length === perPage };
+  }
+
+  async getMergeBase(baseRef: string, headRef: string): Promise<string | null> {
+    const params = new URLSearchParams();
+    params.append("refs[]", baseRef);
+    params.append("refs[]", headRef);
+    try {
+      const data = await this.makeRequest<any>(
+        `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/merge_base?${params.toString()}`,
+        { headers: this.authHeaders }
+      );
+      return data?.id ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async listPullRequests(
+    opts: ListPullRequestsOptions = {}
+  ): Promise<ListPullRequestsResult> {
+    const page = Math.max(1, Math.floor(opts.page ?? 1));
+    const perPage = Math.min(100, Math.max(1, Math.floor(opts.perPage ?? 50)));
+    // GitLab spells the states differently and treats "all" as the absence of
+    // a filter.
+    const stateParam =
+      opts.state === "open"
+        ? "&state=opened"
+        : opts.state === "merged"
+          ? "&state=merged"
+          : opts.state === "closed"
+            ? "&state=closed"
+            : "";
+    const url =
+      `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/merge_requests` +
+      `?order_by=updated_at&sort=desc` +
+      `&per_page=${perPage}&page=${page}${stateParam}`;
+    const data = await this.makeRequest<any>(url, {
+      headers: this.authHeaders,
+    });
+    const items: any[] = Array.isArray(data) ? data : [];
+    const pullRequests = items.map((item): RepoPullRequest => {
+      const state: PullRequestState =
+        item?.state === "merged"
+          ? "merged"
+          : item?.state === "closed" || item?.state === "locked"
+            ? "closed"
+            : "open";
+      return {
+        number: Number(item?.iid) || Number(item?.id) || 0,
+        title: String(item?.title ?? ""),
+        state,
+        authorName: item?.author?.username ?? item?.author?.name ?? undefined,
+        sourceBranch: String(item?.source_branch ?? ""),
+        targetBranch: String(item?.target_branch ?? ""),
+        headSha: item?.sha ?? undefined,
+        // The list payload carries no base sha; diff_refs only appears on the
+        // single-MR endpoint, so callers fall back to the target branch.
+        baseSha: item?.diff_refs?.base_sha ?? undefined,
+        url: item?.web_url ?? undefined,
+        updatedAt: item?.updated_at ?? undefined,
+      };
+    });
+    return { pullRequests, hasMore: items.length === perPage };
   }
 
   async compareCommits(

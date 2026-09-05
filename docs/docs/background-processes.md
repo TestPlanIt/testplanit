@@ -121,7 +121,7 @@ The application uses the following background processes:
 
 ### Impact Analysis Worker
 
-- Processes Impact (test impact analysis) jobs: fetches the commit diff, matches Code Pins, searches the case library by changed paths, scores run history, and asks the LLM to rank the remaining candidates
+- Processes Impact Analysis jobs: fetches the commit diff, matches Code Pins, searches the case library by keyword, scores run history, and asks the LLM to rank the remaining candidates
 - Reports a phase per step and persists the affected-test list to the analysis record
 - Default concurrency: 1 (each job can involve provider API calls and multiple LLM batches)
 - Location: `workers/impactAnalysisWorker.ts`

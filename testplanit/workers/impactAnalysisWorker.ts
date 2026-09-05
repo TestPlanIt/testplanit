@@ -425,8 +425,8 @@ export const processor = async (
               await job.updateProgress({
                 phase: "waiting_for_ai",
                 message: "waiting_for_ai",
-                batchesCompleted: processed,
-                batchesTotal: total,
+                casesRanked: processed,
+                casesToRank: total,
                 candidates: candidates.length,
               } satisfies ImpactProgress);
             },

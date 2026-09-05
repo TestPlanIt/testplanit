@@ -1,8 +1,6 @@
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
-import { ImpactButton } from "@/components/impact/ImpactButton";
-import { recordImpactAcceptance } from "@/components/impact/recordImpactAcceptance";
 import { ApplicationArea } from "~/zenstack/models";
 import { CirclePlay, Combine, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -508,24 +506,6 @@ export function TestCasesSection({
                     : testRunData.testCases.length,
                 })}
           </span>
-          {isEditMode && canAddEdit && !compositionLocked && (
-            <ImpactButton
-              projectId={Number(params.projectId)}
-              selectedTestCases={selectedTestCases}
-              onSuggestionsAccepted={setSelectedTestCases}
-              onAnalysisAccepted={(info) =>
-                void recordImpactAcceptance(
-                  Number(params.projectId),
-                  info.analysisId,
-                  {
-                    testRunId: testRunData?.id,
-                    acceptedCaseIds: info.acceptedCaseIds,
-                  }
-                )
-              }
-              size="sm"
-            />
-          )}
           {isEditMode &&
             canAddEdit &&
             !compositionLocked &&

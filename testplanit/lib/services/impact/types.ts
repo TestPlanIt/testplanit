@@ -250,8 +250,8 @@ export interface ImpactProgress {
   pinsMatched?: number;
   pinsStale?: number;
   candidates?: number;
-  batchesCompleted?: number;
-  batchesTotal?: number;
+  casesRanked?: number;
+  casesToRank?: number;
   selectedSoFar?: number;
 }
 

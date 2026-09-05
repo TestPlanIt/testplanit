@@ -50,8 +50,8 @@ export function progressValue(
   if (phaseIndex < 0) return undefined;
   const span = 100 / IMPACT_PHASES.length;
   const within =
-    progress.batchesTotal && progress.batchesTotal > 0
-      ? (progress.batchesCompleted ?? 0) / progress.batchesTotal
+    progress.casesToRank && progress.casesToRank > 0
+      ? (progress.casesRanked ?? 0) / progress.casesToRank
       : 0;
   return Math.min(99, Math.round(phaseIndex * span + within * span));
 }
@@ -90,10 +90,10 @@ export function AnalysisProgressStep({
         ? progress.phase
         : "analyzing";
   const value = progressValue(progress);
-  const hasBatches =
+  const hasRankingProgress =
     progress !== null &&
-    typeof progress.batchesTotal === "number" &&
-    progress.batchesTotal > 0;
+    typeof progress.casesToRank === "number" &&
+    progress.casesToRank > 0;
 
   return (
     <div
@@ -109,11 +109,11 @@ export function AnalysisProgressStep({
           <p className="text-sm text-muted-foreground">
             {t(`loading.${messageKey}`)}
           </p>
-          {hasBatches && (
+          {hasRankingProgress && (
             <p className="text-xs text-muted-foreground">
-              {t("loading.batch", {
-                current: progress?.batchesCompleted ?? 0,
-                total: progress?.batchesTotal ?? 0,
+              {t("loading.ranking", {
+                current: progress?.casesRanked ?? 0,
+                total: progress?.casesToRank ?? 0,
               })}
             </p>
           )}
