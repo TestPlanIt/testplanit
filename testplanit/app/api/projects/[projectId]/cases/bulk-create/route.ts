@@ -1,23 +1,19 @@
-import { ProjectAccessType } from "~/zenstack/models";
-import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import {
-  authenticateApiTokenForMethod,
-  extractBearerToken,
-} from "~/lib/api-token-auth";
-import {
-  enrichFromApiAuth,
-  withAuditContext,
-} from "~/lib/auditContextWrappers";
+import { authorizeProjectApiRequest } from "~/lib/api/authorizeProjectApiRequest";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
+import {
+  IssueKeyResolutionError,
+  resolveIssueKeys,
+  type IssueKeyResolution,
+} from "~/lib/services/resolveIssueKeys";
 import {
   persistGeneratedTestCases,
   type ImportCaseResult,
   type ImportInput,
 } from "~/lib/services/testCaseImport";
-import { authOptions } from "~/server/auth";
 
 // Bulk case-creation endpoint reached by the MCP `testplanit_cases_create_many`
 // tool (and any other programmatic caller). It resolves the shared context
@@ -49,9 +45,18 @@ const caseSchema = z.object({
     .array(z.union([z.number().int().positive(), z.string().min(1)]))
     .optional(),
   customFields: z.record(z.string(), z.any()).optional(),
+  // Tracker issue keys ("PROJ-123") to attach to this case. Resolved
+  // server-side against the project's issue-tracker integration, creating the
+  // local Issue row when the key has never been seen here — so a script or an
+  // agent no longer needs a human to open the ticket in the UI first. A key
+  // that can't be resolved fails its own case, never the batch.
+  issues: z.array(z.string().min(1).max(255)).max(50).optional(),
 });
 
 const bulkCreateSchema = z.object({
+  // Integration to resolve `issues` keys against. Optional — the project's
+  // single active issue-tracker integration is used when it is unambiguous.
+  integrationId: z.number().int().positive().optional(),
   // Batch-level template (optional — defaults to the project's first enabled
   // template, matching the single-create tool).
   templateId: z.number().int().positive().optional(),
@@ -70,54 +75,6 @@ export const POST = withAuditContext(
     { params }: { params: Promise<{ projectId: string }> }
   ) => {
     try {
-      // ── Authentication (session, else API token) ──────────────────────────
-      // Mirror the ZenStack RPC handler the MCP server already calls: session
-      // first, then a Bearer token whose `mode:read` scope is enforced against
-      // this write method (POST). This keeps the endpoint reachable by the same
-      // MCP token as the rest of the case tools and rejects read-only tokens.
-      const session = await getServerSession(authOptions);
-      let userId: string | undefined = session?.user?.id;
-      let userName: string | undefined = session?.user?.name ?? undefined;
-      let userEmail: string | undefined = session?.user?.email ?? undefined;
-      let userAccess: string | null | undefined = session?.user?.access;
-      let tokenScopes: string[] | undefined;
-
-      if (!userId) {
-        const token = extractBearerToken(request);
-        if (!token) {
-          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-        const apiAuth = await authenticateApiTokenForMethod(request);
-        if (!apiAuth.authenticated) {
-          const status = apiAuth.errorCode === "READ_ONLY_TOKEN" ? 403 : 401;
-          return NextResponse.json(
-            { error: apiAuth.error, code: apiAuth.errorCode },
-            { status }
-          );
-        }
-        userId = apiAuth.userId;
-        userAccess = apiAuth.access;
-        tokenScopes = apiAuth.scopes;
-        const user = await baseDb.user.findUnique({
-          where: { id: userId },
-          select: { name: true, email: true },
-        });
-        userName = user?.name ?? undefined;
-        userEmail = user?.email ?? undefined;
-      }
-
-      if (!userId) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-
-      // Attribute the importer's audit hooks to the authenticated actor.
-      enrichFromApiAuth({
-        userId,
-        userEmail,
-        userName,
-        scopes: tokenScopes,
-      });
-
       const { projectId: projectIdParam } = await params;
       const projectId = parseInt(projectIdParam);
       if (isNaN(projectId)) {
@@ -127,50 +84,13 @@ export const POST = withAuditContext(
         );
       }
 
-      // ── Project access (identical policy to the bulk-edit sibling) ────────
-      const isAdmin = userAccess === "ADMIN";
-      const isProjectAdmin = userAccess === "PROJECTADMIN";
-      const projectAccessWhere = isAdmin
-        ? { id: projectId, isDeleted: false }
-        : {
-            id: projectId,
-            isDeleted: false,
-            OR: [
-              {
-                userPermissions: {
-                  some: {
-                    userId,
-                    accessType: { not: ProjectAccessType.NO_ACCESS },
-                  },
-                },
-              },
-              {
-                groupPermissions: {
-                  some: {
-                    group: {
-                      assignedUsers: { some: { userId } },
-                    },
-                    accessType: { not: ProjectAccessType.NO_ACCESS },
-                  },
-                },
-              },
-              { defaultAccessType: ProjectAccessType.GLOBAL_ROLE },
-              ...(isProjectAdmin
-                ? [{ assignedUsers: { some: { userId } } }]
-                : []),
-            ],
-          };
-
-      const project = await baseDb.projects.findFirst({
-        where: projectAccessWhere,
-        select: { id: true, name: true },
-      });
-      if (!project) {
-        return NextResponse.json(
-          { error: "Project not found or access denied" },
-          { status: 404 }
-        );
+      // ── Authentication + project access ───────────────────────────────────
+      const auth = await authorizeProjectApiRequest(request, projectId);
+      if (!auth.ok) {
+        return NextResponse.json(auth.body, { status: auth.status });
       }
+      const { userId, userName } = auth.actor;
+      const project = auth.project;
 
       // ── Parse + validate body ─────────────────────────────────────────────
       const body = await request.json();
@@ -272,9 +192,70 @@ export const POST = withAuditContext(
         tagNameToId.set(name, tag.id);
       }
 
+      // ── Pre-resolve all issue keys to ids once ───────────────────────────
+      // Deduplicated across the batch, so fifty cases citing one ticket cost
+      // one tracker lookup. A key that fails resolution takes only the cases
+      // that cite it out of the batch — the rest still import.
+      const issueKeyResults = new Map<string, IssueKeyResolution>();
+      const allIssueKeys = valid.flatMap((c) => c.issues ?? []);
+      if (allIssueKeys.length > 0) {
+        try {
+          const resolvedKeys = await resolveIssueKeys({
+            projectId,
+            keys: allIssueKeys,
+            integrationId: data.integrationId,
+          });
+          for (const [key, resolution] of resolvedKeys) {
+            issueKeyResults.set(key, resolution);
+          }
+        } catch (error) {
+          // Integration-level failures (none configured, or ambiguous) doom
+          // every key, so report them once per citing case rather than
+          // failing cases that named no issue at all.
+          const message =
+            error instanceof IssueKeyResolutionError
+              ? error.message
+              : "Failed to resolve issue keys.";
+          for (const key of allIssueKeys) {
+            issueKeyResults.set(key, { key, error: message });
+          }
+        }
+      }
+
+      const withResolvableIssues: IndexedCase[] = [];
+      const issueIdsByCase = new Map<string, number[]>();
+      for (const c of valid) {
+        const keys = c.issues ?? [];
+        const failures: string[] = [];
+        const issueIds: number[] = [];
+        for (const key of keys) {
+          const resolution = issueKeyResults.get(key);
+          if (resolution?.issueId != null) {
+            issueIds.push(resolution.issueId);
+          } else {
+            failures.push(
+              `${key}: ${resolution?.error ?? "could not be resolved."}`
+            );
+          }
+        }
+        if (failures.length > 0) {
+          resultsById.set(c.__id, {
+            id: c.__id,
+            name: c.name,
+            status: "error",
+            error: `Issue key(s) could not be linked — ${failures.join("; ")}`,
+          });
+          continue;
+        }
+        if (issueIds.length > 0) {
+          issueIdsByCase.set(c.__id, [...new Set(issueIds)]);
+        }
+        withResolvableIssues.push(c);
+      }
+
       // ── Group valid cases by effective (folderId, stateName) ──────────────
       const groups = new Map<string, IndexedCase[]>();
-      for (const c of valid) {
+      for (const c of withResolvableIssues) {
         const folderId = c.folderId ?? data.folderId;
         const stateName = c.stateName ?? data.stateName ?? "";
         const key = `${folderId}::${stateName}`;
@@ -355,12 +336,14 @@ export const POST = withAuditContext(
             step: s.text,
             expectedResult: s.expectedResult,
           }));
+          const issueIds = issueIdsByCase.get(c.__id);
           return {
             id: c.__id,
             name: c.name,
             fieldValues: c.customFields ?? {},
             ...(tagIds.length > 0 ? { tagIds } : {}),
             ...(steps ? { steps } : {}),
+            ...(issueIds?.length ? { issueIds } : {}),
           };
         });
 

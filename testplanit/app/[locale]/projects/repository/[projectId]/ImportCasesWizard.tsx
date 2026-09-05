@@ -212,6 +212,11 @@ export function ImportCasesWizard({
   // where the problem is.
   const [importErrors, setImportErrors] = useState<ImportRowError[]>([]);
 
+  // Advisory notes about rows that DID import — today, issue cells naming a
+  // ticket that resolved to nothing. Kept apart from `importErrors` so the
+  // failure panel's count stays honest: none of these cost a test case.
+  const [importWarnings, setImportWarnings] = useState<ImportRowError[]>([]);
+
   // What the preview, pagination, and submit counts should reflect. In
   // multi-row mode this is the aggregated case rows (one per case), not the
   // raw CSV rows — otherwise the wizard would render every continuation row
@@ -727,6 +732,7 @@ export function ImportCasesWizard({
     // The listed failures describe the previous mapping; drop them so the
     // panel never contradicts what the user is now about to import.
     setImportErrors([]);
+    setImportWarnings([]);
   };
 
   const getMappedFields = () => {
@@ -813,6 +819,7 @@ export function ImportCasesWizard({
     setIsImporting(true);
     setImportProgress(0);
     setImportErrors([]);
+    setImportWarnings([]);
 
     try {
       const response = await fetch(`/api/repository/import`, {
@@ -882,6 +889,8 @@ export function ImportCasesWizard({
 
               if (data.complete) {
                 const rowErrors = (data.errors ?? []) as ImportRowError[];
+                const rowWarnings = (data.warnings ?? []) as ImportRowError[];
+                setImportWarnings(rowWarnings);
 
                 // Cases that failed while being written are reported on the
                 // completion event. Keep the wizard open in that case so the
@@ -908,10 +917,23 @@ export function ImportCasesWizard({
                   }),
                 });
 
-                setOpen(false);
                 onImportComplete?.();
                 // Dispatch event to refresh Cases component data
                 window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
+
+                // Every case landed, but some cells linked to nothing. Hold the
+                // wizard open so the notes can be read — closing on a toast
+                // alone would lose them.
+                if (rowWarnings.length > 0) {
+                  toast.warning(t("importWizard.warnings.partialTitle"), {
+                    description: `${t("importWizard.warnings.summary", {
+                      count: rowWarnings.length,
+                    })} ${formatImportError(rowWarnings[0])}`,
+                  });
+                  return;
+                }
+
+                setOpen(false);
                 return;
               }
 
@@ -1696,6 +1718,40 @@ export function ImportCasesWizard({
     );
   };
 
+  const renderImportWarnings = () => {
+    if (importWarnings.length === 0) return null;
+
+    const listed = importWarnings.slice(0, MAX_LISTED_IMPORT_ERRORS);
+    const hidden = importWarnings.length - listed.length;
+
+    return (
+      <Alert className="mb-4">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          <div className="space-y-2">
+            <p className="font-medium">
+              {t("importWizard.warnings.summary", {
+                count: importWarnings.length,
+              })}
+            </p>
+            <ul className="list-disc space-y-1 ps-5 text-sm">
+              {listed.map((rowWarning, index) => (
+                <li key={`${rowWarning.row}-${rowWarning.field}-${index}`}>
+                  {formatImportError(rowWarning)}
+                </li>
+              ))}
+            </ul>
+            {hidden > 0 && (
+              <p className="text-xs">
+                {t("importWizard.errors.validationMore", { count: hidden })}
+              </p>
+            )}
+          </div>
+        </AlertDescription>
+      </Alert>
+    );
+  };
+
   const renderImportErrors = () => {
     if (importErrors.length === 0) return null;
 
@@ -1790,6 +1846,7 @@ export function ImportCasesWizard({
             />
           )}
           {renderImportErrors()}
+          {renderImportWarnings()}
           {currentPage === 1 && renderPage1()}
           {currentPage === 2 && renderPage2()}
           {currentPage === 3 && renderPage3()}

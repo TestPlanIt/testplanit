@@ -10,6 +10,7 @@ import { baseDb } from "~/lib/db";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { replaceImportedCaseIssueLinks } from "~/lib/services/importCaseIssueLinks";
+import { resolveImportIssueKeys } from "~/lib/services/importIssueKeyResolution";
 import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
@@ -78,9 +79,13 @@ function parseIssues(value: any): string[] {
       // Try to parse as JSON array
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
-        // If array of objects with name property, extract names
+        // If array of objects with name property, extract names. Trimmed like
+        // the comma-separated branch below: both feed the same name lookup and
+        // the same batch key resolution, which key on the trimmed form.
         return parsed
           .map((issue) => (typeof issue === "string" ? issue : issue.name))
+          .filter((issue): issue is string => typeof issue === "string")
+          .map((issue) => issue.trim())
           .filter(Boolean);
       }
     } catch {
@@ -301,6 +306,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         }
 
         const errors: ImportError[] = [];
+        // Advisory notes about rows that DID import. Kept apart from `errors`
+        // so the wizard's "N rows could not be imported" count stays true —
+        // an issue cell that found no ticket does not fail its case.
+        const warnings: ImportError[] = [];
         const casesToImport: any[] = [];
 
         // A missing Name mapping fails every row identically, which drowns the
@@ -535,6 +544,19 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           });
           folderMaxOrders[folderId] = maxOrderCase?.order ?? -1;
         }
+
+        // Resolve the whole file's `issues` column in one pass, before any row
+        // is written. Cells naming a tracker key no local row answers to are
+        // resolved upstream here — deduplicated across the file, so the cost
+        // is one call per distinct ticket rather than one per case. Advisory
+        // throughout: an unresolvable cell reports itself and the case still
+        // imports.
+        const importIssueKeys = await resolveImportIssueKeys(enhancedDb, {
+          projectId: body.projectId,
+          names: casesToImport.flatMap((c) =>
+            c.issues ? parseIssues(c.issues) : []
+          ),
+        });
 
         // Send initial progress
         sendProgress(0, totalCases);
@@ -930,12 +952,29 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             // Handle issues if present
             if (caseData.issues) {
-              await replaceImportedCaseIssueLinks(enhancedDb, {
-                caseId: newCase.id,
-                projectId: body.projectId,
-                issueNames: parseIssues(caseData.issues),
-                replaceExisting: isUpdate,
-              });
+              const { unmatched } = await replaceImportedCaseIssueLinks(
+                enhancedDb,
+                {
+                  caseId: newCase.id,
+                  projectId: body.projectId,
+                  issueNames: parseIssues(caseData.issues),
+                  replaceExisting: isUpdate,
+                  resolvedKeyIds: importIssueKeys.idsByName,
+                }
+              );
+              // Advisory, like the duplicate warnings: the case is imported,
+              // and the cells that could not be placed say why instead of
+              // disappearing.
+              for (const name of unmatched) {
+                warnings.push({
+                  row: casesToImport.indexOf(caseData) + 1,
+                  field: "Issues",
+                  caseName: caseData.name || undefined,
+                  error:
+                    importIssueKeys.errorsByName.get(name) ??
+                    `No issue named "${name}" in this project.`,
+                });
+              }
             }
 
             // Handle attachments if present
@@ -1123,6 +1162,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           complete: true as const,
           importedCount,
           errors,
+          warnings,
           duplicateWarnings,
         };
         controller.enqueue(

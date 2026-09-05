@@ -6,12 +6,14 @@ import { TestPlanItHttpError } from "../../http.js";
 
 vi.mock("../../api.js", () => ({
   zenstack: vi.fn(),
+  resolveIssueKeys: vi.fn(),
 }));
 
-import { zenstack } from "../../api.js";
+import { resolveIssueKeys, zenstack } from "../../api.js";
 import { registerIssuesLink, registerIssuesUnlink } from "./link.js";
 
 const mockZenstack = vi.mocked(zenstack);
+const mockResolve = vi.mocked(resolveIssueKeys);
 
 const mockEnv = {
   apiUrl: "https://testplanit.example.com",
@@ -139,6 +141,143 @@ describe("registerIssuesLink", () => {
       arguments: { issueId: 1, entityType: "testCase", entityIds: [] },
     });
     expect(result.isError).toBe(true);
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Linking by key is the whole point of #596: an agent names the ticket, and
+ * TestPlanIt materializes the row rather than requiring someone to open it in
+ * the web UI first. The two identifying forms must stay exclusive — silently
+ * preferring one would let a call link a different issue than the key it named.
+ */
+describe("registerIssuesLink by externalKey", () => {
+  beforeEach(() => {
+    mockZenstack.mockReset();
+    mockResolve.mockReset();
+  });
+
+  it("resolves the key and links the row it produced", async () => {
+    mockResolve.mockResolvedValue({
+      success: true,
+      resolvedCount: 1,
+      failedCount: 0,
+      createdCount: 1,
+      results: [{ key: "PROJ-1", issueId: 4242, created: true }],
+    });
+    mockZenstack.mockResolvedValueOnce({ id: 4242 });
+
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "PROJ-1",
+        projectId: 3,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(mockResolve).toHaveBeenCalledWith(3, ["PROJ-1"], deps.env, undefined);
+    const { body } = getCallArgs();
+    expect((body.where as any).id).toBe(4242);
+    const text = JSON.parse((result.content[0] as any).text);
+    expect(text.issueId).toBe(4242);
+  });
+
+  it("passes integrationId through when the project has more than one tracker", async () => {
+    mockResolve.mockResolvedValue({
+      success: true,
+      resolvedCount: 1,
+      failedCount: 0,
+      createdCount: 0,
+      results: [{ key: "PROJ-1", issueId: 1 }],
+    });
+    mockZenstack.mockResolvedValueOnce({ id: 1 });
+
+    const { client } = await setupLinkClient();
+    await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "PROJ-1",
+        projectId: 3,
+        integrationId: 9,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(mockResolve).toHaveBeenCalledWith(3, ["PROJ-1"], deps.env, 9);
+  });
+
+  it("refuses both identifying forms at once instead of picking one", async () => {
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        issueId: 1,
+        externalKey: "PROJ-1",
+        projectId: 3,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("not both");
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
+  it("requires projectId alongside a key, since a key is only unique within one", async () => {
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "PROJ-1",
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("projectId");
+    expect(mockResolve).not.toHaveBeenCalled();
+  });
+
+  it("requires one of the two forms", async () => {
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: { entityType: "testCase", entityIds: [101] },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
+  it("does not link anything when the key cannot be resolved", async () => {
+    mockResolve.mockResolvedValue({
+      success: true,
+      resolvedCount: 0,
+      failedCount: 1,
+      createdCount: 0,
+      results: [{ key: "TYPO-9", error: "Issue does not exist" }],
+    });
+
+    const { client } = await setupLinkClient();
+    const result = await client.callTool({
+      name: "testplanit_issues_link",
+      arguments: {
+        externalKey: "TYPO-9",
+        projectId: 3,
+        entityType: "testCase",
+        entityIds: [101],
+      },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("Issue does not exist");
     expect(mockZenstack).not.toHaveBeenCalled();
   });
 });

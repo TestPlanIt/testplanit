@@ -3094,6 +3094,10 @@
           "partialTitle": "Alcuni casi di test non sono stati importati",
           "partialSummary": "{failed, plural, one {# riga non poteva essere importata} other {# righe non potevano essere importate}}. {imported, plural, one {# caso di test è stato importato} other {# casi di test sono stati importati}} correttamente."
         },
+        "warnings": {
+          "partialTitle": "Alcuni link ai problemi non sono stati creati",
+          "summary": "{count, plural, one {# cella di problema non è stata collegata} other {# celle di problema non sono state collegate}}. I casi di test sono stati importati"
+        },
         "page1": {
           "fileType": {
             "label": "Tipo di file",

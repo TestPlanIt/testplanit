@@ -3094,6 +3094,10 @@
           "partialTitle": "Bazı test durumları içe aktarılmadı",
           "partialSummary": "{failed, plural, one {# satır} other {# satır}} içe aktarılamadı. {imported, plural, one {# test durumu} other {# test durumu}} başarıyla içe aktarıldı."
         },
+        "warnings": {
+          "partialTitle": "Bazı sorun bağlantıları oluşturulamadı",
+          "summary": "{count, plural, one {# sorun hücresi} other {# sorun hücresi}} bağlanamadı. Test durumları içe aktarıldı."
+        },
         "page1": {
           "fileType": {
             "label": "Dosya Türü",

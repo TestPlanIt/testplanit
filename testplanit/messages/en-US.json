@@ -3094,6 +3094,10 @@
           "partialTitle": "Some test cases were not imported",
           "partialSummary": "{failed, plural, one {# row} other {# rows}} could not be imported. {imported, plural, one {# test case was} other {# test cases were}} imported successfully."
         },
+        "warnings": {
+          "partialTitle": "Some issue links were not created",
+          "summary": "{count, plural, one {# issue cell} other {# issue cells}} could not be linked. The test cases were imported."
+        },
         "page1": {
           "fileType": {
             "label": "File Type",

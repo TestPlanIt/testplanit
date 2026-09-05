@@ -1,20 +1,7 @@
 import { baseDb } from "@/lib/db";
+import { ISSUE_TRACKING_PROVIDERS } from "~/lib/integrations/issueTrackerProviders";
 import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
 import { upsertLinkedIssueShell } from "~/lib/services/linkedIssueUpsert";
-import { IntegrationProvider } from "~/zenstack/models";
-
-// Supported issue tracking providers (every provider routed through
-// ManageExternalIssues — i.e. all issue trackers except SIMPLE_URL, which has
-// its own ManageSimpleUrlIssues path).
-const ISSUE_TRACKING_PROVIDERS = [
-  IntegrationProvider.JIRA,
-  IntegrationProvider.GITHUB,
-  IntegrationProvider.AZURE_DEVOPS,
-  IntegrationProvider.GITLAB,
-  IntegrationProvider.GITEA,
-  IntegrationProvider.REDMINE,
-  IntegrationProvider.MANTISBT,
-];
 
 /**
  * Retire the tracker shell row an unlink may have just orphaned.

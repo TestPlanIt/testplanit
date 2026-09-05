@@ -145,6 +145,99 @@ export async function zenstack<T>(
 }
 
 /**
+ * POST JSON to a non-RPC host route and unwrap the response.
+ *
+ * The host's bespoke routes don't speak the ZenStack envelope, but they do
+ * report failures the same way, so the error parsing here mirrors
+ * `zenstack()`'s exactly — a `READ_ONLY_TOKEN` 403 or a validation message
+ * reaches the agent with its `code` intact, and the bearer token never
+ * appears in an error string (T-06-05 / T-05-06b).
+ */
+export async function postHostJson<T>(
+  path: string,
+  body: unknown,
+  env: EnvConfig,
+  timeoutMs = TIMEOUT_MS,
+): Promise<T> {
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "POST",
+    headers: bearerHeaders(env),
+    body: JSON.stringify(body ?? {}),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    let code: string | undefined;
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(text) as Record<string, unknown>;
+      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (typeof errField === "string") {
+        parsedMessage = errField;
+      } else if (errField && typeof errField === "object") {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string")
+          parsedMessage = errObj["message"] as string;
+      }
+    } catch {
+      // non-JSON body
+    }
+    throw new TestPlanItHttpError(
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      { statusCode: response.status, code },
+    );
+  }
+  return JSON.parse(text) as T;
+}
+
+/** One entry of `/api/projects/{id}/issues/resolve`'s per-key report. */
+export interface IssueKeyResolution {
+  key: string;
+  issueId?: number;
+  created?: boolean;
+  error?: string;
+}
+
+export interface ResolveIssueKeysResponse {
+  success: boolean;
+  resolvedCount: number;
+  failedCount: number;
+  createdCount: number;
+  results: IssueKeyResolution[];
+}
+
+// Each unresolved key costs one upstream tracker round trip, so a batch needs
+// materially more headroom than a CRUD call.
+const RESOLVE_TIMEOUT_MS = 60000;
+
+/**
+ * Resolve tracker issue keys to local Issue rows, creating any row the host
+ * has never seen, via `/api/projects/{projectId}/issues/resolve`.
+ *
+ * This is what lets an agent name `PROJ-123` without a human having opened
+ * that ticket in the web UI first: the host reads it through the project's own
+ * integration credentials and upserts on `(externalId, integrationId)`, the
+ * same key the UI writes, so the row is shared rather than duplicated.
+ *
+ * Resolution can hit the tracker's API, so it gets a longer ceiling than CRUD.
+ */
+export async function resolveIssueKeys(
+  projectId: number,
+  keys: string[],
+  env: EnvConfig,
+  integrationId?: number,
+): Promise<ResolveIssueKeysResponse> {
+  return postHostJson<ResolveIssueKeysResponse>(
+    `/api/projects/${projectId}/issues/resolve`,
+    { keys, ...(integrationId !== undefined ? { integrationId } : {}) },
+    env,
+    RESOLVE_TIMEOUT_MS,
+  );
+}
+
+/**
  * Name → ID lookup via `/api/cli/lookup` (D-02).
  *
  * NOT all entity types are supported — see VERIFIED type union below. Notably,

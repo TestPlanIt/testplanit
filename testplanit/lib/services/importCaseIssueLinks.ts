@@ -19,6 +19,13 @@ import { DEFECT_SCOPE_WHERE } from "~/lib/services/issueRoleScope";
  *     neither creates requirement links from a name collision nor deletes
  *     the ones already on the case: `replaceExisting` clears exactly the
  *     links this column authored.
+ *
+ * A cell may also name a tracker key the local database has never seen. Those
+ * are resolved upstream once per batch, before any row is written, and arrive
+ * here through `resolvedKeyIds` — this function stays a pure link writer and
+ * never reaches for an integration itself. Names it still cannot place come
+ * back in `unmatched` so the importer can report them; they used to be
+ * dropped without a word, which is the behaviour this replaces.
  */
 
 export interface ImportCaseIssueLinkClient {
@@ -41,17 +48,36 @@ export interface ImportCaseIssueLinkArgs {
   issueNames: string[];
   /** True for an update-import: the column replaces the case's defect links. */
   replaceExisting: boolean;
+  /**
+   * Tracker keys the batch resolved upstream, name → local Issue id. Consulted
+   * only after the local name lookup misses, so a name that matches a row here
+   * never reaches for the tracker's answer.
+   */
+  resolvedKeyIds?: ReadonlyMap<string, number>;
+}
+
+export interface ImportCaseIssueLinkResult {
+  /** Names this call could place nowhere — neither locally nor upstream. */
+  unmatched: string[];
 }
 
 export async function replaceImportedCaseIssueLinks(
   db: ImportCaseIssueLinkClient,
-  { caseId, projectId, issueNames, replaceExisting }: ImportCaseIssueLinkArgs
-): Promise<void> {
+  {
+    caseId,
+    projectId,
+    issueNames,
+    replaceExisting,
+    resolvedKeyIds,
+  }: ImportCaseIssueLinkArgs
+): Promise<ImportCaseIssueLinkResult> {
   if (replaceExisting) {
     await db.repositoryCaseIssue.deleteMany({
       where: { caseId, issue: { ...DEFECT_SCOPE_WHERE } },
     });
   }
+
+  const unmatched: string[] = [];
 
   for (const issueName of issueNames) {
     const issue = await db.issue.findFirst({
@@ -63,10 +89,16 @@ export async function replaceImportedCaseIssueLinks(
       },
     });
 
-    if (issue) {
-      await db.repositoryCaseIssue.create({
-        data: { caseId, issueId: issue.id },
-      });
+    const issueId = issue?.id ?? resolvedKeyIds?.get(issueName);
+    if (issueId == null) {
+      unmatched.push(issueName);
+      continue;
     }
+
+    await db.repositoryCaseIssue.create({
+      data: { caseId, issueId },
+    });
   }
+
+  return { unmatched };
 }

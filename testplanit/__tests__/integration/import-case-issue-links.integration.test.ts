@@ -226,6 +226,31 @@ describeIntegration("CSV import issue links (live DB)", () => {
     );
   });
 
+  /**
+   * A cell may name a tracker key no local row answers to. The batch resolves
+   * those upstream before any row is written and hands the ids down; what this
+   * proves against a real database is that the linker actually writes the join
+   * row for one, and reports — rather than swallows — a name it can place
+   * nowhere.
+   */
+  it("links a name only the batch resolution could place, and reports the rest", async () => {
+    const resolvedName = `${STAMP}-RESOLVED-KEY`;
+    const hopelessName = `${STAMP}-NOWHERE`;
+
+    const { unmatched } = await replaceImportedCaseIssueLinks(db, {
+      caseId,
+      projectId: importingProjectId,
+      issueNames: [resolvedName, hopelessName],
+      replaceExisting: true,
+      resolvedKeyIds: new Map([[resolvedName, sameNameDefectId]]),
+    });
+
+    expect(await survivingLinkedIssueIds()).toContain(sameNameDefectId);
+    // Unplaceable names come back named, so the importer can say which cell
+    // failed instead of dropping it silently.
+    expect(unmatched).toEqual([hopelessName]);
+  });
+
   it("leaves existing links alone on a create-import", async () => {
     // A fresh row (replaceExisting false) adds links; it never clears any.
     const before = await survivingLinkedIssueIds();

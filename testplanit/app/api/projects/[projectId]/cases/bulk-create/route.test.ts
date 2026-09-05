@@ -40,6 +40,19 @@ vi.mock("~/lib/services/testCaseImport", () => ({
   persistGeneratedTestCases: vi.fn(),
 }));
 
+// Declared inside the factory: vi.mock is hoisted above any top-level binding
+// this file could otherwise close over.
+vi.mock("~/lib/services/resolveIssueKeys", () => ({
+  resolveIssueKeys: vi.fn(),
+  IssueKeyResolutionError: class extends Error {
+    readonly status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.status = status;
+    }
+  },
+}));
+
 import { getServerSession } from "next-auth";
 import {
   authenticateApiTokenForMethod,
@@ -48,6 +61,10 @@ import {
 import { enrichFromApiAuth } from "~/lib/auditContextWrappers";
 import { baseDb } from "~/lib/db";
 import { loadTemplateData } from "~/lib/services/jira-panel-generation";
+import {
+  IssueKeyResolutionError,
+  resolveIssueKeys,
+} from "~/lib/services/resolveIssueKeys";
 import { persistGeneratedTestCases } from "~/lib/services/testCaseImport";
 import { POST } from "./route";
 
@@ -124,6 +141,7 @@ beforeEach(() => {
   (baseDb.tags.upsert as any).mockImplementation(async ({ where }: any) => ({
     id: where.name === "Regression" ? 50 : 51,
   }));
+  (resolveIssueKeys as any).mockResolvedValue(new Map());
   importerEchoSuccess();
 });
 
@@ -433,6 +451,123 @@ describe("Bulk Create API Route", () => {
       const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
       expect(importInput.testCases).toHaveLength(1);
       expect(importInput.testCases[0].name).toBe("ok");
+    });
+  });
+
+  /**
+   * Issue keys are the point of #596: an agent attaches a ticket in the same
+   * request that creates the case, and the server does the tracker lookup that
+   * previously only the web UI could do.
+   */
+  describe("Issue keys", () => {
+    it("resolves keys once for the batch and links the resulting ids", async () => {
+      (resolveIssueKeys as any).mockResolvedValue(
+        new Map([
+          ["PROJ-1", { key: "PROJ-1", issueId: 900 }],
+          ["PROJ-2", { key: "PROJ-2", issueId: 901, created: true }],
+        ])
+      );
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "A", issues: ["PROJ-1"] },
+          { name: "B", issues: ["PROJ-1", "PROJ-2"] },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.importedCount).toBe(2);
+
+      // One resolve call for the whole batch, carrying every citation.
+      expect(resolveIssueKeys).toHaveBeenCalledTimes(1);
+      expect((resolveIssueKeys as any).mock.calls[0][0]).toMatchObject({
+        projectId: 1,
+        keys: ["PROJ-1", "PROJ-1", "PROJ-2"],
+      });
+
+      const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(importInput.testCases[0].issueIds).toEqual([900]);
+      expect(importInput.testCases[1].issueIds).toEqual([900, 901]);
+    });
+
+    it("fails only the cases citing an unresolvable key", async () => {
+      (resolveIssueKeys as any).mockResolvedValue(
+        new Map([
+          ["PROJ-1", { key: "PROJ-1", issueId: 900 }],
+          ["TYPO-9", { key: "TYPO-9", error: "Issue does not exist" }],
+        ])
+      );
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [
+          { name: "good", issues: ["PROJ-1"] },
+          { name: "bad", issues: ["TYPO-9"] },
+          { name: "none" },
+        ],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.importedCount).toBe(2);
+      expect(data.failedCount).toBe(1);
+      const bad = data.results.find((r: any) => r.name === "bad");
+      expect(bad.status).toBe("error");
+      expect(bad.error).toContain("TYPO-9");
+      expect(bad.error).toContain("Issue does not exist");
+
+      // The unaffected cases still reached the importer.
+      const importInput = (persistGeneratedTestCases as any).mock.calls[0][0];
+      expect(importInput.testCases.map((c: any) => c.name)).toEqual([
+        "good",
+        "none",
+      ]);
+    });
+
+    it("reports a missing integration on the citing cases only", async () => {
+      (resolveIssueKeys as any).mockRejectedValue(
+        new IssueKeyResolutionError("no tracker configured", 400)
+      );
+
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "cites", issues: ["PROJ-1"] }, { name: "quiet" }],
+      });
+      const res = await POST(req, ctx);
+      const data = await res.json();
+
+      expect(data.importedCount).toBe(1);
+      expect(data.failedCount).toBe(1);
+      expect(data.results.find((r: any) => r.name === "cites").error).toContain(
+        "no tracker configured"
+      );
+      expect(data.results.find((r: any) => r.name === "quiet").status).toBe(
+        "success"
+      );
+    });
+
+    it("forwards integrationId when the caller disambiguates", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        integrationId: 9,
+        cases: [{ name: "A", issues: ["PROJ-1"] }],
+      });
+      await POST(req, ctx);
+
+      expect((resolveIssueKeys as any).mock.calls[0][0].integrationId).toBe(9);
+    });
+
+    it("does not reach for the tracker when no case cites an issue", async () => {
+      const [req, ctx] = createRequest({
+        folderId: 12,
+        cases: [{ name: "A" }],
+      });
+      await POST(req, ctx);
+
+      expect(resolveIssueKeys).not.toHaveBeenCalled();
     });
   });
 });

@@ -3094,6 +3094,10 @@
           "partialTitle": "일부 테스트 케이스를 가져오지 못했습니다",
           "partialSummary": "{failed, plural, other {#개 행}}을 가져올 수 없습니다. {imported, plural, other {#개의 테스트 케이스}}가 성공적으로 가져와졌습니다."
         },
+        "warnings": {
+          "partialTitle": "일부 이슈 링크가 생성되지 않았습니다",
+          "summary": "{count, plural, other {#개의 이슈 셀}}을(를) 연결할 수 없습니다. 테스트 케이스는 가져왔습니다."
+        },
         "page1": {
           "fileType": {
             "label": "파일 형식",

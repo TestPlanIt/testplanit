@@ -3094,6 +3094,10 @@
           "partialTitle": "Certains cas de test n'ont pas été importés",
           "partialSummary": "{failed, plural, one {# ligne n'a pas pu être importée} other {# lignes n'ont pas pu être importées}}. {imported, plural, one {# cas de test a été importé} other {# cas de test ont été importés}} avec succès."
         },
+        "warnings": {
+          "partialTitle": "Certains liens de problèmes n'ont pas été créés",
+          "summary": "{count, plural, one {# cellule de problème n'a pas pu être liée} other {# cellules de problème n'ont pas pu être liées}}. Les cas de test ont été importés."
+        },
         "page1": {
           "fileType": {
             "label": "Type de fichier",

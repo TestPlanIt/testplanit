@@ -201,6 +201,17 @@ const SCOPED_FILES = [
   // This is the only issue read the importer performs, which is why
   // app/api/repository/import/route.ts no longer carries a read exemption.
   "lib/services/importCaseIssueLinks.ts",
+  // The batch half of that same `issues` column, added when the importer
+  // learned to resolve unknown cells as tracker keys. Both of its reads carry
+  // the defect scope for the same reason its sibling above does, and the
+  // second one is the whole point: a key that resolves through the tracker to
+  // a REQUIREMENT row is refused rather than linked, because `replaceExisting`
+  // clears only the defect links this column authored, so a requirement link
+  // written here is one no later import could clear. The file's own unit test
+  // exercises that refusal through a mocked client that returns null either
+  // way, so it would still pass if the spread were dropped — the threshold
+  // entry further down is the real guard.
+  "lib/services/importIssueKeyResolution.ts",
   // 26-08's traceability matrix loader spreads REQUIREMENT_SCOPE_WHERE (the
   // other half of this module's mirror pair, not DEFECT_SCOPE_WHERE) into
   // its single findMany call reading requirement names and parents for
@@ -371,6 +382,18 @@ const EXEMPT_MILESTONE_MEMBERSHIP_FILES = [
 const EXEMPT_EXTERNAL_KEY_LOOKUP_FILES = [
   "app/api/integrations/jira/search/route.ts",
   "app/api/integrations/jira/test-info/route.ts",
+  // Resolves a caller-supplied tracker key to the one row that holds it, so
+  // the API, the MCP server, and the import can attach a ticket without a
+  // human opening it in the UI first. Deliberately kind-agnostic on both
+  // reads: the key names a specific ticket, and the row the tracker owns for
+  // it is the answer whichever kind that row happens to be — narrowing to
+  // defects here would report a real, resolvable key as missing. Row-kind
+  // policy belongs to the callers, and the one caller that has such a policy
+  // (importIssueKeyResolution.ts, defects-only) applies it to this module's
+  // result rather than asking it to pre-filter. Its second read is the
+  // cross-project probe that turns a silent miss into a named owner, which
+  // must see every row for the same reason.
+  "lib/services/resolveIssueKeys.ts",
 ];
 
 // EXEMPT — ingestion and import must see every row kind, or importing (or
@@ -564,6 +587,12 @@ describe("Issue read-scope containment (HYG-01, structural)", () => {
           minimum: 2,
           reason:
             "1 import + 1 conditional spread guarding the opt-in includeRequirements toggle — inherited unchanged from the search-issues-dialog.tsx fork source",
+        },
+        {
+          file: "lib/services/importIssueKeyResolution.ts",
+          minimum: 3,
+          reason:
+            "1 import + 1 use in the local name lookup + 1 use in the post-resolution re-read that refuses to link a requirement. Its own unit test mocks the client to return null on that re-read either way, so the test passes with or without the predicate — this floor is what actually holds the refusal in place",
         },
       ];
 

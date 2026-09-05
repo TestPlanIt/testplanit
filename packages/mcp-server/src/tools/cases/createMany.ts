@@ -1,21 +1,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
+import { postHostJson } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
-import { TestPlanItHttpError } from "../../http.js";
 
 export interface CasesCreateManyDeps {
   env: EnvConfig;
 }
 
 const FETCH_TIMEOUT_MS = 30000;
-
-function bearerHeaders(env: EnvConfig): Record<string, string> {
-  return {
-    Authorization: `Bearer ${env.apiToken}`,
-    "Content-Type": "application/json",
-  };
-}
 
 /** Per-case outcome echoed back from the bulk-create route. */
 interface BulkCaseResult {
@@ -36,47 +29,21 @@ interface BulkCreateResponse {
 /**
  * POST the batch to the dedicated bulk-create route, which resolves shared
  * context once and hands each (folder, state) group to the transactional
- * importer. Mirrors the error parsing in api.ts/zenstack so a host-side
- * READ_ONLY_TOKEN (403) or validation message reaches the agent — and so the
- * `code` is preserved for the friendly mode:read mapping in errors.ts.
+ * importer. `postHostJson` carries the same error parsing as api.ts/zenstack,
+ * so a host-side READ_ONLY_TOKEN (403) or validation message reaches the agent
+ * with its `code` intact for the friendly mode:read mapping in errors.ts.
  */
 async function postBulkCreate(
   projectId: number,
   body: unknown,
   env: EnvConfig,
 ): Promise<BulkCreateResponse> {
-  const path = `/api/projects/${projectId}/cases/bulk-create`;
-  const response = await fetch(`${env.apiUrl}${path}`, {
-    method: "POST",
-    headers: bearerHeaders(env),
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-  });
-  const text = await response.text();
-  if (!response.ok) {
-    let code: string | undefined;
-    let parsedMessage: string | undefined;
-    try {
-      const parsed = JSON.parse(text) as Record<string, unknown>;
-      if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
-      const errField = parsed?.["error"];
-      if (typeof errField === "string") {
-        parsedMessage = errField;
-      } else if (errField && typeof errField === "object") {
-        const errObj = errField as Record<string, unknown>;
-        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
-        if (typeof errObj["message"] === "string")
-          parsedMessage = errObj["message"] as string;
-      }
-    } catch {
-      // non-JSON body
-    }
-    throw new TestPlanItHttpError(
-      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
-      { statusCode: response.status, code },
-    );
-  }
-  return JSON.parse(text) as BulkCreateResponse;
+  return postHostJson<BulkCreateResponse>(
+    `/api/projects/${projectId}/cases/bulk-create`,
+    body,
+    env,
+    FETCH_TIMEOUT_MS,
+  );
 }
 
 export function registerCasesCreateMany(
@@ -87,7 +54,7 @@ export function registerCasesCreateMany(
     "testplanit_cases_create_many",
     {
       description:
-        "Create many test cases in one operation, far faster than calling testplanit_cases_create per case. Each case supports the same fields as a single create (name, steps, tags, customFields) plus optional per-case folderId / stateName overriding the batch defaults. Cases are grouped by their effective (folder, state) and each group is persisted in one transaction. Returns a per-case results array so partial failures are visible (each entry has status 'success' with caseId, or 'error' with a message). customFields must belong to the chosen template — out-of-template fields are reported as a per-case error, not silently dropped.",
+        "Create many test cases in one operation, far faster than calling testplanit_cases_create per case. Each case supports the same fields as a single create (name, steps, tags, customFields) plus optional per-case folderId / stateName overriding the batch defaults. Cases are grouped by their effective (folder, state) and each group is persisted in one transaction. Returns a per-case results array so partial failures are visible (each entry has status 'success' with caseId, or 'error' with a message). customFields must belong to the chosen template — out-of-template fields are reported as a per-case error, not silently dropped. Each case may also carry `issues`: tracker issue keys resolved server-side and created when TestPlanIt has never seen them, so attaching a ticket needs no UI pre-step.",
       inputSchema: {
         projectId: z
           .number()
@@ -113,6 +80,14 @@ export function registerCasesCreateMany(
           .optional()
           .describe(
             "Default CASES workflow state name for the batch. Defaults to the first state by order. Each case may override it.",
+          ),
+        integrationId: z
+          .number()
+          .int()
+          .positive()
+          .optional()
+          .describe(
+            "Integration to resolve per-case `issues` keys against. Required only when the project has more than one active issue-tracker integration.",
           ),
         cases: z
           .array(
@@ -159,6 +134,13 @@ export function registerCasesCreateMany(
                 .describe(
                   "Custom field values keyed by display name, e.g. { 'Priority': 'High' }. Must be fields on the chosen template.",
                 ),
+              issues: z
+                .array(z.string().min(1).max(255))
+                .max(50)
+                .optional()
+                .describe(
+                  "Tracker issue keys (e.g. 'PROJ-123') to link to this case. Resolved server-side through the project's integration and created when TestPlanIt has never seen the key, so no one has to open the ticket in the web UI first. Keys are deduplicated across the batch. A key that cannot be resolved fails only the cases citing it, reported as a per-case error.",
+                ),
             }),
           )
           .min(1)
@@ -174,6 +156,9 @@ export function registerCasesCreateMany(
             ...(input.templateId != null ? { templateId: input.templateId } : {}),
             folderId: input.folderId,
             ...(input.stateName != null ? { stateName: input.stateName } : {}),
+            ...(input.integrationId != null
+              ? { integrationId: input.integrationId }
+              : {}),
             cases: input.cases,
           },
           deps.env,

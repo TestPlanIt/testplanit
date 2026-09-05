@@ -3094,6 +3094,10 @@
           "partialTitle": "Algunos casos de prueba no se importaron",
           "partialSummary": "{failed, plural, one {# fila no se pudo importar} other {# filas no se pudieron importar}}. {imported, plural, one {# caso de prueba se importó correctamente} other {# casos de prueba se importaron correctamente}}."
         },
+        "warnings": {
+          "partialTitle": "Algunos enlaces de incidencias no se crearon",
+          "summary": "{count, plural, one {# celda de incidencia} other {# celdas de incidencias}} no se pudieron vincular. Los casos de prueba se importaron."
+        },
         "page1": {
           "fileType": {
             "label": "Tipo de archivo",
