@@ -361,9 +361,18 @@ export async function createCaseVersion(
     } catch {
       // body is not JSON; leave parsedMessage / code undefined
     }
+    // A 401 or 404 here, on a request whose token was good enough to write
+    // the case moments earlier, means the host predates API-token access to
+    // this endpoint. Failing is deliberate — a case with no version snapshot
+    // cannot be read back as it was executed — but the failure has to say so,
+    // or the reader is left staring at an unexplained Unauthorized.
+    const hostTooOld = response.status === 401 || response.status === 404;
+    const hint = hostTooOld
+      ? " — this TestPlanIt host cannot record case versions for API clients. Upgrade the host, or pin an @testplanit/mcp-server matching it."
+      : "";
     // T-06-05 / T-05-06b: NEVER include the bearer token in error messages.
     throw new TestPlanItHttpError(
-      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}`,
+      `HTTP ${response.status} from ${path}${parsedMessage ? `: ${parsedMessage}` : ""}${hint}`,
       { statusCode: response.status, code },
     );
   }

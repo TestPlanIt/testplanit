@@ -307,6 +307,38 @@ describe("createCaseVersion()", () => {
     });
   });
 
+  it("tells the reader the host is too old on a 401", async () => {
+    // The token was good enough to write the case seconds earlier, so a 401
+    // here is the host lacking API-token access to this endpoint, not a bad
+    // token. The failure is deliberate; the message has to explain it.
+    fetchMock.mockResolvedValueOnce(jsonResponse(401, { error: "Unauthorized" }));
+
+    await expect(createCaseVersion(42, {}, ENV)).rejects.toSatisfy(
+      (err: unknown) => {
+        const e = err as TestPlanItHttpError;
+        expect(e.statusCode).toBe(401);
+        expect(e.message).toContain("cannot record case versions");
+        expect(e.message).toContain("Upgrade the host");
+        expect(e.message).not.toContain("tpi_");
+        return true;
+      },
+    );
+  });
+
+  it("adds no host-upgrade hint to failures that are not 401/404", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(500, { error: "boom" }));
+
+    await expect(createCaseVersion(42, {}, ENV)).rejects.toSatisfy(
+      (err: unknown) => {
+        const e = err as TestPlanItHttpError;
+        expect(e.statusCode).toBe(500);
+        expect(e.message).toContain("boom");
+        expect(e.message).not.toContain("Upgrade the host");
+        return true;
+      },
+    );
+  });
+
   it("surfaces the host error message and never the raw token", async () => {
     fetchMock.mockResolvedValueOnce(
       jsonResponse(403, {

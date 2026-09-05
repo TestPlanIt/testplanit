@@ -186,7 +186,7 @@ export function registerCasesCreate(
               ? postCreateErr.statusCode
               : undefined;
           throw new TestPlanItHttpError(
-            `Test case ${created.id} was created but post-create wiring failed (steps / tags / custom fields / re-fetch); the case was soft-deleted as a best-effort cleanup. Underlying error: ${inner}`,
+            `Test case ${created.id} was created but post-create wiring failed (steps / tags / custom fields / version snapshot / re-fetch); the case was soft-deleted as a best-effort cleanup. Underlying error: ${inner}`,
             status !== undefined ? { statusCode: status } : {},
           );
         }
