@@ -11,7 +11,7 @@ import {
   RotateCw,
   Smartphone,
   Square,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
@@ -307,7 +307,7 @@ const ResizableImageComponent = (props: any) => {
               className="p-1.5 rounded hover:bg-destructive"
               title={t("delete")}
             >
-              <Trash2 size={16} />
+              <Trash size={16} />
             </button>
           </div>
         )}

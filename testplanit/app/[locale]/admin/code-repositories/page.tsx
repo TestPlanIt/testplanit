@@ -22,7 +22,7 @@ import { SectionHeader } from "@/components/ui/typography";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
-import { CirclePlus, GitBranch, Trash2 } from "lucide-react";
+import { CirclePlus, GitBranch, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -356,7 +356,7 @@ function CodeRepositoryList() {
         <AlertDialogContent className="max-w-md border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" />
+              <Trash className="h-5 w-5 text-destructive" />
               {t("delete.title")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">

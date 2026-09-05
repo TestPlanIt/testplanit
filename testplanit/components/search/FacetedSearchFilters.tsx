@@ -50,7 +50,7 @@ import {
   Settings,
   Tags,
   Timer,
-  Trash2,
+  Trash,
   User,
   UserCheck,
   Workflow,
@@ -1200,7 +1200,7 @@ export function FacetedSearchFilters({
                     htmlFor="include-deleted"
                     className="text-sm font-medium flex items-center gap-1"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash className="h-4 w-4" />
                     {t("search.filters.includeDeleted")}
                   </Label>
                 </div>

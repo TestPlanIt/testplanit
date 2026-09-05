@@ -29,7 +29,7 @@ import {
   SquarePen,
   SquarePlay,
   StopCircle,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
@@ -266,7 +266,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     className="text-destructive hover:text-destructive-foreground"
                   >
                     <div className="flex items-center">
-                      <Trash2 className="w-5 h-5 me-2" />
+                      <Trash className="w-5 h-5 me-2" />
                       {tCommon("actions.delete")}
                     </div>
                   </DropdownMenuItem>

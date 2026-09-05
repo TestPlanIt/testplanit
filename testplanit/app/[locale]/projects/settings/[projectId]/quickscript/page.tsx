@@ -57,7 +57,7 @@ import {
   Plus,
   RefreshCw,
   Save,
-  Trash2,
+  Trash,
   Unlink,
   XCircle,
 } from "lucide-react";
@@ -770,7 +770,7 @@ export default function QuickScriptPage() {
                           onClick={() => remove(index)}
                           disabled={fields.length === 1}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-4 w-4" />
                         </Button>
                       </div>
                     ))}

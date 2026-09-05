@@ -5,7 +5,7 @@ import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import { Button } from "@/components/ui/button";
 import type { Tags } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -166,7 +166,7 @@ export const useColumns = (
               onClick={() => onDeleteTag?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           </div>
         ),

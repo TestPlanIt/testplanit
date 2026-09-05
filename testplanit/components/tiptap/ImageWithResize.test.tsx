@@ -38,7 +38,7 @@ vi.mock("lucide-react", () => ({
   RotateCw: () => <svg data-testid="icon-rotate-cw" />,
   Smartphone: () => <svg data-testid="icon-smartphone" />,
   Square: () => <svg data-testid="icon-square" />,
-  Trash2: () => <svg data-testid="icon-trash2" />,
+  Trash: () => <svg data-testid="icon-trash" />,
 }));
 
 // We need to import the module-level ResizableImageComponent.

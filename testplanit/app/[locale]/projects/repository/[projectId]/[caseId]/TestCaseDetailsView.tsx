@@ -90,7 +90,7 @@ import {
   Save,
   ScrollText,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
@@ -2235,7 +2235,7 @@ export function TestCaseDetailsView({
                             onClick={() => setIsDeleteCaseOpen(true)}
                           >
                             {renderActionButtonContent(
-                              Trash2,
+                              Trash,
                               t("common.actions.delete")
                             )}
                           </Button>

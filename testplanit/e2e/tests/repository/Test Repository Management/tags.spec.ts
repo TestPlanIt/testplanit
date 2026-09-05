@@ -452,7 +452,7 @@ test.describe("Tags", () => {
       await expect(tagRow).toBeVisible({ timeout: 5000 });
 
       // Click the delete button in that row
-      const deleteButton = tagRow.locator("button:has(svg.lucide-trash-2)");
+      const deleteButton = tagRow.locator("button:has(svg.lucide-trash)");
       await expect(deleteButton).toBeVisible({ timeout: 3000 });
       await deleteButton.click();
     });

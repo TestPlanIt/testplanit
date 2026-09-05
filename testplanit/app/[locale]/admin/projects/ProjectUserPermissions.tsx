@@ -28,7 +28,7 @@ import {
   SelectSeparator,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash } from "lucide-react";
 
 // Type for user data including their global role
 type UserWithRole = User & { role: Roles | null };
@@ -438,7 +438,7 @@ export function ProjectUserPermissions({
                       aria-label={t("actions.removeUser")}
                       disabled={!permission}
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash className="h-4 w-4 text-destructive" />
                     </Button>
                   </td>
                 </tr>

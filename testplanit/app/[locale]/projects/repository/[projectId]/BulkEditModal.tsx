@@ -46,7 +46,7 @@ import {
   Loader2,
   LockIcon,
   MessageSquareWarning,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { BulkRequestReviewSheet } from "~/components/reviews/BulkRequestReviewSheet";
 import {
@@ -2457,7 +2457,7 @@ export function BulkEditModal({
                     isSaving
                   }
                 >
-                  <Trash2 className="h-5 w-5" />
+                  <Trash className="h-5 w-5" />
                   {tCommon("actions.delete")}
                 </Button>
               </PopoverTrigger>
@@ -2482,7 +2482,7 @@ export function BulkEditModal({
                     disabled={isDeleting}
                   >
                     {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <Trash2 className="h-4 w-4" />
+                    <Trash className="h-4 w-4" />
                     {tCommon("actions.delete")}
                   </Button>
                 </div>

@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppConfigRow } from "./types";
 
@@ -110,7 +110,7 @@ export function getColumns(
             aria-label={t("actions.delete")}
             onClick={() => onDeleteConfig?.(row.original)}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       ),

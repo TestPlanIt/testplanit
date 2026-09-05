@@ -24,7 +24,7 @@ import {
   Pause,
   Play,
   RefreshCw,
-  Trash2,
+  Trash,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -394,7 +394,7 @@ export function QueueManagement() {
               onClick={() => performQueueAction(queue.name, "clean", true)}
               disabled={actionInProgress === queue.name}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
           </div>
         );

@@ -1,4 +1,4 @@
-import { Bot, ListChecks, SquareStack, Trash2 } from "lucide-react";
+import { Bot, ListChecks, SquareStack, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { Link } from "~/lib/navigation";
@@ -88,7 +88,7 @@ export function TestCaseNameDisplay({
   if (showIcon) {
     if (isDeleted) {
       icon = (
-        <Trash2
+        <Trash
           className={cn("shrink-0 mt-0.5 text-muted-foreground", iconSize)}
         />
       );

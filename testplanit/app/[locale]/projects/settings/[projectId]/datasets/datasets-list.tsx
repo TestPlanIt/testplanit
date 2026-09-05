@@ -13,7 +13,7 @@ import {
   DatabaseArrowUp,
   Loader2,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -215,7 +215,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
             aria-label={t("actionDelete")}
             data-testid={`dataset-list-delete-${row.original.id}`}
           >
-            <Trash2 className="h-5 w-5" />
+            <Trash className="h-5 w-5" />
           </Button>
         </div>
       ),

@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
-import { Edit3, GripVertical, Trash2 } from "lucide-react";
+import { Edit3, GripVertical, Trash } from "lucide-react";
 
 const columns =
   "grid grid-cols-[30px_120px_auto_70px_70px_50px] items-center py-1 px-4 bg-muted text-sm";
@@ -213,7 +213,7 @@ const DraggableItem = ({
         }}
         className="text-destructive p-0 -my-1"
       >
-        <Trash2 size={20} />
+        <Trash size={20} />
       </Button>
     </div>
   );

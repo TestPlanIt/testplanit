@@ -222,9 +222,9 @@ test.describe("Bulk Operations", () => {
     });
 
     await test.step("Trigger delete and confirm in the popover", async () => {
-      // Click delete button in the modal footer (has Trash2 icon and destructive variant)
+      // Click delete button in the modal footer (has Trash icon and destructive variant)
       const deleteButton = bulkEditModal!
-        .locator("button:has(svg.lucide-trash-2)")
+        .locator("button:has(svg.lucide-trash)")
         .first();
       await expect(deleteButton).toBeVisible({ timeout: 5000 });
       await deleteButton.click();
@@ -235,9 +235,9 @@ test.describe("Bulk Operations", () => {
       );
       await expect(popoverContent).toBeVisible({ timeout: 5000 });
 
-      // The confirm delete button is inside the popover and has destructive variant with Trash2 icon
+      // The confirm delete button is inside the popover and has destructive variant with Trash icon
       const confirmDeleteButton = popoverContent
-        .locator("button:has(svg.lucide-trash-2)")
+        .locator("button:has(svg.lucide-trash)")
         .first();
       await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
       await confirmDeleteButton.click();
@@ -321,7 +321,7 @@ test.describe("Bulk Operations", () => {
     await test.step("Open delete confirmation and verify it shows the count", async () => {
       // Click delete button
       const deleteButton = bulkEditModal!
-        .locator("button:has(svg.lucide-trash-2)")
+        .locator("button:has(svg.lucide-trash)")
         .first();
       await expect(deleteButton).toBeVisible({ timeout: 5000 });
       await deleteButton.click();
@@ -394,7 +394,7 @@ test.describe("Bulk Operations", () => {
     await test.step("Open delete confirmation then cancel it", async () => {
       // Click delete button to open confirmation
       const deleteButton = bulkEditModal!
-        .locator("button:has(svg.lucide-trash-2)")
+        .locator("button:has(svg.lucide-trash)")
         .first();
       await expect(deleteButton).toBeVisible({ timeout: 5000 });
       await deleteButton.click();

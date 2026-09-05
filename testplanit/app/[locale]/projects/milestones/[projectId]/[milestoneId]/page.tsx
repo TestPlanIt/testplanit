@@ -65,7 +65,7 @@ import {
   PlayCircle,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
   TrendingDown,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -997,7 +997,7 @@ export default function MilestoneDetailsPage() {
                         )}
                       >
                         <ActionButtonContent
-                          icon={Trash2}
+                          icon={Trash}
                           label={tCommon("actions.delete")}
                         />
                       </Button>

@@ -35,7 +35,7 @@ import {
   Loader2,
   Pencil,
   Search,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -243,7 +243,7 @@ export function SavedSearchesMenu({
                       setOpen(false);
                     }}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash className="h-3.5 w-3.5" />
                   </Button>
                 </li>
               ))}
