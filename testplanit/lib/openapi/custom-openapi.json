@@ -566,6 +566,263 @@
         }
       }
     },
+    "/projects/{projectId}/cases/bulk-create": {
+      "post": {
+        "tags": ["Projects", "Repository"],
+        "summary": "Bulk create test cases",
+        "description": "Creates up to 200 test cases in one call, grouped by their effective folder and workflow state so each group lands in a single transaction. Each case gets its steps, tags, custom field values and a version 1 snapshot.\n\nPartial failure is reported per case rather than failing the batch: `results` carries one entry per submitted case, keyed by its index in `cases`. A transaction failure fails every case in that folder/state group. Accepts a session cookie or a Bearer API token; a token scoped `mode:read` is rejected with 403.",
+        "operationId": "bulkCreateCases",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["folderId", "cases"],
+                "properties": {
+                  "folderId": {
+                    "type": "integer",
+                    "description": "Default folder for the batch. Must belong to this project. Each case may override it."
+                  },
+                  "templateId": {
+                    "type": "integer",
+                    "description": "Template for the batch. Defaults to the project's first enabled assigned template."
+                  },
+                  "stateName": {
+                    "type": "string",
+                    "description": "Default CASES-scope workflow state name. Defaults to the first state by order. Each case may override it."
+                  },
+                  "cases": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 200,
+                    "items": {
+                      "type": "object",
+                      "required": ["name"],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2000
+                        },
+                        "folderId": { "type": "integer" },
+                        "stateName": { "type": "string" },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "text": { "type": "string" },
+                              "expectedResult": { "type": "string" },
+                              "order": { "type": "integer", "minimum": 0 }
+                            }
+                          }
+                        },
+                        "tags": {
+                          "type": "array",
+                          "description": "Tag IDs, or tag names which are created if missing.",
+                          "items": {
+                            "oneOf": [
+                              { "type": "integer" },
+                              { "type": "string" }
+                            ]
+                          }
+                        },
+                        "customFields": {
+                          "type": "object",
+                          "description": "Custom field values keyed by the template field's display name. A name not on the template fails that case.",
+                          "additionalProperties": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch processed. Inspect `results` for per-case outcomes; `failedCount` may be non-zero.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "importedCount": { "type": "integer" },
+                    "failedCount": { "type": "integer" },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "The case's index in the submitted `cases` array."
+                          },
+                          "name": { "type": "string" },
+                          "status": {
+                            "type": "string",
+                            "enum": ["success", "error"]
+                          },
+                          "caseId": {
+                            "type": "integer",
+                            "description": "Present on success."
+                          },
+                          "error": {
+                            "type": "string",
+                            "description": "Present on failure."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid project ID, invalid body, or a template that is not enabled and assigned to the project"
+          },
+          "401": { "description": "No session and no valid API token" },
+          "403": { "description": "API token is scoped `mode:read`" },
+          "404": { "description": "Project not found or access denied" },
+          "422": {
+            "description": "No enabled template is assigned to the project"
+          }
+        }
+      }
+    },
+    "/repository/cases/{caseId}/versions": {
+      "post": {
+        "tags": ["Repository"],
+        "summary": "Record a test case version snapshot",
+        "description": "Creates a RepositoryCaseVersions snapshot of the test case's CURRENT state. Any client that changes a case through the model API should call this afterwards, otherwise the case has no version history and a run result recorded against it cannot be read back as the case stood when it ran.\n\nThe caller is responsible for advancing RepositoryCases.currentVersion before calling this, OR for asking this endpoint to do it with `bumpVersion`. Accepts a session cookie or a Bearer API token; a token scoped `mode:read` is rejected with 403.",
+        "operationId": "createTestCaseVersion",
+        "parameters": [
+          {
+            "name": "caseId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "ID of the test case to snapshot."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bumpVersion": {
+                    "type": "boolean",
+                    "description": "Increment the case's currentVersion and snapshot at the new number, in one transaction. Use on EDIT. Mutually exclusive with `version`."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Explicit version number, for imports preserving history. Mutually exclusive with `bumpVersion`; defaults to the case's currentVersion."
+                  },
+                  "copyFieldValues": {
+                    "type": "boolean",
+                    "description": "Copy the case's custom field values onto the version. API clients should set this, otherwise the version renders with every custom field blank. Steps-type fields are never copied."
+                  },
+                  "creatorId": {
+                    "type": "string",
+                    "description": "Override the recorded author, for imports. Defaults to the caller."
+                  },
+                  "creatorName": { "type": "string" },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Override the recorded timestamp, for imports. Defaults to now."
+                  },
+                  "overrides": {
+                    "type": "object",
+                    "description": "Values to record on the snapshot instead of the case's current ones. Omit to snapshot the case as stored.",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "stateId": { "type": "integer" },
+                      "stateName": { "type": "string" },
+                      "automated": { "type": "boolean" },
+                      "estimate": { "type": "integer", "nullable": true },
+                      "forecastManual": { "type": "integer", "nullable": true },
+                      "forecastAutomated": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "steps": {
+                        "type": "array",
+                        "items": { "type": "object" },
+                        "description": "Tiptap step documents."
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      },
+                      "issues": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "integer" },
+                            "name": { "type": "string" },
+                            "externalId": { "type": "string", "nullable": true }
+                          }
+                        }
+                      },
+                      "attachments": {
+                        "type": "array",
+                        "items": { "type": "object" }
+                      },
+                      "isArchived": { "type": "boolean" },
+                      "order": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Version snapshot created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "version": {
+                      "type": "object",
+                      "description": "The created RepositoryCaseVersions row."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid case ID, invalid body, or both `version` and `bumpVersion` given"
+          },
+          "401": { "description": "No session and no valid API token" },
+          "403": { "description": "API token is scoped `mode:read`" },
+          "404": {
+            "description": "Test case not found, or its project is not accessible to the caller"
+          }
+        }
+      }
+    },
     "/tags/counts": {
       "post": {
         "tags": ["Tags"],
