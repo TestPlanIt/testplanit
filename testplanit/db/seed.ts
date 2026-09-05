@@ -1101,15 +1101,17 @@ async function seedCaseFields(fieldTypeMap: any) {
     { displayName: "Steps", systemName: "steps", typeName: "Steps" },
   ];
 
-  await Promise.all(
-    caseFieldsData.map(({ displayName, systemName, typeName }) =>
-      db.caseFields.upsert({
-        where: { systemName },
-        update: { typeId: fieldTypeMap[typeName] },
-        create: { displayName, systemName, typeId: fieldTypeMap[typeName] },
-      })
-    )
-  );
+  // Sequential, not Promise.all: concurrent upserts commit in whatever order
+  // the pool schedules them, so on a fresh database each field drew a
+  // different autoincrement id from one seed run to the next. Seeding them in
+  // order makes the ids follow the list above.
+  for (const { displayName, systemName, typeName } of caseFieldsData) {
+    await db.caseFields.upsert({
+      where: { systemName },
+      update: { typeId: fieldTypeMap[typeName] },
+      create: { displayName, systemName, typeId: fieldTypeMap[typeName] },
+    });
+  }
   console.log("Seeded case fields.");
 
   // Seed priority field options

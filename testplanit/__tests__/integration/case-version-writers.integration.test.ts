@@ -32,14 +32,18 @@ const describeIntegration =
 const raw = createRawDbClient();
 const STAMP = `cvw-${Date.now()}`;
 
-// Seeded fixture ids (db/seed.ts): template 1 = "Default Template" with
-// Priority (Dropdown), Description (Text Long), Steps (Steps), Expected
-// (Text Long).
-const TEMPLATE_ID = 1;
-const FIELD_PRIORITY = 1;
-const FIELD_DESCRIPTION = 3;
-const FIELD_STEPS = 4;
-const OPTION_HIGH = 2;
+// Seeded fixtures (db/seed.ts): "Default Template" carries Priority
+// (Dropdown), Description (Text Long), Expected (Text Long) and Steps (Steps).
+// Resolved by name in beforeAll rather than pinned to ids: these were once
+// hardcoded as 1/3/4, and because `seedCaseFields` upserted the four fields
+// concurrently, the id each one drew varied between seed runs — so the suite
+// passed or failed on how a given database happened to interleave those
+// inserts. The seed is sequential now, but nothing here should depend on that.
+let TEMPLATE_ID: number;
+let FIELD_PRIORITY: number;
+let FIELD_DESCRIPTION: number;
+let FIELD_STEPS: number;
+let OPTION_HIGH: number;
 
 /** A serialized Tiptap document — what an API client sends for a step. */
 const STEP_DOC = {
@@ -144,6 +148,34 @@ describeIntegration("case version writers (live DB)", () => {
     if (!admin)
       throw new Error("Test prerequisite: no ADMIN user (run db/seed.ts)");
     userId = admin.id;
+
+    const fieldIdBySystemName = async (systemName: string) => {
+      const field = await raw.caseFields.findUnique({ where: { systemName } });
+      if (!field)
+        throw new Error(
+          `Test prerequisite: no "${systemName}" case field (run db/seed.ts)`
+        );
+      return field.id;
+    };
+    FIELD_PRIORITY = await fieldIdBySystemName("priority");
+    FIELD_DESCRIPTION = await fieldIdBySystemName("description");
+    FIELD_STEPS = await fieldIdBySystemName("steps");
+
+    const template = await raw.templates.findUnique({
+      where: { templateName: "Default Template" },
+    });
+    if (!template)
+      throw new Error(
+        "Test prerequisite: no Default Template (run db/seed.ts)"
+      );
+    TEMPLATE_ID = template.id;
+
+    const high = await raw.fieldOptions.findFirst({ where: { name: "High" } });
+    if (!high)
+      throw new Error(
+        "Test prerequisite: no High priority option (db/seed.ts)"
+      );
+    OPTION_HIGH = high.id;
 
     const project = await raw.projects.findFirst({
       where: { isDeleted: false },
