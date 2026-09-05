@@ -21,6 +21,8 @@ You will see:
 * **Folder Tree View:** A hierarchical view of folders on the left.
 * **Test Case List:** A list of test cases within the selected folder on the right.
 
+![The Test Case Repository showing the folder tree on the left and the case list on the right, with "Show all descendants" turned on so the table lists cases from the selected folder and every folder beneath it](/img/screenshots/user-guide/projects/repository/repository-list.png)
+
 ## Adding Folders and Cases
 
 * **Add Folder:** Click the "Add Folder" button (usually near the top of the folder tree).

@@ -64,6 +64,8 @@ Each row in this tab becomes one iteration when the case runs. The grid is a spr
 - Sensitive cells render as `••••••`; click to reveal (for permitted viewers) before editing.
 - The **Label** column is free-text — surfaces on the iteration row in execution so testers can scan the table at a glance ("Good username", "Empty password", etc.).
 
+![The Configure Parameters sheet open on the Dataset tab, showing a five-row dataset with a Label column and one column per declared parameter](/img/screenshots/user-guide/projects/parameterized/dataset-tab.png)
+
 ### @param chips in step text
 
 Inside any step or expected-result field, type `@` to open the parameter picker, or click the **Insert Parameter** toolbar button. The inserted chip displays as `@username` and renders the iteration's value when the step is shown during execution. Sensitive parameter chips render as `••••••` unless the viewer has the right permission.

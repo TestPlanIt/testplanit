@@ -99,17 +99,27 @@ function HomepageHeader() {
 
 const screenshots = [
   {
-    src: '/img/test-cases.png',
+    src: '/img/screenshots/user-guide/projects/repository/repository-list.png',
     alt: 'TestPlanIt test case management interface showing test repository, folders, and test cases',
     label: 'Test Cases',
   },
   {
-    src: '/img/test-runs.png',
+    src: '/img/screenshots/user-guide/projects/parameterized/dataset-tab.png',
+    alt: 'TestPlanIt parameterized test case with a dataset of input rows, each row driving one iteration at run time',
+    label: 'Parameterized Cases',
+  },
+  {
+    src: '/img/screenshots/user-guide/projects/quickscript/export-preview.png',
+    alt: 'TestPlanIt QuickScript export preview showing an automation script generated from a manual test case',
+    label: 'QuickScript',
+  },
+  {
+    src: '/img/screenshots/user-guide/projects/runs/runs-list.png',
     alt: 'TestPlanIt test runs and results dashboard with execution summary and trend charts',
     label: 'Test Runs',
   },
   {
-    src: '/img/sessions.png',
+    src: '/img/screenshots/user-guide/projects/sessions/sessions-list.png',
     alt: 'TestPlanIt exploratory testing sessions with results summary',
     label: 'Sessions',
   },

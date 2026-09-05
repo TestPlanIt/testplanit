@@ -95,6 +95,8 @@ Public access with password requirement.
 
 ### From Report Builder
 
+![The Share Report dialog on its Create Share tab, showing the three share modes, the expiration picker, the view-notification checkbox, and the title and description fields](/img/screenshots/user-guide/share-links/share-report-dialog.png)
+
 1. **Configure Your Report**
    - Navigate to Reports page
    - Select report type (Test Execution, Automation Trends, etc.)

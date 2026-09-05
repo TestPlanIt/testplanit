@@ -100,6 +100,8 @@ After generation, a preview pane shows:
 
 You can copy individual files to the clipboard or download the full set.
 
+![The QuickScript Export Preview dialog showing a generated automation script with syntax highlighting, plus Copy to clipboard and Download actions](/img/screenshots/user-guide/projects/quickscript/export-preview.png)
+
 ### Partial Failures
 
 If AI generation fails for a case, QuickScript automatically falls back to the template for that case. The preview badge shows **Template Generated** for those files. The download is always available regardless of how many cases fell back.
