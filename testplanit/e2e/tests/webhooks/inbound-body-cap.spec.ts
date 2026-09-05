@@ -1,5 +1,6 @@
 import { expect, test } from "../../fixtures/index";
 import { createRawDbClient } from "~/lib/rawDbClient";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Inbound Webhook Body Cap E2E (Phase 3, plan 03-08)
@@ -35,7 +36,7 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     let configToken: string | undefined;
     let configId: string | undefined;
     let oversizeBody: string | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Provision an inbound Jira webhook config", async () => {
       // Provision a Jira config via the admin form. The body cap is route-

@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Result Flip Justification E2E (API contract)
@@ -61,7 +62,7 @@ test.describe("Result flip justification", () => {
     let testRunCaseId:
       Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Seed a run-case with a prior Passed result", async () => {
       ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
@@ -100,7 +101,7 @@ test.describe("Result flip justification", () => {
     let testRunCaseId:
       Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Seed a run-case with a prior Passed result", async () => {
       ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
@@ -138,7 +139,7 @@ test.describe("Result flip justification", () => {
     let testRunCaseId:
       Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let passedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Seed a run-case with a prior Passed result", async () => {
       ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
@@ -172,7 +173,7 @@ test.describe("Result flip justification", () => {
     let testRunCaseId:
       Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Seed a run-case with no prior result", async () => {
       ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL));
@@ -206,7 +207,7 @@ test.describe("Result flip justification", () => {
     let testRunCaseId:
       Awaited<ReturnType<typeof seedRunCase>>["testRunCaseId"] | undefined;
     let failedId: Awaited<ReturnType<typeof api.getStatusId>> | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Seed a run-case with the setting disabled and a prior Passed result", async () => {
       ({ runId, testRunCaseId } = await seedRunCase(api, request, baseURL, {

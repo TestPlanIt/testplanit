@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
@@ -121,7 +122,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const name = `MCP-E2E-${Date.now()}`;
-    let r: Awaited<ReturnType<typeof request.post>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("Create a test case via REST", async () => {
       r = await request.post(`${baseURL}/api/model/repositoryCases/create`, {
@@ -159,7 +160,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     request,
     baseURL,
   }) => {
-    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("List cases filtered to the new case id", async () => {
       const q = encodeURIComponent(
@@ -190,7 +191,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     request,
     baseURL,
   }) => {
-    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("Fetch full case detail via findUnique", async () => {
       const q = encodeURIComponent(
@@ -226,7 +227,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     baseURL,
   }) => {
     const newName = `Renamed-${Date.now()}`;
-    let r: Awaited<ReturnType<typeof request.patch>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("Update the case name via PATCH", async () => {
       r = await request.patch(`${baseURL}/api/model/repositoryCases/update`, {
@@ -246,7 +247,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     request,
     baseURL,
   }) => {
-    let r: Awaited<ReturnType<typeof request.patch>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("Soft-delete the case via PATCH isDeleted=true", async () => {
       r = await request.patch(`${baseURL}/api/model/repositoryCases/update`, {
@@ -266,7 +267,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     request,
     baseURL,
   }) => {
-    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("List non-deleted cases filtered to the case id", async () => {
       const q = encodeURIComponent(
@@ -301,7 +302,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     request,
     baseURL,
   }) => {
-    let r: Awaited<ReturnType<typeof request.get>> | undefined;
+    let r: APIResponse | undefined;
 
     await test.step("List cases filtered by automated: true", async () => {
       const q = encodeURIComponent(

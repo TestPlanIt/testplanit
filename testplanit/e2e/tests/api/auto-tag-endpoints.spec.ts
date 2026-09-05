@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Auto-Tag API Endpoint Tests
@@ -25,7 +26,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit auto-tag request without authentication", async () => {
         response = await unauthRequest.post(`${baseURL}/api/auto-tag/submit`, {
           data: {
@@ -45,7 +46,7 @@ test.describe("Auto-Tag API Endpoints", () => {
     });
 
     test("returns 400 for missing entityIds", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit auto-tag request with entityIds omitted", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/submit`, {
           data: {
@@ -68,7 +69,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit auto-tag request with an empty entityIds array", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/submit`, {
           data: {
@@ -87,7 +88,7 @@ test.describe("Auto-Tag API Endpoints", () => {
     });
 
     test("returns 400 for invalid entityType", async ({ request, baseURL }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit auto-tag request with an invalid entityType", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/submit`, {
           data: {
@@ -109,7 +110,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Submit a valid auto-tag request", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/submit`, {
           data: {
@@ -146,7 +147,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.get>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request job status without authentication", async () => {
         response = await unauthRequest.get(
           `${baseURL}/api/auto-tag/status/nonexistent-job-123`
@@ -165,7 +166,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.get>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Request status for a non-existent job ID", async () => {
         response = await request.get(
           `${baseURL}/api/auto-tag/status/nonexistent-job-e2e-99999`
@@ -197,7 +198,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Cancel job without authentication", async () => {
         response = await unauthRequest.post(
           `${baseURL}/api/auto-tag/cancel/nonexistent-job-123`
@@ -216,7 +217,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Cancel a non-existent job ID", async () => {
         response = await request.post(
           `${baseURL}/api/auto-tag/cancel/nonexistent-job-e2e-99999`
@@ -250,7 +251,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       const unauthCtx = await browser.newContext({ storageState: undefined });
       const unauthRequest = unauthCtx.request;
 
-      let response: Awaited<ReturnType<typeof unauthRequest.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Apply a tag suggestion without authentication", async () => {
         response = await unauthRequest.post(`${baseURL}/api/auto-tag/apply`, {
           data: {
@@ -277,7 +278,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Apply with an empty suggestions array", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/apply`, {
           data: {
@@ -297,7 +298,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Apply with the suggestions field omitted", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/apply`, {
           data: {
@@ -317,7 +318,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Apply a suggestion with an invalid entityType", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/apply`, {
           data: {
@@ -472,7 +473,7 @@ test.describe("Auto-Tag API Endpoints", () => {
       request,
       baseURL,
     }) => {
-      let response: Awaited<ReturnType<typeof request.post>> | undefined;
+      let response: APIResponse | undefined;
       await test.step("Apply a tag to a non-existent case ID", async () => {
         response = await request.post(`${baseURL}/api/auto-tag/apply`, {
           data: {

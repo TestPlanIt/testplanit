@@ -1,4 +1,5 @@
 import { expect, test } from "../../../fixtures";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * User Management Gap-Fill E2E Tests
@@ -266,8 +267,7 @@ test.describe("User Management Gaps", () => {
       });
 
       try {
-        let tokenResponse:
-          Awaited<ReturnType<typeof page.request.post>> | undefined;
+        let tokenResponse: APIResponse | undefined;
 
         await test.step("Create an API token for the test user", async () => {
           // Create an API token for the test user via API (use page.request which has baseURL)

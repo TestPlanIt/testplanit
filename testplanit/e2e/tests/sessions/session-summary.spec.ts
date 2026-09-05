@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Session Summary API Tests
@@ -17,7 +18,7 @@ test.describe("Session Summary API", () => {
   }) => {
     let project: any;
     let sessionId: number | undefined;
-    let summaryResponse: Awaited<ReturnType<typeof request.get>> | undefined;
+    let summaryResponse: APIResponse | undefined;
     let summary: any;
 
     await test.step("Find the E2E Test Project", async () => {
@@ -77,7 +78,7 @@ test.describe("Session Summary API", () => {
   }) => {
     let project: any;
     let sessionIds: number[] | undefined;
-    let summaries: Awaited<ReturnType<typeof request.get>>[] | undefined;
+    let summaries: APIResponse[] | undefined;
 
     await test.step("Find the E2E Test Project", async () => {
       const projectResponse = await request.get(

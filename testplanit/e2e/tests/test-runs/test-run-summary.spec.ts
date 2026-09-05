@@ -1,4 +1,5 @@
 import { expect, test } from "../../fixtures";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Test Run Summary API Tests
@@ -17,7 +18,7 @@ test.describe("Test Run Summary API", () => {
   }) => {
     let project: any;
     let testRunId: number | undefined;
-    let summaryResponse: Awaited<ReturnType<typeof request.get>> | undefined;
+    let summaryResponse: APIResponse | undefined;
 
     await test.step("Find the E2E Test Project", async () => {
       const projectResponse = await request.get(
