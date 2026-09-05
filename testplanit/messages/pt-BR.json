@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Versão do caso de teste não encontrada.",
+      "caseNotFoundTitle": "Este caso de teste não foi encontrado",
+      "caseNotFoundDescription": "O caso de teste ao qual esta versão pertence não existe neste projeto, ou foi excluído. Verifique o link que você seguiu.",
+      "backToRepository": "Voltar para o repositório",
+      "invalidVersionTitle": "\"{version}\" não é um número de versão",
+      "invalidVersionDescription": "Versões são números inteiros contados a partir de 1. Verifique o link que você seguiu, ou abra o caso de teste e escolha uma versão em seu histórico.",
+      "notRecordedTitle": "A versão {version} deste caso de teste não foi registrada",
+      "notRecordedDescription": "Não há instantâneo salvo para esta versão, portanto o caso de teste não pode ser exibido como estava naquele momento. As versões são registradas quando um caso é salvo; casos criados ou alterados antes do registro de instantâneos não possuem histórico para exibir.",
+      "viewCurrentCase": "Ver o caso de teste atual",
+      "snapshotUnavailable": "A versão {version} não foi registrada, portanto este resultado não pode ser visualizado como o caso estava quando foi executado.",
       "detailsRegion": "Detalhes do caso de teste",
       "metadataRegion": "Metadados do caso de teste",
       "versionCreated": "Versão {version}",

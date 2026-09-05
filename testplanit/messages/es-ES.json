@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Versión de caso de prueba no encontrada.",
+      "caseNotFoundTitle": "Este caso de prueba no fue encontrado",
+      "caseNotFoundDescription": "El caso de prueba al que pertenece esta versión no existe en este proyecto, o ha sido eliminado. Verifique el enlace que siguió.",
+      "backToRepository": "Volver al repositorio",
+      "invalidVersionTitle": "\"{version}\" no es un número de versión",
+      "invalidVersionDescription": "Las versiones son números enteros que comienzan desde 1. Verifique el enlace que siguió, o abra el caso de prueba y elija una versión de su historial.",
+      "notRecordedTitle": "La versión {version} de este caso de prueba no fue registrada",
+      "notRecordedDescription": "No hay una instantánea guardada para esta versión, por lo que el caso de prueba no puede mostrarse tal como estaba en ese momento. Las versiones se registran cuando se guarda un caso; los casos creados o modificados antes de que se registraran las instantáneas no tienen historial para mostrar.",
+      "viewCurrentCase": "Ver el caso de prueba actual",
+      "snapshotUnavailable": "La versión {version} no fue registrada, por lo que este resultado no puede visualizarse tal como estaba el caso cuando se ejecutó.",
       "detailsRegion": "Detalles del caso de prueba",
       "metadataRegion": "Metadatos de caso de prueba",
       "versionCreated": "Versión {version}",

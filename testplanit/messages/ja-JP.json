@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "テストケースのバージョンが見つかりません。",
+      "caseNotFoundTitle": "このテストケースが見つかりません",
+      "caseNotFoundDescription": "このバージョンが属するテストケースは、このプロジェクトに存在しないか、削除されています。リンクを確認してください。",
+      "backToRepository": "リポジトリに戻る",
+      "invalidVersionTitle": "「{version}」はバージョン番号ではありません",
+      "invalidVersionDescription": "バージョンは1から始まる整数です。リンクを確認するか、テストケースを開いて履歴からバージョンを選択してください。",
+      "notRecordedTitle": "このテストケースのバージョン{version}は記録されていません",
+      "notRecordedDescription": "このバージョンの保存されたスナップショットが存在しないため、その時点のテストケースを表示できません。バージョンはケースが保存された時点で記録されます。スナップショットが記録される前に作成または変更されたケースには、表示できる履歴がありません。",
+      "viewCurrentCase": "現在のテストケースを表示",
+      "snapshotUnavailable": "バージョン{version}は記録されていないため、この結果は実行当時のケースの状態として表示できません。",
       "detailsRegion": "テストケースの詳細",
       "metadataRegion": "テストケースのメタデータ",
       "versionCreated": "バージョン {version}",

@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "未找到測試用例版本。",
+      "caseNotFoundTitle": "未找到此測試用例",
+      "caseNotFoundDescription": "此版本所屬的測試用例在此專案中不存在，或已被刪除。請檢查您所點擊的連結。",
+      "backToRepository": "返回儲存庫",
+      "invalidVersionTitle": "「{version}」不是有效的版本號碼",
+      "invalidVersionDescription": "版本是從 1 開始遞增的整數。請檢查您所點擊的連結，或開啟測試用例並從其歷史記錄中選擇一個版本。",
+      "notRecordedTitle": "此測試用例的版本 {version} 未被記錄",
+      "notRecordedDescription": "此版本沒有已儲存的快照，因此無法顯示測試用例在該時間點的狀態。版本會在用例被儲存時記錄；在快照功能啟用前建立或變更的用例沒有可顯示的歷史記錄。",
+      "viewCurrentCase": "檢視目前的測試用例",
+      "snapshotUnavailable": "版本 {version} 未被記錄，因此無法檢視此結果在執行當下用例的狀態。",
       "detailsRegion": "測試用例詳情",
       "metadataRegion": "測試用例元數據",
       "versionCreated": "版本 {version}",

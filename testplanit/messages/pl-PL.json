@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Nie znaleziono wersji przypadku testowego.",
+      "caseNotFoundTitle": "Nie znaleziono tego przypadku testowego",
+      "caseNotFoundDescription": "Przypadek testowy, do którego należy ta wersja, nie istnieje w tym projekcie lub został usunięty. Sprawdź link, z którego skorzystano.",
+      "backToRepository": "Powrót do repozytorium",
+      "invalidVersionTitle": "\"{version}\" nie jest numerem wersji",
+      "invalidVersionDescription": "Wersje to liczby całkowite liczone od 1. Sprawdź link, z którego skorzystano, lub otwórz przypadek testowy i wybierz wersję z jego historii.",
+      "notRecordedTitle": "Wersja {version} tego przypadku testowego nie została zarejestrowana",
+      "notRecordedDescription": "Nie ma zapisanego zrzutu dla tej wersji, więc przypadek testowy nie może zostać wyświetlony w postaci, w jakiej istniał w tamtym momencie. Wersje są rejestrowane podczas zapisywania przypadku; przypadki utworzone lub zmienione przed rozpoczęciem rejestrowania zrzutów nie mają historii do wyświetlenia.",
+      "viewCurrentCase": "Wyświetl bieżący przypadek testowy",
+      "snapshotUnavailable": "Wersja {version} nie została zarejestrowana, więc ten wynik nie może zostać wyświetlony w postaci, w jakiej przypadek istniał w momencie jego uruchomienia.",
       "detailsRegion": "Szczegóły przypadku testowego",
       "metadataRegion": "Metadane przypadku testowego",
       "versionCreated": "Wersja {version}",

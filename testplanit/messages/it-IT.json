@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Versione del caso di prova non trovata.",
+      "caseNotFoundTitle": "Questo caso di prova non è stato trovato",
+      "caseNotFoundDescription": "Il caso di prova a cui appartiene questa versione non esiste in questo progetto, oppure è stato eliminato. Controlla il link seguito.",
+      "backToRepository": "Torna al repository",
+      "invalidVersionTitle": "\"{version}\" non è un numero di versione",
+      "invalidVersionDescription": "Le versioni sono numeri interi che partono da 1. Controlla il link seguito, oppure apri il caso di prova e scegli una versione dalla sua cronologia.",
+      "notRecordedTitle": "La versione {version} di questo caso di prova non è stata registrata",
+      "notRecordedDescription": "Non esiste alcuno snapshot salvato per questa versione, quindi il caso di prova non può essere mostrato come si presentava in quel momento. Le versioni vengono registrate quando un caso viene salvato; i casi creati o modificati prima della registrazione degli snapshot non hanno cronologia da mostrare.",
+      "viewCurrentCase": "Visualizza il caso di prova attuale",
+      "snapshotUnavailable": "La versione {version} non è stata registrata, quindi questo risultato non può essere visualizzato come si presentava il caso di prova al momento dell'esecuzione.",
       "detailsRegion": "Dettagli del caso di prova",
       "metadataRegion": "Metadati del caso di prova",
       "versionCreated": "Versione {version}",

@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "未找到测试用例版本。",
+      "caseNotFoundTitle": "未找到此测试用例",
+      "caseNotFoundDescription": "此版本所属的测试用例在此项目中不存在，或已被删除。请检查您所访问的链接。",
+      "backToRepository": "返回存储库",
+      "invalidVersionTitle": "“{version}”不是有效的版本号",
+      "invalidVersionDescription": "版本号是从 1 开始计数的整数。请检查您所访问的链接，或打开测试用例并从其历史记录中选择一个版本。",
+      "notRecordedTitle": "此测试用例的版本 {version} 未被记录",
+      "notRecordedDescription": "此版本没有保存的快照，因此无法显示该测试用例在当时的状态。版本仅在用例保存时被记录；在开始记录快照之前创建或更改的用例没有历史记录可显示。",
+      "viewCurrentCase": "查看当前测试用例",
+      "snapshotUnavailable": "版本 {version} 未被记录，因此无法查看该结果运行时用例的状态。",
       "detailsRegion": "测试用例详情",
       "metadataRegion": "测试用例元数据",
       "versionCreated": "版本 {version}",

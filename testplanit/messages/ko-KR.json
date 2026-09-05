@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "테스트 케이스 버전을 찾을 수 없습니다.",
+      "caseNotFoundTitle": "이 테스트 케이스를 찾을 수 없습니다",
+      "caseNotFoundDescription": "이 버전이 속한 테스트 케이스가 이 프로젝트에 존재하지 않거나 삭제되었습니다. 따라간 링크를 확인하세요.",
+      "backToRepository": "저장소로 돌아가기",
+      "invalidVersionTitle": "\"{version}\"은 버전 번호가 아닙니다",
+      "invalidVersionDescription": "버전은 1부터 시작하는 정수입니다. 따라간 링크를 확인하거나, 테스트 케이스를 열어 기록에서 버전을 선택하세요.",
+      "notRecordedTitle": "이 테스트 케이스의 버전 {version}은 기록되지 않았습니다",
+      "notRecordedDescription": "이 버전에 저장된 스냅샷이 없어 테스트 케이스를 당시 상태로 표시할 수 없습니다. 버전은 케이스가 저장될 때 기록되며, 스냅샷 기록이 시작되기 전에 생성되거나 변경된 케이스는 표시할 기록이 없습니다.",
+      "viewCurrentCase": "현재 테스트 케이스 보기",
+      "snapshotUnavailable": "버전 {version}이 기록되지 않아 실행 당시 케이스 상태로 이 결과를 볼 수 없습니다.",
       "detailsRegion": "테스트 케이스 세부 정보",
       "metadataRegion": "테스트 케이스 메타데이터",
       "versionCreated": "버전 {version}",

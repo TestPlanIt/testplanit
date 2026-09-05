@@ -61,6 +61,7 @@ import {
   ChartLine,
   ChevronDown,
   ChevronRight,
+  CircleAlert,
   Combine,
   History,
   Layers,
@@ -1068,6 +1069,7 @@ export default function TestResultHistory({
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
   const tParams = useTranslations("parameters");
+  const tVersion = useTranslations("repository.version");
   const locale = useLocale();
   const router = useRouter();
   const dateFnsLocale = getDateFnsLocale(locale);
@@ -1112,6 +1114,30 @@ export default function TestResultHistory({
   );
   const projectEditWindowSeconds =
     editWindowProject?.editResultsDurationSeconds ?? null;
+
+  // Version numbers this case actually has a snapshot for. A result records
+  // the case version it ran against, but nothing guarantees a matching
+  // RepositoryCaseVersions row — cases written by the API before #598, and
+  // anything created before snapshots were recorded, have none. Without this
+  // the version column links to a page that cannot show the case as executed,
+  // and the reader has no warning before clicking (#599).
+  const { data: recordedVersionRows } = useClientQueries(
+    schema
+  ).repositoryCaseVersions.useFindMany(
+    {
+      where: { repositoryCaseId: Number(caseId), isDeleted: false },
+      select: { version: true },
+    },
+    { enabled: Boolean(caseId) }
+  );
+
+  const recordedVersions = useMemo(
+    () =>
+      recordedVersionRows
+        ? new Set(recordedVersionRows.map((row) => row.version))
+        : null,
+    [recordedVersionRows]
+  );
 
   // Fetch test case data
   const { data: fetchedTestCase, isLoading: isLoadingTestCase } =
@@ -1910,14 +1936,38 @@ export default function TestResultHistory({
             )}
           </TableCell>
           <TableCell className="max-w-[50px] text-center">
-            {result.sourceType === "manual" && !result.isPending && (
-              <Link
-                href={`/projects/repository/${activeProjectId}/${caseId}/${result.testRunCaseVersion}`}
-                className="hover:underline"
-              >
-                {result.testRunCaseVersion}
-              </Link>
-            )}
+            {result.sourceType === "manual" &&
+              !result.isPending &&
+              (recordedVersions &&
+              !recordedVersions.has(result.testRunCaseVersion) ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="text-muted-foreground inline-flex items-center gap-1"
+                      data-testid="snapshot-unavailable"
+                      aria-label={tVersion("snapshotUnavailable", {
+                        version: result.testRunCaseVersion,
+                      })}
+                    >
+                      <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                      {result.testRunCaseVersion}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tVersion("snapshotUnavailable", {
+                      version: result.testRunCaseVersion,
+                    })}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href={`/projects/repository/${activeProjectId}/${caseId}/${result.testRunCaseVersion}`}
+                  className="hover:underline"
+                >
+                  {result.testRunCaseVersion}
+                </Link>
+              ))}
             {result.sourceType !== "manual" && "-"}
           </TableCell>
           <TableCell className="max-w-[50px]">

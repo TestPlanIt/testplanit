@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Testfallversion nicht gefunden.",
+      "caseNotFoundTitle": "Dieser Testfall wurde nicht gefunden",
+      "caseNotFoundDescription": "Der Testfall, zu dem diese Version gehört, existiert in diesem Projekt nicht oder wurde gelöscht. Überprüfen Sie den Link, dem Sie gefolgt sind.",
+      "backToRepository": "Zurück zum Repository",
+      "invalidVersionTitle": "\"{version}\" ist keine Versionsnummer",
+      "invalidVersionDescription": "Versionen sind ganze Zahlen, die ab 1 aufwärts gezählt werden. Überprüfen Sie den Link, dem Sie gefolgt sind, oder öffnen Sie den Testfall und wählen Sie eine Version aus dem Verlauf aus.",
+      "notRecordedTitle": "Version {version} dieses Testfalls wurde nicht aufgezeichnet",
+      "notRecordedDescription": "Es gibt keinen gespeicherten Snapshot für diese Version, daher kann der Testfall nicht so angezeigt werden, wie er zu diesem Zeitpunkt war. Versionen werden aufgezeichnet, wenn ein Fall gespeichert wird; Fälle, die vor der Aufzeichnung von Snapshots erstellt oder geändert wurden, haben keinen anzuzeigenden Verlauf.",
+      "viewCurrentCase": "Aktuellen Testfall anzeigen",
+      "snapshotUnavailable": "Version {version} wurde nicht aufgezeichnet, daher kann dieses Ergebnis nicht so angezeigt werden, wie der Fall zum Zeitpunkt der Ausführung stand.",
       "detailsRegion": "Details zum Testfall",
       "metadataRegion": "Testfall-Metadaten",
       "versionCreated": "Version {version}",

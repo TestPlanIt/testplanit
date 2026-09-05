@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Không tìm thấy phiên bản trường hợp kiểm thử.",
+      "caseNotFoundTitle": "Không tìm thấy trường hợp kiểm thử này",
+      "caseNotFoundDescription": "Trường hợp kiểm thử mà phiên bản này thuộc về không tồn tại trong dự án này, hoặc đã bị xóa. Hãy kiểm tra lại liên kết bạn đã theo.",
+      "backToRepository": "Quay lại kho lưu trữ",
+      "invalidVersionTitle": "\"{version}\" không phải là số phiên bản",
+      "invalidVersionDescription": "Phiên bản là các số nguyên đếm tăng dần từ 1. Hãy kiểm tra lại liên kết bạn đã theo, hoặc mở trường hợp kiểm thử và chọn một phiên bản từ lịch sử của nó.",
+      "notRecordedTitle": "Phiên bản {version} của trường hợp kiểm thử này không được ghi lại",
+      "notRecordedDescription": "Không có ảnh chụp nhanh nào được lưu cho phiên bản này, vì vậy không thể hiển thị trường hợp kiểm thử như tại thời điểm đó. Các phiên bản được ghi lại khi một trường hợp được lưu; các trường hợp được tạo hoặc thay đổi trước khi ảnh chụp nhanh được ghi lại sẽ không có lịch sử để hiển thị.",
+      "viewCurrentCase": "Xem trường hợp kiểm thử hiện tại",
+      "snapshotUnavailable": "Phiên bản {version} không được ghi lại, vì vậy không thể xem kết quả này như trường hợp đã diễn ra khi chạy.",
       "detailsRegion": "Chi tiết trường hợp thử nghiệm",
       "metadataRegion": "Siêu dữ liệu trường hợp thử nghiệm",
       "versionCreated": "Phiên bản {version}",

@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Testcaseversie niet gevonden.",
+      "caseNotFoundTitle": "Deze testcase is niet gevonden",
+      "caseNotFoundDescription": "De testcase waartoe deze versie behoort, bestaat niet in dit project of is verwijderd. Controleer de link die u hebt gevolgd.",
+      "backToRepository": "Terug naar de repository",
+      "invalidVersionTitle": "\"{version}\" is geen versienummer",
+      "invalidVersionDescription": "Versies zijn gehele getallen die oplopen vanaf 1. Controleer de link die u hebt gevolgd, of open de testcase en kies een versie uit de geschiedenis ervan.",
+      "notRecordedTitle": "Versie {version} van deze testcase is niet opgeslagen",
+      "notRecordedDescription": "Er is geen opgeslagen momentopname voor deze versie, dus de testcase kan niet worden weergegeven zoals deze op dat moment was. Versies worden vastgelegd wanneer een testcase wordt opgeslagen; testcases die zijn aangemaakt of gewijzigd voordat momentopnamen werden vastgelegd, hebben geen geschiedenis om te tonen.",
+      "viewCurrentCase": "Bekijk de huidige testcase",
+      "snapshotUnavailable": "Versie {version} is niet opgeslagen, dus dit resultaat kan niet worden bekeken zoals de testcase eruitzag toen deze werd uitgevoerd.",
       "detailsRegion": "Testcasedetails",
       "metadataRegion": "Testcase-metagegevens",
       "versionCreated": "Versie {version}",

@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Test case version not found.",
+      "caseNotFoundTitle": "This test case was not found",
+      "caseNotFoundDescription": "The test case this version belongs to does not exist in this project, or it has been deleted. Check the link you followed.",
+      "backToRepository": "Back to the repository",
+      "invalidVersionTitle": "\"{version}\" is not a version number",
+      "invalidVersionDescription": "Versions are whole numbers counting up from 1. Check the link you followed, or open the test case and pick a version from its history.",
+      "notRecordedTitle": "Version {version} of this test case was not recorded",
+      "notRecordedDescription": "There is no saved snapshot for this version, so the test case cannot be shown as it was at that point. Versions are recorded when a case is saved; cases created or changed before snapshots were recorded have no history to show.",
+      "viewCurrentCase": "View the current test case",
+      "snapshotUnavailable": "Version {version} was not recorded, so this result cannot be viewed as the case stood when it ran.",
       "detailsRegion": "Test case details",
       "metadataRegion": "Test case metadata",
       "versionCreated": "Version {version}",

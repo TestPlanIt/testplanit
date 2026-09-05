@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Verze testovacího případu nebyla nalezena.",
+      "caseNotFoundTitle": "Tento testovací případ nebyl nalezen",
+      "caseNotFoundDescription": "Testovací případ, ke kterému tato verze náleží, v tomto projektu neexistuje nebo byl odstraněn. Zkontrolujte odkaz, který jste použili.",
+      "backToRepository": "Zpět do repozitáře",
+      "invalidVersionTitle": "\"{version}\" není číslo verze",
+      "invalidVersionDescription": "Verze jsou celá čísla počínající od 1. Zkontrolujte odkaz, který jste použili, nebo otevřete testovací případ a vyberte verzi z jeho historie.",
+      "notRecordedTitle": "Verze {version} tohoto testovacího případu nebyla zaznamenána",
+      "notRecordedDescription": "Pro tuto verzi neexistuje žádný uložený snímek, takže testovací případ nelze zobrazit v podobě, v jaké byl v danou chvíli. Verze se zaznamenávají při uložení případu; případy vytvořené nebo změněné před zahájením zaznamenávání snímků nemají historii k zobrazení.",
+      "viewCurrentCase": "Zobrazit aktuální testovací případ",
+      "snapshotUnavailable": "Verze {version} nebyla zaznamenána, takže tento výsledek nelze zobrazit v podobě, v jaké byl případ v době spuštění.",
       "detailsRegion": "Podrobnosti testovacího případu",
       "metadataRegion": "Metadata testovacího případu",
       "versionCreated": "Verze {version}",

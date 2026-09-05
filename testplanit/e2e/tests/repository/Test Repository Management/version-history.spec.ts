@@ -427,6 +427,100 @@ test.describe("Version History", () => {
     });
   });
 
+  test("Unrecorded Version Reports It Instead of Showing the Current Case", async ({
+    api,
+    page,
+  }) => {
+    const uniqueId = Date.now();
+
+    let projectId: number | undefined;
+    let testCaseId: number | undefined;
+    const testCaseName = `Missing Version Case ${uniqueId}`;
+
+    await test.step("Create a test case with a single version", async () => {
+      projectId = await getTestProjectId(api);
+
+      const folderName = `Missing Version Folder ${uniqueId}`;
+      const folderId = await api.createFolder(projectId, folderName);
+      testCaseId = await api.createTestCase(projectId, folderId, testCaseName);
+    });
+
+    await test.step("Open a version that was never recorded", async () => {
+      // Version 99 has no snapshot row. The page used to fall through to the
+      // current case with no warning, so a result linking to a version that
+      // was never recorded showed today's case as the executed one.
+      await page.goto(
+        `/en-US/projects/repository/${projectId}/${testCaseId}/99`
+      );
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.getByTestId("version-not-recorded")).toBeVisible({
+        timeout: 15000,
+      });
+      // Neither the version page nor the current case is rendered in its
+      // place — the version page always ends with the history-view footer.
+      await expect(
+        page.locator("text=/History.*View|Test.*Case.*History/i")
+      ).toHaveCount(0);
+      // And the URL still names the version that was asked for.
+      expect(page.url()).toContain(`/${testCaseId}/99`);
+    });
+
+    await test.step("Report a missing test case separately from a missing version", async () => {
+      // A case id that doesn't exist is NOT "the version wasn't recorded", and
+      // its recovery link must not point at a case that will error.
+      await page.goto(`/en-US/projects/repository/${projectId}/99999999/1`);
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.getByTestId("version-case-not-found")).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(page.getByTestId("version-not-recorded")).toHaveCount(0);
+      await expect(
+        page.getByTestId("version-case-not-found").getByRole("link")
+      ).toHaveAttribute(
+        "href",
+        new RegExp(`/projects/repository/${projectId}$`)
+      );
+    });
+
+    await test.step("Report a version segment that is not a version number", async () => {
+      await page.goto(
+        `/en-US/projects/repository/${projectId}/${testCaseId}/abc`
+      );
+      await page.waitForLoadState("networkidle");
+
+      await expect(page.getByTestId("version-invalid")).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(page.getByTestId("version-not-recorded")).toHaveCount(0);
+    });
+
+    await test.step("Return to the unrecorded version for the recovery link", async () => {
+      await page.goto(
+        `/en-US/projects/repository/${projectId}/${testCaseId}/99`
+      );
+      await page.waitForLoadState("networkidle");
+      await expect(page.getByTestId("version-not-recorded")).toBeVisible({
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Offer a way back to the current case", async () => {
+      await page
+        .getByTestId("version-not-recorded")
+        .getByRole("link")
+        .first()
+        .click();
+      await page.waitForURL(
+        `**/projects/repository/${projectId}/${testCaseId}`
+      );
+      await expect(
+        page.getByText(testCaseName, { exact: true }).first()
+      ).toBeVisible({ timeout: 15000 });
+    });
+  });
+
   test("Resizable Panels on Version Page", async ({ api, page }) => {
     const uniqueId = Date.now();
 

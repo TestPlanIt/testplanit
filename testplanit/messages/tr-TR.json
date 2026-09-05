@@ -2893,6 +2893,15 @@
   "repository": {
     "version": {
       "notFound": "Test senaryosu sürümü bulunamadı.",
+      "caseNotFoundTitle": "Bu test senaryosu bulunamadı",
+      "caseNotFoundDescription": "Bu sürümün ait olduğu test senaryosu bu projede mevcut değil veya silinmiş. Takip ettiğiniz bağlantıyı kontrol edin.",
+      "backToRepository": "Depoya geri dön",
+      "invalidVersionTitle": "\"{version}\" bir sürüm numarası değil",
+      "invalidVersionDescription": "Sürümler 1'den başlayarak sayılan tam sayılardır. Takip ettiğiniz bağlantıyı kontrol edin veya test senaryosunu açıp geçmişinden bir sürüm seçin.",
+      "notRecordedTitle": "Bu test senaryosunun {version} sürümü kaydedilmemiş",
+      "notRecordedDescription": "Bu sürüm için kaydedilmiş bir anlık görüntü olmadığından, test senaryosu o noktadaki haliyle gösterilemiyor. Sürümler bir senaryo kaydedildiğinde kaydedilir; anlık görüntüler kaydedilmeden önce oluşturulmuş veya değiştirilmiş senaryoların gösterilecek geçmişi yoktur.",
+      "viewCurrentCase": "Güncel test senaryosunu görüntüle",
+      "snapshotUnavailable": "{version} sürümü kaydedilmediğinden, bu sonuç senaryonun çalıştırıldığı andaki haliyle görüntülenemiyor.",
       "detailsRegion": "Test senaryosu detayları",
       "metadataRegion": "Test durumu meta verileri",
       "versionCreated": "Sürüm {version}",
