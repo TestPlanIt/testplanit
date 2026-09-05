@@ -49,11 +49,6 @@ const mockTx = {
   // copy/move flow runs without a real connection.
   $executeRaw: vi.fn().mockResolvedValue(0),
   repositoryCases: {
-    // findFirst: the copy/move flow now probes for a soft-deleted row at
-    // the target's (projectId, name, className, source) tuple before
-    // creating, so it can resurrect instead of 23505ing. Default to null
-    // (no soft-deleted match) so existing tests hit the create path.
-    findFirst: vi.fn().mockResolvedValue(null),
     create: vi.fn(),
     update: vi.fn(),
     deleteMany: vi.fn(),
@@ -345,9 +340,8 @@ describe("CopyMoveWorker", () => {
     mockDb.repositoryFolders.create.mockResolvedValue({ id: 5000 });
     mockDb.repositoryFolders.updateMany.mockResolvedValue({ count: 0 });
 
-    // Transaction: findFirst returns null (no soft-deleted), create
-    // returns new case with id 1001.
-    mockTx.repositoryCases.findFirst.mockResolvedValue(null);
+    // Transaction: create returns a new case with id 1001. The copy/move
+    // flow always creates a fresh case (it never resurrects a tombstone).
     mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
     mockTx.repositoryCases.update.mockResolvedValue({});
 
@@ -562,6 +556,117 @@ describe("CopyMoveWorker", () => {
           where: { id: 1001 },
           data: expect.objectContaining({ currentVersion: 1 }),
         })
+      );
+    });
+
+    it("REPEAT-COPY-01: same case copied twice with rename creates distinct cases, no version collision", async () => {
+      // Faithful reproduction of the production failure: copy a case into the
+      // same project/folder, delete the resulting "(copy)", then copy again.
+      // The name search must skip the tombstoned "(copy)" name and create a
+      // brand-new "(copy 2)" case — never reusing the tombstone (whose
+      // version-1 row still exists), which would 23505 on
+      // RepositoryCaseVersions_repositoryCaseId_version_key.
+      const store: { id: number; name: string; isDeleted: boolean }[] = [
+        { id: 1, name: "Test Case 1", isDeleted: false },
+      ];
+      let nextId = 8613;
+
+      // db.repositoryCases.findFirst serves three probes:
+      //  - folderMaxOrder (where.folderId) → null
+      //  - existingCase live-conflict probe (where.isDeleted === false)
+      //  - nameIsTaken probe (no isDeleted key → live OR tombstoned both block)
+      mockDb.repositoryCases.findFirst.mockImplementation(async (args: any) => {
+        const where = args?.where ?? {};
+        if (where.folderId !== undefined) return null;
+        const match = store.find((c) => {
+          if (c.name !== where.name) return false;
+          if (where.isDeleted === false) return c.isDeleted === false;
+          return true; // nameIsTaken: any live OR tombstoned row blocks
+        });
+        return match ? { id: match.id } : null;
+      });
+
+      mockTx.repositoryCases.create.mockImplementation(async (args: any) => {
+        const row = { id: nextId++, name: args.data.name, isDeleted: false };
+        store.push(row);
+        return { id: row.id };
+      });
+
+      const renameJob = makeMockJob({
+        data: { ...baseCopyJobData, conflictResolution: "rename" as const },
+      });
+
+      const { processor } = await loadWorker();
+
+      // First copy → fresh "Test Case 1 (copy)".
+      await processor(renameJob as Job);
+      const firstCopy = store.find((c) => c.name === "Test Case 1 (copy)");
+      expect(firstCopy).toBeDefined();
+      expect(mockCreateVersion).toHaveBeenCalledWith(
+        mockTx,
+        firstCopy!.id,
+        expect.objectContaining({ version: 1 })
+      );
+
+      // User soft-deletes the first copy; its version-1 row remains.
+      firstCopy!.isDeleted = true;
+      mockCreateVersion.mockClear();
+      mockTx.repositoryCases.update.mockClear();
+
+      // Second copy → must skip the tombstoned "(copy)" → fresh "(copy 2)".
+      await processor(renameJob as Job);
+
+      const secondCopy = store.find((c) => c.name === "Test Case 1 (copy 2)");
+      expect(secondCopy).toBeDefined();
+      expect(secondCopy!.id).not.toBe(firstCopy!.id);
+
+      // The tombstone must NOT be touched (no update reviving its id).
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: firstCopy!.id } })
+      );
+
+      // Fresh case → version 1, no (repositoryCaseId, version) collision.
+      expect(mockCreateVersion).toHaveBeenCalledWith(
+        mockTx,
+        secondCopy!.id,
+        expect.objectContaining({ version: 1 })
+      );
+    });
+
+    it("REPEAT-COPY-02: copy whose name matches only a tombstone creates a fresh, distinct case (never resurrects)", async () => {
+      // A copy (here with the default "skip" resolution) whose name collides
+      // ONLY with a soft-deleted case — no live duplicate — must still create
+      // a brand-new case under a disambiguated name, NOT reuse the tombstone's
+      // id. The tombstone's stale version-1 row stays untouched, so version 1
+      // is free on the new case.
+      mockDb.repositoryCases.findFirst.mockImplementation(async (args: any) => {
+        const where = args?.where ?? {};
+        if (where.folderId !== undefined) return null; // folderMaxOrder
+        // Live-conflict probe (isDeleted:false): no live duplicate exists.
+        if (where.isDeleted === false) return null;
+        // nameIsTaken probe: the original name is held by a tombstone (id
+        // 8613); the disambiguated "(copy)" name is free.
+        if (where.name === "Test Case 1") return { id: 8613 };
+        return null;
+      });
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job); // baseCopyJobData = copy + skip
+
+      // Created fresh (id 1001 from the default create mock), under the
+      // disambiguated name — the tombstone id 8613 is never reused.
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "Test Case 1 (copy)" }),
+        })
+      );
+      expect(mockTx.repositoryCases.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 8613 } })
+      );
+      expect(mockCreateVersion).toHaveBeenCalledWith(
+        mockTx,
+        1001,
+        expect.objectContaining({ version: 1 })
       );
     });
 
