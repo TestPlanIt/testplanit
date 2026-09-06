@@ -2693,6 +2693,7 @@ export function TestCaseDetailsView({
                             render={({ field: { onChange, value } }) => (
                               <Select
                                 onValueChange={(val) => {
+                                  if (!val) return;
                                   onChange(Number(val));
                                   handleTemplateChange(Number(val));
                                 }}
