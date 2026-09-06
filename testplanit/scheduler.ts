@@ -12,6 +12,7 @@ import {
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_PURGE_STALE_CASE_DRAFTS,
   JOB_REVIEW_REMINDERS,
   JOB_SWEEP_ABANDONED_RUNS,
   JOB_UPDATE_ALL_CASES,
@@ -244,6 +245,27 @@ async function scheduleJobs() {
       );
     }
 
+    // Purge abandoned case drafts. Daily is ample — the retention window is 30
+    // days, so the exact hour a draft ages out is immaterial.
+    for (const tenantId of tenantIds) {
+      const caseDraftPurgeId = tenantId
+        ? `${JOB_PURGE_STALE_CASE_DRAFTS}-${tenantId}`
+        : JOB_PURGE_STALE_CASE_DRAFTS;
+
+      await forecastQueue.upsertJobScheduler(
+        caseDraftPurgeId,
+        { pattern: CRON_SCHEDULE_DAILY_3AM },
+        {
+          name: JOB_PURGE_STALE_CASE_DRAFTS,
+          data: { tenantId },
+        }
+      );
+
+      console.log(
+        `Upserted job scheduler "${JOB_PURGE_STALE_CASE_DRAFTS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+    }
+
     // Upsert notification digest job schedulers for each tenant
     for (const tenantId of tenantIds) {
       const digestId = tenantId
@@ -328,6 +350,7 @@ async function scheduleJobs() {
                 JOB_MILESTONE_DUE_NOTIFICATIONS,
                 JOB_REVIEW_REMINDERS,
                 JOB_SWEEP_ABANDONED_RUNS,
+                JOB_PURGE_STALE_CASE_DRAFTS,
               ],
             },
             { queue: notificationQueue, jobNames: [JOB_SEND_DAILY_DIGEST] },

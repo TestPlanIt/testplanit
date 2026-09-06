@@ -67,11 +67,19 @@ import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import parseDuration from "parse-duration";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
+import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
+import { useCaseDraft } from "~/hooks/useCaseDraft";
+import {
+  caseDraftDigest,
+  reviveCaseDraftValues,
+  type CaseDraftExtras,
+} from "~/lib/services/caseDraft";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import { IconName } from "~/types/globals";
@@ -321,6 +329,20 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
 
+  // Draft auto-save. `draftBaseline` is the digest of whatever the form was
+  // last reset to; anything that differs from it is unsaved work. Every reset
+  // below updates it in lockstep, which is why the baseline is state rather
+  // than something derived from react-hook-form's own `isDirty` — the resets
+  // here fire from effects that re-run on template switches and refetches.
+  const [draftBaseline, setDraftBaseline] = useState<string | null>(null);
+  // Restored values wait here when the restore also switches template: the
+  // template effect resets the form to that template's defaults, so the
+  // restore has to be applied on the far side of that reset.
+  const pendingRestoreValuesRef = useRef<FormValues | null>(null);
+  /** Bumped on a draft restore to remount the field renderers — see its use
+   * on the case-field key below. */
+  const [draftRestoreNonce, setDraftRestoreNonce] = useState(0);
+
   const { data: sharedStepGroupsData, isLoading: isLoadingSharedStepGroups } =
     useClientQueries(schema).sharedStepGroup.useFindMany(
       {
@@ -499,6 +521,37 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     setValue,
   } = form;
 
+  // Editor state the form does not own. Pending file uploads are excluded on
+  // purpose — a `File` handle cannot be serialized, and no draft can bring one
+  // back after a reload.
+  const draftExtras = useMemo<CaseDraftExtras>(
+    () => ({
+      tags: selectedTags,
+      issues: linkedIssueIds,
+      inlineParameters,
+      inlineDatasetRows,
+    }),
+    [selectedTags, linkedIssueIds, inlineParameters, inlineDatasetRows]
+  );
+  // Read by the reset sites below, which must not re-run when tags or issues
+  // change. Synced from an effect (writing a ref during render is what
+  // `react-hooks/refs` forbids) declared ahead of every effect that reads it,
+  // since effects run in declaration order.
+  const draftExtrasRef = useRef(draftExtras);
+  useEffect(() => {
+    draftExtrasRef.current = draftExtras;
+  }, [draftExtras]);
+
+  const draft = useCaseDraft({
+    form,
+    scope: folderId ? { kind: "folder", folderId } : null,
+    projectId: numericProjectId,
+    userId: session?.user?.id,
+    enabled: open,
+    extras: draftExtras,
+    baselineDigest: draftBaseline,
+  });
+
   const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: {
       isDeleted: false,
@@ -532,9 +585,13 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     setSelectedFiles(files);
   };
 
+  // Cancel is an explicit "don't create this case", so it discards the draft.
+  // Dismissing the dialog with Escape or a backdrop click is not — that path
+  // leaves the draft in place and offers to restore it on the next open.
   const handleCancel = () => {
     setSelectedFiles([]);
     setSelectedLinks([]);
+    draft.clear();
     onClose();
   };
 
@@ -650,6 +707,19 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         }
       });
       reset(defaultValues as FormValues);
+      setDraftBaseline(
+        caseDraftDigest(defaultValues as Record<string, unknown>, {
+          ...draftExtrasRef.current,
+        })
+      );
+      // A restore that also switched template lands here, after the defaults
+      // above. The baseline stays the defaults, so the restored content reads
+      // as unsaved work and keeps auto-saving.
+      const pendingRestore = pendingRestoreValuesRef.current;
+      if (pendingRestore) {
+        pendingRestoreValuesRef.current = null;
+        reset(pendingRestore);
+      }
       // Enable the name field after template and fields are ready
       setIsTemplateReady(true);
     }
@@ -708,6 +778,16 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       setSelectedLinks([]);
       setSelectedTags([]);
       setLinkedIssueIds([]);
+      // The extras are being emptied in this same pass, so the baseline is
+      // computed against empty ones rather than whatever the refs still hold.
+      setDraftBaseline(
+        caseDraftDigest(defaultValues as Record<string, unknown>, {
+          tags: [],
+          issues: [],
+          inlineParameters: [],
+          inlineDatasetRows: [],
+        })
+      );
     }
   }, [open, reset, defaultTemplateId, defaultWorkflowId, templates, setValue]);
 
@@ -770,7 +850,45 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         }
       });
       reset(defaultValues as FormValues);
+      setDraftBaseline(
+        caseDraftDigest(defaultValues as Record<string, unknown>, {
+          ...draftExtrasRef.current,
+        })
+      );
     }
+  };
+
+  /**
+   * Applies a restored draft. When it names a different template than the one
+   * on screen, the values are parked in a ref and the template effect applies
+   * them after its own reset — otherwise that reset would immediately wipe
+   * them back to the template defaults.
+   */
+  const handleRestoreDraft = () => {
+    const payload = draft.acceptRestore();
+    if (!payload) return;
+    const values = reviveCaseDraftValues(payload) as FormValues;
+    setSelectedTags(payload.extras.tags ?? []);
+    setLinkedIssueIds(payload.extras.issues ?? []);
+    setInlineParameters(
+      (payload.extras.inlineParameters ?? []) as InlineParameter[]
+    );
+    setInlineDatasetRows(
+      (payload.extras.inlineDatasetRows ?? []) as InlineDatasetRow[]
+    );
+
+    const draftedTemplateId =
+      typeof values.templateId === "number" ? values.templateId : null;
+    if (draftedTemplateId && draftedTemplateId !== selectedTemplateId) {
+      pendingRestoreValuesRef.current = values;
+      setIsTemplateReady(false);
+      setSelectedTemplateId(draftedTemplateId);
+      setDraftRestoreNonce((n) => n + 1);
+      return;
+    }
+    reset(values);
+    setDraftRestoreNonce((n) => n + 1);
+    setIsTemplateReady(true);
   };
 
   if (!session || !session.user.access) {
@@ -1129,6 +1247,8 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         // Scoping by projectId + dropping `refetchType: "all"` (refetching
         // even inactive queries app-wide) takes typical post-save latency
         // from "freeze 1-2s" to a single render of the visible folder view.
+        // The case now exists, so the draft that described it is spent.
+        draft.clear();
         onClose();
         setIsSubmitting(false);
 
@@ -1183,13 +1303,20 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
+      {/* Header and footer are pinned and only the fields between them scroll,
+          so Create/Cancel stay reachable on a long template. Mirrors
+          BulkEditModal; `overflow-y-hidden` and `flex` override DialogContent's
+          own `overflow-y-auto grid` through tailwind-merge. */}
       <DialogContent
-        className="sm:max-w-[600px] lg:max-w-[1400px]"
+        className="sm:max-w-[600px] lg:max-w-[1400px] max-h-[90vh] flex flex-col overflow-y-hidden"
         data-testid="add-case-dialog"
       >
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <DialogHeader>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-1 flex-col space-y-4"
+          >
+            <DialogHeader className="shrink-0">
               <DialogTitle className="flex items-center justify-between">
                 <div>{t("repository.addCase.title")}</div>
                 <div>
@@ -1256,254 +1383,269 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                 )}
               </DialogDescription>
             </DialogHeader>
-            <div className="flex h-fit min-w-[300px]">
-              <ResizablePanelGroup
-                direction="horizontal"
-                autoSaveId="add-case-panels"
-              >
-                <ResizablePanel
-                  id="add-case-left"
-                  order={1}
-                  ref={panelRef}
-                  defaultSize={80}
-                  collapsedSize={0}
-                  minSize={0}
-                  collapsible
-                  className={`p-0 m-0 me-4 ${
-                    isTransitioning
-                      ? "transition-all duration-300 ease-in-out"
-                      : ""
-                  }`}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="flex h-fit min-w-[300px]">
+                <ResizablePanelGroup
+                  direction="horizontal"
+                  autoSaveId="add-case-panels"
                 >
-                  <div className="mb-4 min-w-[300px] mx-1">
-                    <FormField
-                      control={control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center">
-                            {t("repository.addCase.name")}
-                            <sup>
-                              <Asterisk className="w-3 h-3 text-destructive" />
-                            </sup>
-                            <HelpPopover helpKey="case.name" />
-                          </FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder={t(
-                                "repository.addCase.namePlaceholder"
-                              )}
-                              data-testid="case-name-input"
-                              {...field}
-                              disabled={!isTemplateReady}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="my-4 mx-1 min-w-[100px] w-fit">
-                    <FormField
-                      control={control}
-                      name="workflowId"
-                      render={({ field: _field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center">
-                            {t("common.fields.state")}
-                            <sup>
-                              <Asterisk className="w-3 h-3 text-destructive" />
-                            </sup>
-                            <HelpPopover helpKey="case.state" />
-                          </FormLabel>
-                          <FormControl>
-                            <Controller
-                              control={control}
-                              name="workflowId"
-                              render={({ field: { onChange, value } }) => (
-                                <Select
-                                  onValueChange={(val) => onChange(Number(val))}
-                                  value={value ? value.toString() : ""}
-                                >
-                                  <SelectTrigger className="w-fit">
-                                    <SelectValue
-                                      placeholder={t(
-                                        "repository.addCase.selectState"
-                                      )}
-                                    />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      {workflowOptions.map((workflow) => (
-                                        <SelectItem
-                                          key={workflow.value}
-                                          value={workflow.value}
-                                          disabled={workflow.disabledForCreate}
-                                        >
-                                          {workflow.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </FormControl>
-                          {hasGatedWorkflow && (
-                            <FormDescription>
-                              {t(
-                                "reviews.transitionGate.gatedStatesNotSelectable"
-                              )}
-                            </FormDescription>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  {selectedTemplateId && (
-                    <div className="space-y-4">
-                      {templates
-                        ?.find((template) => template.id === selectedTemplateId)
-                        ?.caseFields.map((caseField: any) => {
-                          const isStepsField =
-                            caseField.caseField?.type?.type === "Steps";
-                          return (
-                            <React.Fragment key={caseField.caseFieldId}>
-                              {/* Mirror the case details page: the Configure
+                  <ResizablePanel
+                    id="add-case-left"
+                    order={1}
+                    ref={panelRef}
+                    defaultSize={80}
+                    collapsedSize={0}
+                    minSize={0}
+                    collapsible
+                    className={`p-0 m-0 me-4 ${
+                      isTransitioning
+                        ? "transition-all duration-300 ease-in-out"
+                        : ""
+                    }`}
+                  >
+                    <div className="mb-4 min-w-[300px] mx-1">
+                      <FormField
+                        control={control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center">
+                              {t("repository.addCase.name")}
+                              <sup>
+                                <Asterisk className="w-3 h-3 text-destructive" />
+                              </sup>
+                              <HelpPopover helpKey="case.name" />
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder={t(
+                                  "repository.addCase.namePlaceholder"
+                                )}
+                                data-testid="case-name-input"
+                                {...field}
+                                disabled={!isTemplateReady}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="my-4 mx-1 min-w-[100px] w-fit">
+                      <FormField
+                        control={control}
+                        name="workflowId"
+                        render={({ field: _field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center">
+                              {t("common.fields.state")}
+                              <sup>
+                                <Asterisk className="w-3 h-3 text-destructive" />
+                              </sup>
+                              <HelpPopover helpKey="case.state" />
+                            </FormLabel>
+                            <FormControl>
+                              <Controller
+                                control={control}
+                                name="workflowId"
+                                render={({ field: { onChange, value } }) => (
+                                  <Select
+                                    onValueChange={(val) =>
+                                      onChange(Number(val))
+                                    }
+                                    value={value ? value.toString() : ""}
+                                  >
+                                    <SelectTrigger className="w-fit">
+                                      <SelectValue
+                                        placeholder={t(
+                                          "repository.addCase.selectState"
+                                        )}
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectGroup>
+                                        {workflowOptions.map((workflow) => (
+                                          <SelectItem
+                                            key={workflow.value}
+                                            value={workflow.value}
+                                            disabled={
+                                              workflow.disabledForCreate
+                                            }
+                                          >
+                                            {workflow.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
+                            </FormControl>
+                            {hasGatedWorkflow && (
+                              <FormDescription>
+                                {t(
+                                  "reviews.transitionGate.gatedStatesNotSelectable"
+                                )}
+                              </FormDescription>
+                            )}
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {selectedTemplateId && (
+                      <div className="space-y-4">
+                        {templates
+                          ?.find(
+                            (template) => template.id === selectedTemplateId
+                          )
+                          ?.caseFields.map((caseField: any) => {
+                            const isStepsField =
+                              caseField.caseField?.type?.type === "Steps";
+                            return (
+                              // The nonce remounts the field on a draft
+                              // restore: TipTapEditor seeds its document from
+                              // `content` once, at mount, so a form.reset()
+                              // alone leaves every rich-text field showing its
+                              // pre-restore text.
+                              <React.Fragment
+                                key={`${caseField.caseFieldId}-${draftRestoreNonce}`}
+                              >
+                                {/* Mirror the case details page: the Configure
                               Parameters button sits right above the Steps
                               field renderer. Same component, same placement,
                               same affordance. In AddCase it opens a Sheet
                               that hosts the InlineDatasetEditor instead of
                               the live (caseId-bound) ConfigureParametersSheet
                               — the case doesn't exist yet at this point. */}
-                              {isStepsField && (
-                                <div className="flex justify-end">
-                                  <ConfigureParametersButton
-                                    parameterCount={inlineParameters.length}
-                                    canEdit
-                                    onOpen={() =>
-                                      setInlineParamsSheetOpen(true)
-                                    }
-                                  />
-                                </div>
-                              )}
-                              <RenderField
-                                field={caseField}
-                                control={control}
-                                canEditRestricted={canEditRestrictedPerm}
-                                projectId={Number(projectId)}
-                              />
-                            </React.Fragment>
-                          );
-                        })}
-                    </div>
-                  )}
-                </ResizablePanel>
-                <ResizableHandle withHandle className="w-1" />
-                <div>
-                  <Button
-                    onClick={toggleCollapse}
-                    variant="secondary"
-                    className="p-0 -ms-1 rounded-s-none"
-                    type="button"
-                  >
-                    {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
-                  </Button>
-                </div>
-                <ResizablePanel
-                  id="add-case-right"
-                  order={2}
-                  collapsedSize={0}
-                  minSize={0}
-                  collapsible
-                  className="p-0 m-0 min-w-0 ms-4"
-                >
-                  <FormField
-                    control={control}
-                    name="estimate"
-                    render={({ field }) => (
-                      <div className="min-w-[50px] mx-1">
-                        <FormItem>
-                          <FormLabel className="flex items-center">
-                            {t("common.fields.estimate")}
-                            <HelpPopover helpKey="case.estimate" />
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              placeholder={t(
-                                "repository.addCase.estimatePlaceholder"
-                              )}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                                {isStepsField && (
+                                  <div className="flex justify-end">
+                                    <ConfigureParametersButton
+                                      parameterCount={inlineParameters.length}
+                                      canEdit
+                                      onOpen={() =>
+                                        setInlineParamsSheetOpen(true)
+                                      }
+                                    />
+                                  </div>
+                                )}
+                                <RenderField
+                                  field={caseField}
+                                  control={control}
+                                  canEditRestricted={canEditRestrictedPerm}
+                                  projectId={Number(projectId)}
+                                />
+                              </React.Fragment>
+                            );
+                          })}
                       </div>
                     )}
-                  />
-                  <div className="mb-1.5">
+                  </ResizablePanel>
+                  <ResizableHandle withHandle className="w-1" />
+                  <div>
+                    <Button
+                      onClick={toggleCollapse}
+                      variant="secondary"
+                      className="p-0 -ms-1 rounded-s-none"
+                      type="button"
+                    >
+                      {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+                    </Button>
+                  </div>
+                  <ResizablePanel
+                    id="add-case-right"
+                    order={2}
+                    collapsedSize={0}
+                    minSize={0}
+                    collapsible
+                    className="p-0 m-0 min-w-0 ms-4"
+                  >
                     <FormField
                       control={control}
-                      name="automated"
+                      name="estimate"
                       render={({ field }) => (
-                        <FormItem>
-                          <div className="mt-4 flex items-center space-x-2 ">
+                        <div className="min-w-[50px] mx-1">
+                          <FormItem>
                             <FormLabel className="flex items-center">
-                              {t("common.fields.automated")}
-                              <HelpPopover helpKey="case.automated" />
+                              {t("common.fields.estimate")}
+                              <HelpPopover helpKey="case.estimate" />
                             </FormLabel>
                             <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
+                              <Input
+                                type="text"
+                                placeholder={t(
+                                  "repository.addCase.estimatePlaceholder"
+                                )}
+                                {...field}
                               />
                             </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
+                            <FormMessage />
+                          </FormItem>
+                        </div>
                       )}
                     />
-                  </div>
-                  <div className="mb-1.5">
-                    <FormLabel className="flex items-center">
-                      {t("common.fields.tags")}
-                      <HelpPopover helpKey="case.tags" />
-                    </FormLabel>
-                  </div>
-                  <ManageTags
-                    selectedTags={selectedTags}
-                    setSelectedTags={setSelectedTags}
-                    canCreateTags={showAddEditTagsPerm}
-                  />
-                  <div className="mt-4 mb-1.5">
-                    <FormLabel className="flex items-center">
-                      {t("common.fields.issues")}
-                      <HelpPopover helpKey="case.issues" />
-                    </FormLabel>
-                  </div>
-                  {folder?.project ? (
-                    <UnifiedIssueManager
-                      projectId={folder.project.id}
-                      linkedIssueIds={linkedIssueIds}
-                      setLinkedIssueIds={setLinkedIssueIds}
-                      entityType="testCase"
+                    <div className="mb-1.5">
+                      <FormField
+                        control={control}
+                        name="automated"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="mt-4 flex items-center space-x-2 ">
+                              <FormLabel className="flex items-center">
+                                {t("common.fields.automated")}
+                                <HelpPopover helpKey="case.automated" />
+                              </FormLabel>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="mb-1.5">
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.tags")}
+                        <HelpPopover helpKey="case.tags" />
+                      </FormLabel>
+                    </div>
+                    <ManageTags
+                      selectedTags={selectedTags}
+                      setSelectedTags={setSelectedTags}
+                      canCreateTags={showAddEditTagsPerm}
                     />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {t("common.ui.loadingIssueTracker")}
-                    </p>
-                  )}
-                  <div className="my-8">
-                    <UploadAttachments
-                      onFileSelect={handleFileSelect}
-                      allowLinks
-                      onLinksChange={setSelectedLinks}
-                    />
-                  </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+                    <div className="mt-4 mb-1.5">
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.issues")}
+                        <HelpPopover helpKey="case.issues" />
+                      </FormLabel>
+                    </div>
+                    {folder?.project ? (
+                      <UnifiedIssueManager
+                        projectId={folder.project.id}
+                        linkedIssueIds={linkedIssueIds}
+                        setLinkedIssueIds={setLinkedIssueIds}
+                        entityType="testCase"
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t("common.ui.loadingIssueTracker")}
+                      </p>
+                    )}
+                    <div className="my-8">
+                      <UploadAttachments
+                        onFileSelect={handleFileSelect}
+                        allowLinks
+                        onLinksChange={setSelectedLinks}
+                      />
+                    </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </div>
             </div>
             {templateHasSteps && (
               <Sheet
@@ -1535,7 +1677,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                 </SheetContent>
               </Sheet>
             )}
-            <DialogFooter>
+            <DialogFooter className="shrink-0 border-t border-primary/20 pt-4">
               {errors.root && (
                 <div
                   className="bg-destructive text-destructive-foreground text-sm p-2"
@@ -1544,6 +1686,11 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   {errors.root.message}
                 </div>
               )}
+              <CaseDraftStatus
+                status={draft.status}
+                lastSavedAt={draft.lastSavedAt}
+                className="me-auto self-center"
+              />
               <Button
                 variant="outline"
                 type="button"
@@ -1569,6 +1716,12 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
             </DialogFooter>
           </form>
         </Form>
+        <RestoreCaseDraftDialog
+          draft={draft.pendingRestore}
+          scopeKind="folder"
+          onRestore={handleRestoreDraft}
+          onDiscard={draft.discardRestore}
+        />
       </DialogContent>
     </Dialog>
   );

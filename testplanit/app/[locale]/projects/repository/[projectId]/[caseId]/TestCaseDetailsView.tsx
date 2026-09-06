@@ -108,6 +108,15 @@ import { PanelImperativeHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { CaseDraftRecoveryBanner } from "@/components/caseDrafts/CaseDraftRecoveryBanner";
+import { CaseDraftStatus } from "@/components/caseDrafts/CaseDraftStatus";
+import { RestoreCaseDraftDialog } from "@/components/caseDrafts/RestoreCaseDraftDialog";
+import { useCaseDraft } from "~/hooks/useCaseDraft";
+import {
+  caseDraftDigest,
+  reviveCaseDraftValues,
+  type CaseDraftExtras,
+} from "~/lib/services/caseDraft";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
@@ -974,6 +983,49 @@ export function TestCaseDetailsView({
     watch,
   } = methods;
 
+  // Draft auto-save. `draftBaseline` is the digest of the case as the editor
+  // last reset to it; anything different is unsaved work. It is kept in step
+  // with the reset in Effect 2 below rather than read from react-hook-form's
+  // `isDirty`, which that effect invalidates every time it re-runs on a
+  // background refetch.
+  const [draftBaseline, setDraftBaseline] = useState<string | null>(null);
+  // Steps restored from a draft. StepsForm owns its own field array and seeds
+  // it from its `steps` prop, so restored steps have to arrive that way — a
+  // form.reset() alone races with StepsForm's initialisation and loses.
+  const [restoredDraftSteps, setRestoredDraftSteps] = useState<any[] | null>(
+    null
+  );
+  /** Bumped on a draft restore to remount the field renderers — see its use
+   * on the case-field key below. */
+  const [draftRestoreNonce, setDraftRestoreNonce] = useState(0);
+  // Values from a restored draft, held for the whole edit session rather than
+  // applied once. Effect 2 below re-runs on every background refetch of the
+  // case and resets the form to the saved values; without re-applying here, a
+  // refetch seconds after the user clicks Restore silently throws their
+  // recovered work away again. Cleared on Save, Cancel and Discard.
+  const restoredDraftValuesRef = useRef<Record<string, any> | null>(null);
+
+  // Tags and issues are form fields here, so the only state outside the form
+  // worth capturing is which template is selected.
+  const draftExtras = useMemo<CaseDraftExtras>(
+    () => ({ templateId: selectedTemplateId }),
+    [selectedTemplateId]
+  );
+
+  const draft = useCaseDraft({
+    form: methods,
+    scope: isValidCaseId ? { kind: "case", caseId: numericCaseId } : null,
+    projectId: numericProjectId,
+    userId: session?.user?.id,
+    enabled: isEditMode,
+    // A crash lands the user on the read-only view, so the draft has to be
+    // discoverable there too — see the recovery banner below.
+    detectWhenDisabled: canAddEdit,
+    extras: draftExtras,
+    baselineDigest: draftBaseline,
+    baseVersion: testcase?.currentVersion ?? null,
+  });
+
   // Client mirror of the strict-transitive gate. The inline error JSX
   // below the state Select renders directly off `transitionCheck`, and
   // `handleSave` re-runs the preflight before firing the mutation — no
@@ -1078,6 +1130,16 @@ export function TestCaseDetailsView({
       }
     });
     reset(defaultValues);
+    setDraftBaseline(
+      caseDraftDigest(defaultValues, { templateId: selectedTemplateId })
+    );
+
+    // Re-apply a restored draft on the far side of the reset above, every time
+    // this effect runs. The baseline stays the case's own values, so the
+    // restored content reads as unsaved work and keeps auto-saving.
+    if (restoredDraftValuesRef.current) {
+      reset(restoredDraftValuesRef.current);
+    }
   }, [
     selectedTemplateId,
     testcase,
@@ -1088,6 +1150,57 @@ export function TestCaseDetailsView({
     t,
     // parseJsonToTipTap, formatSeconds, emptyEditorContent are assumed stable
   ]);
+
+  /**
+   * Applies a restored draft over the case's saved values. Steps go through
+   * `restoredDraftSteps` rather than the form: StepsForm seeds its field array
+   * from its `steps` prop and a bare reset() races that initialisation.
+   */
+  const handleRestoreDraft = useCallback(() => {
+    const payload = draft.acceptRestore();
+    if (!payload) return;
+    const values = reviveCaseDraftValues(payload) as Record<string, any>;
+    if (Array.isArray(values.steps)) {
+      setRestoredDraftSteps(values.steps);
+    }
+    restoredDraftValuesRef.current = values;
+    // Only a real template id switches the template. A draft written while the
+    // view was still initialising can carry 0, and switching to that empties
+    // the field set and blanks the template picker — which looks exactly like
+    // the restore having destroyed the case.
+    const draftedTemplateId =
+      typeof payload.extras?.templateId === "number" &&
+      payload.extras.templateId > 0
+        ? payload.extras.templateId
+        : null;
+    if (draftedTemplateId != null && draftedTemplateId !== selectedTemplateId) {
+      // Effect 2 re-runs for the new template and applies the values above.
+      setSelectedTemplateId(draftedTemplateId);
+      setDraftRestoreNonce((n) => n + 1);
+      return;
+    }
+    reset(values);
+    setDraftRestoreNonce((n) => n + 1);
+  }, [draft, reset, selectedTemplateId]);
+
+  const handleDiscardDraft = useCallback(() => {
+    restoredDraftValuesRef.current = null;
+    setRestoredDraftSteps(null);
+    draft.discardRestore();
+  }, [draft]);
+
+  /**
+   * Read-mode banner action: enter edit mode with the draft already applied.
+   * Restoring first consumes `pendingRestore`, so the edit-mode dialog does not
+   * then ask the same question again.
+   */
+  const handleResumeFromDraft = useCallback(() => {
+    handleRestoreDraft();
+    setSelectedTemplateId(
+      (current) => current ?? testcase?.template?.id ?? null
+    );
+    setIsEditMode(true);
+  }, [handleRestoreDraft, testcase?.template?.id]);
 
   const viewVersion = (version: string) => {
     router.push(`/projects/repository/${projectId}/${caseId}/${version}`);
@@ -1190,6 +1303,10 @@ export function TestCaseDetailsView({
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
     setSelectedLinks([]);
+    // Cancel is an explicit "throw these edits away", so the draft goes too.
+    draft.clear();
+    setRestoredDraftSteps(null);
+    restoredDraftValuesRef.current = null;
     // Form will be reset through the template change effect
     onEditExit?.(false);
   };
@@ -1938,6 +2055,11 @@ export function TestCaseDetailsView({
       setPendingAttachmentChanges({ edits: [], deletes: [] });
       setSelectedFiles([]);
       setSelectedLinks([]);
+      // The edits are now on the case itself, so the draft describing them is
+      // spent. This also drops the restored-steps override below.
+      draft.clear();
+      setRestoredDraftSteps(null);
+      restoredDraftValuesRef.current = null;
       void refetch();
       onEditExit?.(true);
     } catch (error) {
@@ -2063,6 +2185,13 @@ export function TestCaseDetailsView({
             <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
           )}
           <div className="px-6">
+            {!isEditMode && (
+              <CaseDraftRecoveryBanner
+                draft={draft.pendingRestore}
+                onResume={handleResumeFromDraft}
+                onDiscard={handleDiscardDraft}
+              />
+            )}
             <ReviewStatusBanner
               entityType="CASE"
               entityId={testcase.id}
@@ -2121,6 +2250,15 @@ export function TestCaseDetailsView({
                     type="TEST_CASE"
                     id={testcase.id}
                     projectId={numericProjectId}
+                    className="shrink-0 whitespace-nowrap"
+                  />
+                )}
+                {/* Shares the folder-select row: in edit mode the right side
+                    of this row is free (RecordId is read-mode only). */}
+                {isEditMode && !isSubmitting && (
+                  <CaseDraftStatus
+                    status={draft.status}
+                    lastSavedAt={draft.lastSavedAt}
                     className="shrink-0 whitespace-nowrap"
                   />
                 )}
@@ -2644,7 +2782,14 @@ export function TestCaseDetailsView({
                         const isStepsField =
                           field.caseField.type.type === "Steps";
                         if (isStepsField) {
-                          fieldValue = testcase.steps || [];
+                          // A restored draft's steps win over the saved ones:
+                          // this is the `steps` prop StepsForm seeds from, and
+                          // it is the only way restored steps reach its field
+                          // array intact.
+                          fieldValue =
+                            (isEditMode && restoredDraftSteps) ||
+                            testcase.steps ||
+                            [];
                         }
                         // Skip empty fields in view mode — except Steps when
                         // the viewer can edit. The Configure Parameters
@@ -2672,7 +2817,13 @@ export function TestCaseDetailsView({
                           return null;
                         return (
                           <li
-                            key={`case-field-${field.caseField.id}-${fieldIndex}`}
+                            // The nonce remounts the field on a draft restore.
+                            // TipTapEditor seeds its document from `content`
+                            // once, at mount, so a form.reset() updates the
+                            // value behind it while the editor keeps showing
+                            // the old text — the restore looks like it dropped
+                            // every rich-text field.
+                            key={`case-field-${field.caseField.id}-${fieldIndex}-${draftRestoreNonce}`}
                             className="mb-2 me-6"
                           >
                             {field.caseField.type.type !== "Steps" && (
@@ -3063,6 +3214,15 @@ export function TestCaseDetailsView({
           projectId={numericProjectId}
         />
       )}
+      {/* Read mode gets the banner above instead — a modal over content the
+          user has only just opened would be an ambush. */}
+      <RestoreCaseDraftDialog
+        draft={isEditMode ? draft.pendingRestore : null}
+        scopeKind="case"
+        isStale={draft.isRestoreStale}
+        onRestore={handleRestoreDraft}
+        onDiscard={handleDiscardDraft}
+      />
     </FormProvider>
   );
 }

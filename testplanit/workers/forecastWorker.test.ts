@@ -45,6 +45,9 @@ const mockDb = {
   appConfig: {
     findUnique: vi.fn(),
   },
+  caseDraft: {
+    deleteMany: vi.fn(),
+  },
   // Default: invoke the callback with a tx whose reviewRequest.update is the
   // same spy as baseDb.reviewRequest.update — so tests can assert on the
   // stamp call regardless of whether it happens inside or outside the tx.
@@ -791,5 +794,63 @@ describe("JOB_REVIEW_REMINDERS", () => {
       where: { id: "rr-empty" },
       data: { lastRemindedAt: FIXED_NOW },
     });
+  });
+});
+
+describe("JOB_PURGE_STALE_CASE_DRAFTS", () => {
+  const FIXED_NOW = new Date("2026-05-24T12:00:00Z");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_NOW);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const runProcessor = async () => {
+    const { processor, JOB_PURGE_STALE_CASE_DRAFTS } =
+      await import("./forecastWorker");
+    const job = {
+      id: "job-cd-1",
+      name: JOB_PURGE_STALE_CASE_DRAFTS,
+      data: { tenantId: undefined, actorContext: {} },
+    } as unknown as Job;
+    return processor(job);
+  };
+
+  it("deletes only drafts untouched for the full retention window", async () => {
+    mockDb.caseDraft.deleteMany.mockResolvedValue({ count: 3 });
+
+    const result = await runProcessor();
+
+    const { CASE_DRAFT_RETENTION_DAYS } =
+      await import("../lib/services/caseDraft");
+    const cutoff = new Date(
+      FIXED_NOW.getTime() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
+    );
+    expect(mockDb.caseDraft.deleteMany).toHaveBeenCalledWith({
+      where: { updatedAt: { lt: cutoff } },
+    });
+    expect(result).toMatchObject({ status: "completed", successCount: 3 });
+  });
+
+  it("keeps a draft that was touched inside the window", async () => {
+    // The cutoff is exclusive on `lt`, so a draft updated exactly at the
+    // boundary survives — a user still editing must never be swept.
+    mockDb.caseDraft.deleteMany.mockResolvedValue({ count: 0 });
+
+    await runProcessor();
+
+    const arg = mockDb.caseDraft.deleteMany.mock.calls[0][0];
+    expect(Object.keys(arg.where.updatedAt)).toEqual(["lt"]);
+  });
+
+  it("propagates a purge failure so BullMQ retries the job", async () => {
+    mockDb.caseDraft.deleteMany.mockRejectedValue(new Error("deadlock"));
+
+    await expect(runProcessor()).rejects.toThrow("deadlock");
   });
 });

@@ -14,6 +14,7 @@ import {
   resolveAbandonedRunTargetStateId,
   resolveEffectiveIdleMinutes,
 } from "../lib/services/abandonedRuns";
+import { CASE_DRAFT_RETENTION_DAYS } from "../lib/services/caseDraft";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderConfig";
@@ -56,6 +57,7 @@ export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 export const JOB_REVIEW_REMINDERS = "review-reminders";
 export const JOB_SWEEP_ABANDONED_RUNS = "sweep-abandoned-runs";
+export const JOB_PURGE_STALE_CASE_DRAFTS = "purge-stale-case-drafts";
 
 /**
  * Load the name and liveness of a review's subject row.
@@ -999,6 +1001,28 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
           );
         } catch (error) {
           console.error(`Job ${job.id}: Error in abandoned-run sweep`, error);
+          throw error;
+        }
+        break;
+
+      case JOB_PURGE_STALE_CASE_DRAFTS:
+        console.log(`Job ${job.id}: Purging stale case drafts.`);
+        try {
+          const cutoff = new Date(
+            Date.now() - CASE_DRAFT_RETENTION_DAYS * 24 * 60 * 60 * 1000
+          );
+          // Deleted outright rather than soft-deleted: a draft is scratch
+          // space, never a record of anything, and a tombstoned one would
+          // still trip the unique (userId, draftKey) index on the next edit.
+          const { count } = await db.caseDraft.deleteMany({
+            where: { updatedAt: { lt: cutoff } },
+          });
+          successCount = count;
+          console.log(
+            `Job ${job.id} completed: purged ${count} case draft(s) untouched since ${cutoff.toISOString()}.`
+          );
+        } catch (error) {
+          console.error(`Job ${job.id}: Error purging case drafts`, error);
           throw error;
         }
         break;

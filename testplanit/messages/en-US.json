@@ -3170,6 +3170,22 @@
       "successMessage": "New Test Case Added",
       "errorMessage": "Unknown error adding new test case"
     },
+    "draft": {
+      "saving": "Saving…",
+      "saved": "All changes saved {time}",
+      "unsaved": "Unsaved changes",
+      "saveFailed": "Unable to save — retrying",
+      "restoreTitle": "Restore unsaved changes?",
+      "restoreDescription": "You have unsaved changes to this test case from {age}. Restore them, or discard them and load the saved version.",
+      "restoreTitleNew": "Restore unsaved test case?",
+      "restoreDescriptionNew": "You started a test case {age} and never saved it. Restore what you wrote, or discard it and start fresh.",
+      "restoreStaleWarning": "This test case has been saved by someone else since your draft was written. Restoring replaces their content when you save.",
+      "restoreDiscard": "Discard",
+      "restoreRestore": "Restore",
+      "bannerText": "You have unsaved changes to this test case from {age}.",
+      "bannerAction": "Resume editing",
+      "bannerDiscard": "Discard them"
+    },
     "columns": {
       "selectCase": "Select Case",
       "runOrder": "Run Order",

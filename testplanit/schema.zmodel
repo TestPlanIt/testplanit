@@ -211,6 +211,7 @@ model User {
     passwordChangedAt                        DateTime?                         @db.Timestamptz(6)
     mustChangePassword                       Boolean                           @default(false)
     passwordHistory                          PasswordHistory[]
+    caseDrafts                               CaseDraft[]
 
     @@index([isActive, isDeleted])
     @@index([access])
@@ -600,6 +601,7 @@ model Projects {
     duplicateScanResults             DuplicateScanResult[]
     stepSequenceMatches              StepSequenceMatch[]
     reviewRequests                   ReviewRequest[]
+    caseDrafts                       CaseDraft[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -1451,6 +1453,7 @@ model RepositoryFolders {
     isDeleted    Boolean             @default(false)
     deletedAt    DateTime?           @db.Timestamptz(6)
     cases        RepositoryCases[]
+    caseDrafts   CaseDraft[]
 
     @@unique([projectId, repositoryId, parentId, name, isDeleted])
     @@index([projectId, repositoryId, isDeleted])
@@ -2014,6 +2017,7 @@ model RepositoryCases {
     parameters              TestCaseParameter[]
     ownedDataSets           DataSet[]                    @relation("DataSetOwnerCase")
     sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
+    drafts                  CaseDraft[]
 
     @@unique([projectId, name, className, source])
     @@index([projectId, isDeleted, isArchived])
@@ -2078,6 +2082,69 @@ model RepositoryCases {
     // imperfectly (drift risk). The app preflight is the single source
     // of truth and produces structured REVIEW_REQUIRED responses; raw
     // prisma + ZenStack-enhanced server actions both route through it.
+}
+
+// Auto-saved in-progress case edits. Shape and lifecycle: lib/services/caseDraft.ts
+model CaseDraft {
+    id          String             @id @default(uuid())
+    projectId   Int
+    project     Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    userId      String
+    user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // "case:<id>" or "folder:<id>" — a non-null key so the unique index below bites
+    draftKey    String
+    caseId      Int?
+    case        RepositoryCases?   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+    folderId    Int?
+    folder      RepositoryFolders? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    payload     Json
+    baseVersion Int?
+    createdAt   DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime           @updatedAt @db.Timestamptz(6)
+
+    @@unique([userId, draftKey])
+    @@index([updatedAt])
+    @@index([projectId])
+    @@index([caseId])
+    @@index([folderId])
+
+    @@deny('all', auth() == null)
+    @@deny('all', auth().access == 'NONE')
+    // A per-user NO_ACCESS grant beats the ladder below, whose
+    // default-access clauses would otherwise admit anyone holding a global
+    // role with TestCaseRepository canAddEdit. RepositoryCases does not need
+    // this because its read rule goes through auth().accessibleProjectIds,
+    // which already excludes NO_ACCESS projects.
+    @@deny('all', project.userPermissions?[user.id == auth().id && accessType == 'NO_ACCESS'])
+
+    // Author-only, with no ADMIN override: nobody reads another user's draft.
+    // The project half mirrors RepositoryCases' write ladder rather than using
+    // auth().accessibleProjectIds — that list is Valkey-cached for 60s for
+    // non-admins, and every other model uses it for `read` only. Gating writes
+    // on it made auto-save fail for a minute after a project was created or
+    // access granted, while every other repository action worked.
+    @@allow('all', auth().id == userId && (
+        project.creator.id == auth().id ||
+        project.userPermissions?[user.id == auth().id && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        project.userPermissions?[user.id == auth().id && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        project.assignedUsers?[user.id == auth().id && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        project.groupPermissions?[group.assignedUsers?[user.id == auth().id] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (project.assignedUsers?[user.id == auth().id] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        (project.defaultAccessType == 'SPECIFIC_ROLE' && auth().access != 'NONE' &&
+         project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    ))
 }
 
 model RepositoryCaseVersions {
