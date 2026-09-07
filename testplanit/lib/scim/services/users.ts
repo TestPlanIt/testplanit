@@ -30,6 +30,11 @@
  *   - metadata.scimPasswordDropped:   POST/PUT body included a `password` field
  *   - metadata.scimNoOp:              PUT/PATCH produced an empty column diff
  *
+ * Cross-IdP ownership: every path that touches an existing row first calls
+ * `assertScimWriteOwnership`, and every write claims the row for the calling
+ * token by stamping `scimTokenId`. See `lib/scim/ownership.ts` for the rule.
+ * Reads are scoped the same way, so one IdP cannot enumerate another's users.
+ *
  * Role-attribute hybrid: every write path derives `User.scimRoles` from the
  * merged `scimExtensions` blob and then re-runs `recomputeUserAccess` inside
  * the same transaction, so an IdP that asserts a mapped `roles` value moves
@@ -55,6 +60,10 @@ import {
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToDbWhere } from "../filter";
+import {
+  assertScimWriteOwnership,
+  scimOwnershipReadFilter,
+} from "../ownership";
 import { readScimFallbackDefault, recomputeUserAccess } from "./recompute";
 import {
   computeUserUpdatesFromScim,
@@ -269,6 +278,19 @@ export async function createScimUser(
     const matchEmail = resolveMatchEmail(body);
     const existing = await findUserByEmail(tx, matchEmail);
 
+    // Any branch below writes an existing row, so the cross-IdP check comes
+    // first: a collision with another directory's user must surface as a
+    // conflict rather than silently rebinding the row to this IdP.
+    if (existing) {
+      await assertScimWriteOwnership(
+        tx,
+        "User",
+        existing.id,
+        existing.scimTokenId,
+        ctx
+      );
+    }
+
     // Branch 1 — Resurrection: tombstoned row with the SAME scimExternalId.
     if (
       existing &&
@@ -332,6 +354,7 @@ async function resurrectTombstonedUser(
       email: extractPrimaryEmail(body.emails) ?? existing.email,
       scimExtensions: toJsonInput(extensions),
       scimRoles,
+      scimTokenId: ctx.tokenId,
       access: fallbackDefault,
       accessSource: "GROUP_MAPPING",
     },
@@ -388,6 +411,7 @@ async function jitBindExistingUser(
       scimFamilyName: body.name?.familyName ?? null,
       scimExtensions: toJsonInput(extensions),
       scimRoles,
+      scimTokenId: ctx.tokenId,
     },
     include: SCIM_USER_INCLUDE,
   });
@@ -461,6 +485,7 @@ async function insertNewScimUser(
           ? (extensions as JsonValue)
           : undefined,
       scimRoles,
+      scimTokenId: ctx.tokenId,
       authMethod: "SCIM",
       access: fallbackDefault,
       accessSource: "GROUP_MAPPING",
@@ -502,10 +527,13 @@ async function insertNewScimUser(
 
 export async function getScimUserById(
   id: string,
-  _ctx: ScimAuthContext
+  ctx: ScimAuthContext
 ): Promise<ScimUserResource> {
-  const row = await baseDb.user.findUnique({
-    where: { id },
+  // A row owned by another IdP reads as 404 rather than 403: from this
+  // directory's point of view the user genuinely does not exist, and a
+  // distinguishable status would leak the other directory's membership.
+  const row = await baseDb.user.findFirst({
+    where: { AND: [{ id }, scimOwnershipReadFilter(ctx)] },
     include: SCIM_USER_INCLUDE,
   });
   if (!row || row.isDeleted) {
@@ -520,7 +548,7 @@ export async function getScimUserById(
 
 export async function listScimUsers(
   { filter, startIndex, count }: ListScimUsersInput,
-  _ctx: ScimAuthContext
+  ctx: ScimAuthContext
 ): Promise<ListScimUsersResult> {
   const resolvedCount =
     count === undefined
@@ -531,7 +559,7 @@ export async function listScimUsers(
   const filterWhere: UserWhereInput = filter ? scimFilterToDbWhere(filter) : {};
 
   const finalWhere: UserWhereInput = {
-    AND: [filterWhere, { isDeleted: false }],
+    AND: [filterWhere, { isDeleted: false }, scimOwnershipReadFilter(ctx)],
   };
 
   const [rows, totalResults] = await Promise.all([
@@ -568,6 +596,14 @@ export async function putScimUser(
     if (!current || current.isDeleted) {
       throw new ScimNotFoundError(`User ${id} not found`);
     }
+
+    await assertScimWriteOwnership(
+      tx,
+      "User",
+      current.id,
+      current.scimTokenId,
+      ctx
+    );
 
     const updates: UserUpdateArgs["data"] = {};
 
@@ -678,6 +714,13 @@ export async function putScimUser(
       return { resource: userToScim(current), status: 200 };
     }
 
+    // Claim an unowned row on the first write that changes something. Placed
+    // after the no-op check so a no-op PUT stays a no-op; the row is claimed
+    // by whichever real write lands first.
+    if (current.scimTokenId === null) {
+      updates.scimTokenId = ctx.tokenId;
+    }
+
     const before = asScimSnapshot(current);
     const updated = (await tx.user.update({
       where: { id: current.id },
@@ -730,6 +773,14 @@ export async function patchScimUser(
       throw new ScimNotFoundError(`User ${id} not found`);
     }
 
+    await assertScimWriteOwnership(
+      tx,
+      "User",
+      current.id,
+      current.scimTokenId,
+      ctx
+    );
+
     const currentScim = userToScim(current);
     const draftScim = applyScimPatch(currentScim, body);
     const updates = computeUserUpdatesFromScim(currentScim, draftScim);
@@ -743,7 +794,7 @@ export async function patchScimUser(
     // merged extensions blob and so can only change when that blob does. That
     // keeps it out of `assertWritableOnly`'s SCIM-attribute surface while
     // still reaching the Prisma payload below.
-    const derived: { scimRoles?: string[] } = {};
+    const derived: { scimRoles?: string[]; scimTokenId?: string } = {};
 
     if ("scimExtensions" in updates && updates.scimExtensions !== undefined) {
       const merged = mergeExtensions(
@@ -766,6 +817,11 @@ export async function patchScimUser(
         metadata: { scimNoOp: true, scimTokenId: ctx.tokenId },
       });
       return { resource: userToScim(current) };
+    }
+
+    // Claim an unowned row — see the equivalent note in putScimUser.
+    if (current.scimTokenId === null) {
+      derived.scimTokenId = ctx.tokenId;
     }
 
     const before = asScimSnapshot(current);
@@ -828,6 +884,14 @@ export async function deleteScimUser(
       // Idempotent — already tombstoned; no second webhook, no audit.
       return { status: 204 };
     }
+
+    await assertScimWriteOwnership(
+      tx,
+      "User",
+      current.id,
+      current.scimTokenId,
+      ctx
+    );
 
     const tombstoned = await tx.user.update({
       where: { id: current.id },

@@ -59,6 +59,10 @@ import {
   emitScimGroupUpdated,
 } from "~/lib/webhooks/event-emitters/groupEvents";
 import { readScimFallbackDefault, recomputeUserAccess } from "./recompute";
+import {
+  assertScimWriteOwnership,
+  scimOwnershipReadFilter,
+} from "../ownership";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimFilterToDbGroupWhere } from "../filter";
@@ -289,6 +293,13 @@ export async function createScimGroup(
         include: SCIM_GROUP_INCLUDE,
       });
       if (existingByExternal) {
+        await assertScimWriteOwnership(
+          tx,
+          "Group",
+          String(existingByExternal.id),
+          existingByExternal.scimTokenId,
+          ctx
+        );
         if (existingByExternal.isDeleted) {
           return resurrectTombstonedGroup(
             tx,
@@ -315,6 +326,13 @@ export async function createScimGroup(
       include: SCIM_GROUP_INCLUDE,
     });
     if (existingByName) {
+      await assertScimWriteOwnership(
+        tx,
+        "Group",
+        String(existingByName.id),
+        existingByName.scimTokenId,
+        ctx
+      );
       return jitBindExistingGroup(
         tx,
         existingByName as DbGroupWithMembers,
@@ -349,6 +367,7 @@ async function insertNewScimGroup(
         payload.scimExtensions && Object.keys(payload.scimExtensions).length > 0
           ? (payload.scimExtensions as JsonValue)
           : undefined,
+      scimTokenId: ctx.tokenId,
       isDeleted: false,
     },
     include: SCIM_GROUP_INCLUDE,
@@ -409,6 +428,7 @@ async function resurrectTombstonedGroup(
       isDeleted: false,
       name: payload.name,
       scimDisplayName: payload.scimDisplayName,
+      scimTokenId: ctx.tokenId,
       scimExtensions: toJsonInput(mergedExtensions),
     },
     include: SCIM_GROUP_INCLUDE,
@@ -483,6 +503,7 @@ async function jitBindExistingGroup(
     data: {
       externalId: payload.externalId,
       scimDisplayName: payload.scimDisplayName,
+      scimTokenId: ctx.tokenId,
       scimExtensions: toJsonInput(mergedExtensions),
     },
     include: SCIM_GROUP_INCLUDE,
@@ -538,14 +559,16 @@ async function jitBindExistingGroup(
 
 export async function getScimGroupById(
   id: string,
-  _ctx: ScimAuthContext
+  ctx: ScimAuthContext
 ): Promise<ScimGroupResource> {
   const parsedId = parseGroupId(id);
   if (parsedId === null) {
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
-  const row = await baseDb.groups.findUnique({
-    where: { id: parsedId },
+  // A group owned by another IdP reads as 404 — see the note on
+  // getScimUserById for why this is not a 403.
+  const row = await baseDb.groups.findFirst({
+    where: { AND: [{ id: parsedId }, scimOwnershipReadFilter(ctx)] },
     include: SCIM_GROUP_INCLUDE,
   });
   if (!row || row.isDeleted) {
@@ -560,7 +583,7 @@ export async function getScimGroupById(
 
 export async function listScimGroups(
   { filter, startIndex, count }: ListScimGroupsInput,
-  _ctx: ScimAuthContext
+  ctx: ScimAuthContext
 ): Promise<ListScimGroupsResult> {
   const resolvedCount =
     count === undefined
@@ -573,7 +596,7 @@ export async function listScimGroups(
     : {};
 
   const finalWhere: GroupsWhereInput = {
-    AND: [filterWhere, { isDeleted: false }],
+    AND: [filterWhere, { isDeleted: false }, scimOwnershipReadFilter(ctx)],
   };
 
   const [rows, totalResults] = await Promise.all([
@@ -615,6 +638,14 @@ export async function putScimGroup(
     if (!current || current.isDeleted) {
       throw new ScimNotFoundError(`Group ${id} not found`);
     }
+
+    await assertScimWriteOwnership(
+      tx,
+      "Group",
+      String(current.id),
+      current.scimTokenId,
+      ctx
+    );
 
     const { updates } = computeGroupUpdatesFromScim(
       current as DbGroupForScim,
@@ -671,6 +702,8 @@ export async function putScimGroup(
       updatedRow = (await tx.groups.update({
         where: { id: current.id },
         data: {
+          // Claim an unowned group on the first write that changes something.
+          ...(current.scimTokenId === null ? { scimTokenId: ctx.tokenId } : {}),
           ...(updates.name !== undefined ? { name: updates.name } : {}),
           ...(updates.scimDisplayName !== undefined
             ? { scimDisplayName: updates.scimDisplayName }
@@ -779,6 +812,14 @@ export async function patchScimGroup(
       throw new ScimNotFoundError(`Group ${id} not found`);
     }
 
+    await assertScimWriteOwnership(
+      tx,
+      "Group",
+      String(current.id),
+      current.scimTokenId,
+      ctx
+    );
+
     const currentScim = groupToScim(current as DbGroupForScim);
     const draftScim = applyScimPatch(currentScim, body);
 
@@ -855,6 +896,8 @@ export async function patchScimGroup(
       updatedRow = (await tx.groups.update({
         where: { id: current.id },
         data: {
+          // Claim an unowned group on the first write that changes something.
+          ...(current.scimTokenId === null ? { scimTokenId: ctx.tokenId } : {}),
           ...(updates.name !== undefined ? { name: updates.name } : {}),
           ...(updates.scimDisplayName !== undefined
             ? { scimDisplayName: updates.scimDisplayName }
@@ -962,6 +1005,14 @@ export async function deleteScimGroup(
       if (!current || current.isDeleted) {
         throw new ScimNotFoundError(`Group ${id} not found`);
       }
+
+      await assertScimWriteOwnership(
+        tx,
+        "Group",
+        String(current.id),
+        current.scimTokenId,
+        ctx
+      );
 
       const priorMemberIds = (current.assignedUsers ?? []).map(
         (a) => a.user.id

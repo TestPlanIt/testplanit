@@ -40,12 +40,16 @@ type ConflictTypeKey =
   | "typeDisplayNameOverwrote"
   | "typeReEmitted"
   | "typeConflict"
+  | "typeTokenConflict"
   | "typeUnknown";
 
 function deriveConflictType(
   metadata: Record<string, unknown> | null
 ): ConflictTypeKey {
   if (!metadata) return "typeUnknown";
+  // Checked first: a cross-IdP collision is the most actionable row in the
+  // log, and it is the only one that means a write was refused outright.
+  if (metadata.scimTokenConflict) return "typeTokenConflict";
   if (metadata.scimReEmittedBy) return "typeReEmitted";
   if (
     Array.isArray(metadata.scimSkippedMemberIds) &&

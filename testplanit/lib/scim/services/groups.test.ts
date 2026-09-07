@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/lib/db", () => {
   const tx = {
+    scimToken: {
+      findUnique: vi.fn(),
+    },
     groups: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -88,6 +91,7 @@ import {
 } from "../constants";
 import { scimFilterToDbGroupWhere } from "../filter";
 import { ScimPatchApplyError } from "../patch";
+import { ScimOwnershipError } from "../ownership";
 import {
   ScimNotFoundError,
   ScimUniquenessError,
@@ -103,6 +107,7 @@ import {
 import type { ScimGroupBody } from "../mapping/group";
 
 interface TxLike {
+  scimToken: { findUnique: ReturnType<typeof vi.fn> };
   groups: {
     findUnique: ReturnType<typeof vi.fn>;
     findFirst: ReturnType<typeof vi.fn>;
@@ -126,7 +131,11 @@ interface TxLike {
 
 const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 
-const CTX = { tokenId: "tok_test", systemUserId: SCIM_SYSTEM_USER_ID } as const;
+const CTX = {
+  tokenId: "tok_test",
+  systemUserId: SCIM_SYSTEM_USER_ID,
+  idpName: "OKTA",
+} as const;
 
 interface DbGroupRow {
   id: number;
@@ -136,6 +145,7 @@ interface DbGroupRow {
   scimExtensions: unknown;
   updatedAt: Date | null;
   isDeleted: boolean;
+  scimTokenId: string | null;
   assignedUsers: Array<{ user: { id: string; name: string } }>;
 }
 
@@ -149,6 +159,7 @@ function makeGroup(overrides: Partial<DbGroupRow> = {}): DbGroupRow {
     scimExtensions: null,
     updatedAt: now,
     isDeleted: false,
+    scimTokenId: null,
     assignedUsers: [],
     ...overrides,
   };
@@ -403,7 +414,7 @@ describe("createScimGroup", () => {
 
 describe("getScimGroupById", () => {
   it("B1: existing row → returns groupToScim with members projected", async () => {
-    tx.groups.findUnique.mockResolvedValue(
+    tx.groups.findFirst.mockResolvedValue(
       makeGroup({
         id: 81,
         assignedUsers: [
@@ -423,14 +434,14 @@ describe("getScimGroupById", () => {
   });
 
   it("B2: tombstoned row → throws ScimNotFoundError", async () => {
-    tx.groups.findUnique.mockResolvedValue(makeGroup({ isDeleted: true }));
+    tx.groups.findFirst.mockResolvedValue(makeGroup({ isDeleted: true }));
     await expect(getScimGroupById("7", CTX)).rejects.toBeInstanceOf(
       ScimNotFoundError
     );
   });
 
   it("B3: missing row → throws ScimNotFoundError", async () => {
-    tx.groups.findUnique.mockResolvedValue(null);
+    tx.groups.findFirst.mockResolvedValue(null);
     await expect(getScimGroupById("99", CTX)).rejects.toBeInstanceOf(
       ScimNotFoundError
     );
@@ -478,7 +489,8 @@ describe("listScimGroups", () => {
     const args = tx.groups.findMany.mock.calls[0][0] as {
       where: { AND: Array<Record<string, unknown>> };
     };
-    expect(args.where.AND.length).toBe(2);
+    // filter + tombstone gate + cross-IdP ownership scope
+    expect(args.where.AND.length).toBe(3);
   });
 
   it("C3: startIndex=21 count=20 → skip=20 take=20", async () => {
@@ -1301,3 +1313,116 @@ describe("J — inline recompute wiring assertions", () => {
 // Reference SYSTEM_PROJECT_ID to keep the import non-dead in case the
 // build pipeline tree-shakes unused identifiers from test fixtures.
 void SYSTEM_PROJECT_ID;
+
+describe("K — cross-IdP provenance and ownership (V2-MULTI-IDP-01)", () => {
+  it("K1: a brand-new group is stamped with the provisioning token", async () => {
+    tx.groups.findUnique.mockResolvedValue(null);
+    tx.groups.findFirst.mockResolvedValue(null);
+    tx.groups.create.mockResolvedValue(makeGroup({ id: 300 }));
+
+    await createScimGroup(makeBody(), CTX);
+
+    const args = tx.groups.create.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.scimTokenId).toBe("tok_test");
+  });
+
+  it("K2: POST colliding with another IdP's group is refused", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 301, scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    await expect(createScimGroup(makeBody(), CTX)).rejects.toBeInstanceOf(
+      ScimOwnershipError
+    );
+    expect(tx.groups.update).not.toHaveBeenCalled();
+    expect(tx.groups.create).not.toHaveBeenCalled();
+  });
+
+  it("K3: PUT on another IdP's group is refused and writes nothing", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 302, scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    await expect(
+      putScimGroup("302", makeBody({ displayName: "Renamed" }), CTX)
+    ).rejects.toBeInstanceOf(ScimOwnershipError);
+    expect(tx.groups.update).not.toHaveBeenCalled();
+  });
+
+  it("K4: PATCH on another IdP's group is refused and writes nothing", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 303, scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [{ op: "replace", path: "displayName", value: "Renamed" }],
+    };
+
+    await expect(
+      patchScimGroup("303", body as never, CTX)
+    ).rejects.toBeInstanceOf(ScimOwnershipError);
+    expect(tx.groups.update).not.toHaveBeenCalled();
+  });
+
+  it("K5: DELETE on another IdP's group is refused and leaves no tombstone", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 304, scimTokenId: "tok_entra" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "ENTRA" });
+
+    await expect(deleteScimGroup("304", CTX)).rejects.toBeInstanceOf(
+      ScimOwnershipError
+    );
+    expect(tx.groups.update).not.toHaveBeenCalled();
+  });
+
+  it("K6: a sibling token for the same IdP may write — rotation keeps working", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 305, scimTokenId: "tok_okta_old" })
+    );
+    tx.scimToken.findUnique.mockResolvedValue({ idpName: "OKTA" });
+    tx.groups.update.mockResolvedValue(
+      makeGroup({ id: 305, name: "Renamed", scimDisplayName: "Renamed" })
+    );
+
+    await expect(
+      putScimGroup("305", makeBody({ displayName: "Renamed" }), CTX)
+    ).resolves.toBeDefined();
+    expect(tx.groups.update).toHaveBeenCalledTimes(1);
+  });
+
+  it("K7: a real PUT claims a still-unowned group", async () => {
+    tx.groups.findUnique.mockResolvedValue(
+      makeGroup({ id: 306, scimTokenId: null })
+    );
+    tx.groups.update.mockResolvedValue(
+      makeGroup({ id: 306, name: "Renamed", scimDisplayName: "Renamed" })
+    );
+
+    await putScimGroup("306", makeBody({ displayName: "Renamed" }), CTX);
+
+    const args = tx.groups.update.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.scimTokenId).toBe("tok_test");
+  });
+
+  it("K8: reads are scoped to unowned groups plus the caller's own IdP", async () => {
+    tx.groups.findFirst.mockResolvedValue(makeGroup({ id: 307 }));
+
+    await getScimGroupById("307", CTX);
+
+    const args = tx.groups.findFirst.mock.calls[0][0] as {
+      where: { AND: Array<Record<string, unknown>> };
+    };
+    expect(args.where.AND).toContainEqual({
+      OR: [{ scimTokenId: null }, { scimToken: { idpName: "OKTA" } }],
+    });
+  });
+});

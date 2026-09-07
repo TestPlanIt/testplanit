@@ -32,6 +32,7 @@ vi.mock("~/lib/scim/auth", () => ({
   requireScimBearer: vi.fn().mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   }),
 }));
 
@@ -106,6 +107,7 @@ beforeEach(() => {
   vi.mocked(requireScimBearer).mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   });
   vi.mocked(createScimGroup).mockReset();
   vi.mocked(listScimGroups).mockReset();
@@ -132,7 +134,11 @@ describe("POST /api/scim/v2/Groups", () => {
     expect(body.displayName).toBe("Eng");
     expect(createScimGroup).toHaveBeenCalledWith(
       expect.objectContaining({ displayName: "Eng" }),
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 
@@ -307,7 +313,11 @@ describe("GET /api/scim/v2/Groups", () => {
     expect(res.status).toBe(200);
     expect(listScimGroups).toHaveBeenCalledWith(
       { filter: 'displayName eq "Eng"', startIndex: 21, count: 20 },
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 

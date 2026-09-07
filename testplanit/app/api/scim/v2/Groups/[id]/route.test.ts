@@ -34,6 +34,7 @@ vi.mock("~/lib/scim/auth", () => ({
   requireScimBearer: vi.fn().mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   }),
 }));
 
@@ -128,6 +129,7 @@ beforeEach(() => {
   vi.mocked(requireScimBearer).mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   });
   vi.mocked(getScimGroupById).mockReset();
   vi.mocked(putScimGroup).mockReset();
@@ -147,6 +149,7 @@ describe("GET /api/scim/v2/Groups/[id]", () => {
     expect(getScimGroupById).toHaveBeenCalledWith("11", {
       tokenId: "tk_test",
       systemUserId: "system-scim-user",
+      idpName: "OKTA" as const,
     });
   });
 
@@ -204,7 +207,11 @@ describe("PUT /api/scim/v2/Groups/[id]", () => {
     expect(putScimGroup).toHaveBeenCalledWith(
       "11",
       expect.objectContaining({ displayName: "Eng" }),
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 
@@ -313,7 +320,11 @@ describe("PATCH /api/scim/v2/Groups/[id]", () => {
     expect(patchScimGroup).toHaveBeenCalledWith(
       "11",
       expect.objectContaining({ Operations: expect.any(Array) }),
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 
@@ -441,6 +452,7 @@ describe("DELETE /api/scim/v2/Groups/[id]", () => {
     expect(deleteScimGroup).toHaveBeenCalledWith("11", {
       tokenId: "tk_test",
       systemUserId: "system-scim-user",
+      idpName: "OKTA" as const,
     });
   });
 

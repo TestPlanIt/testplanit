@@ -41,6 +41,17 @@ You can revoke a token at any time from the same page. Revocation is immediate: 
 The full token is only displayed once upon creation. TestPlanIt stores only an encrypted copy and a hashed copy and cannot show the original value again.
 :::
 
+### Running more than one identity provider
+
+You can mint tokens for several IdPs — for example Okta for employees and Entra for contractors — and point them all at the same TestPlanIt instance. Each user and group records which IdP provisioned it, and that provenance is enforced:
+
+- **Each IdP sees only its own directory.** SCIM `GET` and list requests return rows provisioned by the calling token's IdP, plus any row no IdP has claimed yet. One IdP cannot enumerate another's users through the SCIM API.
+- **Writes across IdPs are refused.** A `PUT`, `PATCH`, or `DELETE` against a resource another IdP provisioned returns `409 Conflict` instead of overwriting it. A `POST` that collides with another IdP's user — the same email address, say — is refused the same way rather than being silently rebound.
+- **Refusals are visible.** Every refused write is recorded in the [External-ID conflict log](#external-id-conflict-log) on `/admin/scim` as a **Cross-IdP conflict**, showing which IdP owns the resource and which one attempted the write. That is your signal that two directories overlap and one of them needs its scope narrowed.
+- **Rows are claimed on first write.** Users and groups that predate this behaviour, and any created manually in TestPlanIt, start unclaimed: any IdP may write them, and the first one to do so becomes their owner.
+
+Ownership is tracked per IdP, not per token, so revoking a token and minting a replacement for the same IdP keeps full access to everything that IdP provisioned. Note that **Other** is a single IdP identity: two connectors both minted as **Other** are treated as the same directory. Give each provider its own IdP type where you need them isolated.
+
 ## SCIM-managed users and groups
 
 Once a user is provisioned via SCIM, TestPlanIt treats their core identity attributes (name, email, username, external id, active flag) as IdP-owned. The Users admin page renders a **SCIM** badge on those rows, and the Edit / Force password change / Revoke password / Delete actions are disabled — the IdP is the source of truth. The same applies to SCIM-managed Groups: the name, external id, and member list flow from the IdP, and the admin Edit / Delete actions are gated.

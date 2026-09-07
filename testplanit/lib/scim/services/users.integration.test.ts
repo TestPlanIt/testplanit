@@ -101,6 +101,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
     ctx = {
       tokenId: `scimit-tok-${Date.now()}`,
       systemUserId: SCIM_SYSTEM_USER_ID,
+      idpName: "OKTA",
     };
 
     // Sanity check: the sentinel Projects row must exist before any test

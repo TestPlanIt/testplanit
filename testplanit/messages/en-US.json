@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Display name overwritten",
         "typeReEmitted": "Re-emitted",
         "typeConflict": "Conflict",
+        "typeTokenConflict": "Cross-IdP conflict",
         "typeUnknown": "Unknown",
         "viewPayload": "View payload",
         "reEmit": "Re-emit member event",

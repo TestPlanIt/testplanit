@@ -53,6 +53,8 @@ import {
 } from "~/lib/scim/constants";
 import { checkScimTokenRateLimit } from "./rate-limit";
 
+import type { IdpName } from "~/zenstack/models";
+
 /**
  * Sentinel exception thrown by `requireScimBearer` on any auth failure.
  *
@@ -76,6 +78,12 @@ export class ScimAuthError extends Error {
 export interface ScimAuthContext {
   tokenId: string;
   systemUserId: string;
+  /**
+   * The IdP this token speaks for. Carried on the context because cross-IdP
+   * ownership (lib/scim/ownership.ts) is keyed on the IdP rather than the
+   * token id, so revoke + mint rotation keeps a directory's rows writable.
+   */
+  idpName: IdpName;
 }
 
 /** Hosts that count as a loopback origin for the probe-marker carve-out. */
@@ -147,6 +155,7 @@ export async function requireScimBearer(
     select: {
       id: true,
       systemUserId: true,
+      idpName: true,
       isActive: true,
       expiresAt: true,
       revokedAt: true,
@@ -215,5 +224,9 @@ export async function requireScimBearer(
   // making them invisible to the /admin/scim conflict-log query.
   updateAuditContext({ scimTokenId: row.id });
 
-  return { tokenId: row.id, systemUserId: row.systemUserId };
+  return {
+    tokenId: row.id,
+    systemUserId: row.systemUserId,
+    idpName: row.idpName,
+  };
 }

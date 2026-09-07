@@ -100,6 +100,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     ctx = {
       tokenId: `scimit-tok-${Date.now()}`,
       systemUserId: SCIM_SYSTEM_USER_ID,
+      idpName: "OKTA",
     };
 
     const systemProject = await db.projects.findUnique({

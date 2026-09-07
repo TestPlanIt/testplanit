@@ -75,6 +75,7 @@ const testGroup: ExtendedGroups = {
   isDeleted: false,
   deletedAt: null,
   mappedAccess: null,
+  scimTokenId: null,
   assignedUsers: [{ userId: "u1" }, { userId: "u2" }],
   projectPermissions: [{ projectId: 10 }, { projectId: 20 }, { projectId: 30 }],
 };
@@ -91,6 +92,7 @@ const emptyGroup: ExtendedGroups = {
   isDeleted: false,
   deletedAt: null,
   mappedAccess: null,
+  scimTokenId: null,
   assignedUsers: [],
   projectPermissions: [],
 };
