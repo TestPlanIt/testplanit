@@ -109,7 +109,8 @@ describe("IntegrationManager", () => {
       expect(types).toContain("GITEA");
       expect(types).toContain("REDMINE");
       expect(types).toContain("MANTISBT");
-      expect(types).toHaveLength(8);
+      expect(types).toContain("CLICKUP");
+      expect(types).toHaveLength(9);
     });
   });
 

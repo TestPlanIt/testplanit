@@ -80,9 +80,9 @@ describe("ClickUpAdapter", () => {
     });
 
     it("throws when no access token is provided", async () => {
-      await expect(
-        adapter.authenticate({ type: "oauth" })
-      ).rejects.toThrow("requires an access token");
+      await expect(adapter.authenticate({ type: "oauth" })).rejects.toThrow(
+        "requires an access token"
+      );
     });
 
     it("throws when the token validation request fails", async () => {
@@ -198,7 +198,8 @@ describe("ClickUpAdapter", () => {
         labels: ["bug"],
       });
 
-      const [calledUrl, options] = mockFetch.mock.calls[0];
+      const [calledUrl, options] =
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(calledUrl).toBe(
         "https://api.clickup.com/api/v2/list/901234567/task"
       );
@@ -225,7 +226,7 @@ describe("ClickUpAdapter", () => {
         projectId: "999888777",
       });
 
-      const [calledUrl] = mockFetch.mock.calls[0];
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(calledUrl).toBe(
         "https://api.clickup.com/api/v2/list/999888777/task"
       );
@@ -254,7 +255,8 @@ describe("ClickUpAdapter", () => {
 
       await adapter.updateIssue("abc123", { assigneeId: "2" });
 
-      const [calledUrl, options] = mockFetch.mock.calls[0];
+      const [calledUrl, options] =
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(calledUrl).toBe("https://api.clickup.com/api/v2/task/abc123");
       expect(options.method).toBe("PUT");
       const body = JSON.parse(options.body);
@@ -269,7 +271,7 @@ describe("ClickUpAdapter", () => {
 
       await adapter.updateIssue("abc123", { status: "in progress" });
 
-      const [, options] = mockFetch.mock.calls[0];
+      const [, options] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       const body = JSON.parse(options.body);
       expect(body.status).toBe("in progress");
     });
@@ -309,8 +311,7 @@ describe("ClickUpAdapter", () => {
     it("falls back to custom_id for the key when present", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () =>
-          Promise.resolve({ ...mockClickUpTask, custom_id: "TP-42" }),
+        json: () => Promise.resolve({ ...mockClickUpTask, custom_id: "TP-42" }),
       });
 
       const result = await adapter.getIssue("abc123");
@@ -336,7 +337,7 @@ describe("ClickUpAdapter", () => {
         updatedWithinDays: 7,
       });
 
-      const [calledUrl] = mockFetch.mock.calls[0];
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       const url = new URL(calledUrl);
       expect(url.searchParams.getAll("statuses[]")).toEqual([
         "open",
@@ -427,7 +428,8 @@ describe("ClickUpAdapter", () => {
 
       await adapter.linkToTestCase("abc123", "TC-1");
 
-      const [calledUrl, options] = mockFetch.mock.calls[0];
+      const [calledUrl, options] =
+        mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
       expect(calledUrl).toBe(
         "https://api.clickup.com/api/v2/task/abc123/comment"
       );
@@ -446,7 +448,9 @@ describe("ClickUpAdapter", () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () =>
-            Promise.resolve({ spaces: [{ id: "space1", name: "Engineering" }] }),
+            Promise.resolve({
+              spaces: [{ id: "space1", name: "Engineering" }],
+            }),
         })
         .mockResolvedValueOnce({
           ok: true,
