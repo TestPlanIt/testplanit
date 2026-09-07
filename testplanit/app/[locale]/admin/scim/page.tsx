@@ -52,6 +52,7 @@ import type { Access } from "~/zenstack/models";
 
 import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";
+import { RoleMappingsCard } from "./RoleMappingsCard";
 
 export default function ScimTokensPage() {
   return <ScimTokensList />;
@@ -474,6 +475,8 @@ function ScimTokensList() {
       </Card>
 
       <FallbackDefaultCard />
+
+      <RoleMappingsCard />
 
       {/* Revoke Single Token Dialog */}
       <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>

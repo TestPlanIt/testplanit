@@ -135,6 +135,11 @@ model User {
     scimExtensions                           Json?
     scimGivenName                            String?                           @deny('update', scimGivenName != null)
     scimFamilyName                           String?                           @deny('update', scimGivenName != null)
+    // Flattened `roles[].value` strings from the IdP's last SCIM payload.
+    // The full roles array still round-trips verbatim through scimExtensions;
+    // this column exists so access resolution can join against
+    // ScimRoleMapping without parsing JSON on every recompute.
+    scimRoles                                String[]
     access                                   Access                            @default(NONE)
     accessSource                             AccessSource                      @default(MANUAL)
     roleId                                   Int
@@ -338,6 +343,27 @@ model ScimToken {
     @@index([createdById])
     @@deny('all', auth() == null)
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// Maps an IdP-asserted SCIM `roles[].value` string onto a TestPlanIt access
+// tier. Role-derived tiers take precedence over group-derived ones in
+// resolveEffectiveAccess -- an IdP that asserts roles is making a more
+// specific statement about the user than group membership does.
+//
+// Matching is case-insensitive: `roleValue` is stored lowercased and every
+// incoming role value is lowercased before comparison, because IdPs are not
+// consistent about the casing of role labels.
+model ScimRoleMapping {
+    id           Int      @id @default(autoincrement())
+    roleValue    String   @unique @length(1, 200)
+    mappedAccess Access
+    createdAt    DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+    @@index([roleValue])
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
 }
 
 enum Theme {

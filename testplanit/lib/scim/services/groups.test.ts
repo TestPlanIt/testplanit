@@ -1036,11 +1036,13 @@ describe("deleteScimGroup", () => {
         id: "u10",
         access: "USER",
         accessSource: "GROUP_MAPPING",
+        scimRoles: [],
       })
       .mockResolvedValueOnce({
         id: "u11",
         access: "USER",
         accessSource: "GROUP_MAPPING",
+        scimRoles: [],
       });
     tx.groupAssignment.findMany
       .mockResolvedValueOnce([]) // u10 has no remaining mapped groups
@@ -1145,6 +1147,7 @@ describe("J — inline recompute wiring assertions", () => {
       id: "u1",
       access: "NONE",
       accessSource: "GROUP_MAPPING",
+      scimRoles: [],
     });
     tx.groupAssignment.findMany.mockResolvedValue([
       { group: { mappedAccess: "USER" } },
@@ -1186,6 +1189,7 @@ describe("J — inline recompute wiring assertions", () => {
       id: "u1",
       access: "USER",
       accessSource: "GROUP_MAPPING",
+      scimRoles: [],
     });
     tx.groupAssignment.findMany.mockResolvedValue([]);
     tx.user.update.mockResolvedValue({ id: "u1", access: "NONE" });
@@ -1224,6 +1228,7 @@ describe("J — inline recompute wiring assertions", () => {
       id: "u1",
       access: "USER",
       accessSource: "GROUP_MAPPING",
+      scimRoles: [],
     });
     tx.groupAssignment.findMany.mockResolvedValue([
       { group: { mappedAccess: "USER" } },
@@ -1261,11 +1266,13 @@ describe("J — inline recompute wiring assertions", () => {
         id: "u3",
         access: "NONE",
         accessSource: "GROUP_MAPPING",
+        scimRoles: [],
       })
       .mockResolvedValueOnce({
         id: "u1",
         access: "USER",
         accessSource: "GROUP_MAPPING",
+        scimRoles: [],
       });
     tx.groupAssignment.findMany
       .mockResolvedValueOnce([]) // u3 has no mapped groups

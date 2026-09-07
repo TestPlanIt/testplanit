@@ -119,6 +119,7 @@ function makeUser(overrides: Record<string, unknown> = {}) {
     scimGivenName: "Alice",
     scimFamilyName: "Example",
     scimExtensions: null,
+    scimRoles: [],
     isActive: true,
     isDeleted: false,
     authMethod: "SCIM",

@@ -5618,7 +5618,19 @@
       "fallbackDefaultTitle": "Default Mapped Access",
       "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
       "fallbackDefaultLabel": "Default access tier",
-      "fallbackDefaultSaved": "Fallback default saved"
+      "fallbackDefaultSaved": "Fallback default saved",
+      "roleMappings": {
+        "title": "Role Mappings",
+        "description": "Map a role your identity provider asserts on a user to an access tier. Role mappings take precedence over group mappings, so they can raise or lower access.",
+        "empty": "No role mappings yet. Users are governed by group mappings and the default access tier.",
+        "roleLabel": "Role value",
+        "rolePlaceholder": "Role value from your IdP, e.g. qa-lead",
+        "accessLabel": "Access tier",
+        "add": "Add mapping",
+        "remove": "Remove mapping",
+        "saved": "Role mapping saved",
+        "errorRoleRequired": "Enter the role value your IdP sends."
+      }
     },
     "tags": {
       "add": {
@@ -7410,6 +7422,7 @@
     "scim": "## SCIM Provisioning\nProvision users from your identity provider into TestPlanIt over SCIM 2.0.",
     "scimConflicts": "## External-ID Conflict Log\nSCIM identity events that required system intervention (linking, resurrection, displayName overwrite, skipped members).",
     "scimFallbackDefault": "## Default Mapped Access\nAccess tier assigned to users not covered by any group mapping.",
+    "scimRoleMappings": "## Role Mappings\nMaps a `roles` value asserted by your identity provider onto an access tier. A role mapping takes precedence over group mappings: a user the IdP gives a mapped role receives that tier even when a group would grant them more. Unmapped role values are ignored.",
     "integrations": "## Issue Integrations\nManage third-party integrations for issue tracking.",
     "notifications": "## Notification Administration\nSet the default notification preferences (users can override) and send out System Notifications.",
     "notificationsSystem": "## System Notifications\nSend important announcements to all users.",

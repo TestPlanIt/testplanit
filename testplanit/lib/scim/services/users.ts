@@ -29,6 +29,12 @@
  *   - metadata.scimResurrected:       POST hit a tombstoned row, same external id
  *   - metadata.scimPasswordDropped:   POST/PUT body included a `password` field
  *   - metadata.scimNoOp:              PUT/PATCH produced an empty column diff
+ *
+ * Role-attribute hybrid: every write path derives `User.scimRoles` from the
+ * merged `scimExtensions` blob and then re-runs `recomputeUserAccess` inside
+ * the same transaction, so an IdP that asserts a mapped `roles` value moves
+ * the user's tier on the same request that carried the assertion. The `roles`
+ * array itself still round-trips verbatim through `scimExtensions`.
  */
 
 import { hash } from "bcrypt";
@@ -49,13 +55,14 @@ import {
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToDbWhere } from "../filter";
-import { readScimFallbackDefault } from "./recompute";
+import { readScimFallbackDefault, recomputeUserAccess } from "./recompute";
 import {
   computeUserUpdatesFromScim,
   deriveDisplayName,
   extractNonWritableUrns,
   extractPrimaryEmail,
   mergeExtensions,
+  rolesFromExtensions,
   userToScim,
 } from "../mapping/user";
 import { applyScimPatch, ScimPatchApplyError } from "../patch";
@@ -308,6 +315,7 @@ async function resurrectTombstonedUser(
     existing.scimExtensions,
     extractNonWritableUrns(body as unknown as Record<string, unknown>)
   );
+  const scimRoles = rolesFromExtensions(extensions);
 
   const fallbackDefault = await readScimFallbackDefault(tx);
 
@@ -323,11 +331,20 @@ async function resurrectTombstonedUser(
       name: deriveDisplayName(body),
       email: extractPrimaryEmail(body.emails) ?? existing.email,
       scimExtensions: toJsonInput(extensions),
+      scimRoles,
       access: fallbackDefault,
       accessSource: "GROUP_MAPPING",
     },
     include: SCIM_USER_INCLUDE,
   });
+
+  // Only pay for a recompute when the IdP actually asserted roles. With no
+  // roles there is nothing the resolver could conclude that the tier written
+  // above does not already say, and a bulk sync would eat two extra queries
+  // per user for nothing.
+  if (scimRoles.length > 0) {
+    await recomputeUserAccess(tx, resurrected.id, fallbackDefault);
+  }
 
   await emitScimUserCreated(resurrected, tx, DEFAULT_EMIT_OPTS);
   await captureAuditEvent({
@@ -359,6 +376,7 @@ async function jitBindExistingUser(
     existing.scimExtensions,
     extractNonWritableUrns(body as unknown as Record<string, unknown>)
   );
+  const scimRoles = rolesFromExtensions(extensions);
 
   const before = asScimSnapshot(existing);
   const linked = await tx.user.update({
@@ -369,9 +387,17 @@ async function jitBindExistingUser(
       scimGivenName: body.name?.givenName ?? null,
       scimFamilyName: body.name?.familyName ?? null,
       scimExtensions: toJsonInput(extensions),
+      scimRoles,
     },
     include: SCIM_USER_INCLUDE,
   });
+
+  // A JIT bind adopts a pre-existing manual user. Recompute only takes their
+  // tier over when a mapping input actually applies (see recomputeUserAccess);
+  // an unmapped manual user keeps the access an admin gave them.
+  if (scimRoles.length > 0) {
+    await recomputeUserAccess(tx, linked.id, await readScimFallbackDefault(tx));
+  }
 
   await emitScimUserUpdated(
     before,
@@ -415,6 +441,7 @@ async function insertNewScimUser(
   const extensions = extractNonWritableUrns(
     body as unknown as Record<string, unknown>
   );
+  const scimRoles = rolesFromExtensions(extensions);
 
   const randomPassword = await hash(
     crypto.randomBytes(RANDOM_PASSWORD_BYTES).toString("base64"),
@@ -433,6 +460,7 @@ async function insertNewScimUser(
         Object.keys(extensions).length > 0
           ? (extensions as JsonValue)
           : undefined,
+      scimRoles,
       authMethod: "SCIM",
       access: fallbackDefault,
       accessSource: "GROUP_MAPPING",
@@ -443,6 +471,10 @@ async function insertNewScimUser(
     },
     include: SCIM_USER_INCLUDE,
   });
+
+  if (scimRoles.length > 0) {
+    await recomputeUserAccess(tx, created.id, fallbackDefault);
+  }
 
   await emitScimUserCreated(created, tx, DEFAULT_EMIT_OPTS);
   await captureAuditEvent({
@@ -614,6 +646,14 @@ export async function putScimUser(
           updates.scimExtensions = json;
         }
       }
+
+      // `roles` rides inside the merged core-URN bucket; mirror it onto the
+      // flat column whenever the asserted set actually changed so the column
+      // stays a faithful projection of what a GET would re-emit.
+      const nextRoles = rolesFromExtensions(merged);
+      if (nextRoles.join(" ") !== current.scimRoles.join(" ")) {
+        updates.scimRoles = nextRoles;
+      }
     }
 
     // password warning — fired regardless of whether updates are otherwise
@@ -644,6 +684,14 @@ export async function putScimUser(
       data: updates,
       include: SCIM_USER_INCLUDE,
     } as UserUpdateArgs)) as Parameters<typeof asScimSnapshot>[0];
+
+    if (updates.scimRoles !== undefined) {
+      await recomputeUserAccess(
+        tx,
+        current.id,
+        await readScimFallbackDefault(tx)
+      );
+    }
 
     await emitScimUserUpdated(
       before,
@@ -691,12 +739,23 @@ export async function patchScimUser(
     // scimExtensions PATCH preserves untouched URN buckets even when the
     // draft only carried a subset of URNs (the mapper already returns the
     // draft's complete URN bucket; we merge with current to be safe).
+    // `scimRoles` is derived, never patched directly — it rides along with the
+    // merged extensions blob and so can only change when that blob does. That
+    // keeps it out of `assertWritableOnly`'s SCIM-attribute surface while
+    // still reaching the Prisma payload below.
+    const derived: { scimRoles?: string[] } = {};
+
     if ("scimExtensions" in updates && updates.scimExtensions !== undefined) {
       const merged = mergeExtensions(
         current.scimExtensions,
         updates.scimExtensions ?? {}
       );
       updates.scimExtensions = merged;
+
+      const nextRoles = rolesFromExtensions(merged);
+      if (nextRoles.join(" ") !== current.scimRoles.join(" ")) {
+        derived.scimRoles = nextRoles;
+      }
     }
 
     if (Object.keys(updates).length === 0) {
@@ -712,9 +771,17 @@ export async function patchScimUser(
     const before = asScimSnapshot(current);
     const updated = await tx.user.update({
       where: { id: current.id },
-      data: updates as UserUpdateArgs["data"],
+      data: { ...updates, ...derived } as UserUpdateArgs["data"],
       include: SCIM_USER_INCLUDE,
     });
+
+    if (derived.scimRoles !== undefined) {
+      await recomputeUserAccess(
+        tx,
+        current.id,
+        await readScimFallbackDefault(tx)
+      );
+    }
 
     // Mid-session deactivation: delete the user's Account rows so the next
     // login attempt forces re-authentication through the IdP.

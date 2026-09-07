@@ -223,6 +223,8 @@ A user whose access is driven by group mapping is called a **governed** user. If
 
 **Ungoverned users** (those who have never been added to a mapped group and were not provisioned via SCIM) are never auto-changed by mapping — their access stays as set by an admin.
 
+If your IdP sends a `roles` attribute on the user, you can map role values to tiers as well. A **role mapping takes precedence over group mappings**: when the IdP asserts a role you have mapped, that tier is used even if a group would grant more. See [Map an IdP role to an access tier](#map-an-idp-role-to-an-access-tier) below.
+
 ### Configure a mapping
 
 #### Set a group's Mapped Access
@@ -239,6 +241,27 @@ Selecting **No mapping** removes the mapping from that group — it no longer dr
 1. Navigate to **Admin → Authentication → SCIM Provisioning** (`/admin/scim`).
 2. Under the **Role Mapping** section, change the **Fallback Default** selector. Options are **None** (the system default), **User**, **Project Admin**, and **Admin**. Here **None** is the no-access tier itself — distinct from a group's **No mapping**, which means the group carries no tier at all.
 3. Click **Save**. The new default takes effect for every governed user with no mapped-group membership on the next recompute.
+
+#### Map an IdP role to an access tier
+
+Group membership is often too coarse: a directory may put every engineer in one group while marking a handful of them as contractors on the user record itself. Role mapping closes that gap.
+
+1. Navigate to **Admin → Authentication → SCIM Provisioning** (`/admin/scim`).
+2. Under **Role Mappings**, type the role value exactly as your IdP sends it in the `roles` attribute — for example `qa-lead` — and choose the access tier it should grant.
+3. Click **Add mapping**.
+
+Notes on how role mappings behave:
+
+- **Roles win over groups.** A user the IdP gives a mapped role receives that tier even when a mapped group would grant a higher one. This lets you use a role as a correction to coarse group mapping — mapping `contractor` to **User** holds contractors at User even though they sit in an Admin-mapped group.
+- **Highest-wins applies among roles.** If the IdP asserts two mapped roles, the stronger tier is used.
+- **A role mapped to None is an explicit deny** that overrides any group tier. This is different from removing the mapping, which simply returns the user to group-driven access.
+- **Unmapped role values are ignored.** Organizational roles that carry no access meaning (`engineering`, `emea`) do not affect a user's tier, and they never silently reduce access.
+- **Matching is case-insensitive.** `QA-Lead` and `qa-lead` are the same mapping.
+- **A mapped role governs on its own.** A user with a mapped role becomes directory-governed even if they belong to no mapped group.
+
+Role values are read from the SCIM `roles` attribute on each user sync, so a change in the IdP takes effect on the next push for that user. Adding, retiering, or removing a mapping in TestPlanIt recomputes every user holding that role in the background.
+
+The full `roles` array is also stored verbatim and returned on a SCIM `GET`, whether or not any value is mapped.
 
 ### Downgrade confirmation
 
