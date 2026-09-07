@@ -2,6 +2,7 @@
 export { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 // Adapter exports
 export { BaseAdapter } from "./adapters/BaseAdapter";
+export { ClickUpAdapter } from "./adapters/ClickUpAdapter";
 export { GitHubAdapter } from "./adapters/GitHubAdapter";
 // Types
 export type {

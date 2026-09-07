@@ -40,6 +40,12 @@ const constructExternalUrl = (
   baseUrl: string | undefined,
   externalKey: string
 ): string | null => {
+  // ClickUp is not self-hosted — task URLs are always app.clickup.com,
+  // independent of any configured baseUrl.
+  if (provider === IntegrationProvider.CLICKUP) {
+    return `https://app.clickup.com/t/${externalKey}`;
+  }
+
   if (!baseUrl) {
     return null;
   }

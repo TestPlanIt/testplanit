@@ -7,6 +7,7 @@ import { AuthenticationService } from "./AuthenticationService";
 import { resolveStoredCredentials } from "./credentials";
 import { credentialsCorruptError } from "./errors";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
+import { ClickUpAdapter } from "./adapters/ClickUpAdapter";
 import { GiteaAdapter } from "./adapters/GiteaAdapter";
 import { GitHubAdapter } from "./adapters/GitHubAdapter";
 import { GitLabAdapter } from "./adapters/GitLabAdapter";
@@ -75,6 +76,7 @@ export class IntegrationManager {
     this.registerAdapter("GITEA", GiteaAdapter);
     this.registerAdapter("REDMINE", RedmineAdapter);
     this.registerAdapter("MANTISBT", MantisBTAdapter);
+    this.registerAdapter("CLICKUP", ClickUpAdapter);
   }
 
   /**
