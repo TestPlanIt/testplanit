@@ -684,7 +684,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const formattedTestCases = issue.repositoryCases.map((testCase: any) => {
+    // A soft-deleted case only keeps its Jira link because the row survives
+    // the delete. With no live results it has nothing to show in the panel,
+    // so it is dropped. With results it stays so the execution history
+    // remains attached to the issue; the panel renders it as deleted.
+    const hasLiveResults = (testCase: any) =>
+      (testCase.testRuns || []).some(
+        (testRunCase: any) => (testRunCase.results?.length ?? 0) > 0
+      );
+    const visibleCases = issue.repositoryCases.filter(
+      (testCase: any) => !testCase.isDeleted || hasLiveResults(testCase)
+    );
+
+    const formattedTestCases = visibleCases.map((testCase: any) => {
       // Collect all results from all test runs for this case
       const allResults =
         testCase.testRuns?.flatMap(

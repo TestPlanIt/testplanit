@@ -425,8 +425,15 @@ const FieldChipsRow = ({ fields, expanded, onToggle }) => {
 // Test case row component
 const TestCaseRow = ({ testCase, onOpen }) => {
   const [expanded, setExpanded] = useState(false);
+  // A deleted case is only listed because it still has results; the row
+  // exists to keep that history with the issue, so it is rendered muted, its
+  // stale field values are dropped, and the title no longer deep-links (the
+  // case page refuses soft-deleted cases).
+  const isDeleted = Boolean(testCase.isDeleted);
   // Fields opted into the panel; valueless ones are hidden by design.
-  const visibleFields = (testCase.fields || []).filter(fieldHasValue);
+  const visibleFields = isDeleted
+    ? []
+    : (testCase.fields || []).filter(fieldHasValue);
 
   const getIcon = (source, isDeleted) => {
     if (isDeleted) return <DynamicIcon name="Trash" className="h-4 w-4 shrink-0" />;
@@ -476,17 +483,26 @@ const TestCaseRow = ({ testCase, onOpen }) => {
   };
 
   return (
-    <div className="testplanit-card border rounded-md transition-colors">
+    <div className={`testplanit-card border rounded-md transition-colors ${isDeleted ? 'border-dashed opacity-75' : ''}`}>
       <div className="flex items-center justify-between p-2 testplanit-hover">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          {getIcon(testCase.source, testCase.isDeleted)}
-          <button
-            className="text-sm font-medium testplanit-primary flex-1 truncate text-left"
-            onClick={handleTitleClick}
-            title={testCase.name}
-          >
-            {testCase.name}
-          </button>
+          {getIcon(testCase.source, isDeleted)}
+          {isDeleted ? (
+            <span
+              className="text-sm font-medium testplanit-text-muted flex-1 truncate text-left line-through"
+              title={`${testCase.name} (deleted in TestPlanIt)`}
+            >
+              {testCase.name}
+            </span>
+          ) : (
+            <button
+              className="text-sm font-medium testplanit-primary flex-1 truncate text-left"
+              onClick={handleTitleClick}
+              title={testCase.name}
+            >
+              {testCase.name}
+            </button>
+          )}
           {(testCase.estimate || testCase.forecastManual || testCase.forecastAutomated) && (
             <div className="flex items-center gap-1">
               {testCase.estimate && (
@@ -507,15 +523,25 @@ const TestCaseRow = ({ testCase, onOpen }) => {
             </div>
           )}
           <div className="flex items-center gap-2">
-            {/* Workflow State */}
-            <span
-              className="text-xs px-2 py-1 rounded-md border font-medium flex items-center justify-center gap-1 w-20"
-              style={getStatusStyle(testCase.statusColor)}
-              title={testCase.status}
-            >
-              <DynamicIcon name={testCase.statusIcon} className="h-3 w-3 shrink-0" style={{ color: 'white' }} />
-              <span className="truncate">{testCase.status}</span>
-            </span>
+            {isDeleted ? (
+              /* A workflow state means nothing for a deleted case; say so instead. */
+              <span
+                className="text-xs px-2 py-1 rounded-md border font-medium flex items-center justify-center w-20 testplanit-text-muted testplanit-muted-bg"
+                title="Deleted in TestPlanIt. Its results are kept with this issue."
+              >
+                <span className="truncate">Deleted</span>
+              </span>
+            ) : (
+              /* Workflow State */
+              <span
+                className="text-xs px-2 py-1 rounded-md border font-medium flex items-center justify-center gap-1 w-20"
+                style={getStatusStyle(testCase.statusColor)}
+                title={testCase.status}
+              >
+                <DynamicIcon name={testCase.statusIcon} className="h-3 w-3 shrink-0" style={{ color: 'white' }} />
+                <span className="truncate">{testCase.status}</span>
+              </span>
+            )}
             {/* Test Result Status Badge */}
             {testCase.lastResult && (
               <span
@@ -2563,6 +2589,12 @@ const App = () => {
   const hasSessions = testData?.sessions?.length > 0;
   const hasTestRuns = testData?.testRuns?.length > 0;
 
+  // Deleted cases (kept only for their result history) are listed after the
+  // live ones and counted separately so they are easy to skip.
+  const allTestCases = testData?.testCases || [];
+  const liveTestCases = allTestCases.filter((testCase) => !testCase.isDeleted);
+  const deletedTestCases = allTestCases.filter((testCase) => testCase.isDeleted);
+
   if (!hasTestCases && !hasSessions && !hasTestRuns) {
     return (
       <div className="p-4 testplanit-bg">
@@ -2604,11 +2636,16 @@ const App = () => {
               name={sectionsExpanded.testCases ? "ChevronDown" : "ChevronRight"}
               className="h-4 w-4"
             />
-            Test Cases ({testData.testCases.length})
+            Test Cases ({liveTestCases.length})
+            {deletedTestCases.length > 0 && (
+              <span className="normal-case tracking-normal font-normal testplanit-text-muted">
+                · {deletedTestCases.length} deleted
+              </span>
+            )}
           </button>
           {sectionsExpanded.testCases && (
             <div>
-              {testData.testCases.map((testCase, index) => (
+              {[...liveTestCases, ...deletedTestCases].map((testCase, index) => (
                 <TestCaseRow
                   key={testCase.id || index}
                   testCase={testCase}

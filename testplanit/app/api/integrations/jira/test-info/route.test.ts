@@ -48,12 +48,12 @@ const buildCase = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const buildIssue = (testCase: Record<string, unknown>) => ({
+const buildIssue = (...testCases: Record<string, unknown>[]) => ({
   id: 1,
   name: "PROJ-1",
   externalKey: "PROJ-1",
   externalId: "1000",
-  caseIssues: [{ case: testCase }],
+  caseIssues: testCases.map((testCase) => ({ case: testCase })),
   sessions: [],
   testRuns: [],
   testRunResults: [],
@@ -61,18 +61,116 @@ const buildIssue = (testCase: Record<string, unknown>) => ({
   sessionResults: [],
 });
 
-describe("jira test-info fields resolution", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(baseDb.integration.findMany).mockResolvedValue([
-      { id: 1, settings: { forgeApiKey: FORGE_API_KEY } },
+/** A TestRunCases row as the route's include returns it (live results only). */
+const buildRunCase = (
+  results: Record<string, unknown>[],
+  overrides: Record<string, unknown> = {}
+) => ({
+  id: 50,
+  testRun: { id: 7, name: "Regression", isCompleted: true },
+  results,
+  ...overrides,
+});
+
+const buildResult = (overrides: Record<string, unknown> = {}) => ({
+  id: 900,
+  status: { name: "Passed", color: { value: "#16a34a" } },
+  executedAt: "2026-09-01T10:00:00.000Z",
+  executedBy: { id: "u1", name: "Ann" },
+  editedAt: null,
+  editedBy: null,
+  elapsed: 42,
+  testRunCaseVersion: 2,
+  attempt: 1,
+  ...overrides,
+});
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(baseDb.integration.findMany).mockResolvedValue([
+    { id: 1, settings: { forgeApiKey: FORGE_API_KEY } },
+  ] as any);
+  vi.mocked(baseDb.status.findFirst).mockResolvedValue({
+    name: "Untested",
+    color: { value: "#9ca3af" },
+  } as any);
+});
+
+describe("jira test-info deleted cases", () => {
+  it("omits deleted cases that have no surviving results", async () => {
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(
+        buildCase({ id: 10, name: "Live" }),
+        buildCase({ id: 11, name: "Never run", isDeleted: true }),
+        // The results include filters soft-deleted results out, so a run row
+        // whose results were all deleted arrives empty and counts as none.
+        buildCase({
+          id: 12,
+          name: "Results gone",
+          isDeleted: true,
+          testRuns: [buildRunCase([])],
+        })
+      ),
     ] as any);
-    vi.mocked(baseDb.status.findFirst).mockResolvedValue({
-      name: "Untested",
-      color: { value: "#9ca3af" },
-    } as any);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.testCases.map((testCase: any) => testCase.id)).toEqual([10]);
   });
 
+  it("keeps a deleted case that has results and returns its history", async () => {
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(
+        buildCase({
+          id: 11,
+          name: "Gone",
+          isDeleted: true,
+          testRuns: [buildRunCase([buildResult()])],
+        })
+      ),
+    ] as any);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(body.testCases).toHaveLength(1);
+    expect(body.testCases[0]).toMatchObject({
+      id: 11,
+      name: "Gone",
+      isDeleted: true,
+      lastResult: "Passed",
+      lastResultColor: "#16a34a",
+    });
+    expect(body.testCases[0].resultHistory).toEqual([
+      expect.objectContaining({
+        resultId: 900,
+        testRunId: 7,
+        testRunName: "Regression",
+        testRunIsCompleted: true,
+        status: "Passed",
+        statusColor: "#16a34a",
+        executedBy: { id: "u1", name: "Ann" },
+        testRunCaseVersion: 2,
+      }),
+    ]);
+  });
+
+  it("still returns a live case that has never been run", async () => {
+    vi.mocked(baseDb.issue.findMany).mockResolvedValue([
+      buildIssue(buildCase({ id: 10, name: "Live", testRuns: [] })),
+    ] as any);
+
+    const response = await GET(buildRequest());
+    const body = await response.json();
+
+    expect(body.testCases.map((testCase: any) => testCase.id)).toEqual([10]);
+    expect(body.testCases[0].lastResult).toBe("Untested");
+  });
+});
+
+describe("jira test-info fields resolution", () => {
   it("resolves each field type like the repository case table", async () => {
     const testCase = buildCase({
       template: {
