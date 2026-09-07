@@ -22,16 +22,14 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { sql } from "kysely";
 import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   cleanupIntegrationScimTokens,
   provisionIntegrationScimToken,
 } from "~/__tests__/helpers/scimIntegrationToken";
 
-import {
-  SCIM_SCHEMAS,
-  SYSTEM_PROJECT_ID,
-} from "../constants";
+import { SCIM_SCHEMAS, SYSTEM_PROJECT_ID } from "../constants";
 import {
   createScimGroup,
   deleteScimGroup,
@@ -128,14 +126,12 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     const groupIds = groups.map((g) => g.id);
 
     if (groupIds.length > 0) {
-      await db.webhookOutboxEvent.deleteMany({
-        where: {
-          // Raw Prisma-style JSON-path filter v3's typed WhereInput doesn't model.
-          OR: groupIds.map((id) => ({
-            payload: { path: ["id"], equals: id },
-          })) as any,
-        },
-      });
+      // Raw SQL: ZenStack v3 models a JSON `path` as a string, not
+      // Prisma's array form, so the typed filter is rejected outright.
+      await sql`
+        DELETE FROM "WebhookOutboxEvent"
+        WHERE "payload"->>'id' = ANY(${sql.val(groupIds.map(String))})
+      `.execute(db.$qb);
       await db.groupAssignment.deleteMany({
         where: { groupId: { in: groupIds } },
       });

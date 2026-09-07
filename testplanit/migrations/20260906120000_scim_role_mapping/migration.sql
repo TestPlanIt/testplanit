@@ -6,12 +6,16 @@
 -- role-value -> access-tier table that resolveEffectiveAccess reads, and
 -- whose tiers take precedence over group-derived ones.
 --
--- Backfill is deliberately omitted: existing rows get the empty-array default,
--- which means "the IdP has asserted no roles for this user" and leaves group
--- mapping in charge. The next SCIM write per user populates the column.
+-- Existing rows are backfilled to an empty array, which means "the IdP has
+-- asserted no roles for this user" and leaves group mapping in charge. The
+-- next SCIM write per user populates the column.
 
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "scimRoles" TEXT[] DEFAULT ARRAY[]::TEXT[];
+-- No column DEFAULT: Prisma models a String[] without one, and adding a
+-- default here shows up forever as schema drift. Existing rows are backfilled
+-- explicitly instead, so no row is left NULL.
+ALTER TABLE "User" ADD COLUMN     "scimRoles" TEXT[];
+UPDATE "User" SET "scimRoles" = ARRAY[]::TEXT[] WHERE "scimRoles" IS NULL;
 
 -- CreateTable
 CREATE TABLE "ScimRoleMapping" (

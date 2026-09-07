@@ -16,6 +16,7 @@
  * swept in afterAll.
  */
 
+import { sql } from "kysely";
 import { NextRequest } from "next/server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -162,13 +163,13 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
       });
     }
     if (sweepIds.length > 0) {
-      await db.webhookOutboxEvent.deleteMany({
-        where: {
-          OR: sweepIds.map((id) => ({
-            payload: { path: ["id"], equals: id },
-          })) as never,
-        },
-      });
+      // Raw SQL rather than a typed JSON-path filter: ZenStack v3 models
+      // `path` as a string, and the outbox discriminator is a JSON field
+      // (`payload.id`) that the typed WhereInput does not express portably.
+      await sql`
+        DELETE FROM "WebhookOutboxEvent"
+        WHERE "payload"->>'id' = ANY(${sql.val(sweepIds)})
+      `.execute(db.$qb);
       await db.account.deleteMany({ where: { userId: { in: sweepIds } } });
       await db.user.deleteMany({ where: { id: { in: sweepIds } } });
     }
