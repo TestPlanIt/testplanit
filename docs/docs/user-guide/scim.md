@@ -372,6 +372,7 @@ Row types you'll see:
 - **scimResurrected** — A SCIM `POST` matched a tombstoned (soft-deleted) row by `externalId` and brought it back instead of creating a duplicate.
 - **scimSkippedMemberIds** — A `PATCH /Groups/{id}` referenced one or more unknown user ids; the known members were applied and the unknown ids were recorded here. The **Re-emit** action on this row replays the `member_added` / `member_removed` webhook event with the fully-resolved member list once the missing users have been provisioned.
 - **scimDisplayNameOverwrote** — A SCIM update overwrote an admin's manual rename of a group. The IdP is the source of truth for identity attributes; rename in the IdP if the change should persist.
+- **Cross-IdP conflict** — A write was **refused** because the user or group belongs to a different identity provider. The payload names both the owning IdP and the one that attempted the write. Unlike the rows above, which record something TestPlanIt resolved on your behalf, this one records a request that was rejected with `409 Conflict` — treat it as a signal that two directories overlap and one needs its scope narrowed. See [Running more than one identity provider](#running-more-than-one-identity-provider).
 
 The conflict log surfaces only the last ~90 days (the same retention window as the rest of the audit log).
 

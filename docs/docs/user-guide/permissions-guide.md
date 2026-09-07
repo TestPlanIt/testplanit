@@ -129,6 +129,7 @@ Every user has a system-wide access level that determines their baseline permiss
 
 - An ADMIN can set a user's access level manually: navigate to **Administration** > **Users**, edit the user, and select an access level. No further step is needed, though an already–signed-in user may keep their previous access for up to a minute — see [How Quickly Changes Take Effect](#how-quickly-changes-take-effect).
 - Access levels can also be assigned **automatically by group role mapping** — a group carries a mapped tier (User, Project Admin, or Admin) that its members inherit, highest-wins, with a configurable fallback default. See [Role mapping](./scim.md#role-mapping) and [Groups → Mapped access tier](./groups.md#mapped-access-tier).
+- If your identity provider asserts a `roles` attribute, a **role mapping takes precedence over group mapping** — a user given a mapped role receives that tier even when a group would grant more. See [Map an IdP role to an access tier](./scim.md#map-an-idp-role-to-an-access-tier).
 - Editing the access level of a user who is governed by group mapping switches them to manual control.
 
 ## Project Access Control
@@ -389,7 +390,7 @@ Groups provide an efficient way to manage permissions for teams.
 - **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project; if a member also belongs to a GLOBAL_ROLE-granted group, the SPECIFIC_ROLE grant decides their role
 
 :::note
-The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page manages group membership and, separately, an optional **Mapped Access Tier** that drives members' global access level (see [Role mapping](./scim.md#role-mapping)) — it does not assign per-project roles.
+The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page can also grant a group access on specific projects — see [Per-project access](./groups.md#per-project-access) — which materializes into the same group permission rows described above and resolves through the same precedence ladder. Separately, a group's **Mapped Access Tier** drives members' *global* access level (see [Role mapping](./scim.md#role-mapping)) rather than any per-project role.
 :::
 
 ### Use Cases
@@ -755,6 +756,7 @@ If the change still has not applied after a minute, it is not this cache. Confir
 - Create groups
 - Add/remove members
 - Set a **Mapped Access Tier** to drive members' global access level (see [Role mapping](./scim.md#role-mapping))
+- Grant **Per-project access** so the group carries a tier on specific projects only (see [Per-project access](./groups.md#per-project-access))
 - View group projects
 - Delete groups
 - Audit group access
