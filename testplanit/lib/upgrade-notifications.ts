@@ -409,6 +409,22 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       </ul>
     `,
   },
+  "1.0.0": {
+    title: "TestPlanIt 1.0 Is Here",
+    message: `
+      <p>TestPlanIt reaches <strong>1.0</strong> — the release that completes the feature set we set out to build.</p>
+      <h4>Highlights</h4>
+      <ul>
+        <li><strong>Jira, end to end</strong> — milestone sync, a release cockpit with burndown and readiness rollups, and AI generation from the TestPlanIt panel on an issue</li>
+        <li><strong>AI generation that can see your app</strong> — screenshots from linked issues, rich-text images, and crawled pages feed the model alongside the text</li>
+        <li><strong>Automated runs, analyzed</strong> — per-run metrics, an execution timeline, flaky detection, and automated status counted correctly everywhere</li>
+        <li><strong>A revamped repository</strong> — dockable case details, a sortable latest-result column, reorderable columns, and saved views</li>
+        <li><strong>Review workflows</strong> — bulk approval requests, a dedicated review inbox, and a pending queue with reminders</li>
+        <li><strong>A rebuilt data and access layer</strong> — access control enforced at the query layer, with the heaviest lists dropping from ~22s to ~270ms</li>
+      </ul>
+      <p>Read the <a href="https://docs.testplanit.com/blog/v1.0-release" target="_blank">1.0 release announcement</a> for the complete list of what's new.</p>
+    `,
+  },
 };
 
 /**
