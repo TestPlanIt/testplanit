@@ -375,6 +375,80 @@ describe("ClickUpAdapter", () => {
         "ClickUp List ID not configured"
       );
     });
+
+    it("computes the ClickUp page from its fixed page size, not the caller's limit", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ tasks: [], last_page: true }),
+      });
+
+      // A bulk-import-style call: 50 items already consumed (one ClickUp
+      // page's worth of tasks minus some), requesting the next 50. ClickUp
+      // itself pages in batches of 100, so this must still ask for
+      // ClickUp page 1 (tasks 101-200), not page 2 (dividing 100 by the
+      // caller's limit of 50) which would skip tasks 101-200 entirely.
+      await adapter.searchIssues({ limit: 50, offset: 100 });
+
+      const [calledUrl] = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const url = new URL(calledUrl);
+      expect(url.searchParams.get("page")).toBe("1");
+    });
+
+    it("scans additional ClickUp pages to find a query match past the first page", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              tasks: [
+                { ...mockClickUpTask, id: "page0-task", name: "No match here" },
+              ],
+              last_page: false,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              tasks: [mockClickUpTask],
+              last_page: true,
+            }),
+        });
+
+      const result = await adapter.searchIssues({ query: "Test Task" });
+
+      // Two ClickUp task pages fetched (plus the one auth call from
+      // authenticateAdapter() in beforeEach) — the interactive search
+      // dialog only calls searchIssues() once and never re-requests with a
+      // later page, so the adapter itself must keep scanning until it
+      // finds a match or runs out of pages.
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(result.issues).toHaveLength(1);
+      expect(result.issues[0].id).toBe("abc123");
+      expect(result.hasMore).toBe(false);
+    });
+
+    it("stops scanning once enough matches are found without exhausting all pages", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            tasks: [mockClickUpTask],
+            last_page: false,
+          }),
+      });
+
+      const result = await adapter.searchIssues({
+        query: "Test Task",
+        limit: 1,
+      });
+
+      // One task page fetched (plus the one auth call from
+      // authenticateAdapter() in beforeEach).
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(result.issues).toHaveLength(1);
+      expect(result.hasMore).toBe(true);
+    });
   });
 
   describe("comments", () => {
