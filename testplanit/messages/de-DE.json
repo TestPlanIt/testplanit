@@ -736,7 +736,8 @@
       "reports": "Berichte",
       "adminSamlConfig": "Admin - SAML-Konfiguration",
       "apiDocumentation": "API-Dokumentation",
-      "sharedContent": "Gemeinsame Inhalte"
+      "sharedContent": "Gemeinsame Inhalte",
+      "impact": "Auswirkungsanalyse"
     },
     "aria": {
       "userMenu": "Benutzermenü",
@@ -2224,6 +2225,105 @@
           "savedToast": "Bereinigung verwaister Automatisierungen für dieses Projekt aktualisiert",
           "saveError": "Bereinigung verwaister Automatisierungen konnte nicht aktualisiert werden"
         }
+      },
+      "impact": {
+        "title": "Auswirkungsanalyse",
+        "description": "Aktivieren Sie die Auswirkungsanalyse für Tests und verbinden Sie das Repository der zu testenden Anwendung.",
+        "enableLabel": "Auswirkungsanalyse aktivieren",
+        "enableDescription": "Ermöglichen Sie Teammitgliedern, beim Erstellen eines Testlaufs betroffene Tests anhand von Codeänderungen auszuwählen.",
+        "enabledToast": "Auswirkungsanalyse aktiviert",
+        "disabledToast": "Auswirkungsanalyse deaktiviert",
+        "noRepos": {
+          "title": "Keine Code-Repositories konfiguriert",
+          "adminDescription": "Richten Sie eine Repository-Verbindung ein, bevor Sie die Auswirkungsanalyse für dieses Projekt konfigurieren.",
+          "adminLink": "Gehe zu den Code-Repositories",
+          "userDescription": "Wenden Sie sich an Ihren Systemadministrator, um eine Verbindung zum Code-Repository einzurichten."
+        },
+        "repository": {
+          "title": "Anwendungs-Repository",
+          "description": "Wählen Sie das Repository aus, das die zu testende Anwendung enthält.",
+          "placeholder": "Wählen Sie ein Code-Repository aus...",
+          "branchLabel": "Zweig",
+          "branchPlaceholder": "Wählen Sie einen Zweig aus...",
+          "branchInputPlaceholder": "Leer lassen, um den Standardzweig des Repositorys zu verwenden",
+          "defaultBranch": "Standardzweig des Repositorys",
+          "branchesUnavailable": "Zweige konnten nicht aufgelistet werden: {error}",
+          "branchesFallbackHint": "Geben Sie stattdessen den Namen des Zweigs ein."
+        },
+        "pathPatterns": {
+          "title": "Pfadmuster",
+          "description": "Welche Anwendungsdateien einbezogen werden sollen. Jede Zeile kombiniert einen Basispfad und ein Glob-Muster. Beispiel: path=src + pattern=**/* schließt alles unter src ein.",
+          "pathLabel": "Pfad",
+          "pathPlaceholder": "src",
+          "patternLabel": "Muster",
+          "addPath": "Pfad hinzufügen",
+          "previewFiles": "Vorschau der Dateien",
+          "scanningRepo": "Repository-Dateien werden durchsucht… ({seconds}s)",
+          "files": "{count, plural, one {# Datei} other {# Dateien}}",
+          "truncatedBadge": "Die Ergebnisse können unvollständig sein (Anbieterbeschränkung)"
+        },
+        "preview": {
+          "resolvingBranch": "Auflösen des Zweigs…",
+          "scanningFiles": "Dateien werden gescannt in {scope}…",
+          "scanningFilesCount": "Dateien in {scope}… werden durchsucht ({count, number} gefunden)",
+          "filtering": "Anwenden von Filtern auf {count, number} Dateien…",
+          "rateLimited": "Durch den Anbieter ratenbegrenzt — erneuter Versuch in {seconds, number}s…"
+        },
+        "cache": {
+          "title": "Cache-Einstellungen",
+          "description": "Dateien werden in Valkey zwischengespeichert, damit die Code-Pin-Dateiauswahl und die Repository-Markierungen schnell bleiben.",
+          "enableLabel": "Dateizwischenspeicherung aktivieren",
+          "disabledWarning": "Die Dateizwischenspeicherung ist deaktiviert. Repository-Markierungen werden nicht gescannt, und die Code-Pin-Dateiauswahl listet Dateien bei jedem Öffnen live von Ihrem Anbieter auf.",
+          "ttlBefore": "Cache für",
+          "ttlDays": "{count, plural, one {Tag} other {Tage}}",
+          "ttlAriaLabel": "Cache-Dauer in Tagen",
+          "statusTitle": "Cache-Status",
+          "refreshButton": "Cache aktualisieren",
+          "listingFiles": "Dateien auflisten…",
+          "cachingFiles": "{count} Dateien werden zwischengespeichert…",
+          "statusNeverFetched": "Nie abgeholt",
+          "statusPending": "Wird aktualisiert...",
+          "lastFetched": "Zuletzt abgerufen",
+          "filesCached": "Zwischengespeicherte Dateien",
+          "contentsCached": "Inhalte zwischengespeichert",
+          "contentsIncomplete": "Nur {cached} von {total} Dateiinhalten sind zwischengespeichert. Aktualisieren Sie erneut, um den Vorgang abzuschließen.",
+          "totalSize": "Gesamtgröße"
+        },
+        "markers": {
+          "title": "Repository-Markierungen",
+          "description": "Kommentar-Annotationen wie @testplanit case:123 und Einträge in .testplanit/testmap.yml werden bei jeder Cache-Aktualisierung zu Code-Pins.",
+          "lastScan": "Letzter Scan: {date}",
+          "never": "Noch nicht gescannt",
+          "skippedPrivacy": "Übersprungen: Die Dateizwischenspeicherung ist deaktiviert.",
+          "skippedPartial": "Übersprungen: Dateiinhalte wurden nur teilweise zwischengespeichert.",
+          "summary": "{annotations, plural, one {# Annotation} other {# Annotationen}} · {mapEntries, plural, one {# Zuordnungseintrag} other {# Zuordnungseinträge}} · {created} erstellt · {updated} aktualisiert · {removed} entfernt",
+          "problems": "{count, plural, one {# Problem} other {# Probleme}}",
+          "error": "Scan fehlgeschlagen: {error}"
+        },
+        "save": "Konfiguration speichern",
+        "saved": "Konfiguration der Auswirkungsanalyse gespeichert",
+        "saveError": "Konfiguration konnte nicht gespeichert werden",
+        "listError": "Fehler beim Auflisten der Repository-Dateien",
+        "contentsError": "Dateiinhalt konnte nicht zwischengespeichert werden",
+        "networkError": "Netzwerkfehler während der Cache-Aktualisierung",
+        "refreshSuccess": "Cache aktualisiert: {fileCount} Dateien ({contentCached} Inhalt zwischengespeichert)",
+        "refreshRateLimited": "Cache aktualisiert: {fileCount} Dateien aufgelistet, {contentCached}/{fileCount} Inhalte zwischengespeichert (Rate begrenzt – erneut aktualisieren, um den Vorgang abzuschließen)",
+        "refreshComplete": "Cache aktualisiert: {fileCount} Dateien",
+        "refreshInProgress": "Die Cache-Aktualisierung läuft noch im Hintergrund. Diese Seite wird aktualisiert, sobald sie abgeschlossen ist.",
+        "validation": {
+          "pathRequired": "Pfad erforderlich",
+          "patternRequired": "Muster ist erforderlich",
+          "repositoryRequired": "Repository ist erforderlich",
+          "pathPatternRequired": "Mindestens ein Pfadmuster ist erforderlich"
+        },
+        "disconnect": "Repository trennen",
+        "confirmDisconnect": "Möchten Sie \"{name}\" wirklich von diesem Projekt trennen?",
+        "disconnectWarningTitle": "Durch das Trennen dieses Repositorys wird Folgendes bewirkt:",
+        "disconnectWarning1": "{count, plural, one {# Code-Pin} other {# Code-Pins}} und den Analyseverlauf für dieses Repository entfernen",
+        "disconnectWarning2": "Alle zwischengespeicherten Repository-Dateien entfernen",
+        "disconnectWarning3": "Pfadmuster und Zweigkonfigurationen entfernen",
+        "disconnectSuccess": "Anwendungs-Repository getrennt",
+        "disconnectError": "Fehler beim Trennen des Anwendungs-Repositorys"
       }
     },
     "matrix": {
@@ -3095,8 +3195,8 @@
           "partialSummary": "{failed, plural, one {# Zeile konnte} other {# Zeilen konnten}} nicht importiert werden. {imported, plural, one {# Testfall wurde} other {# Testfälle wurden}} erfolgreich importiert."
         },
         "warnings": {
-          "partialTitle": "Einige Issue-Verknüpfungen wurden nicht erstellt",
-          "summary": "{count, plural, one {# Issue-Zelle konnte} other {# Issue-Zellen konnten}} nicht verknüpft werden. Die Testfälle wurden importiert."
+          "partialTitle": "Einige Ticket-Verknüpfungen konnten nicht erstellt werden",
+          "summary": "{count, plural, one {# Ticket-Zelle} other {# Ticket-Zellen}} konnten nicht verknüpft werden. Die Testfälle wurden importiert."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "Testfall erstellen",
       "successMessage": "Neuer Testfall hinzugefügt",
       "errorMessage": "Unbekannter Fehler beim Hinzufügen eines neuen Testfalls"
+    },
+    "draft": {
+      "saving": "Speichern…",
+      "saved": "Alle Änderungen gespeichert um {time}",
+      "unsaved": "Nicht gespeicherte Änderungen",
+      "saveFailed": "Speichern nicht möglich — wird erneut versucht",
+      "restoreTitle": "Nicht gespeicherte Änderungen wiederherstellen?",
+      "restoreDescription": "Sie haben nicht gespeicherte Änderungen an diesem Testfall von {age}. Stellen Sie sie wieder her oder verwerfen Sie sie und laden Sie die gespeicherte Version.",
+      "restoreTitleNew": "Nicht gespeicherten Testfall wiederherstellen?",
+      "restoreDescriptionNew": "Sie haben einen Testfall {age} begonnen und nie gespeichert. Stellen Sie wieder her, was Sie geschrieben haben, oder verwerfen Sie es und beginnen Sie von vorn.",
+      "restoreStaleWarning": "Dieser Testfall wurde von jemand anderem gespeichert, seit Ihr Entwurf geschrieben wurde. Das Wiederherstellen ersetzt dessen Inhalt, wenn Sie speichern.",
+      "restoreDiscard": "Verwerfen",
+      "restoreRestore": "Wiederherstellen",
+      "bannerText": "Sie haben nicht gespeicherte Änderungen an diesem Testfall von {age}.",
+      "bannerAction": "Bearbeitung fortsetzen",
+      "bannerDiscard": "Verwerfen"
     },
     "columns": {
       "selectCase": "Fall auswählen",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "„{name}“ wird aus Ihren gespeicherten Ansichten entfernt. Dies kann nicht rückgängig gemacht werden.",
       "deleted": "Gespeicherte Ansicht gelöscht",
       "deleteFailed": "Die Ansicht konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
+    },
+    "codePins": {
+      "add": "Pin hinzufügen",
+      "addDialogDescription": "Pins werden an der aktuellen Branch-Spitze verankert.",
+      "addDialogTitle": "Diesen Fall am Code anpinnen",
+      "addFailed": "Der Pin konnte nicht hinzugefügt werden",
+      "addSuccess": "Pin hinzugefügt",
+      "anchoredAt": "Verankert bei {sha}",
+      "cancel": "Abbrechen",
+      "caseLabel": "Testfall",
+      "casePlaceholder": "Testfälle suchen...",
+      "contentUnavailable": "Dateiinhalt ist nicht verfügbar.",
+      "description": "Code, den dieser Fall abdeckt. Eine Änderung innerhalb eines angepinnten Blocks zieht den Fall in Impact-Analysen ein.",
+      "dismissStale": "Verwerfen",
+      "duplicate": "Dieser Pin existiert bereits.",
+      "empty": "Noch keine Code-Pins.",
+      "endLine": "Endzeile",
+      "errorFileNotFound": "Datei an der Branch-Spitze nicht gefunden.",
+      "errorLineOutOfRange": "Der Zeilenbereich liegt außerhalb der Datei.",
+      "errorSnippetTooLarge": "Der angepinnte Block ist zu groß.",
+      "errorSymbolNotFound": "Symbol in der Datei nicht gefunden.",
+      "fileLabel": "Datei",
+      "filePlaceholder": "Dateien suchen...",
+      "filesCached": "{count, plural, one {# Datei} other {# Dateien}} zwischengespeichert · {date}",
+      "filesLive": "Dateien werden live aus dem Repository aufgelistet",
+      "globLabel": "Muster",
+      "globMatches": "{count, plural, =0 {Keine zwischengespeicherten Dateien passen} one {# zwischengespeicherte Datei passt} other {# zwischengespeicherte Dateien passen}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Art",
+      "kindFile": "Ganze Datei",
+      "kindGlob": "Glob-Muster",
+      "kindLabel": "Anpinnen an",
+      "kindRange": "Zeilen",
+      "kindSymbol": "Symbol",
+      "linesHint": "Klicken Sie auf eine Zeilennummer, um zu beginnen, Umschalt-Klick zum Beenden.",
+      "location": "Ort",
+      "managedTooltip": "Verwaltet vom Repository. Bearbeiten Sie die Markierung im Code.",
+      "noFilesCached": "Keine zwischengespeicherte Dateiliste. Bitten Sie einen Projektadministrator, den Repository-Cache zu aktualisieren.",
+      "noteLabel": "Notiz",
+      "notePlaceholder": "Warum dieser Fall diesen Code abdeckt (optional)",
+      "reanchor": "Neu verankern",
+      "reanchorFailed": "Der Pin konnte nicht neu verankert werden",
+      "reanchorSuccess": "Pin neu verankert",
+      "remove": "Entfernen",
+      "removeConfirm": "Diesen Pin entfernen?",
+      "removeFailed": "Der Pin konnte nicht entfernt werden",
+      "removeSuccess": "Pin entfernt",
+      "source": "Quelle",
+      "sourceAi": "KI",
+      "sourceAnnotation": "Annotation",
+      "sourceManual": "Manuell",
+      "sourceMapfile": "Map-Datei",
+      "staleBadge": "Veraltet",
+      "staleFileDeleted": "Datei gelöscht",
+      "staleSnippetNotFound": "Zeilen nicht gefunden",
+      "staleSymbolNotFound": "Symbol nicht gefunden",
+      "staleTooltip": "Der angepinnte Block konnte an der Branch-Spitze nicht gefunden werden: {reason}.",
+      "startLine": "Startzeile",
+      "submit": "Pin hinzufügen",
+      "symbolHint": "Die Deklaration wird anhand des Namens in der Datei lokalisiert.",
+      "symbolLabel": "Symbol",
+      "symbolNoneDetected": "Keine Symbole erkannt, geben Sie einen Namen ein.",
+      "symbolPlaceholder": "funktionsName",
+      "symbolSelectPlaceholder": "Symbol auswählen oder eingeben...",
+      "updateSuccess": "Pin aktualisiert",
+      "updateFailed": "Der Pin konnte nicht aktualisiert werden",
+      "editDialogTitle": "Diesen Pin bearbeiten",
+      "editDialogDescription": "Die Datei und der Pin-Typ bleiben unverändert. Um eines von beiden zu ändern, entfernen Sie diesen Pin und fügen Sie einen neuen hinzu.",
+      "editAction": "Pin bearbeiten",
+      "saveChanges": "Änderungen speichern",
+      "symbolSearchPlaceholder": "Symbole suchen...",
+      "symbolUseTyped": "„{symbol}“ verwenden",
+      "title": "Code-Pins",
+      "viewerFailed": "Die Datei konnte nicht geladen werden.",
+      "viewerLoading": "Datei wird geladen…",
+      "viewerTooLarge": "Diese Datei ist zu groß zum Anzeigen. Geben Sie stattdessen die Zeilennummern ein.",
+      "wholeFile": "Ganze Datei"
+    },
+    "diffView": {
+      "added": "Hinzugefügte Zeile",
+      "removed": "Entfernte Zeile",
+      "oldLine": "Alte Zeile",
+      "newLine": "Neue Zeile",
+      "context": "Kontextzeile"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Wiederholt",
       "clear": "Filter löschen"
+    },
+    "impact": {
+      "title": "Auswirkung",
+      "analyzeImpact": "Impact analysieren",
+      "description": "Wählen Sie zwei Commits der getesteten Anwendung aus und legen Sie fest, welche Testfälle von den Änderungen betroffen sind.",
+      "noRepository": "Verbinden Sie das Anwendungs-Repository in den Projekteinstellungen, um Impact zu nutzen.",
+      "aiUnavailable": "Keine aktive LLM-Integration: Ergebnisse stammen nur aus Code-Pins, Stichwortabgleich und Testlauf-Verlauf.",
+      "steps": {
+        "pick": "Commits",
+        "diff": "Änderungen",
+        "analyze": "Analysieren",
+        "review": "Betroffene Tests"
+      },
+      "pull": {
+        "label": "Pull-Request",
+        "selectPlaceholder": "Pull-Request auswählen...",
+        "searchPlaceholder": "Nach Nummer, Titel, Autor oder Branch suchen...",
+        "stateAll": "Alle",
+        "stateOpen": "Offen",
+        "stateMerged": "Zusammengeführt",
+        "stateClosed": "Geschlossen",
+        "resolved": "Vergleich von {base} auf {target} mit {head} auf {source}."
+      },
+      "pick": {
+        "modeLabel": "Änderungen auswählen nach",
+        "modeCommits": "Commits",
+        "modePull": "Pull-Request",
+        "modeCommitsHint": "Was sich zwischen zwei Builds geändert hat, damit Sie alles erneut testen können, was seit der zuletzt geprüften Version dazugekommen ist.",
+        "modePullHint": "Was dieser Pull-Request ändert, gemessen ab dem Punkt, an dem sich sein Branch abgespalten hat, sodass Arbeit, die inzwischen auf dem Ziel-Branch gelandet ist, ausgeschlossen bleibt.",
+        "branchLabel": "Zweig",
+        "baseLabel": "Basis-Commit",
+        "headLabel": "Head-Commit",
+        "commitPlaceholder": "Commits suchen...",
+        "searchHint": "Geben Sie einen Commit-Hash ein oder filtern Sie die geladenen Commits nach Nachricht oder Autor.",
+        "refLabel": "Oder eine Referenz einfügen",
+        "refPlaceholder": "Branch, Tag oder Hash",
+        "refNotFound": "Referenz nicht gefunden",
+        "latestOnBranch": "Neuester Stand auf {branch}",
+        "previousAnalysisLabel": "Von einer früheren Analyse starten",
+        "previousAnalysisPlaceholder": "Analyse auswählen...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# betroffener Test} other {# betroffene Tests}}",
+        "sameCommit": "Basis und Head sind derselbe Commit.",
+        "swapped": "Basis und Head wurden vertauscht, damit die Änderungen vorwärts gelesen werden.",
+        "loadingCommits": "Commits werden geladen…",
+        "noCommits": "Keine Commits gefunden."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# Datei} other {# Dateien}} geändert · +{additions, number} −{deletions, number}",
+        "truncated": "Der Anbieter hat einen partiellen Diff zurückgegeben. Einige geänderte Dateien werden nicht angezeigt oder haben keinen Patch.",
+        "noChanges": "Keine Änderungen zwischen diesen Commits.",
+        "statusAdded": "Hinzugefügt",
+        "statusModified": "Geändert",
+        "statusRemoved": "Entfernt",
+        "statusRenamed": "Umbenannt",
+        "showPatch": "Änderungen anzeigen",
+        "hidePatch": "Änderungen ausblenden",
+        "largePatch": "Großer Patch ({lines, number} Zeilen)",
+        "showFullPatch": "Vollständigen Patch anzeigen",
+        "binary": "Binärdatei",
+        "noPatch": "Patch nicht verfügbar",
+        "pinnedFiles": "{count, plural, one {# Pin} other {# Pins}}",
+        "loading": "Commits werden verglichen…",
+        "failed": "Die Commits konnten nicht verglichen werden."
+      },
+      "loading": {
+        "analyzing": "Analyse läuft…",
+        "resolving_config": "Repository-Konfiguration wird aufgelöst…",
+        "fetching_diff": "Diff wird abgerufen…",
+        "matching_pins": "Code-Pins werden abgeglichen…",
+        "searching_cases": "Testfälle werden nach Stichwort durchsucht…",
+        "scoring_history": "Testlauf-Verlauf wird bewertet…",
+        "waiting_for_ai": "Warten auf KI…",
+        "merging": "Ergebnisse werden zusammengeführt…",
+        "ranking": "{current} von {total} Kandidaten-Testfällen bewertet",
+        "reused": "Es wird eine aktuelle Analyse derselben Commits wiederverwendet."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Keine betroffenen Tests} one {# betroffener Test} other {# betroffene Tests}}",
+        "description": "Sortiert nach Punktzahl. Jeder Test zeigt, warum er ausgewählt wurde.",
+        "relatedCount": "{count, plural, one {# verwandter Test} other {# verwandte Tests}} wurden niedriger bewertet und sind nicht ausgewählt.",
+        "summary": "Zusammenfassung",
+        "score": "Punktzahl",
+        "case": "Testfall",
+        "reasons": "Warum",
+        "tierPinned": "Angepinnt",
+        "tierAffected": "Betroffen",
+        "tierRelated": "Verwandt",
+        "selectAll": "Alle auswählen",
+        "selectNone": "Keine auswählen",
+        "showDetails": "Gründe anzeigen",
+        "hideDetails": "Gründe ausblenden",
+        "excluded": "{count, plural, one {# Fall, der bereits im Testlauf enthalten war, wurde übersprungen} other {# Fälle, die bereits im Testlauf enthalten waren, wurden übersprungen}}"
+      },
+      "noAffected": {
+        "title": "Keine betroffenen Tests gefunden",
+        "description": "Kein Testfall passte zu den Änderungen. Pinnen Sie Fälle an die geänderten Dateien an, damit die nächste Analyse sie findet."
+      },
+      "reasons": {
+        "pin": "Pin",
+        "path": "Stichwort",
+        "history": "Verlauf",
+        "ai": "KI",
+        "linked": "Verwandt",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Passt zu {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "„{term}“ in {field} gefunden",
+        "fieldName": "Fallname",
+        "fieldContent": "Fallinhalt",
+        "fieldTag": "Tag",
+        "fieldFolder": "Ordner",
+        "historyDetail": "{count, plural, one {# früherer Testlauf} other {# frühere Testläufe}} nach Änderungen an denselben Dateien",
+        "historyFailed": "In einem früheren Testlauf nach ähnlichen Änderungen fehlgeschlagen",
+        "linkedDetail": "Verknüpft mit Fall {caseId}"
+      },
+      "stale": {
+        "badge": "Veraltet",
+        "tooltipAnalysis": "Der angepinnte Block konnte im Basis-Commit nicht gefunden werden; nur anhand des Dateipfads abgeglichen. Erneut von der Testfallseite anpinnen.",
+        "title": "{count, plural, one {# veralteter Pin} other {# veraltete Pins}}",
+        "description": "Diese Pins stimmen nicht mehr mit dem Code überein. Verankern Sie sie erneut über die Testfallseite."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# geänderte Datei hat keinen Test} other {# geänderte Dateien haben keine Tests}}",
+        "description": "Kein Testfall ist mit diesen Dateien verknüpft. Pinnen Sie einen Fall an, um die Lücke zu schließen.",
+        "pinAction": "Fall anpinnen...",
+        "pinned": "Angepinnt"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "Der Anbieter hat einen partiellen Diff zurückgegeben.",
+        "diff_truncated_by_budget": "Nur ein Teil des Diffs passte in den KI-Kontext; {count, plural, one {# Datei wurde} other {# Dateien wurden}} nur nach Pfad zusammengefasst.",
+        "llm_not_configured": "Keine aktive LLM-Integration: KI-Bewertung wurde übersprungen.",
+        "search_fallback_db": "Suchindex nicht verfügbar: Stichwortabgleich verwendete die Datenbank.",
+        "search_index_empty": "Dieses Projekt hat keine Fälle im Suchindex, daher verwendete der Stichwortabgleich die Datenbank. Bitten Sie einen Administrator, für bessere Treffer neu zu indexieren.",
+        "ai_partial": "Einige KI-Stapel sind fehlgeschlagen; die Ergebnisse können unvollständig sein.",
+        "ai_truncated": "{count, plural, one {# KI-Stapel wurde} other {# KI-Stapel wurden}} vom Modell abgeschnitten.",
+        "no_candidates": "Kein Testfall passte.",
+        "anchor_fetch_capped": "Einige angepinnte Dateien wurden nur anhand des Pfads abgeglichen (Abrufgrenze erreicht)."
+      },
+      "actions": {
+        "compare": "Vergleichen",
+        "analyze": "Analysieren",
+        "reanalyze": "Erneut analysieren",
+        "refine": "Zurück zu den Änderungen",
+        "accept": "{count, plural, one {# Fall hinzufügen} other {# Fälle hinzufügen}}",
+        "cancelAnalysis": "Analyse abbrechen",
+        "back": "Zurück",
+        "next": "Weiter"
+      },
+      "errors": {
+        "title": "Analyse fehlgeschlagen",
+        "generic": "Beim Analysieren der Änderungen ist etwas schiefgelaufen. Bitte versuchen Sie es erneut.",
+        "pullFailed": "Die Commits dieses Pull-Requests konnten nicht gelesen werden. Wählen Sie einen anderen aus oder benennen Sie die Commits selbst.",
+        "compareFailed": "Die Commits konnten nicht verglichen werden.",
+        "analysisFailed": "Die Analyse ist fehlgeschlagen: {error}",
+        "cancelled": "Die Analyse wurde abgebrochen.",
+        "timeout": "Die Analyse dauert zu lange. Schauen Sie später noch einmal vorbei oder versuchen Sie es erneut.",
+        "branchesFailed": "Branches konnten nicht aufgelistet werden.",
+        "commitsFailed": "Commits konnten nicht geladen werden.",
+        "disabled": "Impact ist für dieses Projekt nicht aktiviert.",
+        "noConfig": "Verbinden Sie zunächst das Anwendungs-Repository in den Projekteinstellungen."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Authentifizierung",
       "toolsAndIntegrations": "Tools & Integrationen",
       "aiTools": "KI-Werkzeuge",
-      "system": "System"
+      "system": "System",
+      "impact": "Impact-Analyse"
     },
     "imports": {
       "description": "Daten aus externen Testmanagement-Tools in TestPlanIt importieren.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Ergebnisse des Testlaufs",
         "issueConfigs": "Problemkonfigurationen",
         "sharedStepGroups": "Gemeinsame Schrittgruppen",
-        "dataSets": "Datensätze"
+        "dataSets": "Datensätze",
+        "codePins": "Code-Pins",
+        "impactAnalyses": "Impact-Analysen"
       },
       "table": {
         "title": "Gelöscht {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Testfälle aus URL generieren (Anforderungen)",
         "generate_from_url_app": "Testfälle aus URL generieren (Anwendungstests)",
         "automation_candidates": "Bericht über Automatisierungskandidaten",
-        "derive_case_steps": "KI-Schrittableitung"
+        "derive_case_steps": "KI-Schrittableitung",
+        "impact_analysis": "Auswirkung: Auswahl betroffener Tests"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Testläufe filtern\n\nAktivieren Sie ein Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Tabs „Aktiv“ als auch „Abgeschlossen“ und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Manuell** / **Automatisiert** — beschränkt die Liste auf diese Art von Testlauf. Wenn beide aktiviert (oder beide deaktiviert) sind, werden alle Testläufe angezeigt.\n- **Meine Testläufe** — nur Testläufe, an denen Sie beteiligt sind: Sie haben den Testlauf erstellt, Ihnen ist ein Testfall darin zugewiesen, oder Sie haben ein Testergebnis darin erfasst.",
-    "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen."
+    "projectSessionsFilters": "## Sitzungen filtern\n\nAktivieren Sie einen Chip, um die Liste einzugrenzen. Chips gelten sowohl für die Registerkarten \"Aktiv\" als auch \"Abgeschlossen\" und werden auf diesem Gerät für dieses Projekt gespeichert.\n\n- **Meine Sitzungen** — nur Sitzungen, an denen Sie beteiligt sind: Sie haben die Sitzung erstellt oder sie wurde Ihnen zugewiesen.",
+    "projectImpact": "## Auswirkung\nVerbinden Sie das Repository der zu testenden Anwendung, damit dieses Projekt eine Testauswirkungsanalyse durchführen kann: Wählen Sie zwei Commits aus, um zu sehen, welche Testfälle von den Änderungen betroffen sind, und verknüpfen Sie Testfälle mit dem Code, den sie abdecken."
   },
   "reports": {
     "ui": {

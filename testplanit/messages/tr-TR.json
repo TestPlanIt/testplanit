@@ -736,7 +736,8 @@
       "reports": "Raporlar",
       "adminSamlConfig": "Yönetici - SAML Yapılandırması",
       "apiDocumentation": "API Dokümantasyonu",
-      "sharedContent": "Paylaşılan İçerik"
+      "sharedContent": "Paylaşılan İçerik",
+      "impact": "Etki Analizi"
     },
     "aria": {
       "userMenu": "Kullanıcı menüsü",
@@ -2224,6 +2225,105 @@
           "savedToast": "Bu proje için terk edilmiş otomasyon temizliği güncellendi",
           "saveError": "Terk edilmiş otomasyon temizliği güncellenemedi"
         }
+      },
+      "impact": {
+        "title": "Etki Analizi",
+        "description": "Test etki analizini etkinleştirin ve test edilen uygulamanın deposunu bağlayın.",
+        "enableLabel": "Etki Analizini Etkinleştir",
+        "enableDescription": "Ekip üyelerinin bir test çalıştırması oluştururken kod değişikliklerinden etkilenen testleri seçmesine izin verin.",
+        "enabledToast": "Etki Analizi etkinleştirildi",
+        "disabledToast": "Etki Analizi devre dışı bırakıldı",
+        "noRepos": {
+          "title": "Hiçbir kod deposu yapılandırılmamış",
+          "adminDescription": "Bu proje için Etki Analizini yapılandırmadan önce bir depo bağlantısı kurun.",
+          "adminLink": "Kod Depolarına Git",
+          "userDescription": "Kod deposu bağlantısını kurmak için sistem yöneticinizle iletişime geçin."
+        },
+        "repository": {
+          "title": "Uygulama Deposu",
+          "description": "Test edilen uygulamayı barındıran depoyu seçin.",
+          "placeholder": "Bir kod deposu seçin...",
+          "branchLabel": "Dal",
+          "branchPlaceholder": "Bir dal seçin...",
+          "branchInputPlaceholder": "Deponun varsayılan dalını kullanmak için boş bırakın",
+          "defaultBranch": "Depo varsayılan dalı",
+          "branchesUnavailable": "Dallar listelenemedi: {error}",
+          "branchesFallbackHint": "Bunun yerine dal adını yazın."
+        },
+        "pathPatterns": {
+          "title": "Yol Desenleri",
+          "description": "Hangi uygulama dosyalarının dahil edileceği. Her satır bir temel yol ve bir glob desenini birleştirir. Örnek: path=src + pattern=**/* src altındaki her şeyi dahil eder.",
+          "pathLabel": "Yol",
+          "pathPlaceholder": "src",
+          "patternLabel": "Desen",
+          "addPath": "Yol Ekle",
+          "previewFiles": "Dosyaları Önizle",
+          "scanningRepo": "Depo dosyaları taranıyor… ({seconds}s)",
+          "files": "{count, plural, one {# dosya} other {# dosya}}",
+          "truncatedBadge": "Sonuçlar eksik olabilir (sağlayıcı sınırlaması)"
+        },
+        "preview": {
+          "resolvingBranch": "Dal çözümleniyor…",
+          "scanningFiles": "{scope} içindeki dosyalar taranıyor…",
+          "scanningFilesCount": "{scope} içindeki dosyalar taranıyor… ({count, number} bulundu)",
+          "filtering": "{count, number} dosyaya filtreler uygulanıyor…",
+          "rateLimited": "Sağlayıcı tarafından hız sınırlandı — {seconds, number} saniye içinde yeniden deneniyor…"
+        },
+        "cache": {
+          "title": "Önbellek Ayarları",
+          "description": "Dosyalar Valkey'de önbelleğe alınır, böylece Code Pin dosya seçici ve depo işaretleri hızlı kalır.",
+          "enableLabel": "Dosya önbelleklemesini etkinleştirin",
+          "disabledWarning": "Dosya önbellekleme devre dışı. Depo işaretleri taranmaz ve Code Pin dosya seçici her açılışta dosyaları doğrudan sağlayıcınızdan listeler.",
+          "ttlBefore": "Önbellekte tutma süresi",
+          "ttlDays": "{count, plural, one {gün} other {gün}}",
+          "ttlAriaLabel": "Gün cinsinden önbellek süresi",
+          "statusTitle": "Önbellek Durumu",
+          "refreshButton": "Önbelleği Yenile",
+          "listingFiles": "Dosyalar listeleniyor…",
+          "cachingFiles": "{count} dosya önbelleğe alınıyor…",
+          "statusNeverFetched": "Hiç getirilmedi",
+          "statusPending": "Yenileniyor...",
+          "lastFetched": "Son Getirilen",
+          "filesCached": "Önbelleğe alınan dosyalar",
+          "contentsCached": "İçerikler Önbelleğe Alındı",
+          "contentsIncomplete": "Yalnızca {total} dosya içeriğinden {cached} tanesi önbelleğe alındı. Tamamlamak için yeniden yenileyin.",
+          "totalSize": "Toplam Boyut"
+        },
+        "markers": {
+          "title": "Depo İşaretleri",
+          "description": "@testplanit case:123 gibi yorum açıklamaları ve .testplanit/testmap.yml dosyasındaki girişler, her önbellek yenilemesinde Code Pin'lere dönüşür.",
+          "lastScan": "Son tarama: {date}",
+          "never": "Henüz taranmadı",
+          "skippedPrivacy": "Atlandı: dosya önbellekleme devre dışı.",
+          "skippedPartial": "Atlandı: dosya içerikleri yalnızca kısmen önbelleğe alındı.",
+          "summary": "{annotations, plural, one {# açıklama} other {# açıklama}} · {mapEntries, plural, one {# harita girişi} other {# harita girişi}} · {created} oluşturuldu · {updated} güncellendi · {removed} kaldırıldı",
+          "problems": "{count, plural, one {# sorun} other {# sorun}}",
+          "error": "Tarama başarısız oldu: {error}"
+        },
+        "save": "Yapılandırmayı Kaydet",
+        "saved": "Etki Analizi yapılandırması kaydedildi",
+        "saveError": "Yapılandırma kaydedilemedi",
+        "listError": "Depo dosyalarını listeleme başarısız oldu",
+        "contentsError": "Dosya içeriği önbelleğe alınamadı",
+        "networkError": "Önbellek yenileme sırasında ağ hatası",
+        "refreshSuccess": "Önbellek yenilendi: {fileCount} dosya ({contentCached} içerik önbelleğe alındı)",
+        "refreshRateLimited": "Önbellek yenilendi: {fileCount} dosya listelendi, {contentCached}/{fileCount} içerik önbelleğe alındı (oran sınırlı — tamamlamak için tekrar yenileyin)",
+        "refreshComplete": "Önbellek yenilendi: {fileCount} dosya",
+        "refreshInProgress": "Önbellek yenileme arka planda hâlâ çalışıyor. Tamamlandığında burada güncellenecek.",
+        "validation": {
+          "pathRequired": "Yol gereklidir",
+          "patternRequired": "Desen gereklidir",
+          "repositoryRequired": "Depo gereklidir",
+          "pathPatternRequired": "En az bir yol deseni gereklidir"
+        },
+        "disconnect": "Depoyu Bağlantısını Kes",
+        "confirmDisconnect": "\"{name}\" ifadesini bu projeden ayırmak istediğinizden emin misiniz?",
+        "disconnectWarningTitle": "Bu depoyu bağlantısını kesmek şunlara yol açacaktır:",
+        "disconnectWarning1": "Bu depo için {count, plural, one {# Code Pin} other {# Code Pin}} ve analiz geçmişini kaldırın",
+        "disconnectWarning2": "Önbelleğe alınmış tüm depo dosyalarını kaldırın",
+        "disconnectWarning3": "Yol kalıbını ve dallanma yapılandırmalarını kaldırın",
+        "disconnectSuccess": "Uygulama deposu bağlantısı kesildi",
+        "disconnectError": "Uygulama deposunun bağlantısı kesilemedi"
       }
     },
     "matrix": {
@@ -3096,7 +3196,7 @@
         },
         "warnings": {
           "partialTitle": "Bazı sorun bağlantıları oluşturulamadı",
-          "summary": "{count, plural, one {# sorun hücresi} other {# sorun hücresi}} bağlanamadı. Test durumları içe aktarıldı."
+          "summary": "{count, plural, one {# sorun hücresi} other {# sorun hücresi}} bağlanamadı. Test senaryoları içe aktarıldı."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "Test Durumu Oluştur",
       "successMessage": "Yeni Test Durumu Eklendi",
       "errorMessage": "Yeni test senaryosu eklenirken bilinmeyen bir hata oluştu."
+    },
+    "draft": {
+      "saving": "Kaydediliyor…",
+      "saved": "Tüm değişiklikler {time} tarihinde kaydedildi",
+      "unsaved": "Kaydedilmemiş değişiklikler",
+      "saveFailed": "Kaydedilemiyor — yeniden deneniyor",
+      "restoreTitle": "Kaydedilmemiş değişiklikler geri yüklensin mi?",
+      "restoreDescription": "Bu test senaryosunda {age} tarihinden kalma kaydedilmemiş değişiklikleriniz var. Bunları geri yükleyin veya atıp kaydedilmiş sürümü yükleyin.",
+      "restoreTitleNew": "Kaydedilmemiş test senaryosu geri yüklensin mi?",
+      "restoreDescriptionNew": "{age} tarihinde bir test senaryosuna başladınız ve hiç kaydetmediniz. Yazdıklarınızı geri yükleyin veya atıp yeniden başlayın.",
+      "restoreStaleWarning": "Bu test senaryosu, taslağınız yazıldıktan sonra başka biri tarafından kaydedildi. Geri yüklerseniz, kaydettiğinizde onların içeriğinin yerini alır.",
+      "restoreDiscard": "At",
+      "restoreRestore": "Geri Yükle",
+      "bannerText": "Bu test senaryosunda {age} tarihinden kalma kaydedilmemiş değişiklikleriniz var.",
+      "bannerAction": "Düzenlemeye devam et",
+      "bannerDiscard": "Bunları at"
     },
     "columns": {
       "selectCase": "Büyük/küçük harf seçimi",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "\"{name}\" kayıtlı görünümlerinizden kaldırılacak. Bu işlem geri alınamaz.",
       "deleted": "Kayıtlı görünüm silindi",
       "deleteFailed": "Görünüm silinemedi. Lütfen tekrar deneyin."
+    },
+    "codePins": {
+      "add": "Sabitleme ekle",
+      "addDialogDescription": "Sabitlemeler mevcut dal ucuna bağlanır.",
+      "addDialogTitle": "Bu senaryoyu koda sabitle",
+      "addFailed": "Sabitleme eklenemedi",
+      "addSuccess": "Sabitleme eklendi",
+      "anchoredAt": "{sha} adresinde sabitlendi",
+      "cancel": "İptal",
+      "caseLabel": "Test senaryosu",
+      "casePlaceholder": "Test senaryolarını ara...",
+      "contentUnavailable": "Dosya içeriği kullanılamıyor.",
+      "description": "Bu senaryonun kapsadığı kod. Sabitlenmiş bir bloktaki değişiklik, senaryoyu Etki analizlerine dahil eder.",
+      "dismissStale": "Kapat",
+      "duplicate": "Bu sabitleme zaten mevcut.",
+      "empty": "Henüz Kod Sabitlemesi yok.",
+      "endLine": "Bitiş satırı",
+      "errorFileNotFound": "Dal ucunda dosya bulunamadı.",
+      "errorLineOutOfRange": "Satır aralığı dosyanın dışında.",
+      "errorSnippetTooLarge": "Sabitlenmiş blok çok büyük.",
+      "errorSymbolNotFound": "Sembol dosyada bulunamadı.",
+      "fileLabel": "Dosya",
+      "filePlaceholder": "Dosyaları ara...",
+      "filesCached": "{count, plural, one {# dosya} other {# dosya}} önbelleğe alındı · {date}",
+      "filesLive": "Dosyalar depodan canlı olarak listeleniyor",
+      "globLabel": "Model",
+      "globMatches": "{count, plural, =0 {Eşleşen önbelleğe alınmış dosya yok} one {# önbelleğe alınmış dosya eşleşiyor} other {# önbelleğe alınmış dosya eşleşiyor}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Tür",
+      "kindFile": "Tüm dosya",
+      "kindGlob": "Glob deseni",
+      "kindLabel": "Sabitleme hedefi",
+      "kindRange": "Satırlar",
+      "kindSymbol": "Sembol",
+      "linesHint": "Başlamak için bir satır numarasına tıklayın, bitirmek için shift tuşuyla tıklayın.",
+      "location": "Konum",
+      "managedTooltip": "Depo tarafından yönetiliyor. İşareti kodda düzenleyin.",
+      "noFilesCached": "Önbelleğe alınmış dosya listesi yok. Depo önbelleğini yenilemesi için bir proje yöneticisinden isteyin.",
+      "noteLabel": "Not",
+      "notePlaceholder": "Bu senaryonun bu kodu neden kapsadığı (isteğe bağlı)",
+      "reanchor": "Yeniden sabitle",
+      "reanchorFailed": "Sabitleme yeniden sabitlenemedi",
+      "reanchorSuccess": "Sabitleme yeniden sabitlendi",
+      "remove": "Kaldır",
+      "removeConfirm": "Bu sabitleme kaldırılsın mı?",
+      "removeFailed": "Sabitleme kaldırılamadı",
+      "removeSuccess": "Sabitleme kaldırıldı",
+      "source": "Kaynak",
+      "sourceAi": "YZ",
+      "sourceAnnotation": "Ek Açıklama",
+      "sourceManual": "Manuel",
+      "sourceMapfile": "Harita dosyası",
+      "staleBadge": "Bayat",
+      "staleFileDeleted": "dosya silindi",
+      "staleSnippetNotFound": "satırlar bulunamadı",
+      "staleSymbolNotFound": "sembol bulunamadı",
+      "staleTooltip": "Sabitlenmiş blok dal ucunda bulunamadı: {reason}.",
+      "startLine": "Başlangıç satırı",
+      "submit": "Sabitleme ekle",
+      "symbolHint": "Bildirim, dosyada ada göre bulunur.",
+      "symbolLabel": "Sembol",
+      "symbolNoneDetected": "Hiçbir sembol algılanmadı, bir ad yazın.",
+      "symbolPlaceholder": "fonksiyonAdı",
+      "symbolSelectPlaceholder": "Bir sembol seçin veya yazın...",
+      "updateSuccess": "Sabitleme güncellendi",
+      "updateFailed": "Sabitleme güncellenemedi",
+      "editDialogTitle": "Bu sabitlemeyi düzenle",
+      "editDialogDescription": "Dosya ve sabitleme türü olduğu gibi kalır. Değiştirmek için bu sabitlemeyi kaldırın ve yeni bir tane ekleyin.",
+      "editAction": "Sabitlemeyi düzenle",
+      "saveChanges": "Değişiklikleri kaydet",
+      "symbolSearchPlaceholder": "Sembolleri ara...",
+      "symbolUseTyped": "\"{symbol}\" kullan",
+      "title": "Kod Sabitlemeleri",
+      "viewerFailed": "Dosya yüklenemedi.",
+      "viewerLoading": "Dosya yükleniyor…",
+      "viewerTooLarge": "Bu dosya görüntülemek için çok büyük. Bunun yerine satır numaralarını girin.",
+      "wholeFile": "Tüm dosya"
+    },
+    "diffView": {
+      "added": "Eklenen satır",
+      "removed": "Kaldırılan satır",
+      "oldLine": "Eski satır",
+      "newLine": "Yeni satır",
+      "context": "Bağlam satırı"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Yeniden Denendi",
       "clear": "Filtreleri temizle"
+    },
+    "impact": {
+      "title": "Etki",
+      "analyzeImpact": "Etkiyi analiz et",
+      "description": "Test edilen uygulamanın iki commit'ini seçin ve değişikliklerin etkilediği test senaryolarını belirleyin.",
+      "noRepository": "Etki özelliğini kullanmak için proje ayarlarında uygulama deposunu bağlayın.",
+      "aiUnavailable": "Aktif LLM entegrasyonu yok: sonuçlar yalnızca Kod Sabitlemeleri, anahtar kelime eşleştirme ve çalıştırma geçmişinden gelir.",
+      "steps": {
+        "pick": "Commit'ler",
+        "diff": "Değişiklikler",
+        "analyze": "Analiz Et",
+        "review": "Etkilenen Testler"
+      },
+      "pull": {
+        "label": "Çekme isteği",
+        "selectPlaceholder": "Bir çekme isteği seçin...",
+        "searchPlaceholder": "Numara, başlık, yazar veya dala göre ara...",
+        "stateAll": "Tümü",
+        "stateOpen": "Açık",
+        "stateMerged": "Birleştirildi",
+        "stateClosed": "Kapatıldı",
+        "resolved": "{target} üzerindeki {base} ile {source} üzerindeki {head} karşılaştırılıyor."
+      },
+      "pick": {
+        "modeLabel": "Değişiklikleri şuna göre seç",
+        "modeCommits": "Commit'ler",
+        "modePull": "Çekme isteği",
+        "modeCommitsHint": "İki derleme arasında ne değişti, böylece en son doğruladığınız derlemeden bu yana gelen her şeyi yeniden test edebilirsiniz.",
+        "modePullHint": "Bu çekme isteğinin dalının ayrıldığı noktadan itibaren değiştirdikleri; bu sırada hedef dala işlenen çalışmalar hariç tutulur.",
+        "branchLabel": "Dal",
+        "baseLabel": "Temel commit",
+        "headLabel": "Başlangıç commit'i",
+        "commitPlaceholder": "Commit'leri ara...",
+        "searchHint": "Bir commit sha'sı yazın veya yüklenen commit'leri mesaj veya yazara göre filtreleyin.",
+        "refLabel": "Veya bir referans yapıştırın",
+        "refPlaceholder": "Dal, etiket veya sha",
+        "refNotFound": "Referans bulunamadı",
+        "latestOnBranch": "{branch} üzerindeki en son",
+        "previousAnalysisLabel": "Önceki bir analizden başla",
+        "previousAnalysisPlaceholder": "Bir analiz seçin...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# etkilenen test} other {# etkilenen test}}",
+        "sameCommit": "Temel ve başlangıç aynı commit.",
+        "swapped": "Temel ve başlangıç, değişiklikler ileriye doğru okunacak şekilde değiştirildi.",
+        "loadingCommits": "Commit'ler yükleniyor…",
+        "noCommits": "Commit bulunamadı."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# dosya} other {# dosya}} değişti · +{additions, number} −{deletions, number}",
+        "truncated": "Sağlayıcı kısmi bir fark döndürdü. Bazı değiştirilen dosyalar gösterilmiyor veya yaması yok.",
+        "noChanges": "Bu commit'ler arasında değişiklik yok.",
+        "statusAdded": "Eklendi",
+        "statusModified": "Değiştirildi",
+        "statusRemoved": "Kaldırıldı",
+        "statusRenamed": "Yeniden Adlandırıldı",
+        "showPatch": "Değişiklikleri göster",
+        "hidePatch": "Değişiklikleri gizle",
+        "largePatch": "Büyük yama ({lines, number} satır)",
+        "showFullPatch": "Tam yamayı göster",
+        "binary": "İkili dosya",
+        "noPatch": "Yama mevcut değil",
+        "pinnedFiles": "{count, plural, one {# sabitleme} other {# sabitleme}}",
+        "loading": "Commit'ler karşılaştırılıyor…",
+        "failed": "Commit'ler karşılaştırılamadı."
+      },
+      "loading": {
+        "analyzing": "Analiz ediliyor…",
+        "resolving_config": "Depo yapılandırması çözümleniyor…",
+        "fetching_diff": "Fark alınıyor…",
+        "matching_pins": "Kod Sabitlemeleri eşleştiriliyor…",
+        "searching_cases": "Test senaryoları anahtar kelimeye göre aranıyor…",
+        "scoring_history": "Çalıştırma geçmişi puanlanıyor…",
+        "waiting_for_ai": "YZ bekleniyor…",
+        "merging": "Sonuçlar birleştiriliyor…",
+        "ranking": "{total} aday test senaryosundan {current} tanesi sıralandı",
+        "reused": "Aynı commit'lerin yakın zamanda yapılmış bir analizi yeniden kullanılıyor."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Etkilenen test yok} one {# etkilenen test} other {# etkilenen test}}",
+        "description": "Puana göre sıralandı. Her testte neden seçildiği gösterilir.",
+        "relatedCount": "{count, plural, one {# ilgili test} other {# ilgili test}} daha düşük puan aldı ve işaretli değil.",
+        "summary": "Özet",
+        "score": "Puan",
+        "case": "Test senaryosu",
+        "reasons": "Neden",
+        "tierPinned": "Sabitlenmiş",
+        "tierAffected": "Etkilenen",
+        "tierRelated": "İlgili",
+        "selectAll": "Tümünü seç",
+        "selectNone": "Hiçbirini seçme",
+        "showDetails": "Nedenleri göster",
+        "hideDetails": "Nedenleri gizle",
+        "excluded": "{count, plural, one {# senaryo zaten çalıştırmadaydı ve atlandı} other {# senaryo zaten çalıştırmadaydı ve atlandı}}"
+      },
+      "noAffected": {
+        "title": "Etkilenen test bulunamadı",
+        "description": "Değişikliklerle eşleşen test senaryosu bulunamadı. Sonraki analizin bunları bulabilmesi için senaryoları değiştirilen dosyalara sabitleyin."
+      },
+      "reasons": {
+        "pin": "Sabitleme",
+        "path": "Anahtar Kelime",
+        "history": "Geçmiş",
+        "ai": "YZ",
+        "linked": "İlgili",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "{pattern} ile eşleşiyor",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "{field} içinde \"{term}\" eşleşti",
+        "fieldName": "senaryo adı",
+        "fieldContent": "senaryo içeriği",
+        "fieldTag": "etiket",
+        "fieldFolder": "klasör",
+        "historyDetail": "Aynı dosyalarda değişikliklerden sonra {count, plural, one {# önceki çalıştırma} other {# önceki çalıştırma}}",
+        "historyFailed": "Benzer değişikliklerden sonra önceki bir çalıştırmada başarısız oldu",
+        "linkedDetail": "{caseId} senaryosuna bağlı"
+      },
+      "stale": {
+        "badge": "Bayat",
+        "tooltipAnalysis": "Sabitlenmiş blok temel commit'te bulunamadı; yalnızca dosya yoluna göre eşleştirildi. Test senaryosu sayfasından yeniden sabitleyin.",
+        "title": "{count, plural, one {# bayat sabitleme} other {# bayat sabitleme}}",
+        "description": "Bu sabitlemeler artık kodla eşleşmiyor. Bunları test senaryosu sayfasından yeniden sabitleyin."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# değiştirilen dosyanın testi yok} other {# değiştirilen dosyanın testi yok}}",
+        "description": "Bu dosyalara bağlı hiçbir test senaryosu yok. Açığı kapatmak için bir senaryo sabitleyin.",
+        "pinAction": "Bir senaryo sabitle...",
+        "pinned": "Sabitlendi"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "Sağlayıcı kısmi bir fark döndürdü.",
+        "diff_truncated_by_budget": "Farkın yalnızca bir kısmı YZ bağlamına sığdı; {count, plural, one {# dosya} other {# dosya}} yalnızca yola göre özetlendi.",
+        "llm_not_configured": "Aktif LLM entegrasyonu yok: YZ sıralaması atlandı.",
+        "search_fallback_db": "Arama dizini kullanılamıyor: anahtar kelime eşleştirmesi veritabanını kullandı.",
+        "search_index_empty": "Bu projede arama dizininde hiç senaryo yok, bu yüzden anahtar kelime eşleştirmesi veritabanını kullandı. Daha iyi eşleşmeler için bir yöneticiden yeniden dizinleme isteyin.",
+        "ai_partial": "Bazı YZ toplu işlemleri başarısız oldu; sonuçlar eksik olabilir.",
+        "ai_truncated": "{count, plural, one {# YZ toplu işlemi} other {# YZ toplu işlemi}} model tarafından kesildi.",
+        "no_candidates": "Hiçbir test senaryosu eşleşmedi.",
+        "anchor_fetch_capped": "Bazı sabitlenmiş dosyalar yalnızca yola göre eşleştirildi (getirme sınırına ulaşıldı)."
+      },
+      "actions": {
+        "compare": "Karşılaştır",
+        "analyze": "Analiz Et",
+        "reanalyze": "Yeniden analiz et",
+        "refine": "Değişikliklere dön",
+        "accept": "{count, plural, one {# senaryo ekle} other {# senaryo ekle}}",
+        "cancelAnalysis": "Analizi iptal et",
+        "back": "Geri",
+        "next": "İleri"
+      },
+      "errors": {
+        "title": "Analiz başarısız oldu",
+        "generic": "Değişiklikler analiz edilirken bir şeyler ters gitti. Lütfen tekrar deneyin.",
+        "pullFailed": "Bu çekme isteğinin commit'leri okunamadı. Başka birini seçin veya commit'leri kendiniz belirtin.",
+        "compareFailed": "Commit'ler karşılaştırılamadı.",
+        "analysisFailed": "Analiz başarısız oldu: {error}",
+        "cancelled": "Analiz iptal edildi.",
+        "timeout": "Analiz çok uzun sürüyor. Daha sonra tekrar kontrol edin veya yeniden deneyin.",
+        "branchesFailed": "Dallar listelenemedi.",
+        "commitsFailed": "Commit'ler yüklenemedi.",
+        "disabled": "Etki, bu proje için etkinleştirilmemiş.",
+        "noConfig": "Önce proje ayarlarında uygulama deposunu bağlayın."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Kimlik doğrulama",
       "toolsAndIntegrations": "Araçlar ve Entegrasyonlar",
       "aiTools": "Yapay Zeka Araçları",
-      "system": "Sistem"
+      "system": "Sistem",
+      "impact": "Etki Analizi"
     },
     "imports": {
       "description": "Harici test yönetim araçlarından gelen verileri TestPlanIt'e aktarın.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Test Çalıştırma Adım Sonuçları",
         "issueConfigs": "Sorun Yapılandırmaları",
         "sharedStepGroups": "Ortak Adım Grupları",
-        "dataSets": "Veri kümeleri"
+        "dataSets": "Veri kümeleri",
+        "codePins": "Kod Sabitlemeleri",
+        "impactAnalyses": "Etki Analizleri"
       },
       "table": {
         "title": "Silindi {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "URL'den Test Senaryoları Oluştur (Gereksinimler)",
         "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)",
         "automation_candidates": "Otomasyon Adayları Raporu",
-        "derive_case_steps": "Yapay Zeka Adım Türetme"
+        "derive_case_steps": "Yapay Zeka Adım Türetme",
+        "impact_analysis": "Etki: Etkilenen Test Seçimi"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Test çalıştırmalarını filtreleme\n\nListeyi daraltmak için bir etiketi açıp kapatın. Etiketler hem Aktif hem de Tamamlanmış sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Manuel** / **Otomatik** — listeyi o türdeki çalıştırmalarla sınırlar. Her ikisini de açmak (veya her ikisini de kapatmak) tüm çalıştırmaları gösterir.\n- **Test Çalıştırmalarım** — yalnızca sizin dahil olduğunuz çalıştırmalar: çalıştırmayı siz oluşturdunuz, içinde size bir test durumu atanmış ya da içinde bir test sonucu kaydetmişsiniz.",
-    "projectSessionsFilters": "## Oturumları filtreleme\n\nListeyi daraltmak için bir çip seçin/kaldırın. Çipler hem Etkin hem de Tamamlanan sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Oturumlarım** — yalnızca içinde bulunduğunuz oturumlar: oturumu siz oluşturdunuz veya size atanmış."
+    "projectSessionsFilters": "## Oturumları filtreleme\n\nListeyi daraltmak için bir çip seçin/kaldırın. Çipler hem Etkin hem de Tamamlanan sekmelerine uygulanır ve bu proje için bu cihazda hatırlanır.\n\n- **Oturumlarım** — yalnızca içinde bulunduğunuz oturumlar: oturumu siz oluşturdunuz veya size atanmış.",
+    "projectImpact": "## Etki\nBu projenin test etki analizi çalıştırabilmesi için test edilen uygulamanın deposunu bağlayın: değişikliklerin hangi test senaryolarını etkilediğini görmek için iki commit seçin ve test senaryolarını kapsadıkları koda sabitleyin."
   },
   "reports": {
     "ui": {

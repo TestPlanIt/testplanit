@@ -736,7 +736,8 @@
       "reports": "報告書",
       "adminSamlConfig": "管理者 - SAML設定",
       "apiDocumentation": "APIドキュメント",
-      "sharedContent": "共有コンテンツ"
+      "sharedContent": "共有コンテンツ",
+      "impact": "影響分析"
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
@@ -2224,6 +2225,105 @@
           "savedToast": "このプロジェクトの放置された自動化のクリーンアップを更新しました",
           "saveError": "放置された自動化のクリーンアップの更新に失敗しました"
         }
+      },
+      "impact": {
+        "title": "影響分析",
+        "description": "テストの影響分析を有効にし、テスト対象アプリケーションのリポジトリを接続します。",
+        "enableLabel": "影響分析を有効にする",
+        "enableDescription": "テスト実行を作成する際に、チームメンバーがコードの変更から影響を受けるテストを選択できるようにします。",
+        "enabledToast": "影響分析が有効になりました",
+        "disabledToast": "影響分析が無効になりました",
+        "noRepos": {
+          "title": "コードリポジトリは設定されていません",
+          "adminDescription": "このプロジェクトの影響分析を設定する前に、リポジトリへの接続を確立してください。",
+          "adminLink": "コードリポジトリへ移動",
+          "userDescription": "コードリポジトリへの接続を設定するには、システム管理者に連絡してください。"
+        },
+        "repository": {
+          "title": "アプリケーションリポジトリ",
+          "description": "テスト対象アプリケーションを保持するリポジトリを選択してください。",
+          "placeholder": "コードリポジトリを選択…",
+          "branchLabel": "ブランチ",
+          "branchPlaceholder": "ブランチを選択…",
+          "branchInputPlaceholder": "リポジトリのデフォルトブランチを使用する場合は、空白のままにしてください",
+          "defaultBranch": "リポジトリのデフォルトブランチ",
+          "branchesUnavailable": "ブランチを一覧表示できませんでした: {error}",
+          "branchesFallbackHint": "代わりにブランチ名を入力してください。"
+        },
+        "pathPatterns": {
+          "title": "パスパターン",
+          "description": "含めるアプリケーションファイルを指定します。各行はベースパスとglobパターンを組み合わせます。例: path=src + pattern=**/* は、src配下のすべてを含みます。",
+          "pathLabel": "パス",
+          "pathPlaceholder": "src",
+          "patternLabel": "パターン",
+          "addPath": "パスを追加",
+          "previewFiles": "プレビューファイル",
+          "scanningRepo": "リポジトリファイルをスキャンしています… ({seconds}秒)",
+          "files": "{count, plural, other {# ファイル}}",
+          "truncatedBadge": "結果は不完全な場合があります（プロバイダーの制限による）"
+        },
+        "preview": {
+          "resolvingBranch": "ブランチを解決しています…",
+          "scanningFiles": "{scope}内のファイルをスキャンしています…",
+          "scanningFilesCount": "{scope}内のファイルをスキャンしています… ({count, number}件見つかりました)",
+          "filtering": "{count, number}件のファイルにフィルタを適用しています…",
+          "rateLimited": "プロバイダーによってレート制限されました — {seconds, number}秒後に再試行します…"
+        },
+        "cache": {
+          "title": "キャッシュ設定",
+          "description": "ファイルはValkeyにキャッシュされるため、Code Pinのファイル選択やリポジトリマーカーが高速に動作します。",
+          "enableLabel": "ファイルキャッシュを有効にする",
+          "disabledWarning": "ファイルキャッシュが無効になっています。リポジトリマーカーはスキャンされず、Code Pinのファイル選択は開くたびにプロバイダーから直接ファイルを一覧表示します。",
+          "ttlBefore": "キャッシュ期間",
+          "ttlDays": "{count, plural, other {日}}",
+          "ttlAriaLabel": "キャッシュの有効日数",
+          "statusTitle": "キャッシュの状態",
+          "refreshButton": "キャッシュを更新",
+          "listingFiles": "ファイルを一覧表示しています…",
+          "cachingFiles": "{count} 個のファイルをキャッシュしています…",
+          "statusNeverFetched": "取得したことがありません",
+          "statusPending": "更新中…",
+          "lastFetched": "最終取得",
+          "filesCached": "キャッシュされたファイル",
+          "contentsCached": "キャッシュされたコンテンツ",
+          "contentsIncomplete": "キャッシュされているファイルコンテンツは{total}件中{cached}件のみです。完了するには再度更新してください。",
+          "totalSize": "総サイズ"
+        },
+        "markers": {
+          "title": "リポジトリマーカー",
+          "description": "@testplanit case:123 のようなコメントアノテーションや .testplanit/testmap.yml 内のエントリは、キャッシュを更新するたびにCode Pinになります。",
+          "lastScan": "最終スキャン: {date}",
+          "never": "まだスキャンされていません",
+          "skippedPrivacy": "スキップ: ファイルキャッシュが無効になっています。",
+          "skippedPartial": "スキップ: ファイルコンテンツは部分的にしかキャッシュされていません。",
+          "summary": "{annotations, plural, other {# 件のアノテーション}} · {mapEntries, plural, other {# 件のマップエントリ}} · 作成: {created} · 更新: {updated} · 削除: {removed}",
+          "problems": "{count, plural, other {# 件の問題}}",
+          "error": "スキャンに失敗しました: {error}"
+        },
+        "save": "設定を保存",
+        "saved": "影響分析の設定が保存されました",
+        "saveError": "設定を保存できませんでした",
+        "listError": "リポジトリファイルの一覧表示に失敗しました",
+        "contentsError": "ファイルコンテンツのキャッシュに失敗しました",
+        "networkError": "キャッシュ更新中にネットワークエラーが発生しました",
+        "refreshSuccess": "キャッシュが更新されました: {fileCount} 個のファイル ({contentCached} 個のコンテンツがキャッシュされました)",
+        "refreshRateLimited": "キャッシュが更新されました: {fileCount} 個のファイルが一覧表示され、{contentCached}/{fileCount} 個のコンテンツがキャッシュされました (レート制限あり - 完了するには再度更新してください)",
+        "refreshComplete": "キャッシュを更新しました：{fileCount} 件のファイル",
+        "refreshInProgress": "キャッシュの更新はバックグラウンドで実行中です。完了するとここに反映されます。",
+        "validation": {
+          "pathRequired": "パスが必要です",
+          "patternRequired": "パターンが必要です",
+          "repositoryRequired": "リポジトリが必要です",
+          "pathPatternRequired": "少なくとも1つのパスパターンが必要です"
+        },
+        "disconnect": "リポジトリの接続を解除します",
+        "confirmDisconnect": "「{name}」をこのプロジェクトから切断してもよろしいですか？",
+        "disconnectWarningTitle": "このリポジトリの接続を解除すると、以下のようになります：",
+        "disconnectWarning1": "このリポジトリの{count, plural, other {# 件のCode Pin}}と分析履歴を削除します",
+        "disconnectWarning2": "キャッシュされたリポジトリファイルをすべて削除します",
+        "disconnectWarning3": "パスパターンとブランチ構成を削除します",
+        "disconnectSuccess": "アプリケーションリポジトリの接続が解除されました",
+        "disconnectError": "アプリケーションリポジトリの接続解除に失敗しました"
       }
     },
     "matrix": {
@@ -3095,7 +3195,7 @@
           "partialSummary": "{failed, plural, other {#行}}をインポートできませんでした。{imported, plural, other {#件のテストケース}}が正常にインポートされました。"
         },
         "warnings": {
-          "partialTitle": "一部の課題リンクが作成されませんでした",
+          "partialTitle": "一部の課題リンクは作成されませんでした",
           "summary": "{count, plural, other {#件の課題セル}}をリンクできませんでした。テストケースはインポートされました。"
         },
         "page1": {
@@ -3169,6 +3269,22 @@
       "create": "テストケースを作成する",
       "successMessage": "新しいテストケースが追加されました",
       "errorMessage": "新しいテストケースの追加中に不明なエラーが発生しました"
+    },
+    "draft": {
+      "saving": "保存中…",
+      "saved": "すべての変更は{time}に保存されました",
+      "unsaved": "保存されていない変更",
+      "saveFailed": "保存できません — 再試行中",
+      "restoreTitle": "保存されていない変更を復元しますか？",
+      "restoreDescription": "このテストケースには{age}からの保存されていない変更があります。復元するか、破棄して保存済みのバージョンを読み込んでください。",
+      "restoreTitleNew": "保存されていないテストケースを復元しますか？",
+      "restoreDescriptionNew": "{age}にテストケースの作成を開始しましたが、保存されませんでした。書いた内容を復元するか、破棄して最初からやり直してください。",
+      "restoreStaleWarning": "このテストケースは、下書きが作成された後に他の人によって保存されています。復元すると、保存時にその内容が置き換えられます。",
+      "restoreDiscard": "破棄",
+      "restoreRestore": "復元する",
+      "bannerText": "このテストケースには{age}からの保存されていない変更があります。",
+      "bannerAction": "編集を再開する",
+      "bannerDiscard": "破棄する"
     },
     "columns": {
       "selectCase": "ケースを選択",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "「{name}」が保存済みビューから削除されます。この操作は元に戻せません。",
       "deleted": "保存済みビューを削除しました",
       "deleteFailed": "ビューを削除できませんでした。もう一度お試しください。"
+    },
+    "codePins": {
+      "add": "ピンを追加",
+      "addDialogDescription": "ピンは現在のブランチの先端に固定されます。",
+      "addDialogTitle": "このケースをコードにピン留めする",
+      "addFailed": "ピンを追加できませんでした",
+      "addSuccess": "ピンが追加されました",
+      "anchoredAt": "{sha}に固定",
+      "cancel": "キャンセル",
+      "caseLabel": "テストケース",
+      "casePlaceholder": "テストケースを検索…",
+      "contentUnavailable": "ファイルの内容を利用できません。",
+      "description": "このケースがカバーするコードです。固定されたブロック内の変更があると、このケースはインパクト分析に含まれます。",
+      "dismissStale": "却下する",
+      "duplicate": "このピンは既に存在します。",
+      "empty": "コードピンはまだありません。",
+      "endLine": "終了行",
+      "errorFileNotFound": "ブランチの先端にファイルが見つかりません。",
+      "errorLineOutOfRange": "行範囲がファイルの範囲外です。",
+      "errorSnippetTooLarge": "固定されたブロックが大きすぎます。",
+      "errorSymbolNotFound": "ファイル内にシンボルが見つかりません。",
+      "fileLabel": "ファイル",
+      "filePlaceholder": "ファイルを検索…",
+      "filesCached": "{count, plural, other {#件のファイル}}をキャッシュ済み · {date}",
+      "filesLive": "リポジトリからファイルをライブで一覧表示中",
+      "globLabel": "パターン",
+      "globMatches": "{count, plural, =0 {一致するキャッシュ済みファイルはありません} other {#件のキャッシュ済みファイルが一致}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "種類",
+      "kindFile": "ファイル全体",
+      "kindGlob": "Globパターン",
+      "kindLabel": "ピン留め先",
+      "kindRange": "行",
+      "kindSymbol": "シンボル",
+      "linesHint": "開始する行番号をクリックし、終了する行番号をShiftキーを押しながらクリックしてください。",
+      "location": "場所",
+      "managedTooltip": "リポジトリによって管理されています。コード内のマーカーを編集してください。",
+      "noFilesCached": "キャッシュされたファイル一覧がありません。プロジェクト管理者にリポジトリキャッシュの更新を依頼してください。",
+      "noteLabel": "注記",
+      "notePlaceholder": "このケースがこのコードをカバーする理由（任意）",
+      "reanchor": "再固定",
+      "reanchorFailed": "ピンを再固定できませんでした",
+      "reanchorSuccess": "ピンを再固定しました",
+      "remove": "削除",
+      "removeConfirm": "このピンを削除しますか？",
+      "removeFailed": "ピンを削除できませんでした",
+      "removeSuccess": "ピンを削除しました",
+      "source": "ソース",
+      "sourceAi": "AI",
+      "sourceAnnotation": "アノテーション",
+      "sourceManual": "手動",
+      "sourceMapfile": "マップファイル",
+      "staleBadge": "古い",
+      "staleFileDeleted": "ファイルが削除されました",
+      "staleSnippetNotFound": "行が見つかりません",
+      "staleSymbolNotFound": "シンボルが見つかりません",
+      "staleTooltip": "ブランチの先端で固定されたブロックが見つかりませんでした: {reason}。",
+      "startLine": "開始行",
+      "submit": "ピンを追加",
+      "symbolHint": "宣言はファイル内で名前によって特定されます。",
+      "symbolLabel": "シンボル",
+      "symbolNoneDetected": "シンボルが検出されませんでした。名前を入力してください。",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "シンボルを選択または入力…",
+      "updateSuccess": "ピンを更新しました",
+      "updateFailed": "ピンを更新できませんでした",
+      "editDialogTitle": "このピンを編集",
+      "editDialogDescription": "ファイルとピンの種類はそのまま維持されます。変更するには、このピンを削除して新しいピンを追加してください。",
+      "editAction": "ピンを編集",
+      "saveChanges": "変更を保存する",
+      "symbolSearchPlaceholder": "シンボルを検索…",
+      "symbolUseTyped": "「{symbol}」を使用",
+      "title": "コードピン",
+      "viewerFailed": "ファイルを読み込めませんでした。",
+      "viewerLoading": "ファイルを読み込み中…",
+      "viewerTooLarge": "このファイルは大きすぎて表示できません。代わりに行番号を入力してください。",
+      "wholeFile": "ファイル全体"
+    },
+    "diffView": {
+      "added": "追加された行",
+      "removed": "削除された行",
+      "oldLine": "変更前の行",
+      "newLine": "変更後の行",
+      "context": "コンテキスト行"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "リトライ済み",
       "clear": "フィルターをクリア"
+    },
+    "impact": {
+      "title": "インパクト",
+      "analyzeImpact": "インパクトを分析",
+      "description": "テスト対象アプリケーションの2つのコミットを選択し、変更の影響を受けるテストケースを選択してください。",
+      "noRepository": "インパクトを使用するには、プロジェクト設定でアプリケーションのリポジトリを接続してください。",
+      "aiUnavailable": "有効なLLM連携がありません: 結果はコードピン、キーワードマッチング、実行履歴のみに基づきます。",
+      "steps": {
+        "pick": "コミット",
+        "diff": "変更点",
+        "analyze": "分析",
+        "review": "影響を受けるテスト"
+      },
+      "pull": {
+        "label": "プルリクエスト",
+        "selectPlaceholder": "プルリクエストを選択してください…",
+        "searchPlaceholder": "番号、タイトル、作成者、またはブランチで検索…",
+        "stateAll": "すべて",
+        "stateOpen": "オープン",
+        "stateMerged": "マージ済み",
+        "stateClosed": "クローズ済み",
+        "resolved": "{target}上の{base}と{source}上の{head}を比較しています。"
+      },
+      "pick": {
+        "modeLabel": "変更の選択方法",
+        "modeCommits": "コミット",
+        "modePull": "プルリクエスト",
+        "modeCommitsHint": "2つのビルド間で何が変更されたかを示し、最後に確認したものから追加されたすべての変更を再テストできます。",
+        "modePullHint": "このプルリクエストがブランチの分岐点から変更した内容を示します。これにより、その間にターゲットブランチに追加された変更は除外されます。",
+        "branchLabel": "ブランチ",
+        "baseLabel": "ベースコミット",
+        "headLabel": "ヘッドコミット",
+        "commitPlaceholder": "コミットを検索…",
+        "searchHint": "コミットのshaを入力するか、メッセージまたは作成者で読み込まれたコミットを絞り込んでください。",
+        "refLabel": "または参照を貼り付け",
+        "refPlaceholder": "ブランチ、タグ、またはsha",
+        "refNotFound": "参照が見つかりません",
+        "latestOnBranch": "{branch}の最新",
+        "previousAnalysisLabel": "以前の分析から開始",
+        "previousAnalysisPlaceholder": "分析を選択してください…",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, other {影響を受けるテスト#件}}",
+        "sameCommit": "ベースとヘッドは同じコミットです。",
+        "swapped": "変更が前方に読み取れるように、ベースとヘッドが入れ替えられました。",
+        "loadingCommits": "コミットを読み込み中…",
+        "noCommits": "コミットが見つかりませんでした。"
+      },
+      "diff": {
+        "summary": "{files, plural, other {#件のファイル}}が変更されました · +{additions, number} −{deletions, number}",
+        "truncated": "プロバイダーは部分的な差分を返しました。一部の変更されたファイルは表示されないか、パッチがありません。",
+        "noChanges": "これらのコミット間に変更はありません。",
+        "statusAdded": "追加",
+        "statusModified": "変更",
+        "statusRemoved": "削除",
+        "statusRenamed": "名前変更",
+        "showPatch": "変更を表示",
+        "hidePatch": "変更を隠す",
+        "largePatch": "大きなパッチ（{lines, number}行）",
+        "showFullPatch": "パッチ全体を表示",
+        "binary": "バイナリファイル",
+        "noPatch": "パッチは利用できません",
+        "pinnedFiles": "{count, plural, other {#件のピン}}",
+        "loading": "コミットを比較中…",
+        "failed": "コミットを比較できませんでした。"
+      },
+      "loading": {
+        "analyzing": "分析中…",
+        "resolving_config": "リポジトリ設定を解決中…",
+        "fetching_diff": "差分を取得中…",
+        "matching_pins": "コードピンを照合中…",
+        "searching_cases": "キーワードでテストケースを検索中…",
+        "scoring_history": "実行履歴をスコアリング中…",
+        "waiting_for_ai": "AIを待機中…",
+        "merging": "結果を統合中…",
+        "ranking": "{total}件中{current}件の候補テストケースをランク付け",
+        "reused": "同じコミットの最近の分析を再利用しています。"
+      },
+      "affected": {
+        "title": "{count, plural, =0 {影響を受けるテストはありません} other {影響を受けるテスト#件}}",
+        "description": "スコア順に並んでいます。すべてのテストに選択された理由が表示されます。",
+        "relatedCount": "{count, plural, other {関連テスト#件}}のスコアが低く、チェックが外されています。",
+        "summary": "概要",
+        "score": "スコア",
+        "case": "テストケース",
+        "reasons": "理由",
+        "tierPinned": "ピン留め済み",
+        "tierAffected": "影響あり",
+        "tierRelated": "関連",
+        "selectAll": "すべて選択",
+        "selectNone": "選択を解除",
+        "showDetails": "理由を表示",
+        "hideDetails": "理由を隠す",
+        "excluded": "{count, plural, other {実行に既に含まれるケース#件がスキップされました}}"
+      },
+      "noAffected": {
+        "title": "影響を受けるテストが見つかりませんでした",
+        "description": "変更に一致するテストケースがありません。次回の分析で見つかるように、変更されたファイルにケースをピン留めしてください。"
+      },
+      "reasons": {
+        "pin": "ピン",
+        "path": "キーワード",
+        "history": "履歴",
+        "ai": "AI",
+        "linked": "関連",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "{pattern}に一致",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "{field}内で「{term}」に一致",
+        "fieldName": "ケース名",
+        "fieldContent": "ケースの内容",
+        "fieldTag": "タグ",
+        "fieldFolder": "フォルダ",
+        "historyDetail": "同じファイルへの変更後の過去の実行{count, plural, other {#件}}",
+        "historyFailed": "類似の変更後の過去の実行で失敗しました",
+        "linkedDetail": "ケース{caseId}にリンク"
+      },
+      "stale": {
+        "badge": "古い",
+        "tooltipAnalysis": "ベースコミットで固定されたブロックが見つかりませんでした。ファイルパスのみで一致しました。テストケースページから再度ピン留めしてください。",
+        "title": "{count, plural, other {古いピン#件}}",
+        "description": "これらのピンはコードに一致しなくなりました。テストケースページから再固定してください。"
+      },
+      "uncovered": {
+        "title": "{count, plural, other {変更されたファイル#件にテストがありません}}",
+        "description": "これらのファイルにリンクされたテストケースがありません。ケースをピン留めしてギャップを埋めてください。",
+        "pinAction": "ケースをピン留め…",
+        "pinned": "ピン留め済み"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "プロバイダーは部分的な差分を返しました。",
+        "diff_truncated_by_budget": "差分の一部のみがAIコンテキストに収まりました。{count, plural, other {#件のファイル}}がパスのみで要約されました。",
+        "llm_not_configured": "有効なLLM連携がありません: AIランキングはスキップされました。",
+        "search_fallback_db": "検索インデックスが利用できません: キーワードマッチングはデータベースを使用しました。",
+        "search_index_empty": "このプロジェクトには検索インデックスにケースがないため、キーワードマッチングはデータベースを使用しました。より良い一致を得るには、管理者に再インデックスを依頼してください。",
+        "ai_partial": "一部のAIバッチが失敗しました。結果が不完全な場合があります。",
+        "ai_truncated": "{count, plural, other {#件のAIバッチ}}がモデルによって切り捨てられました。",
+        "no_candidates": "一致するテストケースがありませんでした。",
+        "anchor_fetch_capped": "一部の固定されたファイルはパスのみで一致しました（取得の上限に達しました）。"
+      },
+      "actions": {
+        "compare": "比較する",
+        "analyze": "分析",
+        "reanalyze": "再分析",
+        "refine": "変更に戻る",
+        "accept": "{count, plural, other {#件のケースを追加}}",
+        "cancelAnalysis": "分析をキャンセル",
+        "back": "戻る",
+        "next": "次へ"
+      },
+      "errors": {
+        "title": "分析に失敗しました",
+        "generic": "変更の分析中に問題が発生しました。もう一度お試しください。",
+        "pullFailed": "そのプルリクエストのコミットを読み取れませんでした。別のものを選択するか、コミットを自分で指定してください。",
+        "compareFailed": "コミットを比較できませんでした。",
+        "analysisFailed": "分析に失敗しました: {error}",
+        "cancelled": "分析はキャンセルされました。",
+        "timeout": "分析に時間がかかりすぎています。後で確認するか、もう一度お試しください。",
+        "branchesFailed": "ブランチの一覧を取得できませんでした。",
+        "commitsFailed": "コミットを読み込めませんでした。",
+        "disabled": "このプロジェクトではインパクトが有効になっていません。",
+        "noConfig": "まずプロジェクト設定でアプリケーションのリポジトリを接続してください。"
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "認証",
       "toolsAndIntegrations": "ツールと連携機能",
       "aiTools": "AIツール",
-      "system": "システム"
+      "system": "システム",
+      "impact": "インパクト分析"
     },
     "imports": {
       "description": "外部のテスト管理ツールからデータをTestPlanItに取り込む。",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "テスト実行ステップの結果",
         "issueConfigs": "問題構成",
         "sharedStepGroups": "共有ステップグループ",
-        "dataSets": "データセット"
+        "dataSets": "データセット",
+        "codePins": "コードピン",
+        "impactAnalyses": "影響分析"
       },
       "table": {
         "title": "削除されました {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "URLからテストケースを生成する（要件）",
         "generate_from_url_app": "URLからテストケースを生成する（アプリケーションテスト）",
         "automation_candidates": "自動化候補者レポート",
-        "derive_case_steps": "AIステップ導出"
+        "derive_case_steps": "AIステップ導出",
+        "impact_analysis": "影響:影響を受けるテストの選択"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## テスト実行のフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「アクティブ」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイス上で記憶されます。\n\n- **手動** / **自動** — その種類の実行のみにリストを限定します。両方をオンにする（または両方をオフにする）と、すべての実行が表示されます。\n- **自分のテスト実行** — 自分が関与している実行のみ：自分が作成した実行、自分にテストケースが割り当てられている実行、または自分がテスト結果を記録した実行です。",
-    "projectSessionsFilters": "## セッションのフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「進行中」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイスに記憶されます。\n\n- **マイセッション** — 自分が関与しているセッションのみ：自分が作成したセッション、または自分に割り当てられたセッション。"
+    "projectSessionsFilters": "## セッションのフィルタリング\n\nチップを切り替えてリストを絞り込みます。チップは「進行中」タブと「完了」タブの両方に適用され、このプロジェクトについてこのデバイスに記憶されます。\n\n- **マイセッション** — 自分が関与しているセッションのみ：自分が作成したセッション、または自分に割り当てられたセッション。",
+    "projectImpact": "## 影響\nテスト対象アプリケーションのリポジトリを接続すると、このプロジェクトでテスト影響分析を実行できるようになります。コミットを2つ選択して変更の影響を受けるテストケースを確認したり、テストケースをそれが対象とするコードに紐付けたりできます。"
   },
   "reports": {
     "ui": {

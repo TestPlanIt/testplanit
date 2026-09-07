@@ -736,7 +736,8 @@
       "reports": "報告",
       "adminSamlConfig": "管理員 - SAML 配置",
       "apiDocumentation": "API 文件",
-      "sharedContent": "分享內容"
+      "sharedContent": "分享內容",
+      "impact": "影響分析"
     },
     "aria": {
       "userMenu": "使用者選單",
@@ -2224,6 +2225,105 @@
           "savedToast": "此專案的廢棄自動化清理已更新",
           "saveError": "更新廢棄自動化清理失敗"
         }
+      },
+      "impact": {
+        "title": "影響分析",
+        "description": "啟用測試影響分析並連接受測應用程式的儲存庫。",
+        "enableLabel": "啟用影響分析",
+        "enableDescription": "允許團隊成員在組成測試執行時，從程式碼變更中選取受影響的測試。",
+        "enabledToast": "影響分析已啟用",
+        "disabledToast": "影響分析已停用",
+        "noRepos": {
+          "title": "未配置任何代碼倉庫",
+          "adminDescription": "在為此項目配置影響分析之前，請先建立儲存庫連線。",
+          "adminLink": "前往代碼倉庫",
+          "userDescription": "請聯絡系統管理員設定程式碼庫連線。"
+        },
+        "repository": {
+          "title": "應用程式儲存庫",
+          "description": "選擇存放受測應用程式的儲存庫。",
+          "placeholder": "選擇一個代碼倉庫……",
+          "branchLabel": "分支",
+          "branchPlaceholder": "選擇一個分支……",
+          "branchInputPlaceholder": "留空則使用倉庫預設分支",
+          "defaultBranch": "儲存庫預設分支",
+          "branchesUnavailable": "無法列出分支：{error}",
+          "branchesFallbackHint": "請改為輸入分支名稱。"
+        },
+        "pathPatterns": {
+          "title": "路徑模式",
+          "description": "要包含哪些應用程式檔案。每一列組合一個基礎路徑與一個萬用字元模式。範例：path=src + pattern=**/* 將包含 src 底下的所有內容。",
+          "pathLabel": "路徑",
+          "pathPlaceholder": "路徑",
+          "patternLabel": "模式",
+          "addPath": "新增路徑",
+          "previewFiles": "預覽檔案",
+          "scanningRepo": "正在掃描儲存庫檔案… ({seconds}s)",
+          "files": "{count, plural, other {# 個檔案}}",
+          "truncatedBadge": "結果可能不完整（受提供者限制）"
+        },
+        "preview": {
+          "resolvingBranch": "正在解析分支…",
+          "scanningFiles": "正在掃描 {scope} 中的檔案…",
+          "scanningFilesCount": "正在掃描 {scope} 中的檔案…（已找到 {count, number} 個）",
+          "filtering": "正在對 {count, number} 個檔案套用篩選器…",
+          "rateLimited": "被提供者限制速率 — 將在 {seconds, number} 秒後重試…"
+        },
+        "cache": {
+          "title": "快取設定",
+          "description": "檔案會快取於 Valkey，以確保 Code Pin 檔案選擇器與儲存庫標記能保持快速回應。",
+          "enableLabel": "啟用檔案快取",
+          "disabledWarning": "檔案快取已停用。系統不會掃描儲存庫標記，且 Code Pin 檔案選擇器每次開啟時都會即時列出您提供者的檔案。",
+          "ttlBefore": "快取",
+          "ttlDays": "{count, plural, other {天}}",
+          "ttlAriaLabel": "以天為單位的快取持續時間",
+          "statusTitle": "快取狀態",
+          "refreshButton": "刷新快取",
+          "listingFiles": "文件列表…",
+          "cachingFiles": "正在快取 {count} 個檔案…",
+          "statusNeverFetched": "從未獲取",
+          "statusPending": "重新整理中……",
+          "lastFetched": "最後獲取時間",
+          "filesCached": "文件已快取",
+          "contentsCached": "內容已快取",
+          "contentsIncomplete": "僅快取了 {total} 個檔案內容中的 {cached} 個。請再次重新整理以完成。",
+          "totalSize": "總尺寸"
+        },
+        "markers": {
+          "title": "儲存庫標記",
+          "description": "每次快取重新整理時，像 @testplanit case:123 這樣的註解標註以及 .testplanit/testmap.yml 中的項目都會變成 Code Pin。",
+          "lastScan": "上次掃描：{date}",
+          "never": "尚未掃描",
+          "skippedPrivacy": "已略過：檔案快取已停用。",
+          "skippedPartial": "已略過：檔案內容僅部分快取。",
+          "summary": "{annotations, plural, other {# 個註解}} · {mapEntries, plural, other {# 個對應項目}} · 已建立 {created} 個 · 已更新 {updated} 個 · 已移除 {removed} 個",
+          "problems": "{count, plural, other {# 個問題}}",
+          "error": "掃描失敗：{error}"
+        },
+        "save": "儲存配置",
+        "saved": "影響分析配置已儲存",
+        "saveError": "配置保存失敗",
+        "listError": "無法列出儲存庫文件",
+        "contentsError": "文件內容快取失敗",
+        "networkError": "快取刷新期間出現網路錯誤",
+        "refreshSuccess": "快取已刷新：{fileCount} 個檔案（已快取 {contentCached} 個內容）",
+        "refreshRateLimited": "快取已刷新：列出了 {fileCount} 個文件，快取了 {contentCached}/{fileCount} 個內容（速率受限——請再次刷新以完成）",
+        "refreshComplete": "快取已重新整理：{fileCount} 個檔案",
+        "refreshInProgress": "快取重新整理仍在背景執行中。完成後將在此處更新。",
+        "validation": {
+          "pathRequired": "路徑是必需的",
+          "patternRequired": "需要圖案",
+          "repositoryRequired": "需要儲存庫",
+          "pathPatternRequired": "至少需要一種路徑模式"
+        },
+        "disconnect": "斷開儲存庫",
+        "confirmDisconnect": "您確定要中斷「{name}」與此項目的連線嗎？",
+        "disconnectWarningTitle": "斷開此儲存庫的連線將導致：",
+        "disconnectWarning1": "移除 {count, plural, other {# 個 Code Pin}} 以及此儲存庫的分析歷史記錄",
+        "disconnectWarning2": "刪除所有快取的儲存庫文件",
+        "disconnectWarning3": "移除路徑模式和分支配置",
+        "disconnectSuccess": "應用程式儲存庫已斷開連接",
+        "disconnectError": "斷開應用程式儲存庫連線失敗"
       }
     },
     "matrix": {
@@ -3095,8 +3195,8 @@
           "partialSummary": "{failed, plural, other {# 列}} 無法匯入。{imported, plural, other {# 個測試案例}} 已成功匯入。"
         },
         "warnings": {
-          "partialTitle": "部分問題連結未建立",
-          "summary": "{count, plural, other {# 個問題儲存格}} 無法連結。測試案例已匯入。"
+          "partialTitle": "部分問題連結未能建立",
+          "summary": "{count, plural, other {# 個問題儲存格}}無法連結。測試案例已匯入。"
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "建立測試用例",
       "successMessage": "新增測試案例",
       "errorMessage": "新增測試用例時出現未知錯誤"
+    },
+    "draft": {
+      "saving": "正在儲存…",
+      "saved": "所有變更已於 {time} 儲存",
+      "unsaved": "未儲存的變更",
+      "saveFailed": "無法儲存 — 正在重試",
+      "restoreTitle": "要還原未儲存的變更嗎？",
+      "restoreDescription": "您在 {age} 對此測試案例所做的變更尚未儲存。您可以還原這些變更，或放棄它們並載入已儲存的版本。",
+      "restoreTitleNew": "要還原未儲存的測試案例嗎？",
+      "restoreDescriptionNew": "您於 {age} 開始建立測試案例但從未儲存。您可以還原所寫的內容，或放棄它並重新開始。",
+      "restoreStaleWarning": "自您撰寫草稿以來，此測試案例已被其他人儲存過。還原將在您儲存時取代對方的內容。",
+      "restoreDiscard": "放棄",
+      "restoreRestore": "還原",
+      "bannerText": "您在 {age} 對此測試案例所做的變更尚未儲存。",
+      "bannerAction": "繼續編輯",
+      "bannerDiscard": "放棄它們"
     },
     "columns": {
       "selectCase": "選擇個案",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "「{name}」將從您已儲存的檢視中移除。此操作無法復原。",
       "deleted": "已儲存的檢視已刪除",
       "deleteFailed": "無法刪除檢視，請再試一次。"
+    },
+    "codePins": {
+      "add": "新增釘選",
+      "addDialogDescription": "釘選會錨定於目前的分支尖端。",
+      "addDialogTitle": "將此案例釘選至程式碼",
+      "addFailed": "無法新增釘選",
+      "addSuccess": "已新增釘選",
+      "anchoredAt": "錨定於 {sha}",
+      "cancel": "取消",
+      "caseLabel": "測試用例",
+      "casePlaceholder": "搜尋測試用例……",
+      "contentUnavailable": "檔案內容無法取得。",
+      "description": "此案例涵蓋的程式碼。若釘選區塊內發生變更，將使該案例被納入影響分析中。",
+      "dismissStale": "忽略",
+      "duplicate": "此釘選已存在。",
+      "empty": "尚無程式碼釘選。",
+      "endLine": "結束行",
+      "errorFileNotFound": "在分支尖端找不到該檔案。",
+      "errorLineOutOfRange": "行範圍超出檔案範圍。",
+      "errorSnippetTooLarge": "釘選的區塊過大。",
+      "errorSymbolNotFound": "在檔案中找不到該符號。",
+      "fileLabel": "檔案",
+      "filePlaceholder": "搜尋檔案……",
+      "filesCached": "{count, plural, other {# 個檔案}}已快取 · {date}",
+      "filesLive": "即時列出儲存庫中的檔案",
+      "globLabel": "模式",
+      "globMatches": "{count, plural, =0 {沒有符合的快取檔案} other {# 個快取檔案符合}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "類型",
+      "kindFile": "整個檔案",
+      "kindGlob": "萬用字元模式",
+      "kindLabel": "釘選至",
+      "kindRange": "行",
+      "kindSymbol": "符號",
+      "linesHint": "點選行號以開始，按住 Shift 點選以結束。",
+      "location": "位置",
+      "managedTooltip": "由儲存庫管理。請在程式碼中編輯標記。",
+      "noFilesCached": "沒有快取的檔案清單。請請專案管理員重新整理儲存庫快取。",
+      "noteLabel": "備註",
+      "notePlaceholder": "為何此案例涵蓋此程式碼（選填）",
+      "reanchor": "重新錨定",
+      "reanchorFailed": "無法重新錨定釘選",
+      "reanchorSuccess": "釘選已重新錨定",
+      "remove": "移除",
+      "removeConfirm": "要移除此釘選嗎？",
+      "removeFailed": "無法移除釘選",
+      "removeSuccess": "釘選已移除",
+      "source": "來源",
+      "sourceAi": "AI",
+      "sourceAnnotation": "註記",
+      "sourceManual": "手動",
+      "sourceMapfile": "映射檔案",
+      "staleBadge": "過時",
+      "staleFileDeleted": "檔案已刪除",
+      "staleSnippetNotFound": "找不到指定行",
+      "staleSymbolNotFound": "找不到符號",
+      "staleTooltip": "在分支尖端找不到釘選的區塊：{reason}。",
+      "startLine": "起始行",
+      "submit": "新增釘選",
+      "symbolHint": "該宣告在檔案中依名稱定位。",
+      "symbolLabel": "符號",
+      "symbolNoneDetected": "未偵測到符號，請輸入名稱。",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "選擇或輸入符號……",
+      "updateSuccess": "釘選已更新",
+      "updateFailed": "無法更新釘選",
+      "editDialogTitle": "編輯此釘選",
+      "editDialogDescription": "檔案與釘選類型保持不變。若要更改任一項，請移除此釘選並新增一個新的。",
+      "editAction": "編輯釘選",
+      "saveChanges": "儲存變更",
+      "symbolSearchPlaceholder": "搜尋符號……",
+      "symbolUseTyped": "使用「{symbol}」",
+      "title": "程式碼釘選",
+      "viewerFailed": "無法載入檔案。",
+      "viewerLoading": "正在載入檔案…",
+      "viewerTooLarge": "此檔案過大，無法顯示。請改為輸入行號。",
+      "wholeFile": "整個檔案"
+    },
+    "diffView": {
+      "added": "新增行",
+      "removed": "移除行",
+      "oldLine": "舊行",
+      "newLine": "新行",
+      "context": "內容行"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "已重試",
       "clear": "清除過濾器"
+    },
+    "impact": {
+      "title": "影響",
+      "analyzeImpact": "分析影響",
+      "description": "選擇受測應用程式的兩個提交，並選取受變更影響的測試案例。",
+      "noRepository": "請在專案設定中連接應用程式儲存庫以使用影響分析。",
+      "aiUnavailable": "無啟用中的 LLM 整合：結果僅來自程式碼釘選、關鍵字比對及執行歷史。",
+      "steps": {
+        "pick": "提交",
+        "diff": "變更",
+        "analyze": "分析",
+        "review": "受影響的測試"
+      },
+      "pull": {
+        "label": "拉取請求",
+        "selectPlaceholder": "選擇拉取請求……",
+        "searchPlaceholder": "依編號、標題、作者或分支搜尋……",
+        "stateAll": "全部",
+        "stateOpen": "開啟",
+        "stateMerged": "已合併",
+        "stateClosed": "已關閉",
+        "resolved": "正在比較 {target} 上的 {base} 與 {source} 上的 {head}。"
+      },
+      "pick": {
+        "modeLabel": "依此選擇變更",
+        "modeCommits": "提交",
+        "modePull": "拉取請求",
+        "modeCommitsHint": "兩次組建之間發生的變更，讓您可重新測試自上次驗證以來新增的所有內容。",
+        "modePullHint": "此拉取請求所變更的內容，是從其分支拆分處開始計算，因此目標分支同時發生的變更不包含在內。",
+        "branchLabel": "分支",
+        "baseLabel": "基礎提交",
+        "headLabel": "目標提交",
+        "commitPlaceholder": "搜尋提交……",
+        "searchHint": "輸入提交 sha，或依訊息或作者篩選已載入的提交。",
+        "refLabel": "或貼上參照",
+        "refPlaceholder": "分支、標籤或 sha",
+        "refNotFound": "找不到參照",
+        "latestOnBranch": "{branch} 上的最新版本",
+        "previousAnalysisLabel": "從先前的分析開始",
+        "previousAnalysisPlaceholder": "選擇一項分析……",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, other {# 個受影響的測試}}",
+        "sameCommit": "基礎與目標為同一個提交。",
+        "swapped": "基礎與目標已互換，以使變更依正向順序讀取。",
+        "loadingCommits": "正在載入提交…",
+        "noCommits": "找不到提交。"
+      },
+      "diff": {
+        "summary": "{files, plural, other {# 個檔案}}已變更 · +{additions, number} −{deletions, number}",
+        "truncated": "提供者傳回了部分差異。部分變更的檔案未顯示或無修補程式。",
+        "noChanges": "這些提交之間沒有變更。",
+        "statusAdded": "已新增",
+        "statusModified": "已修改",
+        "statusRemoved": "已移除",
+        "statusRenamed": "已重新命名",
+        "showPatch": "顯示變更",
+        "hidePatch": "隱藏變更",
+        "largePatch": "大型修補程式（{lines, number} 行）",
+        "showFullPatch": "顯示完整修補程式",
+        "binary": "二進位檔案",
+        "noPatch": "無可用的修補程式",
+        "pinnedFiles": "{count, plural, other {# 個釘選}}",
+        "loading": "正在比較提交…",
+        "failed": "無法比較提交。"
+      },
+      "loading": {
+        "analyzing": "分析中…",
+        "resolving_config": "正在解析儲存庫設定…",
+        "fetching_diff": "正在取得差異…",
+        "matching_pins": "正在比對程式碼釘選…",
+        "searching_cases": "正在依關鍵字搜尋測試案例…",
+        "scoring_history": "正在計算執行歷史分數…",
+        "waiting_for_ai": "正在等待 AI…",
+        "merging": "正在合併結果…",
+        "ranking": "已排名 {total} 個候選測試案例中的第 {current} 個",
+        "reused": "正在重複使用相同提交的最近一次分析。"
+      },
+      "affected": {
+        "title": "{count, plural, =0 {無受影響的測試} other {# 個受影響的測試}}",
+        "description": "依分數排序。每個測試皆顯示其被選取的原因。",
+        "relatedCount": "{count, plural, other {# 個相關測試}}分數較低且未勾選。",
+        "summary": "摘要",
+        "score": "分數",
+        "case": "測試用例",
+        "reasons": "原因",
+        "tierPinned": "已釘選",
+        "tierAffected": "受影響",
+        "tierRelated": "相關",
+        "selectAll": "全選",
+        "selectNone": "取消全選",
+        "showDetails": "顯示原因",
+        "hideDetails": "隱藏原因",
+        "excluded": "{count, plural, other {# 個已在執行中的案例被跳過}}"
+      },
+      "noAffected": {
+        "title": "未找到受影響的測試",
+        "description": "沒有測試案例符合這些變更。請將案例釘選至變更的檔案，以便下次分析能找到它們。"
+      },
+      "reasons": {
+        "pin": "釘選",
+        "path": "關鍵字",
+        "history": "歷史",
+        "ai": "AI",
+        "linked": "相關",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "符合 {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "在 {field} 中符合「{term}」",
+        "fieldName": "案例名稱",
+        "fieldContent": "案例內容",
+        "fieldTag": "標籤",
+        "fieldFolder": "資料夾",
+        "historyDetail": "{count, plural, other {# 次先前的執行}}於相同檔案變更後發生",
+        "historyFailed": "於類似變更後的先前執行中失敗",
+        "linkedDetail": "連結至案例 {caseId}"
+      },
+      "stale": {
+        "badge": "過時",
+        "tooltipAnalysis": "在基礎提交中找不到釘選的區塊；僅依檔案路徑比對。請從測試案例頁面重新釘選。",
+        "title": "{count, plural, other {# 個過時釘選}}",
+        "description": "這些釘選已不再符合程式碼。請從測試案例頁面重新錨定它們。"
+      },
+      "uncovered": {
+        "title": "{count, plural, other {# 個變更的檔案沒有測試}}",
+        "description": "沒有測試案例連結至這些檔案。請釘選一個案例以填補此缺口。",
+        "pinAction": "釘選一個案例……",
+        "pinned": "已釘選"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "提供者傳回了部分差異。",
+        "diff_truncated_by_budget": "僅部分差異符合 AI 內容限制；{count, plural, other {# 個檔案}}僅依路徑摘要。",
+        "llm_not_configured": "無啟用中的 LLM 整合：已跳過 AI 排名。",
+        "search_fallback_db": "搜尋索引無法使用：關鍵字比對已使用資料庫進行。",
+        "search_index_empty": "此專案的搜尋索引中沒有案例，因此關鍵字比對已使用資料庫進行。請請管理員重新建立索引以獲得更佳的比對結果。",
+        "ai_partial": "部分 AI 批次失敗；結果可能不完整。",
+        "ai_truncated": "{count, plural, other {# 個 AI 批次}}被模型截斷。",
+        "no_candidates": "沒有測試案例符合。",
+        "anchor_fetch_capped": "部分釘選檔案僅依路徑比對（已達取用上限）。"
+      },
+      "actions": {
+        "compare": "比較",
+        "analyze": "分析",
+        "reanalyze": "重新分析",
+        "refine": "返回變更",
+        "accept": "{count, plural, other {新增 # 個案例}}",
+        "cancelAnalysis": "取消分析",
+        "back": "返回",
+        "next": "下一步"
+      },
+      "errors": {
+        "title": "分析失敗",
+        "generic": "分析變更時發生錯誤，請再試一次。",
+        "pullFailed": "無法讀取該拉取請求的提交。請選擇其他的，或自行指定提交。",
+        "compareFailed": "無法比較提交。",
+        "analysisFailed": "分析失敗：{error}",
+        "cancelled": "分析已取消。",
+        "timeout": "分析耗時過長。請稍後再查看，或重試一次。",
+        "branchesFailed": "無法列出分支。",
+        "commitsFailed": "無法載入提交。",
+        "disabled": "此專案尚未啟用影響分析功能。",
+        "noConfig": "請先在專案設定中連接應用程式儲存庫。"
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "驗證",
       "toolsAndIntegrations": "工具與集成",
       "aiTools": "AI 工具",
-      "system": "系統"
+      "system": "系統",
+      "impact": "影響分析"
     },
     "imports": {
       "description": "將外部測試管理工具中的資料匯入TestPlanIt。",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "測試運行步驟結果",
         "issueConfigs": "問題配置",
         "sharedStepGroups": "共同步驟小組",
-        "dataSets": "數據集"
+        "dataSets": "數據集",
+        "codePins": "程式碼標記",
+        "impactAnalyses": "影響分析"
       },
       "table": {
         "title": "已刪除 {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "根據 URL 產生測試案例（需求）",
         "generate_from_url_app": "從 URL 產生測試用例（應用程式測試）",
         "automation_candidates": "自動化候選報告",
-        "derive_case_steps": "AI 步驟推導"
+        "derive_case_steps": "AI 步驟推導",
+        "impact_analysis": "影響:受影響的測試選擇"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## 篩選測試運行\n\n切換標籤以縮小列表範圍。標籤同時適用於「進行中」和「已完成」分頁，並會在此裝置上針對此專案記住設定。\n\n- **手動** / **自動化** — 將列表限制為該類型的運行。同時開啟（或同時關閉）兩者將顯示所有運行。\n- **我的測試運行** — 僅顯示您參與的運行：您建立了該運行、您被指派了其中的測試用例，或您在其中記錄了測試結果。",
-    "projectSessionsFilters": "## 篩選工作階段\n\n切換晶片以縮小清單範圍。晶片同時套用於「進行中」及「已完成」分頁，並會針對此裝置和此專案記住設定。\n\n- **我的工作階段** — 僅顯示您參與的工作階段：由您建立的工作階段，或指派給您的工作階段。"
+    "projectSessionsFilters": "## 篩選工作階段\n\n切換晶片以縮小清單範圍。晶片同時套用於「進行中」及「已完成」分頁，並會針對此裝置和此專案記住設定。\n\n- **我的工作階段** — 僅顯示您參與的工作階段：由您建立的工作階段，或指派給您的工作階段。",
+    "projectImpact": "## 影響\n連結受測應用程式的儲存庫，讓此專案能夠執行測試影響分析：選擇兩個提交以查看變更影響哪些測試案例，並將測試案例釘選至其涵蓋的程式碼。"
   },
   "reports": {
     "ui": {

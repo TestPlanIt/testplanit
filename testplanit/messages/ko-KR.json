@@ -736,7 +736,8 @@
       "reports": "보고서",
       "adminSamlConfig": "관리자 - SAML 구성",
       "apiDocumentation": "API 문서",
-      "sharedContent": "공유 콘텐츠"
+      "sharedContent": "공유 콘텐츠",
+      "impact": "영향 분석"
     },
     "aria": {
       "userMenu": "사용자 메뉴",
@@ -2224,6 +2225,105 @@
           "savedToast": "이 프로젝트의 자동화 방치 정리가 업데이트되었습니다",
           "saveError": "자동화 방치 정리 업데이트에 실패했습니다"
         }
+      },
+      "impact": {
+        "title": "영향 분석",
+        "description": "테스트 영향 분석을 활성화하고 테스트 대상 애플리케이션의 저장소를 연결합니다.",
+        "enableLabel": "영향 분석 활성화",
+        "enableDescription": "테스트 실행을 구성할 때 팀원이 코드 변경 사항에서 영향을 받는 테스트를 선택할 수 있도록 합니다.",
+        "enabledToast": "영향 분석이 활성화되었습니다",
+        "disabledToast": "영향 분석이 비활성화되었습니다",
+        "noRepos": {
+          "title": "구성된 코드 저장소가 없습니다",
+          "adminDescription": "이 프로젝트의 영향 분석을 구성하기 전에 저장소 연결을 설정하십시오.",
+          "adminLink": "코드 저장소로 이동",
+          "userDescription": "코드 저장소 연결을 설정하려면 시스템 관리자에게 문의하십시오."
+        },
+        "repository": {
+          "title": "애플리케이션 저장소",
+          "description": "테스트 대상 애플리케이션이 포함된 저장소를 선택하십시오.",
+          "placeholder": "코드 저장소를 선택하세요...",
+          "branchLabel": "브랜치",
+          "branchPlaceholder": "브랜치를 선택하세요...",
+          "branchInputPlaceholder": "저장소 기본 브랜치를 사용하려면 비워 두십시오",
+          "defaultBranch": "저장소 기본 브랜치",
+          "branchesUnavailable": "브랜치 목록을 가져올 수 없습니다: {error}",
+          "branchesFallbackHint": "대신 브랜치 이름을 입력하십시오."
+        },
+        "pathPatterns": {
+          "title": "경로 패턴",
+          "description": "포함할 애플리케이션 파일을 지정합니다. 각 행은 기본 경로와 glob 패턴을 결합합니다. 예: path=src + pattern=**/* 는 src 아래의 모든 항목을 포함합니다.",
+          "pathLabel": "경로",
+          "pathPlaceholder": "src",
+          "patternLabel": "패턴",
+          "addPath": "경로 추가",
+          "previewFiles": "미리보기 파일",
+          "scanningRepo": "저장소 파일 스캔 중… ({seconds}s)",
+          "files": "{count, plural, other {# 파일}}",
+          "truncatedBadge": "결과가 불완전할 수 있습니다(제공업체 제한)"
+        },
+        "preview": {
+          "resolvingBranch": "브랜치 확인 중…",
+          "scanningFiles": "{scope}에서 파일을 스캔하는 중…",
+          "scanningFilesCount": "{scope}에서 파일을 스캔하는 중… ({count, number}개 발견됨)",
+          "filtering": "{count, number}개 파일에 필터를 적용하는 중…",
+          "rateLimited": "제공업체에서 속도 제한이 적용되어 {seconds, number}초 후 재시도합니다…"
+        },
+        "cache": {
+          "title": "캐시 설정",
+          "description": "Code Pin 파일 선택기와 저장소 마커의 속도를 유지하기 위해 파일이 Valkey에 캐시됩니다.",
+          "enableLabel": "파일 캐싱을 활성화합니다",
+          "disabledWarning": "파일 캐싱이 비활성화되어 있습니다. 저장소 마커가 스캔되지 않으며, Code Pin 파일 선택기는 열 때마다 제공업체에서 실시간으로 파일 목록을 가져옵니다.",
+          "ttlBefore": "캐시 유지 기간",
+          "ttlDays": "{count, plural, other {일}}",
+          "ttlAriaLabel": "일 단위 캐시 지속 시간",
+          "statusTitle": "캐시 상태",
+          "refreshButton": "캐시 새로 고침",
+          "listingFiles": "파일 목록 가져오는 중…",
+          "cachingFiles": "{count}개 파일 캐싱 중…",
+          "statusNeverFetched": "가져온 적 없음",
+          "statusPending": "새로고침 중...",
+          "lastFetched": "마지막으로 가져온 시간",
+          "filesCached": "캐시된 파일",
+          "contentsCached": "캐시된 콘텐츠",
+          "contentsIncomplete": "{total}개 파일 중 {cached}개의 콘텐츠만 캐시되었습니다. 완료하려면 다시 새로고침하세요.",
+          "totalSize": "전체 크기"
+        },
+        "markers": {
+          "title": "저장소 마커",
+          "description": "@testplanit case:123과 같은 주석 어노테이션과 .testplanit/testmap.yml의 항목은 캐시를 새로 고칠 때마다 Code Pin이 됩니다.",
+          "lastScan": "마지막 스캔: {date}",
+          "never": "아직 스캔되지 않음",
+          "skippedPrivacy": "건너뜀: 파일 캐싱이 비활성화되어 있습니다.",
+          "skippedPartial": "건너뜀: 파일 콘텐츠가 부분적으로만 캐시되었습니다.",
+          "summary": "{annotations, plural, other {주석 #개}} · {mapEntries, plural, other {맵 항목 #개}} · 생성됨 {created}개 · 업데이트됨 {updated}개 · 제거됨 {removed}개",
+          "problems": "{count, plural, other {문제 #개}}",
+          "error": "스캔 실패: {error}"
+        },
+        "save": "설정 저장",
+        "saved": "영향 분석 구성이 저장되었습니다",
+        "saveError": "설정을 저장하는 데 실패했습니다",
+        "listError": "저장소 파일 목록을 가져오는 데 실패했습니다",
+        "contentsError": "파일 내용 캐시에 실패했습니다",
+        "networkError": "캐시 새로 고침 중 네트워크 오류 발생",
+        "refreshSuccess": "캐시 새로 고침됨: {fileCount}개 파일 ({contentCached}개 콘텐츠 캐시됨)",
+        "refreshRateLimited": "캐시 새로 고침됨: {fileCount}개의 파일이 나열되었고, {contentCached}/{fileCount}개의 콘텐츠가 캐시되었습니다(속도 제한됨 - 완료하려면 다시 새로 고침하세요)",
+        "refreshComplete": "캐시 새로고침 완료: 파일 {fileCount}개",
+        "refreshInProgress": "캐시 새로고침이 백그라운드에서 계속 실행 중입니다. 완료되면 여기에 업데이트됩니다.",
+        "validation": {
+          "pathRequired": "경로가 필요합니다",
+          "patternRequired": "패턴이 필요합니다",
+          "repositoryRequired": "저장소가 필요합니다",
+          "pathPatternRequired": "최소 하나의 경로 패턴이 필요합니다"
+        },
+        "disconnect": "저장소 연결 해제",
+        "confirmDisconnect": "\"{name}\"를 이 프로젝트에서 연결 해제하시겠습니까?",
+        "disconnectWarningTitle": "이 저장소 연결을 해제하면 다음과 같은 결과가 발생합니다:",
+        "disconnectWarning1": "이 저장소의 {count, plural, other {Code Pin #개}}와 분석 기록을 제거합니다",
+        "disconnectWarning2": "캐시된 저장소 파일을 모두 제거합니다",
+        "disconnectWarning3": "경로 패턴 및 브랜치 구성을 제거합니다",
+        "disconnectSuccess": "애플리케이션 저장소 연결이 해제되었습니다",
+        "disconnectError": "애플리케이션 저장소 연결 해제에 실패했습니다"
       }
     },
     "matrix": {
@@ -3096,7 +3196,7 @@
         },
         "warnings": {
           "partialTitle": "일부 이슈 링크가 생성되지 않았습니다",
-          "summary": "{count, plural, other {#개의 이슈 셀}}을(를) 연결할 수 없습니다. 테스트 케이스는 가져왔습니다."
+          "summary": "{count, plural, other {#개}} 이슈 셀을 연결할 수 없습니다. 테스트 케이스는 가져왔습니다."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "테스트 케이스 생성",
       "successMessage": "새로운 테스트 케이스가 추가되었습니다.",
       "errorMessage": "새 테스트 케이스를 추가하는 중 알 수 없는 오류가 발생했습니다."
+    },
+    "draft": {
+      "saving": "저장 중…",
+      "saved": "모든 변경 사항이 {time}에 저장되었습니다",
+      "unsaved": "저장되지 않은 변경 사항",
+      "saveFailed": "저장할 수 없음 — 재시도 중",
+      "restoreTitle": "저장되지 않은 변경 사항을 복원하시겠습니까?",
+      "restoreDescription": "{age}에 이 테스트 케이스에 저장되지 않은 변경 사항이 있습니다. 복원하거나, 버리고 저장된 버전을 불러오세요.",
+      "restoreTitleNew": "저장되지 않은 테스트 케이스를 복원하시겠습니까?",
+      "restoreDescriptionNew": "{age}에 테스트 케이스를 작성하기 시작했지만 저장하지 않았습니다. 작성한 내용을 복원하거나, 버리고 새로 시작하세요.",
+      "restoreStaleWarning": "이 테스트 케이스는 초안이 작성된 이후 다른 사람이 저장했습니다. 복원하면 저장 시 해당 내용을 덮어씁니다.",
+      "restoreDiscard": "버리기",
+      "restoreRestore": "복원",
+      "bannerText": "{age}에 이 테스트 케이스에 저장되지 않은 변경 사항이 있습니다.",
+      "bannerAction": "편집 재개",
+      "bannerDiscard": "버리기"
     },
     "columns": {
       "selectCase": "케이스를 선택하세요",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "“{name}” 보기가 저장된 보기에서 삭제됩니다. 이 작업은 취소할 수 없습니다.",
       "deleted": "저장된 보기가 삭제되었습니다",
       "deleteFailed": "보기를 삭제할 수 없습니다. 다시 시도해 주세요."
+    },
+    "codePins": {
+      "add": "핀 추가",
+      "addDialogDescription": "핀은 현재 브랜치 최신 지점에 고정됩니다.",
+      "addDialogTitle": "이 케이스를 코드에 고정",
+      "addFailed": "핀을 추가할 수 없습니다",
+      "addSuccess": "핀이 추가되었습니다",
+      "anchoredAt": "{sha}에 고정됨",
+      "cancel": "취소",
+      "caseLabel": "테스트 케이스",
+      "casePlaceholder": "테스트 케이스 검색...",
+      "contentUnavailable": "파일 내용을 사용할 수 없습니다.",
+      "description": "이 케이스가 다루는 코드입니다. 고정된 블록 내부의 변경 사항은 이 케이스를 영향 분석 대상에 포함시킵니다.",
+      "dismissStale": "닫기",
+      "duplicate": "이 핀은 이미 존재합니다.",
+      "empty": "아직 코드 핀이 없습니다.",
+      "endLine": "끝 줄",
+      "errorFileNotFound": "브랜치 최신 지점에서 파일을 찾을 수 없습니다.",
+      "errorLineOutOfRange": "줄 범위가 파일을 벗어났습니다.",
+      "errorSnippetTooLarge": "고정된 블록이 너무 큽니다.",
+      "errorSymbolNotFound": "파일에서 심볼을 찾을 수 없습니다.",
+      "fileLabel": "파일",
+      "filePlaceholder": "파일 검색...",
+      "filesCached": "{count, plural, other {#개}} 파일 캐시됨 · {date}",
+      "filesLive": "저장소에서 실시간으로 파일 목록을 가져오는 중",
+      "globLabel": "패턴",
+      "globMatches": "{count, plural, =0 {일치하는 캐시된 파일 없음} other {일치하는 캐시된 파일 #개}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "종류",
+      "kindFile": "전체 파일",
+      "kindGlob": "Glob 패턴",
+      "kindLabel": "고정 대상",
+      "kindRange": "줄",
+      "kindSymbol": "심볼",
+      "linesHint": "시작할 줄 번호를 클릭하고, 끝낼 줄 번호를 Shift 클릭하세요.",
+      "location": "위치",
+      "managedTooltip": "저장소에서 관리됩니다. 코드의 마커를 수정하세요.",
+      "noFilesCached": "캐시된 파일 목록이 없습니다. 프로젝트 관리자에게 저장소 캐시를 새로고침해 달라고 요청하세요.",
+      "noteLabel": "메모",
+      "notePlaceholder": "이 케이스가 이 코드를 다루는 이유(선택 사항)",
+      "reanchor": "다시 고정",
+      "reanchorFailed": "핀을 다시 고정할 수 없습니다",
+      "reanchorSuccess": "핀이 다시 고정되었습니다",
+      "remove": "제거",
+      "removeConfirm": "이 핀을 제거하시겠습니까?",
+      "removeFailed": "핀을 제거할 수 없습니다",
+      "removeSuccess": "핀이 제거되었습니다",
+      "source": "소스",
+      "sourceAi": "AI",
+      "sourceAnnotation": "주석",
+      "sourceManual": "수동",
+      "sourceMapfile": "맵 파일",
+      "staleBadge": "오래됨",
+      "staleFileDeleted": "파일 삭제됨",
+      "staleSnippetNotFound": "줄을 찾을 수 없음",
+      "staleSymbolNotFound": "심볼을 찾을 수 없음",
+      "staleTooltip": "고정된 블록을 브랜치 최신 지점에서 찾을 수 없습니다: {reason}.",
+      "startLine": "시작 줄",
+      "submit": "핀 추가",
+      "symbolHint": "선언 위치는 파일 내에서 이름으로 찾습니다.",
+      "symbolLabel": "심볼",
+      "symbolNoneDetected": "감지된 심볼이 없습니다. 이름을 입력하세요.",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "심볼을 선택하거나 입력하세요...",
+      "updateSuccess": "핀이 업데이트되었습니다",
+      "updateFailed": "핀을 업데이트할 수 없습니다",
+      "editDialogTitle": "이 핀 편집",
+      "editDialogDescription": "파일과 핀 유형은 그대로 유지됩니다. 둘 중 하나를 변경하려면 이 핀을 제거하고 새로 추가하세요.",
+      "editAction": "핀 편집",
+      "saveChanges": "변경 사항 저장",
+      "symbolSearchPlaceholder": "심볼 검색...",
+      "symbolUseTyped": "\"{symbol}\" 사용",
+      "title": "코드 핀",
+      "viewerFailed": "파일을 불러올 수 없습니다.",
+      "viewerLoading": "파일 로딩 중…",
+      "viewerTooLarge": "이 파일은 표시하기에 너무 큽니다. 대신 줄 번호를 입력하세요.",
+      "wholeFile": "전체 파일"
+    },
+    "diffView": {
+      "added": "추가된 줄",
+      "removed": "제거된 줄",
+      "oldLine": "이전 줄",
+      "newLine": "새 줄",
+      "context": "컨텍스트 줄"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "재시도됨",
       "clear": "필터 지우기"
+    },
+    "impact": {
+      "title": "영향",
+      "analyzeImpact": "영향 분석",
+      "description": "테스트 대상 애플리케이션의 커밋 두 개를 선택하고, 변경 사항이 영향을 미치는 테스트 케이스를 선택하세요.",
+      "noRepository": "영향 분석을 사용하려면 프로젝트 설정에서 애플리케이션 저장소를 연결하세요.",
+      "aiUnavailable": "활성화된 LLM 통합이 없습니다: 결과는 코드 핀, 키워드 일치, 실행 기록에서만 가져옵니다.",
+      "steps": {
+        "pick": "커밋",
+        "diff": "변경 사항",
+        "analyze": "분석",
+        "review": "영향받는 테스트"
+      },
+      "pull": {
+        "label": "풀 리퀘스트",
+        "selectPlaceholder": "풀 리퀘스트를 선택하세요...",
+        "searchPlaceholder": "번호, 제목, 작성자 또는 브랜치로 검색...",
+        "stateAll": "전체",
+        "stateOpen": "열림",
+        "stateMerged": "병합됨",
+        "stateClosed": "닫힘",
+        "resolved": "{target}의 {base}와 {source}의 {head}를 비교합니다."
+      },
+      "pick": {
+        "modeLabel": "변경 사항 선택 방식",
+        "modeCommits": "커밋",
+        "modePull": "풀 리퀘스트",
+        "modeCommitsHint": "두 빌드 사이의 변경 사항이 무엇인지 확인하여, 마지막으로 검증한 이후 반영된 모든 항목을 다시 테스트할 수 있습니다.",
+        "modePullHint": "이 풀 리퀘스트가 브랜치가 분기된 시점부터 변경한 내용으로, 그 사이 대상 브랜치에 반영된 작업은 제외됩니다.",
+        "branchLabel": "브랜치",
+        "baseLabel": "기준 커밋",
+        "headLabel": "헤드 커밋",
+        "commitPlaceholder": "커밋 검색...",
+        "searchHint": "커밋 sha를 입력하거나, 불러온 커밋을 메시지나 작성자로 필터링하세요.",
+        "refLabel": "또는 참조를 붙여넣으세요",
+        "refPlaceholder": "브랜치, 태그 또는 sha",
+        "refNotFound": "참조를 찾을 수 없습니다",
+        "latestOnBranch": "{branch}의 최신",
+        "previousAnalysisLabel": "이전 분석에서 시작",
+        "previousAnalysisPlaceholder": "분석을 선택하세요...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, other {영향받는 테스트 #개}}",
+        "sameCommit": "기준과 헤드가 동일한 커밋입니다.",
+        "swapped": "변경 사항을 순방향으로 읽을 수 있도록 기준과 헤드가 서로 바뀌었습니다.",
+        "loadingCommits": "커밋 로딩 중…",
+        "noCommits": "커밋을 찾을 수 없습니다."
+      },
+      "diff": {
+        "summary": "{files, plural, other {#개}} 파일 변경됨 · +{additions, number} −{deletions, number}",
+        "truncated": "제공자가 부분적인 diff를 반환했습니다. 일부 변경된 파일이 표시되지 않거나 패치가 없습니다.",
+        "noChanges": "이 커밋 간에 변경 사항이 없습니다.",
+        "statusAdded": "추가됨",
+        "statusModified": "수정됨",
+        "statusRemoved": "제거됨",
+        "statusRenamed": "이름 변경됨",
+        "showPatch": "변경 사항 표시",
+        "hidePatch": "변경 사항 숨기기",
+        "largePatch": "큰 패치 ({lines, number}줄)",
+        "showFullPatch": "전체 패치 표시",
+        "binary": "바이너리 파일",
+        "noPatch": "패치를 사용할 수 없음",
+        "pinnedFiles": "{count, plural, other {핀 #개}}",
+        "loading": "커밋 비교 중…",
+        "failed": "커밋을 비교할 수 없습니다."
+      },
+      "loading": {
+        "analyzing": "분석 중…",
+        "resolving_config": "저장소 구성을 확인하는 중…",
+        "fetching_diff": "diff를 가져오는 중…",
+        "matching_pins": "코드 핀을 일치시키는 중…",
+        "searching_cases": "키워드로 테스트 케이스를 검색하는 중…",
+        "scoring_history": "실행 기록 점수를 매기는 중…",
+        "waiting_for_ai": "AI 응답 대기 중…",
+        "merging": "결과를 결합하는 중…",
+        "ranking": "후보 테스트 케이스 {total}개 중 {current}개 순위 지정됨",
+        "reused": "동일한 커밋의 최근 분석을 재사용합니다."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {영향받는 테스트 없음} other {영향받는 테스트 #개}}",
+        "description": "점수순으로 정렬되었습니다. 각 테스트마다 선택된 이유가 표시됩니다.",
+        "relatedCount": "{count, plural, other {관련 테스트 #개}}는 점수가 낮아 선택 해제되었습니다.",
+        "summary": "요약",
+        "score": "점수",
+        "case": "테스트 케이스",
+        "reasons": "이유",
+        "tierPinned": "고정됨",
+        "tierAffected": "영향받음",
+        "tierRelated": "관련됨",
+        "selectAll": "모두 선택",
+        "selectNone": "선택 안 함",
+        "showDetails": "이유 표시",
+        "hideDetails": "이유 숨기기",
+        "excluded": "{count, plural, other {이미 실행에 포함된 케이스 #개가 건너뛰어졌습니다}}"
+      },
+      "noAffected": {
+        "title": "영향받는 테스트를 찾을 수 없습니다",
+        "description": "변경 사항과 일치하는 테스트 케이스가 없습니다. 변경된 파일에 케이스를 고정하면 다음 분석에서 찾을 수 있습니다."
+      },
+      "reasons": {
+        "pin": "핀",
+        "path": "키워드",
+        "history": "기록",
+        "ai": "AI",
+        "linked": "관련됨",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "{pattern}와 일치",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "{field}에서 \"{term}\" 일치",
+        "fieldName": "케이스 이름",
+        "fieldContent": "케이스 내용",
+        "fieldTag": "태그",
+        "fieldFolder": "폴더",
+        "historyDetail": "{count, plural, other {같은 파일 변경 후 이전 실행 #건}}",
+        "historyFailed": "유사한 변경 후 이전 실행에서 실패함",
+        "linkedDetail": "케이스 {caseId}에 연결됨"
+      },
+      "stale": {
+        "badge": "오래됨",
+        "tooltipAnalysis": "고정된 블록을 기준 커밋에서 찾을 수 없습니다. 파일 경로로만 일치되었습니다. 테스트 케이스 페이지에서 다시 고정하세요.",
+        "title": "{count, plural, other {오래된 핀 #개}}",
+        "description": "이 핀은 더 이상 코드와 일치하지 않습니다. 테스트 케이스 페이지에서 다시 고정하세요."
+      },
+      "uncovered": {
+        "title": "{count, plural, other {테스트가 없는 변경된 파일 #개}}",
+        "description": "이 파일에 연결된 테스트 케이스가 없습니다. 케이스를 고정하여 격차를 해소하세요.",
+        "pinAction": "케이스 고정...",
+        "pinned": "고정됨"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "제공자가 부분적인 diff를 반환했습니다.",
+        "diff_truncated_by_budget": "diff의 일부만 AI 컨텍스트에 맞아, {count, plural, other {#개 파일}}이(가) 경로만으로 요약되었습니다.",
+        "llm_not_configured": "활성화된 LLM 통합이 없습니다: AI 순위 지정이 건너뛰어졌습니다.",
+        "search_fallback_db": "검색 인덱스를 사용할 수 없습니다: 키워드 일치는 데이터베이스를 사용했습니다.",
+        "search_index_empty": "이 프로젝트는 검색 인덱스에 케이스가 없어 키워드 일치가 데이터베이스를 사용했습니다. 더 나은 일치를 위해 관리자에게 재인덱싱을 요청하세요.",
+        "ai_partial": "일부 AI 배치가 실패했습니다. 결과가 불완전할 수 있습니다.",
+        "ai_truncated": "{count, plural, other {AI 배치 #개}}가 모델에 의해 잘렸습니다.",
+        "no_candidates": "일치하는 테스트 케이스가 없습니다.",
+        "anchor_fetch_capped": "일부 고정된 파일이 경로로만 일치되었습니다(가져오기 한도에 도달함)."
+      },
+      "actions": {
+        "compare": "비교",
+        "analyze": "분석",
+        "reanalyze": "다시 분석",
+        "refine": "변경 사항으로 돌아가기",
+        "accept": "{count, plural, other {케이스 #개 추가}}",
+        "cancelAnalysis": "분석 취소",
+        "back": "뒤로",
+        "next": "다음"
+      },
+      "errors": {
+        "title": "분석 실패",
+        "generic": "변경 사항을 분석하는 중 문제가 발생했습니다. 다시 시도해 주세요.",
+        "pullFailed": "해당 풀 리퀘스트의 커밋을 읽을 수 없습니다. 다른 것을 선택하거나 커밋을 직접 지정하세요.",
+        "compareFailed": "커밋을 비교할 수 없습니다.",
+        "analysisFailed": "분석에 실패했습니다: {error}",
+        "cancelled": "분석이 취소되었습니다.",
+        "timeout": "분석이 너무 오래 걸리고 있습니다. 나중에 다시 확인하거나 다시 시도하세요.",
+        "branchesFailed": "브랜치 목록을 가져올 수 없습니다.",
+        "commitsFailed": "커밋을 불러올 수 없습니다.",
+        "disabled": "이 프로젝트에는 영향 분석이 활성화되어 있지 않습니다.",
+        "noConfig": "먼저 프로젝트 설정에서 애플리케이션 저장소를 연결하세요."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "입증",
       "toolsAndIntegrations": "도구 및 통합",
       "aiTools": "AI 도구",
-      "system": "체계"
+      "system": "체계",
+      "impact": "영향 분석"
     },
     "imports": {
       "description": "외부 테스트 관리 도구의 데이터를 TestPlanIt으로 가져옵니다.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "테스트 실행 단계 결과",
         "issueConfigs": "문제 구성",
         "sharedStepGroups": "공유 스텝 그룹",
-        "dataSets": "데이터 세트"
+        "dataSets": "데이터 세트",
+        "codePins": "코드 핀",
+        "impactAnalyses": "영향 분석"
       },
       "table": {
         "title": "삭제됨 {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "URL(요구사항)에서 테스트 케이스 생성",
         "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
         "automation_candidates": "자동화 후보 보고서",
-        "derive_case_steps": "AI 단계 도출"
+        "derive_case_steps": "AI 단계 도출",
+        "impact_analysis": "영향: 영향받는 테스트 선택"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## 테스트 실행 필터링\n\n칩을 토글하여 목록을 좁힐 수 있습니다. 칩은 활성 탭과 완료 탭 모두에 적용되며, 이 기기에서 이 프로젝트에 대해 기억됩니다.\n\n- **수동** / **자동** — 해당 유형의 실행만 목록에 표시합니다. 둘 다 켜거나(또는 둘 다 끄면) 모든 실행이 표시됩니다.\n- **내 테스트 실행** — 본인이 참여한 실행만 표시합니다: 실행을 생성했거나, 실행에서 테스트 케이스가 할당되었거나, 실행에서 테스트 결과를 기록한 경우입니다.",
-    "projectSessionsFilters": "## 세션 필터링\n\n칩을 토글하여 목록을 좁힙니다. 칩은 활성 탭과 완료된 탭 모두에 적용되며, 이 프로젝트에 대해 이 기기에서 기억됩니다.\n\n- **내 세션** — 회원님이 참여하는 세션만 표시됩니다: 회원님이 생성했거나 회원님에게 할당된 세션입니다."
+    "projectSessionsFilters": "## 세션 필터링\n\n칩을 토글하여 목록을 좁힙니다. 칩은 활성 탭과 완료된 탭 모두에 적용되며, 이 프로젝트에 대해 이 기기에서 기억됩니다.\n\n- **내 세션** — 회원님이 참여하는 세션만 표시됩니다: 회원님이 생성했거나 회원님에게 할당된 세션입니다.",
+    "projectImpact": "## 영향도\n테스트 대상 애플리케이션의 저장소를 연결하면 이 프로젝트에서 테스트 영향도 분석을 실행할 수 있습니다: 두 커밋을 선택하여 변경 사항이 어떤 테스트 케이스에 영향을 미치는지 확인하고, 테스트 케이스를 해당 코드에 고정할 수 있습니다."
   },
   "reports": {
     "ui": {

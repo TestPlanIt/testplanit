@@ -736,7 +736,8 @@
       "reports": "Rapports",
       "adminSamlConfig": "Configuration SAML - Administration",
       "apiDocumentation": "Documentation de l'API",
-      "sharedContent": "Contenu partagé"
+      "sharedContent": "Contenu partagé",
+      "impact": "Analyse d'impact"
     },
     "aria": {
       "userMenu": "Menu utilisateur",
@@ -2224,6 +2225,105 @@
           "savedToast": "Nettoyage de l'automatisation abandonnée mis à jour pour ce projet",
           "saveError": "Échec de la mise à jour du nettoyage de l'automatisation abandonnée"
         }
+      },
+      "impact": {
+        "title": "Analyse d'impact",
+        "description": "Activez l'analyse d'impact des tests et connectez le dépôt de l'application testée.",
+        "enableLabel": "Activer l'analyse d'impact",
+        "enableDescription": "Permettre aux membres de l'équipe de sélectionner les tests affectés par les modifications de code lors de la composition d'un cycle de test.",
+        "enabledToast": "Analyse d'impact activée",
+        "disabledToast": "Analyse d'impact désactivée",
+        "noRepos": {
+          "title": "Aucun dépôt de code configuré",
+          "adminDescription": "Configurez une connexion au dépôt avant de configurer l'analyse d'impact pour ce projet.",
+          "adminLink": "Accéder aux dépôts de code",
+          "userDescription": "Contactez votre administrateur système pour configurer une connexion au dépôt de code."
+        },
+        "repository": {
+          "title": "Dépôt de l'application",
+          "description": "Sélectionnez le dépôt qui contient l'application testée.",
+          "placeholder": "Sélectionnez un dépôt de code...",
+          "branchLabel": "Branche",
+          "branchPlaceholder": "Sélectionnez une branche...",
+          "branchInputPlaceholder": "Laissez vide pour utiliser la branche par défaut du dépôt",
+          "defaultBranch": "Branche par défaut du dépôt",
+          "branchesUnavailable": "Impossible de lister les branches : {error}",
+          "branchesFallbackHint": "Saisissez plutôt le nom de la branche."
+        },
+        "pathPatterns": {
+          "title": "Modèles de chemin",
+          "description": "Quels fichiers de l'application inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemple : path=src + pattern=**/* inclut tout ce qui se trouve sous src.",
+          "pathLabel": "Chemin",
+          "pathPlaceholder": "src",
+          "patternLabel": "Modèle",
+          "addPath": "Ajouter un chemin",
+          "previewFiles": "Aperçu des fichiers",
+          "scanningRepo": "Analyse des fichiers du dépôt… ({seconds}s)",
+          "files": "{count, plural, one {# fichier} other {# fichiers}}",
+          "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur)"
+        },
+        "preview": {
+          "resolvingBranch": "Résolution de la branche…",
+          "scanningFiles": "Analyse des fichiers dans {scope}…",
+          "scanningFilesCount": "Analyse des fichiers dans {scope}… ({count, number} trouvé)",
+          "filtering": "Application des filtres aux fichiers {count, number}…",
+          "rateLimited": "Limité par le fournisseur — nouvelle tentative dans {seconds, number}s…"
+        },
+        "cache": {
+          "title": "Paramètres du cache",
+          "description": "Les fichiers sont mis en cache dans Valkey afin que le sélecteur de fichiers Code Pin et les marqueurs de dépôt restent rapides.",
+          "enableLabel": "Activer la mise en cache des fichiers",
+          "disabledWarning": "La mise en cache des fichiers est désactivée. Les marqueurs de dépôt ne sont pas analysés, et le sélecteur de fichiers Code Pin liste les fichiers en direct depuis votre fournisseur à chaque ouverture.",
+          "ttlBefore": "Mettre en cache pendant",
+          "ttlDays": "{count, plural, one {jour} other {jours}}",
+          "ttlAriaLabel": "Durée du cache en jours",
+          "statusTitle": "État du cache",
+          "refreshButton": "Actualiser le cache",
+          "listingFiles": "Liste des fichiers…",
+          "cachingFiles": "Mise en cache des fichiers {count}…",
+          "statusNeverFetched": "Jamais récupéré",
+          "statusPending": "Rafraîchissement...",
+          "lastFetched": "Dernière récupération",
+          "filesCached": "Fichiers en cache",
+          "contentsCached": "Contenus mis en cache",
+          "contentsIncomplete": "Seuls {cached} des {total} contenus de fichiers sont mis en cache. Actualisez à nouveau pour terminer.",
+          "totalSize": "Taille totale"
+        },
+        "markers": {
+          "title": "Marqueurs de dépôt",
+          "description": "Les annotations de commentaire comme @testplanit case:123 et les entrées dans .testplanit/testmap.yml deviennent des Code Pins à chaque actualisation du cache.",
+          "lastScan": "Dernière analyse : {date}",
+          "never": "Pas encore analysé",
+          "skippedPrivacy": "Ignoré : la mise en cache des fichiers est désactivée.",
+          "skippedPartial": "Ignoré : les contenus de fichiers n'ont été que partiellement mis en cache.",
+          "summary": "{annotations, plural, one {# annotation} other {# annotations}} · {mapEntries, plural, one {# entrée de mappage} other {# entrées de mappage}} · {created} créés · {updated} mis à jour · {removed} supprimés",
+          "problems": "{count, plural, one {# problème} other {# problèmes}}",
+          "error": "Échec de l'analyse : {error}"
+        },
+        "save": "Enregistrer la configuration",
+        "saved": "Configuration de l'analyse d'impact enregistrée",
+        "saveError": "Échec de l'enregistrement de la configuration",
+        "listError": "Impossible de lister les fichiers du dépôt",
+        "contentsError": "Échec de la mise en cache du contenu du fichier",
+        "networkError": "Erreur réseau lors de l'actualisation du cache",
+        "refreshSuccess": "Cache actualisé : {fileCount} fichiers ({contentCached} contenus mis en cache)",
+        "refreshRateLimited": "Cache actualisé : {fileCount} fichiers listés, {contentCached}/{fileCount} contenus mis en cache (limite de débit — actualisez à nouveau pour terminer)",
+        "refreshComplete": "Cache actualisé : {fileCount} fichiers",
+        "refreshInProgress": "L'actualisation du cache est toujours en cours en arrière-plan. Cela se mettra à jour ici une fois terminé.",
+        "validation": {
+          "pathRequired": "Le chemin d'accès est requis",
+          "patternRequired": "Un modèle est requis",
+          "repositoryRequired": "Un dépôt est requis",
+          "pathPatternRequired": "Au moins un modèle de chemin est requis"
+        },
+        "disconnect": "Déconnexion du dépôt",
+        "confirmDisconnect": "Êtes-vous sûr de vouloir déconnecter «{name}» de ce projet ?",
+        "disconnectWarningTitle": "La déconnexion de ce dépôt aura pour effet :",
+        "disconnectWarning1": "Supprimer {count, plural, one {# Code Pin} other {# Code Pins}} et l'historique d'analyse pour ce dépôt",
+        "disconnectWarning2": "Supprimer tous les fichiers de dépôt mis en cache",
+        "disconnectWarning3": "Supprimer les configurations de chemin et de branche",
+        "disconnectSuccess": "Dépôt de l'application déconnecté",
+        "disconnectError": "Échec de la déconnexion du dépôt de l'application"
       }
     },
     "matrix": {
@@ -3096,7 +3196,7 @@
         },
         "warnings": {
           "partialTitle": "Certains liens de problèmes n'ont pas été créés",
-          "summary": "{count, plural, one {# cellule de problème n'a pas pu être liée} other {# cellules de problème n'ont pas pu être liées}}. Les cas de test ont été importés."
+          "summary": "{count, plural, one {# cellule de problème} other {# cellules de problème}} n'ont pas pu être liées. Les cas de test ont été importés."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "Créer un cas de test",
       "successMessage": "Nouveau cas de test ajouté",
       "errorMessage": "Erreur inconnue lors de l'ajout d'un nouveau cas de test"
+    },
+    "draft": {
+      "saving": "Enregistrement…",
+      "saved": "Toutes les modifications enregistrées {time}",
+      "unsaved": "Modifications non enregistrées",
+      "saveFailed": "Impossible d'enregistrer — nouvelle tentative",
+      "restoreTitle": "Restaurer les modifications non enregistrées ?",
+      "restoreDescription": "Vous avez des modifications non enregistrées de ce cas de test depuis {age}. Restaurez-les, ou ignorez-les et chargez la version enregistrée.",
+      "restoreTitleNew": "Restaurer le cas de test non enregistré ?",
+      "restoreDescriptionNew": "Vous avez commencé un cas de test {age} et ne l'avez jamais enregistré. Restaurez ce que vous avez écrit, ou ignorez-le et recommencez.",
+      "restoreStaleWarning": "Ce cas de test a été enregistré par quelqu'un d'autre depuis que votre brouillon a été rédigé. La restauration remplacera son contenu lors de l'enregistrement.",
+      "restoreDiscard": "Ignorer",
+      "restoreRestore": "Restaurer",
+      "bannerText": "Vous avez des modifications non enregistrées de ce cas de test depuis {age}.",
+      "bannerAction": "Reprendre l'édition",
+      "bannerDiscard": "Les ignorer"
     },
     "columns": {
       "selectCase": "Sélectionner le cas",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "« {name} » sera retirée de vos vues enregistrées. Cette action est irréversible.",
       "deleted": "Vue enregistrée supprimée",
       "deleteFailed": "Impossible de supprimer la vue. Veuillez réessayer."
+    },
+    "codePins": {
+      "add": "Ajouter une épingle",
+      "addDialogDescription": "Les épingles sont ancrées à la pointe de la branche actuelle.",
+      "addDialogTitle": "Épingler ce cas au code",
+      "addFailed": "Impossible d'ajouter l'épingle",
+      "addSuccess": "Épingle ajoutée",
+      "anchoredAt": "Ancré à {sha}",
+      "cancel": "Annuler",
+      "caseLabel": "Cas de test",
+      "casePlaceholder": "Rechercher des cas de test...",
+      "contentUnavailable": "Le contenu du fichier n'est pas disponible.",
+      "description": "Code couvert par ce cas. Une modification à l'intérieur d'un bloc épinglé intègre le cas aux analyses d'impact.",
+      "dismissStale": "Rejeter",
+      "duplicate": "Cette épingle existe déjà.",
+      "empty": "Aucune épingle de code pour le moment.",
+      "endLine": "Ligne de fin",
+      "errorFileNotFound": "Fichier introuvable à la pointe de la branche.",
+      "errorLineOutOfRange": "La plage de lignes est en dehors du fichier.",
+      "errorSnippetTooLarge": "Le bloc épinglé est trop volumineux.",
+      "errorSymbolNotFound": "Symbole introuvable dans le fichier.",
+      "fileLabel": "Fichier",
+      "filePlaceholder": "Rechercher des fichiers...",
+      "filesCached": "{count, plural, one {# fichier} other {# fichiers}} en cache · {date}",
+      "filesLive": "Liste des fichiers en direct depuis le référentiel",
+      "globLabel": "Modèle",
+      "globMatches": "{count, plural, =0 {Aucun fichier en cache ne correspond} one {# fichier en cache correspond} other {# fichiers en cache correspondent}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Type",
+      "kindFile": "Fichier entier",
+      "kindGlob": "Modèle glob",
+      "kindLabel": "Épingler à",
+      "kindRange": "Lignes",
+      "kindSymbol": "Symbole",
+      "linesHint": "Cliquez sur un numéro de ligne pour commencer, maj-clic pour terminer.",
+      "location": "Emplacement",
+      "managedTooltip": "Géré par le référentiel. Modifiez le marqueur dans le code.",
+      "noFilesCached": "Aucune liste de fichiers en cache. Demandez à un administrateur de projet de rafraîchir le cache du référentiel.",
+      "noteLabel": "Remarque",
+      "notePlaceholder": "Pourquoi ce cas couvre ce code (facultatif)",
+      "reanchor": "Réancrer",
+      "reanchorFailed": "Impossible de réancrer l'épingle",
+      "reanchorSuccess": "Épingle réancrée",
+      "remove": "Retirer",
+      "removeConfirm": "Retirer cette épingle ?",
+      "removeFailed": "Impossible de retirer l'épingle",
+      "removeSuccess": "Épingle retirée",
+      "source": "Source",
+      "sourceAi": "IA",
+      "sourceAnnotation": "Annotation",
+      "sourceManual": "Manuel",
+      "sourceMapfile": "Fichier de mappage",
+      "staleBadge": "Obsolète",
+      "staleFileDeleted": "fichier supprimé",
+      "staleSnippetNotFound": "lignes introuvables",
+      "staleSymbolNotFound": "symbole introuvable",
+      "staleTooltip": "Le bloc épinglé est introuvable à la pointe de la branche : {reason}.",
+      "startLine": "Ligne de début",
+      "submit": "Ajouter une épingle",
+      "symbolHint": "La déclaration est localisée par nom dans le fichier.",
+      "symbolLabel": "Symbole",
+      "symbolNoneDetected": "Aucun symbole détecté, saisissez un nom.",
+      "symbolPlaceholder": "nomFonction",
+      "symbolSelectPlaceholder": "Sélectionnez ou saisissez un symbole...",
+      "updateSuccess": "Épingle mise à jour",
+      "updateFailed": "Impossible de mettre à jour l'épingle",
+      "editDialogTitle": "Modifier cette épingle",
+      "editDialogDescription": "Le fichier et le type d'épingle restent inchangés. Pour les modifier, retirez cette épingle et ajoutez-en une nouvelle.",
+      "editAction": "Modifier l'épingle",
+      "saveChanges": "Enregistrer les modifications",
+      "symbolSearchPlaceholder": "Rechercher des symboles...",
+      "symbolUseTyped": "Utiliser « {symbol} »",
+      "title": "Épingles de code",
+      "viewerFailed": "Impossible de charger le fichier.",
+      "viewerLoading": "Chargement du fichier…",
+      "viewerTooLarge": "Ce fichier est trop volumineux pour être affiché. Saisissez plutôt les numéros de ligne.",
+      "wholeFile": "Fichier entier"
+    },
+    "diffView": {
+      "added": "Ligne ajoutée",
+      "removed": "Ligne supprimée",
+      "oldLine": "Ancienne ligne",
+      "newLine": "Nouvelle ligne",
+      "context": "Ligne de contexte"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Réessayé",
       "clear": "Effacer les filtres"
+    },
+    "impact": {
+      "title": "Impact",
+      "analyzeImpact": "Analyser l'impact",
+      "description": "Choisissez deux commits de l'application testée et sélectionnez les cas de test affectés par les modifications.",
+      "noRepository": "Connectez le référentiel de l'application dans les paramètres du projet pour utiliser Impact.",
+      "aiUnavailable": "Aucune intégration LLM active : les résultats proviennent uniquement des épingles de code, de la correspondance par mots-clés et de l'historique des exécutions.",
+      "steps": {
+        "pick": "Commits",
+        "diff": "Modifications",
+        "analyze": "Analyser",
+        "review": "Tests affectés"
+      },
+      "pull": {
+        "label": "Demande de tirage",
+        "selectPlaceholder": "Sélectionnez une demande de tirage...",
+        "searchPlaceholder": "Rechercher par numéro, titre, auteur ou branche...",
+        "stateAll": "Tous",
+        "stateOpen": "Ouvert",
+        "stateMerged": "Fusionné",
+        "stateClosed": "Fermé",
+        "resolved": "Comparaison de {base} sur {target} avec {head} sur {source}."
+      },
+      "pick": {
+        "modeLabel": "Choisir les modifications par",
+        "modeCommits": "Commits",
+        "modePull": "Demande de tirage",
+        "modeCommitsHint": "Ce qui a changé entre deux builds, afin de pouvoir retester tout ce qui a été livré depuis la dernière vérification.",
+        "modePullHint": "Ce que cette demande de tirage modifie, mesuré depuis le point de divergence de sa branche, de sorte que les travaux livrés sur la branche cible entre-temps sont exclus.",
+        "branchLabel": "Branche",
+        "baseLabel": "Commit de base",
+        "headLabel": "Commit de tête",
+        "commitPlaceholder": "Rechercher des commits...",
+        "searchHint": "Saisissez un sha de commit, ou filtrez les commits chargés par message ou auteur.",
+        "refLabel": "Ou collez une référence",
+        "refPlaceholder": "Branche, tag ou sha",
+        "refNotFound": "Référence introuvable",
+        "latestOnBranch": "Dernier sur {branch}",
+        "previousAnalysisLabel": "Démarrer à partir d'une analyse précédente",
+        "previousAnalysisPlaceholder": "Sélectionnez une analyse...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# test affecté} other {# tests affectés}}",
+        "sameCommit": "La base et la tête sont le même commit.",
+        "swapped": "La base et la tête ont été inversées pour que les modifications se lisent dans l'ordre.",
+        "loadingCommits": "Chargement des commits…",
+        "noCommits": "Aucun commit trouvé."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# fichier} other {# fichiers}} modifiés · +{additions, number} −{deletions, number}",
+        "truncated": "Le fournisseur a renvoyé un diff partiel. Certains fichiers modifiés ne sont pas affichés ou n'ont pas de patch.",
+        "noChanges": "Aucune modification entre ces commits.",
+        "statusAdded": "Ajouté",
+        "statusModified": "Modifié",
+        "statusRemoved": "Supprimé",
+        "statusRenamed": "Renommé",
+        "showPatch": "Afficher les modifications",
+        "hidePatch": "Masquer les modifications",
+        "largePatch": "Patch volumineux ({lines, number} lignes)",
+        "showFullPatch": "Afficher le patch complet",
+        "binary": "Fichier binaire",
+        "noPatch": "Patch non disponible",
+        "pinnedFiles": "{count, plural, one {# épingle} other {# épingles}}",
+        "loading": "Comparaison des commits…",
+        "failed": "Impossible de comparer les commits."
+      },
+      "loading": {
+        "analyzing": "Analyse en cours…",
+        "resolving_config": "Résolution de la configuration du référentiel…",
+        "fetching_diff": "Récupération du diff…",
+        "matching_pins": "Correspondance des épingles de code…",
+        "searching_cases": "Recherche de cas de test par mot-clé…",
+        "scoring_history": "Évaluation de l'historique des exécutions…",
+        "waiting_for_ai": "En attente de l'IA…",
+        "merging": "Combinaison des résultats…",
+        "ranking": "{current} sur {total} cas de test candidats classés",
+        "reused": "Réutilisation d'une analyse récente des mêmes commits."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Aucun test affecté} one {# test affecté} other {# tests affectés}}",
+        "description": "Trié par score. Chaque test indique pourquoi il a été sélectionné.",
+        "relatedCount": "{count, plural, one {# test associé} other {# tests associés}} ont un score inférieur et sont décochés.",
+        "summary": "Résumé",
+        "score": "Score",
+        "case": "Cas de test",
+        "reasons": "Pourquoi",
+        "tierPinned": "Épinglé",
+        "tierAffected": "Affecté",
+        "tierRelated": "Associé",
+        "selectAll": "Tout sélectionner",
+        "selectNone": "Ne rien sélectionner",
+        "showDetails": "Afficher les raisons",
+        "hideDetails": "Masquer les raisons",
+        "excluded": "{count, plural, one {# cas déjà présent dans l'exécution a été ignoré} other {# cas déjà présents dans l'exécution ont été ignorés}}"
+      },
+      "noAffected": {
+        "title": "Aucun test affecté trouvé",
+        "description": "Aucun cas de test ne correspond aux modifications. Épinglez des cas aux fichiers modifiés pour que la prochaine analyse les trouve."
+      },
+      "reasons": {
+        "pin": "Épingle",
+        "path": "Mot-clé",
+        "history": "Historique",
+        "ai": "IA",
+        "linked": "Associé",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Correspond à {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "Correspondance de « {term} » dans {field}",
+        "fieldName": "nom du cas",
+        "fieldContent": "contenu du cas",
+        "fieldTag": "étiquette",
+        "fieldFolder": "dossier",
+        "historyDetail": "{count, plural, one {# exécution antérieure} other {# exécutions antérieures}} après des modifications des mêmes fichiers",
+        "historyFailed": "Échec lors d'une exécution antérieure après des modifications similaires",
+        "linkedDetail": "Lié au cas {caseId}"
+      },
+      "stale": {
+        "badge": "Obsolète",
+        "tooltipAnalysis": "Le bloc épinglé est introuvable au commit de base ; correspondance par chemin de fichier uniquement. Réépinglez depuis la page du cas de test.",
+        "title": "{count, plural, one {# épingle obsolète} other {# épingles obsolètes}}",
+        "description": "Ces épingles ne correspondent plus au code. Réancrez-les depuis la page du cas de test."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# fichier modifié n'a aucun test} other {# fichiers modifiés n'ont aucun test}}",
+        "description": "Aucun cas de test n'est lié à ces fichiers. Épinglez un cas pour combler cette lacune.",
+        "pinAction": "Épingler un cas...",
+        "pinned": "Épinglé"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "Le fournisseur a renvoyé un diff partiel.",
+        "diff_truncated_by_budget": "Seule une partie du diff tenait dans le contexte de l'IA ; {count, plural, one {# fichier a été} other {# fichiers ont été}} résumés par chemin uniquement.",
+        "llm_not_configured": "Aucune intégration LLM active : le classement par IA a été ignoré.",
+        "search_fallback_db": "Index de recherche indisponible : la correspondance par mots-clés a utilisé la base de données.",
+        "search_index_empty": "Ce projet n'a aucun cas dans l'index de recherche, la correspondance par mots-clés a donc utilisé la base de données. Demandez à un administrateur de réindexer pour de meilleures correspondances.",
+        "ai_partial": "Certains lots d'IA ont échoué ; les résultats peuvent être incomplets.",
+        "ai_truncated": "{count, plural, one {# lot d'IA a été} other {# lots d'IA ont été}} coupés par le modèle.",
+        "no_candidates": "Aucun cas de test ne correspond.",
+        "anchor_fetch_capped": "Certains fichiers épinglés ont été trouvés par chemin uniquement (limite de récupération atteinte)."
+      },
+      "actions": {
+        "compare": "Comparer",
+        "analyze": "Analyser",
+        "reanalyze": "Analyser à nouveau",
+        "refine": "Retour aux modifications",
+        "accept": "{count, plural, one {Ajouter # cas} other {Ajouter # cas}}",
+        "cancelAnalysis": "Annuler l'analyse",
+        "back": "Retour",
+        "next": "Suivant"
+      },
+      "errors": {
+        "title": "L'analyse a échoué",
+        "generic": "Une erreur s'est produite lors de l'analyse des modifications. Veuillez réessayer.",
+        "pullFailed": "Impossible de lire les commits de cette demande de tirage. Choisissez-en une autre, ou nommez les commits vous-même.",
+        "compareFailed": "Impossible de comparer les commits.",
+        "analysisFailed": "L'analyse a échoué : {error}",
+        "cancelled": "L'analyse a été annulée.",
+        "timeout": "L'analyse prend trop de temps. Revenez plus tard ou réessayez.",
+        "branchesFailed": "Impossible de lister les branches.",
+        "commitsFailed": "Impossible de charger les commits.",
+        "disabled": "Impact n'est pas activé pour ce projet.",
+        "noConfig": "Connectez d'abord le référentiel de l'application dans les paramètres du projet."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Authentification",
       "toolsAndIntegrations": "Outils et intégrations",
       "aiTools": "Outils IA",
-      "system": "Système"
+      "system": "Système",
+      "impact": "Analyse d'impact"
     },
     "imports": {
       "description": "Importez les données provenant d'outils de gestion de tests externes dans TestPlanIt.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Résultats de l'étape d'exécution du test",
         "issueConfigs": "Configurations des problèmes",
         "sharedStepGroups": "Groupes de pas partagés",
-        "dataSets": "Ensembles de données"
+        "dataSets": "Ensembles de données",
+        "codePins": "Épingles de code",
+        "impactAnalyses": "Analyses d'impact"
       },
       "table": {
         "title": "Supprimé {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Générer des cas de test à partir d'une URL (exigences)",
         "generate_from_url_app": "Générer des cas de test à partir d'une URL (tests d'application)",
         "automation_candidates": "Rapport des candidats à l'automatisation",
-        "derive_case_steps": "Dérivation des étapes par IA"
+        "derive_case_steps": "Dérivation des étapes par IA",
+        "impact_analysis": "Impact : Sélection des tests affectés"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Filtrage des exécutions de test\n\nActivez ou désactivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Manuel** / **Automatisé** — limite la liste à ce type d'exécution. Activer les deux (ou les désactiver toutes les deux) affiche toutes les exécutions.\n- **Mes exécutions de test** — uniquement les exécutions auxquelles vous participez : vous avez créé l'exécution, un cas de test vous y est assigné, ou vous avez enregistré un résultat de test dans celle-ci.",
-    "projectSessionsFilters": "## Filtrage des sessions\n\nActivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Mes sessions** — uniquement les sessions auxquelles vous participez : vous avez créé la session, ou elle vous est assignée."
+    "projectSessionsFilters": "## Filtrage des sessions\n\nActivez une puce pour affiner la liste. Les puces s'appliquent aux onglets Actives et Terminées, et sont mémorisées sur cet appareil pour ce projet.\n\n- **Mes sessions** — uniquement les sessions auxquelles vous participez : vous avez créé la session, ou elle vous est assignée.",
+    "projectImpact": "## Impact\nConnectez le référentiel de l'application testée afin que ce projet puisse exécuter une analyse d'impact des tests : choisissez deux commits pour voir quels cas de test sont affectés par les modifications, et épinglez les cas de test au code qu'ils couvrent."
   },
   "reports": {
     "ui": {

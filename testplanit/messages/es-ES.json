@@ -736,7 +736,8 @@
       "reports": "Informes",
       "adminSamlConfig": "Administrador - Configuración SAML",
       "apiDocumentation": "Documentación de la API",
-      "sharedContent": "Contenido compartido"
+      "sharedContent": "Contenido compartido",
+      "impact": "Análisis de Impacto"
     },
     "aria": {
       "userMenu": "Menú de usuario",
@@ -2224,6 +2225,105 @@
           "savedToast": "Limpieza de automatización abandonada actualizada para este proyecto",
           "saveError": "Error al actualizar la limpieza de automatización abandonada"
         }
+      },
+      "impact": {
+        "title": "Análisis de Impacto",
+        "description": "Habilite el análisis de impacto de pruebas y conecte el repositorio de la aplicación bajo prueba.",
+        "enableLabel": "Habilitar Análisis de Impacto",
+        "enableDescription": "Permita que los miembros del equipo seleccionen las pruebas afectadas por los cambios de código al componer una ejecución de prueba.",
+        "enabledToast": "Análisis de Impacto habilitado",
+        "disabledToast": "Análisis de Impacto deshabilitado",
+        "noRepos": {
+          "title": "No hay repositorios de código configurados",
+          "adminDescription": "Configure una conexión de repositorio antes de configurar el Análisis de Impacto para este proyecto.",
+          "adminLink": "Ir a Repositorios de Código",
+          "userDescription": "Comuníquese con su administrador del sistema para configurar una conexión al repositorio de código."
+        },
+        "repository": {
+          "title": "Repositorio de la Aplicación",
+          "description": "Seleccione el repositorio que contiene la aplicación bajo prueba.",
+          "placeholder": "Seleccione un repositorio de código...",
+          "branchLabel": "Rama",
+          "branchPlaceholder": "Seleccione una rama...",
+          "branchInputPlaceholder": "Déjelo en blanco para usar la rama predeterminada del repositorio",
+          "defaultBranch": "Rama predeterminada del repositorio",
+          "branchesUnavailable": "No se pudieron listar las ramas: {error}",
+          "branchesFallbackHint": "Escriba el nombre de la rama en su lugar."
+        },
+        "pathPatterns": {
+          "title": "Patrones de Ruta",
+          "description": "Qué archivos de la aplicación incluir. Cada fila combina una ruta base y un patrón glob. Ejemplo: path=src + pattern=**/* incluye todo bajo src.",
+          "pathLabel": "Ruta",
+          "pathPlaceholder": "origen",
+          "patternLabel": "Patrón",
+          "addPath": "Agregar Ruta",
+          "previewFiles": "Vista Previa de Archivos",
+          "scanningRepo": "Escaneando archivos del repositorio… ({seconds}s)",
+          "files": "{count, plural, one {# archivo} other {# archivos}}",
+          "truncatedBadge": "Los resultados pueden estar incompletos (límite del proveedor)"
+        },
+        "preview": {
+          "resolvingBranch": "Resolviendo la rama…",
+          "scanningFiles": "Escaneando archivos en {scope}…",
+          "scanningFilesCount": "Escaneando archivos en {scope}… ({count, number} encontrados)",
+          "filtering": "Aplicando filtros a {count, number} archivos…",
+          "rateLimited": "Limitado por el proveedor — reintentando en {seconds, number}s…"
+        },
+        "cache": {
+          "title": "Configuración de Caché",
+          "description": "Los archivos se almacenan en caché en Valkey para que el selector de archivos de Code Pin y los marcadores del repositorio se mantengan rápidos.",
+          "enableLabel": "Habilitar el almacenamiento en caché de archivos",
+          "disabledWarning": "El almacenamiento en caché de archivos está deshabilitado. Los marcadores del repositorio no se escanean, y el selector de archivos de Code Pin lista archivos en vivo desde su proveedor en cada apertura.",
+          "ttlBefore": "Caché durante",
+          "ttlDays": "{count, plural, one {día} other {días}}",
+          "ttlAriaLabel": "Duración de la caché en días",
+          "statusTitle": "Estado de la Caché",
+          "refreshButton": "Actualizar Caché",
+          "listingFiles": "Listando archivos…",
+          "cachingFiles": "Almacenando en caché {count} archivos…",
+          "statusNeverFetched": "Nunca recuperado",
+          "statusPending": "Actualizando...",
+          "lastFetched": "Última Obtención",
+          "filesCached": "Archivos en Caché",
+          "contentsCached": "Contenidos en Caché",
+          "contentsIncomplete": "Solo {cached} de {total} contenidos de archivo están en caché. Actualice de nuevo para completar.",
+          "totalSize": "Tamaño Total"
+        },
+        "markers": {
+          "title": "Marcadores del Repositorio",
+          "description": "Las anotaciones de comentarios como @testplanit case:123 y las entradas en .testplanit/testmap.yml se convierten en Code Pins en cada actualización de caché.",
+          "lastScan": "Último escaneo: {date}",
+          "never": "Aún no escaneado",
+          "skippedPrivacy": "Omitido: el almacenamiento en caché de archivos está deshabilitado.",
+          "skippedPartial": "Omitido: el contenido de los archivos solo se almacenó parcialmente en caché.",
+          "summary": "{annotations, plural, one {# anotación} other {# anotaciones}} · {mapEntries, plural, one {# entrada de mapa} other {# entradas de mapa}} · {created} creados · {updated} actualizados · {removed} eliminados",
+          "problems": "{count, plural, one {# problema} other {# problemas}}",
+          "error": "Falló el escaneo: {error}"
+        },
+        "save": "Guardar Configuración",
+        "saved": "Configuración del Análisis de Impacto guardada",
+        "saveError": "No se pudo guardar la configuración",
+        "listError": "No se pudieron listar los archivos del repositorio",
+        "contentsError": "No se pudo almacenar en caché el contenido del archivo",
+        "networkError": "Error de red durante la actualización de caché",
+        "refreshSuccess": "Caché actualizada: {fileCount} archivos ({contentCached} contenidos almacenados en caché)",
+        "refreshRateLimited": "Caché actualizada: {fileCount} archivos listados, {contentCached}/{fileCount} contenidos almacenados en caché (velocidad limitada; actualice nuevamente para completar)",
+        "refreshComplete": "Caché actualizada: {fileCount} archivos",
+        "refreshInProgress": "La actualización de la caché sigue ejecutándose en segundo plano. Se actualizará aquí cuando termine.",
+        "validation": {
+          "pathRequired": "La ruta es obligatoria",
+          "patternRequired": "Se requiere patrón",
+          "repositoryRequired": "Se requiere repositorio",
+          "pathPatternRequired": "Se requiere al menos un patrón de ruta"
+        },
+        "disconnect": "Desconectar Repositorio",
+        "confirmDisconnect": "¿Estás seguro de que deseas desconectar \"{name}\" de este proyecto?",
+        "disconnectWarningTitle": "Desconectar este repositorio provocará lo siguiente:",
+        "disconnectWarning1": "Eliminar {count, plural, one {# Code Pin} other {# Code Pins}} y el historial de análisis de este repositorio",
+        "disconnectWarning2": "Eliminar todos los archivos del repositorio en caché",
+        "disconnectWarning3": "Eliminar patrones de ruta y configuraciones de rama",
+        "disconnectSuccess": "Repositorio de la aplicación desconectado",
+        "disconnectError": "No se pudo desconectar el repositorio de la aplicación"
       }
     },
     "matrix": {
@@ -3170,6 +3270,22 @@
       "successMessage": "Nuevo caso de prueba añadido",
       "errorMessage": "Error desconocido añadiendo nuevo caso de prueba"
     },
+    "draft": {
+      "saving": "Guardando…",
+      "saved": "Todos los cambios guardados {time}",
+      "unsaved": "Cambios no guardados",
+      "saveFailed": "No se pudo guardar — reintentando",
+      "restoreTitle": "¿Restaurar los cambios no guardados?",
+      "restoreDescription": "Tiene cambios no guardados en este caso de prueba de {age}. Restáurelos, o descártelos y cargue la versión guardada.",
+      "restoreTitleNew": "¿Restaurar el caso de prueba no guardado?",
+      "restoreDescriptionNew": "Comenzó un caso de prueba {age} y nunca lo guardó. Restaure lo que escribió, o descártelo y empiece de nuevo.",
+      "restoreStaleWarning": "Este caso de prueba ha sido guardado por otra persona desde que se escribió su borrador. Restaurarlo reemplazará su contenido cuando guarde.",
+      "restoreDiscard": "Descartar",
+      "restoreRestore": "Restaurar",
+      "bannerText": "Tiene cambios no guardados en este caso de prueba de {age}.",
+      "bannerAction": "Reanudar edición",
+      "bannerDiscard": "Descartarlos"
+    },
     "columns": {
       "selectCase": "Seleccionar Caso",
       "runOrder": "Ejecutar pedido",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "“{name}” se eliminará de sus vistas guardadas. Esta acción no se puede deshacer.",
       "deleted": "Vista guardada eliminada",
       "deleteFailed": "No se pudo eliminar la vista. Inténtelo de nuevo."
+    },
+    "codePins": {
+      "add": "Agregar pin",
+      "addDialogDescription": "Los pines quedan anclados en la punta de la rama actual.",
+      "addDialogTitle": "Anclar este caso al código",
+      "addFailed": "No se pudo agregar el pin",
+      "addSuccess": "Pin agregado",
+      "anchoredAt": "Anclado en {sha}",
+      "cancel": "Cancelar",
+      "caseLabel": "Caso de prueba",
+      "casePlaceholder": "Buscar casos de prueba...",
+      "contentUnavailable": "El contenido del archivo no está disponible.",
+      "description": "Código que cubre este caso. Un cambio dentro de un bloque anclado incluye el caso en los análisis de impacto.",
+      "dismissStale": "Descartar",
+      "duplicate": "Este pin ya existe.",
+      "empty": "Aún no hay pines de código.",
+      "endLine": "Línea final",
+      "errorFileNotFound": "Archivo no encontrado en la punta de la rama.",
+      "errorLineOutOfRange": "El rango de líneas está fuera del archivo.",
+      "errorSnippetTooLarge": "El bloque anclado es demasiado grande.",
+      "errorSymbolNotFound": "Símbolo no encontrado en el archivo.",
+      "fileLabel": "Archivo",
+      "filePlaceholder": "Buscar archivos...",
+      "filesCached": "{count, plural, one {# archivo} other {# archivos}} en caché · {date}",
+      "filesLive": "Mostrando archivos en vivo desde el repositorio",
+      "globLabel": "Patrón",
+      "globMatches": "{count, plural, =0 {Ningún archivo en caché coincide} one {# archivo en caché coincide} other {# archivos en caché coinciden}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Tipo",
+      "kindFile": "Archivo completo",
+      "kindGlob": "Patrón glob",
+      "kindLabel": "Anclar a",
+      "kindRange": "Líneas",
+      "kindSymbol": "Símbolo",
+      "linesHint": "Haga clic en un número de línea para iniciar, mayús-clic para finalizar.",
+      "location": "Ubicación",
+      "managedTooltip": "Administrado por el repositorio. Edite el marcador en el código.",
+      "noFilesCached": "No hay lista de archivos en caché. Pida a un administrador del proyecto que actualice la caché del repositorio.",
+      "noteLabel": "Nota",
+      "notePlaceholder": "Por qué este caso cubre este código (opcional)",
+      "reanchor": "Volver a anclar",
+      "reanchorFailed": "No se pudo volver a anclar el pin",
+      "reanchorSuccess": "Pin vuelto a anclar",
+      "remove": "Eliminar",
+      "removeConfirm": "¿Eliminar este pin?",
+      "removeFailed": "No se pudo eliminar el pin",
+      "removeSuccess": "Pin eliminado",
+      "source": "Fuente",
+      "sourceAi": "IA",
+      "sourceAnnotation": "Anotación",
+      "sourceManual": "Manual",
+      "sourceMapfile": "Archivo de mapa",
+      "staleBadge": "Obsoleto",
+      "staleFileDeleted": "archivo eliminado",
+      "staleSnippetNotFound": "líneas no encontradas",
+      "staleSymbolNotFound": "símbolo no encontrado",
+      "staleTooltip": "No se pudo encontrar el bloque anclado en la punta de la rama: {reason}.",
+      "startLine": "Línea inicial",
+      "submit": "Agregar pin",
+      "symbolHint": "La declaración se localiza por nombre en el archivo.",
+      "symbolLabel": "Símbolo",
+      "symbolNoneDetected": "No se detectaron símbolos, escriba un nombre.",
+      "symbolPlaceholder": "nombreDeFunción",
+      "symbolSelectPlaceholder": "Seleccione o escriba un símbolo...",
+      "updateSuccess": "Pin actualizado",
+      "updateFailed": "No se pudo actualizar el pin",
+      "editDialogTitle": "Editar este pin",
+      "editDialogDescription": "El archivo y el tipo de pin permanecen igual. Para cambiar cualquiera de los dos, elimine este pin y agregue uno nuevo.",
+      "editAction": "Editar pin",
+      "saveChanges": "Guardar cambios",
+      "symbolSearchPlaceholder": "Buscar símbolos...",
+      "symbolUseTyped": "Usar \"{symbol}\"",
+      "title": "Pines de código",
+      "viewerFailed": "No se pudo cargar el archivo.",
+      "viewerLoading": "Cargando archivo…",
+      "viewerTooLarge": "Este archivo es demasiado grande para mostrar. Ingrese los números de línea en su lugar.",
+      "wholeFile": "Archivo completo"
+    },
+    "diffView": {
+      "added": "Línea añadida",
+      "removed": "Línea eliminada",
+      "oldLine": "Línea anterior",
+      "newLine": "Línea nueva",
+      "context": "Línea de contexto"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Reintentado",
       "clear": "Limpiar filtros"
+    },
+    "impact": {
+      "title": "Impacto",
+      "analyzeImpact": "Analizar impacto",
+      "description": "Elija dos commits de la aplicación bajo prueba y seleccione los casos de prueba afectados por los cambios.",
+      "noRepository": "Conecte el repositorio de la aplicación en la configuración del proyecto para usar Impacto.",
+      "aiUnavailable": "No hay integración de LLM activa: los resultados provienen únicamente de Pines de código, coincidencia de palabras clave e historial de ejecuciones.",
+      "steps": {
+        "pick": "Confirmaciones",
+        "diff": "Cambios",
+        "analyze": "Analizar",
+        "review": "Pruebas afectadas"
+      },
+      "pull": {
+        "label": "Solicitud de extracción",
+        "selectPlaceholder": "Seleccione un pull request...",
+        "searchPlaceholder": "Buscar por número, título, autor o rama...",
+        "stateAll": "Todos",
+        "stateOpen": "Abierto",
+        "stateMerged": "Fusionado",
+        "stateClosed": "Cerrado",
+        "resolved": "Comparando {base} en {target} con {head} en {source}."
+      },
+      "pick": {
+        "modeLabel": "Elegir cambios por",
+        "modeCommits": "Confirmaciones",
+        "modePull": "Solicitud de extracción",
+        "modeCommitsHint": "Lo que cambió entre dos builds, para que pueda volver a probar todo lo que se agregó desde el último que verificó.",
+        "modePullHint": "Lo que cambia este pull request, medido desde donde su rama se separó, por lo que el trabajo que se agregó mientras tanto a la rama de destino queda excluido.",
+        "branchLabel": "Rama",
+        "baseLabel": "Commit base",
+        "headLabel": "Commit final",
+        "commitPlaceholder": "Buscar commits...",
+        "searchHint": "Escriba un sha de commit, o filtre los commits cargados por mensaje o autor.",
+        "refLabel": "O pegue una referencia",
+        "refPlaceholder": "Rama, etiqueta o sha",
+        "refNotFound": "Referencia no encontrada",
+        "latestOnBranch": "Última en {branch}",
+        "previousAnalysisLabel": "Comenzar desde un análisis anterior",
+        "previousAnalysisPlaceholder": "Seleccione un análisis...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# prueba afectada} other {# pruebas afectadas}}",
+        "sameCommit": "El commit base y el final son el mismo.",
+        "swapped": "El commit base y el final se intercambiaron para que los cambios se lean hacia adelante.",
+        "loadingCommits": "Cargando commits…",
+        "noCommits": "No se encontraron commits."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# archivo} other {# archivos}} cambiados · +{additions, number} −{deletions, number}",
+        "truncated": "El proveedor devolvió una comparación parcial. Algunos archivos modificados no se muestran o no tienen parche.",
+        "noChanges": "No hay cambios entre estos commits.",
+        "statusAdded": "Añadido",
+        "statusModified": "Modificado",
+        "statusRemoved": "Eliminado",
+        "statusRenamed": "Renombrado",
+        "showPatch": "Mostrar cambios",
+        "hidePatch": "Ocultar cambios",
+        "largePatch": "Parche grande ({lines, number} líneas)",
+        "showFullPatch": "Mostrar parche completo",
+        "binary": "Archivo binario",
+        "noPatch": "Parche no disponible",
+        "pinnedFiles": "{count, plural, one {# pin} other {# pines}}",
+        "loading": "Comparando commits…",
+        "failed": "No se pudieron comparar los commits."
+      },
+      "loading": {
+        "analyzing": "Analizando…",
+        "resolving_config": "Resolviendo la configuración del repositorio…",
+        "fetching_diff": "Obteniendo la comparación…",
+        "matching_pins": "Buscando coincidencias de Pines de código…",
+        "searching_cases": "Buscando casos de prueba por palabra clave…",
+        "scoring_history": "Calificando el historial de ejecuciones…",
+        "waiting_for_ai": "Esperando a la IA…",
+        "merging": "Combinando resultados…",
+        "ranking": "Clasificados {current} de {total} casos de prueba candidatos",
+        "reused": "Reutilizando un análisis reciente de los mismos commits."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Sin pruebas afectadas} one {# prueba afectada} other {# pruebas afectadas}}",
+        "description": "Ordenado por puntaje. Cada prueba muestra por qué fue seleccionada.",
+        "relatedCount": "{count, plural, one {# prueba relacionada} other {# pruebas relacionadas}} obtuvieron menor puntaje y están sin marcar.",
+        "summary": "Resumen",
+        "score": "Puntaje",
+        "case": "Caso de prueba",
+        "reasons": "Por qué",
+        "tierPinned": "Anclado",
+        "tierAffected": "Afectado",
+        "tierRelated": "Relacionado",
+        "selectAll": "Seleccionar todo",
+        "selectNone": "No seleccionar nada",
+        "showDetails": "Mostrar motivos",
+        "hideDetails": "Ocultar motivos",
+        "excluded": "{count, plural, one {# caso ya en la ejecución fue omitido} other {# casos ya en la ejecución fueron omitidos}}"
+      },
+      "noAffected": {
+        "title": "No se encontraron pruebas afectadas",
+        "description": "Ningún caso de prueba coincidió con los cambios. Ancle casos a los archivos modificados para que el próximo análisis los encuentre."
+      },
+      "reasons": {
+        "pin": "Fijado",
+        "path": "Palabra clave",
+        "history": "Historial",
+        "ai": "IA",
+        "linked": "Relacionado",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Coincide con {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "Coincidió \"{term}\" en {field}",
+        "fieldName": "nombre del caso",
+        "fieldContent": "contenido del caso",
+        "fieldTag": "etiqueta",
+        "fieldFolder": "carpeta",
+        "historyDetail": "{count, plural, one {# ejecución anterior} other {# ejecuciones anteriores}} después de cambios en los mismos archivos",
+        "historyFailed": "Falló en una ejecución anterior después de cambios similares",
+        "linkedDetail": "Vinculado al caso {caseId}"
+      },
+      "stale": {
+        "badge": "Obsoleto",
+        "tooltipAnalysis": "El bloque anclado no se encontró en el commit base; coincidió solo por la ruta del archivo. Vuelva a anclar desde la página del caso de prueba.",
+        "title": "{count, plural, one {# pin obsoleto} other {# pines obsoletos}}",
+        "description": "Estos pines ya no coinciden con el código. Vuelva a anclarlos desde la página del caso de prueba."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# archivo modificado no tiene pruebas} other {# archivos modificados no tienen pruebas}}",
+        "description": "Ningún caso de prueba está vinculado a estos archivos. Ancle un caso para cerrar la brecha.",
+        "pinAction": "Anclar un caso...",
+        "pinned": "Anclado"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "El proveedor devolvió una comparación parcial.",
+        "diff_truncated_by_budget": "Solo una parte de la comparación cupo en el contexto de la IA; {count, plural, one {# archivo fue} other {# archivos fueron}} resumidos solo por ruta.",
+        "llm_not_configured": "No hay integración de LLM activa: se omitió la clasificación por IA.",
+        "search_fallback_db": "Índice de búsqueda no disponible: la coincidencia de palabras clave usó la base de datos.",
+        "search_index_empty": "Este proyecto no tiene casos en el índice de búsqueda, por lo que la coincidencia de palabras clave usó la base de datos. Pida a un administrador que reindexe para obtener mejores coincidencias.",
+        "ai_partial": "Algunos lotes de IA fallaron; los resultados pueden estar incompletos.",
+        "ai_truncated": "{count, plural, one {# lote de IA fue} other {# lotes de IA fueron}} truncados por el modelo.",
+        "no_candidates": "Ningún caso de prueba coincidió.",
+        "anchor_fetch_capped": "Algunos archivos anclados coincidieron solo por ruta (se alcanzó el límite de obtención)."
+      },
+      "actions": {
+        "compare": "Comparar",
+        "analyze": "Analizar",
+        "reanalyze": "Analizar de nuevo",
+        "refine": "Volver a los cambios",
+        "accept": "{count, plural, one {Agregar # caso} other {Agregar # casos}}",
+        "cancelAnalysis": "Cancelar análisis",
+        "back": "Atrás",
+        "next": "Siguiente"
+      },
+      "errors": {
+        "title": "Análisis fallido",
+        "generic": "Algo salió mal al analizar los cambios. Por favor, inténtelo de nuevo.",
+        "pullFailed": "No se pudieron leer los commits de ese pull request. Elija otro, o nombre los commits usted mismo.",
+        "compareFailed": "No se pudieron comparar los commits.",
+        "analysisFailed": "El análisis falló: {error}",
+        "cancelled": "El análisis fue cancelado.",
+        "timeout": "El análisis está tardando demasiado. Vuelva más tarde o inténtelo de nuevo.",
+        "branchesFailed": "No se pudieron listar las ramas.",
+        "commitsFailed": "No se pudieron cargar los commits.",
+        "disabled": "Impacto no está habilitado para este proyecto.",
+        "noConfig": "Conecte primero el repositorio de la aplicación en la configuración del proyecto."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Autenticación",
       "toolsAndIntegrations": "Herramientas e integraciones",
       "aiTools": "Herramientas de IA",
-      "system": "Sistema"
+      "system": "Sistema",
+      "impact": "Análisis de impacto"
     },
     "imports": {
       "description": "Importa datos de herramientas externas de gestión de pruebas a TestPlanIt.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Resultados del paso de prueba",
         "issueConfigs": "Configuraciones del problema",
         "sharedStepGroups": "Grupos de pasos compartidos",
-        "dataSets": "Conjuntos de datos"
+        "dataSets": "Conjuntos de datos",
+        "codePins": "Pines de Código",
+        "impactAnalyses": "Análisis de Impacto"
       },
       "table": {
         "title": "Eliminado {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Generar casos de prueba a partir de una URL (Requisitos)",
         "generate_from_url_app": "Generar casos de prueba a partir de una URL (Pruebas de aplicaciones)",
         "automation_candidates": "Informe de candidatos para la automatización",
-        "derive_case_steps": "Derivación de pasos por IA"
+        "derive_case_steps": "Derivación de pasos por IA",
+        "impact_analysis": "Impacto: Selección de Pruebas Afectadas"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Filtrado de ejecuciones de prueba\n\nActive o desactive un chip para acotar la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Manual** / **Automatizado** — limita la lista a ese tipo de ejecución. Activar ambos (o desactivar ambos) muestra todas las ejecuciones.\n- **Mis Ejecuciones de Prueba** — solo las ejecuciones en las que usted participa: usted creó la ejecución, tiene asignado un caso de prueba en ella, o registró un resultado de prueba en ella.",
-    "projectSessionsFilters": "## Filtrado de sesiones\n\nActive un chip para reducir la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Mis Sesiones** — solo las sesiones en las que participa: usted creó la sesión, o está asignada a usted."
+    "projectSessionsFilters": "## Filtrado de sesiones\n\nActive un chip para reducir la lista. Los chips se aplican tanto a las pestañas Activas como Completadas, y se recuerdan en este dispositivo para este proyecto.\n\n- **Mis Sesiones** — solo las sesiones en las que participa: usted creó la sesión, o está asignada a usted.",
+    "projectImpact": "## Impacto\nConecta el repositorio de la aplicación bajo prueba para que este proyecto pueda ejecutar análisis de impacto de pruebas: elige dos commits para ver qué casos de prueba se ven afectados por los cambios, y vincula casos de prueba al código que cubren."
   },
   "reports": {
     "ui": {

@@ -736,7 +736,8 @@
       "reports": "Rapporten",
       "adminSamlConfig": "Beheerder - SAML-configuratie",
       "apiDocumentation": "API-documentatie",
-      "sharedContent": "Gedeelde inhoud"
+      "sharedContent": "Gedeelde inhoud",
+      "impact": "Impactanalyse"
     },
     "aria": {
       "userMenu": "Gebruikersmenu",
@@ -2224,6 +2225,105 @@
           "savedToast": "Opschonen van verlaten automatisering bijgewerkt voor dit project",
           "saveError": "Bijwerken van opschonen van verlaten automatisering mislukt"
         }
+      },
+      "impact": {
+        "title": "Impactanalyse",
+        "description": "Schakel impactanalyse voor tests in en koppel de repository van de applicatie die wordt getest.",
+        "enableLabel": "Impactanalyse inschakelen",
+        "enableDescription": "Sta teamleden toe om beïnvloede tests te selecteren op basis van codewijzigingen bij het samenstellen van een testrun.",
+        "enabledToast": "Impactanalyse ingeschakeld",
+        "disabledToast": "Impactanalyse uitgeschakeld",
+        "noRepos": {
+          "title": "Er zijn geen code repositories geconfigureerd",
+          "adminDescription": "Stel een repositoryverbinding in voordat u Impact voor dit project configureert.",
+          "adminLink": "Ga naar Code Repositories",
+          "userDescription": "Neem contact op met uw systeembeheerder om een verbinding met de codeopslagplaats in te stellen."
+        },
+        "repository": {
+          "title": "Applicatierepository",
+          "description": "Selecteer de repository die de applicatie bevat die wordt getest.",
+          "placeholder": "Selecteer een codeopslagplaats...",
+          "branchLabel": "Tak",
+          "branchPlaceholder": "Selecteer een tak...",
+          "branchInputPlaceholder": "Laat dit veld leeg om de standaardbranch van de repository te gebruiken",
+          "defaultBranch": "Standaardbranch van de repository",
+          "branchesUnavailable": "Branches konden niet worden weergegeven: {error}",
+          "branchesFallbackHint": "Typ in plaats daarvan de branchnaam."
+        },
+        "pathPatterns": {
+          "title": "Padpatronen",
+          "description": "Welke applicatiebestanden moeten worden opgenomen. Elke rij combineert een basispad en een glob-patroon. Voorbeeld: pad=src + patroon=**/* omvat alles onder src.",
+          "pathLabel": "Pad",
+          "pathPlaceholder": "bron",
+          "patternLabel": "Patroon",
+          "addPath": "Pad toevoegen",
+          "previewFiles": "Voorbeeldbestanden",
+          "scanningRepo": "Bestanden in de repository scannen… ({seconds}s)",
+          "files": "{count, plural, one {# bestand} other {# bestanden}}",
+          "truncatedBadge": "De resultaten kunnen onvolledig zijn (beperkingen van de aanbieder)"
+        },
+        "preview": {
+          "resolvingBranch": "Oplossende tak…",
+          "scanningFiles": "Bestanden scannen in {scope}…",
+          "scanningFilesCount": "Bestanden scannen in {scope}… ({count, number} gevonden)",
+          "filtering": "Filters toepassen op {count, number} bestanden…",
+          "rateLimited": "Snelheidslimiet bereikt bij de provider — nieuwe poging over {seconds, number}s…"
+        },
+        "cache": {
+          "title": "Cache-instellingen",
+          "description": "Bestanden worden gecached in Valkey zodat de Code Pin-bestandskiezer en repositorymarkeringen snel blijven.",
+          "enableLabel": "Bestandscaching inschakelen",
+          "disabledWarning": "Bestandscaching is uitgeschakeld. Repositorymarkeringen worden niet gescand en de Code Pin-bestandskiezer geeft bij elke opening live bestanden van uw provider weer.",
+          "ttlBefore": "Cache voor",
+          "ttlDays": "{count, plural, one {dag} other {dagen}}",
+          "ttlAriaLabel": "Cacheduur in dagen",
+          "statusTitle": "Cachestatus",
+          "refreshButton": "Cache vernieuwen",
+          "listingFiles": "Lijst met bestanden…",
+          "cachingFiles": "{count} bestanden in de cache opslaan…",
+          "statusNeverFetched": "Nooit opgehaald",
+          "statusPending": "Verfrissend...",
+          "lastFetched": "Laatst opgehaald",
+          "filesCached": "Bestanden in cache opgeslagen",
+          "contentsCached": "Inhoud in cache opgeslagen",
+          "contentsIncomplete": "Slechts {cached} van {total} bestandsinhoud is in cache opgeslagen. Vernieuw opnieuw om te voltooien.",
+          "totalSize": "Totale grootte"
+        },
+        "markers": {
+          "title": "Repositorymarkeringen",
+          "description": "Commentaarannotaties zoals @testplanit case:123 en items in .testplanit/testmap.yml worden bij elke cachevernieuwing Code Pins.",
+          "lastScan": "Laatste scan: {date}",
+          "never": "Nog niet gescand",
+          "skippedPrivacy": "Overgeslagen: bestandscaching is uitgeschakeld.",
+          "skippedPartial": "Overgeslagen: bestandsinhoud was slechts gedeeltelijk in de cache opgeslagen.",
+          "summary": "{annotations, plural, one {# annotatie} other {# annotaties}} · {mapEntries, plural, one {# mapitem} other {# mapitems}} · {created} aangemaakt · {updated} bijgewerkt · {removed} verwijderd",
+          "problems": "{count, plural, one {# probleem} other {# problemen}}",
+          "error": "Scan mislukt: {error}"
+        },
+        "save": "Configuratie opslaan",
+        "saved": "Impactanalyseconfiguratie opgeslagen",
+        "saveError": "Configuratie kon niet worden opgeslagen",
+        "listError": "Het is niet gelukt om de bestanden in de repository weer te geven",
+        "contentsError": "Het is niet gelukt om de inhoud van het bestand in de cache op te slaan",
+        "networkError": "Netwerkfout tijdens het vernieuwen van de cache",
+        "refreshSuccess": "Cache vernieuwd: {fileCount} bestanden ({contentCached} inhoud in cache opgeslagen)",
+        "refreshRateLimited": "Cache vernieuwd: {fileCount} bestanden weergegeven, {contentCached}/{fileCount} inhoud in cache opgeslagen (snelheid beperkt — vernieuw opnieuw om te voltooien)",
+        "refreshComplete": "Cache vernieuwd: {fileCount} bestanden",
+        "refreshInProgress": "Het vernieuwen van de cache wordt nog op de achtergrond uitgevoerd. Dit wordt hier bijgewerkt zodra het is voltooid.",
+        "validation": {
+          "pathRequired": "Pad is vereist",
+          "patternRequired": "Een patroon is vereist",
+          "repositoryRequired": "Een repository is vereist",
+          "pathPatternRequired": "Er is ten minste één padpatroon vereist"
+        },
+        "disconnect": "Ontkoppel de opslagplaats",
+        "confirmDisconnect": "Weet je zeker dat je \"{name}\" van dit project wilt loskoppelen?",
+        "disconnectWarningTitle": "Als u de verbinding met deze repository verbreekt, zal het volgende gebeuren:",
+        "disconnectWarning1": "Verwijder {count, plural, one {# Code Pin} other {# Code Pins}} en de analysegeschiedenis voor deze repository",
+        "disconnectWarning2": "Verwijder alle in de cache opgeslagen repositorybestanden",
+        "disconnectWarning3": "Verwijder padpatroon- en vertakkingsconfiguraties",
+        "disconnectSuccess": "Applicatierepository ontkoppeld",
+        "disconnectError": "Het is niet gelukt om de verbinding met de applicatierepository te verbreken"
       }
     },
     "matrix": {
@@ -3095,8 +3195,8 @@
           "partialSummary": "{failed, plural, one {# rij kon} other {# rijen konden}} niet worden geïmporteerd. {imported, plural, one {# testgeval is} other {# testgevallen zijn}} succesvol geïmporteerd."
         },
         "warnings": {
-          "partialTitle": "Sommige issuekoppelingen zijn niet aangemaakt",
-          "summary": "{count, plural, one {# issuecel} other {# issuecellen}} konden niet worden gekoppeld. De testgevallen zijn geïmporteerd."
+          "partialTitle": "Sommige probleemkoppelingen zijn niet aangemaakt",
+          "summary": "{count, plural, one {# probleemcel kon} other {# probleemcellen konden}} niet worden gekoppeld. De testgevallen zijn geïmporteerd."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "Testcase maken",
       "successMessage": "Nieuwe testcase toegevoegd",
       "errorMessage": "Onbekende fout bij het toevoegen van een nieuwe testcase"
+    },
+    "draft": {
+      "saving": "Opslaan…",
+      "saved": "Alle wijzigingen opgeslagen {time}",
+      "unsaved": "Niet-opgeslagen wijzigingen",
+      "saveFailed": "Kan niet opslaan — opnieuw proberen",
+      "restoreTitle": "Niet-opgeslagen wijzigingen herstellen?",
+      "restoreDescription": "U heeft niet-opgeslagen wijzigingen aan dit testgeval van {age}. Herstel ze, of negeer ze en laad de opgeslagen versie.",
+      "restoreTitleNew": "Niet-opgeslagen testgeval herstellen?",
+      "restoreDescriptionNew": "U bent {age} begonnen met een testgeval en heeft het nooit opgeslagen. Herstel wat u heeft geschreven, of negeer het en begin opnieuw.",
+      "restoreStaleWarning": "Dit testgeval is door iemand anders opgeslagen sinds uw concept is geschreven. Herstellen vervangt hun inhoud wanneer u opslaat.",
+      "restoreDiscard": "Negeren",
+      "restoreRestore": "Herstellen",
+      "bannerText": "U heeft niet-opgeslagen wijzigingen aan dit testgeval van {age}.",
+      "bannerAction": "Verder bewerken",
+      "bannerDiscard": "Negeren"
     },
     "columns": {
       "selectCase": "Selecteer zaak",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "“{name}” wordt verwijderd uit uw opgeslagen weergaven. Dit kan niet ongedaan worden gemaakt.",
       "deleted": "Opgeslagen weergave verwijderd",
       "deleteFailed": "Kan de weergave niet verwijderen. Probeer het opnieuw."
+    },
+    "codePins": {
+      "add": "Pin toevoegen",
+      "addDialogDescription": "Pins worden verankerd aan de huidige tak-tip.",
+      "addDialogTitle": "Dit geval aan code vastpinnen",
+      "addFailed": "Kon de pin niet toevoegen",
+      "addSuccess": "Pin toegevoegd",
+      "anchoredAt": "Verankerd bij {sha}",
+      "cancel": "Annuleren",
+      "caseLabel": "Testgeval",
+      "casePlaceholder": "Testgevallen zoeken...",
+      "contentUnavailable": "Bestandsinhoud is niet beschikbaar.",
+      "description": "Code die dit geval dekt. Een wijziging binnen een vastgepind blok trekt het geval naar Impactanalyses.",
+      "dismissStale": "Afwijzen",
+      "duplicate": "Deze pin bestaat al.",
+      "empty": "Nog geen Code Pins.",
+      "endLine": "Eindregel",
+      "errorFileNotFound": "Bestand niet gevonden bij de tak-tip.",
+      "errorLineOutOfRange": "Het regelbereik valt buiten het bestand.",
+      "errorSnippetTooLarge": "Het vastgepinde blok is te groot.",
+      "errorSymbolNotFound": "Symbool niet gevonden in het bestand.",
+      "fileLabel": "Bestand",
+      "filePlaceholder": "Bestanden zoeken...",
+      "filesCached": "{count, plural, one {# bestand} other {# bestanden}} gecachet · {date}",
+      "filesLive": "Bestanden live opsommen vanuit de repository",
+      "globLabel": "Patroon",
+      "globMatches": "{count, plural, =0 {Geen gecachete bestanden komen overeen} one {# gecachet bestand komt overeen} other {# gecachete bestanden komen overeen}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Soort",
+      "kindFile": "Volledig bestand",
+      "kindGlob": "Glob-patroon",
+      "kindLabel": "Vastpinnen aan",
+      "kindRange": "Regels",
+      "kindSymbol": "Symbool",
+      "linesHint": "Klik op een regelnummer om te beginnen, shift-klik om te eindigen.",
+      "location": "Locatie",
+      "managedTooltip": "Beheerd door de repository. Bewerk de marker in de code.",
+      "noFilesCached": "Geen gecachete bestandslijst. Vraag een projectbeheerder om de repository-cache te vernieuwen.",
+      "noteLabel": "Opmerking",
+      "notePlaceholder": "Waarom dit geval deze code dekt (optioneel)",
+      "reanchor": "Opnieuw verankeren",
+      "reanchorFailed": "Kon de pin niet opnieuw verankeren",
+      "reanchorSuccess": "Pin opnieuw verankerd",
+      "remove": "Verwijderen",
+      "removeConfirm": "Deze pin verwijderen?",
+      "removeFailed": "Kon de pin niet verwijderen",
+      "removeSuccess": "Pin verwijderd",
+      "source": "Bron",
+      "sourceAi": "AI",
+      "sourceAnnotation": "Annotatie",
+      "sourceManual": "Handmatig",
+      "sourceMapfile": "Kaartbestand",
+      "staleBadge": "Verouderd",
+      "staleFileDeleted": "bestand verwijderd",
+      "staleSnippetNotFound": "regels niet gevonden",
+      "staleSymbolNotFound": "symbool niet gevonden",
+      "staleTooltip": "Het vastgepinde blok kon niet worden gevonden bij de tak-tip: {reason}.",
+      "startLine": "Beginregel",
+      "submit": "Pin toevoegen",
+      "symbolHint": "De declaratie wordt op naam gezocht in het bestand.",
+      "symbolLabel": "Symbool",
+      "symbolNoneDetected": "Geen symbolen gedetecteerd, typ een naam.",
+      "symbolPlaceholder": "functieNaam",
+      "symbolSelectPlaceholder": "Selecteer of typ een symbool...",
+      "updateSuccess": "Pin bijgewerkt",
+      "updateFailed": "Kon de pin niet bijwerken",
+      "editDialogTitle": "Deze pin bewerken",
+      "editDialogDescription": "Het bestand en het pintype blijven ongewijzigd. Om een van beide te wijzigen, verwijdert u deze pin en voegt u een nieuwe toe.",
+      "editAction": "Pin bewerken",
+      "saveChanges": "Wijzigingen opslaan",
+      "symbolSearchPlaceholder": "Symbolen zoeken...",
+      "symbolUseTyped": "Gebruik \"{symbol}\"",
+      "title": "Code-pins",
+      "viewerFailed": "Kon het bestand niet laden.",
+      "viewerLoading": "Bestand laden…",
+      "viewerTooLarge": "Dit bestand is te groot om weer te geven. Voer in plaats daarvan de regelnummers in.",
+      "wholeFile": "Volledig bestand"
+    },
+    "diffView": {
+      "added": "Toegevoegde regel",
+      "removed": "Verwijderde regel",
+      "oldLine": "Oude regel",
+      "newLine": "Nieuwe regel",
+      "context": "Contextregel"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Opnieuw geprobeerd",
       "clear": "Filters wissen"
+    },
+    "impact": {
+      "title": "Impact",
+      "analyzeImpact": "Impact analyseren",
+      "description": "Kies twee commits van de te testen applicatie en selecteer de testgevallen die door de wijzigingen worden beïnvloed.",
+      "noRepository": "Verbind de applicatierepository in de projectinstellingen om Impact te gebruiken.",
+      "aiUnavailable": "Geen actieve LLM-integratie: resultaten komen alleen van Code Pins, trefwoordovereenkomst en runhistorie.",
+      "steps": {
+        "pick": "Commits",
+        "diff": "Wijzigingen",
+        "analyze": "Analyseren",
+        "review": "Beïnvloede tests"
+      },
+      "pull": {
+        "label": "Pull request",
+        "selectPlaceholder": "Selecteer een pull request...",
+        "searchPlaceholder": "Zoek op nummer, titel, auteur of tak...",
+        "stateAll": "Alle",
+        "stateOpen": "Open",
+        "stateMerged": "Samengevoegd",
+        "stateClosed": "Gesloten",
+        "resolved": "Vergelijking van {base} op {target} met {head} op {source}."
+      },
+      "pick": {
+        "modeLabel": "Wijzigingen kiezen op basis van",
+        "modeCommits": "Commits",
+        "modePull": "Pull request",
+        "modeCommitsHint": "Wat er is veranderd tussen twee builds, zodat u alles opnieuw kunt testen dat is toegevoegd sinds de laatst geverifieerde versie.",
+        "modePullHint": "Wat deze pull request wijzigt, gemeten vanaf waar de tak is afgesplitst, zodat werk dat ondertussen op de doeltak is toegevoegd, buiten beschouwing blijft.",
+        "branchLabel": "Tak",
+        "baseLabel": "Basiscommit",
+        "headLabel": "Head-commit",
+        "commitPlaceholder": "Commits zoeken...",
+        "searchHint": "Typ een commit-sha, of filter de geladen commits op bericht of auteur.",
+        "refLabel": "Of plak een ref",
+        "refPlaceholder": "Tak, tag of sha",
+        "refNotFound": "Ref niet gevonden",
+        "latestOnBranch": "Nieuwste op {branch}",
+        "previousAnalysisLabel": "Beginnen vanaf een eerdere analyse",
+        "previousAnalysisPlaceholder": "Selecteer een analyse...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# beïnvloede test} other {# beïnvloede tests}}",
+        "sameCommit": "Basis en head zijn dezelfde commit.",
+        "swapped": "Basis en head zijn verwisseld zodat de wijzigingen voorwaarts leesbaar zijn.",
+        "loadingCommits": "Commits laden…",
+        "noCommits": "Geen commits gevonden."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# bestand} other {# bestanden}} gewijzigd · +{additions, number} −{deletions, number}",
+        "truncated": "De provider heeft een gedeeltelijke diff geretourneerd. Sommige gewijzigde bestanden worden niet weergegeven of hebben geen patch.",
+        "noChanges": "Geen wijzigingen tussen deze commits.",
+        "statusAdded": "Toegevoegd",
+        "statusModified": "Gewijzigd",
+        "statusRemoved": "Verwijderd",
+        "statusRenamed": "Naam gewijzigd",
+        "showPatch": "Wijzigingen tonen",
+        "hidePatch": "Wijzigingen verbergen",
+        "largePatch": "Grote patch ({lines, number} regels)",
+        "showFullPatch": "Volledige patch tonen",
+        "binary": "Binair bestand",
+        "noPatch": "Patch niet beschikbaar",
+        "pinnedFiles": "{count, plural, one {# pin} other {# pins}}",
+        "loading": "Commits vergelijken…",
+        "failed": "Kon de commits niet vergelijken."
+      },
+      "loading": {
+        "analyzing": "Analyseren…",
+        "resolving_config": "Repositoryconfiguratie oplossen…",
+        "fetching_diff": "Diff ophalen…",
+        "matching_pins": "Code Pins koppelen…",
+        "searching_cases": "Testgevallen zoeken op trefwoord…",
+        "scoring_history": "Runhistorie scoren…",
+        "waiting_for_ai": "Wachten op AI…",
+        "merging": "Resultaten combineren…",
+        "ranking": "{current} van {total} kandidaat-testgevallen gerangschikt",
+        "reused": "Een recente analyse van dezelfde commits wordt hergebruikt."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Geen beïnvloede tests} one {# beïnvloede test} other {# beïnvloede tests}}",
+        "description": "Gesorteerd op score. Elke test toont waarom deze is geselecteerd.",
+        "relatedCount": "{count, plural, one {# gerelateerde test} other {# gerelateerde tests}} scoorden lager en zijn uitgevinkt.",
+        "summary": "Samenvatting",
+        "score": "Score",
+        "case": "Testgeval",
+        "reasons": "Waarom",
+        "tierPinned": "Vastgepind",
+        "tierAffected": "Beïnvloed",
+        "tierRelated": "Gerelateerd",
+        "selectAll": "Alles selecteren",
+        "selectNone": "Niets selecteren",
+        "showDetails": "Redenen tonen",
+        "hideDetails": "Redenen verbergen",
+        "excluded": "{count, plural, one {# geval dat al in de run zat, is overgeslagen} other {# gevallen die al in de run zaten, zijn overgeslagen}}"
+      },
+      "noAffected": {
+        "title": "Geen beïnvloede tests gevonden",
+        "description": "Geen testgeval kwam overeen met de wijzigingen. Pin gevallen aan de gewijzigde bestanden zodat de volgende analyse ze vindt."
+      },
+      "reasons": {
+        "pin": "Pin",
+        "path": "Trefwoord",
+        "history": "Historie",
+        "ai": "AI",
+        "linked": "Gerelateerd",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Komt overeen met {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "\"{term}\" gevonden in {field}",
+        "fieldName": "gevalnaam",
+        "fieldContent": "gevalinhoud",
+        "fieldTag": "label",
+        "fieldFolder": "map",
+        "historyDetail": "{count, plural, one {# eerdere run} other {# eerdere runs}} na wijzigingen aan dezelfde bestanden",
+        "historyFailed": "Mislukt in een eerdere run na vergelijkbare wijzigingen",
+        "linkedDetail": "Gekoppeld aan geval {caseId}"
+      },
+      "stale": {
+        "badge": "Verouderd",
+        "tooltipAnalysis": "Het vastgepinde blok kon niet worden gevonden bij de basiscommit; alleen overeenkomend op bestandspad. Pin opnieuw vanaf de testgevalpagina.",
+        "title": "{count, plural, one {# verouderde pin} other {# verouderde pins}}",
+        "description": "Deze pins komen niet meer overeen met de code. Verankerdeze opnieuw vanaf de testgevalpagina."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# gewijzigd bestand heeft geen test} other {# gewijzigde bestanden hebben geen tests}}",
+        "description": "Geen testgeval is aan deze bestanden gekoppeld. Pin een geval om de leemte op te vullen.",
+        "pinAction": "Een geval vastpinnen...",
+        "pinned": "Vastgepind"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "De provider heeft een gedeeltelijke diff geretourneerd.",
+        "diff_truncated_by_budget": "Slechts een deel van de diff paste in de AI-context; {count, plural, one {# bestand is} other {# bestanden zijn}} alleen samengevat op pad.",
+        "llm_not_configured": "Geen actieve LLM-integratie: AI-rangschikking is overgeslagen.",
+        "search_fallback_db": "Zoekindex niet beschikbaar: trefwoordovereenkomst gebruikte de database.",
+        "search_index_empty": "Dit project heeft geen gevallen in de zoekindex, dus trefwoordovereenkomst gebruikte de database. Vraag een beheerder om opnieuw te indexeren voor betere overeenkomsten.",
+        "ai_partial": "Sommige AI-batches zijn mislukt; resultaten kunnen onvolledig zijn.",
+        "ai_truncated": "{count, plural, one {# AI-batch is} other {# AI-batches zijn}} afgebroken door het model.",
+        "no_candidates": "Geen testgeval kwam overeen.",
+        "anchor_fetch_capped": "Sommige vastgepinde bestanden zijn alleen op pad gematcht (ophaallimiet bereikt)."
+      },
+      "actions": {
+        "compare": "Vergelijken",
+        "analyze": "Analyseren",
+        "reanalyze": "Opnieuw analyseren",
+        "refine": "Terug naar wijzigingen",
+        "accept": "{count, plural, one {# geval toevoegen} other {# gevallen toevoegen}}",
+        "cancelAnalysis": "Analyse annuleren",
+        "back": "Terug",
+        "next": "Volgende"
+      },
+      "errors": {
+        "title": "Analyse mislukt",
+        "generic": "Er is iets misgegaan bij het analyseren van de wijzigingen. Probeer het opnieuw.",
+        "pullFailed": "Kon de commits van deze pull request niet lezen. Kies een andere, of geef zelf de commits op.",
+        "compareFailed": "Kon de commits niet vergelijken.",
+        "analysisFailed": "De analyse is mislukt: {error}",
+        "cancelled": "De analyse is geannuleerd.",
+        "timeout": "De analyse duurt te lang. Kom later terug of probeer het opnieuw.",
+        "branchesFailed": "Kon takken niet weergeven.",
+        "commitsFailed": "Kon commits niet laden.",
+        "disabled": "Impact is niet ingeschakeld voor dit project.",
+        "noConfig": "Verbind eerst de applicatierepository in de projectinstellingen."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Authenticatie",
       "toolsAndIntegrations": "Tools en integraties",
       "aiTools": "AI-tools",
-      "system": "Systeem"
+      "system": "Systeem",
+      "impact": "Impactanalyse"
     },
     "imports": {
       "description": "Importeer gegevens van externe testmanagementtools in TestPlanIt.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Resultaten van de testrunstap",
         "issueConfigs": "Probleemconfiguraties",
         "sharedStepGroups": "Gedeelde stappengroepen",
-        "dataSets": "Gegevenssets"
+        "dataSets": "Gegevenssets",
+        "codePins": "Codepins",
+        "impactAnalyses": "Impactanalyses"
       },
       "table": {
         "title": "Verwijderd {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Testcases genereren vanuit URL (vereisten)",
         "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)",
         "automation_candidates": "Rapport over automatiseringskandidaten",
-        "derive_case_steps": "AI-afleiding van stappen"
+        "derive_case_steps": "AI-afleiding van stappen",
+        "impact_analysis": "Impact: Selectie van beïnvloede tests"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Testruns filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Handmatig** / **Geautomatiseerd** — beperk de lijst tot dat type run. Als u beide inschakelt (of beide uitschakelt), worden alle runs weergegeven.\n- **Mijn testruns** — alleen runs waaraan u deelneemt: u heeft de run aangemaakt, u heeft een testgeval toegewezen gekregen in de run, of u heeft een testresultaat vastgelegd in de run.",
-    "projectSessionsFilters": "## Sessies filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Mijn sessies** — alleen sessies waaraan je deelneemt: je hebt de sessie aangemaakt, of ze is aan jou toegewezen."
+    "projectSessionsFilters": "## Sessies filteren\n\nSchakel een chip in om de lijst te beperken. Chips zijn van toepassing op zowel het tabblad Actief als Voltooid, en worden op dit apparaat onthouden voor dit project.\n\n- **Mijn sessies** — alleen sessies waaraan je deelneemt: je hebt de sessie aangemaakt, of ze is aan jou toegewezen.",
+    "projectImpact": "## Impact\nKoppel de repository van de applicatie die getest wordt, zodat dit project test-impactanalyse kan uitvoeren: kies twee commits om te zien welke testgevallen door de wijzigingen worden beïnvloed, en koppel testgevallen aan de code die ze dekken."
   },
   "reports": {
     "ui": {

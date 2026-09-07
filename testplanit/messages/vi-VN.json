@@ -736,7 +736,8 @@
       "reports": "Báo cáo",
       "adminSamlConfig": "Quản trị viên - Cấu hình SAML",
       "apiDocumentation": "Tài liệu API",
-      "sharedContent": "Nội dung được chia sẻ"
+      "sharedContent": "Nội dung được chia sẻ",
+      "impact": "Phân tích tác động"
     },
     "aria": {
       "userMenu": "Menu người dùng",
@@ -2224,6 +2225,105 @@
           "savedToast": "Đã cập nhật dọn dẹp tự động hóa bị bỏ dở cho dự án này",
           "saveError": "Không thể cập nhật dọn dẹp tự động hóa bị bỏ dở"
         }
+      },
+      "impact": {
+        "title": "Phân tích tác động",
+        "description": "Bật tính năng phân tích tác động kiểm thử và kết nối kho lưu trữ của ứng dụng đang được kiểm thử.",
+        "enableLabel": "Bật Phân tích tác động",
+        "enableDescription": "Cho phép thành viên nhóm chọn các bài kiểm thử bị ảnh hưởng từ các thay đổi mã khi soạn một lượt kiểm thử.",
+        "enabledToast": "Đã bật Phân tích tác động",
+        "disabledToast": "Đã tắt Phân tích tác động",
+        "noRepos": {
+          "title": "Chưa có kho lưu trữ mã nào được cấu hình",
+          "adminDescription": "Hãy thiết lập kết nối kho lưu trữ trước khi cấu hình Phân tích tác động cho dự án này.",
+          "adminLink": "Truy cập Kho lưu trữ mã nguồn",
+          "userDescription": "Hãy liên hệ với quản trị viên hệ thống của bạn để thiết lập kết nối kho lưu trữ mã nguồn."
+        },
+        "repository": {
+          "title": "Kho lưu trữ ứng dụng",
+          "description": "Chọn kho lưu trữ chứa ứng dụng đang được kiểm thử.",
+          "placeholder": "Chọn một kho lưu trữ mã nguồn...",
+          "branchLabel": "Nhánh",
+          "branchPlaceholder": "Chọn một nhánh...",
+          "branchInputPlaceholder": "Để trống nếu muốn sử dụng nhánh mặc định của kho lưu trữ",
+          "defaultBranch": "Nhánh mặc định của kho lưu trữ",
+          "branchesUnavailable": "Không thể liệt kê các nhánh: {error}",
+          "branchesFallbackHint": "Hãy nhập tên nhánh thay vào đó."
+        },
+        "pathPatterns": {
+          "title": "Các kiểu đường đi",
+          "description": "Các tệp ứng dụng nào sẽ được bao gồm. Mỗi hàng kết hợp một đường dẫn cơ sở và một mẫu glob. Ví dụ: path=src + pattern=**/* bao gồm mọi thứ trong src.",
+          "pathLabel": "Con đường",
+          "pathPlaceholder": "nguồn",
+          "patternLabel": "Mẫu",
+          "addPath": "Thêm đường dẫn",
+          "previewFiles": "Xem trước tệp",
+          "scanningRepo": "Đang quét các tệp kho lưu trữ… ({seconds}s)",
+          "files": "{count, plural, other {# tập tin}}",
+          "truncatedBadge": "Kết quả có thể không đầy đủ (giới hạn của nhà cung cấp)"
+        },
+        "preview": {
+          "resolvingBranch": "Đang giải quyết nhánh…",
+          "scanningFiles": "Đang quét các tập tin trong {scope}…",
+          "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)",
+          "filtering": "Áp dụng bộ lọc cho {count, number} tệp…",
+          "rateLimited": "Bị giới hạn tốc độ bởi nhà cung cấp — đang thử lại sau {seconds, number} giây…"
+        },
+        "cache": {
+          "title": "Cài đặt bộ nhớ đệm",
+          "description": "Các tệp được lưu vào bộ nhớ đệm Valkey để bộ chọn tệp Code Pin và các dấu mốc kho lưu trữ luôn nhanh chóng.",
+          "enableLabel": "Bật tính năng lưu trữ tệp tạm thời",
+          "disabledWarning": "Tính năng lưu trữ tệp tạm thời đang bị tắt. Các dấu mốc kho lưu trữ không được quét, và bộ chọn tệp Code Pin sẽ liệt kê các tệp trực tiếp từ nhà cung cấp của bạn mỗi lần mở.",
+          "ttlBefore": "Lưu vào bộ nhớ đệm trong",
+          "ttlDays": "{count, plural, other {ngày}}",
+          "ttlAriaLabel": "Thời gian lưu vào bộ nhớ đệm tính bằng ngày",
+          "statusTitle": "Trạng thái bộ nhớ đệm",
+          "refreshButton": "Làm mới bộ nhớ cache",
+          "listingFiles": "Đang liệt kê các tập tin…",
+          "cachingFiles": "Đang lưu trữ {count} tập tin…",
+          "statusNeverFetched": "Chưa bao giờ lấy được",
+          "statusPending": "Đang làm mới...",
+          "lastFetched": "Lần tải cuối cùng",
+          "filesCached": "Tệp tin được lưu vào bộ nhớ cache",
+          "contentsCached": "Nội dung đã được lưu vào bộ nhớ đệm",
+          "contentsIncomplete": "Chỉ có {cached} trên {total} nội dung tệp được lưu vào bộ nhớ đệm. Hãy làm mới lại để hoàn tất.",
+          "totalSize": "Tổng kích thước"
+        },
+        "markers": {
+          "title": "Các dấu mốc kho lưu trữ",
+          "description": "Các chú thích như @testplanit case:123 và các mục trong .testplanit/testmap.yml sẽ trở thành Code Pin mỗi khi bộ nhớ đệm được làm mới.",
+          "lastScan": "Lần quét cuối: {date}",
+          "never": "Chưa được quét",
+          "skippedPrivacy": "Bỏ qua: tính năng lưu trữ tệp tạm thời đang bị tắt.",
+          "skippedPartial": "Bỏ qua: nội dung tệp chỉ được lưu vào bộ nhớ đệm một phần.",
+          "summary": "{annotations, plural, other {# chú thích}} · {mapEntries, plural, other {# mục ánh xạ}} · {created} đã tạo · {updated} đã cập nhật · {removed} đã xóa",
+          "problems": "{count, plural, other {# vấn đề}}",
+          "error": "Quét thất bại: {error}"
+        },
+        "save": "Lưu cấu hình",
+        "saved": "Cấu hình Phân tích tác động đã được lưu",
+        "saveError": "Không thể lưu cấu hình",
+        "listError": "Không thể liệt kê các tệp trong kho lưu trữ",
+        "contentsError": "Không thể lưu nội dung tệp vào bộ nhớ cache",
+        "networkError": "Lỗi mạng trong quá trình làm mới bộ nhớ cache",
+        "refreshSuccess": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin ({contentCached} nội dung đã được lưu vào bộ nhớ cache)",
+        "refreshRateLimited": "Bộ nhớ cache đã được làm mới: {fileCount} tập tin đã được liệt kê, {contentCached}/{fileCount} nội dung đã được lưu vào bộ nhớ cache (tốc độ truy cập bị giới hạn — hãy làm mới lại để hoàn tất)",
+        "refreshComplete": "Bộ nhớ cache đã được làm mới: {fileCount} tệp",
+        "refreshInProgress": "Quá trình làm mới bộ nhớ đệm vẫn đang chạy trong nền. Nó sẽ cập nhật tại đây khi hoàn tất.",
+        "validation": {
+          "pathRequired": "Cần có đường dẫn",
+          "patternRequired": "Cần có mẫu",
+          "repositoryRequired": "Cần có kho lưu trữ",
+          "pathPatternRequired": "Cần ít nhất một kiểu đường đi"
+        },
+        "disconnect": "Ngắt kết nối kho lưu trữ",
+        "confirmDisconnect": "Bạn có chắc chắn muốn ngắt kết nối \"{name}\" khỏi dự án này không?",
+        "disconnectWarningTitle": "Việc ngắt kết nối kho lưu trữ này sẽ:",
+        "disconnectWarning1": "Xóa {count, plural, other {# Code Pin}} và lịch sử phân tích của kho lưu trữ này",
+        "disconnectWarning2": "Xóa tất cả các tệp kho lưu trữ đã được lưu vào bộ nhớ cache",
+        "disconnectWarning3": "Xóa cấu hình đường dẫn và nhánh",
+        "disconnectSuccess": "Kho lưu trữ ứng dụng đã bị ngắt kết nối",
+        "disconnectError": "Không thể ngắt kết nối kho lưu trữ ứng dụng"
       }
     },
     "matrix": {
@@ -3095,7 +3195,7 @@
           "partialSummary": "{failed, plural, other {# dòng}} không thể nhập được. {imported, plural, other {# trường hợp kiểm thử}} đã được nhập thành công."
         },
         "warnings": {
-          "partialTitle": "Một số liên kết sự cố không được tạo",
+          "partialTitle": "Một số liên kết sự cố chưa được tạo",
           "summary": "{count, plural, other {# ô sự cố}} không thể liên kết. Các trường hợp kiểm thử đã được nhập."
         },
         "page1": {
@@ -3169,6 +3269,22 @@
       "create": "Tạo trường hợp kiểm thử",
       "successMessage": "Đã thêm trường hợp kiểm thử mới.",
       "errorMessage": "Lỗi không xác định khi thêm trường hợp kiểm thử mới"
+    },
+    "draft": {
+      "saving": "Đang lưu…",
+      "saved": "Tất cả các thay đổi đã được lưu {time}",
+      "unsaved": "Thay đổi chưa được lưu",
+      "saveFailed": "Không thể lưu — đang thử lại",
+      "restoreTitle": "Khôi phục các thay đổi chưa được lưu?",
+      "restoreDescription": "Bạn có các thay đổi chưa được lưu cho trường hợp kiểm thử này từ {age}. Khôi phục chúng, hoặc hủy bỏ chúng và tải phiên bản đã lưu.",
+      "restoreTitleNew": "Khôi phục trường hợp kiểm thử chưa được lưu?",
+      "restoreDescriptionNew": "Bạn đã bắt đầu một trường hợp kiểm thử {age} và chưa bao giờ lưu nó. Khôi phục những gì bạn đã viết, hoặc hủy bỏ nó và bắt đầu lại.",
+      "restoreStaleWarning": "Trường hợp kiểm thử này đã được người khác lưu kể từ khi bản nháp của bạn được viết. Việc khôi phục sẽ thay thế nội dung của họ khi bạn lưu.",
+      "restoreDiscard": "Hủy bỏ",
+      "restoreRestore": "Khôi phục",
+      "bannerText": "Bạn có các thay đổi chưa được lưu cho trường hợp kiểm thử này từ {age}.",
+      "bannerAction": "Tiếp tục chỉnh sửa",
+      "bannerDiscard": "Hủy bỏ chúng"
     },
     "columns": {
       "selectCase": "Chọn trường hợp",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "“{name}” sẽ bị xóa khỏi các chế độ xem đã lưu của bạn. Hành động này không thể hoàn tác.",
       "deleted": "Đã xóa chế độ xem đã lưu",
       "deleteFailed": "Không thể xóa chế độ xem. Vui lòng thử lại."
+    },
+    "codePins": {
+      "add": "Thêm ghim",
+      "addDialogDescription": "Các ghim được neo tại điểm đầu nhánh hiện tại.",
+      "addDialogTitle": "Ghim trường hợp này vào mã",
+      "addFailed": "Không thể thêm ghim",
+      "addSuccess": "Đã thêm ghim",
+      "anchoredAt": "Được neo tại {sha}",
+      "cancel": "Hủy bỏ",
+      "caseLabel": "Trường hợp kiểm thử",
+      "casePlaceholder": "Tìm kiếm trường hợp kiểm thử...",
+      "contentUnavailable": "Nội dung tập tin không khả dụng.",
+      "description": "Mã mà trường hợp này bao phủ. Một thay đổi bên trong khối được ghim sẽ đưa trường hợp vào các phân tích Tác động.",
+      "dismissStale": "Bỏ qua",
+      "duplicate": "Ghim này đã tồn tại.",
+      "empty": "Chưa có Ghim mã nào.",
+      "endLine": "Dòng kết thúc",
+      "errorFileNotFound": "Không tìm thấy tập tin tại điểm đầu nhánh.",
+      "errorLineOutOfRange": "Phạm vi dòng nằm ngoài tập tin.",
+      "errorSnippetTooLarge": "Khối được ghim quá lớn.",
+      "errorSymbolNotFound": "Không tìm thấy ký hiệu trong tập tin.",
+      "fileLabel": "Tập tin",
+      "filePlaceholder": "Tìm kiếm tập tin...",
+      "filesCached": "{count, plural, other {# tập tin}} được lưu bộ nhớ đệm · {date}",
+      "filesLive": "Liệt kê tập tin trực tiếp từ kho lưu trữ",
+      "globLabel": "Mẫu",
+      "globMatches": "{count, plural, =0 {Không có tập tin lưu bộ nhớ đệm nào khớp} other {# tập tin lưu bộ nhớ đệm khớp}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Loại",
+      "kindFile": "Toàn bộ tập tin",
+      "kindGlob": "Mẫu glob",
+      "kindLabel": "Ghim vào",
+      "kindRange": "Các dòng",
+      "kindSymbol": "Ký hiệu",
+      "linesHint": "Nhấp vào số dòng để bắt đầu, giữ shift và nhấp để kết thúc.",
+      "location": "Vị trí",
+      "managedTooltip": "Được quản lý bởi kho lưu trữ. Chỉnh sửa dấu hiệu trong mã.",
+      "noFilesCached": "Không có danh sách tập tin đã lưu bộ nhớ đệm. Hãy yêu cầu quản trị viên dự án làm mới bộ nhớ đệm kho lưu trữ.",
+      "noteLabel": "Ghi chú",
+      "notePlaceholder": "Tại sao trường hợp này bao phủ mã này (không bắt buộc)",
+      "reanchor": "Neo lại",
+      "reanchorFailed": "Không thể neo lại ghim",
+      "reanchorSuccess": "Đã neo lại ghim",
+      "remove": "Xóa",
+      "removeConfirm": "Xóa ghim này?",
+      "removeFailed": "Không thể xóa ghim",
+      "removeSuccess": "Đã xóa ghim",
+      "source": "Nguồn",
+      "sourceAi": "AI",
+      "sourceAnnotation": "Chú thích",
+      "sourceManual": "Thủ công",
+      "sourceMapfile": "Tập tin bản đồ",
+      "staleBadge": "Cũ",
+      "staleFileDeleted": "tập tin đã bị xóa",
+      "staleSnippetNotFound": "không tìm thấy các dòng",
+      "staleSymbolNotFound": "không tìm thấy ký hiệu",
+      "staleTooltip": "Không thể tìm thấy khối được ghim tại điểm đầu nhánh: {reason}.",
+      "startLine": "Dòng bắt đầu",
+      "submit": "Thêm ghim",
+      "symbolHint": "Khai báo được định vị theo tên trong tập tin.",
+      "symbolLabel": "Ký hiệu",
+      "symbolNoneDetected": "Không phát hiện ký hiệu nào, hãy nhập tên.",
+      "symbolPlaceholder": "tênHàm",
+      "symbolSelectPlaceholder": "Chọn hoặc nhập ký hiệu...",
+      "updateSuccess": "Đã cập nhật ghim",
+      "updateFailed": "Không thể cập nhật ghim",
+      "editDialogTitle": "Chỉnh sửa ghim này",
+      "editDialogDescription": "Tập tin và loại ghim vẫn giữ nguyên. Để thay đổi một trong hai, hãy xóa ghim này và thêm ghim mới.",
+      "editAction": "Chỉnh sửa ghim",
+      "saveChanges": "Lưu thay đổi",
+      "symbolSearchPlaceholder": "Tìm kiếm ký hiệu...",
+      "symbolUseTyped": "Sử dụng \"{symbol}\"",
+      "title": "Ghim mã",
+      "viewerFailed": "Không thể tải tập tin.",
+      "viewerLoading": "Đang tải tập tin…",
+      "viewerTooLarge": "Tập tin này quá lớn để hiển thị. Hãy nhập số dòng thay thế.",
+      "wholeFile": "Toàn bộ tập tin"
+    },
+    "diffView": {
+      "added": "Dòng được thêm",
+      "removed": "Dòng đã xóa",
+      "oldLine": "Dòng cũ",
+      "newLine": "Dòng mới",
+      "context": "Dòng ngữ cảnh"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Đã thử lại",
       "clear": "Xóa bộ lọc"
+    },
+    "impact": {
+      "title": "Tác động",
+      "analyzeImpact": "Phân tích tác động",
+      "description": "Chọn hai commit của ứng dụng đang được kiểm thử và chọn các trường hợp kiểm thử bị ảnh hưởng bởi các thay đổi.",
+      "noRepository": "Kết nối kho lưu trữ ứng dụng trong cài đặt dự án để sử dụng Tác động.",
+      "aiUnavailable": "Không có tích hợp LLM đang hoạt động: kết quả chỉ đến từ Ghim mã, khớp từ khóa và lịch sử chạy.",
+      "steps": {
+        "pick": "Commit",
+        "diff": "Thay đổi",
+        "analyze": "Phân tích",
+        "review": "Kiểm thử bị ảnh hưởng"
+      },
+      "pull": {
+        "label": "Yêu cầu kéo",
+        "selectPlaceholder": "Chọn một yêu cầu kéo...",
+        "searchPlaceholder": "Tìm kiếm theo số, tiêu đề, tác giả hoặc nhánh...",
+        "stateAll": "Tất cả",
+        "stateOpen": "Mở",
+        "stateMerged": "Đã hợp nhất",
+        "stateClosed": "Đã đóng",
+        "resolved": "So sánh {base} trên {target} với {head} trên {source}."
+      },
+      "pick": {
+        "modeLabel": "Chọn thay đổi theo",
+        "modeCommits": "Commit",
+        "modePull": "Yêu cầu kéo",
+        "modeCommitsHint": "Những gì đã thay đổi giữa hai bản build, để bạn có thể kiểm thử lại mọi thứ đã có kể từ lần cuối bạn xác minh.",
+        "modePullHint": "Những gì yêu cầu kéo này thay đổi, được đo từ nơi nhánh của nó tách ra, vì vậy công việc đã có trên nhánh đích trong lúc đó sẽ không được tính.",
+        "branchLabel": "Nhánh",
+        "baseLabel": "Commit gốc",
+        "headLabel": "Commit đích",
+        "commitPlaceholder": "Tìm kiếm commit...",
+        "searchHint": "Nhập một sha commit, hoặc lọc các commit đã tải theo thông điệp hoặc tác giả.",
+        "refLabel": "Hoặc dán một ref",
+        "refPlaceholder": "Nhánh, thẻ hoặc sha",
+        "refNotFound": "Không tìm thấy ref",
+        "latestOnBranch": "Mới nhất trên {branch}",
+        "previousAnalysisLabel": "Bắt đầu từ một phân tích trước đó",
+        "previousAnalysisPlaceholder": "Chọn một phân tích...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, other {# kiểm thử bị ảnh hưởng}}",
+        "sameCommit": "Commit gốc và commit đích là cùng một commit.",
+        "swapped": "Commit gốc và commit đích đã được hoán đổi để các thay đổi đọc theo chiều thuận.",
+        "loadingCommits": "Đang tải commit…",
+        "noCommits": "Không tìm thấy commit nào."
+      },
+      "diff": {
+        "summary": "{files, plural, other {# tập tin}} đã thay đổi · +{additions, number} −{deletions, number}",
+        "truncated": "Nhà cung cấp đã trả về một diff không đầy đủ. Một số tập tin đã thay đổi không được hiển thị hoặc không có patch.",
+        "noChanges": "Không có thay đổi giữa các commit này.",
+        "statusAdded": "Đã thêm",
+        "statusModified": "Đã sửa đổi",
+        "statusRemoved": "Đã xóa",
+        "statusRenamed": "Đã đổi tên",
+        "showPatch": "Hiện thay đổi",
+        "hidePatch": "Ẩn thay đổi",
+        "largePatch": "Patch lớn ({lines, number} dòng)",
+        "showFullPatch": "Hiện toàn bộ patch",
+        "binary": "Tập tin nhị phân",
+        "noPatch": "Patch không khả dụng",
+        "pinnedFiles": "{count, plural, other {# ghim}}",
+        "loading": "Đang so sánh commit…",
+        "failed": "Không thể so sánh các commit."
+      },
+      "loading": {
+        "analyzing": "Đang phân tích…",
+        "resolving_config": "Đang phân giải cấu hình kho lưu trữ…",
+        "fetching_diff": "Đang lấy diff…",
+        "matching_pins": "Đang khớp Ghim mã…",
+        "searching_cases": "Đang tìm kiếm trường hợp kiểm thử theo từ khóa…",
+        "scoring_history": "Đang chấm điểm lịch sử chạy…",
+        "waiting_for_ai": "Đang chờ AI…",
+        "merging": "Đang kết hợp kết quả…",
+        "ranking": "Đã xếp hạng {current} trong tổng số {total} trường hợp kiểm thử ứng viên",
+        "reused": "Đang sử dụng lại một phân tích gần đây của cùng các commit."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Không có kiểm thử nào bị ảnh hưởng} other {# kiểm thử bị ảnh hưởng}}",
+        "description": "Được sắp xếp theo điểm số. Mỗi kiểm thử đều hiển thị lý do được chọn.",
+        "relatedCount": "{count, plural, other {# kiểm thử liên quan}} có điểm thấp hơn và chưa được chọn.",
+        "summary": "Tóm tắt",
+        "score": "Điểm",
+        "case": "Trường hợp kiểm thử",
+        "reasons": "Lý do",
+        "tierPinned": "Đã ghim",
+        "tierAffected": "Bị ảnh hưởng",
+        "tierRelated": "Liên quan",
+        "selectAll": "Chọn tất cả",
+        "selectNone": "Không chọn",
+        "showDetails": "Hiện lý do",
+        "hideDetails": "Ẩn lý do",
+        "excluded": "{count, plural, other {# trường hợp đã có trong lần chạy đã bị bỏ qua}}"
+      },
+      "noAffected": {
+        "title": "Không tìm thấy kiểm thử bị ảnh hưởng nào",
+        "description": "Không có trường hợp kiểm thử nào khớp với các thay đổi. Hãy ghim các trường hợp vào các tập tin đã thay đổi để lần phân tích tiếp theo tìm thấy chúng."
+      },
+      "reasons": {
+        "pin": "Ghim",
+        "path": "Từ khóa",
+        "history": "Lịch sử",
+        "ai": "AI",
+        "linked": "Liên quan",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Khớp {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "Đã khớp \"{term}\" trong {field}",
+        "fieldName": "tên trường hợp",
+        "fieldContent": "nội dung trường hợp",
+        "fieldTag": "nhãn",
+        "fieldFolder": "thư mục",
+        "historyDetail": "{count, plural, other {# lần chạy trước}} sau các thay đổi đối với cùng tập tin",
+        "historyFailed": "Đã thất bại trong một lần chạy trước sau các thay đổi tương tự",
+        "linkedDetail": "Liên kết với trường hợp {caseId}"
+      },
+      "stale": {
+        "badge": "Cũ",
+        "tooltipAnalysis": "Không thể tìm thấy khối được ghim tại commit gốc; chỉ khớp theo đường dẫn tập tin. Hãy ghim lại từ trang trường hợp kiểm thử.",
+        "title": "{count, plural, other {# ghim cũ}}",
+        "description": "Các ghim này không còn khớp với mã. Hãy neo lại chúng từ trang trường hợp kiểm thử."
+      },
+      "uncovered": {
+        "title": "{count, plural, other {# tập tin đã thay đổi không có kiểm thử}}",
+        "description": "Không có trường hợp kiểm thử nào được liên kết với các tập tin này. Hãy ghim một trường hợp để lấp đầy khoảng trống.",
+        "pinAction": "Ghim một trường hợp...",
+        "pinned": "Đã ghim"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "Nhà cung cấp đã trả về một diff không đầy đủ.",
+        "diff_truncated_by_budget": "Chỉ một phần của diff phù hợp với ngữ cảnh AI; {count, plural, other {# tập tin}} đã được tóm tắt chỉ theo đường dẫn.",
+        "llm_not_configured": "Không có tích hợp LLM đang hoạt động: xếp hạng AI đã bị bỏ qua.",
+        "search_fallback_db": "Chỉ mục tìm kiếm không khả dụng: khớp từ khóa đã sử dụng cơ sở dữ liệu.",
+        "search_index_empty": "Dự án này không có trường hợp nào trong chỉ mục tìm kiếm, vì vậy khớp từ khóa đã sử dụng cơ sở dữ liệu. Hãy yêu cầu quản trị viên lập lại chỉ mục để có kết quả khớp tốt hơn.",
+        "ai_partial": "Một số lô AI đã thất bại; kết quả có thể không đầy đủ.",
+        "ai_truncated": "{count, plural, other {# lô AI}} đã bị mô hình cắt bớt.",
+        "no_candidates": "Không có trường hợp kiểm thử nào khớp.",
+        "anchor_fetch_capped": "Một số tập tin đã ghim chỉ được khớp theo đường dẫn (đã đạt giới hạn lấy dữ liệu)."
+      },
+      "actions": {
+        "compare": "So sánh",
+        "analyze": "Phân tích",
+        "reanalyze": "Phân tích lại",
+        "refine": "Quay lại thay đổi",
+        "accept": "{count, plural, other {Thêm # trường hợp}}",
+        "cancelAnalysis": "Hủy phân tích",
+        "back": "Quay lại",
+        "next": "Tiếp theo"
+      },
+      "errors": {
+        "title": "Phân tích thất bại",
+        "generic": "Đã xảy ra sự cố khi phân tích các thay đổi. Vui lòng thử lại.",
+        "pullFailed": "Không thể đọc các commit của yêu cầu kéo đó. Hãy chọn một yêu cầu khác, hoặc tự đặt tên cho các commit.",
+        "compareFailed": "Không thể so sánh các commit.",
+        "analysisFailed": "Phân tích đã thất bại: {error}",
+        "cancelled": "Phân tích đã bị hủy.",
+        "timeout": "Phân tích đang mất quá nhiều thời gian. Hãy quay lại sau hoặc thử lại.",
+        "branchesFailed": "Không thể liệt kê các nhánh.",
+        "commitsFailed": "Không thể tải các commit.",
+        "disabled": "Tác động chưa được bật cho dự án này.",
+        "noConfig": "Hãy kết nối kho lưu trữ ứng dụng trong cài đặt dự án trước."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Xác thực",
       "toolsAndIntegrations": "Công cụ & Tích hợp",
       "aiTools": "Công cụ AI",
-      "system": "Hệ thống"
+      "system": "Hệ thống",
+      "impact": "Phân tích tác động"
     },
     "imports": {
       "description": "Tích hợp dữ liệu từ các công cụ quản lý kiểm thử bên ngoài vào TestPlanIt.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Kết quả các bước chạy thử nghiệm",
         "issueConfigs": "Cấu hình sự cố",
         "sharedStepGroups": "Nhóm bước chung",
-        "dataSets": "Bộ dữ liệu"
+        "dataSets": "Bộ dữ liệu",
+        "codePins": "Ghim Mã",
+        "impactAnalyses": "Phân Tích Tác Động"
       },
       "table": {
         "title": "Đã xóa {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Tạo các trường hợp kiểm thử từ URL (Yêu cầu)",
         "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)",
         "automation_candidates": "Báo cáo ứng viên tự động hóa",
-        "derive_case_steps": "Suy luận bước bằng AI"
+        "derive_case_steps": "Suy luận bước bằng AI",
+        "impact_analysis": "Tác Động: Lựa Chọn Kiểm Thử Bị Ảnh Hưởng"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Lọc lần chạy thử nghiệm\n\nBật/tắt một thẻ để thu hẹp danh sách. Các thẻ áp dụng cho cả tab Đang hoạt động và Đã hoàn thành, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Thủ công** / **Tự động** — giới hạn danh sách theo loại lần chạy đó. Bật cả hai (hoặc tắt cả hai) sẽ hiển thị tất cả các lần chạy.\n- **Lần chạy thử nghiệm của tôi** — chỉ các lần chạy bạn tham gia: bạn đã tạo lần chạy, bạn được gán một trường hợp kiểm thử trong đó, hoặc bạn đã ghi lại một kết quả kiểm thử trong đó.",
-    "projectSessionsFilters": "## Lọc phiên\n\nBật một chip để thu hẹp danh sách. Các chip áp dụng cho cả tab Đang hoạt động và Đã hoàn tất, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Phiên của tôi** — chỉ các phiên bạn tham gia: bạn đã tạo phiên, hoặc phiên được giao cho bạn."
+    "projectSessionsFilters": "## Lọc phiên\n\nBật một chip để thu hẹp danh sách. Các chip áp dụng cho cả tab Đang hoạt động và Đã hoàn tất, và được ghi nhớ trên thiết bị này cho dự án này.\n\n- **Phiên của tôi** — chỉ các phiên bạn tham gia: bạn đã tạo phiên, hoặc phiên được giao cho bạn.",
+    "projectImpact": "## Tác động\nKết nối kho lưu trữ của ứng dụng đang được kiểm thử để dự án này có thể chạy phân tích tác động kiểm thử: chọn hai commit để xem thay đổi ảnh hưởng đến những test case nào, và gắn test case với đoạn mã mà chúng bao phủ."
   },
   "reports": {
     "ui": {

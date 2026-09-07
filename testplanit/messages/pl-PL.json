@@ -736,7 +736,8 @@
       "reports": "Raporty",
       "adminSamlConfig": "Administrator – Konfiguracja SAML",
       "apiDocumentation": "Dokumentacja API",
-      "sharedContent": "Udostępniana treść"
+      "sharedContent": "Udostępniana treść",
+      "impact": "Analiza wpływu"
     },
     "aria": {
       "userMenu": "Menu użytkownika",
@@ -2224,6 +2225,105 @@
           "savedToast": "Zaktualizowano czyszczenie porzuconej automatyzacji dla tego projektu",
           "saveError": "Nie udało się zaktualizować czyszczenia porzuconej automatyzacji"
         }
+      },
+      "impact": {
+        "title": "Analiza wpływu",
+        "description": "Włącz analizę wpływu testów i połącz repozytorium testowanej aplikacji.",
+        "enableLabel": "Włącz analizę wpływu",
+        "enableDescription": "Zezwól członkom zespołu na wybieranie testów, na które mają wpływ zmiany w kodzie, podczas tworzenia przebiegu testowego.",
+        "enabledToast": "Analiza wpływu włączona",
+        "disabledToast": "Analiza wpływu wyłączona",
+        "noRepos": {
+          "title": "Brak skonfigurowanych repozytoriów kodu",
+          "adminDescription": "Skonfiguruj połączenie z repozytorium przed skonfigurowaniem analizy wpływu dla tego projektu.",
+          "adminLink": "Przejdź do repozytoriów kodu",
+          "userDescription": "Skontaktuj się z administratorem systemu, aby skonfigurować połączenie z repozytorium kodu."
+        },
+        "repository": {
+          "title": "Repozytorium aplikacji",
+          "description": "Wybierz repozytorium zawierające testowaną aplikację.",
+          "placeholder": "Wybierz repozytorium kodu...",
+          "branchLabel": "Gałąź",
+          "branchPlaceholder": "Wybierz gałąź...",
+          "branchInputPlaceholder": "Pozostaw puste, aby użyć domyślnej gałęzi repozytorium",
+          "defaultBranch": "Domyślna gałąź repozytorium",
+          "branchesUnavailable": "Nie udało się wyświetlić listy gałęzi: {error}",
+          "branchesFallbackHint": "Wpisz nazwę gałęzi ręcznie."
+        },
+        "pathPatterns": {
+          "title": "Wzory ścieżek",
+          "description": "Które pliki aplikacji mają zostać uwzględnione. Każdy wiersz łączy ścieżkę bazową i wzorzec glob. Przykład: path=src + pattern=**/* obejmuje wszystko w katalogu src.",
+          "pathLabel": "Ścieżka",
+          "pathPlaceholder": "src",
+          "patternLabel": "Wzór",
+          "addPath": "Dodaj ścieżkę",
+          "previewFiles": "Podgląd plików",
+          "scanningRepo": "Skanowanie plików repozytorium… ({seconds}s)",
+          "files": "{count, plural, one {# plik} few {# pliki} many {# plików} other {# pliku}}",
+          "truncatedBadge": "Wyniki mogą być niekompletne (limit dostawcy)"
+        },
+        "preview": {
+          "resolvingBranch": "Rozwiązywanie gałęzi…",
+          "scanningFiles": "Skanowanie plików w {scope}…",
+          "scanningFilesCount": "Skanowanie plików w {scope}… (znaleziono {count, number})",
+          "filtering": "Stosowanie filtrów do {count, number} plików…",
+          "rateLimited": "Przekroczono limit zapytań u dostawcy — ponawianie za {seconds, number}s…"
+        },
+        "cache": {
+          "title": "Ustawienia pamięci podręcznej",
+          "description": "Pliki są buforowane w Valkey, dzięki czemu wybór plików Code Pin i znaczniki repozytorium działają szybko.",
+          "enableLabel": "Włącz buforowanie plików",
+          "disabledWarning": "Buforowanie plików jest wyłączone. Znaczniki repozytorium nie są skanowane, a selektor plików Code Pin wyświetla pliki na żywo od dostawcy przy każdym otwarciu.",
+          "ttlBefore": "Buforuj przez",
+          "ttlDays": "{count, plural, one {dzień} few {dni} many {dni} other {dnia}}",
+          "ttlAriaLabel": "Czas trwania pamięci podręcznej w dniach",
+          "statusTitle": "Status pamięci podręcznej",
+          "refreshButton": "Odśwież pamięć podręczną",
+          "listingFiles": "Wyświetlanie plików…",
+          "cachingFiles": "Buforowanie {count} plików…",
+          "statusNeverFetched": "Nigdy nie pobrano",
+          "statusPending": "Odświeżanie...",
+          "lastFetched": "Ostatnio pobrano",
+          "filesCached": "Pliki w pamięci podręcznej",
+          "contentsCached": "Zawartość w pamięci podręcznej",
+          "contentsIncomplete": "Tylko {cached} z {total} zawartości plików jest w pamięci podręcznej. Odśwież ponownie, aby zakończyć.",
+          "totalSize": "Całkowity rozmiar"
+        },
+        "markers": {
+          "title": "Znaczniki repozytorium",
+          "description": "Adnotacje w komentarzach, takie jak @testplanit case:123, oraz wpisy w pliku .testplanit/testmap.yml stają się elementami Code Pin przy każdym odświeżeniu pamięci podręcznej.",
+          "lastScan": "Ostatnie skanowanie: {date}",
+          "never": "Jeszcze nie skanowano",
+          "skippedPrivacy": "Pominięto: buforowanie plików jest wyłączone.",
+          "skippedPartial": "Pominięto: zawartość plików została zbuforowana tylko częściowo.",
+          "summary": "{annotations, plural, one {# adnotacja} few {# adnotacje} many {# adnotacji} other {# adnotacji}} · {mapEntries, plural, one {# wpis mapy} few {# wpisy mapy} many {# wpisów mapy} other {# wpisów mapy}} · utworzono: {created} · zaktualizowano: {updated} · usunięto: {removed}",
+          "problems": "{count, plural, one {# problem} few {# problemy} many {# problemów} other {# problemów}}",
+          "error": "Skanowanie nie powiodło się: {error}"
+        },
+        "save": "Zapisz konfigurację",
+        "saved": "Zapisano konfigurację analizy wpływu",
+        "saveError": "Nie udało się zapisać konfiguracji",
+        "listError": "Nie udało się wyświetlić listy plików repozytorium",
+        "contentsError": "Nie udało się zapisać zawartości pliku w pamięci podręcznej",
+        "networkError": "Błąd sieciowy podczas odświeżania pamięci podręcznej",
+        "refreshSuccess": "Odświeżono pamięć podręczną: {fileCount} plików (zawartość w pamięci podręcznej: {contentCached})",
+        "refreshRateLimited": "Odświeżono pamięć podręczną: {fileCount} plików na liście, {contentCached}/{fileCount} zawartości w pamięci podręcznej (ograniczona szybkość — w celu dokończenia należy odświeżyć ponownie)",
+        "refreshComplete": "Odświeżono pamięć podręczną: {fileCount} plików",
+        "refreshInProgress": "Odświeżanie pamięci podręcznej wciąż działa w tle. Ten widok zostanie zaktualizowany po zakończeniu.",
+        "validation": {
+          "pathRequired": "Ścieżka jest wymagana",
+          "patternRequired": "Wzór jest wymagany",
+          "repositoryRequired": "Repozytorium jest wymagane",
+          "pathPatternRequired": "Wymagany jest co najmniej jeden wzorzec ścieżki"
+        },
+        "disconnect": "Odłącz repozytorium",
+        "confirmDisconnect": "Czy na pewno chcesz odłączyć „{name}” od tego projektu?",
+        "disconnectWarningTitle": "Odłączenie tego repozytorium spowoduje:",
+        "disconnectWarning1": "Usuń {count, plural, one {# element Code Pin} few {# elementy Code Pin} many {# elementów Code Pin} other {# elementu Code Pin}} oraz historię analizy tego repozytorium",
+        "disconnectWarning2": "Usuń wszystkie pliki z pamięci podręcznej repozytorium",
+        "disconnectWarning3": "Usuń wzorzec ścieżki i konfiguracje gałęzi",
+        "disconnectSuccess": "Repozytorium aplikacji odłączone",
+        "disconnectError": "Nie udało się odłączyć repozytorium aplikacji"
       }
     },
     "matrix": {
@@ -3096,7 +3196,7 @@
         },
         "warnings": {
           "partialTitle": "Niektóre linki do zgłoszeń nie zostały utworzone",
-          "summary": "{count, plural, one {# komórka z problemem nie mogła zostać połączona} few {# komórki z problemem nie mogły zostać połączone} many {# komórek z problemem nie mogło zostać połączonych} other {# komórki z problemem nie mogły zostać połączone}}. Przypadki testowe zostały zaimportowane."
+          "summary": "{count, plural, one {# komórka problemu} few {# komórki problemów} many {# komórek problemów} other {# komórki problemu}} nie mogła zostać powiązana. Przypadki testowe zostały zaimportowane."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "Utwórz przypadek testowy",
       "successMessage": "Dodano nowy przypadek testowy",
       "errorMessage": "Nieznany błąd podczas dodawania nowego przypadku testowego"
+    },
+    "draft": {
+      "saving": "Zapisywanie…",
+      "saved": "Wszystkie zmiany zapisano {time}",
+      "unsaved": "Niezapisane zmiany",
+      "saveFailed": "Nie można zapisać — ponawianie próby",
+      "restoreTitle": "Przywrócić niezapisane zmiany?",
+      "restoreDescription": "Masz niezapisane zmiany w tym przypadku testowym z {age}. Przywróć je lub odrzuć i wczytaj zapisaną wersję.",
+      "restoreTitleNew": "Przywrócić niezapisany przypadek testowy?",
+      "restoreDescriptionNew": "Rozpocząłeś tworzenie przypadku testowego {age} i nigdy go nie zapisałeś. Przywróć to, co napisałeś, lub odrzuć i zacznij od nowa.",
+      "restoreStaleWarning": "Ten przypadek testowy został zapisany przez kogoś innego od czasu utworzenia Twojej wersji roboczej. Przywrócenie zastąpi jego zawartość po zapisaniu.",
+      "restoreDiscard": "Odrzuć",
+      "restoreRestore": "Przywróć",
+      "bannerText": "Masz niezapisane zmiany w tym przypadku testowym z {age}.",
+      "bannerAction": "Wznów edycję",
+      "bannerDiscard": "Odrzuć je"
     },
     "columns": {
       "selectCase": "Wybierz sprawę",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "„{name}” zostanie usunięte z zapisanych widoków. Tej operacji nie można odwrócić.",
       "deleted": "Zapisany widok usunięty",
       "deleteFailed": "Nie udało się usunąć widoku. Spróbuj ponownie."
+    },
+    "codePins": {
+      "add": "Dodaj pinezkę",
+      "addDialogDescription": "Pinezki są zakotwiczone na końcu bieżącej gałęzi.",
+      "addDialogTitle": "Przypnij ten przypadek do kodu",
+      "addFailed": "Nie można dodać pinezki",
+      "addSuccess": "Dodano pinezkę",
+      "anchoredAt": "Zakotwiczono w {sha}",
+      "cancel": "Anuluj",
+      "caseLabel": "Przypadek testowy",
+      "casePlaceholder": "Szukaj przypadków testowych...",
+      "contentUnavailable": "Zawartość pliku jest niedostępna.",
+      "description": "Kod, który obejmuje ten przypadek. Zmiana wewnątrz przypiętego bloku włącza przypadek do analiz wpływu.",
+      "dismissStale": "Odrzuć",
+      "duplicate": "Ta pinezka już istnieje.",
+      "empty": "Brak pinezek kodu.",
+      "endLine": "Linia końcowa",
+      "errorFileNotFound": "Nie znaleziono pliku na końcu gałęzi.",
+      "errorLineOutOfRange": "Zakres linii wykracza poza plik.",
+      "errorSnippetTooLarge": "Przypięty blok jest zbyt duży.",
+      "errorSymbolNotFound": "Nie znaleziono symbolu w pliku.",
+      "fileLabel": "Plik",
+      "filePlaceholder": "Szukaj plików...",
+      "filesCached": "{count, plural, one {# plik} few {# pliki} many {# plików} other {# pliku}} w pamięci podręcznej · {date}",
+      "filesLive": "Wyświetlanie plików na żywo z repozytorium",
+      "globLabel": "Wzorzec",
+      "globMatches": "{count, plural, =0 {Brak pasujących plików w pamięci podręcznej} one {# pasujący plik w pamięci podręcznej} few {# pasujące pliki w pamięci podręcznej} many {# pasujących plików w pamięci podręcznej} other {# pasującego pliku w pamięci podręcznej}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Rodzaj",
+      "kindFile": "Cały plik",
+      "kindGlob": "Wzorzec glob",
+      "kindLabel": "Przypnij do",
+      "kindRange": "Linie",
+      "kindSymbol": "Symbol",
+      "linesHint": "Kliknij numer linii, aby rozpocząć, przytrzymaj shift i kliknij, aby zakończyć.",
+      "location": "Lokalizacja",
+      "managedTooltip": "Zarządzane przez repozytorium. Edytuj znacznik w kodzie.",
+      "noFilesCached": "Brak listy plików w pamięci podręcznej. Poproś administratora projektu o odświeżenie pamięci podręcznej repozytorium.",
+      "noteLabel": "Notatka",
+      "notePlaceholder": "Dlaczego ten przypadek obejmuje ten kod (opcjonalnie)",
+      "reanchor": "Ponownie zakotwicz",
+      "reanchorFailed": "Nie można ponownie zakotwiczyć pinezki",
+      "reanchorSuccess": "Pinezka ponownie zakotwiczona",
+      "remove": "Usuń",
+      "removeConfirm": "Usunąć tę pinezkę?",
+      "removeFailed": "Nie można usunąć pinezki",
+      "removeSuccess": "Pinezka usunięta",
+      "source": "Źródło",
+      "sourceAi": "AI",
+      "sourceAnnotation": "Adnotacja",
+      "sourceManual": "Ręczne",
+      "sourceMapfile": "Plik mapy",
+      "staleBadge": "Nieaktualne",
+      "staleFileDeleted": "plik usunięty",
+      "staleSnippetNotFound": "nie znaleziono linii",
+      "staleSymbolNotFound": "nie znaleziono symbolu",
+      "staleTooltip": "Przypięty blok nie został znaleziony na końcu gałęzi: {reason}.",
+      "startLine": "Linia początkowa",
+      "submit": "Dodaj pinezkę",
+      "symbolHint": "Deklaracja jest lokalizowana według nazwy w pliku.",
+      "symbolLabel": "Symbol",
+      "symbolNoneDetected": "Nie wykryto symboli, wpisz nazwę.",
+      "symbolPlaceholder": "nazwaFunkcji",
+      "symbolSelectPlaceholder": "Wybierz lub wpisz symbol...",
+      "updateSuccess": "Pinezka zaktualizowana",
+      "updateFailed": "Nie można zaktualizować pinezki",
+      "editDialogTitle": "Edytuj tę pinezkę",
+      "editDialogDescription": "Plik i typ pinezki pozostają bez zmian. Aby zmienić którekolwiek, usuń tę pinezkę i dodaj nową.",
+      "editAction": "Edytuj pinezkę",
+      "saveChanges": "Zapisz zmiany",
+      "symbolSearchPlaceholder": "Szukaj symboli...",
+      "symbolUseTyped": "Użyj \"{symbol}\"",
+      "title": "Pinezki kodu",
+      "viewerFailed": "Nie można wczytać pliku.",
+      "viewerLoading": "Wczytywanie pliku…",
+      "viewerTooLarge": "Ten plik jest zbyt duży, aby go wyświetlić. Wprowadź numery linii zamiast tego.",
+      "wholeFile": "Cały plik"
+    },
+    "diffView": {
+      "added": "Dodana linia",
+      "removed": "Usunięta linia",
+      "oldLine": "Stara linia",
+      "newLine": "Nowa linia",
+      "context": "Linia kontekstu"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Ponowione",
       "clear": "Wyczyść filtry"
+    },
+    "impact": {
+      "title": "Wpływ",
+      "analyzeImpact": "Analizuj wpływ",
+      "description": "Wybierz dwa commity testowanej aplikacji i zaznacz przypadki testowe, na które wpływają zmiany.",
+      "noRepository": "Połącz repozytorium aplikacji w ustawieniach projektu, aby korzystać z Analizy wpływu.",
+      "aiUnavailable": "Brak aktywnej integracji LLM: wyniki pochodzą tylko z pinezek kodu, dopasowywania słów kluczowych i historii przebiegów.",
+      "steps": {
+        "pick": "Commity",
+        "diff": "Zmiany",
+        "analyze": "Analizuj",
+        "review": "Przypadki dotknięte zmianą"
+      },
+      "pull": {
+        "label": "Żądanie ściągnięcia",
+        "selectPlaceholder": "Wybierz żądanie ściągnięcia...",
+        "searchPlaceholder": "Szukaj po numerze, tytule, autorze lub gałęzi...",
+        "stateAll": "Wszystkie",
+        "stateOpen": "Otwarte",
+        "stateMerged": "Scalone",
+        "stateClosed": "Zamknięte",
+        "resolved": "Porównywanie {base} na {target} z {head} na {source}."
+      },
+      "pick": {
+        "modeLabel": "Wybierz zmiany według",
+        "modeCommits": "Commitów",
+        "modePull": "Żądania ściągnięcia",
+        "modeCommitsHint": "Co zmieniło się między dwiema kompilacjami, abyś mógł ponownie przetestować wszystko, co pojawiło się od ostatniej zweryfikowanej wersji.",
+        "modePullHint": "Co zmienia to żądanie ściągnięcia, mierzone od momentu odgałęzienia jego gałęzi, tak aby prace wprowadzone w międzyczasie do gałęzi docelowej zostały pominięte.",
+        "branchLabel": "Gałąź",
+        "baseLabel": "Commit bazowy",
+        "headLabel": "Commit docelowy",
+        "commitPlaceholder": "Szukaj commitów...",
+        "searchHint": "Wpisz sha commita lub filtruj wczytane commity według wiadomości lub autora.",
+        "refLabel": "Lub wklej referencję",
+        "refPlaceholder": "Gałąź, tag lub sha",
+        "refNotFound": "Nie znaleziono referencji",
+        "latestOnBranch": "Najnowszy w {branch}",
+        "previousAnalysisLabel": "Rozpocznij od poprzedniej analizy",
+        "previousAnalysisPlaceholder": "Wybierz analizę...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# dotknięty przypadek testowy} few {# dotknięte przypadki testowe} many {# dotkniętych przypadków testowych} other {# dotkniętego przypadku testowego}}",
+        "sameCommit": "Bazowy i docelowy to ten sam commit.",
+        "swapped": "Zamieniono bazowy i docelowy commit, aby zmiany czytać w przód.",
+        "loadingCommits": "Wczytywanie commitów…",
+        "noCommits": "Nie znaleziono commitów."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# plik} few {# pliki} many {# plików} other {# pliku}} zmieniono · +{additions, number} −{deletions, number}",
+        "truncated": "Dostawca zwrócił częściowy diff. Niektóre zmienione pliki nie są wyświetlane lub nie mają łaty.",
+        "noChanges": "Brak zmian między tymi commitami.",
+        "statusAdded": "Dodano",
+        "statusModified": "Zmodyfikowano",
+        "statusRemoved": "Usunięto",
+        "statusRenamed": "Zmieniono nazwę",
+        "showPatch": "Pokaż zmiany",
+        "hidePatch": "Ukryj zmiany",
+        "largePatch": "Duża łata ({lines, number} linii)",
+        "showFullPatch": "Pokaż pełną łatę",
+        "binary": "Plik binarny",
+        "noPatch": "Łata niedostępna",
+        "pinnedFiles": "{count, plural, one {# pinezka} few {# pinezki} many {# pinezek} other {# pinezki}}",
+        "loading": "Porównywanie commitów…",
+        "failed": "Nie można porównać commitów."
+      },
+      "loading": {
+        "analyzing": "Analizowanie…",
+        "resolving_config": "Rozwiązywanie konfiguracji repozytorium…",
+        "fetching_diff": "Pobieranie diffa…",
+        "matching_pins": "Dopasowywanie pinezek kodu…",
+        "searching_cases": "Wyszukiwanie przypadków testowych według słów kluczowych…",
+        "scoring_history": "Ocenianie historii przebiegów…",
+        "waiting_for_ai": "Oczekiwanie na AI…",
+        "merging": "Łączenie wyników…",
+        "ranking": "Oceniono {current} z {total} kandydujących przypadków testowych",
+        "reused": "Ponowne wykorzystanie niedawnej analizy tych samych commitów."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Brak dotkniętych przypadków testowych} one {# dotknięty przypadek testowy} few {# dotknięte przypadki testowe} many {# dotkniętych przypadków testowych} other {# dotkniętego przypadku testowego}}",
+        "description": "Posortowano według wyniku. Każdy przypadek testowy pokazuje, dlaczego został wybrany.",
+        "relatedCount": "{count, plural, one {# powiązany przypadek testowy} few {# powiązane przypadki testowe} many {# powiązanych przypadków testowych} other {# powiązanego przypadku testowego}} uzyskał niższy wynik i jest odznaczony.",
+        "summary": "Podsumowanie",
+        "score": "Wynik",
+        "case": "Przypadek testowy",
+        "reasons": "Dlaczego",
+        "tierPinned": "Przypięte",
+        "tierAffected": "Dotknięte",
+        "tierRelated": "Powiązane",
+        "selectAll": "Zaznacz wszystko",
+        "selectNone": "Odznacz wszystko",
+        "showDetails": "Pokaż powody",
+        "hideDetails": "Ukryj powody",
+        "excluded": "{count, plural, one {# przypadek już w przebiegu został pominięty} few {# przypadki już w przebiegu zostały pominięte} many {# przypadków już w przebiegu zostało pominiętych} other {# przypadku już w przebiegu zostało pominiętego}}"
+      },
+      "noAffected": {
+        "title": "Nie znaleziono dotkniętych przypadków testowych",
+        "description": "Żaden przypadek testowy nie pasuje do zmian. Przypnij przypadki do zmienionych plików, aby następna analiza je znalazła."
+      },
+      "reasons": {
+        "pin": "Pinezka",
+        "path": "Słowo kluczowe",
+        "history": "Historia",
+        "ai": "AI",
+        "linked": "Powiązane",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Pasuje do {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "Dopasowano \"{term}\" w {field}",
+        "fieldName": "nazwa przypadku",
+        "fieldContent": "treść przypadku",
+        "fieldTag": "tag",
+        "fieldFolder": "folder",
+        "historyDetail": "{count, plural, one {# wcześniejszy przebieg} few {# wcześniejsze przebiegi} many {# wcześniejszych przebiegów} other {# wcześniejszego przebiegu}} po zmianach w tych samych plikach",
+        "historyFailed": "Niepowodzenie we wcześniejszym przebiegu po podobnych zmianach",
+        "linkedDetail": "Powiązano z przypadkiem {caseId}"
+      },
+      "stale": {
+        "badge": "Nieaktualne",
+        "tooltipAnalysis": "Przypięty blok nie został znaleziony w commicie bazowym; dopasowano tylko po ścieżce pliku. Ponownie przypnij ze strony przypadku testowego.",
+        "title": "{count, plural, one {# nieaktualna pinezka} few {# nieaktualne pinezki} many {# nieaktualnych pinezek} other {# nieaktualnej pinezki}}",
+        "description": "Te pinezki nie pasują już do kodu. Ponownie zakotwicz je ze strony przypadku testowego."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# zmieniony plik nie ma testu} few {# zmienione pliki nie mają testów} many {# zmienionych plików nie ma testów} other {# zmienionego pliku nie ma testów}}",
+        "description": "Żaden przypadek testowy nie jest powiązany z tymi plikami. Przypnij przypadek, aby zamknąć lukę.",
+        "pinAction": "Przypnij przypadek...",
+        "pinned": "Przypięte"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "Dostawca zwrócił częściowy diff.",
+        "diff_truncated_by_budget": "Tylko część diffa zmieściła się w kontekście AI; {count, plural, one {# plik został} few {# pliki zostały} many {# plików zostało} other {# pliku zostało}} podsumowany tylko według ścieżki.",
+        "llm_not_configured": "Brak aktywnej integracji LLM: pominięto ocenianie przez AI.",
+        "search_fallback_db": "Indeks wyszukiwania niedostępny: dopasowywanie słów kluczowych użyło bazy danych.",
+        "search_index_empty": "Ten projekt nie ma przypadków w indeksie wyszukiwania, więc dopasowywanie słów kluczowych użyło bazy danych. Poproś administratora o ponowne indeksowanie w celu lepszego dopasowania.",
+        "ai_partial": "Niektóre partie AI nie powiodły się; wyniki mogą być niekompletne.",
+        "ai_truncated": "{count, plural, one {# partia AI została} few {# partie AI zostały} many {# partii AI zostało} other {# partii AI zostało}} ucięte przez model.",
+        "no_candidates": "Żaden przypadek testowy nie pasował.",
+        "anchor_fetch_capped": "Niektóre przypięte pliki zostały dopasowane tylko po ścieżce (osiągnięto limit pobierania)."
+      },
+      "actions": {
+        "compare": "Porównaj",
+        "analyze": "Analizuj",
+        "reanalyze": "Analizuj ponownie",
+        "refine": "Wróć do zmian",
+        "accept": "{count, plural, one {Dodaj # przypadek} few {Dodaj # przypadki} many {Dodaj # przypadków} other {Dodaj # przypadku}}",
+        "cancelAnalysis": "Anuluj analizę",
+        "back": "Wstecz",
+        "next": "Dalej"
+      },
+      "errors": {
+        "title": "Analiza nie powiodła się",
+        "generic": "Coś poszło nie tak podczas analizowania zmian. Spróbuj ponownie.",
+        "pullFailed": "Nie można odczytać commitów tego żądania ściągnięcia. Wybierz inne lub wskaż commity samodzielnie.",
+        "compareFailed": "Nie można porównać commitów.",
+        "analysisFailed": "Analiza nie powiodła się: {error}",
+        "cancelled": "Analiza została anulowana.",
+        "timeout": "Analiza trwa zbyt długo. Sprawdź ponownie później lub spróbuj jeszcze raz.",
+        "branchesFailed": "Nie można wyświetlić listy gałęzi.",
+        "commitsFailed": "Nie można wczytać commitów.",
+        "disabled": "Analiza wpływu nie jest włączona dla tego projektu.",
+        "noConfig": "Najpierw połącz repozytorium aplikacji w ustawieniach projektu."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Uwierzytelnianie",
       "toolsAndIntegrations": "Narzędzia i integracje",
       "aiTools": "Narzędzia AI",
-      "system": "System"
+      "system": "System",
+      "impact": "Analiza wpływu"
     },
     "imports": {
       "description": "Przenieś dane z zewnętrznych narzędzi do zarządzania testami do TestPlanIt.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Wyniki testu krok po kroku",
         "issueConfigs": "Konfiguracje problemów",
         "sharedStepGroups": "Wspólne grupy kroków",
-        "dataSets": "Zestawy danych"
+        "dataSets": "Zestawy danych",
+        "codePins": "Piny kodu",
+        "impactAnalyses": "Analizy wpływu"
       },
       "table": {
         "title": "Usunięto {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Generuj przypadki testowe z adresu URL (wymagania)",
         "generate_from_url_app": "Generuj przypadki testowe z adresu URL (testowanie aplikacji)",
         "automation_candidates": "Raport kandydatów do automatyzacji",
-        "derive_case_steps": "Generowanie kroków przez AI"
+        "derive_case_steps": "Generowanie kroków przez AI",
+        "impact_analysis": "Wpływ: Wybór dotkniętych testów"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Filtrowanie przebiegów testowych\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Ręczne** / **Automatyczne** — ogranicz listę do danego typu przebiegu. Włączenie obu (lub wyłączenie obu) pokazuje wszystkie przebiegi.\n- **Moje przebiegi testowe** — tylko przebiegi, w których uczestniczysz: utworzyłeś przebieg, przypisano Ci w nim przypadek testowy lub zarejestrowałeś w nim wynik testu.",
-    "projectSessionsFilters": "## Filtrowanie sesji\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Moje sesje** — tylko sesje, w których uczestniczysz: utworzyłeś sesję lub została ona Ci przypisana."
+    "projectSessionsFilters": "## Filtrowanie sesji\n\nPrzełącz etykietę, aby zawęzić listę. Etykiety mają zastosowanie zarówno do kart Aktywne, jak i Zakończone, i są zapamiętywane na tym urządzeniu dla tego projektu.\n\n- **Moje sesje** — tylko sesje, w których uczestniczysz: utworzyłeś sesję lub została ona Ci przypisana.",
+    "projectImpact": "## Wpływ\nPodłącz repozytorium testowanej aplikacji, aby ten projekt mógł uruchamiać analizę wpływu testów: wybierz dwa commity, aby zobaczyć, na które przypadki testowe wpływają zmiany, i przypisz przypadki testowe do kodu, który obejmują."
   },
   "reports": {
     "ui": {

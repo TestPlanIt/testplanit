@@ -736,7 +736,8 @@
       "reports": "Reporty",
       "adminSamlConfig": "Admin - Konfigurace SAML",
       "apiDocumentation": "API dokumentace",
-      "sharedContent": "Sdílený obsah"
+      "sharedContent": "Sdílený obsah",
+      "impact": "Analýza dopadu"
     },
     "aria": {
       "userMenu": "Uživatelské menu",
@@ -2224,6 +2225,105 @@
           "savedToast": "Úklid opuštěné automatizace byl pro tento projekt aktualizován",
           "saveError": "Nepodařilo se aktualizovat úklid opuštěné automatizace"
         }
+      },
+      "impact": {
+        "title": "Analýza dopadu",
+        "description": "Povolte analýzu dopadu testů a připojte repozitář testované aplikace.",
+        "enableLabel": "Povolit analýzu dopadu",
+        "enableDescription": "Umožněte členům týmu vybrat ovlivněné testy na základě změn kódu při vytváření testovacího běhu.",
+        "enabledToast": "Analýza dopadu povolena",
+        "disabledToast": "Analýza dopadu zakázána",
+        "noRepos": {
+          "title": "Nejsou nakonfigurovány žádné repozitáře kódu",
+          "adminDescription": "Před konfigurací analýzy dopadu pro tento projekt nastavte připojení repozitáře.",
+          "adminLink": "Přejít na Repozitáře kódu",
+          "userDescription": "Kontaktujte svého systémového administrátora, aby nastavil připojení repozitáře kódu."
+        },
+        "repository": {
+          "title": "Repozitář aplikace",
+          "description": "Vyberte repozitář, který obsahuje testovanou aplikaci.",
+          "placeholder": "Vyberte repozitář kódu...",
+          "branchLabel": "Větev",
+          "branchPlaceholder": "Vyberte větev...",
+          "branchInputPlaceholder": "Ponechte prázdné pro použití výchozí větve repozitáře",
+          "defaultBranch": "Výchozí větev repozitáře",
+          "branchesUnavailable": "Větve se nepodařilo vypsat: {error}",
+          "branchesFallbackHint": "Zadejte místo toho název větve."
+        },
+        "pathPatterns": {
+          "title": "Vzory cest",
+          "description": "Které soubory aplikace zahrnout. Každý řádek kombinuje základní cestu a glob vzor. Příklad: path=src + pattern=**/* zahrne vše pod src.",
+          "pathLabel": "Cesta",
+          "pathPlaceholder": "src",
+          "patternLabel": "Vzor",
+          "addPath": "Přidat cestu",
+          "previewFiles": "Náhled souborů",
+          "scanningRepo": "Prohledávání souborů repozitáře… ({seconds} s)",
+          "files": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}}",
+          "truncatedBadge": "Výsledky mohou být neúplné (limit poskytovatele)"
+        },
+        "preview": {
+          "resolvingBranch": "Zjišťování větve…",
+          "scanningFiles": "Prohledávání souborů v {scope}…",
+          "scanningFilesCount": "Prohledávání souborů v {scope}… (nalezeno {count, number})",
+          "filtering": "Používání filtrů na {count, number} souborů…",
+          "rateLimited": "Omezeno poskytovatelem — opakování za {seconds, number} s…"
+        },
+        "cache": {
+          "title": "Nastavení mezipaměti",
+          "description": "Soubory jsou ukládány do mezipaměti Valkey, aby výběr souborů Code Pin a značky repozitáře zůstaly rychlé.",
+          "enableLabel": "Povolit ukládání souborů do mezipaměti",
+          "disabledWarning": "Ukládání souborů do mezipaměti je zakázáno. Značky repozitáře nejsou prohledávány a výběr souborů Code Pin při každém otevření vypisuje soubory přímo od vašeho poskytovatele.",
+          "ttlBefore": "Ukládat do mezipaměti po dobu",
+          "ttlDays": "{count, plural, one {den} few {dny} many {dne} other {dní}}",
+          "ttlAriaLabel": "Doba trvání mezipaměti ve dnech",
+          "statusTitle": "Stav mezipaměti",
+          "refreshButton": "Obnovit mezipaměť",
+          "listingFiles": "Výpis souborů…",
+          "cachingFiles": "Ukládání {count} souborů do mezipaměti…",
+          "statusNeverFetched": "Nikdy nenačteno",
+          "statusPending": "Obnovování...",
+          "lastFetched": "Naposledy načteno",
+          "filesCached": "Uloženo souborů",
+          "contentsCached": "Uložen obsah",
+          "contentsIncomplete": "V mezipaměti je uložen obsah pouze {cached} z {total} souborů. Pro dokončení obnovte znovu.",
+          "totalSize": "Celková velikost"
+        },
+        "markers": {
+          "title": "Značky repozitáře",
+          "description": "Komentářové anotace jako @testplanit case:123 a záznamy v souboru .testplanit/testmap.yml se při každém obnovení mezipaměti stávají značkami Code Pin.",
+          "lastScan": "Poslední skenování: {date}",
+          "never": "Zatím neskenováno",
+          "skippedPrivacy": "Přeskočeno: ukládání souborů do mezipaměti je zakázáno.",
+          "skippedPartial": "Přeskočeno: obsah souborů byl uložen do mezipaměti pouze částečně.",
+          "summary": "{annotations, plural, one {# anotace} few {# anotace} many {# anotace} other {# anotací}} · {mapEntries, plural, one {# záznam mapy} few {# záznamy mapy} many {# záznamu mapy} other {# záznamů mapy}} · vytvořeno: {created} · aktualizováno: {updated} · odebráno: {removed}",
+          "problems": "{count, plural, one {# problém} few {# problémy} many {# problému} other {# problémů}}",
+          "error": "Skenování selhalo: {error}"
+        },
+        "save": "Uložit konfiguraci",
+        "saved": "Konfigurace analýzy dopadu byla uložena",
+        "saveError": "Nepodařilo se uložit konfiguraci",
+        "listError": "Nepodařilo se vypsat soubory repozitáře",
+        "contentsError": "Nepodařilo se uložit obsah souborů do mezipaměti",
+        "networkError": "Chyba sítě při obnovování mezipaměti",
+        "refreshSuccess": "Mezipaměť obnovena: {fileCount} souborů ({contentCached} obsahů uloženo)",
+        "refreshRateLimited": "Mezipaměť obnovena: vypsáno {fileCount} souborů, uloženo {contentCached}/{fileCount} obsahů (omezeno rychlostí požadavků — pro dokončení obnovte znovu)",
+        "refreshComplete": "Mezipaměť obnovena: {fileCount} souborů",
+        "refreshInProgress": "Obnovení mezipaměti stále probíhá na pozadí. Jakmile skončí, zobrazí se zde aktualizace.",
+        "validation": {
+          "pathRequired": "Cesta je povinná",
+          "patternRequired": "Vzor je povinný",
+          "repositoryRequired": "Repozitář je povinný",
+          "pathPatternRequired": "Je vyžadován alespoň jeden vzor cesty"
+        },
+        "disconnect": "Odpojit repozitář",
+        "confirmDisconnect": "Opravdu chcete odpojit \"{name}\" od tohoto projektu?",
+        "disconnectWarningTitle": "Odpojení tohoto repozitáře způsobí:",
+        "disconnectWarning1": "Odstraní {count, plural, one {# Code Pin} few {# Code Piny} many {# Code Pinu} other {# Code Pinů}} a historii analýzy tohoto repozitáře",
+        "disconnectWarning2": "Odstraní všechny soubory repozitáře uložené v mezipaměti",
+        "disconnectWarning3": "Odstraní konfigurace vzorů cest a větví",
+        "disconnectSuccess": "Repozitář aplikace byl odpojen",
+        "disconnectError": "Nepodařilo se odpojit repozitář aplikace"
       }
     },
     "matrix": {
@@ -3095,8 +3195,8 @@
           "partialSummary": "{failed, plural, one {# řádek} few {# řádky} many {# řádku} other {# řádků}} se nepodařilo importovat. {imported, plural, one {# testovací případ byl} few {# testovací případy byly} many {# testovacího případu bylo} other {# testovacích případů bylo}} úspěšně importováno."
         },
         "warnings": {
-          "partialTitle": "Některé odkazy na issues nebyly vytvořeny",
-          "summary": "{count, plural, one {# buňku issue} few {# buňky issue} many {# buňky issue} other {# buněk issue}} se nepodařilo propojit. Testovací případy byly importovány."
+          "partialTitle": "Některá propojení problémů nebyla vytvořena",
+          "summary": "{count, plural, one {# buňku problému} few {# buňky problémů} many {# buňky problému} other {# buněk problémů}} se nepodařilo propojit. Testovací případy byly importovány."
         },
         "page1": {
           "fileType": {
@@ -3169,6 +3269,22 @@
       "create": "Vytvořit testovací případ",
       "successMessage": "Nový testovací případ byl přidán",
       "errorMessage": "Neznámá chyba při přidávání nového testovacího případu"
+    },
+    "draft": {
+      "saving": "Ukládání…",
+      "saved": "Všechny změny uloženy {time}",
+      "unsaved": "Neuložené změny",
+      "saveFailed": "Nelze uložit — opakuje se pokus",
+      "restoreTitle": "Obnovit neuložené změny?",
+      "restoreDescription": "Máte neuložené změny v tomto testovacím případu z {age}. Obnovte je, nebo je zahoďte a načtěte uloženou verzi.",
+      "restoreTitleNew": "Obnovit neuložený testovací případ?",
+      "restoreDescriptionNew": "Testovací případ jste začali {age} a nikdy jej neuložili. Obnovte, co jste napsali, nebo to zahoďte a začněte znovu.",
+      "restoreStaleWarning": "Tento testovací případ byl mezitím uložen někým jiným, od té doby, co byl váš koncept vytvořen. Obnovením nahradíte jeho obsah při uložení.",
+      "restoreDiscard": "Zahodit",
+      "restoreRestore": "Obnovit",
+      "bannerText": "Máte neuložené změny v tomto testovacím případu z {age}.",
+      "bannerAction": "Pokračovat v úpravách",
+      "bannerDiscard": "Zahodit je"
     },
     "columns": {
       "selectCase": "Vybrat případ",
@@ -3697,6 +3813,90 @@
       "deleteConfirm": "„{name}“ bude odebráno z vašich uložených zobrazení. Tuto akci nelze vrátit zpět.",
       "deleted": "Uložené zobrazení bylo odstraněno",
       "deleteFailed": "Zobrazení se nepodařilo odstranit. Zkuste to prosím znovu."
+    },
+    "codePins": {
+      "add": "Přidat příponu",
+      "addDialogDescription": "Přípony jsou ukotveny na aktuálním konci větve.",
+      "addDialogTitle": "Připnout tento případ ke kódu",
+      "addFailed": "Nepodařilo se přidat přípnutí",
+      "addSuccess": "Přípnutí přidáno",
+      "anchoredAt": "Ukotveno na {sha}",
+      "cancel": "Zrušit",
+      "caseLabel": "Testovací případ",
+      "casePlaceholder": "Hledat testovací případy...",
+      "contentUnavailable": "Obsah souboru není k dispozici.",
+      "description": "Kód, který tento případ pokrývá. Změna uvnitř připnutého bloku zahrne případ do analýz dopadu.",
+      "dismissStale": "Zavřít",
+      "duplicate": "Toto připnutí již existuje.",
+      "empty": "Zatím žádné připnuté kódy.",
+      "endLine": "Koncový řádek",
+      "errorFileNotFound": "Soubor nebyl na konci větve nalezen.",
+      "errorLineOutOfRange": "Rozsah řádků je mimo soubor.",
+      "errorSnippetTooLarge": "Připnutý blok je příliš velký.",
+      "errorSymbolNotFound": "Symbol nebyl v souboru nalezen.",
+      "fileLabel": "Soubor",
+      "filePlaceholder": "Hledat soubory...",
+      "filesCached": "{count, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}} v mezipaměti · {date}",
+      "filesLive": "Zobrazení souborů přímo z repozitáře",
+      "globLabel": "Vzor",
+      "globMatches": "{count, plural, =0 {Žádné soubory v mezipaměti neodpovídají} one {# soubor v mezipaměti odpovídá} few {# soubory v mezipaměti odpovídají} many {# souboru v mezipaměti odpovídá} other {# souborů v mezipaměti odpovídá}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Druh",
+      "kindFile": "Celý soubor",
+      "kindGlob": "Vzor glob",
+      "kindLabel": "Připnout k",
+      "kindRange": "Řádky",
+      "kindSymbol": "Symbol",
+      "linesHint": "Klikněte na číslo řádku pro začátek, se shift-klikem pro konec.",
+      "location": "Umístění",
+      "managedTooltip": "Spravováno repozitářem. Upravte značku v kódu.",
+      "noFilesCached": "Žádný seznam souborů v mezipaměti. Požádejte administrátora projektu o obnovení mezipaměti repozitáře.",
+      "noteLabel": "Poznámka",
+      "notePlaceholder": "Proč tento případ pokrývá tento kód (volitelné)",
+      "reanchor": "Znovu ukotvit",
+      "reanchorFailed": "Nepodařilo se znovu ukotvit připnutí",
+      "reanchorSuccess": "Přípnutí znovu ukotveno",
+      "remove": "Odebrat",
+      "removeConfirm": "Odebrat toto připnutí?",
+      "removeFailed": "Nepodařilo se odebrat přípnutí",
+      "removeSuccess": "Přípnutí odebráno",
+      "source": "Zdroj",
+      "sourceAi": "AI",
+      "sourceAnnotation": "Anotace",
+      "sourceManual": "Manuální",
+      "sourceMapfile": "Mapovací soubor",
+      "staleBadge": "Zastaralé",
+      "staleFileDeleted": "soubor smazán",
+      "staleSnippetNotFound": "řádky nenalezeny",
+      "staleSymbolNotFound": "symbol nenalezen",
+      "staleTooltip": "Připnutý blok nebyl na konci větve nalezen: {reason}.",
+      "startLine": "Počáteční řádek",
+      "submit": "Přidat přípnutí",
+      "symbolHint": "Deklarace je v souboru nalezena podle jména.",
+      "symbolLabel": "Symbol",
+      "symbolNoneDetected": "Nebyly zjištěny žádné symboly, zadejte jméno.",
+      "symbolPlaceholder": "nazevFunkce",
+      "symbolSelectPlaceholder": "Vyberte nebo zadejte symbol...",
+      "updateSuccess": "Přípnutí aktualizováno",
+      "updateFailed": "Nepodařilo se aktualizovat přípnutí",
+      "editDialogTitle": "Upravit toto přípnutí",
+      "editDialogDescription": "Soubor a typ přípnutí zůstávají stejné. Chcete-li něco z toho změnit, odeberte toto přípnutí a přidejte nové.",
+      "editAction": "Upravit přípnutí",
+      "saveChanges": "Uložit změny",
+      "symbolSearchPlaceholder": "Hledat symboly...",
+      "symbolUseTyped": "Použít \"{symbol}\"",
+      "title": "Kódové připnutí",
+      "viewerFailed": "Nepodařilo se načíst soubor.",
+      "viewerLoading": "Načítání souboru…",
+      "viewerTooLarge": "Tento soubor je příliš velký na zobrazení. Zadejte místo toho čísla řádků.",
+      "wholeFile": "Celý soubor"
+    },
+    "diffView": {
+      "added": "Přidaný řádek",
+      "removed": "Odebraný řádek",
+      "oldLine": "Starý řádek",
+      "newLine": "Nový řádek",
+      "context": "Kontextový řádek"
     }
   },
   "tags": {
@@ -4119,6 +4319,168 @@
     "junitFilters": {
       "retried": "Opakováno",
       "clear": "Vymazat filtry"
+    },
+    "impact": {
+      "title": "Dopad",
+      "analyzeImpact": "Analyzovat dopad",
+      "description": "Vyberte dva commity testované aplikace a označte testovací případy, kterých se změny týkají.",
+      "noRepository": "Pro použití Dopadu připojte repozitář aplikace v nastavení projektu.",
+      "aiUnavailable": "Žádná aktivní LLM integrace: výsledky pocházejí pouze z kódových přípnutí, shody klíčových slov a historie běhů.",
+      "steps": {
+        "pick": "Commity",
+        "diff": "Změny",
+        "analyze": "Analyzovat",
+        "review": "Ovlivněné testy"
+      },
+      "pull": {
+        "label": "Pull request",
+        "selectPlaceholder": "Vyberte pull request...",
+        "searchPlaceholder": "Hledat podle čísla, názvu, autora nebo větve...",
+        "stateAll": "Vše",
+        "stateOpen": "Otevřeno",
+        "stateMerged": "Sloučeno",
+        "stateClosed": "Uzavřeno",
+        "resolved": "Porovnání {base} na {target} s {head} na {source}."
+      },
+      "pick": {
+        "modeLabel": "Vybrat změny podle",
+        "modeCommits": "Commity",
+        "modePull": "Pull request",
+        "modeCommitsHint": "Co se změnilo mezi dvěma buildy, abyste mohli znovu otestovat vše, co přibylo od posledně ověřené verze.",
+        "modePullHint": "Co tento pull request mění, měřeno od místa, kde se jeho větev rozdělila, takže práce, která mezitím přibyla do cílové větve, je vynechána.",
+        "branchLabel": "Větev",
+        "baseLabel": "Základní commit",
+        "headLabel": "Vrcholový commit",
+        "commitPlaceholder": "Hledat commity...",
+        "searchHint": "Zadejte sha commitu, nebo filtrujte načtené commity podle zprávy nebo autora.",
+        "refLabel": "Nebo vložte referenci",
+        "refPlaceholder": "Větev, tag nebo sha",
+        "refNotFound": "Reference nenalezena",
+        "latestOnBranch": "Nejnovější na {branch}",
+        "previousAnalysisLabel": "Začít z předchozí analýzy",
+        "previousAnalysisPlaceholder": "Vyberte analýzu...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# ovlivněný test} few {# ovlivněné testy} many {# ovlivněného testu} other {# ovlivněných testů}}",
+        "sameCommit": "Základní a vrcholový commit jsou stejné.",
+        "swapped": "Základní a vrcholový commit byly prohozeny, aby změny šly ve správném pořadí.",
+        "loadingCommits": "Načítání commitů…",
+        "noCommits": "Žádné commity nebyly nalezeny."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# soubor} few {# soubory} many {# souboru} other {# souborů}} změněno · +{additions, number} −{deletions, number}",
+        "truncated": "Poskytovatel vrátil částečný diff. Některé změněné soubory nejsou zobrazeny nebo nemají patch.",
+        "noChanges": "Mezi těmito commity nejsou žádné změny.",
+        "statusAdded": "Přidáno",
+        "statusModified": "Upraveno",
+        "statusRemoved": "Odebráno",
+        "statusRenamed": "Přejmenováno",
+        "showPatch": "Zobrazit změny",
+        "hidePatch": "Skrýt změny",
+        "largePatch": "Velký patch ({lines, number} řádků)",
+        "showFullPatch": "Zobrazit celý patch",
+        "binary": "Binární soubor",
+        "noPatch": "Patch není k dispozici",
+        "pinnedFiles": "{count, plural, one {# přípnutí} few {# přípnutí} many {# přípnutí} other {# přípnutí}}",
+        "loading": "Porovnávání commitů…",
+        "failed": "Nepodařilo se porovnat commity."
+      },
+      "loading": {
+        "analyzing": "Analyzuje se…",
+        "resolving_config": "Zjišťování konfigurace repozitáře…",
+        "fetching_diff": "Načítání diffu…",
+        "matching_pins": "Přiřazování kódových přípnutí…",
+        "searching_cases": "Hledání testovacích případů podle klíčových slov…",
+        "scoring_history": "Vyhodnocování historie běhů…",
+        "waiting_for_ai": "Čekání na AI…",
+        "merging": "Slučování výsledků…",
+        "ranking": "Seřazeno {current} z {total} kandidátních testovacích případů",
+        "reused": "Znovu se používá nedávná analýza stejných commitů."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {Žádné ovlivněné testy} one {# ovlivněný test} few {# ovlivněné testy} many {# ovlivněného testu} other {# ovlivněných testů}}",
+        "description": "Seřazeno podle skóre. Každý test ukazuje, proč byl vybrán.",
+        "relatedCount": "{count, plural, one {# související test má} few {# související testy mají} many {# souvisejícího testu má} other {# souvisejících testů má}} nižší skóre a jsou odškrtnuty.",
+        "summary": "Souhrn",
+        "score": "Skóre",
+        "case": "Testovací případ",
+        "reasons": "Proč",
+        "tierPinned": "Připnuto",
+        "tierAffected": "Ovlivněno",
+        "tierRelated": "Souvisí",
+        "selectAll": "Vybrat vše",
+        "selectNone": "Nevybrat nic",
+        "showDetails": "Zobrazit důvody",
+        "hideDetails": "Skrýt důvody",
+        "excluded": "{count, plural, one {# případ již v běhu byl vynechán} few {# případy již v běhu byly vynechány} many {# případu již v běhu bylo vynecháno} other {# případů již v běhu bylo vynecháno}}"
+      },
+      "noAffected": {
+        "title": "Žádné ovlivněné testy nebyly nalezeny",
+        "description": "Žádný testovací případ neodpovídal změnám. Připněte případy ke změněným souborům, aby je příští analýza našla."
+      },
+      "reasons": {
+        "pin": "Přípnutí",
+        "path": "Klíčové slovo",
+        "history": "Historie",
+        "ai": "AI",
+        "linked": "Souvisí",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Odpovídá {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "Nalezena shoda \"{term}\" v {field}",
+        "fieldName": "název případu",
+        "fieldContent": "obsah případu",
+        "fieldTag": "štítek",
+        "fieldFolder": "složka",
+        "historyDetail": "{count, plural, one {# dřívější běh} few {# dřívější běhy} many {# dřívějšího běhu} other {# dřívějších běhů}} po změnách stejných souborů",
+        "historyFailed": "Selhal v dřívějším běhu po podobných změnách",
+        "linkedDetail": "Propojeno s případem {caseId}"
+      },
+      "stale": {
+        "badge": "Zastaralé",
+        "tooltipAnalysis": "Připnutý blok nebyl na základním commitu nalezen; shoda podle cesty k souboru pouze. Znovu připněte ze stránky testovacího případu.",
+        "title": "{count, plural, one {# zastaralé přípnutí} few {# zastaralá přípnutí} many {# zastaralého přípnutí} other {# zastaralých přípnutí}}",
+        "description": "Tato přípnutí již neodpovídají kódu. Znovu je ukotvete ze stránky testovacího případu."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# změněný soubor nemá test} few {# změněné soubory nemají testy} many {# změněného souboru nemá test} other {# změněných souborů nemá testy}}",
+        "description": "K těmto souborům není propojen žádný testovací případ. Připněte případ, abyste vyplnili mezeru.",
+        "pinAction": "Připnout případ...",
+        "pinned": "Připnuto"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "Poskytovatel vrátil částečný diff.",
+        "diff_truncated_by_budget": "Do kontextu AI se vešla jen část diffu; {count, plural, one {# soubor byl} few {# soubory byly} many {# souboru bylo} other {# souborů bylo}} shrnuty pouze podle cesty.",
+        "llm_not_configured": "Žádná aktivní LLM integrace: řazení pomocí AI bylo přeskočeno.",
+        "search_fallback_db": "Vyhledávací index není k dispozici: pro shodu klíčových slov byla použita databáze.",
+        "search_index_empty": "Tento projekt nemá žádné případy ve vyhledávacím indexu, proto byla pro shodu klíčových slov použita databáze. Požádejte administrátora o reindexaci pro lepší výsledky.",
+        "ai_partial": "Některé dávky AI selhaly; výsledky mohou být neúplné.",
+        "ai_truncated": "{count, plural, one {# dávka AI byla} few {# dávky AI byly} many {# dávky AI bylo} other {# dávek AI bylo}} modelem zkrácena.",
+        "no_candidates": "Žádný testovací případ neodpovídal.",
+        "anchor_fetch_capped": "Některé připnuté soubory byly shodovány pouze podle cesty (dosažen limit načítání)."
+      },
+      "actions": {
+        "compare": "Porovnat",
+        "analyze": "Analyzovat",
+        "reanalyze": "Analyzovat znovu",
+        "refine": "Zpět na změny",
+        "accept": "{count, plural, one {Přidat # případ} few {Přidat # případy} many {Přidat # případu} other {Přidat # případů}}",
+        "cancelAnalysis": "Zrušit analýzu",
+        "back": "Zpět",
+        "next": "Další"
+      },
+      "errors": {
+        "title": "Analýza selhala",
+        "generic": "Při analýze změn se něco pokazilo. Zkuste to prosím znovu.",
+        "pullFailed": "Nepodařilo se přečíst commity tohoto pull requestu. Vyberte jiný, nebo zadejte commity ručně.",
+        "compareFailed": "Nepodařilo se porovnat commity.",
+        "analysisFailed": "Analýza selhala: {error}",
+        "cancelled": "Analýza byla zrušena.",
+        "timeout": "Analýza trvá příliš dlouho. Zkontrolujte to později nebo to zkuste znovu.",
+        "branchesFailed": "Nepodařilo se vypsat větve.",
+        "commitsFailed": "Nepodařilo se načíst commity.",
+        "disabled": "Dopad není pro tento projekt povolen.",
+        "noConfig": "Nejprve připojte repozitář aplikace v nastavení projektu."
+      }
     }
   },
   "admin": {
@@ -4168,7 +4530,8 @@
       "authentication": "Ověřování",
       "toolsAndIntegrations": "Nástroje a integrace",
       "aiTools": "Nástroje AI",
-      "system": "Systém"
+      "system": "Systém",
+      "impact": "Analýza dopadu"
     },
     "imports": {
       "description": "Přeneste data z externích nástrojů pro správu testování do TestPlanIt.",
@@ -5689,7 +6052,9 @@
         "testRunStepResults": "Výsledky kroků testovacího běhu",
         "issueConfigs": "Konfigurace problémů",
         "sharedStepGroups": "Skupiny sdílených kroků",
-        "dataSets": "Datové sady"
+        "dataSets": "Datové sady",
+        "codePins": "Kódové piny",
+        "impactAnalyses": "Analýzy dopadů"
       },
       "table": {
         "title": "Smazané {itemType}",
@@ -6180,7 +6545,8 @@
         "generate_from_url": "Generovat testovací případy z URL (požadavky)",
         "generate_from_url_app": "Generovat testovací případy z URL (testování aplikace)",
         "automation_candidates": "Report kandidátů na automatizaci",
-        "derive_case_steps": "Odvození kroků pomocí AI"
+        "derive_case_steps": "Odvození kroků pomocí AI",
+        "impact_analysis": "Dopad: Výběr ovlivněných testů"
       }
     },
     "elasticsearch": {
@@ -7720,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Filtrování testovacích běhů\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Manuální** / **Automatizované** — omezí seznam na daný typ běhu. Zapnutí obou (nebo vypnutí obou) zobrazí všechny běhy.\n- **Moje testovací běhy** — pouze běhy, kterých se účastníte: vytvořili jste běh, je vám v něm přiřazen testovací případ, nebo jste v něm zaznamenali výsledek testu.",
-    "projectSessionsFilters": "## Filtrování relací\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Moje relace** — pouze relace, kterých se účastníte: vytvořili jste relaci nebo je vám přiřazena."
+    "projectSessionsFilters": "## Filtrování relací\n\nPřepnutím štítku zúžíte seznam. Štítky se vztahují na obě karty, Aktivní i Dokončené, a jsou na tomto zařízení zapamatovány pro tento projekt.\n\n- **Moje relace** — pouze relace, kterých se účastníte: vytvořili jste relaci nebo je vám přiřazena.",
+    "projectImpact": "## Dopad\nPřipojte repozitář testované aplikace, aby tento projekt mohl spouštět analýzu dopadu testů: vyberte dva commity a zjistěte, které testovací případy jsou změnami ovlivněny, a připněte testovací případy ke kódu, který pokrývají."
   },
   "reports": {
     "ui": {
