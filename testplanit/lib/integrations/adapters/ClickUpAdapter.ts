@@ -39,6 +39,21 @@ function renderClickUpDescription(description: unknown): string {
   return String(description);
 }
 
+/**
+ * ClickUp's Get Tasks endpoint always returns this many tasks per page,
+ * regardless of any limit the caller requests — pagination math must be
+ * done in terms of this fixed size, never the caller's `limit`.
+ */
+const CLICKUP_TASK_PAGE_SIZE = 100;
+
+/**
+ * Upper bound on ClickUp pages scanned for one text-query search, so a
+ * huge List with no match can't turn an interactive search into an
+ * unbounded fetch loop (MAX_QUERY_SCAN_PAGES * CLICKUP_TASK_PAGE_SIZE
+ * tasks scanned at most).
+ */
+const MAX_QUERY_SCAN_PAGES = 20;
+
 /** ClickUp priority is an integer 1 (urgent) through 4 (low); unknown values default to "normal". */
 function mapPriorityToClickUp(priority: string): number {
   const map: Record<string, number> = {
@@ -276,21 +291,17 @@ export class ClickUpAdapter extends BaseAdapter {
     return this.mapClickUpTask(response);
   }
 
-  async searchIssues(options: IssueSearchOptions): Promise<{
-    issues: IssueData[];
-    total: number;
-    hasMore: boolean;
-  }> {
-    const listId = options.projectId || this.listId;
-    if (!listId) {
-      throw new Error(
-        "ClickUp List ID not configured. Expected settings.listId or IssueSearchOptions.projectId."
-      );
-    }
-
-    const limit = options.limit || 100;
+  /**
+   * Build the query string for one page of ClickUp's Get Tasks call.
+   * `page` is a ClickUp page index (each page is CLICKUP_TASK_PAGE_SIZE
+   * items) — never the caller's `limit`, which ClickUp does not honor.
+   */
+  private buildSearchParams(
+    page: number,
+    options: IssueSearchOptions
+  ): URLSearchParams {
     const params = new URLSearchParams();
-    params.set("page", String(Math.floor((options.offset || 0) / limit)));
+    params.set("page", String(page));
     params.set("include_closed", "true");
     if (options.status && options.status.length > 0) {
       for (const s of options.status) params.append("statuses[]", s);
@@ -304,25 +315,76 @@ export class ClickUpAdapter extends BaseAdapter {
         String(Date.now() - Math.floor(options.updatedWithinDays) * 86_400_000)
       );
     }
+    return params;
+  }
 
-    const response = await this.makeRequest<any>(
-      `${this.baseUrl}/list/${listId}/task?${params.toString()}`
+  async searchIssues(options: IssueSearchOptions): Promise<{
+    issues: IssueData[];
+    total: number;
+    hasMore: boolean;
+  }> {
+    const listId = options.projectId || this.listId;
+    if (!listId) {
+      throw new Error(
+        "ClickUp List ID not configured. Expected settings.listId or IssueSearchOptions.projectId."
+      );
+    }
+
+    // ClickUp's Get Tasks endpoint always pages in fixed batches of
+    // CLICKUP_TASK_PAGE_SIZE and ignores the caller's `limit` entirely —
+    // translating `offset` into a ClickUp page number via the caller's
+    // `limit` (as opposed to ClickUp's actual page size) would silently
+    // skip or re-request the wrong slice of tasks once the two diverge
+    // (e.g. a bulk import requesting 50 at a time against 100-per-page
+    // responses). Always divide by ClickUp's real page size instead.
+    const startPage = Math.floor(
+      (options.offset || 0) / CLICKUP_TASK_PAGE_SIZE
     );
-    const tasks: any[] = response.tasks || [];
+    const limit = options.limit || 100;
+
+    if (!options.query) {
+      const response = await this.makeRequest<any>(
+        `${this.baseUrl}/list/${listId}/task?${this.buildSearchParams(startPage, options).toString()}`
+      );
+      const tasks: any[] = response.tasks || [];
+      return {
+        issues: tasks.map((t) => this.mapClickUpTask(t)),
+        total: tasks.length,
+        hasMore: response.last_page === false,
+      };
+    }
 
     // ClickUp's list-tasks endpoint has no server-side free-text search
-    // qualifier (unlike GitHub's `q=`); filter client-side as a documented
-    // fallback when a query is supplied.
-    const filtered = options.query
-      ? tasks.filter((t) =>
-          t.name?.toLowerCase().includes(options.query!.toLowerCase())
-        )
-      : tasks;
+    // qualifier (unlike GitHub's `q=`). A single page can't be relied on to
+    // contain every match (interactive callers like the issue-link search
+    // dialog make one searchIssues() call and never inspect `hasMore`), so
+    // scan forward across ClickUp pages — capped at
+    // MAX_QUERY_SCAN_PAGES — accumulating matches until there are enough
+    // to satisfy `limit` or the list is exhausted.
+    const query = options.query.toLowerCase();
+    const matches: any[] = [];
+    let page = startPage;
+    let exhausted = false;
+    while (
+      matches.length < limit &&
+      page < startPage + MAX_QUERY_SCAN_PAGES &&
+      !exhausted
+    ) {
+      const response = await this.makeRequest<any>(
+        `${this.baseUrl}/list/${listId}/task?${this.buildSearchParams(page, options).toString()}`
+      );
+      const tasks: any[] = response.tasks || [];
+      for (const t of tasks) {
+        if (t.name?.toLowerCase().includes(query)) matches.push(t);
+      }
+      exhausted = response.last_page === true || tasks.length === 0;
+      page++;
+    }
 
     return {
-      issues: filtered.map((t) => this.mapClickUpTask(t)),
-      total: filtered.length,
-      hasMore: response.last_page === false,
+      issues: matches.slice(0, limit).map((t) => this.mapClickUpTask(t)),
+      total: matches.length,
+      hasMore: !exhausted,
     };
   }
 

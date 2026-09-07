@@ -12,6 +12,7 @@ const ISSUE_TRACKING_PROVIDERS = [
   IntegrationProvider.GITEA,
   IntegrationProvider.REDMINE,
   IntegrationProvider.MANTISBT,
+  IntegrationProvider.CLICKUP,
 ];
 
 export class JiraLinkService {
