@@ -191,7 +191,9 @@ export class ClickUpAdapter extends BaseAdapter {
     refreshToken?: string;
     expiresAt?: Date;
   }> {
-    throw new Error("ClickUp OAuth tokens do not expire and cannot be refreshed");
+    throw new Error(
+      "ClickUp OAuth tokens do not expire and cannot be refreshed"
+    );
   }
 
   async createIssue(data: CreateIssueData): Promise<IssueData> {
@@ -237,9 +239,7 @@ export class ClickUpAdapter extends BaseAdapter {
       payload.name = data.title;
     }
     if (data.description !== undefined) {
-      payload.markdown_description = renderClickUpDescription(
-        data.description
-      );
+      payload.markdown_description = renderClickUpDescription(data.description);
     }
     if (data.status !== undefined) {
       // ClickUp statuses are free-text and defined per-List; pass through
@@ -367,7 +367,9 @@ export class ClickUpAdapter extends BaseAdapter {
     Array<{ id: string; key: string; name: string }>
   > {
     if (!this.teamId) {
-      throw new Error("ClickUp Team (workspace) ID not configured (settings.teamId).");
+      throw new Error(
+        "ClickUp Team (workspace) ID not configured (settings.teamId)."
+      );
     }
 
     const spacesResponse = await this.makeRequest<any>(

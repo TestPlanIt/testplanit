@@ -19,6 +19,7 @@ Settings → Integrations).
    This must match exactly what TestPlanIt sends during authorization —
    TestPlanIt derives it from `NEXTAUTH_URL`, so the value shown on the
    integration's config form (once you select ClickUp) is the one to copy.
+
 3. Copy the app's **Client ID** and **Client Secret** — you'll paste these
    into TestPlanIt in the next step.
 
