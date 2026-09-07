@@ -16,6 +16,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Shared steps** - Define reusable step sequences that can be included in multiple test cases
 - **Custom fields** - Define custom fields to capture additional metadata for your test cases
 - **Expected results** - Clearly define what success looks like for each step
+- **Auto-save** - In-progress edits are kept as you type and offered back if a tab closes, a session expires, or you navigate away before saving; drafts are private to their author and never alter the test case until you click Save
 
 ### Repository Organization
 

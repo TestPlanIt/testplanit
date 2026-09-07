@@ -29,6 +29,12 @@ The main section displays key details about the test case:
 *   **Updated:** Timestamp indicating the last time the test case was modified.
 *   **Custom Fields:** Any additional fields defined by the selected template will be displayed here.
 
+## Editing and Auto-Save
+
+While editing, your changes are saved as you type. A status indicator sits on the same row as the folder picker, showing **Saving…**, **All changes saved**, or a retry notice if the server cannot be reached.
+
+Reopening a case with unsaved edits prompts you to restore or discard them. If you land on the read-only view with unsaved work outstanding — after a crash, for example — a banner offers to resume editing where you left off. Cancelling out of edit mode discards the draft. See [Auto-Save and Draft Recovery](./case-draft-autosave.md).
+
 ## Duration Display
 
 Both the `Estimate` and `Forecast` fields store time in seconds but are displayed in a human-readable format (e.g., "5 minutes, 30 seconds", "1 hour, 2 minutes"). If no time is recorded (value is 0 or null), it displays "No time recorded".

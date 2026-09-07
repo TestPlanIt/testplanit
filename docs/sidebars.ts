@@ -249,6 +249,7 @@ const sidebars: SidebarsConfig = {
                     'user-guide/projects/repository-add-case', // Corresponds to repository-add-case.md
                     'user-guide/projects/repository-case-details', // Add Test Case Details page
                     'user-guide/projects/repository-case-versions', // Add Test Case Versions page
+                    'user-guide/projects/case-draft-autosave', // Auto-save and draft recovery
                     'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases feature hub
                     'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
                     'import-export', // Add import-export.md
