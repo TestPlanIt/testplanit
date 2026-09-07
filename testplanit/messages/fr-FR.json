@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Nom d'affichage remplacé",
         "typeReEmitted": "Réémis",
         "typeConflict": "Conflit",
+        "typeTokenConflict": "Conflit inter-IdP",
         "typeUnknown": "Inconnu",
         "viewPayload": "Afficher la charge utile",
         "reEmit": "Événement de réémission pour les membres",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Accès mappé par défaut",
       "fallbackDefaultDescription": "Niveau d'accès attribué aux utilisateurs non couverts par un mappage de groupe.",
       "fallbackDefaultLabel": "Niveau d'accès par défaut",
-      "fallbackDefaultSaved": "Valeur par défaut de secours enregistrée"
+      "fallbackDefaultSaved": "Valeur par défaut de secours enregistrée",
+      "rotate": {
+        "confirm": "Faire pivoter le jeton",
+        "title": "Faire pivoter le jeton SCIM",
+        "description": "Générer un nouveau porteur pour « {name} ». Le jeton conserve son nom, son IdP et tout ce qu'il a provisionné — seul le secret change.",
+        "overlapLabel": "Conserver l'ancien jeton actif pendant",
+        "overlapHint": "Votre IdP continue le provisionnement avec l'ancien jeton jusqu'à la fin de cette période, ce qui vous permet de coller le nouveau sans interruption.",
+        "overlapNone": "Basculer immédiatement",
+        "overlap1h": "1 heure",
+        "overlap24h": "24 heures",
+        "overlap7d": "7 jours",
+        "overlap30d": "30 jours",
+        "submit": "Faire pivoter le jeton",
+        "submitting": "Rotation en cours…",
+        "revealTitle": "Nouveau jeton SCIM",
+        "revealDescriptionOverlap": "Collez ceci dans votre IdP avant la fin de la période de chevauchement. Le jeton précédent continue de fonctionner jusque-là.",
+        "revealDescriptionImmediate": "Le jeton précédent a cessé de fonctionner immédiatement. Collez ceci dans votre IdP dès maintenant pour reprendre le provisionnement."
+      },
+      "roleMappings": {
+        "title": "Mappages de rôles",
+        "description": "Associez un rôle que votre fournisseur d'identité attribue à un utilisateur à un niveau d'accès. Les mappages de rôles ont priorité sur les mappages de groupes, ils peuvent donc augmenter ou réduire l'accès.",
+        "empty": "Aucun mappage de rôle pour le moment. Les utilisateurs sont régis par les mappages de groupes et le niveau d'accès par défaut.",
+        "roleLabel": "Valeur du rôle",
+        "rolePlaceholder": "Valeur du rôle depuis votre IdP, par ex. qa-lead",
+        "accessLabel": "Niveau d'accès",
+        "add": "Ajouter un mappage",
+        "remove": "Supprimer le mappage",
+        "saved": "Mappage de rôle enregistré",
+        "errorRoleRequired": "Saisissez la valeur du rôle envoyée par votre IdP."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Niveau d'accès mappé",
       "mappedAccessNone": "Aucun mappage",
       "mappedAccessSelect": "Sélectionnez le niveau d'accès...",
+      "projectMappings": {
+        "label": "Accès par projet",
+        "description": "Accordez à ce groupe un niveau d'accès sur des projets spécifiques, à la place — ou en plus — du niveau global ci-dessus.",
+        "empty": "Aucun accès par projet. Les membres obtiennent uniquement le niveau global ci-dessus et le niveau par défaut de chaque projet.",
+        "projectLabel": "Projet",
+        "projectPlaceholder": "Sélectionner un projet…",
+        "accessLabel": "Niveau d'accès",
+        "add": "Ajouter un projet",
+        "remove": "Supprimer l'accès au projet",
+        "saved": "Accès au projet enregistré"
+      },
       "downgradeConfirmTitle": "Confirmer la modification de l'accès",
       "downgradeConfirmDescription": "{count, plural, one {# utilisateur aurait} other {# utilisateurs auraient}} un accès réduit. Continuer ?",
       "downgradeConfirmApplyAnyway": "Appliquer quand même",
@@ -7410,6 +7451,7 @@
     "scim": "## Provisionnement SCIM\nImportez les utilisateurs de votre fournisseur d'identité dans TestPlanIt via SCIM 2.0.",
     "scimConflicts": "## Journal des conflits d'ID externe\nÉvénements d'identité SCIM nécessitant une intervention du système (liaison, résurrection, remplacement du nom d'affichage, membres ignorés).",
     "scimFallbackDefault": "## Accès mappé par défaut\nNiveau d'accès attribué aux utilisateurs non couverts par un mappage de groupe.",
+    "scimRoleMappings": "## Mappages de rôles\nAssocie une valeur `roles` attribuée par votre fournisseur d'identité à un niveau d'accès. Un mappage de rôle a priorité sur les mappages de groupes : un utilisateur auquel l'IdP attribue un rôle mappé reçoit ce niveau, même si un groupe lui accorderait davantage. Les valeurs de rôle non mappées sont ignorées.",
     "integrations": "## Intégrations de suivi des problèmes\nGérer les intégrations tierces pour le suivi des problèmes.",
     "notifications": "## Administration des notifications\nDéfinissez les préférences de notification par défaut (les utilisateurs peuvent les modifier) et envoyez les notifications système.",
     "notificationsSystem": "## Notifications système\nEnvoyer des annonces importantes à tous les utilisateurs.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Nom du groupe\nUn nom ou des mots-clés clairs, concis et descriptifs utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
       "users": "## Utilisateurs\nIndique les utilisateurs affectés à ce groupe.",
+      "projectMappedAccess": "## Accès par projet\nAccorde aux membres de ce groupe un niveau d'accès sur un projet spécifique, résolu selon les règles de permission habituelles du projet.\n\n- **Utilisateur** donne aux membres leur propre rôle global sur ce projet\n- **Admin de projet** et **Admin** accordent tous deux le rôle Admin de projet sur ce projet — au sein d'un seul projet, Admin de projet est le niveau d'accès le plus élevé\n- L'accès par projet ne fait qu'**accorder** des droits. Il ne peut pas retirer un accès que les paramètres par défaut du projet donnent déjà, c'est pourquoi il n'y a pas d'option « Aucun » ici\n- La suppression d'une association retire l'accès accordé ; les membres reviennent aux paramètres par défaut du projet",
       "mappedAccess": "## Niveau d'accès mappé\nLes membres de ce groupe reçoivent au moins ce niveau d'accès lors de la prochaine synchronisation.\n\n- Le niveau le plus élevé parmi tous les groupes d'un utilisateur l'emporte\n- « Aucun mappage » signifie que ce groupe n'affecte pas l'accès — les membres reviennent à la valeur par défaut définie sur la page SCIM\n- Une modification manuelle de l'accès d'un utilisateur prend le pas sur le mappage (et est signalée sur l'écran de modification de cet utilisateur)"
     },
     "template": {

@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Nazwa wyświetlana została nadpisana",
         "typeReEmitted": "Ponownie wyemitowane",
         "typeConflict": "Konflikt",
+        "typeTokenConflict": "Konflikt między dostawcami tożsamości",
         "typeUnknown": "Nieznany",
         "viewPayload": "Wyświetl ładunek",
         "reEmit": "Wydarzenie członkowskie z ponowną emisją",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Domyślny zmapowany dostęp",
       "fallbackDefaultDescription": "Poziom dostępu przypisany użytkownikom nieobjętym żadnym mapowaniem grup.",
       "fallbackDefaultLabel": "Domyślny poziom dostępu",
-      "fallbackDefaultSaved": "Domyślna wartość zastępcza zapisana"
+      "fallbackDefaultSaved": "Domyślna wartość zastępcza zapisana",
+      "rotate": {
+        "confirm": "Rotuj token",
+        "title": "Rotacja tokenu SCIM",
+        "description": "Wygeneruj nowy token dostępu dla „{name}”. Token zachowuje swoją nazwę, IdP oraz wszystko, co zostało za jego pomocą utworzone — zmienia się tylko sekret.",
+        "overlapLabel": "Zachowaj działanie starego tokenu przez",
+        "overlapHint": "Twój dostawca tożsamości IdP będzie kontynuował provisioning przy użyciu starego tokenu do końca tego okresu, dzięki czemu możesz wkleić nowy token bez przerwy w działaniu.",
+        "overlapNone": "Przełącz natychmiast",
+        "overlap1h": "1 godzina",
+        "overlap24h": "24 godziny",
+        "overlap7d": "7 dni",
+        "overlap30d": "30 dni",
+        "submit": "Rotuj token",
+        "submitting": "Rotowanie…",
+        "revealTitle": "Nowy token SCIM",
+        "revealDescriptionOverlap": "Wklej to do swojego dostawcy tożsamości IdP przed końcem okresu nakładania się. Poprzedni token będzie działał do tego czasu.",
+        "revealDescriptionImmediate": "Poprzedni token przestał działać natychmiast. Wklej ten token do swojego dostawcy tożsamości IdP teraz, aby wznowić provisioning."
+      },
+      "roleMappings": {
+        "title": "Mapowania ról",
+        "description": "Przypisz rolę, którą dostawca tożsamości nadaje użytkownikowi, do poziomu dostępu. Mapowania ról mają pierwszeństwo przed mapowaniami grup, dzięki czemu mogą zwiększać lub zmniejszać dostęp.",
+        "empty": "Brak jeszcze mapowań ról. Użytkownicy podlegają mapowaniom grup oraz domyślnemu poziomowi dostępu.",
+        "roleLabel": "Wartość roli",
+        "rolePlaceholder": "Wartość roli z Twojego dostawcy tożsamości, np. qa-lead",
+        "accessLabel": "Poziom dostępu",
+        "add": "Dodaj mapowanie",
+        "remove": "Usuń mapowanie",
+        "saved": "Zapisano mapowanie roli",
+        "errorRoleRequired": "Wprowadź wartość roli wysyłaną przez Twojego dostawcę tożsamości."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Zmapowany poziom dostępu",
       "mappedAccessNone": "Brak mapowania",
       "mappedAccessSelect": "Wybierz poziom dostępu...",
+      "projectMappings": {
+        "label": "Dostęp na poziomie projektu",
+        "description": "Nadaj tej grupie poziom dostępu do konkretnych projektów, zamiast — lub oprócz — poziomu dostępu obowiązującego w całej organizacji powyżej.",
+        "empty": "Brak dostępu na poziomie projektu. Członkowie otrzymują wyłącznie poziom dostępu obowiązujący w całej organizacji powyżej oraz domyślne ustawienia każdego projektu.",
+        "projectLabel": "Projekt",
+        "projectPlaceholder": "Wybierz projekt…",
+        "accessLabel": "Poziom dostępu",
+        "add": "Dodaj projekt",
+        "remove": "Usuń dostęp do projektu",
+        "saved": "Zapisano dostęp do projektu"
+      },
       "downgradeConfirmTitle": "Potwierdź zmianę dostępu",
       "downgradeConfirmDescription": "{count, plural, one {# użytkownik będzie mieć obniżony dostęp} few {# użytkownicy będą mieć obniżony dostęp} many {# użytkowników będzie mieć obniżony dostęp} other {# użytkownika będzie mieć obniżony dostęp}}. Kontynuować?",
       "downgradeConfirmApplyAnyway": "Zastosuj mimo to",
@@ -7410,6 +7451,7 @@
     "scim": "## Provisioning SCIM\nDostarcz użytkowników do TestPlanIt od swojego dostawcy tożsamości przez SCIM 2.0.",
     "scimConflicts": "## Dziennik konfliktów identyfikatorów zewnętrznych\nWydarzenia tożsamościowe SCIM wymagające interwencji systemu (łączenie, wskrzeszanie, nadpisywanie nazwy wyświetlanej, pomijanie członków).",
     "scimFallbackDefault": "## Domyślny zmapowany dostęp\nPoziom dostępu przypisany użytkownikom nieobjętym żadnym mapowaniem grup.",
+    "scimRoleMappings": "## Mapowania ról\nMapuje wartość `roles` nadawaną przez dostawcę tożsamości na poziom dostępu. Mapowanie roli ma pierwszeństwo przed mapowaniami grup: użytkownik, któremu dostawca tożsamości przypisał zmapowaną rolę, otrzymuje ten poziom dostępu, nawet gdy grupa przyznałaby mu wyższy poziom. Niezmapowane wartości ról są ignorowane.",
     "integrations": "## Integracje problemów\nZarządzaj integracjami stron trzecich w celu śledzenia problemów.",
     "notifications": "## Administracja powiadomień\nUstaw domyślne preferencje powiadomień (użytkownicy mogą je zmienić) i wysyłaj powiadomienia systemowe.",
     "notificationsSystem": "## Powiadomienia systemowe\nWysyłaj ważne ogłoszenia do wszystkich użytkowników.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Nazwa grupy\nJasna, zwięzła, opisowa nazwa lub słowo(a) kluczowe używane we wszystkich projektach.\n\n— Pomaga członkom zespołu szybko znaleźć powiązane przypadki testowe, przebiegi testów i sesje.",
       "users": "## Użytkownicy\nWskazuje użytkowników przypisanych do tej grupy.",
+      "projectMappedAccess": "## Dostęp na poziomie projektu\nNadaje członkom tej grupy poziom dostępu do jednego konkretnego projektu, ustalany zgodnie ze standardowymi regułami uprawnień projektu.\n\n- **Użytkownik** nadaje członkom ich własną rolę globalną w tym projekcie\n- **Administrator projektu** oraz **Administrator** nadają rolę Administratora projektu w tym projekcie — w obrębie pojedynczego projektu jest to najsilniejsze możliwe uprawnienie\n- Dostęp na poziomie projektu może wyłącznie **nadawać** uprawnienia. Nie może odebrać dostępu, który domyślnie zapewnia sam projekt, dlatego nie ma tu opcji „Brak”\n- Usunięcie mapowania cofa nadanie uprawnienia; członkowie wracają do domyślnych ustawień projektu",
       "mappedAccess": "## Zmapowany poziom dostępu\nCzłonkowie tej grupy otrzymają co najmniej ten poziom dostępu przy następnej synchronizacji.\n\n- Wygrywa najwyższy poziom ze wszystkich grup użytkownika\n- „Brak mapowania” oznacza, że ta grupa nie wpływa na dostęp — członkowie korzystają z wartości domyślnej ustawionej na stronie SCIM\n- Ręczna zmiana dostępu użytkownika ma priorytet nad mapowaniem (i jest oznaczona na ekranie edycji tego użytkownika)"
     },
     "template": {

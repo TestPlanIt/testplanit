@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "显示名称已覆盖",
         "typeReEmitted": "再发射",
         "typeConflict": "冲突",
+        "typeTokenConflict": "跨身份提供商冲突",
         "typeUnknown": "未知",
         "viewPayload": "查看有效载荷",
         "reEmit": "重新发送成员活动",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "默认映射访问权限",
       "fallbackDefaultDescription": "分配给未被任何组映射覆盖的用户的访问层级。",
       "fallbackDefaultLabel": "默认访问层级",
-      "fallbackDefaultSaved": "已保存默认回退设置"
+      "fallbackDefaultSaved": "已保存默认回退设置",
+      "rotate": {
+        "confirm": "轮换令牌",
+        "title": "轮换 SCIM 令牌",
+        "description": "为“{name}”生成新的持有者令牌。令牌保留其名称、身份提供商及其已配置的所有内容 — 仅密钥会更改。",
+        "overlapLabel": "保持旧令牌有效",
+        "overlapHint": "在此窗口结束之前，您的身份提供商将继续使用旧令牌进行配置，因此您可以粘贴新令牌而不会中断服务。",
+        "overlapNone": "立即切换",
+        "overlap1h": "1 小时",
+        "overlap24h": "24 小时",
+        "overlap7d": "7 天",
+        "overlap30d": "30 天",
+        "submit": "轮换令牌",
+        "submitting": "正在轮换…",
+        "revealTitle": "新的 SCIM 令牌",
+        "revealDescriptionOverlap": "请在重叠窗口结束前将其粘贴到您的身份提供商中。在此之前，之前的令牌仍可继续使用。",
+        "revealDescriptionImmediate": "之前的令牌已立即停止工作。请立即将此内容粘贴到您的身份提供商中以恢复配置。"
+      },
+      "roleMappings": {
+        "title": "角色映射",
+        "description": "将您的身份提供商对用户所断言的角色映射到访问层级。角色映射优先于组映射，因此可以提升或降低访问权限。",
+        "empty": "尚无角色映射。用户由组映射和默认访问层级管理。",
+        "roleLabel": "角色值",
+        "rolePlaceholder": "来自您身份提供商的角色值，例如 qa-lead",
+        "accessLabel": "访问层级",
+        "add": "添加映射",
+        "remove": "移除映射",
+        "saved": "角色映射已保存",
+        "errorRoleRequired": "请输入您的身份提供商发送的角色值。"
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "映射访问层级",
       "mappedAccessNone": "无映射",
       "mappedAccessSelect": "选择访问层级……",
+      "projectMappings": {
+        "label": "按项目访问",
+        "description": "为该组在特定项目上授予访问层级，以替代——或叠加于——上方的组织级层级之上。",
+        "empty": "暂无按项目访问权限。成员仅获得上方的组织级层级以及各项目自身的默认设置。",
+        "projectLabel": "项目",
+        "projectPlaceholder": "选择一个项目…",
+        "accessLabel": "访问层级",
+        "add": "添加项目",
+        "remove": "移除项目访问权限",
+        "saved": "项目访问权限已保存"
+      },
       "downgradeConfirmTitle": "确认访问权限更改",
       "downgradeConfirmDescription": "{count, plural, other {# 位用户}} 的访问权限将被降低。是否继续？",
       "downgradeConfirmApplyAnyway": "仍然应用",
@@ -7410,6 +7451,7 @@
     "scim": "## SCIM 用户配置\n通过 SCIM 2.0 将身份提供商的用户配置到 TestPlanIt 中。",
     "scimConflicts": "## 外部 ID 冲突日志\nSCIM 身份事件需要系统干预（链接、恢复、显示名称覆盖、跳过成员）。",
     "scimFallbackDefault": "## 默认映射访问权限\n分配给未被任何群组映射覆盖的用户的访问级别。",
+    "scimRoleMappings": "## 角色映射\n将您的身份提供商断言的 `roles` 值映射到访问层级。角色映射优先于组映射：即使某个组会授予更高的权限，只要身份提供商为用户分配了已映射的角色，该用户也将获得该角色对应的层级。未映射的角色值将被忽略。",
     "integrations": "## 问题集成\n管理用于问题跟踪的第三方集成。",
     "notifications": "## 通知管理\n设置默认通知偏好设置（用户可以覆盖），并发送系统通知。",
     "notificationsSystem": "## 系统通知\n向所有用户发送重要公告。",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## 组名称\n一个清晰、简洁、描述性的名称或关键词，用于所有项目。\n\n- 帮助团队成员快速找到相关的测试用例、测试运行和会话。",
       "users": "## 用户\n表示分配给此组的用户。",
+      "projectMappedAccess": "## 项目级访问权限\n为该组成员授予某个特定项目的访问层级，该层级依据项目自身的常规权限规则进行解析。\n\n- **用户** 使该成员在该项目中获得其自身的全局角色\n- **项目管理员** 和 **管理员** 均会在该项目中授予“项目管理员”角色——在单个项目内，项目管理员是可授予的最高权限\n- 项目级访问权限仅用于**授予**权限，无法收回该项目默认设置已赋予的访问权限，因此此处没有“无”选项\n- 删除映射会撤销该授权；成员将恢复为该项目的默认设置",
       "mappedAccess": "## 映射访问层级\n此组的成员在下次同步时将至少获得此访问层级。\n\n- 用户所在的所有组中最高的层级将生效\n- “无映射”表示此组不影响访问权限 — 成员将回退到 SCIM 页面上设置的默认值\n- 对用户的手动访问权限更改会优先于映射（并会在该用户的编辑界面上标记出来）"
     },
     "template": {

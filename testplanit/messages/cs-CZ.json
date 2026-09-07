@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Zobrazované jméno přepsáno",
         "typeReEmitted": "Znovu odesláno",
         "typeConflict": "Konflikt",
+        "typeTokenConflict": "Konflikt mezi poskytovateli identity",
         "typeUnknown": "Neznámé",
         "viewPayload": "Zobrazit obsah",
         "reEmit": "Znovu odeslat událost člena",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Výchozí mapovaný přístup",
       "fallbackDefaultDescription": "Úroveň přístupu přiřazená uživatelům, na které se nevztahuje žádné mapování skupin.",
       "fallbackDefaultLabel": "Výchozí úroveň přístupu",
-      "fallbackDefaultSaved": "Záložní výchozí hodnota uložena"
+      "fallbackDefaultSaved": "Záložní výchozí hodnota uložena",
+      "rotate": {
+        "confirm": "Rotovat token",
+        "title": "Rotovat SCIM token",
+        "description": "Vygenerovat nový bearer token pro „{name}“. Token si zachová svůj název, IdP a vše, co provedl — mění se pouze tajný klíč.",
+        "overlapLabel": "Zachovat funkčnost starého tokenu po dobu",
+        "overlapHint": "Váš IdP bude nadále provádět provisioning pomocí starého tokenu, dokud toto okno neskončí, takže nový token můžete vložit bez výpadku.",
+        "overlapNone": "Přejít okamžitě",
+        "overlap1h": "1 hodina",
+        "overlap24h": "24 hodin",
+        "overlap7d": "7 dní",
+        "overlap30d": "30 dní",
+        "submit": "Rotovat token",
+        "submitting": "Rotuje se…",
+        "revealTitle": "Nový SCIM token",
+        "revealDescriptionOverlap": "Vložte tento token do svého IdP před koncem překryvného okna. Předchozí token do té doby zůstává funkční.",
+        "revealDescriptionImmediate": "Předchozí token okamžitě přestal fungovat. Vložte tento token do svého IdP nyní, abyste obnovili provisioning."
+      },
+      "roleMappings": {
+        "title": "Mapování rolí",
+        "description": "Namapujte roli, kterou váš poskytovatel identity přiřazuje uživateli, na úroveň přístupu. Mapování rolí má přednost před mapováním skupin, takže může přístup zvýšit i snížit.",
+        "empty": "Zatím žádná mapování rolí. Uživatelé se řídí mapováním skupin a výchozí úrovní přístupu.",
+        "roleLabel": "Hodnota role",
+        "rolePlaceholder": "Hodnota role z vašeho IdP, např. qa-lead",
+        "accessLabel": "Úroveň přístupu",
+        "add": "Přidat mapování",
+        "remove": "Odebrat mapování",
+        "saved": "Mapování role bylo uloženo",
+        "errorRoleRequired": "Zadejte hodnotu role, kterou odesílá váš IdP."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Mapovaná úroveň přístupu",
       "mappedAccessNone": "Žádné mapování",
       "mappedAccessSelect": "Vyberte úroveň přístupu...",
+      "projectMappings": {
+        "label": "Přístup na jednotlivé projekty",
+        "description": "Udělte této skupině úroveň přístupu na konkrétní projekty, místo — nebo navíc k — úrovni přístupu platné pro celou organizaci výše.",
+        "empty": "Žádný přístup na jednotlivé projekty. Členové mají pouze úroveň přístupu platnou pro celou organizaci výše a výchozí nastavení každého projektu.",
+        "projectLabel": "Projekt",
+        "projectPlaceholder": "Vyberte projekt…",
+        "accessLabel": "Úroveň přístupu",
+        "add": "Přidat projekt",
+        "remove": "Odebrat přístup k projektu",
+        "saved": "Přístup k projektu byl uložen"
+      },
       "downgradeConfirmTitle": "Potvrdit změnu přístupu",
       "downgradeConfirmDescription": "{count, plural, one {# uživateli} few {# uživatelům} many {# uživatelům} other {# uživatelům}} bude snížen přístup. Pokračovat?",
       "downgradeConfirmApplyAnyway": "Přesto použít",
@@ -7410,6 +7451,7 @@
     "scim": "## Zřizování SCIM\nZřizujte uživatele z vašeho poskytovatele identity do TestPlanIt prostřednictvím SCIM 2.0.",
     "scimConflicts": "## Protokol konfliktů externích ID\nUdálosti identity SCIM, které vyžadovaly zásah systému (propojení, obnovení, přepsání zobrazovaného jména, přeskočení členů).",
     "scimFallbackDefault": "## Výchozí mapovaný přístup\nÚroveň přístupu přiřazená uživatelům, na které se nevztahuje žádné mapování skupin.",
+    "scimRoleMappings": "## Mapování rolí\nMapuje hodnotu `roles` přiřazenou vaším poskytovatelem identity na úroveň přístupu. Mapování rolí má přednost před mapováním skupin: uživatel, kterému IdP přiřadí namapovanou roli, obdrží danou úroveň, i když by mu skupina udělila více oprávnění. Nenamapované hodnoty rolí jsou ignorovány.",
     "integrations": "## Integrace úkolů\nSpravujte integrace třetích stran pro sledování úkolů.",
     "notifications": "## Administrace oznámení\nNastavte výchozí předvolby oznámení (uživatelé je mohou přepsat) a odesílejte systémová oznámení.",
     "notificationsSystem": "## Systémová oznámení\nOdesílejte důležitá oznámení všem uživatelům.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Název skupiny\nJasný, stručný a výstižný název nebo klíčové slovo (slova), které se používají napříč všemi projekty.\n\n- Pomáhá členům týmu rychle najít související testovací případy, testovací běhy a relace.",
       "users": "## Uživatelé\nUdává uživatele, kteří jsou přiřazeni k této skupině.",
+      "projectMappedAccess": "## Přístup na jednotlivé projekty\nUděluje členům této skupiny úroveň přístupu k jednomu konkrétnímu projektu, řešenou pomocí běžných pravidel oprávnění daného projektu.\n\n- **Uživatel** dává členům jejich vlastní globální roli v daném projektu\n- **Správce projektu** i **Správce** oba udělují roli Správce projektu v daném projektu — v rámci jednoho projektu je Správce projektu nejsilnějším možným oprávněním\n- Přístup na úrovni projektu pouze **uděluje**. Nemůže odebrat přístup, který již projekt sám o sobě standardně poskytuje, což je důvod, proč zde není možnost „Žádný“\n- Odstranění mapování odebere udělené oprávnění; členové se vrátí k výchozímu nastavení projektu",
       "mappedAccess": "## Mapovaná úroveň přístupu\nČlenům této skupiny bude při další synchronizaci udělena minimálně tato úroveň přístupu.\n\n- Vítězí nejvyšší úroveň napříč všemi skupinami uživatele\n- „Žádné mapování“ znamená, že tato skupina neovlivňuje přístup — členové se vrátí k výchozí hodnotě nastavené na stránce SCIM\n- Ruční změna přístupu u uživatele má přednost před mapováním (a je označena na obrazovce úprav daného uživatele)"
     },
     "template": {

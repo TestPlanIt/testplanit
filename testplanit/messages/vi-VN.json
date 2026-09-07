@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Tên hiển thị bị ghi đè",
         "typeReEmitted": "Phát lại",
         "typeConflict": "Xung đột",
+        "typeTokenConflict": "Xung đột đa nhà cung cấp danh tính IdP",
         "typeUnknown": "Không rõ",
         "viewPayload": "Xem tải trọng",
         "reEmit": "Sự kiện tái phát hành dành cho thành viên",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Quyền truy cập ánh xạ mặc định",
       "fallbackDefaultDescription": "Cấp truy cập được gán cho người dùng không thuộc bất kỳ ánh xạ nhóm nào.",
       "fallbackDefaultLabel": "Cấp truy cập mặc định",
-      "fallbackDefaultSaved": "Đã lưu giá trị mặc định dự phòng"
+      "fallbackDefaultSaved": "Đã lưu giá trị mặc định dự phòng",
+      "rotate": {
+        "confirm": "Xoay vòng mã thông báo",
+        "title": "Xoay vòng mã thông báo SCIM",
+        "description": "Tạo bearer mới cho \"{name}\". Mã thông báo giữ nguyên tên, IdP và mọi thứ nó đã cấp phát — chỉ có bí mật thay đổi.",
+        "overlapLabel": "Giữ mã thông báo cũ hoạt động trong",
+        "overlapHint": "IdP của bạn sẽ tiếp tục cấp phát bằng mã thông báo cũ cho đến khi khoảng thời gian này kết thúc, giúp bạn có thể dán mã mới vào mà không bị gián đoạn dịch vụ.",
+        "overlapNone": "Chuyển đổi ngay lập tức",
+        "overlap1h": "1 giờ",
+        "overlap24h": "24 giờ",
+        "overlap7d": "7 ngày",
+        "overlap30d": "30 ngày",
+        "submit": "Xoay vòng mã thông báo",
+        "submitting": "Đang xoay vòng…",
+        "revealTitle": "Mã thông báo SCIM mới",
+        "revealDescriptionOverlap": "Hãy dán mã này vào IdP của bạn trước khi khoảng thời gian chồng lấn kết thúc. Mã thông báo trước đó vẫn hoạt động cho đến lúc đó.",
+        "revealDescriptionImmediate": "Mã thông báo trước đó đã ngừng hoạt động ngay lập tức. Hãy dán mã này vào IdP của bạn ngay để tiếp tục cấp phát."
+      },
+      "roleMappings": {
+        "title": "Ánh xạ vai trò",
+        "description": "Ánh xạ một vai trò mà nhà cung cấp danh tính của bạn khẳng định trên người dùng thành một cấp truy cập. Ánh xạ vai trò được ưu tiên hơn ánh xạ nhóm, do đó có thể nâng cao hoặc hạ thấp quyền truy cập.",
+        "empty": "Chưa có ánh xạ vai trò nào. Người dùng được quản lý bởi ánh xạ nhóm và cấp truy cập mặc định.",
+        "roleLabel": "Giá trị vai trò",
+        "rolePlaceholder": "Giá trị vai trò từ IdP của bạn, ví dụ: qa-lead",
+        "accessLabel": "Cấp truy cập",
+        "add": "Thêm ánh xạ",
+        "remove": "Xóa ánh xạ",
+        "saved": "Đã lưu ánh xạ vai trò",
+        "errorRoleRequired": "Nhập giá trị vai trò mà IdP của bạn gửi."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Cấp truy cập đã ánh xạ",
       "mappedAccessNone": "Không có ánh xạ",
       "mappedAccessSelect": "Chọn cấp truy cập...",
+      "projectMappings": {
+        "label": "Truy cập theo từng dự án",
+        "description": "Cấp cho nhóm này một cấp truy cập trên các dự án cụ thể, thay vì — hoặc bên cạnh — cấp truy cập toàn tổ chức ở trên.",
+        "empty": "Không có quyền truy cập theo từng dự án. Thành viên chỉ nhận được cấp truy cập toàn tổ chức ở trên và mặc định riêng của mỗi dự án.",
+        "projectLabel": "Dự án",
+        "projectPlaceholder": "Chọn một dự án…",
+        "accessLabel": "Cấp truy cập",
+        "add": "Thêm dự án",
+        "remove": "Xóa quyền truy cập dự án",
+        "saved": "Đã lưu quyền truy cập dự án"
+      },
       "downgradeConfirmTitle": "Xác nhận thay đổi quyền truy cập",
       "downgradeConfirmDescription": "{count, plural, other {# người dùng}} sẽ bị giảm quyền truy cập. Tiếp tục?",
       "downgradeConfirmApplyAnyway": "Vẫn áp dụng",
@@ -7410,6 +7451,7 @@
     "scim": "## Cấp phép SCIM\nCấp phép người dùng từ nhà cung cấp danh tính của bạn vào TestPlanIt thông qua SCIM 2.0.",
     "scimConflicts": "## Nhật ký xung đột ID bên ngoài\nCác sự kiện nhận dạng SCIM yêu cầu sự can thiệp của hệ thống (liên kết, khôi phục, ghi đè displayName, bỏ qua thành viên).",
     "scimFallbackDefault": "## Truy cập ánh xạ mặc định\nCấp truy cập được gán cho người dùng không thuộc bất kỳ ánh xạ nhóm nào.",
+    "scimRoleMappings": "## Ánh xạ vai trò\nÁnh xạ một giá trị `roles` được nhà cung cấp danh tính của bạn khẳng định thành một cấp truy cập. Ánh xạ vai trò được ưu tiên hơn ánh xạ nhóm: người dùng mà IdP gán cho một vai trò đã ánh xạ sẽ nhận được cấp đó ngay cả khi một nhóm có thể cấp cho họ nhiều quyền hơn. Các giá trị vai trò không được ánh xạ sẽ bị bỏ qua.",
     "integrations": "## Tích hợp theo dõi vấn đề\nQuản lý các tích hợp của bên thứ ba để theo dõi sự cố.",
     "notifications": "## Quản trị thông báo\nThiết lập tùy chọn thông báo mặc định (người dùng có thể thay đổi) và gửi Thông báo Hệ thống.",
     "notificationsSystem": "## Thông báo hệ thống\nGửi thông báo quan trọng đến tất cả người dùng.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Tên Nhóm\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
       "users": "## Người dùng\nCho biết những người dùng được chỉ định vào nhóm này.",
+      "projectMappedAccess": "## Truy cập theo từng dự án\nCấp cho thành viên của nhóm này một cấp truy cập trên một dự án cụ thể, được giải quyết theo các quy tắc phân quyền thông thường của dự án.\n\n- **Người dùng** cấp cho thành viên vai trò toàn cục riêng của họ trên dự án đó\n- **Quản trị viên dự án** và **Quản trị viên** đều cấp vai trò Quản trị viên dự án trên dự án đó — trong phạm vi một dự án, Quản trị viên dự án là quyền cấp mạnh nhất có thể\n- Truy cập theo từng dự án chỉ **cấp thêm**. Nó không thể lấy đi quyền truy cập mà mặc định của dự án đã cấp sẵn, đó là lý do tại sao không có tùy chọn \"Không có\" ở đây\n- Xóa một ánh xạ sẽ thu hồi quyền cấp; thành viên sẽ quay về mặc định của dự án",
       "mappedAccess": "## Cấp truy cập đã ánh xạ\nCác thành viên của nhóm này được cấp ít nhất cấp truy cập này vào lần đồng bộ tiếp theo.\n\n- Cấp cao nhất trong tất cả các nhóm của người dùng sẽ được áp dụng\n- \"Không có ánh xạ\" nghĩa là nhóm này không ảnh hưởng đến quyền truy cập — các thành viên sẽ sử dụng giá trị mặc định được đặt trên trang SCIM\n- Việc thay đổi quyền truy cập thủ công trên một người dùng sẽ ghi đè lên ánh xạ (và được đánh dấu trên màn hình chỉnh sửa của người dùng đó)"
     },
     "template": {

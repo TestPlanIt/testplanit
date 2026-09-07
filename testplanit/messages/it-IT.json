@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Nome visualizzato sovrascritto",
         "typeReEmitted": "Ritrasmesso",
         "typeConflict": "Conflitto",
+        "typeTokenConflict": "Conflitto cross-IdP",
         "typeUnknown": "Sconosciuto",
         "viewPayload": "Visualizza il carico utile",
         "reEmit": "Ritrasmetti l'evento del membro",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Accesso mappato predefinito",
       "fallbackDefaultDescription": "Livello di accesso assegnato agli utenti non coperti da alcuna mappatura di gruppo.",
       "fallbackDefaultLabel": "Livello di accesso predefinito",
-      "fallbackDefaultSaved": "Predefinito di riserva salvato"
+      "fallbackDefaultSaved": "Predefinito di riserva salvato",
+      "rotate": {
+        "confirm": "Ruota token",
+        "title": "Ruota token SCIM",
+        "description": "Genera un nuovo bearer per \"{name}\". Il token mantiene il suo nome, l'IdP e tutto ciò che ha provisionato — cambia solo il segreto.",
+        "overlapLabel": "Mantieni attivo il vecchio token per",
+        "overlapHint": "Il tuo IdP continua a provisionare con il vecchio token fino alla fine di questa finestra, così puoi incollare il nuovo senza interruzioni.",
+        "overlapNone": "Passa subito",
+        "overlap1h": "1 ora",
+        "overlap24h": "24 ore",
+        "overlap7d": "7 giorni",
+        "overlap30d": "30 giorni",
+        "submit": "Ruota token",
+        "submitting": "Rotazione in corso…",
+        "revealTitle": "Nuovo token SCIM",
+        "revealDescriptionOverlap": "Incolla questo nel tuo IdP prima che la finestra di sovrapposizione termini. Il token precedente continua a funzionare fino ad allora.",
+        "revealDescriptionImmediate": "Il token precedente ha smesso di funzionare immediatamente. Incolla questo nel tuo IdP ora per riprendere il provisioning."
+      },
+      "roleMappings": {
+        "title": "Mappature dei ruoli",
+        "description": "Mappa un ruolo che il tuo provider di identità assegna a un utente su un livello di accesso. Le mappature dei ruoli hanno la precedenza sulle mappature dei gruppi, quindi possono aumentare o diminuire l'accesso.",
+        "empty": "Nessuna mappatura di ruoli ancora presente. Gli utenti sono governati dalle mappature dei gruppi e dal livello di accesso predefinito.",
+        "roleLabel": "Valore del ruolo",
+        "rolePlaceholder": "Valore del ruolo dal tuo IdP, ad es. qa-lead",
+        "accessLabel": "Livello di accesso",
+        "add": "Aggiungi mappatura",
+        "remove": "Rimuovi mappatura",
+        "saved": "Mappatura del ruolo salvata",
+        "errorRoleRequired": "Inserisci il valore del ruolo inviato dal tuo IdP."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Livello di accesso mappato",
       "mappedAccessNone": "Nessuna mappatura",
       "mappedAccessSelect": "Seleziona il livello di accesso...",
+      "projectMappings": {
+        "label": "Accesso per singolo progetto",
+        "description": "Concedi a questo gruppo un livello di accesso su progetti specifici, invece di — o in aggiunta a — il livello a livello di organizzazione sopra.",
+        "empty": "Nessun accesso per singolo progetto. I membri ottengono solo il livello a livello di organizzazione sopra e il valore predefinito di ciascun progetto.",
+        "projectLabel": "Progetto",
+        "projectPlaceholder": "Seleziona un progetto…",
+        "accessLabel": "Livello di accesso",
+        "add": "Aggiungi progetto",
+        "remove": "Rimuovi accesso al progetto",
+        "saved": "Accesso al progetto salvato"
+      },
       "downgradeConfirmTitle": "Conferma modifica accesso",
       "downgradeConfirmDescription": "{count, plural, one {# utente avrebbe l'accesso ridotto} other {# utenti avrebbero l'accesso ridotto}}. Continuare?",
       "downgradeConfirmApplyAnyway": "Applica comunque",
@@ -7410,6 +7451,7 @@
     "scim": "## Provisioning SCIM\nEffettua il provisioning degli utenti dal tuo provider di identità in TestPlanIt tramite SCIM 2.0.",
     "scimConflicts": "## Registro dei conflitti ID esterno\nEventi di identità SCIM che hanno richiesto l'intervento del sistema (collegamento, ripristino, sovrascrittura del nome visualizzato, membri ignorati).",
     "scimFallbackDefault": "## Accesso mappato predefinito\nLivello di accesso assegnato agli utenti non coperti da alcuna mappatura di gruppo.",
+    "scimRoleMappings": "## Mappature dei ruoli\nMappa un valore `roles` asserito dal tuo provider di identità su un livello di accesso. Una mappatura del ruolo ha la precedenza sulle mappature dei gruppi: un utente a cui l'IdP assegna un ruolo mappato riceve quel livello anche quando un gruppo gli garantirebbe di più. I valori di ruolo non mappati vengono ignorati.",
     "integrations": "## Integrazioni dei problemi\nGestire le integrazioni di terze parti per il monitoraggio dei problemi.",
     "notifications": "## Amministrazione delle notifiche\nImposta le preferenze di notifica predefinite (che gli utenti possono modificare) e invia notifiche di sistema.",
     "notificationsSystem": "## Notifiche di sistema\nInvia annunci importanti a tutti gli utenti.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Nome del gruppo\nUn nome o una o più parole chiave chiare, concise e descrittive, utilizzate in tutti i progetti.\n\n- Aiuta i membri del team a trovare rapidamente casi di test, esecuzioni di test e sessioni correlate.",
       "users": "## Utenti\nIndica gli utenti assegnati a questo gruppo.",
+      "projectMappedAccess": "## Accesso per Progetto\nConcede ai membri di questo gruppo un livello di accesso su uno specifico progetto, risolto attraverso le normali regole di autorizzazione del progetto.\n\n- **Utente** assegna ai membri il proprio ruolo globale su quel progetto\n- **Amministratore del Progetto** e **Amministratore** concedono entrambi il ruolo di Amministratore del Progetto su quel progetto — all'interno di un singolo progetto, Amministratore del Progetto è la concessione più forte esistente\n- L'accesso per progetto **concede** solamente. Non può togliere l'accesso che il progetto stesso già garantisce per impostazione predefinita, motivo per cui qui non è disponibile l'opzione \"Nessuno\"\n- Rimuovere un'associazione revoca la concessione; i membri tornano all'impostazione predefinita del progetto",
       "mappedAccess": "## Livello di accesso mappato\nAi membri di questo gruppo viene concesso almeno questo livello di accesso alla prossima sincronizzazione.\n\n- Vince il livello più alto tra tutti i gruppi di un utente\n- \"Nessuna mappatura\" significa che questo gruppo non influisce sull'accesso — i membri ricadono sul valore predefinito impostato nella pagina SCIM\n- Una modifica manuale dell'accesso di un utente ha la precedenza sulla mappatura (ed è segnalata nella schermata di modifica di quell'utente)"
     },
     "template": {

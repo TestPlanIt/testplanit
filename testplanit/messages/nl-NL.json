@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Weergavenaam overschreven",
         "typeReEmitted": "Opnieuw uitgestoten",
         "typeConflict": "Conflict",
+        "typeTokenConflict": "Cross-IdP-conflict",
         "typeUnknown": "Onbekend",
         "viewPayload": "Payload bekijken",
         "reEmit": "Heruitgifte ledenevenement",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Standaard gekoppelde toegang",
       "fallbackDefaultDescription": "Toegangsniveau toegewezen aan gebruikers die niet onder een groepskoppeling vallen.",
       "fallbackDefaultLabel": "Standaard toegangsniveau",
-      "fallbackDefaultSaved": "Fallback-standaard opgeslagen"
+      "fallbackDefaultSaved": "Fallback-standaard opgeslagen",
+      "rotate": {
+        "confirm": "Token roteren",
+        "title": "SCIM-token roteren",
+        "description": "Genereer een nieuwe bearer voor \"{name}\". Het token behoudt zijn naam, IdP en alles wat het heeft geconfigureerd — alleen het geheim verandert.",
+        "overlapLabel": "Oude token laten werken voor",
+        "overlapHint": "Uw IdP blijft provisioneren met het oude token totdat dit venster eindigt, zodat u het nieuwe kunt plakken zonder uitval.",
+        "overlapNone": "Direct overschakelen",
+        "overlap1h": "1 uur",
+        "overlap24h": "24 uur",
+        "overlap7d": "7 dagen",
+        "overlap30d": "30 dagen",
+        "submit": "Token roteren",
+        "submitting": "Roteren…",
+        "revealTitle": "Nieuw SCIM-token",
+        "revealDescriptionOverlap": "Plak dit in uw IdP voordat het overlapvenster eindigt. Het vorige token blijft tot dan werken.",
+        "revealDescriptionImmediate": "Het vorige token werkt niet meer. Plak dit nu in uw IdP om provisioning te hervatten."
+      },
+      "roleMappings": {
+        "title": "Roltoewijzingen",
+        "description": "Koppel een rol die uw identiteitsprovider aan een gebruiker toekent aan een toegangsniveau. Roltoewijzingen hebben voorrang op groepstoewijzingen, dus ze kunnen de toegang verhogen of verlagen.",
+        "empty": "Nog geen roltoewijzingen. Gebruikers worden beheerd door groepstoewijzingen en het standaard toegangsniveau.",
+        "roleLabel": "Rolwaarde",
+        "rolePlaceholder": "Rolwaarde van uw IdP, bijv. qa-lead",
+        "accessLabel": "Toegangsniveau",
+        "add": "Toewijzing toevoegen",
+        "remove": "Toewijzing verwijderen",
+        "saved": "Roltoewijzing opgeslagen",
+        "errorRoleRequired": "Voer de rolwaarde in die uw IdP verzendt."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Gekoppeld toegangsniveau",
       "mappedAccessNone": "Geen koppeling",
       "mappedAccessSelect": "Selecteer toegangsniveau...",
+      "projectMappings": {
+        "label": "Toegang per project",
+        "description": "Geef deze groep een toegangsniveau voor specifieke projecten, in plaats van — of bovenop — het organisatiebrede niveau hierboven.",
+        "empty": "Geen toegang per project. Leden krijgen alleen het organisatiebrede niveau hierboven en de standaardinstelling van elk project.",
+        "projectLabel": "Project",
+        "projectPlaceholder": "Selecteer een project…",
+        "accessLabel": "Toegangsniveau",
+        "add": "Project toevoegen",
+        "remove": "Projecttoegang verwijderen",
+        "saved": "Projecttoegang opgeslagen"
+      },
       "downgradeConfirmTitle": "Toegangswijziging bevestigen",
       "downgradeConfirmDescription": "{count, plural, one {# gebruiker} other {# gebruikers}} zouden een lager toegangsniveau krijgen. Doorgaan?",
       "downgradeConfirmApplyAnyway": "Toch toepassen",
@@ -7410,6 +7451,7 @@
     "scim": "## SCIM-provisioning\nGeef gebruikers van uw identiteitsprovider toegang tot TestPlanIt via SCIM 2.0.",
     "scimConflicts": "## Logboek voor externe-ID-conflicten\nSCIM-identiteitsgebeurtenissen die systeeminterventie vereisten (koppelen, herstellen, displayName overschrijven, overgeslagen leden).",
     "scimFallbackDefault": "## Standaard toegewezen toegang\nToegangsniveau toegewezen aan gebruikers die niet onder een groepskoppeling vallen.",
+    "scimRoleMappings": "## Roltoewijzingen\nKoppelt een `roles`-waarde die door uw identiteitsprovider wordt toegekend aan een toegangsniveau. Een roltoewijzing heeft voorrang op groepstoewijzingen: een gebruiker aan wie de IdP een toegewezen rol geeft, krijgt dat niveau, zelfs als een groep hen meer zou toekennen. Niet-toegewezen rolwaarden worden genegeerd.",
     "integrations": "## Issue-integraties\nBeheer integraties met externe partijen voor het bijhouden van problemen.",
     "notifications": "## Meldingenbeheer\nStel de standaardvoorkeuren voor meldingen in (die gebruikers kunnen overschrijven) en verstuur systeemmeldingen.",
     "notificationsSystem": "## Systeemmeldingen\nStuur belangrijke aankondigingen naar alle gebruikers.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Groepsnaam\nEen duidelijke, beknopte, beschrijvende naam of trefwoord(en) die in alle projecten wordt gebruikt.\n\n- Helpt teamleden snel gerelateerde testcases, testruns en sessies te vinden.",
       "users": "## Gebruikers\nGeeft de gebruikers aan die aan deze groep zijn toegewezen.",
+      "projectMappedAccess": "## Toegang per project\nVerleent leden van deze groep een toegangsniveau op één specifiek project, bepaald via de normale rechtenregels van het project.\n\n- **Gebruiker** geeft leden hun eigen globale rol op dat project\n- **Projectbeheerder** en **Beheerder** verlenen beide de rol Projectbeheerder op dat project — binnen één project is Projectbeheerder de sterkste toekenning die er is\n- Toegang per project kan alleen **toekennen**. Het kan geen toegang wegnemen die de standaardinstelling van een project al geeft, daarom is er hier geen optie \"Geen\"\n- Het verwijderen van een koppeling trekt de toekenning in; leden vallen terug op de standaardinstelling van het project",
       "mappedAccess": "## Gekoppeld toegangsniveau\nLeden van deze groep krijgen bij de volgende synchronisatie minimaal dit toegangsniveau.\n\n- Het hoogste niveau van alle groepen van een gebruiker geldt\n- \"Geen koppeling\" betekent dat deze groep geen invloed heeft op de toegang — leden vallen terug op de standaardinstelling op de SCIM-pagina\n- Een handmatige toegangswijziging bij een gebruiker heeft voorrang op de koppeling (en wordt gemarkeerd op het bewerkingsscherm van die gebruiker)"
     },
     "template": {

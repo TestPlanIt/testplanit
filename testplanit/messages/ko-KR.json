@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "표시 이름이 덮어쓰기되었습니다.",
         "typeReEmitted": "재송금됨",
         "typeConflict": "갈등",
+        "typeTokenConflict": "IdP 간 충돌",
         "typeUnknown": "알려지지 않은",
         "viewPayload": "페이로드 보기",
         "reEmit": "회원 이벤트 재전송",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "기본 매핑 접근",
       "fallbackDefaultDescription": "그룹 매핑에 포함되지 않은 사용자에게 할당되는 접근 등급입니다.",
       "fallbackDefaultLabel": "기본 접근 등급",
-      "fallbackDefaultSaved": "기본 대체값이 저장되었습니다"
+      "fallbackDefaultSaved": "기본 대체값이 저장되었습니다",
+      "rotate": {
+        "confirm": "토큰 교체",
+        "title": "SCIM 토큰 교체",
+        "description": "\"{name}\"에 대한 새 베어러를 생성합니다. 토큰은 이름, IdP 및 프로비저닝된 모든 항목을 유지하며 — 비밀 값만 변경됩니다.",
+        "overlapLabel": "이전 토큰을 다음 기간 동안 계속 작동시키기",
+        "overlapHint": "이 기간이 끝날 때까지 IdP는 이전 토큰으로 계속 프로비저닝하므로, 중단 없이 새 토큰을 붙여넣을 수 있습니다.",
+        "overlapNone": "즉시 전환",
+        "overlap1h": "1시간",
+        "overlap24h": "24시간",
+        "overlap7d": "7일",
+        "overlap30d": "30일",
+        "submit": "토큰 교체",
+        "submitting": "교체 중…",
+        "revealTitle": "새 SCIM 토큰",
+        "revealDescriptionOverlap": "중첩 기간이 끝나기 전에 이 값을 IdP에 붙여넣으세요. 이전 토큰은 그때까지 계속 작동합니다.",
+        "revealDescriptionImmediate": "이전 토큰은 즉시 작동을 멈췄습니다. 프로비저닝을 재개하려면 지금 이 값을 IdP에 붙여넣으세요."
+      },
+      "roleMappings": {
+        "title": "역할 매핑",
+        "description": "ID 공급자가 사용자에게 지정하는 역할을 액세스 등급에 매핑합니다. 역할 매핑은 그룹 매핑보다 우선하므로 액세스 권한을 높이거나 낮출 수 있습니다.",
+        "empty": "아직 역할 매핑이 없습니다. 사용자는 그룹 매핑과 기본 액세스 등급의 적용을 받습니다.",
+        "roleLabel": "역할 값",
+        "rolePlaceholder": "IdP의 역할 값, 예: qa-lead",
+        "accessLabel": "액세스 등급",
+        "add": "매핑 추가",
+        "remove": "매핑 제거",
+        "saved": "역할 매핑이 저장되었습니다",
+        "errorRoleRequired": "IdP가 전송하는 역할 값을 입력하세요."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "매핑된 접근 등급",
       "mappedAccessNone": "매핑 없음",
       "mappedAccessSelect": "접근 등급을 선택하세요...",
+      "projectMappings": {
+        "label": "프로젝트별 액세스",
+        "description": "위의 조직 전체 등급 대신 또는 그에 더해, 이 그룹에 특정 프로젝트에 대한 액세스 등급을 부여합니다.",
+        "empty": "프로젝트별 액세스가 없습니다. 구성원은 위의 조직 전체 등급과 각 프로젝트의 기본값만 적용받습니다.",
+        "projectLabel": "프로젝트",
+        "projectPlaceholder": "프로젝트를 선택하세요…",
+        "accessLabel": "액세스 등급",
+        "add": "프로젝트 추가",
+        "remove": "프로젝트 액세스 제거",
+        "saved": "프로젝트 액세스가 저장되었습니다"
+      },
       "downgradeConfirmTitle": "접근 변경 확인",
       "downgradeConfirmDescription": "{count, plural, other {사용자 #명}}의 접근 권한이 낮아집니다. 계속하시겠습니까?",
       "downgradeConfirmApplyAnyway": "그래도 적용",
@@ -7410,6 +7451,7 @@
     "scim": "## SCIM 프로비저닝\nSCIM 2.0을 통해 ID 공급자로부터 TestPlanIt에 사용자를 프로비저닝하세요.",
     "scimConflicts": "## 외부 ID 충돌 로그\n시스템 개입이 필요한 SCIM ID 이벤트(연결, 복구, displayName 덮어쓰기, 멤버 건너뛰기).",
     "scimFallbackDefault": "## 기본 매핑 접근 권한\n그룹 매핑에 포함되지 않은 사용자에게 할당되는 접근 등급입니다.",
+    "scimRoleMappings": "## 역할 매핑\nID 공급자가 지정하는 `roles` 값을 액세스 등급에 매핑합니다. 역할 매핑은 그룹 매핑보다 우선합니다: IdP가 매핑된 역할을 부여한 사용자는 그룹이 더 높은 권한을 부여하더라도 해당 등급을 받습니다. 매핑되지 않은 역할 값은 무시됩니다.",
     "integrations": "## 이슈 통합\n이슈 추적을 위한 타사 통합 관리.",
     "notifications": "## 알림 관리\n기본 알림 설정을 지정하고(사용자가 재정의할 수 있음) 시스템 알림을 전송합니다.",
     "notificationsSystem": "## 시스템 알림\n모든 사용자에게 중요 공지사항을 전송합니다.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## 그룹 이름\n모든 프로젝트에서 사용되는 명확하고 간결하며 설명적인 이름 또는 키워드입니다.\n\n- 팀 구성원이 관련 테스트 케이스, 테스트 실행 및 세션을 빠르게 찾을 수 있도록 도와줍니다.",
       "users": "## 사용자\n이 그룹에 할당된 사용자를 나타냅니다.",
+      "projectMappedAccess": "## 프로젝트별 액세스\n이 그룹의 구성원에게 특정 프로젝트 하나에 대한 액세스 등급을 부여하며, 이는 해당 프로젝트의 일반 권한 규칙을 통해 적용됩니다.\n\n- **사용자**는 구성원에게 해당 프로젝트에 대한 자신의 전역 역할을 부여합니다\n- **프로젝트 관리자**와 **관리자** 모두 해당 프로젝트에 대한 프로젝트 관리자 역할을 부여합니다 — 단일 프로젝트 내에서 프로젝트 관리자는 가장 강력한 권한입니다\n- 프로젝트별 액세스는 오직 **부여**만 합니다. 프로젝트 자체의 기본값이 이미 제공하는 액세스를 제거할 수는 없으며, 이것이 여기에 \"없음\" 옵션이 없는 이유입니다\n- 매핑을 제거하면 부여가 철회되며, 구성원은 프로젝트의 기본값으로 되돌아갑니다",
       "mappedAccess": "## 매핑된 접근 등급\n이 그룹의 구성원은 다음 동기화 시 최소한 이 접근 등급을 부여받습니다.\n\n- 사용자가 속한 모든 그룹 중 가장 높은 등급이 적용됩니다\n- \"매핑 없음\"은 이 그룹이 접근에 영향을 미치지 않음을 의미합니다 — 구성원은 SCIM 페이지에 설정된 기본값을 따릅니다\n- 사용자에 대한 수동 접근 변경은 매핑을 대체합니다(해당 사용자의 편집 화면에 표시됨)"
     },
     "template": {

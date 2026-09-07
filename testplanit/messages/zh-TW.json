@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "顯示名稱已覆蓋",
         "typeReEmitted": "再發射",
         "typeConflict": "衝突",
+        "typeTokenConflict": "跨身分識別提供者衝突",
         "typeUnknown": "未知",
         "viewPayload": "查看有效載荷",
         "reEmit": "重新發送成員活動",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "預設對應存取",
       "fallbackDefaultDescription": "指派給未被任何群組對應涵蓋的使用者的存取層級。",
       "fallbackDefaultLabel": "預設存取層級",
-      "fallbackDefaultSaved": "後備預設值已儲存"
+      "fallbackDefaultSaved": "後備預設值已儲存",
+      "rotate": {
+        "confirm": "輪換權杖",
+        "title": "輪換 SCIM 權杖",
+        "description": "為「{name}」產生新的持有者權杖。該權杖保留其名稱、身分識別提供者，以及所有已佈建的內容 — 僅密鑰會變更。",
+        "overlapLabel": "讓舊權杖繼續運作",
+        "overlapHint": "在此期間結束前，您的身分識別提供者會持續使用舊權杖進行佈建，讓您可以貼上新權杖而不會中斷服務。",
+        "overlapNone": "立即切換",
+        "overlap1h": "1 小時",
+        "overlap24h": "24 小時",
+        "overlap7d": "7 天",
+        "overlap30d": "30 天",
+        "submit": "輪換權杖",
+        "submitting": "輪換中…",
+        "revealTitle": "新的 SCIM 權杖",
+        "revealDescriptionOverlap": "請在重疊期間結束前，將此貼到您的身分識別提供者中。在此之前，先前的權杖仍會繼續運作。",
+        "revealDescriptionImmediate": "先前的權杖已立即停止運作。請立即將此貼到您的身分識別提供者中以恢復佈建。"
+      },
+      "roleMappings": {
+        "title": "角色對應",
+        "description": "將您的身分識別提供者對使用者所斷言的角色對應至存取層級。角色對應優先於群組對應，因此可以提升或降低存取權限。",
+        "empty": "目前尚無角色對應。使用者由群組對應與預設存取層級管理。",
+        "roleLabel": "角色值",
+        "rolePlaceholder": "來自您的身分識別提供者的角色值，例如 qa-lead",
+        "accessLabel": "存取層級",
+        "add": "新增對應",
+        "remove": "移除對應",
+        "saved": "角色對應已儲存",
+        "errorRoleRequired": "請輸入您的身分識別提供者傳送的角色值。"
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "對應存取層級",
       "mappedAccessNone": "無對應",
       "mappedAccessSelect": "選擇存取層級……",
+      "projectMappings": {
+        "label": "逐專案存取權限",
+        "description": "賦予此群組在特定專案上的存取層級，取代或疊加於上方的組織層級之上。",
+        "empty": "尚無逐專案存取權限。成員僅獲得上方的組織層級以及各專案自身的預設層級。",
+        "projectLabel": "專案",
+        "projectPlaceholder": "選擇一個專案…",
+        "accessLabel": "存取層級",
+        "add": "新增專案",
+        "remove": "移除專案存取權限",
+        "saved": "專案存取權限已儲存"
+      },
       "downgradeConfirmTitle": "確認存取變更",
       "downgradeConfirmDescription": "{count, plural, other {# 位使用者}} 的存取權限將被降低。是否繼續？",
       "downgradeConfirmApplyAnyway": "仍要套用",
@@ -7410,6 +7451,7 @@
     "scim": "## SCIM 佈建\n透過 SCIM 2.0 將身分提供者的使用者佈建至 TestPlanIt。",
     "scimConflicts": "## 外部 ID 衝突記錄\n需要系統介入的 SCIM 身分事件（連結、復原、顯示名稱覆寫、跳過成員）。",
     "scimFallbackDefault": "## 預設對應存取權限\n未被任何群組對應涵蓋之使用者所指派的存取層級。",
+    "scimRoleMappings": "## 角色對應\n將您的身分識別提供者所斷言的 `roles` 值對應到存取層級。角色對應優先於群組對應：即使某個群組會賦予使用者更高的存取層級，只要身分識別提供者賦予該使用者已對應的角色，該使用者仍會獲得該對應的層級。未對應的角色值將被忽略。",
     "integrations": "## 問題整合\n管理用於問題追蹤的第三方整合。",
     "notifications": "## 通知管理\n設定預設通知偏好設定（使用者可以覆蓋），並發送系統通知。",
     "notificationsSystem": "## 系統通知\n向所有使用者發送重要公告。",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## 群組名稱\n一個清晰、簡潔、描述性的名稱或關鍵字，用於所有項目。\n\n- 幫助團隊成員快速找到相關的測試案例、測試運行和會話。",
       "users": "## 使用者\n表示指派給此群組的使用者。",
+      "projectMappedAccess": "## 專案存取權限\n授予此群組成員在特定專案上的存取層級，該層級將依專案的一般權限規則來解析。\n\n- **使用者**授予成員在該專案上擁有其原本的全域角色\n- **專案管理員**和**管理員**皆會授予該專案的專案管理員角色 — 在單一專案內，專案管理員是最高的授權等級\n- 專案層級存取權限僅能**授予**權限，無法收回該專案預設已賦予的存取權限，因此此處沒有「無」選項\n- 移除對應設定會撤銷授權；成員將回復為該專案的預設存取層級",
       "mappedAccess": "## 對應存取層級\n此群組的成員在下次同步時將獲得至少此存取層級。\n\n- 使用者所有群組中最高的層級將優先套用\n- 「無對應」表示此群組不會影響存取權限 — 成員將退回至 SCIM 頁面上設定的預設值\n- 對使用者進行手動存取變更將取代對應設定（並會在該使用者的編輯畫面上標記）"
     },
     "template": {

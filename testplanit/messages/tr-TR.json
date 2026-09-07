@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Görüntülenen ad üzerine yazıldı.",
         "typeReEmitted": "Yeniden yayınlandı",
         "typeConflict": "Anlaşmazlık",
+        "typeTokenConflict": "Sağlayıcılar arası çakışma",
         "typeUnknown": "Bilinmiyor",
         "viewPayload": "Yükü görüntüle",
         "reEmit": "Yeniden gönder üye etkinliği",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Varsayılan Eşlenmiş Erişim",
       "fallbackDefaultDescription": "Herhangi bir grup eşlemesi tarafından kapsanmayan kullanıcılara atanan erişim katmanı.",
       "fallbackDefaultLabel": "Varsayılan erişim katmanı",
-      "fallbackDefaultSaved": "Yedek varsayılan kaydedildi"
+      "fallbackDefaultSaved": "Yedek varsayılan kaydedildi",
+      "rotate": {
+        "confirm": "Token'ı döndür",
+        "title": "SCIM token'ını döndür",
+        "description": "\"{name}\" için yeni bir taşıyıcı oluşturun. Token adını, IdP'sini ve sağladığı her şeyi korur — yalnızca gizli anahtar değişir.",
+        "overlapLabel": "Eski token'ı şu süre boyunca çalışır tut",
+        "overlapHint": "Bu pencere sona erene kadar IdP'niz eski token ile sağlamaya devam eder, böylece kesinti yaşamadan yenisini yapıştırabilirsiniz.",
+        "overlapNone": "Hemen geçiş yap",
+        "overlap1h": "1 saat",
+        "overlap24h": "24 saat",
+        "overlap7d": "7 gün",
+        "overlap30d": "30 gün",
+        "submit": "Token'ı döndür",
+        "submitting": "Döndürülüyor…",
+        "revealTitle": "Yeni SCIM token'ı",
+        "revealDescriptionOverlap": "Örtüşme penceresi sona ermeden bunu IdP'nize yapıştırın. Önceki token o zamana kadar çalışmaya devam eder.",
+        "revealDescriptionImmediate": "Önceki token hemen çalışmayı durdurdu. Sağlamayı sürdürmek için bunu şimdi IdP'nize yapıştırın."
+      },
+      "roleMappings": {
+        "title": "Rol Eşlemeleri",
+        "description": "Kimlik sağlayıcınızın bir kullanıcı için ilan ettiği bir rolü bir erişim katmanına eşleyin. Rol eşlemeleri grup eşlemelerine göre önceliklidir, bu nedenle erişimi artırabilir veya azaltabilir.",
+        "empty": "Henüz rol eşlemesi yok. Kullanıcılar grup eşlemeleri ve varsayılan erişim katmanı tarafından yönetilir.",
+        "roleLabel": "Rol değeri",
+        "rolePlaceholder": "IdP'nizden gelen rol değeri, örn. qa-lead",
+        "accessLabel": "Erişim katmanı",
+        "add": "Eşleme ekle",
+        "remove": "Eşlemeyi kaldır",
+        "saved": "Rol eşlemesi kaydedildi",
+        "errorRoleRequired": "IdP'nizin gönderdiği rol değerini girin."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Eşlenmiş Erişim Katmanı",
       "mappedAccessNone": "Eşleme yok",
       "mappedAccessSelect": "Erişim katmanı seçin...",
+      "projectMappings": {
+        "label": "Proje bazında erişim",
+        "description": "Bu gruba, yukarıdaki organizasyon genelindeki katman yerine — veya buna ek olarak — belirli projelerde bir erişim katmanı verin.",
+        "empty": "Proje bazında erişim yok. Üyeler yalnızca yukarıdaki organizasyon genelindeki katmanı ve her projenin kendi varsayılanını alır.",
+        "projectLabel": "Proje",
+        "projectPlaceholder": "Bir proje seçin…",
+        "accessLabel": "Erişim katmanı",
+        "add": "Proje ekle",
+        "remove": "Proje erişimini kaldır",
+        "saved": "Proje erişimi kaydedildi"
+      },
       "downgradeConfirmTitle": "Erişim Değişikliğini Onayla",
       "downgradeConfirmDescription": "{count, plural, one {# kullanıcının} other {# kullanıcının}} erişimi düşürülecek. Devam edilsin mi?",
       "downgradeConfirmApplyAnyway": "Yine de uygula",
@@ -7410,6 +7451,7 @@
     "scim": "## SCIM Provizyonlama\nKimlik sağlayıcınızdan gelen kullanıcıları SCIM 2.0 üzerinden TestPlanIt'e ekleyin.",
     "scimConflicts": "## Harici Kimlik Çakışma Kaydı\nSistem müdahalesi gerektiren SCIM kimlik olayları (bağlantı kurma, yeniden canlandırma, displayName üzerine yazma, atlanan üyeler).",
     "scimFallbackDefault": "## Varsayılan Eşlenen Erişim\nHerhangi bir grup eşlemesi kapsamında olmayan kullanıcılara atanan erişim düzeyi.",
+    "scimRoleMappings": "## Rol Eşlemeleri\nKimlik sağlayıcınız tarafından ilan edilen bir `roles` değerini bir erişim katmanına eşler. Bir rol eşlemesi, grup eşlemelerine göre önceliklidir: IdP'nin eşlenmiş bir rol verdiği bir kullanıcı, bir grup ona daha fazlasını sağlasa bile o katmanı alır. Eşlenmemiş rol değerleri yok sayılır.",
     "integrations": "## Sorun Entegrasyonları\nSorun takibi için üçüncü taraf entegrasyonlarını yönetin.",
     "notifications": "## Bildirim Yönetimi\nVarsayılan bildirim tercihlerini ayarlayın (kullanıcılar bunları değiştirebilir) ve sistem bildirimlerini gönderin.",
     "notificationsSystem": "## Sistem Bildirimleri\nÖnemli duyuruları tüm kullanıcılara gönderin.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Grup Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
       "users": "## Kullanıcılar\nBu gruba atanmış kullanıcıları gösterir.",
+      "projectMappedAccess": "## Proje Bazlı Erişim\nBu grubun üyelerine, projenin normal izin kurallarına göre çözümlenen belirli bir projede bir erişim katmanı verir.\n\n- **Kullanıcı**, üyelere o projede kendi genel rollerini verir\n- **Proje Yöneticisi** ve **Yönetici**, her ikisi de o projede Proje Yöneticisi rolünü verir — tek bir proje içinde Proje Yöneticisi, verilebilecek en güçlü yetkidir\n- Proje bazlı erişim yalnızca **yetki verir**. Projenin kendi varsayılan ayarının zaten sağladığı erişimi geri alamaz, bu yüzden burada \"Yok\" seçeneği bulunmaz\n- Bir eşlemeyi kaldırmak yetkiyi geri çeker; üyeler projenin varsayılanına döner",
       "mappedAccess": "## Eşlenmiş Erişim Katmanı\nBu grubun üyelerine bir sonraki senkronizasyonda en az bu erişim katmanı verilir.\n\n- Bir kullanıcının tüm gruplarındaki en yüksek katman geçerli olur\n- \"Eşleme yok\" bu grubun erişimi etkilemediği anlamına gelir — üyeler SCIM sayfasında belirlenen varsayılana döner\n- Bir kullanıcı üzerinde yapılan manuel erişim değişikliği eşlemenin yerini alır (ve bu, kullanıcının düzenleme ekranında işaretlenir)"
     },
     "template": {

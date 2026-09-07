@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "Se ha sobrescrito el nombre para mostrar",
         "typeReEmitted": "Reemitido",
         "typeConflict": "Conflicto",
+        "typeTokenConflict": "Conflicto entre IdP",
         "typeUnknown": "Desconocido",
         "viewPayload": "Ver carga útil",
         "reEmit": "Reemitir evento para miembros",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Acceso mapeado predeterminado",
       "fallbackDefaultDescription": "Nivel de acceso asignado a usuarios no cubiertos por ningún mapeo de grupos.",
       "fallbackDefaultLabel": "Nivel de acceso predeterminado",
-      "fallbackDefaultSaved": "Valor predeterminado de respaldo guardado"
+      "fallbackDefaultSaved": "Valor predeterminado de respaldo guardado",
+      "rotate": {
+        "confirm": "Rotar token",
+        "title": "Rotar token SCIM",
+        "description": "Genera un nuevo bearer para \"{name}\". El token conserva su nombre, IdP y todo lo que ha aprovisionado — solo cambia el secreto.",
+        "overlapLabel": "Mantener el token antiguo funcionando durante",
+        "overlapHint": "Su IdP sigue aprovisionando con el token antiguo hasta que finalice esta ventana, para que pueda pegar el nuevo sin interrupciones.",
+        "overlapNone": "Cambiar de inmediato",
+        "overlap1h": "1 hora",
+        "overlap24h": "24 horas",
+        "overlap7d": "7 días",
+        "overlap30d": "30 días",
+        "submit": "Rotar token",
+        "submitting": "Rotando…",
+        "revealTitle": "Nuevo token SCIM",
+        "revealDescriptionOverlap": "Pegue esto en su IdP antes de que finalice la ventana de superposición. El token anterior seguirá funcionando hasta entonces.",
+        "revealDescriptionImmediate": "El token anterior dejó de funcionar de inmediato. Pegue este ahora en su IdP para reanudar el aprovisionamiento."
+      },
+      "roleMappings": {
+        "title": "Asignaciones de roles",
+        "description": "Asigne un rol que su proveedor de identidad afirma sobre un usuario a un nivel de acceso. Las asignaciones de roles tienen prioridad sobre las asignaciones de grupos, por lo que pueden aumentar o disminuir el acceso.",
+        "empty": "Aún no hay asignaciones de roles. Los usuarios se rigen por las asignaciones de grupos y el nivel de acceso predeterminado.",
+        "roleLabel": "Valor del rol",
+        "rolePlaceholder": "Valor del rol de su IdP, p. ej. qa-lead",
+        "accessLabel": "Nivel de acceso",
+        "add": "Añadir asignación",
+        "remove": "Eliminar asignación",
+        "saved": "Asignación de rol guardada",
+        "errorRoleRequired": "Introduzca el valor del rol que envía su IdP."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Nivel de acceso mapeado",
       "mappedAccessNone": "Sin mapeo",
       "mappedAccessSelect": "Seleccionar nivel de acceso...",
+      "projectMappings": {
+        "label": "Acceso por proyecto",
+        "description": "Conceda a este grupo un nivel de acceso en proyectos específicos, en lugar de — o además de — el nivel general de la organización mencionado arriba.",
+        "empty": "Sin acceso por proyecto. Los miembros solo obtienen el nivel general de la organización mencionado arriba y el predeterminado de cada proyecto.",
+        "projectLabel": "Proyecto",
+        "projectPlaceholder": "Seleccione un proyecto…",
+        "accessLabel": "Nivel de acceso",
+        "add": "Añadir proyecto",
+        "remove": "Eliminar acceso al proyecto",
+        "saved": "Acceso al proyecto guardado"
+      },
       "downgradeConfirmTitle": "Confirmar cambio de acceso",
       "downgradeConfirmDescription": "{count, plural, one {# usuario tendría su acceso reducido} other {# usuarios tendrían su acceso reducido}}. ¿Desea continuar?",
       "downgradeConfirmApplyAnyway": "Aplicar de todos modos",
@@ -7410,6 +7451,7 @@
     "scim": "## Aprovisionamiento SCIM\nAprovisione usuarios de su proveedor de identidad en TestPlanIt a través de SCIM 2.0.",
     "scimConflicts": "## Registro de conflictos de ID externo\nEventos de identidad SCIM que requirieron intervención del sistema (vinculación, resurrección, sobrescritura de displayName, miembros omitidos).",
     "scimFallbackDefault": "## Acceso asignado predeterminado\nNivel de acceso asignado a los usuarios no cubiertos por ninguna asignación de grupo.",
+    "scimRoleMappings": "## Asignaciones de roles\nAsigna un valor `roles` afirmado por su proveedor de identidad a un nivel de acceso. Una asignación de rol tiene prioridad sobre las asignaciones de grupos: un usuario al que el IdP le asigna un rol mapeado recibe ese nivel incluso cuando un grupo le otorgaría más. Los valores de rol no asignados se ignoran.",
     "integrations": "## Integraciones de problemas\nGestionar las integraciones de terceros para el seguimiento de incidencias.",
     "notifications": "## Administración de notificaciones\nEstablece las preferencias de notificación por defecto (los usuarios pueden anular) y enviar notificaciones del sistema.",
     "notificationsSystem": "## Notificaciones del sistema\nEnviar anuncios importantes a todos los usuarios.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Nombre del grupo\nUn nombre claro, conciso, descriptivo o palabras clave que se utilizan en todos los proyectos.\n\n- Ayuda a los miembros del equipo a encontrar rápidamente casos de prueba, ejecuciones de pruebas y sesiones.",
       "users": "## Usuarios\nIndica los usuarios que están asignados a este grupo.",
+      "projectMappedAccess": "## Acceso por proyecto\nOtorga a los miembros de este grupo un nivel de acceso en un proyecto específico, resuelto mediante las reglas de permisos normales del proyecto.\n\n- **Usuario** otorga a los miembros su propio rol global en ese proyecto\n- **Administrador de proyecto** y **Administrador** otorgan el rol de Administrador de proyecto en ese proyecto — dentro de un solo proyecto, Administrador de proyecto es el otorgamiento más fuerte que existe\n- El acceso por proyecto solo **otorga**. No puede quitar el acceso que ya proporciona el valor predeterminado propio de un proyecto, por lo que aquí no existe la opción \"Ninguno\"\n- Eliminar una asignación retira el otorgamiento; los miembros vuelven al valor predeterminado del proyecto",
       "mappedAccess": "## Nivel de acceso mapeado\nA los miembros de este grupo se les otorga al menos este nivel de acceso en la próxima sincronización.\n\n- Prevalece el nivel más alto entre todos los grupos de un usuario\n- \"Sin mapeo\" significa que este grupo no afecta el acceso; los miembros vuelven al valor predeterminado establecido en la página SCIM\n- Un cambio manual de acceso en un usuario prevalece sobre el mapeo (y se marca en la pantalla de edición de ese usuario)"
     },
     "template": {

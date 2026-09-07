@@ -5544,6 +5544,7 @@
         "typeDisplayNameOverwrote": "O nome de exibição foi sobrescrito.",
         "typeReEmitted": "Reemitido",
         "typeConflict": "Conflito",
+        "typeTokenConflict": "Conflito entre IdPs",
         "typeUnknown": "Desconhecido",
         "viewPayload": "Visualizar carga útil",
         "reEmit": "Reemitir evento de membro",
@@ -5618,7 +5619,36 @@
       "fallbackDefaultTitle": "Acesso Padrão Mapeado",
       "fallbackDefaultDescription": "Nível de acesso atribuído a usuários não cobertos por nenhum mapeamento de grupo.",
       "fallbackDefaultLabel": "Nível de acesso padrão",
-      "fallbackDefaultSaved": "Padrão de contingência salvo"
+      "fallbackDefaultSaved": "Padrão de contingência salvo",
+      "rotate": {
+        "confirm": "Rotacionar token",
+        "title": "Rotacionar token SCIM",
+        "description": "Gere um novo token para \"{name}\". O token mantém seu nome, IdP e tudo o que já provisionou — apenas o segredo muda.",
+        "overlapLabel": "Manter o token antigo funcionando por",
+        "overlapHint": "Seu IdP continua provisionando com o token antigo até o fim dessa janela, para que você possa colar o novo sem causar interrupções.",
+        "overlapNone": "Trocar imediatamente",
+        "overlap1h": "1 hora",
+        "overlap24h": "24 horas",
+        "overlap7d": "7 dias",
+        "overlap30d": "30 dias",
+        "submit": "Rotacionar token",
+        "submitting": "Rotacionando…",
+        "revealTitle": "Novo token SCIM",
+        "revealDescriptionOverlap": "Cole isto no seu IdP antes que a janela de sobreposição termine. O token anterior continua funcionando até lá.",
+        "revealDescriptionImmediate": "O token anterior parou de funcionar imediatamente. Cole isto no seu IdP agora para retomar o provisionamento."
+      },
+      "roleMappings": {
+        "title": "Mapeamentos de Função",
+        "description": "Mapeie uma função que seu provedor de identidade atribui a um usuário para um nível de acesso. Mapeamentos de função têm precedência sobre mapeamentos de grupo, então podem aumentar ou diminuir o acesso.",
+        "empty": "Ainda não há mapeamentos de função. Os usuários são regidos pelos mapeamentos de grupo e pelo nível de acesso padrão.",
+        "roleLabel": "Valor da função",
+        "rolePlaceholder": "Valor da função do seu IdP, ex.: qa-lead",
+        "accessLabel": "Nível de acesso",
+        "add": "Adicionar mapeamento",
+        "remove": "Remover mapeamento",
+        "saved": "Mapeamento de função salvo",
+        "errorRoleRequired": "Digite o valor da função enviado pelo seu IdP."
+      }
     },
     "tags": {
       "add": {
@@ -5939,6 +5969,17 @@
       "mappedAccessLabel": "Nível de Acesso Mapeado",
       "mappedAccessNone": "Nenhum mapeamento",
       "mappedAccessSelect": "Selecione o nível de acesso...",
+      "projectMappings": {
+        "label": "Acesso por projeto",
+        "description": "Conceda a este grupo um nível de acesso em projetos específicos, em vez de — ou além de — o nível geral da organização acima.",
+        "empty": "Nenhum acesso por projeto. Os membros recebem apenas o nível geral da organização acima e o padrão de cada projeto.",
+        "projectLabel": "Projeto",
+        "projectPlaceholder": "Selecione um projeto…",
+        "accessLabel": "Nível de acesso",
+        "add": "Adicionar projeto",
+        "remove": "Remover acesso ao projeto",
+        "saved": "Acesso ao projeto salvo"
+      },
       "downgradeConfirmTitle": "Confirmar Alteração de Acesso",
       "downgradeConfirmDescription": "{count, plural, one {# usuário teria} other {# usuários teriam}} seu acesso reduzido. Continuar?",
       "downgradeConfirmApplyAnyway": "Aplicar mesmo assim",
@@ -7410,6 +7451,7 @@
     "scim": "## Provisionamento SCIM\nProvisione usuários do seu provedor de identidade para o TestPlanIt via SCIM 2.0.",
     "scimConflicts": "## Registro de Conflitos de ID Externo\nEventos de identidade SCIM que exigiram intervenção do sistema (vinculação, ressurreição, substituição de displayName, membros ignorados).",
     "scimFallbackDefault": "## Acesso Mapeado Padrão\nNível de acesso atribuído a usuários não cobertos por nenhum mapeamento de grupo.",
+    "scimRoleMappings": "## Mapeamentos de Função\nMapeia um valor de `roles` atribuído pelo seu provedor de identidade para um nível de acesso. Um mapeamento de função tem precedência sobre mapeamentos de grupo: um usuário ao qual o IdP atribui uma função mapeada recebe esse nível mesmo quando um grupo lhe concederia mais acesso. Valores de função não mapeados são ignorados.",
     "integrations": "## Integrações de Problemas\nGerencie integrações de terceiros para rastreamento de problemas.",
     "notifications": "## Administração de Notificações\nDefina as preferências de notificação padrão (os usuários podem substituir) e envie Notificações do Sistema.",
     "notificationsSystem": "## Notificações do Sistema\nEnvie anúncios importantes a todos os usuários.",
@@ -7546,6 +7588,7 @@
     "group": {
       "name": "## Nome do Grupo\nUm nome ou palavra(s)-chave clara(s), concisa(s) e descritiva(s) que seja(m) usada(s) em todos os projetos.\n\n- Ajuda os membros da equipe a encontrar rapidamente casos de teste, execuções de teste e sessões relacionadas.",
       "users": "## Usuários\nIndica os usuários que estão atribuídos a este grupo.",
+      "projectMappedAccess": "## Acesso por Projeto\nConcede aos membros deste grupo um nível de acesso em um projeto específico, resolvido através das regras normais de permissão do projeto.\n\n- **Usuário** dá aos membros seu próprio papel global naquele projeto\n- **Admin. do Projeto** e **Admin.** concedem ambos o papel de Admin. do Projeto naquele projeto — dentro de um único projeto, Admin. do Projeto é a concessão mais forte que existe\n- O acesso por projeto apenas **concede**. Ele não pode retirar o acesso que o próprio padrão de um projeto já concede, motivo pelo qual não há uma opção \"Nenhum\" aqui\n- Remover um mapeamento retira a concessão; os membros retornam ao padrão do projeto",
       "mappedAccess": "## Nível de Acesso Mapeado\nOs membros deste grupo recebem pelo menos este nível de acesso na próxima sincronização.\n\n- O nível mais alto entre todos os grupos de um usuário prevalece\n- \"Nenhum mapeamento\" significa que este grupo não afeta o acesso — os membros retornam ao padrão definido na página SCIM\n- Uma alteração manual de acesso em um usuário substitui o mapeamento (e é sinalizada na tela de edição desse usuário)"
     },
     "template": {
