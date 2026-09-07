@@ -142,6 +142,7 @@ export const useColumns = (
                 className="px-2 py-1 h-auto"
                 onClick={() => onEditGroup?.(row.original)}
                 aria-label={t("actions.edit")}
+                data-testid={`admin-group-edit-${row.original.id}`}
               >
                 <SquarePen className="h-4 w-4" />
               </Button>

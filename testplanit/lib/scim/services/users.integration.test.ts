@@ -40,6 +40,10 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createRawDbClient } from "~/lib/rawDbClient";
+import {
+  cleanupIntegrationScimTokens,
+  provisionIntegrationScimToken,
+} from "~/__tests__/helpers/scimIntegrationToken";
 
 import {
   SCIM_SCHEMAS,
@@ -92,17 +96,19 @@ function makeBody(overrides: Partial<ScimUserBody> = {}): ScimUserBody {
 
 describeIntegration("SCIM Users service (live DB)", () => {
   let ctx: ScimAuthContext;
+  const mintedTokenIds: string[] = [];
 
   beforeAll(async () => {
     if (!process.env.NEXTAUTH_SECRET && !process.env.API_TOKEN_SECRET) {
       process.env.NEXTAUTH_SECRET =
         "integration-test-secret-for-scim-token-hashing";
     }
-    ctx = {
-      tokenId: `scimit-tok-${Date.now()}`,
-      systemUserId: SCIM_SYSTEM_USER_ID,
-      idpName: "OKTA",
-    };
+    // A real ScimToken row: User.scimTokenId / Groups.scimTokenId are FKs
+    // onto it, so an invented id would violate the constraint the moment a
+    // create stamps provenance.
+    const provisioned = await provisionIntegrationScimToken("users");
+    ctx = provisioned.ctx;
+    mintedTokenIds.push(provisioned.tokenId);
 
     // Sanity check: the sentinel Projects row must exist before any test
     // can fire a webhook outbox event with projectId = -1.
@@ -153,6 +159,7 @@ describeIntegration("SCIM Users service (live DB)", () => {
       });
       await db.user.deleteMany({ where: { id: { in: sweepIds } } });
     }
+    await cleanupIntegrationScimTokens(db, mintedTokenIds);
     await db.$disconnect();
   });
 

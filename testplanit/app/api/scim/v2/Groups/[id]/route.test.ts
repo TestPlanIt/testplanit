@@ -22,6 +22,8 @@ import {
   ScimUniquenessError,
 } from "~/lib/scim/services/groups";
 
+import { ScimOwnershipError } from "~/lib/scim/ownership";
+
 import { DELETE, GET, PATCH, POST, PUT } from "./route";
 
 vi.mock("~/lib/scim/auth", () => ({
@@ -498,5 +500,52 @@ describe("POST /api/scim/v2/Groups/[id]", () => {
     expect(body.schemas[0]).toBe("urn:ietf:params:scim:api:messages:2.0:Error");
     expect(body.status).toBe("405");
     expect(body.detail).toBe("Method not supported");
+  });
+});
+
+describe("cross-IdP ownership → 409 (V2-MULTI-IDP-01)", () => {
+  // ScimOwnershipError is deliberately NOT mocked at the top of this file, so
+  // these assert the real class flows through the real route mapping.
+  const ownershipError = () =>
+    new ScimOwnershipError("Group", "11", "ENTRA" as never);
+
+  it("PUT on another IdP's group returns 409 uniqueness, not 500", async () => {
+    vi.mocked(putScimGroup).mockRejectedValueOnce(ownershipError());
+    const [req, ctx] = makeReq({
+      method: "PUT",
+      body: { schemas: [], displayName: "Eng" },
+    });
+
+    const res = await PUT(req, ctx);
+
+    expect(res.status).toBe(409);
+    expect(res.headers.get("Content-Type")).toBe("application/scim+json");
+    const body = (await res.json()) as { scimType: string; detail: string };
+    expect(body.scimType).toBe("uniqueness");
+    expect(body.detail).toContain("ENTRA");
+  });
+
+  it("PATCH on another IdP's group returns 409", async () => {
+    vi.mocked(patchScimGroup).mockRejectedValueOnce(ownershipError());
+    const [req, ctx] = makeReq({
+      method: "PATCH",
+      body: {
+        schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+        Operations: [{ op: "replace", path: "displayName", value: "X" }],
+      },
+    });
+
+    const res = await PATCH(req, ctx);
+
+    expect(res.status).toBe(409);
+  });
+
+  it("DELETE on another IdP's group returns 409 rather than falling through to 500", async () => {
+    vi.mocked(deleteScimGroup).mockRejectedValueOnce(ownershipError());
+    const [req, ctx] = makeReq({ method: "DELETE" });
+
+    const res = await DELETE(req, ctx);
+
+    expect(res.status).toBe(409);
   });
 });
