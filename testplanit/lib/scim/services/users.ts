@@ -29,6 +29,17 @@
  *   - metadata.scimResurrected:       POST hit a tombstoned row, same external id
  *   - metadata.scimPasswordDropped:   POST/PUT body included a `password` field
  *   - metadata.scimNoOp:              PUT/PATCH produced an empty column diff
+ *
+ * Cross-IdP ownership: every path that touches an existing row first calls
+ * `assertScimWriteOwnership`, and every write claims the row for the calling
+ * token by stamping `scimTokenId`. See `lib/scim/ownership.ts` for the rule.
+ * Reads are scoped the same way, so one IdP cannot enumerate another's users.
+ *
+ * Role-attribute hybrid: every write path derives `User.scimRoles` from the
+ * merged `scimExtensions` blob and then re-runs `recomputeUserAccess` inside
+ * the same transaction, so an IdP that asserts a mapped `roles` value moves
+ * the user's tier on the same request that carried the assertion. The `roles`
+ * array itself still round-trips verbatim through `scimExtensions`.
  */
 
 import { hash } from "bcrypt";
@@ -49,13 +60,18 @@ import {
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToDbWhere } from "../filter";
-import { readScimFallbackDefault } from "./recompute";
+import {
+  assertScimWriteOwnership,
+  scimOwnershipReadFilter,
+} from "../ownership";
+import { readScimFallbackDefault, recomputeUserAccess } from "./recompute";
 import {
   computeUserUpdatesFromScim,
   deriveDisplayName,
   extractNonWritableUrns,
   extractPrimaryEmail,
   mergeExtensions,
+  rolesFromExtensions,
   userToScim,
 } from "../mapping/user";
 import { applyScimPatch, ScimPatchApplyError } from "../patch";
@@ -262,6 +278,19 @@ export async function createScimUser(
     const matchEmail = resolveMatchEmail(body);
     const existing = await findUserByEmail(tx, matchEmail);
 
+    // Any branch below writes an existing row, so the cross-IdP check comes
+    // first: a collision with another directory's user must surface as a
+    // conflict rather than silently rebinding the row to this IdP.
+    if (existing) {
+      await assertScimWriteOwnership(
+        tx,
+        "User",
+        existing.id,
+        existing.scimTokenId,
+        ctx
+      );
+    }
+
     // Branch 1 — Resurrection: tombstoned row with the SAME scimExternalId.
     if (
       existing &&
@@ -308,6 +337,7 @@ async function resurrectTombstonedUser(
     existing.scimExtensions,
     extractNonWritableUrns(body as unknown as Record<string, unknown>)
   );
+  const scimRoles = rolesFromExtensions(extensions);
 
   const fallbackDefault = await readScimFallbackDefault(tx);
 
@@ -323,11 +353,21 @@ async function resurrectTombstonedUser(
       name: deriveDisplayName(body),
       email: extractPrimaryEmail(body.emails) ?? existing.email,
       scimExtensions: toJsonInput(extensions),
+      scimRoles,
+      scimTokenId: ctx.tokenId,
       access: fallbackDefault,
       accessSource: "GROUP_MAPPING",
     },
     include: SCIM_USER_INCLUDE,
   });
+
+  // Only pay for a recompute when the IdP actually asserted roles. With no
+  // roles there is nothing the resolver could conclude that the tier written
+  // above does not already say, and a bulk sync would eat two extra queries
+  // per user for nothing.
+  if (scimRoles.length > 0) {
+    await recomputeUserAccess(tx, resurrected.id, fallbackDefault);
+  }
 
   await emitScimUserCreated(resurrected, tx, DEFAULT_EMIT_OPTS);
   await captureAuditEvent({
@@ -359,6 +399,7 @@ async function jitBindExistingUser(
     existing.scimExtensions,
     extractNonWritableUrns(body as unknown as Record<string, unknown>)
   );
+  const scimRoles = rolesFromExtensions(extensions);
 
   const before = asScimSnapshot(existing);
   const linked = await tx.user.update({
@@ -369,9 +410,18 @@ async function jitBindExistingUser(
       scimGivenName: body.name?.givenName ?? null,
       scimFamilyName: body.name?.familyName ?? null,
       scimExtensions: toJsonInput(extensions),
+      scimRoles,
+      scimTokenId: ctx.tokenId,
     },
     include: SCIM_USER_INCLUDE,
   });
+
+  // A JIT bind adopts a pre-existing manual user. Recompute only takes their
+  // tier over when a mapping input actually applies (see recomputeUserAccess);
+  // an unmapped manual user keeps the access an admin gave them.
+  if (scimRoles.length > 0) {
+    await recomputeUserAccess(tx, linked.id, await readScimFallbackDefault(tx));
+  }
 
   await emitScimUserUpdated(
     before,
@@ -415,6 +465,7 @@ async function insertNewScimUser(
   const extensions = extractNonWritableUrns(
     body as unknown as Record<string, unknown>
   );
+  const scimRoles = rolesFromExtensions(extensions);
 
   const randomPassword = await hash(
     crypto.randomBytes(RANDOM_PASSWORD_BYTES).toString("base64"),
@@ -433,6 +484,8 @@ async function insertNewScimUser(
         Object.keys(extensions).length > 0
           ? (extensions as JsonValue)
           : undefined,
+      scimRoles,
+      scimTokenId: ctx.tokenId,
       authMethod: "SCIM",
       access: fallbackDefault,
       accessSource: "GROUP_MAPPING",
@@ -443,6 +496,10 @@ async function insertNewScimUser(
     },
     include: SCIM_USER_INCLUDE,
   });
+
+  if (scimRoles.length > 0) {
+    await recomputeUserAccess(tx, created.id, fallbackDefault);
+  }
 
   await emitScimUserCreated(created, tx, DEFAULT_EMIT_OPTS);
   await captureAuditEvent({
@@ -470,10 +527,13 @@ async function insertNewScimUser(
 
 export async function getScimUserById(
   id: string,
-  _ctx: ScimAuthContext
+  ctx: ScimAuthContext
 ): Promise<ScimUserResource> {
-  const row = await baseDb.user.findUnique({
-    where: { id },
+  // A row owned by another IdP reads as 404 rather than 403: from this
+  // directory's point of view the user genuinely does not exist, and a
+  // distinguishable status would leak the other directory's membership.
+  const row = await baseDb.user.findFirst({
+    where: { AND: [{ id }, scimOwnershipReadFilter(ctx)] },
     include: SCIM_USER_INCLUDE,
   });
   if (!row || row.isDeleted) {
@@ -488,7 +548,7 @@ export async function getScimUserById(
 
 export async function listScimUsers(
   { filter, startIndex, count }: ListScimUsersInput,
-  _ctx: ScimAuthContext
+  ctx: ScimAuthContext
 ): Promise<ListScimUsersResult> {
   const resolvedCount =
     count === undefined
@@ -499,7 +559,7 @@ export async function listScimUsers(
   const filterWhere: UserWhereInput = filter ? scimFilterToDbWhere(filter) : {};
 
   const finalWhere: UserWhereInput = {
-    AND: [filterWhere, { isDeleted: false }],
+    AND: [filterWhere, { isDeleted: false }, scimOwnershipReadFilter(ctx)],
   };
 
   const [rows, totalResults] = await Promise.all([
@@ -536,6 +596,14 @@ export async function putScimUser(
     if (!current || current.isDeleted) {
       throw new ScimNotFoundError(`User ${id} not found`);
     }
+
+    await assertScimWriteOwnership(
+      tx,
+      "User",
+      current.id,
+      current.scimTokenId,
+      ctx
+    );
 
     const updates: UserUpdateArgs["data"] = {};
 
@@ -614,6 +682,14 @@ export async function putScimUser(
           updates.scimExtensions = json;
         }
       }
+
+      // `roles` rides inside the merged core-URN bucket; mirror it onto the
+      // flat column whenever the asserted set actually changed so the column
+      // stays a faithful projection of what a GET would re-emit.
+      const nextRoles = rolesFromExtensions(merged);
+      if (nextRoles.join(" ") !== current.scimRoles.join(" ")) {
+        updates.scimRoles = nextRoles;
+      }
     }
 
     // password warning — fired regardless of whether updates are otherwise
@@ -638,12 +714,27 @@ export async function putScimUser(
       return { resource: userToScim(current), status: 200 };
     }
 
+    // Claim an unowned row on the first write that changes something. Placed
+    // after the no-op check so a no-op PUT stays a no-op; the row is claimed
+    // by whichever real write lands first.
+    if (current.scimTokenId === null) {
+      updates.scimTokenId = ctx.tokenId;
+    }
+
     const before = asScimSnapshot(current);
     const updated = (await tx.user.update({
       where: { id: current.id },
       data: updates,
       include: SCIM_USER_INCLUDE,
     } as UserUpdateArgs)) as Parameters<typeof asScimSnapshot>[0];
+
+    if (updates.scimRoles !== undefined) {
+      await recomputeUserAccess(
+        tx,
+        current.id,
+        await readScimFallbackDefault(tx)
+      );
+    }
 
     await emitScimUserUpdated(
       before,
@@ -682,6 +773,14 @@ export async function patchScimUser(
       throw new ScimNotFoundError(`User ${id} not found`);
     }
 
+    await assertScimWriteOwnership(
+      tx,
+      "User",
+      current.id,
+      current.scimTokenId,
+      ctx
+    );
+
     const currentScim = userToScim(current);
     const draftScim = applyScimPatch(currentScim, body);
     const updates = computeUserUpdatesFromScim(currentScim, draftScim);
@@ -691,12 +790,23 @@ export async function patchScimUser(
     // scimExtensions PATCH preserves untouched URN buckets even when the
     // draft only carried a subset of URNs (the mapper already returns the
     // draft's complete URN bucket; we merge with current to be safe).
+    // `scimRoles` is derived, never patched directly — it rides along with the
+    // merged extensions blob and so can only change when that blob does. That
+    // keeps it out of `assertWritableOnly`'s SCIM-attribute surface while
+    // still reaching the Prisma payload below.
+    const derived: { scimRoles?: string[]; scimTokenId?: string } = {};
+
     if ("scimExtensions" in updates && updates.scimExtensions !== undefined) {
       const merged = mergeExtensions(
         current.scimExtensions,
         updates.scimExtensions ?? {}
       );
       updates.scimExtensions = merged;
+
+      const nextRoles = rolesFromExtensions(merged);
+      if (nextRoles.join(" ") !== current.scimRoles.join(" ")) {
+        derived.scimRoles = nextRoles;
+      }
     }
 
     if (Object.keys(updates).length === 0) {
@@ -709,12 +819,25 @@ export async function patchScimUser(
       return { resource: userToScim(current) };
     }
 
+    // Claim an unowned row — see the equivalent note in putScimUser.
+    if (current.scimTokenId === null) {
+      derived.scimTokenId = ctx.tokenId;
+    }
+
     const before = asScimSnapshot(current);
     const updated = await tx.user.update({
       where: { id: current.id },
-      data: updates as UserUpdateArgs["data"],
+      data: { ...updates, ...derived } as UserUpdateArgs["data"],
       include: SCIM_USER_INCLUDE,
     });
+
+    if (derived.scimRoles !== undefined) {
+      await recomputeUserAccess(
+        tx,
+        current.id,
+        await readScimFallbackDefault(tx)
+      );
+    }
 
     // Mid-session deactivation: delete the user's Account rows so the next
     // login attempt forces re-authentication through the IdP.
@@ -761,6 +884,14 @@ export async function deleteScimUser(
       // Idempotent — already tombstoned; no second webhook, no audit.
       return { status: 204 };
     }
+
+    await assertScimWriteOwnership(
+      tx,
+      "User",
+      current.id,
+      current.scimTokenId,
+      ctx
+    );
 
     const tombstoned = await tx.user.update({
       where: { id: current.id },

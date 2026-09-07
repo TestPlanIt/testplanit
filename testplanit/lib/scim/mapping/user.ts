@@ -497,6 +497,61 @@ export function computeUserUpdatesFromScim(
 }
 
 /**
+ * Normalize an IdP-supplied `roles` array into the flat, case-folded value
+ * list persisted on `User.scimRoles`.
+ *
+ * IdPs disagree on the wire shape: RFC 7643 §4.1.2 specifies multi-valued
+ * complex objects (`[{ value: "admin" }]`), but several send bare strings
+ * (`["admin"]`) and some send `display` with no `value`. All three are
+ * accepted. Values are lowercased (matching `ScimRoleMapping.roleValue`),
+ * trimmed, de-duplicated, and emitted in first-seen order.
+ *
+ * Returns `[]` for any input that carries no usable role value, which is the
+ * same signal as "the IdP asserts no roles" — group mapping then governs.
+ */
+export function normalizeScimRoleValues(roles: unknown): string[] {
+  if (!Array.isArray(roles)) return [];
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const entry of roles) {
+    let raw: unknown;
+    if (typeof entry === "string") {
+      raw = entry;
+    } else if (isPlainObject(entry)) {
+      raw = entry.value ?? entry.display;
+    }
+
+    if (typeof raw !== "string") continue;
+    const normalized = raw.trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) continue;
+
+    seen.add(normalized);
+    result.push(normalized);
+  }
+
+  return result;
+}
+
+/**
+ * Read the persisted `roles` attribute back out of a `scimExtensions` blob.
+ *
+ * Every write path (create, PUT, PATCH) funnels the IdP's non-writable core
+ * attributes through `extractNonWritableUrns` / `mergeExtensions` before it
+ * touches the database, so the merged extensions blob — not the raw request
+ * body — is the one place where all three paths agree on what the IdP last
+ * asserted. Deriving `User.scimRoles` from it keeps the column consistent
+ * with the payload a subsequent SCIM GET will re-emit.
+ */
+export function rolesFromExtensions(extensions: unknown): string[] {
+  if (!isPlainObject(extensions)) return [];
+  const coreBucket = extensions[SCIM_SCHEMAS.CORE_USER];
+  if (!isPlainObject(coreBucket)) return [];
+  return normalizeScimRoleValues(coreBucket.roles);
+}
+
+/**
  * Pluck every URN bucket from a SCIM resource (including the core User URN
  * if its payload is non-empty). Used internally by the diff function to
  * decide whether the `scimExtensions` column needs a rewrite.

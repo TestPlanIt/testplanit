@@ -136,6 +136,8 @@ const {
 // Track which assignment data variant to use per test
 let useEmptyAssignments = false;
 
+const stableProjects: Array<{ id: number; name: string }> = [];
+
 vi.mock("@zenstackhq/tanstack-query/react", () => ({
   useClientQueries: () => ({
     groups: { useUpdate: () => ({ mutateAsync: mockUpdateGroup }) },
@@ -144,6 +146,9 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
         data: stableAllUsers,
         isLoading: false,
       }),
+    },
+    projects: {
+      useFindMany: () => ({ data: stableProjects, isLoading: false }),
     },
     groupAssignment: {
       useFindMany: () => ({
@@ -160,6 +165,14 @@ vi.mock("@zenstackhq/tanstack-query/react", () => ({
       }),
     },
   }),
+}));
+
+vi.mock("~/app/actions/scimProjectMappingActions", () => ({
+  listGroupProjectMappings: vi.fn(async () => ({
+    success: true,
+    mappings: [],
+  })),
+  saveGroupProjectMapping: vi.fn(async () => ({ success: true })),
 }));
 
 vi.mock("~/app/actions/scimMappingActions", () => ({

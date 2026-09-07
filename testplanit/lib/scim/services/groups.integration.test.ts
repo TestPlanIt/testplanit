@@ -22,13 +22,14 @@
  */
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { sql } from "kysely";
 import { createRawDbClient } from "~/lib/rawDbClient";
-
 import {
-  SCIM_SCHEMAS,
-  SCIM_SYSTEM_USER_ID,
-  SYSTEM_PROJECT_ID,
-} from "../constants";
+  cleanupIntegrationScimTokens,
+  provisionIntegrationScimToken,
+} from "~/__tests__/helpers/scimIntegrationToken";
+
+import { SCIM_SCHEMAS, SYSTEM_PROJECT_ID } from "../constants";
 import {
   createScimGroup,
   deleteScimGroup,
@@ -91,16 +92,19 @@ async function makeTestUser(emailLabel: string): Promise<string> {
 
 describeIntegration("SCIM Groups service (live DB)", () => {
   let ctx: ScimAuthContext;
+  const mintedTokenIds: string[] = [];
 
   beforeAll(async () => {
     if (!process.env.NEXTAUTH_SECRET && !process.env.API_TOKEN_SECRET) {
       process.env.NEXTAUTH_SECRET =
         "integration-test-secret-for-scim-token-hashing";
     }
-    ctx = {
-      tokenId: `scimit-tok-${Date.now()}`,
-      systemUserId: SCIM_SYSTEM_USER_ID,
-    };
+    // A real ScimToken row: User.scimTokenId / Groups.scimTokenId are FKs
+    // onto it, so an invented id would violate the constraint the moment a
+    // create stamps provenance.
+    const provisioned = await provisionIntegrationScimToken("groups");
+    ctx = provisioned.ctx;
+    mintedTokenIds.push(provisioned.tokenId);
 
     const systemProject = await db.projects.findUnique({
       where: { id: SYSTEM_PROJECT_ID },
@@ -122,14 +126,12 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     const groupIds = groups.map((g) => g.id);
 
     if (groupIds.length > 0) {
-      await db.webhookOutboxEvent.deleteMany({
-        where: {
-          // Raw Prisma-style JSON-path filter v3's typed WhereInput doesn't model.
-          OR: groupIds.map((id) => ({
-            payload: { path: ["id"], equals: id },
-          })) as any,
-        },
-      });
+      // Raw SQL: ZenStack v3 models a JSON `path` as a string, not
+      // Prisma's array form, so the typed filter is rejected outright.
+      await sql`
+        DELETE FROM "WebhookOutboxEvent"
+        WHERE "payload"->>'id' = ANY(${sql.val(groupIds.map(String))})
+      `.execute(db.$qb);
       await db.groupAssignment.deleteMany({
         where: { groupId: { in: groupIds } },
       });
@@ -149,6 +151,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       await db.user.deleteMany({ where: { id: { in: ids } } });
     }
 
+    await cleanupIntegrationScimTokens(db, mintedTokenIds);
     await db.$disconnect();
   });
 

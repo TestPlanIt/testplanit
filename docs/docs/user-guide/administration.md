@@ -35,6 +35,9 @@ For detailed SSO configuration, see the [SSO Documentation](./sso.md).
 - Provision users and groups from your identity provider via SCIM 2.0
 - Configure **group role mapping** — assign a Mapped Access Tier (User, Project Admin, or Admin) to groups so members automatically gain that global access level
 - Set the fallback default access tier for users who belong to no mapped group
+- Configure **role mappings** — map a `roles` value your IdP asserts on a user to an access tier; role mappings take precedence over group mapping
+- **Rotate** a bearer token with an overlap window so provisioning keeps running while you paste the new value into the IdP
+- Review the **conflict log**, including cross-IdP conflicts when two identity providers target the same user or group
 
 For detailed SCIM and role-mapping information, see the [SCIM Provisioning Documentation](./scim.md).
 
@@ -65,6 +68,7 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Assign users to groups for easier permission management
 - Configure group-based project access
 - Set a **Mapped Access Tier** to drive members' global access level ([role mapping](./scim.md#role-mapping))
+- Grant **Per-project access** so a group carries a tier on specific projects only ([per-project access](./groups.md#per-project-access))
 
 ### System Configuration
 

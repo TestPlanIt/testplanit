@@ -57,6 +57,7 @@ function makeGroup(overrides: Partial<DbGroupForScim> = {}): DbGroupForScim {
     scimExtensions: null,
     updatedAt: fixedUpdatedAt,
     isDeleted: false,
+    scimTokenId: null,
     assignedUsers: [],
     ...overrides,
   };

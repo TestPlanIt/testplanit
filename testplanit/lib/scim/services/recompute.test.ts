@@ -12,6 +12,9 @@ vi.mock("~/lib/db", () => {
     groupAssignment: {
       findMany: vi.fn(),
     },
+    scimRoleMapping: {
+      findMany: vi.fn(async () => []),
+    },
   };
   return {
     baseDb: {
@@ -45,6 +48,7 @@ interface TxLike {
     update: ReturnType<typeof vi.fn>;
   };
   groupAssignment: { findMany: ReturnType<typeof vi.fn> };
+  scimRoleMapping: { findMany: ReturnType<typeof vi.fn> };
 }
 
 const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
@@ -59,6 +63,7 @@ function makeUser(
     access?: Access;
     accessSource?: "MANUAL" | "GROUP_MAPPING";
     email?: string;
+    scimRoles?: string[];
   } = {}
 ) {
   return {
@@ -66,6 +71,7 @@ function makeUser(
     access: overrides.access ?? ("NONE" as Access),
     accessSource: overrides.accessSource ?? "MANUAL",
     email: overrides.email ?? "user@example.com",
+    scimRoles: overrides.scimRoles ?? [],
   };
 }
 
@@ -205,5 +211,128 @@ describe("recomputeUserAccess", () => {
     };
     expect(updateCall.data.access).toBe("ADMIN");
     expect(updateCall.data.accessSource).toBe("GROUP_MAPPING");
+  });
+});
+
+describe("recomputeUserAccess — roles hybrid (HYBRID-01)", () => {
+  it("C1: a mapped role tier overrides a higher group tier", async () => {
+    const user = makeUser({
+      access: "ADMIN",
+      accessSource: "GROUP_MAPPING",
+      scimRoles: ["contractor"],
+    });
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([
+      makeGroupAssignment("ADMIN"),
+    ]);
+    tx.scimRoleMapping.findMany.mockResolvedValue([{ mappedAccess: "USER" }]);
+    tx.user.update.mockResolvedValue({ ...user, access: "USER" });
+
+    await recomputeUserAccess(tx as never, user.id, "NONE");
+
+    expect(tx.scimRoleMapping.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { roleValue: { in: ["contractor"] } } })
+    );
+    const updateCall = tx.user.update.mock.calls[0][0] as {
+      data: { access: Access };
+    };
+    expect(updateCall.data.access).toBe("USER");
+  });
+
+  it("C2: role values with no mapping row are ignored — group mapping still governs", async () => {
+    const user = makeUser({
+      access: "NONE",
+      accessSource: "GROUP_MAPPING",
+      scimRoles: ["engineering"],
+    });
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([
+      makeGroupAssignment("PROJECTADMIN"),
+    ]);
+    tx.scimRoleMapping.findMany.mockResolvedValue([]);
+    tx.user.update.mockResolvedValue({ ...user, access: "PROJECTADMIN" });
+
+    await recomputeUserAccess(tx as never, user.id, "NONE");
+
+    const updateCall = tx.user.update.mock.calls[0][0] as {
+      data: { access: Access };
+    };
+    expect(updateCall.data.access).toBe("PROJECTADMIN");
+  });
+
+  it("C3: a mapped role alone makes an otherwise MANUAL user directory-governed", async () => {
+    const user = makeUser({
+      access: "NONE",
+      accessSource: "MANUAL",
+      scimRoles: ["qa-lead"],
+    });
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([]);
+    tx.scimRoleMapping.findMany.mockResolvedValue([
+      { mappedAccess: "PROJECTADMIN" },
+    ]);
+    tx.user.update.mockResolvedValue({ ...user, access: "PROJECTADMIN" });
+
+    await recomputeUserAccess(tx as never, user.id, "NONE");
+
+    expect(tx.user.update).toHaveBeenCalledTimes(1);
+    const updateCall = tx.user.update.mock.calls[0][0] as {
+      data: { access: Access; accessSource: string };
+    };
+    expect(updateCall.data.access).toBe("PROJECTADMIN");
+    expect(updateCall.data.accessSource).toBe("GROUP_MAPPING");
+  });
+
+  it("C4: highest-wins applies within multiple mapped roles", async () => {
+    const user = makeUser({
+      access: "NONE",
+      accessSource: "GROUP_MAPPING",
+      scimRoles: ["qa-lead", "admin"],
+    });
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([]);
+    tx.scimRoleMapping.findMany.mockResolvedValue([
+      { mappedAccess: "PROJECTADMIN" },
+      { mappedAccess: "ADMIN" },
+    ]);
+    tx.user.update.mockResolvedValue({ ...user, access: "ADMIN" });
+
+    await recomputeUserAccess(tx as never, user.id, "NONE");
+
+    const updateCall = tx.user.update.mock.calls[0][0] as {
+      data: { access: Access };
+    };
+    expect(updateCall.data.access).toBe("ADMIN");
+  });
+
+  it("C5: a user with no asserted roles never queries the mapping table", async () => {
+    const user = makeUser({ access: "NONE", accessSource: "GROUP_MAPPING" });
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([]);
+
+    await recomputeUserAccess(tx as never, user.id, "NONE");
+
+    expect(tx.scimRoleMapping.findMany).not.toHaveBeenCalled();
+  });
+
+  it("C6: a role mapped to NONE denies access a group would otherwise grant", async () => {
+    const user = makeUser({
+      access: "ADMIN",
+      accessSource: "GROUP_MAPPING",
+      scimRoles: ["suspended"],
+    });
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([
+      makeGroupAssignment("ADMIN"),
+    ]);
+    tx.scimRoleMapping.findMany.mockResolvedValue([{ mappedAccess: "NONE" }]);
+    tx.user.update.mockResolvedValue({ ...user, access: "NONE" });
+
+    await recomputeUserAccess(tx as never, user.id, "ADMIN");
+
+    const updateCall = tx.user.update.mock.calls[0][0] as {
+      data: { access: Access };
+    };
+    expect(updateCall.data.access).toBe("NONE");
   });
 });

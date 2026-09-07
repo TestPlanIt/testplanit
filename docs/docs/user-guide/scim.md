@@ -37,9 +37,34 @@ SCIM authenticates with a bearer token minted from the TestPlanIt admin UI.
 
 You can revoke a token at any time from the same page. Revocation is immediate: the next request on that token receives `401 Unauthorized`.
 
+### Rotating a token
+
+Use **Rotate** (the ↻ button on the token row) rather than revoking and minting a replacement. Rotation changes only the secret: the token keeps its name, IdP, and — importantly — ownership of everything it has provisioned, so the replacement credential can keep managing the same directory.
+
+1. Click **Rotate** on the token you want to re-key.
+2. Choose how long the old token should keep working: **Cut over immediately**, or an overlap of **1 hour**, **24 hours** (the default), **7 days**, or **30 days**.
+3. Copy the new token from the show-once reveal and paste it into your IdP.
+
+During the overlap window both the old and new bearer authenticate, so provisioning keeps running while you update the IdP configuration — there is no outage between rotating and pasting. When the window ends, the old bearer stops working.
+
+:::note
+Only one overlap can be open per token. Rotating again while a window is still open immediately invalidates the older bearer — which is what you want if you are rotating because a token leaked. Revoking a token also closes its overlap window at once.
+:::
+
 :::warning Important
 The full token is only displayed once upon creation. TestPlanIt stores only an encrypted copy and a hashed copy and cannot show the original value again.
 :::
+
+### Running more than one identity provider
+
+You can mint tokens for several IdPs — for example Okta for employees and Entra for contractors — and point them all at the same TestPlanIt instance. Each user and group records which IdP provisioned it, and that provenance is enforced:
+
+- **Each IdP sees only its own directory.** SCIM `GET` and list requests return rows provisioned by the calling token's IdP, plus any row no IdP has claimed yet. One IdP cannot enumerate another's users through the SCIM API.
+- **Writes across IdPs are refused.** A `PUT`, `PATCH`, or `DELETE` against a resource another IdP provisioned returns `409 Conflict` instead of overwriting it. A `POST` that collides with another IdP's user — the same email address, say — is refused the same way rather than being silently rebound.
+- **Refusals are visible.** Every refused write is recorded in the [External-ID conflict log](#external-id-conflict-log) on `/admin/scim` as a **Cross-IdP conflict**, showing which IdP owns the resource and which one attempted the write. That is your signal that two directories overlap and one of them needs its scope narrowed.
+- **Rows are claimed on first write.** Users and groups that predate this behaviour, and any created manually in TestPlanIt, start unclaimed: any IdP may write them, and the first one to do so becomes their owner.
+
+Ownership is tracked per IdP, not per token, so revoking a token and minting a replacement for the same IdP keeps full access to everything that IdP provisioned. Note that **Other** is a single IdP identity: two connectors both minted as **Other** are treated as the same directory. Give each provider its own IdP type where you need them isolated.
 
 ## SCIM-managed users and groups
 
@@ -223,6 +248,8 @@ A user whose access is driven by group mapping is called a **governed** user. If
 
 **Ungoverned users** (those who have never been added to a mapped group and were not provisioned via SCIM) are never auto-changed by mapping — their access stays as set by an admin.
 
+If your IdP sends a `roles` attribute on the user, you can map role values to tiers as well. A **role mapping takes precedence over group mappings**: when the IdP asserts a role you have mapped, that tier is used even if a group would grant more. See [Map an IdP role to an access tier](#map-an-idp-role-to-an-access-tier) below.
+
 ### Configure a mapping
 
 #### Set a group's Mapped Access
@@ -239,6 +266,49 @@ Selecting **No mapping** removes the mapping from that group — it no longer dr
 1. Navigate to **Admin → Authentication → SCIM Provisioning** (`/admin/scim`).
 2. Under the **Role Mapping** section, change the **Fallback Default** selector. Options are **None** (the system default), **User**, **Project Admin**, and **Admin**. Here **None** is the no-access tier itself — distinct from a group's **No mapping**, which means the group carries no tier at all.
 3. Click **Save**. The new default takes effect for every governed user with no mapped-group membership on the next recompute.
+
+#### Grant a group access on one project
+
+The **Mapped Access Tier** above is org-wide. When a group should reach only certain projects — "the QA leads work on Banking, and nothing else" — use per-project access instead of granting access everywhere.
+
+1. Navigate to **Admin → Users & Groups → Groups** (`/admin/groups`) and open the group's edit dialog.
+2. Under **Per-project access**, pick a project and the tier the group should grant there.
+3. Click **Add project**. Repeat for each project. Change a tier from the same list, or remove one with the trash icon.
+
+Every tier currently grants the same thing: members gain access to that project and carry **their own global role** onto it. The tier is recorded for intent and appears in the audit log, but does not currently change what is granted.
+
+:::warning Per-project access does not make anyone a project admin
+"Project Admin" in the tier list is a **system access level**, not a per-project role. Project-admin authority comes from being a system Admin, being the project's creator, holding a user-specific permission that assigns a role named `Project Admin`, or holding the system Project Admin access level while assigned to the project directly. A group grant is none of those, so per-project access never confers it. Assign project administrators in the project's own settings instead.
+:::
+
+:::note Per-project access only grants
+It cannot take away access a project's own default already gives, which is why there is no **None** option. To deny access on a project, set that project's default access to **No access** and grant it explicitly to the groups that should have it.
+:::
+
+Per-project access is resolved through the project's normal permission rules, alongside any permissions assigned directly in the project's own settings, and follows the same precedence: a user-specific permission beats a group one. Removing a mapping withdraws only the grant the mapping created — a permission an admin assigned to the group by hand in the project settings is left alone.
+
+Because access flows from group membership, and SCIM keeps membership current, a user added to the group in your IdP picks up its per-project access on the next sync with no further configuration.
+
+#### Map an IdP role to an access tier
+
+Group membership is often too coarse: a directory may put every engineer in one group while marking a handful of them as contractors on the user record itself. Role mapping closes that gap.
+
+1. Navigate to **Admin → Authentication → SCIM Provisioning** (`/admin/scim`).
+2. Under **Role Mappings**, type the role value exactly as your IdP sends it in the `roles` attribute — for example `qa-lead` — and choose the access tier it should grant.
+3. Click **Add mapping**.
+
+Notes on how role mappings behave:
+
+- **Roles win over groups.** A user the IdP gives a mapped role receives that tier even when a mapped group would grant a higher one. This lets you use a role as a correction to coarse group mapping — mapping `contractor` to **User** holds contractors at User even though they sit in an Admin-mapped group.
+- **Highest-wins applies among roles.** If the IdP asserts two mapped roles, the stronger tier is used.
+- **A role mapped to None is an explicit deny** that overrides any group tier. This is different from removing the mapping, which simply returns the user to group-driven access.
+- **Unmapped role values are ignored.** Organizational roles that carry no access meaning (`engineering`, `emea`) do not affect a user's tier, and they never silently reduce access.
+- **Matching is case-insensitive.** `QA-Lead` and `qa-lead` are the same mapping.
+- **A mapped role governs on its own.** A user with a mapped role becomes directory-governed even if they belong to no mapped group.
+
+Role values are read from the SCIM `roles` attribute on each user sync, so a change in the IdP takes effect on the next push for that user. Adding, retiering, or removing a mapping in TestPlanIt recomputes every user holding that role in the background.
+
+The full `roles` array is also stored verbatim and returned on a SCIM `GET`, whether or not any value is mapped.
 
 ### Downgrade confirmation
 
@@ -300,6 +370,7 @@ Row types you'll see:
 - **scimResurrected** — A SCIM `POST` matched a tombstoned (soft-deleted) row by `externalId` and brought it back instead of creating a duplicate.
 - **scimSkippedMemberIds** — A `PATCH /Groups/{id}` referenced one or more unknown user ids; the known members were applied and the unknown ids were recorded here. The **Re-emit** action on this row replays the `member_added` / `member_removed` webhook event with the fully-resolved member list once the missing users have been provisioned.
 - **scimDisplayNameOverwrote** — A SCIM update overwrote an admin's manual rename of a group. The IdP is the source of truth for identity attributes; rename in the IdP if the change should persist.
+- **Cross-IdP conflict** — A write was **refused** because the user or group belongs to a different identity provider. The payload names both the owning IdP and the one that attempted the write. Unlike the rows above, which record something TestPlanIt resolved on your behalf, this one records a request that was rejected with `409 Conflict` — treat it as a signal that two directories overlap and one needs its scope narrowed. See [Running more than one identity provider](#running-more-than-one-identity-provider).
 
 The conflict log surfaces only the last ~90 days (the same retention window as the rest of the audit log).
 

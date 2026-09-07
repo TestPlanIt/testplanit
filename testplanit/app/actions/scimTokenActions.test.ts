@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("~/lib/scim/tokens", () => ({
   mintScimToken: vi.fn(),
   revokeScimToken: vi.fn(),
+  rotateScimToken: vi.fn(),
   getScimTokenById: vi.fn(),
 }));
 
@@ -20,13 +21,18 @@ vi.mock("~/server/auth", () => ({
 
 import { ORMError, ORMErrorReason } from "@zenstackhq/orm";
 
-import { mintScimToken, revokeScimToken } from "~/lib/scim/tokens";
+import {
+  mintScimToken,
+  revokeScimToken,
+  rotateScimToken,
+} from "~/lib/scim/tokens";
 import { probeScimToken } from "~/lib/scim/probe";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import {
   mintScimTokenAction,
   revokeScimTokenAction,
+  rotateScimTokenAction,
   testScimProbeAction,
 } from "./scimTokenActions";
 
@@ -274,6 +280,122 @@ describe("scimTokenActions", () => {
         resultStatus: 401,
         source: "scim",
       });
+    });
+  });
+});
+
+describe("rotateScimTokenAction", () => {
+  const rotatedRow = {
+    id: "tk_1",
+    name: "Okta production",
+    tokenPrefix: "tps_newpref",
+    previousTokenExpiresAt: new Date("2026-09-07T12:00:00.000Z"),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects an unauthenticated caller before touching the service", async () => {
+    mockNoSession();
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: 3_600_000,
+    });
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(rotateScimToken).not.toHaveBeenCalled();
+  });
+
+  it("rejects a non-admin caller", async () => {
+    mockNonAdminSession();
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: 3_600_000,
+    });
+
+    expect(result).toEqual({ success: false, error: "Unauthorized" });
+    expect(rotateScimToken).not.toHaveBeenCalled();
+  });
+
+  it("rejects an overlap window beyond the cap", async () => {
+    mockAdminSession();
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: 99_999_999_999,
+    });
+
+    expect(result).toEqual({ success: false, error: "Invalid input" });
+    expect(rotateScimToken).not.toHaveBeenCalled();
+  });
+
+  it("rejects a negative overlap window", async () => {
+    mockAdminSession();
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: -1,
+    });
+
+    expect(result).toEqual({ success: false, error: "Invalid input" });
+  });
+
+  it("returns the replacement bearer and the overlap expiry", async () => {
+    mockAdminSession();
+    vi.mocked(rotateScimToken).mockResolvedValue({
+      token: rotatedRow,
+      plaintext: "tps_brand_new_value",
+    } as any);
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: 3_600_000,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.plaintext).toBe("tps_brand_new_value");
+    expect(result.previousTokenExpiresAt).toBe("2026-09-07T12:00:00.000Z");
+    expect(rotateScimToken).toHaveBeenCalledWith("tk_1", 3_600_000, "admin1");
+  });
+
+  it("audits the rotation with the token id and the window applied", async () => {
+    mockAdminSession();
+    vi.mocked(rotateScimToken).mockResolvedValue({
+      token: rotatedRow,
+      plaintext: "tps_brand_new_value",
+    } as any);
+
+    await rotateScimTokenAction({ tokenId: "tk_1", overlapMs: 3_600_000 });
+
+    expect(captureAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entityType: "ScimToken",
+        entityId: "tk_1",
+        metadata: expect.objectContaining({
+          scimTokenRotated: true,
+          overlapMs: 3_600_000,
+        }),
+      })
+    );
+  });
+
+  it("never leaks a raw error message when the service throws", async () => {
+    mockAdminSession();
+    vi.mocked(rotateScimToken).mockRejectedValue(
+      new Error("connection string postgres://user:pw@host/db")
+    );
+
+    const result = await rotateScimTokenAction({
+      tokenId: "tk_1",
+      overlapMs: 0,
+    });
+
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to rotate SCIM token",
     });
   });
 });

@@ -25,6 +25,7 @@ import {
   SCIM_LIST_RESPONSE_SCHEMA_URN,
 } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
+import { ScimOwnershipError } from "~/lib/scim/ownership";
 import { InvalidFilterError } from "~/lib/scim/filter";
 import { scimResponse } from "~/lib/scim/responses";
 import {
@@ -108,6 +109,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       status: result.linked ? 200 : 201,
     });
   } catch (e) {
+    if (e instanceof ScimOwnershipError) {
+      return scimError(409, "uniqueness", e.message);
+    }
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }

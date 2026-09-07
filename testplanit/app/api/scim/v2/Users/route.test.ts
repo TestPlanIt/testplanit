@@ -32,6 +32,7 @@ vi.mock("~/lib/scim/auth", () => ({
   requireScimBearer: vi.fn().mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   }),
 }));
 
@@ -106,6 +107,7 @@ beforeEach(() => {
   vi.mocked(requireScimBearer).mockResolvedValue({
     tokenId: "tk_test",
     systemUserId: "system-scim-user",
+    idpName: "OKTA" as const,
   });
   vi.mocked(createScimUser).mockReset();
   vi.mocked(listScimUsers).mockReset();
@@ -132,7 +134,11 @@ describe("POST /api/scim/v2/Users", () => {
     expect(body.userName).toBe("jdoe@example.com");
     expect(createScimUser).toHaveBeenCalledWith(
       expect.objectContaining({ userName: "jdoe@example.com" }),
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
   });
 
@@ -282,7 +288,11 @@ describe("GET /api/scim/v2/Users", () => {
     expect(res.status).toBe(200);
     expect(listScimUsers).toHaveBeenCalledWith(
       { filter: 'userName eq "j"', startIndex: 51, count: 50 },
-      { tokenId: "tk_test", systemUserId: "system-scim-user" }
+      {
+        tokenId: "tk_test",
+        systemUserId: "system-scim-user",
+        idpName: "OKTA" as const,
+      }
     );
     const body = (await res.json()) as { startIndex: number };
     expect(body.startIndex).toBe(51);

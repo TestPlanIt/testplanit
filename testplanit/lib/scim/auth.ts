@@ -53,6 +53,8 @@ import {
 } from "~/lib/scim/constants";
 import { checkScimTokenRateLimit } from "./rate-limit";
 
+import type { IdpName } from "~/zenstack/models";
+
 /**
  * Sentinel exception thrown by `requireScimBearer` on any auth failure.
  *
@@ -76,6 +78,12 @@ export class ScimAuthError extends Error {
 export interface ScimAuthContext {
   tokenId: string;
   systemUserId: string;
+  /**
+   * The IdP this token speaks for. Carried on the context because cross-IdP
+   * ownership (lib/scim/ownership.ts) is keyed on the IdP rather than the
+   * token id, so revoke + mint rotation keeps a directory's rows writable.
+   */
+  idpName: IdpName;
 }
 
 /** Hosts that count as a loopback origin for the probe-marker carve-out. */
@@ -142,17 +150,38 @@ export async function requireScimBearer(
   }
 
   const tokenHash = hashToken(raw);
-  const row = await baseDb.scimToken.findUnique({
+  const selection = {
+    id: true,
+    systemUserId: true,
+    idpName: true,
+    isActive: true,
+    expiresAt: true,
+    revokedAt: true,
+    lastUsedAt: true,
+  } as const;
+
+  // Current bearer first — the overwhelmingly common case, and an indexed
+  // unique lookup.
+  let row = await baseDb.scimToken.findUnique({
     where: { token: tokenHash },
-    select: {
-      id: true,
-      systemUserId: true,
-      isActive: true,
-      expiresAt: true,
-      revokedAt: true,
-      lastUsedAt: true,
-    },
+    select: selection,
   });
+
+  // Overlap-window rotation: the superseded bearer stays valid until
+  // previousTokenExpiresAt. The expiry is part of the WHERE rather than a
+  // post-read check so an elapsed window can never resolve, even if a stale
+  // hash is still sitting in the column. The row it returns is the SAME
+  // token row, so the request carries the same id, IdP, and rate-limit
+  // bucket as it would under the new bearer.
+  if (!row) {
+    row = await baseDb.scimToken.findFirst({
+      where: {
+        previousToken: tokenHash,
+        previousTokenExpiresAt: { gt: new Date() },
+      },
+      select: selection,
+    });
+  }
 
   if (!row) {
     throw new ScimAuthError(scimError(401, null, "Token rejected"));
@@ -215,5 +244,9 @@ export async function requireScimBearer(
   // making them invisible to the /admin/scim conflict-log query.
   updateAuditContext({ scimTokenId: row.id });
 
-  return { tokenId: row.id, systemUserId: row.systemUserId };
+  return {
+    tokenId: row.id,
+    systemUserId: row.systemUserId,
+    idpName: row.idpName,
+  };
 }

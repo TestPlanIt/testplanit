@@ -1,9 +1,10 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { ScimToken, User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { Ban, CheckCircle2, Clock, UserMinus } from "lucide-react";
+import { Ban, CheckCircle2, Clock, RefreshCw, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -18,6 +19,7 @@ export interface ExtendedScimToken extends ScimToken {
 export const useColumns = (
   userPreferences: any,
   onRevoke: (token: ExtendedScimToken) => void,
+  onRotate: (token: ExtendedScimToken) => void,
   t: ReturnType<typeof useTranslations<"admin.scim">>,
   tApiTokens: ReturnType<typeof useTranslations<"admin.apiTokens">>,
   tCommon: ReturnType<typeof useTranslations<"common">>
@@ -195,7 +197,7 @@ export const useColumns = (
         enableResizing: true,
         enableSorting: false,
         enableHiding: false,
-        size: 80,
+        size: 120,
         meta: { isPinned: "right" },
         cell: ({ row }) => {
           const token = row.original;
@@ -205,6 +207,16 @@ export const useColumns = (
           return (
             <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
               <TestScimButton tokenId={token.id} />
+              <Button
+                variant="outline"
+                onClick={() => onRotate(token)}
+                className="px-2 py-1 h-auto"
+                title={t("rotate.confirm")}
+                data-testid={`scim-rotate-button-${token.id}`}
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="sr-only">{t("rotate.confirm")}</span>
+              </Button>
               <RevokeScimTokenButton
                 tokenId={token.id}
                 onRevoke={() => onRevoke(token)}
@@ -214,6 +226,6 @@ export const useColumns = (
         },
       },
     ],
-    [dateFormat, timezone, onRevoke, t, tApiTokens, tCommon]
+    [dateFormat, timezone, onRevoke, onRotate, t, tApiTokens, tCommon]
   );
 };
