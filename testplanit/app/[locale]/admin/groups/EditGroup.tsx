@@ -35,6 +35,8 @@ import {
 
 import { Cloud, Users } from "lucide-react";
 
+import { GroupProjectMappings } from "./GroupProjectMappings";
+
 import {
   Form,
   FormControl,
@@ -345,6 +347,8 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                   </FormItem>
                 )}
               />
+
+              <GroupProjectMappings groupId={group.id} />
 
               <div className="space-y-2 pt-4 border-t">
                 <FormLabel className="flex items-center">

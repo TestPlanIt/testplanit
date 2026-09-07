@@ -526,22 +526,23 @@ enum NotificationType {
 }
 
 model Groups {
-    id                 Int                      @id @default(autoincrement())
-    name               String                   @unique @length(1) @deny('update', scimDisplayName != null)
-    externalId         String?                  @unique
-    url                String?                  @url
-    note               String?
-    isDeleted          Boolean                  @default(false)
-    deletedAt          DateTime?                @db.Timestamptz(6)
-    updatedAt          DateTime?                @updatedAt
-    scimDisplayName    String?
-    scimExtensions     Json?
-    mappedAccess       Access?
+    id                    Int                         @id @default(autoincrement())
+    name                  String                      @unique @length(1) @deny('update', scimDisplayName != null)
+    externalId            String?                     @unique
+    url                   String?                     @url
+    note                  String?
+    isDeleted             Boolean                     @default(false)
+    deletedAt             DateTime?                   @db.Timestamptz(6)
+    updatedAt             DateTime?                   @updatedAt
+    scimDisplayName       String?
+    scimExtensions        Json?
+    mappedAccess          Access?
     // See User.scimTokenId — same claim-on-first-write provenance rule.
-    scimTokenId        String?
-    scimToken          ScimToken?               @relation("ScimProvisionedGroups", fields: [scimTokenId], references: [id], onDelete: SetNull)
-    assignedUsers      GroupAssignment[]
-    projectPermissions GroupProjectPermission[]
+    scimTokenId           String?
+    scimToken             ScimToken?                  @relation("ScimProvisionedGroups", fields: [scimTokenId], references: [id], onDelete: SetNull)
+    assignedUsers         GroupAssignment[]
+    projectPermissions    GroupProjectPermission[]
+    projectAccessMappings GroupProjectAccessMapping[]
 
     @@index([scimTokenId])
     @@deny('all', auth() == null)
@@ -552,6 +553,35 @@ model Groups {
     // IdP's source of truth. The SCIM service uses the raw prisma client
     // and bypasses these policies; see lib/scim/services/groups.ts.
     @@deny('delete', scimDisplayName != null)
+}
+
+// Per-project access mapping: an IdP group grants an access tier on ONE
+// project, rather than the org-wide tier Groups.mappedAccess carries.
+//
+// The tier is materialized into a GroupProjectPermission row (see
+// lib/scim/access/projectMappings.ts) so the shipped permission engine
+// resolves it -- there is no second resolution path to keep in sync.
+//
+// Only granting tiers are meaningful here. The permission engine honours
+// SPECIFIC_ROLE and GLOBAL_ROLE from a group row and ignores NO_ACCESS
+// (denial comes only from a user-specific row or the project default), so a
+// mapping cannot revoke access the project default already grants. NONE is
+// therefore rejected at the write boundary rather than stored as a mapping
+// that would silently do nothing.
+model GroupProjectAccessMapping {
+    groupId      Int
+    group        Groups   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    projectId    Int
+    project      Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    mappedAccess Access
+    createdAt    DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+    @@id([groupId, projectId])
+    @@index([projectId])
+    @@deny('all', auth() == null)
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
 }
 
 model GroupAssignment {
@@ -622,6 +652,7 @@ model Projects {
     defaultRole                      Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
     userPermissions                  UserProjectPermission[]
     groupPermissions                 GroupProjectPermission[]
+    groupAccessMappings              GroupProjectAccessMapping[]
     sharedStepGroups                 SharedStepGroup[]
     dataSets                         DataSet[]
     projectIntegrations              ProjectIntegration[]
@@ -4308,13 +4339,18 @@ model UserProjectPermission {
 }
 
 model GroupProjectPermission {
-    groupId    Int
-    group      Groups            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-    projectId  Int
-    project    Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    accessType ProjectAccessType @default(DEFAULT)
-    roleId     Int?
-    role       Roles?            @relation("GroupProjectRole", fields: [roleId], references: [id], onDelete: SetNull)
+    groupId            Int
+    group              Groups            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    projectId          Int
+    project            Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    accessType         ProjectAccessType @default(DEFAULT)
+    roleId             Int?
+    role               Roles?            @relation("GroupProjectRole", fields: [roleId], references: [id], onDelete: SetNull)
+    // True when this row was materialized from a GroupProjectAccessMapping
+    // rather than assigned by hand in the project's permission UI. The
+    // materializer only ever deletes rows it owns, so a manual grant is never
+    // removed by a mapping change.
+    derivedFromMapping Boolean           @default(false)
 
     @@id([groupId, projectId])
 

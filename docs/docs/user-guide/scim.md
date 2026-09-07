@@ -267,6 +267,30 @@ Selecting **No mapping** removes the mapping from that group — it no longer dr
 2. Under the **Role Mapping** section, change the **Fallback Default** selector. Options are **None** (the system default), **User**, **Project Admin**, and **Admin**. Here **None** is the no-access tier itself — distinct from a group's **No mapping**, which means the group carries no tier at all.
 3. Click **Save**. The new default takes effect for every governed user with no mapped-group membership on the next recompute.
 
+#### Grant a group access on one project
+
+The **Mapped Access Tier** above is org-wide. When a group should only carry weight on certain projects — "the QA leads are Project Admins on Banking, and ordinary users everywhere else" — use per-project access instead.
+
+1. Navigate to **Admin → Users & Groups → Groups** (`/admin/groups`) and open the group's edit dialog.
+2. Under **Per-project access**, pick a project and the tier the group should grant there.
+3. Click **Add project**. Repeat for each project. Change a tier from the same list, or remove one with the trash icon.
+
+How the tiers resolve on that project:
+
+| Tier | Effect on the project |
+| --- | --- |
+| **User** | Members get their own global role on the project. |
+| **Project Admin** | Members get the Project Admin role on the project. |
+| **Admin** | The same as Project Admin — within a single project, Project Admin is the strongest grant there is. Org-wide Admin comes from the Mapped Access Tier, not from here. |
+
+:::note Per-project access only grants
+It cannot take away access a project's own default already gives, which is why there is no **None** option. To deny access on a project, set that project's default access to **No access** and grant it explicitly to the groups that should have it.
+:::
+
+Per-project access is resolved through the project's normal permission rules, alongside any permissions assigned directly in the project's own settings, and follows the same precedence: a user-specific permission beats a group one. Removing a mapping withdraws only the grant the mapping created — a permission an admin assigned to the group by hand in the project settings is left alone.
+
+Because access flows from group membership, and SCIM keeps membership current, a user added to the group in your IdP picks up its per-project access on the next sync with no further configuration.
+
 #### Map an IdP role to an access tier
 
 Group membership is often too coarse: a directory may put every engineer in one group while marking a handful of them as contractors on the user record itself. Role mapping closes that gap.

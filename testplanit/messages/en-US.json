@@ -5969,6 +5969,17 @@
       "mappedAccessLabel": "Mapped Access Tier",
       "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
+      "projectMappings": {
+        "label": "Per-project access",
+        "description": "Grant this group an access tier on specific projects, instead of \u2014 or on top of \u2014 the org-wide tier above.",
+        "empty": "No per-project access. Members get only the org-wide tier above and each project's own default.",
+        "projectLabel": "Project",
+        "projectPlaceholder": "Select a project\u2026",
+        "accessLabel": "Access tier",
+        "add": "Add project",
+        "remove": "Remove project access",
+        "saved": "Project access saved"
+      },
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
       "downgradeConfirmApplyAnyway": "Apply anyway",
@@ -7577,6 +7588,7 @@
     "group": {
       "name": "## Group Name\nA clear, concise, descriptive name or keyword(s) that is used across all projects.\n\n- Helps team members quickly find related test cases, test runs and sessions.",
       "users": "## Users\nIndicates the users that are assigned to this group.",
+      "projectMappedAccess": "## Per-Project Access\nGrants members of this group an access tier on one specific project, resolved through the project's normal permission rules.\n\n- **User** gives members their own global role on that project\n- **Project Admin** and **Admin** both grant the Project Admin role on that project \u2014 within a single project, Project Admin is the strongest grant there is\n- Per-project access only **grants**. It cannot take away access a project's own default already gives, which is why there is no \"None\" option here\n- Removing a mapping withdraws the grant; members fall back to the project's default",
       "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
