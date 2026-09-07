@@ -4,7 +4,7 @@
     "description": "TestPlanIt monorepo",
     "author": "Brad DerManouelian",
     "license": "ISC",
-    "packageManager": "pnpm@11.5.0",
+    "packageManager": "pnpm@11.25.0",
     "scripts": {
         "changeset": "changeset",
         "changeset:version": "changeset version",

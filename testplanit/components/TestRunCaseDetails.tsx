@@ -4,6 +4,7 @@ import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { CodePinsPanel } from "@/components/impact/CodePinsPanel";
 import LinkedRequirementsPanel from "@/components/requirements/LinkedRequirementsPanel";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
@@ -1152,6 +1153,8 @@ export function TestRunCaseDetails({
           projectId={projectId}
           readOnly
         />
+
+        <CodePinsPanel caseId={caseId} projectId={projectId} readOnly />
 
         <TestResultHistory
           caseId={caseId}

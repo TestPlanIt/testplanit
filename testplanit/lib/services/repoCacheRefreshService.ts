@@ -2,6 +2,7 @@ import type { DbClient } from "~/lib/zenstack";
 import {
   createGitRepoAdapter,
   type ArchiveTree,
+  type GitRepoAdapter,
 } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
@@ -12,6 +13,12 @@ import {
   extractBasePathScopes,
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
+import { resolveRefToSha } from "./impact/compareService";
+import {
+  shouldScanMarkers,
+  syncMarkerPins,
+  type MarkerScanDb,
+} from "./impact/markerScan";
 
 function isRateLimitError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
@@ -98,6 +105,66 @@ async function fetchContentsBatched(
   return { contentMap, contentRateLimited: false };
 }
 
+async function storeMarkerScanReport(
+  dbClient: DbClient,
+  configId: number,
+  report: unknown
+): Promise<void> {
+  try {
+    await (dbClient as any).projectCodeRepositoryConfig.update({
+      where: { id: configId },
+      data: { markerScanReport: report },
+    });
+  } catch (err) {
+    console.warn(
+      `[repoCacheRefresh] Failed to store marker scan report for config ${configId}:`,
+      err
+    );
+  }
+}
+
+/**
+ * Sync repo markers (annotations + testmap) into code pins for an IMPACT
+ * config. Never throws: a failed scan is recorded in the report instead.
+ */
+async function runMarkerScan(
+  dbClient: DbClient,
+  config: { id: number; projectId: number; project: { createdBy: string } },
+  adapter: GitRepoAdapter,
+  branch: string,
+  contentMap: Map<string, string>,
+  contentRateLimited: boolean
+): Promise<void> {
+  const scannedAt = new Date().toISOString();
+  let report: unknown;
+  if (contentRateLimited) {
+    report = { skipped: "partial_contents", scannedAt };
+  } else {
+    try {
+      const anchorSha = await resolveRefToSha(adapter, branch);
+      report = await syncMarkerPins(
+        dbClient as unknown as MarkerScanDb,
+        { id: config.id, projectId: config.projectId, branch },
+        contentMap,
+        { anchorSha, actorId: config.project.createdBy }
+      );
+    } catch (err) {
+      console.warn(
+        `[repoCacheRefresh] Marker scan failed for config ${config.id}:`,
+        err
+      );
+      report = {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Unknown error during marker scan",
+        scannedAt,
+      };
+    }
+  }
+  await storeMarkerScanReport(dbClient, config.id, report);
+}
+
 export interface RefreshResult {
   success: boolean;
   fileCount: number;
@@ -128,6 +195,7 @@ export async function refreshRepoCache(
         repository: {
           select: { credentials: true, settings: true, provider: true },
         },
+        project: { select: { createdBy: true } },
       },
     }
   );
@@ -137,6 +205,12 @@ export async function refreshRepoCache(
   }
 
   if (!config.cacheEnabled) {
+    if (config.purpose === "IMPACT") {
+      await storeMarkerScanReport(dbClient, config.id, {
+        skipped: "privacy_mode",
+        scannedAt: new Date().toISOString(),
+      });
+    }
     return {
       success: false,
       fileCount: 0,
@@ -260,6 +334,17 @@ export async function refreshRepoCache(
         cacheContentFileCount: contentMap.size,
       },
     });
+
+    if (shouldScanMarkers(config)) {
+      await runMarkerScan(
+        dbClient,
+        config,
+        adapter,
+        branch,
+        contentMap,
+        contentRateLimited
+      );
+    }
 
     return {
       success: true,

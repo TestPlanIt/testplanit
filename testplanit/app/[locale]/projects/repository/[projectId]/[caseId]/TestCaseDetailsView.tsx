@@ -12,6 +12,7 @@ import {
   transformFolders,
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
+import { CodePinsPanel } from "@/components/impact/CodePinsPanel";
 import LinkedRequirementsPanel from "@/components/requirements/LinkedRequirementsPanel";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
@@ -3188,6 +3189,15 @@ export function TestCaseDetailsView({
                 <LinkedRequirementsPanel
                   caseId={testcase.id}
                   projectId={Number(projectId)}
+                />
+              </div>
+            )}
+            {!isEditMode && !isSubmitting && (
+              <div className="mt-6">
+                <CodePinsPanel
+                  caseId={testcase.id}
+                  projectId={Number(projectId)}
+                  readOnly={!canAddEdit}
                 />
               </div>
             )}

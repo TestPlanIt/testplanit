@@ -71,6 +71,19 @@ export const TRIGGER_REGISTRY: TriggerConfig[] = [
   // Cases <-> Tags/Issue explicit join tables (composite (caseId,X) PK → pkCol 'caseId')
   { table: "RepositoryCaseTag", pkCol: "caseId", denylist: [] },
   { table: "RepositoryCaseIssue", pkCol: "caseId", denylist: [] },
+  {
+    table: "RepositoryCaseCodePin",
+    denylist: ["createdAt", "anchorSnippet"],
+  },
+
+  // ── Impact family ─────────────────────────────────────────────────────────
+  {
+    table: "ImpactAnalysis",
+    denylist: ["createdAt", "updatedAt", "diffSummary", "result"],
+    nameCol: "headSha",
+    projectCol: "projectId",
+  },
+  { table: "ImpactAnalysisCase", denylist: [] },
 
   // ── Runs family ───────────────────────────────────────────────────────────
   {
@@ -435,6 +448,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Repositories" },
   { table: "RepositoryFolders" },
   { table: "RepositoryCaseLink" },
+  { table: "RepositoryCaseCodePin" },
   { table: "DuplicateScanResult" },
   { table: "StepSequenceMatch" },
   { table: "StepSequenceMatchCase" },
@@ -454,6 +468,7 @@ export const SOFT_DELETE_REGISTRY: SoftDeleteConfig[] = [
   { table: "Issue" },
   { table: "Integration" },
   { table: "CodeRepository" },
+  { table: "ImpactAnalysis" },
   { table: "LlmIntegration" },
   { table: "SharedStepGroup" },
   { table: "DataSet" },

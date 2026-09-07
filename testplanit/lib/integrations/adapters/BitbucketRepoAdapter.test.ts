@@ -480,4 +480,591 @@ describe("BitbucketRepoAdapter", () => {
       expect(contents.get("src/foo.ts")).toBe("foo");
     });
   });
+
+  describe("listBranches", () => {
+    it("follows next pages and flags the mainbranch as default", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({ mainbranch: { name: "develop" } })
+        )
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: [
+              { name: "main", target: { hash: "aaa111" } },
+              { name: "develop", target: { hash: "bbb222" } },
+            ],
+            next: "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/refs/branches?page=2",
+          })
+        )
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: [{ name: "feature/x", target: { hash: "ccc333" } }],
+          })
+        );
+
+      const branches = await adapter.listBranches();
+
+      expect(branches).toEqual([
+        { name: "main", sha: "aaa111", isDefault: false },
+        { name: "develop", sha: "bbb222", isDefault: true },
+        { name: "feature/x", sha: "ccc333", isDefault: false },
+      ]);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/refs/branches?pagelen=100"
+      );
+      expect(mockFetch.mock.calls[2][0]).toBe(
+        "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/refs/branches?page=2"
+      );
+    });
+
+    it("stops following pages at 500 branches", async () => {
+      const page = (offset: number) =>
+        Array.from({ length: 100 }, (_, i) => ({
+          name: `b${offset + i}`,
+          target: { hash: `${offset + i}` },
+        }));
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ mainbranch: { name: "main" } })
+      );
+      for (let p = 0; p < 5; p++) {
+        mockFetch.mockResolvedValueOnce(
+          makeResponse({
+            values: page(p * 100),
+            next: `https://api.bitbucket.org/page${p + 2}`,
+          })
+        );
+      }
+
+      const branches = await adapter.listBranches();
+
+      expect(branches).toHaveLength(500);
+      expect(mockFetch).toHaveBeenCalledTimes(6);
+    });
+  });
+
+  describe("listCommits", () => {
+    const commit = {
+      hash: "0123456789abcdef0123456789abcdef01234567",
+      message: "feat: add thing\n\nLonger body.",
+      author: {
+        raw: "Jane Doe <jane@example.com>",
+        user: { display_name: "Jane D." },
+      },
+      date: "2026-09-01T10:00:00+00:00",
+      parents: [{ hash: "fedcba9876543210fedcba9876543210fedcba98" }],
+      links: {
+        html: {
+          href: "https://bitbucket.org/myworkspace/myrepo/commits/0123456789abcdef0123456789abcdef01234567",
+        },
+      },
+    };
+
+    it("maps commits and reports hasMore from next", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [commit],
+          next: "https://api.bitbucket.org/page2",
+        })
+      );
+
+      const result = await adapter.listCommits("main");
+
+      expect(result.hasMore).toBe(true);
+      expect(result.commits).toEqual([
+        {
+          sha: "0123456789abcdef0123456789abcdef01234567",
+          shortSha: "0123456",
+          message: "feat: add thing\n\nLonger body.",
+          authorName: "Jane D.",
+          authorEmail: "jane@example.com",
+          authoredAt: "2026-09-01T10:00:00+00:00",
+          parents: ["fedcba9876543210fedcba9876543210fedcba98"],
+          url: "https://bitbucket.org/myworkspace/myrepo/commits/0123456789abcdef0123456789abcdef01234567",
+        },
+      ]);
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/commits/main?pagelen=30&page=1"
+      );
+    });
+
+    it("falls back to the raw author name when there is no user", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            {
+              ...commit,
+              author: { raw: "Anon Committer <anon@example.com>" },
+            },
+            { ...commit, hash: "abcdef1234567", author: { raw: "No Email" } },
+          ],
+        })
+      );
+
+      const result = await adapter.listCommits("main");
+
+      expect(result.hasMore).toBe(false);
+      expect(result.commits[0].authorName).toBe("Anon Committer");
+      expect(result.commits[0].authorEmail).toBe("anon@example.com");
+      expect(result.commits[1].authorName).toBe("No Email");
+      expect(result.commits[1].authorEmail).toBeUndefined();
+    });
+
+    it("passes page, perPage (max 100) and path through", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listCommits("feature/x", {
+        page: 3,
+        perPage: 500,
+        path: "src/index.ts",
+      });
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        "https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/commits/feature%2Fx?pagelen=100&page=3&path=src%2Findex.ts"
+      );
+    });
+  });
+
+  describe("compareCommits", () => {
+    const BASE = "1111111111111111111111111111111111111111";
+    const HEAD = "2222222222222222222222222222222222222222";
+
+    function makeTextResponse(text: string) {
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+        json: () => Promise.reject(new SyntaxError("not json")),
+        text: () => Promise.resolve(text),
+      };
+    }
+
+    function row(
+      status: string,
+      oldPath: string | null,
+      newPath: string | null,
+      added = 0,
+      removed = 0
+    ) {
+      return {
+        type: "diffstat",
+        status,
+        lines_added: added,
+        lines_removed: removed,
+        old: oldPath ? { path: oldPath } : null,
+        new: newPath ? { path: newPath } : null,
+      };
+    }
+
+    const rawDiff = [
+      "diff --git a/src/a.ts b/src/a.ts",
+      "index 1111111..2222222 100644",
+      "--- a/src/a.ts",
+      "+++ b/src/a.ts",
+      "@@ -1,2 +1,2 @@",
+      "-old",
+      "+new",
+      " ctx",
+      "diff --git a/src/gone.ts b/src/gone.ts",
+      "deleted file mode 100644",
+      "--- a/src/gone.ts",
+      "+++ /dev/null",
+      "@@ -1 +0,0 @@",
+      "-bye",
+      "diff --git a/old.ts b/new.ts",
+      "similarity index 90%",
+      "rename from old.ts",
+      "rename to new.ts",
+      "--- a/old.ts",
+      "+++ b/new.ts",
+      "@@ -1 +1 @@",
+      "-x",
+      "+y",
+      "diff --git a/img.png b/img.png",
+      "Binary files a/img.png and b/img.png differ",
+      "",
+    ].join("\n");
+
+    const fullDiffstat = [
+      row("modified", "src/a.ts", "src/a.ts", 1, 1),
+      row("removed", "src/gone.ts", null, 0, 1),
+      row("renamed", "old.ts", "new.ts", 1, 1),
+      row("modified", "img.png", "img.png", 0, 0),
+      row("added", null, "logo.bin", 0, 0),
+    ];
+
+    it("requests head..base for diffstat and diff, and head?exclude=base for commits", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeResponse({ values: [], size: 0 }))
+        .mockResolvedValueOnce(makeTextResponse(""))
+        .mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      const result = await adapter.compareCommits(BASE, HEAD);
+
+      expect(mockFetch.mock.calls[0][0]).toBe(
+        `https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/diffstat/${HEAD}..${BASE}?pagelen=500`
+      );
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        `https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/diff/${HEAD}..${BASE}`
+      );
+      expect(mockFetch.mock.calls[2][0]).toBe(
+        `https://api.bitbucket.org/2.0/repositories/myworkspace/myrepo/commits/${HEAD}?exclude=${BASE}&pagelen=100`
+      );
+      expect(result).toEqual({
+        baseSha: BASE,
+        headSha: HEAD,
+        files: [],
+        commits: [],
+        truncated: false,
+        totalFiles: 0,
+      });
+    });
+
+    it("maps diffstat statuses, joins diff chunks by path and detects binaries", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({ values: fullDiffstat, size: fullDiffstat.length })
+        )
+        .mockResolvedValueOnce(makeTextResponse(rawDiff))
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: [
+              {
+                hash: HEAD,
+                message: "head",
+                author: { raw: "A <a@example.com>" },
+                date: "2026-09-02T00:00:00+00:00",
+                parents: [{ hash: BASE }],
+              },
+            ],
+          })
+        );
+
+      const result = await adapter.compareCommits(BASE, HEAD);
+
+      expect(result.truncated).toBe(false);
+      expect(result.totalFiles).toBe(5);
+      expect(result.commits).toHaveLength(1);
+      expect(result.commits[0].sha).toBe(HEAD);
+      expect(result.commits[0].parents).toEqual([BASE]);
+
+      expect(result.files).toEqual([
+        {
+          path: "src/a.ts",
+          status: "modified",
+          additions: 1,
+          deletions: 1,
+          isBinary: false,
+          patch: "@@ -1,2 +1,2 @@\n-old\n+new\n ctx",
+        },
+        {
+          path: "src/gone.ts",
+          status: "deleted",
+          additions: 0,
+          deletions: 1,
+          isBinary: false,
+          patch: "@@ -1 +0,0 @@\n-bye",
+        },
+        {
+          path: "new.ts",
+          previousPath: "old.ts",
+          status: "renamed",
+          additions: 1,
+          deletions: 1,
+          isBinary: false,
+          patch: "@@ -1 +1 @@\n-x\n+y",
+        },
+        {
+          path: "img.png",
+          status: "modified",
+          additions: 0,
+          deletions: 0,
+          isBinary: true,
+        },
+        {
+          path: "logo.bin",
+          status: "added",
+          additions: 0,
+          deletions: 0,
+          isBinary: true,
+        },
+      ]);
+    });
+
+    it("stops the diffstat listing at maxFiles and flags truncated", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: fullDiffstat.slice(0, 3),
+            size: 5,
+            next: "https://api.bitbucket.org/diffstat-page2",
+          })
+        )
+        .mockResolvedValueOnce(makeTextResponse(rawDiff))
+        .mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      const result = await adapter.compareCommits(BASE, HEAD, { maxFiles: 2 });
+
+      expect(result.files.map((f) => f.path)).toEqual([
+        "src/a.ts",
+        "src/gone.ts",
+      ]);
+      expect(result.truncated).toBe(true);
+      expect(result.totalFiles).toBe(5);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it("follows diffstat next pages until the cap", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: fullDiffstat.slice(0, 2),
+            next: "https://api.bitbucket.org/diffstat-page2",
+          })
+        )
+        .mockResolvedValueOnce(makeResponse({ values: fullDiffstat.slice(2) }))
+        .mockResolvedValueOnce(makeTextResponse(rawDiff))
+        .mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      const result = await adapter.compareCommits(BASE, HEAD);
+
+      expect(result.files).toHaveLength(5);
+      expect(result.truncated).toBe(false);
+      expect(result.totalFiles).toBe(5);
+      expect(mockFetch.mock.calls[1][0]).toBe(
+        "https://api.bitbucket.org/diffstat-page2"
+      );
+    });
+
+    it("drops patches past maxFilesWithPatch with patchTruncated", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({ values: fullDiffstat.slice(0, 3) })
+        )
+        .mockResolvedValueOnce(makeTextResponse(rawDiff))
+        .mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      const result = await adapter.compareCommits(BASE, HEAD, {
+        maxFilesWithPatch: 1,
+      });
+
+      expect(result.truncated).toBe(true);
+      expect(result.files[0].patch).toBeDefined();
+      expect(result.files[0].patchTruncated).toBeUndefined();
+      expect(result.files[1].patch).toBeUndefined();
+      expect(result.files[1].patchTruncated).toBe(true);
+      expect(result.files[2].patch).toBeUndefined();
+      expect(result.files[2].patchTruncated).toBe(true);
+    });
+
+    it("drops a single patch larger than maxPatchBytesPerFile", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({ values: fullDiffstat.slice(0, 2) })
+        )
+        .mockResolvedValueOnce(makeTextResponse(rawDiff))
+        .mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      const result = await adapter.compareCommits(BASE, HEAD, {
+        maxPatchBytesPerFile: 25,
+      });
+
+      expect(result.truncated).toBe(true);
+      expect(result.files[0].patch).toBeUndefined();
+      expect(result.files[0].patchTruncated).toBe(true);
+      expect(result.files[1].patch).toBe("@@ -1 +0,0 @@\n-bye");
+      expect(result.files[1].patchTruncated).toBeUndefined();
+    });
+
+    it("stops attaching patches once maxTotalPatchBytes is reached", async () => {
+      mockFetch
+        .mockResolvedValueOnce(
+          makeResponse({ values: fullDiffstat.slice(0, 3) })
+        )
+        .mockResolvedValueOnce(makeTextResponse(rawDiff))
+        .mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      const result = await adapter.compareCommits(BASE, HEAD, {
+        maxTotalPatchBytes: 50,
+      });
+
+      expect(result.truncated).toBe(true);
+      expect(result.files[0].patch).toBeDefined();
+      expect(result.files[1].patch).toBeDefined();
+      expect(result.files[2].patch).toBeUndefined();
+      expect(result.files[2].patchTruncated).toBe(true);
+    });
+
+    it("caps the commit listing at maxCommits and flags truncated", async () => {
+      const commit = (hash: string) => ({
+        hash,
+        message: hash,
+        author: { raw: "A <a@example.com>" },
+        date: "2026-09-02T00:00:00+00:00",
+        parents: [],
+      });
+      mockFetch
+        .mockResolvedValueOnce(makeResponse({ values: [], size: 0 }))
+        .mockResolvedValueOnce(makeTextResponse(""))
+        .mockResolvedValueOnce(
+          makeResponse({
+            values: [commit("aaaaaaa1"), commit("aaaaaaa2")],
+            next: "https://api.bitbucket.org/commits-page2",
+          })
+        );
+
+      const result = await adapter.compareCommits(BASE, HEAD, {
+        maxCommits: 2,
+      });
+
+      expect(result.commits.map((c) => c.sha)).toEqual([
+        "aaaaaaa1",
+        "aaaaaaa2",
+      ]);
+      expect(result.truncated).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+  });
+  describe("listPullRequests", () => {
+    function makeRawPr(id: number, overrides: Record<string, any> = {}) {
+      return {
+        id,
+        title: `PR ${id}`,
+        state: "OPEN",
+        author: { nickname: "ada", display_name: "Ada Lovelace" },
+        source: {
+          branch: { name: `feature-${id}` },
+          commit: { hash: `head${id}` },
+        },
+        destination: {
+          branch: { name: "main" },
+          commit: { hash: `base${id}` },
+        },
+        links: {
+          html: {
+            href: `https://bitbucket.org/myworkspace/myrepo/pull-requests/${id}`,
+          },
+        },
+        updated_on: "2026-09-01T10:00:00Z",
+        ...overrides,
+      };
+    }
+
+    it("maps a pull request from the values array", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ values: [makeRawPr(11)] })
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/pullrequests?");
+      expect(result.pullRequests).toEqual([
+        {
+          number: 11,
+          title: "PR 11",
+          state: "open",
+          authorName: "ada",
+          sourceBranch: "feature-11",
+          targetBranch: "main",
+          headSha: "head11",
+          baseSha: "base11",
+          url: "https://bitbucket.org/myworkspace/myrepo/pull-requests/11",
+          updatedAt: "2026-09-01T10:00:00Z",
+        },
+      ]);
+    });
+
+    it("repeats the state parameter, which is how Bitbucket takes a set", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listPullRequests({ state: "all" });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("state=OPEN");
+      expect(url).toContain("state=MERGED");
+      expect(url).toContain("state=DECLINED");
+      expect(url).toContain("state=SUPERSEDED");
+    });
+
+    it("asks for both closed spellings, since Bitbucket has two", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listPullRequests({ state: "closed" });
+
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("state=DECLINED");
+      expect(url).toContain("state=SUPERSEDED");
+      expect(url).not.toContain("state=OPEN");
+      expect(url).not.toContain("state=MERGED");
+    });
+
+    it("reads SUPERSEDED and DECLINED as closed", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            makeRawPr(1, { state: "SUPERSEDED" }),
+            makeRawPr(2, { state: "DECLINED" }),
+            makeRawPr(3, { state: "MERGED" }),
+          ],
+        })
+      );
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests.map((pr) => pr.state)).toEqual([
+        "closed",
+        "closed",
+        "merged",
+      ]);
+    });
+
+    it("takes hasMore from the provider's next link, not the page size", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({ values: [makeRawPr(1)], next: "https://api/next" })
+      );
+      await expect(adapter.listPullRequests()).resolves.toMatchObject({
+        hasMore: true,
+      });
+
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [makeRawPr(2)] }));
+      await expect(adapter.listPullRequests()).resolves.toMatchObject({
+        hasMore: false,
+      });
+    });
+
+    it("clamps the page size to Bitbucket's lower maximum", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ values: [] }));
+
+      await adapter.listPullRequests({ perPage: 100 });
+
+      expect(mockFetch.mock.calls[0][0]).toContain("pagelen=50");
+    });
+
+    it("survives a payload with no values array", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ type: "error" }));
+
+      const result = await adapter.listPullRequests();
+
+      expect(result.pullRequests).toEqual([]);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("getMergeBase", () => {
+    it("asks for the revspec as a single encoded segment", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ hash: "m".repeat(40) }));
+
+      const sha = await adapter.getMergeBase("main", "feature");
+
+      expect(mockFetch.mock.calls[0][0]).toContain("/merge-base/main..feature");
+      expect(sha).toBe("m".repeat(40));
+    });
+
+    it("returns null rather than throwing when the endpoint is unavailable", async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ error: "nope" }, 404));
+
+      await expect(adapter.getMergeBase("main", "feature")).resolves.toBeNull();
+    });
+  });
 });

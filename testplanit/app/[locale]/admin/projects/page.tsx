@@ -258,7 +258,8 @@ function ProjectAdmin() {
           },
         },
       },
-      codeRepositoryConfig: {
+      codeRepositoryConfigs: {
+        where: { purpose: "QUICKSCRIPT" as const },
         select: {
           id: true,
           repository: {

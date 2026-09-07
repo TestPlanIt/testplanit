@@ -1,11 +1,40 @@
 import {
+  ChangedFile,
+  ChangedFileStatus,
+  CompareOptions,
+  CompareResult,
   GitRepoAdapter,
+  ListCommitsOptions,
+  ListCommitsResult,
   ListFilesResult,
+  RepoBranch,
+  RepoCommit,
   RepoFileEntry,
   TestConnectionResult,
+  type ListPullRequestsOptions,
+  type ListPullRequestsResult,
+  type PullRequestState,
+  type RepoPullRequest,
 } from "./GitRepoAdapter";
+import {
+  MAX_COMPARE_COMMITS,
+  MAX_COMPARE_FILES,
+  MAX_FILES_WITH_PATCH,
+  MAX_PATCH_BYTES_PER_FILE,
+  MAX_TOTAL_PATCH_BYTES,
+} from "../diff/limits";
+import { parseUnifiedDiff, stripDiffHeaders } from "../diff/parseUnifiedDiff";
 
 const MAX_FILES = 10000; // Cap to prevent runaway pagination
+const MAX_BRANCHES = 500;
+const BRANCH_PAGE_SIZE = 100;
+
+function diffStatus(diff: any): ChangedFileStatus {
+  if (diff.new_file) return "added";
+  if (diff.deleted_file) return "deleted";
+  if (diff.renamed_file) return "renamed";
+  return "modified";
+}
 
 export class GitLabRepoAdapter extends GitRepoAdapter {
   private personalAccessToken: string;
@@ -98,6 +127,213 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
   async getFileContent(path: string, branch: string): Promise<string> {
     const url = `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/files/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(branch)}`;
     return this.makeTextRequest(url, { headers: this.authHeaders });
+  }
+
+  async listBranches(): Promise<RepoBranch[]> {
+    const branches: RepoBranch[] = [];
+    let page = 1;
+
+    while (branches.length < MAX_BRANCHES) {
+      const items = await this.makeRequest<any[]>(
+        `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/branches?per_page=${BRANCH_PAGE_SIZE}&page=${page}`,
+        { headers: this.authHeaders }
+      );
+      for (const item of items) {
+        branches.push({
+          name: item.name,
+          sha: item.commit?.id,
+          isDefault: item.default === true,
+          protected: item.protected === true,
+        });
+      }
+      if (items.length < BRANCH_PAGE_SIZE) break;
+      page++;
+    }
+
+    return branches.slice(0, MAX_BRANCHES);
+  }
+
+  async listCommits(
+    ref: string,
+    opts: ListCommitsOptions = {}
+  ): Promise<ListCommitsResult> {
+    const page = opts.page ?? 1;
+    const perPage = Math.min(opts.perPage ?? 30, 100);
+    let url = `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/commits?ref_name=${encodeURIComponent(ref)}&per_page=${perPage}&page=${page}`;
+    if (opts.path) url += `&path=${encodeURIComponent(opts.path)}`;
+
+    const items = await this.makeRequest<any[]>(url, {
+      headers: this.authHeaders,
+    });
+    const commits = items.map((item) => this.toRepoCommit(item));
+    return { commits, hasMore: commits.length === perPage };
+  }
+
+  async getMergeBase(baseRef: string, headRef: string): Promise<string | null> {
+    const params = new URLSearchParams();
+    params.append("refs[]", baseRef);
+    params.append("refs[]", headRef);
+    try {
+      const data = await this.makeRequest<any>(
+        `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/merge_base?${params.toString()}`,
+        { headers: this.authHeaders }
+      );
+      return data?.id ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async listPullRequests(
+    opts: ListPullRequestsOptions = {}
+  ): Promise<ListPullRequestsResult> {
+    const page = Math.max(1, Math.floor(opts.page ?? 1));
+    const perPage = Math.min(100, Math.max(1, Math.floor(opts.perPage ?? 50)));
+    // GitLab spells the states differently and treats "all" as the absence of
+    // a filter.
+    const stateParam =
+      opts.state === "open"
+        ? "&state=opened"
+        : opts.state === "merged"
+          ? "&state=merged"
+          : opts.state === "closed"
+            ? "&state=closed"
+            : "";
+    const url =
+      `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/merge_requests` +
+      `?order_by=updated_at&sort=desc` +
+      `&per_page=${perPage}&page=${page}${stateParam}`;
+    const data = await this.makeRequest<any>(url, {
+      headers: this.authHeaders,
+    });
+    const items: any[] = Array.isArray(data) ? data : [];
+    const pullRequests = items.map((item): RepoPullRequest => {
+      const state: PullRequestState =
+        item?.state === "merged"
+          ? "merged"
+          : item?.state === "closed" || item?.state === "locked"
+            ? "closed"
+            : "open";
+      return {
+        number: Number(item?.iid) || Number(item?.id) || 0,
+        title: String(item?.title ?? ""),
+        state,
+        authorName: item?.author?.username ?? item?.author?.name ?? undefined,
+        sourceBranch: String(item?.source_branch ?? ""),
+        targetBranch: String(item?.target_branch ?? ""),
+        headSha: item?.sha ?? undefined,
+        // The list payload carries no base sha; diff_refs only appears on the
+        // single-MR endpoint, so callers fall back to the target branch.
+        baseSha: item?.diff_refs?.base_sha ?? undefined,
+        url: item?.web_url ?? undefined,
+        updatedAt: item?.updated_at ?? undefined,
+      };
+    });
+    return { pullRequests, hasMore: items.length === perPage };
+  }
+
+  async compareCommits(
+    baseSha: string,
+    headSha: string,
+    opts: CompareOptions = {}
+  ): Promise<CompareResult> {
+    const maxFiles = opts.maxFiles ?? MAX_COMPARE_FILES;
+    const maxFilesWithPatch = opts.maxFilesWithPatch ?? MAX_FILES_WITH_PATCH;
+    const maxPatchBytesPerFile =
+      opts.maxPatchBytesPerFile ?? MAX_PATCH_BYTES_PER_FILE;
+    const maxTotalPatchBytes = opts.maxTotalPatchBytes ?? MAX_TOTAL_PATCH_BYTES;
+    const maxCommits = opts.maxCommits ?? MAX_COMPARE_COMMITS;
+
+    const data = await this.makeRequest<any>(
+      `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/compare?from=${encodeURIComponent(baseSha)}&to=${encodeURIComponent(headSha)}&straight=true`,
+      { headers: this.authHeaders }
+    );
+    const diffs: any[] = data.diffs ?? [];
+    const rawCommits: any[] = data.commits ?? [];
+
+    let truncated =
+      data.compare_timeout === true ||
+      diffs.length > maxFiles ||
+      rawCommits.length > maxCommits;
+    let filesWithPatch = 0;
+    let totalPatchBytes = 0;
+    const files: ChangedFile[] = [];
+
+    for (const diff of diffs.slice(0, maxFiles)) {
+      const status = diffStatus(diff);
+      const entry: ChangedFile = {
+        path: diff.new_path ?? diff.old_path,
+        status,
+        additions: 0,
+        deletions: 0,
+        isBinary: false,
+      };
+      if (status === "renamed") entry.previousPath = diff.old_path;
+
+      if (diff.too_large || diff.collapsed) {
+        entry.patchTruncated = true;
+        truncated = true;
+        files.push(entry);
+        continue;
+      }
+
+      const raw: string = diff.diff ?? "";
+      const parsed = parseUnifiedDiff(raw);
+      entry.additions = parsed.additions;
+      entry.deletions = parsed.deletions;
+      entry.isBinary = parsed.isBinary || (raw === "" && status !== "renamed");
+      if (entry.isBinary) {
+        files.push(entry);
+        continue;
+      }
+
+      const body = stripDiffHeaders(raw);
+      if (body.length === 0) {
+        files.push(entry);
+        continue;
+      }
+      const bytes = Buffer.byteLength(body);
+      if (
+        filesWithPatch >= maxFilesWithPatch ||
+        bytes > maxPatchBytesPerFile ||
+        totalPatchBytes + bytes > maxTotalPatchBytes
+      ) {
+        entry.patchTruncated = true;
+        truncated = true;
+      } else {
+        entry.patch = body;
+        filesWithPatch++;
+        totalPatchBytes += bytes;
+      }
+      files.push(entry);
+    }
+
+    const commits = rawCommits
+      .slice(0, maxCommits)
+      .map((commit) => this.toRepoCommit(commit));
+
+    return {
+      baseSha,
+      headSha,
+      files,
+      commits,
+      truncated,
+      totalFiles: diffs.length,
+    };
+  }
+
+  private toRepoCommit(commit: any): RepoCommit {
+    const sha: string = commit.id;
+    return {
+      sha,
+      shortSha: sha.slice(0, 7),
+      message: commit.message,
+      authorName: commit.author_name,
+      authorEmail: commit.author_email ?? undefined,
+      authoredAt: commit.authored_date ?? commit.created_at,
+      parents: commit.parent_ids ?? [],
+      url: commit.web_url ?? undefined,
+    };
   }
 
   /** Single-request zip archive of the whole tree at `ref`. */

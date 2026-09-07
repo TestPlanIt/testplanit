@@ -6,6 +6,11 @@
 
 import { assertSsrfSafeResolved, isSsrfSafe } from "~/utils/ssrf";
 import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+import {
+  computeLocalCompare,
+  type LocalCompareChange,
+  type LocalCompareResult,
+} from "../diff/localDiff";
 
 export interface RepoFileEntry {
   path: string;
@@ -30,6 +35,115 @@ export interface ArchiveTree {
   files: RepoFileEntry[];
   /** Decompress the contents of the given paths (a subset of `files`). */
   getContents(wantedPaths: Set<string>): Promise<Map<string, string>>;
+}
+
+export interface RepoBranch {
+  name: string;
+  sha: string;
+  isDefault: boolean;
+  protected?: boolean;
+}
+
+export interface RepoCommit {
+  sha: string;
+  shortSha: string;
+  message: string;
+  authorName: string;
+  authorEmail?: string;
+  /** ISO 8601 */
+  authoredAt: string;
+  parents: string[];
+  url?: string;
+}
+
+export interface ListCommitsOptions {
+  page?: number;
+  perPage?: number;
+  path?: string;
+}
+
+export interface ListCommitsResult {
+  commits: RepoCommit[];
+  hasMore: boolean;
+}
+
+export type PullRequestState = "open" | "merged" | "closed";
+
+export interface RepoPullRequest {
+  /** Provider-visible number, or the id where a provider has no number. */
+  number: number;
+  title: string;
+  state: PullRequestState;
+  authorName?: string;
+  sourceBranch: string;
+  targetBranch: string;
+  /**
+   * Head and base commits. A provider that does not return the base in its
+   * list call leaves `baseSha` unset; callers fall back to `targetBranch`,
+   * which the compare route resolves like any other ref.
+   */
+  headSha?: string;
+  baseSha?: string;
+  url?: string;
+  /** ISO 8601 */
+  updatedAt?: string;
+}
+
+export interface ListPullRequestsOptions {
+  /** Defaults to "all"; the picker filters client-side from there. */
+  state?: PullRequestState | "all";
+  page?: number;
+  perPage?: number;
+  /** Free text the provider matches against the title, where it supports it. */
+  search?: string;
+}
+
+export interface ListPullRequestsResult {
+  pullRequests: RepoPullRequest[];
+  hasMore: boolean;
+}
+
+/** Thrown by adapters whose provider has no pull request concept. */
+export class PullRequestsUnsupportedError extends Error {
+  constructor(provider: string) {
+    super(`${provider} does not support pull requests`);
+    this.name = "PullRequestsUnsupportedError";
+  }
+}
+
+export type ChangedFileStatus = "added" | "modified" | "deleted" | "renamed";
+
+export interface ChangedFile {
+  path: string;
+  previousPath?: string;
+  status: ChangedFileStatus;
+  additions: number;
+  deletions: number;
+  /** Unified diff body for this file, starting at the first hunk. Absent when
+   * the file is binary or the patch exceeded a cap. */
+  patch?: string;
+  patchTruncated?: boolean;
+  isBinary: boolean;
+}
+
+export interface CompareOptions {
+  maxFiles?: number;
+  maxFilesWithPatch?: number;
+  maxPatchBytesPerFile?: number;
+  maxTotalPatchBytes?: number;
+  maxCommits?: number;
+}
+
+export interface CompareResult {
+  baseSha: string;
+  headSha: string;
+  files: ChangedFile[];
+  commits: RepoCommit[];
+  /** True when any cap (ours or the provider's) cut the result short. */
+  truncated: boolean;
+  totalFiles?: number;
+  aheadBy?: number;
+  behindBy?: number;
 }
 
 export abstract class GitRepoAdapter {
@@ -104,6 +218,89 @@ export abstract class GitRepoAdapter {
    * Fetch raw text content of a single file at the given path and branch.
    */
   abstract getFileContent(path: string, branch: string): Promise<string>;
+
+  /** Branches of the repository (capped by the adapter, typically 500). */
+  abstract listBranches(): Promise<RepoBranch[]>;
+
+  /**
+   * Commits reachable from `ref` (branch, tag, or sha), newest first.
+   * `path` restricts the log to commits touching that path.
+   */
+  abstract listCommits(
+    ref: string,
+    opts?: ListCommitsOptions
+  ): Promise<ListCommitsResult>;
+
+  /**
+   * Files changed between two commits (base..head), with per-file patches
+   * where the provider exposes them or the local fallback can compute them.
+   */
+  abstract compareCommits(
+    baseSha: string,
+    headSha: string,
+    opts?: CompareOptions
+  ): Promise<CompareResult>;
+
+  /**
+   * Where two refs diverged, or null when the provider cannot say.
+   *
+   * A pull request is judged from this point, not from the target branch tip,
+   * so the diff describes what the branch did rather than also reporting
+   * everything that landed on the target meanwhile, in reverse. Comparing two
+   * commits chosen by hand stays a direct comparison, which is the question
+   * that mode asks.
+   */
+  async getMergeBase(
+    _baseRef: string,
+    _headRef: string
+  ): Promise<string | null> {
+    return null;
+  }
+
+  /**
+   * Pull requests, newest first. Concrete rather than abstract so a provider
+   * that grows support only adds an override, and the UI can ask whether the
+   * mode is offered at all.
+   */
+  async listPullRequests(
+    _opts?: ListPullRequestsOptions
+  ): Promise<ListPullRequestsResult> {
+    throw new PullRequestsUnsupportedError(this.constructor.name);
+  }
+
+  /**
+   * File content at an exact commit. Defaults to getFileContent, which every
+   * provider accepts a sha for except Azure DevOps (it overrides this).
+   */
+  async getFileContentAtCommit(path: string, sha: string): Promise<string> {
+    return this.getFileContent(path, sha);
+  }
+
+  protected isSha(ref: string): boolean {
+    return /^[0-9a-f]{7,40}$/i.test(ref);
+  }
+
+  /**
+   * Shared fallback for providers whose compare endpoint returns changed paths
+   * but no patch text: fetch both sides of each file and diff locally.
+   */
+  protected async computeLocalCompare(
+    baseSha: string,
+    headSha: string,
+    changes: LocalCompareChange[],
+    opts: CompareOptions = {}
+  ): Promise<LocalCompareResult> {
+    return computeLocalCompare(
+      {
+        getFileContentAtCommit: (path, sha) =>
+          this.getFileContentAtCommit(path, sha),
+      },
+      baseSha,
+      headSha,
+      changes,
+      { maxPatchBytesPerFile: opts.maxPatchBytesPerFile }
+    );
+  }
 
   /**
    * HTTP request with timeout via AbortController.

@@ -55,6 +55,9 @@ export interface TrackedResources {
   llmIntegrationIds: number[];
   projectLlmIntegrationIds: string[];
   issueIntegrationIds: number[];
+  codeRepositoryIds: number[];
+  codeRepositoryConfigIds: number[];
+  codePinIds: number[];
 }
 
 export function createTrackedResources(): TrackedResources {
@@ -75,7 +78,40 @@ export function createTrackedResources(): TrackedResources {
     llmIntegrationIds: [],
     projectLlmIntegrationIds: [],
     issueIntegrationIds: [],
+    codeRepositoryIds: [],
+    codeRepositoryConfigIds: [],
+    codePinIds: [],
   };
+}
+
+/** A ProjectCodeRepositoryConfig row as the model API returns it. */
+export interface ImpactConfigRow {
+  id: number;
+  projectId: number;
+  repositoryId: number;
+  purpose: "QUICKSCRIPT" | "IMPACT";
+  branch: string | null;
+  cacheEnabled: boolean;
+  pathPatterns: Array<{ path: string; pattern: string }>;
+}
+
+export type CodePinKind = "FILE" | "RANGE" | "SYMBOL" | "GLOB";
+
+/** A RepositoryCaseCodePin row as the model API returns it. */
+export interface CodePinRow {
+  id: number;
+  caseId: number;
+  configId: number;
+  kind: CodePinKind;
+  filePath: string;
+  startLine: number | null;
+  endLine: number | null;
+  symbol: string | null;
+  anchorSha: string | null;
+  source: "MANUAL" | "AI" | "ANNOTATION" | "MAPFILE";
+  note: string | null;
+  createdById: string;
+  createdAt: string;
 }
 
 /**
@@ -3654,6 +3690,161 @@ export class ApiHelper {
   }
 
   /**
+   * Turn on the Impact feature for a project (gates the settings page's
+   * repository form, the run-composer Impact button and the Code Pins panel).
+   */
+  async enableImpact(projectId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/projects/update`,
+      {
+        data: {
+          where: { id: projectId },
+          data: { impactEnabled: true },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to enable Impact: ${error}`);
+    }
+  }
+
+  /**
+   * Create an admin-level code repository with placeholder credentials.
+   * Specs mock the provider-backed routes (branches, commits, compare,
+   * files) so no request ever reaches GitHub. Soft-deleted on cleanup.
+   */
+  async createCodeRepository(name: string): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/codeRepository/create`,
+      {
+        data: {
+          data: {
+            name,
+            provider: "GITHUB",
+            status: "ACTIVE",
+            credentials: { token: "e2e-placeholder" },
+            settings: { owner: "e2e", repo: "app" },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create code repository: ${error}`);
+    }
+
+    const result = await response.json();
+    const id: number = result.data.id;
+    this.tracked.codeRepositoryIds.push(id);
+    return id;
+  }
+
+  /**
+   * Bind a code repository to a project for Impact (purpose IMPACT — distinct
+   * from the QuickScript binding, one of each per project). Returns the row.
+   * Hard-deleted on cleanup, the way the settings page's Disconnect does it.
+   */
+  async createImpactConfig(
+    projectId: number,
+    repositoryId: number,
+    opts: {
+      branch?: string | null;
+      pathPatterns?: Array<{ path: string; pattern: string }>;
+      cacheEnabled?: boolean;
+    } = {}
+  ): Promise<ImpactConfigRow> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/projectCodeRepositoryConfig/create`,
+      {
+        data: {
+          data: {
+            purpose: "IMPACT",
+            branch: opts.branch === undefined ? "main" : opts.branch,
+            pathPatterns: opts.pathPatterns ?? [
+              { path: "src", pattern: "**/*" },
+            ],
+            cacheEnabled: opts.cacheEnabled ?? true,
+            project: { connect: { id: projectId } },
+            repository: { connect: { id: repositoryId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create Impact config: ${error}`);
+    }
+
+    const result = await response.json();
+    const row = result.data as ImpactConfigRow;
+    this.tracked.codeRepositoryConfigIds.push(row.id);
+    return row;
+  }
+
+  /**
+   * Register a repository config created through the UI so the file-scoped
+   * cleanup removes it.
+   */
+  trackCodeRepositoryConfig(configId: number): void {
+    if (!this.tracked.codeRepositoryConfigIds.includes(configId)) {
+      this.tracked.codeRepositoryConfigIds.push(configId);
+    }
+  }
+
+  /**
+   * Create a Code Pin straight through the model API (ADMIN policy). The
+   * REST route anchors the pin by reading the file from the provider; this
+   * skips that so no git request is made. Soft-deleted on cleanup.
+   */
+  async createCodePin(
+    caseId: number,
+    configId: number,
+    pin: {
+      kind: CodePinKind;
+      filePath: string;
+      startLine?: number;
+      endLine?: number;
+      symbol?: string;
+      note?: string;
+    }
+  ): Promise<CodePinRow> {
+    const userId = await this.getCurrentUserId();
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/repositoryCaseCodePin/create`,
+      {
+        data: {
+          data: {
+            kind: pin.kind,
+            filePath: pin.filePath,
+            startLine: pin.startLine ?? null,
+            endLine: pin.endLine ?? null,
+            symbol: pin.symbol ?? null,
+            note: pin.note ?? null,
+            source: "MANUAL",
+            case: { connect: { id: caseId } },
+            config: { connect: { id: configId } },
+            createdBy: { connect: { id: userId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create code pin: ${error}`);
+    }
+
+    const result = await response.json();
+    const row = result.data as CodePinRow;
+    this.tracked.codePinIds.push(row.id);
+    return row;
+  }
+
+  /**
    * Create a DuplicateScanResult record directly in the database.
    * Used by E2E tests to set up deterministic duplicate pairs without
    * relying on Elasticsearch indexing and scan timing.
@@ -3813,11 +4004,44 @@ export class ApiHelper {
     }
     this.tracked.shareLinkIds = [];
 
+    // Code Pins (soft-delete, matching the app's own delete route) and the
+    // project repository bindings they hang off (hard-delete, as the
+    // settings page's Disconnect does). Both go before the projects.
+    for (const pinId of this.tracked.codePinIds) {
+      await this.request
+        .patch(`${this.baseURL}/api/model/repositoryCaseCodePin/update`, {
+          data: { where: { id: pinId }, data: { isDeleted: true } },
+        })
+        .catch(() => {});
+    }
+    this.tracked.codePinIds = [];
+
+    for (const configId of this.tracked.codeRepositoryConfigIds) {
+      await this.request
+        .delete(
+          `${this.baseURL}/api/model/projectCodeRepositoryConfig/delete`,
+          { data: { where: { id: configId } } }
+        )
+        .catch(() => {});
+    }
+    this.tracked.codeRepositoryConfigIds = [];
+
     // Finally delete projects (they reference everything else)
     for (const projectId of this.tracked.projectIds) {
       await this.deleteProject(projectId);
     }
     this.tracked.projectIds = [];
+
+    // Code repositories are admin records; soft-delete them once no
+    // project binding above references them any more.
+    for (const repositoryId of this.tracked.codeRepositoryIds) {
+      await this.request
+        .patch(`${this.baseURL}/api/model/codeRepository/update`, {
+          data: { where: { id: repositoryId }, data: { isDeleted: true } },
+        })
+        .catch(() => {});
+    }
+    this.tracked.codeRepositoryIds = [];
 
     // Delete templates (created test data)
     const deletedTemplates = this.tracked.templateIds.length > 0;

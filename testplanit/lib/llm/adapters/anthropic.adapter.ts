@@ -39,7 +39,8 @@ interface AnthropicResponse {
   role: string;
   content: Array<{
     type: string;
-    text: string;
+    /** Absent on non-text blocks, which is why the reply is searched by type. */
+    text?: string;
   }>;
   model: string;
   stop_reason: string;
@@ -371,7 +372,10 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     const data = (await response.json()) as AnthropicResponse;
 
     return {
-      content: data.content[0].text,
+      // A thinking model puts its reasoning in the first block, so the reply
+      // is the first TEXT block, not the first block. An answer carrying no
+      // text at all is an empty string, never undefined.
+      content: data.content.find((block) => block.type === "text")?.text ?? "",
       model: data.model,
       promptTokens: data.usage.input_tokens,
       completionTokens: data.usage.output_tokens,

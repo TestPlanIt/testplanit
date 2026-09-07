@@ -736,7 +736,8 @@
       "reports": "Reports",
       "adminSamlConfig": "Admin - SAML Configuration",
       "apiDocumentation": "API Documentation",
-      "sharedContent": "Shared Content"
+      "sharedContent": "Shared Content",
+      "impact": "Impact Analysis"
     },
     "aria": {
       "userMenu": "User menu",
@@ -2224,6 +2225,105 @@
           "savedToast": "Abandoned automation cleanup updated for this project",
           "saveError": "Failed to update abandoned automation cleanup"
         }
+      },
+      "impact": {
+        "title": "Impact Analysis",
+        "description": "Enable test impact analysis and connect the repository of the application under test.",
+        "enableLabel": "Enable Impact Analysis",
+        "enableDescription": "Allow team members to select affected tests from code changes when composing a test run.",
+        "enabledToast": "Impact Analysis enabled",
+        "disabledToast": "Impact Analysis disabled",
+        "noRepos": {
+          "title": "No code repositories configured",
+          "adminDescription": "Set up a repository connection before configuring Impact for this project.",
+          "adminLink": "Go to Code Repositories",
+          "userDescription": "Contact your system administrator to set up a code repository connection."
+        },
+        "repository": {
+          "title": "Application Repository",
+          "description": "Select the repository that holds the application under test.",
+          "placeholder": "Select a code repository...",
+          "branchLabel": "Branch",
+          "branchPlaceholder": "Select a branch...",
+          "branchInputPlaceholder": "Leave blank to use the repository default branch",
+          "defaultBranch": "Repository default branch",
+          "branchesUnavailable": "Branches could not be listed: {error}",
+          "branchesFallbackHint": "Type the branch name instead."
+        },
+        "pathPatterns": {
+          "title": "Path Patterns",
+          "description": "Which application files to include. Each row combines a base path and a glob pattern. Example: path=src + pattern=**/* includes everything under src.",
+          "pathLabel": "Path",
+          "pathPlaceholder": "src",
+          "patternLabel": "Pattern",
+          "addPath": "Add Path",
+          "previewFiles": "Preview Files",
+          "scanningRepo": "Scanning repository files… ({seconds}s)",
+          "files": "{count, plural, one {# file} other {# files}}",
+          "truncatedBadge": "Results may be incomplete (provider limit)"
+        },
+        "preview": {
+          "resolvingBranch": "Resolving branch…",
+          "scanningFiles": "Scanning files in {scope}…",
+          "scanningFilesCount": "Scanning files in {scope}… ({count, number} found)",
+          "filtering": "Applying filters to {count, number} files…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
+        },
+        "cache": {
+          "title": "Cache Settings",
+          "description": "Files are cached in Valkey so the Code Pin file picker and repository markers stay fast.",
+          "enableLabel": "Enable file caching",
+          "disabledWarning": "File caching is disabled. Repository markers are not scanned, and the Code Pin file picker lists files live from your provider on every open.",
+          "ttlBefore": "Cache for",
+          "ttlDays": "{count, plural, one {day} other {days}}",
+          "ttlAriaLabel": "Cache duration in days",
+          "statusTitle": "Cache Status",
+          "refreshButton": "Refresh Cache",
+          "listingFiles": "Listing files…",
+          "cachingFiles": "Caching {count} files…",
+          "statusNeverFetched": "Never fetched",
+          "statusPending": "Refreshing...",
+          "lastFetched": "Last Fetched",
+          "filesCached": "Files Cached",
+          "contentsCached": "Contents Cached",
+          "contentsIncomplete": "Only {cached} of {total} file contents are cached. Refresh again to complete.",
+          "totalSize": "Total Size"
+        },
+        "markers": {
+          "title": "Repository Markers",
+          "description": "Comment annotations like @testplanit case:123 and entries in .testplanit/testmap.yml become Code Pins on every cache refresh.",
+          "lastScan": "Last scan: {date}",
+          "never": "Not scanned yet",
+          "skippedPrivacy": "Skipped: file caching is disabled.",
+          "skippedPartial": "Skipped: file contents were only partially cached.",
+          "summary": "{annotations, plural, one {# annotation} other {# annotations}} · {mapEntries, plural, one {# map entry} other {# map entries}} · {created} created · {updated} updated · {removed} removed",
+          "problems": "{count, plural, one {# problem} other {# problems}}",
+          "error": "Scan failed: {error}"
+        },
+        "save": "Save Configuration",
+        "saved": "Impact Analysis configuration saved",
+        "saveError": "Failed to save configuration",
+        "listError": "Failed to list repository files",
+        "contentsError": "Failed to cache file contents",
+        "networkError": "Network error during cache refresh",
+        "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
+        "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
+        "validation": {
+          "pathRequired": "Path is required",
+          "patternRequired": "Pattern is required",
+          "repositoryRequired": "Repository is required",
+          "pathPatternRequired": "At least one path pattern is required"
+        },
+        "disconnect": "Disconnect Repository",
+        "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
+        "disconnectWarningTitle": "Disconnecting this repository will:",
+        "disconnectWarning1": "Remove {count, plural, one {# Code Pin} other {# Code Pins}} and the analysis history for this repository",
+        "disconnectWarning2": "Remove all cached repository files",
+        "disconnectWarning3": "Remove path pattern and branch configurations",
+        "disconnectSuccess": "Application repository disconnected",
+        "disconnectError": "Failed to disconnect the application repository"
       }
     },
     "matrix": {
@@ -3713,6 +3813,90 @@
       "deleteConfirm": "“{name}” will be removed from your saved views. This can't be undone.",
       "deleted": "Saved view deleted",
       "deleteFailed": "Couldn't delete the view. Please try again."
+    },
+    "codePins": {
+      "add": "Add pin",
+      "addDialogDescription": "Pins are anchored at the current branch tip.",
+      "addDialogTitle": "Pin this case to code",
+      "addFailed": "Could not add the pin",
+      "addSuccess": "Pin added",
+      "anchoredAt": "Anchored at {sha}",
+      "cancel": "Cancel",
+      "caseLabel": "Test case",
+      "casePlaceholder": "Search test cases...",
+      "contentUnavailable": "File content is not available.",
+      "description": "Code this case covers. A change inside a pinned block pulls the case into Impact analyses.",
+      "dismissStale": "Dismiss",
+      "duplicate": "This pin already exists.",
+      "empty": "No Code Pins yet.",
+      "endLine": "End line",
+      "errorFileNotFound": "File not found at the branch tip.",
+      "errorLineOutOfRange": "The line range is outside the file.",
+      "errorSnippetTooLarge": "The pinned block is too large.",
+      "errorSymbolNotFound": "Symbol not found in the file.",
+      "fileLabel": "File",
+      "filePlaceholder": "Search files...",
+      "filesCached": "{count, plural, one {# file} other {# files}} cached · {date}",
+      "filesLive": "Listing files live from the repository",
+      "globLabel": "Pattern",
+      "globMatches": "{count, plural, =0 {No cached files match} one {# cached file matches} other {# cached files match}}",
+      "globPlaceholder": "src/payments/**",
+      "kind": "Kind",
+      "kindFile": "Whole file",
+      "kindGlob": "Glob pattern",
+      "kindLabel": "Pin to",
+      "kindRange": "Lines",
+      "kindSymbol": "Symbol",
+      "linesHint": "Click a line number to start, shift-click to end.",
+      "location": "Location",
+      "managedTooltip": "Managed by the repository. Edit the marker in the code.",
+      "noFilesCached": "No cached file list. Ask a project admin to refresh the repository cache.",
+      "noteLabel": "Note",
+      "notePlaceholder": "Why this case covers this code (optional)",
+      "reanchor": "Re-anchor",
+      "reanchorFailed": "Could not re-anchor the pin",
+      "reanchorSuccess": "Pin re-anchored",
+      "remove": "Remove",
+      "removeConfirm": "Remove this pin?",
+      "removeFailed": "Could not remove the pin",
+      "removeSuccess": "Pin removed",
+      "source": "Source",
+      "sourceAi": "AI",
+      "sourceAnnotation": "Annotation",
+      "sourceManual": "Manual",
+      "sourceMapfile": "Map file",
+      "staleBadge": "Stale",
+      "staleFileDeleted": "file deleted",
+      "staleSnippetNotFound": "lines not found",
+      "staleSymbolNotFound": "symbol not found",
+      "staleTooltip": "The pinned block could not be found at the branch tip: {reason}.",
+      "startLine": "Start line",
+      "submit": "Add pin",
+      "symbolHint": "The declaration is located by name in the file.",
+      "symbolLabel": "Symbol",
+      "symbolNoneDetected": "No symbols detected, type a name.",
+      "symbolPlaceholder": "functionName",
+      "symbolSelectPlaceholder": "Select or type a symbol...",
+      "updateSuccess": "Pin updated",
+      "updateFailed": "Could not update the pin",
+      "editDialogTitle": "Edit this pin",
+      "editDialogDescription": "The file and the pin type stay as they are. To change either, remove this pin and add a new one.",
+      "editAction": "Edit pin",
+      "saveChanges": "Save changes",
+      "symbolSearchPlaceholder": "Search symbols...",
+      "symbolUseTyped": "Use \"{symbol}\"",
+      "title": "Code Pins",
+      "viewerFailed": "Could not load the file.",
+      "viewerLoading": "Loading file…",
+      "viewerTooLarge": "This file is too large to display. Enter the line numbers instead.",
+      "wholeFile": "Whole file"
+    },
+    "diffView": {
+      "added": "Added line",
+      "removed": "Removed line",
+      "oldLine": "Old line",
+      "newLine": "New line",
+      "context": "Context line"
     }
   },
   "tags": {
@@ -4135,6 +4319,168 @@
     "junitFilters": {
       "retried": "Retried",
       "clear": "Clear filters"
+    },
+    "impact": {
+      "title": "Impact",
+      "analyzeImpact": "Analyze impact",
+      "description": "Pick two commits of the application under test and select the test cases the changes affect.",
+      "noRepository": "Connect the application repository in project settings to use Impact.",
+      "aiUnavailable": "No active LLM integration: results come from Code Pins, keyword matching and run history only.",
+      "steps": {
+        "pick": "Commits",
+        "diff": "Changes",
+        "analyze": "Analyze",
+        "review": "Affected Tests"
+      },
+      "pull": {
+        "label": "Pull request",
+        "selectPlaceholder": "Select a pull request...",
+        "searchPlaceholder": "Search by number, title, author or branch...",
+        "stateAll": "All",
+        "stateOpen": "Open",
+        "stateMerged": "Merged",
+        "stateClosed": "Closed",
+        "resolved": "Comparing {base} on {target} with {head} on {source}."
+      },
+      "pick": {
+        "modeLabel": "Choose changes by",
+        "modeCommits": "Commits",
+        "modePull": "Pull request",
+        "modeCommitsHint": "What changed between two builds, so you can retest everything that landed since the one you last verified.",
+        "modePullHint": "What this pull request changes, measured from where its branch split off, so work that landed on the target branch meanwhile is left out.",
+        "branchLabel": "Branch",
+        "baseLabel": "Base commit",
+        "headLabel": "Head commit",
+        "commitPlaceholder": "Search commits...",
+        "searchHint": "Type a commit sha, or filter the loaded commits by message or author.",
+        "refLabel": "Or paste a ref",
+        "refPlaceholder": "Branch, tag or sha",
+        "refNotFound": "Ref not found",
+        "latestOnBranch": "Latest on {branch}",
+        "previousAnalysisLabel": "Start from a previous analysis",
+        "previousAnalysisPlaceholder": "Select an analysis...",
+        "previousAnalysisOption": "{sha} · {date} · {count, plural, one {# affected test} other {# affected tests}}",
+        "sameCommit": "Base and head are the same commit.",
+        "swapped": "Base and head were swapped so the changes read forward.",
+        "loadingCommits": "Loading commits…",
+        "noCommits": "No commits found."
+      },
+      "diff": {
+        "summary": "{files, plural, one {# file} other {# files}} changed · +{additions, number} −{deletions, number}",
+        "truncated": "The provider returned a partial diff. Some changed files are not shown or have no patch.",
+        "noChanges": "No changes between these commits.",
+        "statusAdded": "Added",
+        "statusModified": "Modified",
+        "statusRemoved": "Removed",
+        "statusRenamed": "Renamed",
+        "showPatch": "Show changes",
+        "hidePatch": "Hide changes",
+        "largePatch": "Large patch ({lines, number} lines)",
+        "showFullPatch": "Show full patch",
+        "binary": "Binary file",
+        "noPatch": "Patch not available",
+        "pinnedFiles": "{count, plural, one {# pin} other {# pins}}",
+        "loading": "Comparing commits…",
+        "failed": "Could not compare the commits."
+      },
+      "loading": {
+        "analyzing": "Analyzing…",
+        "resolving_config": "Resolving repository configuration…",
+        "fetching_diff": "Fetching the diff…",
+        "matching_pins": "Matching Code Pins…",
+        "searching_cases": "Searching test cases by keyword…",
+        "scoring_history": "Scoring run history…",
+        "waiting_for_ai": "Waiting for AI…",
+        "merging": "Combining results…",
+        "ranking": "Ranked {current} of {total} candidate test cases",
+        "reused": "Reusing a recent analysis of the same commits."
+      },
+      "affected": {
+        "title": "{count, plural, =0 {No affected tests} one {# affected test} other {# affected tests}}",
+        "description": "Sorted by score. Every test shows why it was selected.",
+        "relatedCount": "{count, plural, one {# related test} other {# related tests}} scored lower and are unchecked.",
+        "summary": "Summary",
+        "score": "Score",
+        "case": "Test case",
+        "reasons": "Why",
+        "tierPinned": "Pinned",
+        "tierAffected": "Affected",
+        "tierRelated": "Related",
+        "selectAll": "Select all",
+        "selectNone": "Select none",
+        "showDetails": "Show reasons",
+        "hideDetails": "Hide reasons",
+        "excluded": "{count, plural, one {# case already in the run was skipped} other {# cases already in the run were skipped}}"
+      },
+      "noAffected": {
+        "title": "No affected tests found",
+        "description": "No test case matched the changes. Pin cases to the changed files so the next analysis finds them."
+      },
+      "reasons": {
+        "pin": "Pin",
+        "path": "Keyword",
+        "history": "History",
+        "ai": "AI",
+        "linked": "Related",
+        "pinRange": "{path}:{start}–{end}",
+        "pinFile": "{path}",
+        "pinGlob": "Matches {pattern}",
+        "pinSymbol": "{path} · {symbol}",
+        "pathDetail": "Matched \"{term}\" in {field}",
+        "fieldName": "case name",
+        "fieldContent": "case content",
+        "fieldTag": "tag",
+        "fieldFolder": "folder",
+        "historyDetail": "{count, plural, one {# earlier run} other {# earlier runs}} after changes to the same files",
+        "historyFailed": "Failed in an earlier run after similar changes",
+        "linkedDetail": "Linked to case {caseId}"
+      },
+      "stale": {
+        "badge": "Stale",
+        "tooltipAnalysis": "The pinned block could not be found at the base commit; matched by file path only. Re-pin from the test case page.",
+        "title": "{count, plural, one {# stale pin} other {# stale pins}}",
+        "description": "These pins no longer match the code. Re-anchor them from the test case page."
+      },
+      "uncovered": {
+        "title": "{count, plural, one {# changed file has no test} other {# changed files have no tests}}",
+        "description": "No test case is linked to these files. Pin a case to close the gap.",
+        "pinAction": "Pin a case...",
+        "pinned": "Pinned"
+      },
+      "warnings": {
+        "diff_truncated_by_provider": "The provider returned a partial diff.",
+        "diff_truncated_by_budget": "Only part of the diff fit the AI context; {count, plural, one {# file was} other {# files were}} summarized by path only.",
+        "llm_not_configured": "No active LLM integration: AI ranking was skipped.",
+        "search_fallback_db": "Search index unavailable: keyword matching used the database.",
+        "search_index_empty": "This project has no cases in the search index, so keyword matching used the database. Ask an admin to reindex for better matches.",
+        "ai_partial": "Some AI batches failed; results may be incomplete.",
+        "ai_truncated": "{count, plural, one {# AI batch was} other {# AI batches were}} cut off by the model.",
+        "no_candidates": "No test case matched.",
+        "anchor_fetch_capped": "Some pinned files were matched by path only (fetch limit reached)."
+      },
+      "actions": {
+        "compare": "Compare",
+        "analyze": "Analyze",
+        "reanalyze": "Analyze again",
+        "refine": "Back to changes",
+        "accept": "{count, plural, one {Add # case} other {Add # cases}}",
+        "cancelAnalysis": "Cancel analysis",
+        "back": "Back",
+        "next": "Next"
+      },
+      "errors": {
+        "title": "Analysis failed",
+        "generic": "Something went wrong while analyzing the changes. Please try again.",
+        "pullFailed": "Could not read that pull request's commits. Pick another, or name the commits yourself.",
+        "compareFailed": "Could not compare the commits.",
+        "analysisFailed": "The analysis failed: {error}",
+        "cancelled": "The analysis was cancelled.",
+        "timeout": "The analysis is taking too long. Check back later or try again.",
+        "branchesFailed": "Could not list branches.",
+        "commitsFailed": "Could not load commits.",
+        "disabled": "Impact is not enabled for this project.",
+        "noConfig": "Connect the application repository in project settings first."
+      }
     }
   },
   "admin": {
@@ -4184,7 +4530,8 @@
       "authentication": "Authentication",
       "toolsAndIntegrations": "Tools & Integrations",
       "aiTools": "AI Tools",
-      "system": "System"
+      "system": "System",
+      "impact": "Impact Analysis"
     },
     "imports": {
       "description": "Bring data from external test management tools into TestPlanIt.",
@@ -5705,7 +6052,9 @@
         "testRunStepResults": "Test Run Step Results",
         "issueConfigs": "Issue Configs",
         "sharedStepGroups": "Shared Step Groups",
-        "dataSets": "Datasets"
+        "dataSets": "Datasets",
+        "codePins": "Code Pins",
+        "impactAnalyses": "Impact Analyses"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -6196,7 +6545,8 @@
         "generate_from_url": "Generate Test Cases from URL (Requirements)",
         "generate_from_url_app": "Generate Test Cases from URL (Application Testing)",
         "automation_candidates": "Automation Candidates Report",
-        "derive_case_steps": "AI Step Derivation"
+        "derive_case_steps": "AI Step Derivation",
+        "impact_analysis": "Impact: Affected Test Selection"
       }
     },
     "elasticsearch": {
@@ -7029,7 +7379,7 @@
     "projectSessions": "## Sessions\nExploratory testing sessions — time-boxed, unscripted testing captured as notes and results across active and completed states.",
     "projectTags": "## Tags\nTags label and group this project's test cases, sessions, and runs so related work is easy to find.",
     "projectIssues": "## Issues\nIssues from this project's connected trackers, linked to the test cases, runs, and sessions where they were found or referenced.",
-    "projectRequirements": "## Requirements\nThe project's requirements in a hierarchy \u2014 authored natively in TestPlanIt or synced from a connected tracker \u2014 with linked test cases and coverage rolled up through the tree.",
+    "projectRequirements": "## Requirements\nThe project's requirements in a hierarchy — authored natively in TestPlanIt or synced from a connected tracker — with linked test cases and coverage rolled up through the tree.",
     "projectReports": "## Reports\nReports summarize this project's testing — test runs, sessions, and results — as charts and tables you can filter and export.",
     "projectAuditLogs": "## Audit Logs\nThe audit trail of actions performed in this project — who changed what, and when — for security and compliance tracking.",
     "projectIntegrations": "## Issue Integrations\nConnect this project to an issue tracker so its test cases, runs, and sessions can link to and sync with external issues and milestones.",
@@ -7736,7 +8086,8 @@
       }
     },
     "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it.",
-    "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you."
+    "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you.",
+    "projectImpact": "## Impact\nConnect the repository of the application under test so this project can run test impact analysis: pick two commits to see which test cases the changes affect, and pin test cases to the code they cover."
   },
   "reports": {
     "ui": {
@@ -8152,9 +8503,9 @@
         "debtByHierarchy": "Debt by top-level requirement",
         "debtAging": "Debt aging",
         "ageUnder30": "Under 30 days",
-        "age30to90": "30\u201390 days",
-        "age90to180": "90\u2013180 days",
-        "age180to365": "180\u2013365 days",
+        "age30to90": "30–90 days",
+        "age90to180": "90–180 days",
+        "age180to365": "180–365 days",
         "ageOver365": "Over a year",
         "includeNotRun": "Include requirements whose tests have never run",
         "otherRoots": "Other ({count, plural, one {# hierarchy} other {# hierarchies}})",

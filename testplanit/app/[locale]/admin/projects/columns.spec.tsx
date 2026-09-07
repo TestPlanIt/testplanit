@@ -143,6 +143,7 @@ const testProject: ExtendedProjects = {
   promptConfigId: null,
   defaultCaseExportTemplateId: null,
   quickScriptEnabled: false,
+  impactEnabled: false,
   junitIterationPropertyNames: [],
   reviewWorkflowEnabled: true,
   requireResultFlipJustification: false,
@@ -163,7 +164,7 @@ const testProject: ExtendedProjects = {
     { userId: "user-2", projectId: 1 },
   ],
   groupPermissions: [{ groupId: 10 }, { groupId: 20 }],
-  codeRepositoryConfig: { id: 1, repository: { name: "my-github-repo" } },
+  codeRepositoryConfigs: [{ id: 1, repository: { name: "my-github-repo" } }],
   projectLlmIntegrations: [
     { isActive: true, llmIntegration: { name: "GPT-4o", provider: "OPENAI" } },
   ],
@@ -184,7 +185,7 @@ const projectWithNoIntegrations: ExtendedProjects = {
   ...testProject,
   id: 3,
   name: "No Integrations Project",
-  codeRepositoryConfig: null,
+  codeRepositoryConfigs: [],
   projectLlmIntegrations: [],
 };
 

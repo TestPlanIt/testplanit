@@ -32,6 +32,7 @@ const entryPoints = [
   "workers/copyMoveWorker.ts",
   "workers/duplicateScanWorker.ts",
   "workers/magicSelectWorker.ts",
+  "workers/impactAnalysisWorker.ts",
   "workers/stepSequenceScanWorker.ts",
   "workers/generateFromUrlWorker.ts",
   "workers/iterationGenerationWorker.ts",
