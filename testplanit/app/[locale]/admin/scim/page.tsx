@@ -53,6 +53,7 @@ import type { Access } from "~/zenstack/models";
 import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";
 import { RoleMappingsCard } from "./RoleMappingsCard";
+import { RotateDialog } from "./RotateDialog";
 
 export default function ScimTokensPage() {
   return <ScimTokensList />;
@@ -218,6 +219,13 @@ function ScimTokensList() {
   );
   const [isRevoking, setIsRevoking] = useState(false);
 
+  // Rotate dialog state — the replacement bearer is revealed once inside the
+  // dialog's own useState and never enters this component or any cache.
+  const [rotateDialogOpen, setRotateDialogOpen] = useState(false);
+  const [tokenToRotate, setTokenToRotate] = useState<ExtendedScimToken | null>(
+    null
+  );
+
   // Mint dialog state — Plan 06-08 wires the actual reveal flow into this slot.
   // The plaintext bearer is held in React useState ONLY, never in any query cache.
   const [mintDialogOpen, setMintDialogOpen] = useState(false);
@@ -288,6 +296,11 @@ function ScimTokensList() {
     setRevokeDialogOpen(true);
   }, []);
 
+  const handleRotate = useCallback((token: ExtendedScimToken) => {
+    setTokenToRotate(token);
+    setRotateDialogOpen(true);
+  }, []);
+
   const handleConfirmRevoke = useCallback(async () => {
     if (!tokenToRevoke) return;
 
@@ -326,6 +339,7 @@ function ScimTokensList() {
   const columns = useColumns(
     userPreferences,
     handleRevoke,
+    handleRotate,
     t,
     tApiTokens,
     tCommon
@@ -477,6 +491,14 @@ function ScimTokensList() {
       <FallbackDefaultCard />
 
       <RoleMappingsCard />
+
+      <RotateDialog
+        open={rotateDialogOpen}
+        onOpenChange={setRotateDialogOpen}
+        tokenId={tokenToRotate?.id ?? null}
+        tokenName={tokenToRotate?.name ?? null}
+        onRotated={() => void refetchTokens()}
+      />
 
       {/* Revoke Single Token Dialog */}
       <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>

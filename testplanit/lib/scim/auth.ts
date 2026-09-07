@@ -150,18 +150,38 @@ export async function requireScimBearer(
   }
 
   const tokenHash = hashToken(raw);
-  const row = await baseDb.scimToken.findUnique({
+  const selection = {
+    id: true,
+    systemUserId: true,
+    idpName: true,
+    isActive: true,
+    expiresAt: true,
+    revokedAt: true,
+    lastUsedAt: true,
+  } as const;
+
+  // Current bearer first — the overwhelmingly common case, and an indexed
+  // unique lookup.
+  let row = await baseDb.scimToken.findUnique({
     where: { token: tokenHash },
-    select: {
-      id: true,
-      systemUserId: true,
-      idpName: true,
-      isActive: true,
-      expiresAt: true,
-      revokedAt: true,
-      lastUsedAt: true,
-    },
+    select: selection,
   });
+
+  // Overlap-window rotation: the superseded bearer stays valid until
+  // previousTokenExpiresAt. The expiry is part of the WHERE rather than a
+  // post-read check so an elapsed window can never resolve, even if a stale
+  // hash is still sitting in the column. The row it returns is the SAME
+  // token row, so the request carries the same id, IdP, and rate-limit
+  // bucket as it would under the new bearer.
+  if (!row) {
+    row = await baseDb.scimToken.findFirst({
+      where: {
+        previousToken: tokenHash,
+        previousTokenExpiresAt: { gt: new Date() },
+      },
+      select: selection,
+    });
+  }
 
   if (!row) {
     throw new ScimAuthError(scimError(401, null, "Token rejected"));

@@ -208,6 +208,7 @@ model User {
     scimSystemTokens                         ScimToken[]                       @relation("ScimSystemUser")
     scimTokensCreated                        ScimToken[]                       @relation("ScimTokenCreatedBy")
     scimTokensRevoked                        ScimToken[]                       @relation("ScimTokenRevokedBy")
+    scimTokensRotated                        ScimToken[]                       @relation("ScimTokenRotatedBy")
     createdShareLinks                        ShareLink[]                       @relation("ShareLinkCreator")
     shareLinkAccessLogs                      ShareLinkAccessLog[]              @relation("ShareLinkAccessor")
     reviewsRequested                         ReviewRequest[]                   @relation("ReviewRequestedBy")
@@ -325,30 +326,44 @@ enum IdpName {
 // Sibling to ApiToken, NOT extension. No userId FK -- a synthetic
 // __scim__ User row carries the audit attribution surface.
 model ScimToken {
-    id                String    @id @default(cuid())
-    name              String    @length(1, 100)
-    idpName           IdpName
-    token             String    @unique               // SHA-256/HMAC hash for bearer lookup
-    tokenPrefix       String                          // "tps_" + first 8 chars of plaintext
-    secret            String    @omit                 // Encrypted raw token at rest
-    systemUserId      String
-    systemUser        User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
-    createdById       String
-    createdBy         User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
-    revokedById       String?
-    revokedBy         User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
-    expiresAt         DateTime?
-    lastUsedAt        DateTime?
-    lastUsedIp        String?
-    lastSyncAt        DateTime?
-    revokedAt         DateTime?
-    createdAt         DateTime  @default(now()) @db.Timestamptz(6)
-    isActive          Boolean   @default(true)
+    id                     String    @id @default(cuid())
+    name                   String    @length(1, 100)
+    idpName                IdpName
+    token                  String    @unique               // SHA-256/HMAC hash for bearer lookup
+    tokenPrefix            String                          // "tps_" + first 8 chars of plaintext
+    secret                 String    @omit                 // Encrypted raw token at rest
+    systemUserId           String
+    systemUser             User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
+    createdById            String
+    createdBy              User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
+    revokedById            String?
+    revokedBy              User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
+    expiresAt              DateTime?
+    lastUsedAt             DateTime?
+    lastUsedIp             String?
+    lastSyncAt             DateTime?
+    revokedAt              DateTime?
+    createdAt              DateTime  @default(now()) @db.Timestamptz(6)
+    isActive               Boolean   @default(true)
 
-    provisionedUsers  User[]    @relation("ScimProvisionedUsers")
-    provisionedGroups Groups[]  @relation("ScimProvisionedGroups")
+    // Overlap-window rotation. Rotation happens in place: the row keeps its
+    // identity (name, IdP, provenance links, rate-limit bucket) and only the
+    // secret moves, so an operator can paste the new bearer into the IdP
+    // while the old one keeps working until previousTokenExpiresAt. Only one
+    // overlap can be open at a time -- rotating again supersedes it.
+    previousToken          String?   @unique  // hash of the superseded bearer
+    previousSecret         String?   @omit    // encrypted superseded bearer
+    previousTokenPrefix    String?
+    previousTokenExpiresAt DateTime?
+    rotatedAt              DateTime?
+    rotatedById            String?
+    rotatedBy              User?     @relation("ScimTokenRotatedBy", fields: [rotatedById], references: [id])
+
+    provisionedUsers       User[]    @relation("ScimProvisionedUsers")
+    provisionedGroups      Groups[]  @relation("ScimProvisionedGroups")
 
     @@index([token])
+    @@index([previousToken])
     @@index([isActive, expiresAt])
     @@index([createdById])
     @@deny('all', auth() == null)

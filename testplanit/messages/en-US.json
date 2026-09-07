@@ -5620,6 +5620,23 @@
       "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
       "fallbackDefaultLabel": "Default access tier",
       "fallbackDefaultSaved": "Fallback default saved",
+      "rotate": {
+        "confirm": "Rotate token",
+        "title": "Rotate SCIM token",
+        "description": "Generate a new bearer for \"{name}\". The token keeps its name, IdP, and everything it has provisioned — only the secret changes.",
+        "overlapLabel": "Keep the old token working for",
+        "overlapHint": "Your IdP keeps provisioning with the old token until this window ends, so you can paste the new one in without an outage.",
+        "overlapNone": "Cut over immediately",
+        "overlap1h": "1 hour",
+        "overlap24h": "24 hours",
+        "overlap7d": "7 days",
+        "overlap30d": "30 days",
+        "submit": "Rotate token",
+        "submitting": "Rotating…",
+        "revealTitle": "New SCIM token",
+        "revealDescriptionOverlap": "Paste this into your IdP before the overlap window ends. The previous token keeps working until then.",
+        "revealDescriptionImmediate": "The previous token stopped working immediately. Paste this into your IdP now to resume provisioning."
+      },
       "roleMappings": {
         "title": "Role Mappings",
         "description": "Map a role your identity provider asserts on a user to an access tier. Role mappings take precedence over group mappings, so they can raise or lower access.",

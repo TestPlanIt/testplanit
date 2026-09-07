@@ -81,9 +81,72 @@ export async function mintScimToken(
 }
 
 /**
+ * Rotate a SCIM token's secret in place, keeping the superseded bearer valid
+ * for `overlapMs` so provisioning does not break in the gap between minting
+ * the replacement and pasting it into the IdP.
+ *
+ * Rotation deliberately does NOT create a new row. The token keeps its id,
+ * name, IdP, rate-limit bucket, and — most importantly — every `scimTokenId`
+ * provenance link pointing at it, so the rotated credential still owns the
+ * users and groups it provisioned.
+ *
+ * Only one overlap can be open at a time: rotating again while a previous
+ * window is still live supersedes it, immediately invalidating the older
+ * bearer. That is the safe direction — an operator who rotates twice in a
+ * hurry is reacting to a leak.
+ *
+ * Returns the new plaintext exactly ONCE, like {@link mintScimToken}.
+ */
+export async function rotateScimToken(
+  id: string,
+  overlapMs: number,
+  rotatedById: string
+): Promise<MintScimTokenResult> {
+  const current = await baseDb.scimToken.findUnique({
+    where: { id },
+    omit: { secret: false },
+  });
+  if (!current) {
+    throw new Error(`ScimToken ${id} not found`);
+  }
+
+  const randomPart = crypto.randomBytes(SCIM_TOKEN_BYTES).toString("base64url");
+  const plaintext = `${SCIM_TOKEN_PREFIX}${randomPart}`;
+  const hash = hashToken(plaintext);
+  const tokenPrefix = plaintext.substring(0, 12);
+  const encryptedSecret = await encrypt(plaintext);
+
+  // A zero (or negative) window means "cut over immediately": no previous
+  // bearer is retained, which is the old revoke + mint semantics.
+  const keepsOverlap = overlapMs > 0;
+
+  const token = await baseDb.scimToken.update({
+    where: { id },
+    data: {
+      token: hash,
+      tokenPrefix,
+      secret: encryptedSecret,
+      previousToken: keepsOverlap ? current.token : null,
+      previousSecret: keepsOverlap ? current.secret : null,
+      previousTokenPrefix: keepsOverlap ? current.tokenPrefix : null,
+      previousTokenExpiresAt: keepsOverlap
+        ? new Date(Date.now() + overlapMs)
+        : null,
+      rotatedAt: new Date(),
+      rotatedById,
+    },
+  });
+
+  return { token, plaintext };
+}
+
+/**
  * Soft-revoke a SCIM token. The row stays in the database forever so audit
  * rows that FK against it keep their referential integrity; the bearer
  * middleware rejects requests once `revokedAt` is set.
+ *
+ * Revocation also closes any open rotation overlap — a revoked token must
+ * not stay reachable through the bearer it was rotated away from.
  */
 export async function revokeScimToken(
   id: string,
@@ -95,6 +158,10 @@ export async function revokeScimToken(
       isActive: false,
       revokedAt: new Date(),
       revokedById,
+      previousToken: null,
+      previousSecret: null,
+      previousTokenPrefix: null,
+      previousTokenExpiresAt: null,
     },
   });
 }

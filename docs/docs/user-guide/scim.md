@@ -37,6 +37,20 @@ SCIM authenticates with a bearer token minted from the TestPlanIt admin UI.
 
 You can revoke a token at any time from the same page. Revocation is immediate: the next request on that token receives `401 Unauthorized`.
 
+### Rotating a token
+
+Use **Rotate** (the ↻ button on the token row) rather than revoking and minting a replacement. Rotation changes only the secret: the token keeps its name, IdP, and — importantly — ownership of everything it has provisioned, so the replacement credential can keep managing the same directory.
+
+1. Click **Rotate** on the token you want to re-key.
+2. Choose how long the old token should keep working: **Cut over immediately**, or an overlap of **1 hour**, **24 hours** (the default), **7 days**, or **30 days**.
+3. Copy the new token from the show-once reveal and paste it into your IdP.
+
+During the overlap window both the old and new bearer authenticate, so provisioning keeps running while you update the IdP configuration — there is no outage between rotating and pasting. When the window ends, the old bearer stops working.
+
+:::note
+Only one overlap can be open per token. Rotating again while a window is still open immediately invalidates the older bearer — which is what you want if you are rotating because a token leaked. Revoking a token also closes its overlap window at once.
+:::
+
 :::warning Important
 The full token is only displayed once upon creation. TestPlanIt stores only an encrypted copy and a hashed copy and cannot show the original value again.
 :::
