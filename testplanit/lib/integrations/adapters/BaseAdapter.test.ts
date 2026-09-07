@@ -429,6 +429,64 @@ describe("BaseAdapter", () => {
       );
     });
 
+    it("should send the raw OAuth token with no Bearer prefix for ClickUp", async () => {
+      const clickupAdapter = new TestAdapter({
+        provider: "CLICKUP",
+        baseUrl: "https://api.clickup.com/api/v2",
+      });
+      await clickupAdapter.authenticate({
+        type: "oauth",
+        accessToken: "cu_test-token",
+        baseUrl: "https://api.clickup.com/api/v2",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: "test" }),
+      });
+
+      await clickupAdapter.testMakeRequest(
+        "https://api.clickup.com/api/v2/task/1"
+      );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.clickup.com/api/v2/task/1",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "cu_test-token",
+          }),
+        })
+      );
+    });
+
+    it("should still add Bearer prefix for OAuth on non-ClickUp providers", async () => {
+      const githubOAuthAdapter = new TestAdapter({
+        provider: "GITHUB",
+        baseUrl: "https://api.github.com",
+      });
+      await githubOAuthAdapter.authenticate({
+        type: "oauth",
+        accessToken: "gho_test-token",
+        baseUrl: "https://api.github.com",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: "test" }),
+      });
+
+      await githubOAuthAdapter.testMakeRequest("https://api.github.com/user");
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/user",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer gho_test-token",
+          }),
+        })
+      );
+    });
+
     it("should add Basic auth header", async () => {
       const basicAdapter = new TestAdapter({
         provider: "TEST",

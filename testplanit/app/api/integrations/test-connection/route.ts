@@ -870,6 +870,11 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       case IntegrationProvider.SIMPLE_URL:
         result = await testSimpleUrlConnection(testCredentials, testSettings);
         break;
+      case IntegrationProvider.CLICKUP:
+        // ClickUp is OAuth-only — same "credentials present, user
+        // authorization pending" check as the other OAuth2 providers above.
+        result = checkOAuthClientConfig(testCredentials);
+        break;
       default:
         result = {
           success: false,

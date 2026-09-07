@@ -1409,6 +1409,9 @@
           },
           "mantisbt": {
             "description": "Connect to a self-hosted MantisBT instance for issue tracking."
+          },
+          "clickup": {
+            "description": "Connect to ClickUp for task tracking and project management."
           }
         }
       },
@@ -5186,6 +5189,10 @@
         "mantisbt": {
           "name": "MantisBT",
           "description": "Connect to a self-hosted MantisBT instance for issue tracking"
+        },
+        "clickup": {
+          "name": "ClickUp",
+          "description": "Connect to ClickUp for task tracking and project management"
         }
       },
       "filterPlaceholder": "Filter integrations...",
@@ -5298,7 +5305,13 @@
         "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
         "mantisBTUrl": "MantisBT URL",
         "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
-        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
+        "mantisBTUrlHelp": "The base URL of your MantisBT instance",
+        "clickupTeamId": "ClickUp Team (Workspace) ID",
+        "clickupTeamIdPlaceholder": "e.g. 9013456789",
+        "clickupTeamIdHelp": "Found in the ClickUp URL after app.clickup.com/",
+        "clickupListId": "Default ClickUp List ID",
+        "clickupListIdPlaceholder": "e.g. 901234567",
+        "clickupListIdHelp": "The List tasks are created in by default; can be overridden per issue"
       },
       "authType": {
         "api_key": "API Key",
@@ -6235,6 +6248,8 @@
       "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
       "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
       "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
+      "clickupTeamId": "## ClickUp Team (Workspace) ID\nThe numeric ID of the ClickUp Team (also called Workspace) tasks belong to.\n\n- Found in the ClickUp URL: app.clickup.com/{teamId}/...\n- Required to browse Spaces/Folders/Lists when picking a project",
+      "clickupListId": "## Default ClickUp List ID\nThe List new tasks are created in by default.\n\n- Found in the ClickUp URL, or via the List's \"Copy link\" option\n- Optional — a specific List can be chosen per issue instead",
       "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {

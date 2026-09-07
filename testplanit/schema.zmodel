@@ -3344,6 +3344,7 @@ enum IntegrationProvider {
     GITEA
     REDMINE
     MANTISBT
+    CLICKUP
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

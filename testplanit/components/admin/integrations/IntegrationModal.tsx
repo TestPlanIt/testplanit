@@ -80,6 +80,7 @@ const providerAuthTypes: Record<IntegrationProvider, IntegrationAuthType[]> = {
   ],
   [IntegrationProvider.REDMINE]: [IntegrationAuthType.API_KEY],
   [IntegrationProvider.MANTISBT]: [IntegrationAuthType.API_KEY],
+  [IntegrationProvider.CLICKUP]: [IntegrationAuthType.OAUTH2],
 };
 
 export function IntegrationModal({

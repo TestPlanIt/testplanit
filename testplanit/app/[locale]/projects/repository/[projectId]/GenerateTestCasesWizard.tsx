@@ -2217,6 +2217,8 @@ export function GenerateTestCasesWizard({
         return "Redmine";
       case "MANTISBT":
         return "MantisBT";
+      case "CLICKUP":
+        return "ClickUp";
       case "SIMPLE_URL":
         return externalSystem;
       default:

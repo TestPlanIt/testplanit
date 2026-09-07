@@ -177,6 +177,8 @@ const authTypeFields: Record<string, FieldConfig[]> = {
     [PAT_FIELD],
   [`${IntegrationProvider.GITEA}_${IntegrationAuthType.OAUTH2}`]:
     OAUTH_CLIENT_FIELDS,
+  [`${IntegrationProvider.CLICKUP}_${IntegrationAuthType.OAUTH2}`]:
+    OAUTH_CLIENT_FIELDS,
 };
 
 const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
@@ -320,6 +322,28 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
       help: "config.mantisBTUrlHelp",
       isCredential: false,
       required: true,
+    },
+  ],
+  [IntegrationProvider.CLICKUP]: [
+    {
+      // ClickUp Team (workspace) ID — needed to walk the Space/Folder/List
+      // hierarchy for the project (List) picker.
+      name: "teamId",
+      label: "config.clickupTeamId",
+      placeholder: "config.clickupTeamIdPlaceholder",
+      help: "config.clickupTeamIdHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      // Default List tasks are created in. Optional: a specific List can be
+      // chosen per-issue via the project picker instead.
+      name: "listId",
+      label: "config.clickupListId",
+      placeholder: "config.clickupListIdPlaceholder",
+      help: "config.clickupListIdHelp",
+      isCredential: false,
+      required: false,
     },
   ],
 };

@@ -8,7 +8,7 @@ import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
+import { siClickup, siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { AuthorizeIntegrationButton } from "./AuthorizeIntegrationButton";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
 import { EditIntegrationButton } from "./EditIntegrationButton";
@@ -45,6 +45,11 @@ const providerIcons: Record<string, React.ReactNode> = {
   ),
   MANTISBT: <MantisBTIcon className="h-4 w-4 text-[#59A635]" />,
   SIMPLE_URL: <Link className="h-4 w-4" />,
+  CLICKUP: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#7B68EE]" fill="currentColor">
+      <path d={siClickup.path} />
+    </svg>
+  ),
 };
 
 export interface ExtendedIntegration extends Integration {

@@ -229,7 +229,12 @@ export abstract class BaseAdapter implements IssueAdapter {
     // Add authentication headers based on auth type
     switch (this.authData.type) {
       case "oauth":
-        headers["Authorization"] = `Bearer ${this.authData.accessToken}`;
+        // ClickUp does not use the "Bearer" prefix on its Authorization
+        // header for OAuth access tokens.
+        headers["Authorization"] =
+          this.config.provider === "CLICKUP"
+            ? this.authData.accessToken!
+            : `Bearer ${this.authData.accessToken}`;
         break;
       case "api_key":
         // Some APIs use Authorization header with token prefix
