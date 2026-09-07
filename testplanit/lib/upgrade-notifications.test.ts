@@ -210,11 +210,31 @@ describe("upgrade-notifications", () => {
     it("still surfaces genuinely-newer 0.x notifications under a 1.0 beta ceiling", () => {
       // A user far behind sees every 0.x notification; the 1.0.0-beta.5 ceiling
       // sits above all of them, so none are wrongly excluded by the beta suffix.
+      // The 1.0.0 entry itself stays out — a beta ranks below its release.
+      const zeroDotX = Object.keys(upgradeNotifications).filter((version) =>
+        version.startsWith("0.")
+      );
       const result = getUpgradeNotificationsBetweenVersions(
         "0.2.0",
         "1.0.0-beta.5"
       );
-      expect(result.length).toBe(Object.keys(upgradeNotifications).length);
+      expect(result.map(({ version }) => version).sort()).toEqual(
+        zeroDotX.sort()
+      );
+    });
+
+    it("holds the 1.0.0 notification back until 1.0.0 itself ships", () => {
+      const versionsUnderBeta = getUpgradeNotificationsBetweenVersions(
+        "0.40.6",
+        "1.0.0-beta.21"
+      ).map(({ version }) => version);
+      expect(versionsUnderBeta).not.toContain("1.0.0");
+
+      const versionsAtRelease = getUpgradeNotificationsBetweenVersions(
+        "0.40.6",
+        "1.0.0"
+      ).map(({ version }) => version);
+      expect(versionsAtRelease).toContain("1.0.0");
     });
   });
 
