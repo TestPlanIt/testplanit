@@ -83,34 +83,6 @@ test.describe("Per-project group access mapping", () => {
     const groupName = `E2E PPM ${run}`;
     let groupId = 0;
     let projectId = 0;
-    let projectAdminRoleId = 0;
-    let createdProjectAdminRole = false;
-
-    await test.step("Ensure a Project Admin role exists", async () => {
-      // Not seeded: db/seed.ts creates only "user" and "admin". Without it a
-      // PROJECTADMIN mapping takes the documented degraded path (GLOBAL_ROLE
-      // + a scimProjectRoleMissing audit) instead of granting the role.
-      const found = await request.get(`${baseURL}/api/model/roles/findFirst`, {
-        params: {
-          q: JSON.stringify({
-            where: { name: "Project Admin" },
-            select: { id: true },
-          }),
-        },
-      });
-      const existing = (await found.json())?.data?.id;
-      if (existing) {
-        projectAdminRoleId = existing;
-      } else {
-        const made = await request.post(`${baseURL}/api/model/roles/create`, {
-          data: { data: { name: "Project Admin" }, select: { id: true } },
-        });
-        expect(made.ok()).toBeTruthy();
-        projectAdminRoleId = (await made.json())?.data?.id;
-        createdProjectAdminRole = true;
-      }
-      expect(projectAdminRoleId).toBeTruthy();
-    });
 
     await test.step("Create a group and pick a project", async () => {
       const created = await request.post(`${baseURL}/api/model/groups/create`, {
@@ -174,8 +146,10 @@ test.describe("Per-project group access mapping", () => {
       );
       const data = (await res.json())?.data;
       expect(data).toBeTruthy();
-      expect(data.accessType).toBe("SPECIFIC_ROLE");
-      expect(data.roleId).toBe(projectAdminRoleId);
+      // GLOBAL_ROLE for every tier: a group row cannot confer project-admin
+      // authority, and the mapping picks no role.
+      expect(data.accessType).toBe("GLOBAL_ROLE");
+      expect(data.roleId).toBeNull();
       expect(data.derivedFromMapping).toBe(true);
     });
 
@@ -207,13 +181,6 @@ test.describe("Per-project group access mapping", () => {
           data: { where: { id: groupId } },
         })
         .catch(() => undefined);
-      if (createdProjectAdminRole) {
-        await request
-          .post(`${baseURL}/api/model/roles/delete`, {
-            data: { where: { id: projectAdminRoleId } },
-          })
-          .catch(() => undefined);
-      }
     });
   });
 });

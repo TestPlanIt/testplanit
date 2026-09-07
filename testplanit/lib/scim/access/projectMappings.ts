@@ -2,9 +2,8 @@
  * Per-project access mapping for directory groups.
  *
  * `Groups.mappedAccess` grants an org-wide tier. This module is its
- * project-scoped counterpart: an IdP group can grant an access tier on one
- * specific project, which is what "make the QA leads Project Admins on
- * Banking, and nothing else" actually requires.
+ * project-scoped counterpart: an IdP group can grant access on one specific
+ * project rather than across the whole instance.
  *
  * Design: mappings are *materialized* into `GroupProjectPermission` rows
  * rather than resolved at request time. The permission engine
@@ -14,29 +13,41 @@
  * path to reason about, and per-project access needs no recompute when
  * membership changes.
  *
- * What a mapping can and cannot do:
+ * ## What a mapping does, precisely
  *
- *   - It GRANTS. The engine honours `SPECIFIC_ROLE` and `GLOBAL_ROLE` on a
- *     group row; `NO_ACCESS` on a *group* row is ignored outright (denial
- *     comes only from a user-specific row or the project default).
- *   - It therefore CANNOT revoke access the project default already gives.
- *     `NONE` is rejected at the write boundary instead of being stored as a
- *     mapping that would silently do nothing.
+ * It grants project access with `GLOBAL_ROLE`: each member carries their own
+ * global role onto the project. That is the only thing a group-level row can
+ * express here, and the reason is worth stating because the tier names invite
+ * a different assumption:
+ *
+ *   - `PROJECTADMIN` is a *system access level*, not a role. Project-admin
+ *     authority is decided by `authorizeProjectAdminForProject`, which
+ *     recognises system ADMIN, the project creator, a `SPECIFIC_ROLE`
+ *     **user** permission naming a "Project Admin" role, or system
+ *     PROJECTADMIN plus `assignedUsers` membership. A *group* permission row
+ *     is none of those, so no mapping written here can confer project-admin
+ *     authority — only the per-area RBAC permissions the member's own role
+ *     carries.
+ *   - `SPECIFIC_ROLE` would need a role id, and this mapping deliberately
+ *     does not pick roles on the operator's behalf. An earlier version bound
+ *     PROJECTADMIN/ADMIN to a role *named* "Project Admin", which conflated a
+ *     system access level with an RBAC role and depended on a role nothing
+ *     creates.
+ *   - `NO_ACCESS` on a group row is ignored by the engine outright (denial
+ *     comes only from a user-specific row or the project default), so a
+ *     mapping cannot revoke access the project default already grants. NONE
+ *     is rejected at the write boundary rather than stored as a mapping that
+ *     would silently do nothing.
+ *
+ * Consequence: the stored tier records operator intent and is audited, but
+ * every mappable tier currently materializes the same grant. Anything finer
+ * belongs in the project's own permission settings, where a role can be
+ * chosen explicitly.
  */
 
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import type { TxClient } from "~/lib/zenstack";
 import type { Access, ProjectAccessType } from "~/zenstack/models";
-
-/**
- * Name of the role a PROJECTADMIN/ADMIN mapping grants on the project.
- *
- * Matches the literal the permission policies and guards already compare
- * against (schema.zmodel `role.name == 'Project Admin'`,
- * lib/services/resultGuards.ts). It is not seeded, so a deployment that never
- * created it gets the documented fallback below rather than a crash.
- */
-export const PROJECT_ADMIN_ROLE_NAME = "Project Admin" as const;
 
 /** Tiers a per-project mapping can express. NONE is deliberately absent. */
 export const PROJECT_MAPPABLE_ACCESS: readonly Access[] = [
@@ -58,41 +69,14 @@ export interface MaterializedGrant {
  * Translate a mapped tier into the `GroupProjectPermission` shape the
  * permission engine understands.
  *
- *   - USER          -> GLOBAL_ROLE: members carry their own global role onto
- *                      the project. `DEFAULT` would be wrong here — the engine
- *                      filters DEFAULT group rows out, so it would grant
- *                      nothing at all.
- *   - PROJECTADMIN  -> SPECIFIC_ROLE on the "Project Admin" role.
- *   - ADMIN         -> the same. Org-wide ADMIN is conferred by
- *                      `Groups.mappedAccess`, not by a project mapping; within
- *                      one project, Project Admin is the strongest grant
- *                      there is.
- *
- * When no "Project Admin" role exists, PROJECTADMIN/ADMIN degrade to
- * GLOBAL_ROLE and the caller is told, so the operator learns their mapping is
- * weaker than they asked for instead of silently getting nothing.
+ * Every mappable tier resolves to `GLOBAL_ROLE` — see the module header for
+ * why a group-level row cannot express more than that. `DEFAULT` would be
+ * wrong even as a "weakest" option: the engine filters DEFAULT group rows
+ * out, so it would grant nothing at all.
  */
-export function tierToProjectGrant(
-  tier: Access,
-  projectAdminRoleId: number | null
-): { grant: MaterializedGrant; degraded: boolean } {
-  if (tier === "PROJECTADMIN" || tier === "ADMIN") {
-    if (projectAdminRoleId !== null) {
-      return {
-        grant: { accessType: "SPECIFIC_ROLE", roleId: projectAdminRoleId },
-        degraded: false,
-      };
-    }
-    return {
-      grant: { accessType: "GLOBAL_ROLE", roleId: null },
-      degraded: true,
-    };
-  }
-
-  return {
-    grant: { accessType: "GLOBAL_ROLE", roleId: null },
-    degraded: false,
-  };
+export function tierToProjectGrant(tier: Access): MaterializedGrant {
+  void tier;
+  return { accessType: "GLOBAL_ROLE", roleId: null };
 }
 
 /**
@@ -110,7 +94,7 @@ export async function materializeGroupProjectMappings(
   tx: TxClient,
   groupId: number
 ): Promise<void> {
-  const [mappings, existing, projectAdminRole] = await Promise.all([
+  const [mappings, existing] = await Promise.all([
     tx.groupProjectAccessMapping.findMany({
       where: { groupId },
       select: { projectId: true, mappedAccess: true },
@@ -124,21 +108,13 @@ export async function materializeGroupProjectMappings(
         derivedFromMapping: true,
       },
     }),
-    tx.roles.findFirst({
-      where: { name: PROJECT_ADMIN_ROLE_NAME, isDeleted: false },
-      select: { id: true },
-    }),
   ]);
 
-  const projectAdminRoleId = projectAdminRole?.id ?? null;
   const existingByProject = new Map(existing.map((e) => [e.projectId, e]));
   const mappedProjectIds = new Set(mappings.map((m) => m.projectId));
 
   for (const mapping of mappings) {
-    const { grant, degraded } = tierToProjectGrant(
-      mapping.mappedAccess,
-      projectAdminRoleId
-    );
+    const grant = tierToProjectGrant(mapping.mappedAccess);
     const current = existingByProject.get(mapping.projectId);
 
     if (
@@ -161,21 +137,6 @@ export async function materializeGroupProjectMappings(
           projectId: mapping.projectId,
           previousAccessType: current.accessType,
           previousRoleId: current.roleId,
-        },
-      });
-    }
-
-    if (degraded) {
-      await captureAuditEvent({
-        action: "UPDATE",
-        entityType: "GroupProjectPermission",
-        entityId: `${groupId}:${mapping.projectId}`,
-        metadata: {
-          scimProjectRoleMissing: true,
-          scimGroupId: String(groupId),
-          projectId: mapping.projectId,
-          requestedTier: mapping.mappedAccess,
-          missingRoleName: PROJECT_ADMIN_ROLE_NAME,
         },
       });
     }

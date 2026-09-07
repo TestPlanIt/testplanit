@@ -7,7 +7,6 @@ vi.mock("~/lib/services/auditLog", () => ({
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
 import {
-  PROJECT_ADMIN_ROLE_NAME,
   isProjectMappableAccess,
   materializeGroupProjectMappings,
   tierToProjectGrant,
@@ -20,7 +19,6 @@ interface TxLike {
     upsert: ReturnType<typeof vi.fn>;
     deleteMany: ReturnType<typeof vi.fn>;
   };
-  roles: { findFirst: ReturnType<typeof vi.fn> };
 }
 
 function makeTx(opts: {
@@ -31,7 +29,6 @@ function makeTx(opts: {
     roleId: number | null;
     derivedFromMapping: boolean;
   }>;
-  projectAdminRoleId?: number | null;
 }): TxLike {
   return {
     groupProjectAccessMapping: {
@@ -42,13 +39,6 @@ function makeTx(opts: {
       upsert: vi.fn(async () => ({})),
       deleteMany: vi.fn(async () => ({ count: 0 })),
     },
-    roles: {
-      findFirst: vi.fn(async () =>
-        opts.projectAdminRoleId === null
-          ? null
-          : { id: opts.projectAdminRoleId ?? 9 }
-      ),
-    },
   };
 }
 
@@ -57,31 +47,31 @@ afterEach(() => {
 });
 
 describe("tierToProjectGrant", () => {
-  it("P1: USER grants GLOBAL_ROLE, not DEFAULT — DEFAULT group rows are filtered out by the engine and would grant nothing", () => {
-    expect(tierToProjectGrant("USER", 9)).toEqual({
-      grant: { accessType: "GLOBAL_ROLE", roleId: null },
-      degraded: false,
+  it("P1: grants GLOBAL_ROLE so members carry their own global role onto the project", () => {
+    expect(tierToProjectGrant("USER")).toEqual({
+      accessType: "GLOBAL_ROLE",
+      roleId: null,
     });
   });
 
-  it("P2: PROJECTADMIN grants the Project Admin role", () => {
-    expect(tierToProjectGrant("PROJECTADMIN", 9)).toEqual({
-      grant: { accessType: "SPECIFIC_ROLE", roleId: 9 },
-      degraded: false,
-    });
+  it("P2: never emits DEFAULT — the engine filters DEFAULT group rows out, so it would grant nothing", () => {
+    for (const tier of ["USER", "PROJECTADMIN", "ADMIN"] as const) {
+      expect(tierToProjectGrant(tier).accessType).not.toBe("DEFAULT");
+    }
   });
 
-  it("P3: ADMIN is the same as PROJECTADMIN within one project", () => {
-    expect(tierToProjectGrant("ADMIN", 9)).toEqual(
-      tierToProjectGrant("PROJECTADMIN", 9)
+  it("P3: never binds a role id — a group mapping does not pick roles on the operator's behalf", () => {
+    for (const tier of ["USER", "PROJECTADMIN", "ADMIN"] as const) {
+      expect(tierToProjectGrant(tier).roleId).toBeNull();
+      expect(tierToProjectGrant(tier).accessType).not.toBe("SPECIFIC_ROLE");
+    }
+  });
+
+  it("P4: every mappable tier resolves identically — PROJECTADMIN is a system access level, not a per-project grant", () => {
+    expect(tierToProjectGrant("PROJECTADMIN")).toEqual(
+      tierToProjectGrant("USER")
     );
-  });
-
-  it("P4: degrades to GLOBAL_ROLE and reports it when no Project Admin role exists", () => {
-    expect(tierToProjectGrant("PROJECTADMIN", null)).toEqual({
-      grant: { accessType: "GLOBAL_ROLE", roleId: null },
-      degraded: true,
-    });
+    expect(tierToProjectGrant("ADMIN")).toEqual(tierToProjectGrant("USER"));
   });
 });
 
@@ -109,8 +99,8 @@ describe("materializeGroupProjectMappings", () => {
     expect(args.create).toMatchObject({
       groupId: 1,
       projectId: 5,
-      accessType: "SPECIFIC_ROLE",
-      roleId: 9,
+      accessType: "GLOBAL_ROLE",
+      roleId: null,
       derivedFromMapping: true,
     });
   });
@@ -199,29 +189,7 @@ describe("materializeGroupProjectMappings", () => {
     expect(tx.groupProjectPermission.upsert).toHaveBeenCalledTimes(1);
   });
 
-  it("P11: audits the degraded grant when the Project Admin role is missing", async () => {
-    const tx = makeTx({
-      mappings: [{ projectId: 5, mappedAccess: "ADMIN" }],
-      projectAdminRoleId: null,
-    });
-
-    await materializeGroupProjectMappings(tx as never, 1);
-
-    expect(captureAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: expect.objectContaining({
-          scimProjectRoleMissing: true,
-          missingRoleName: PROJECT_ADMIN_ROLE_NAME,
-        }),
-      })
-    );
-    const args = tx.groupProjectPermission.upsert.mock.calls[0][0] as {
-      create: Record<string, unknown>;
-    };
-    expect(args.create.accessType).toBe("GLOBAL_ROLE");
-  });
-
-  it("P12: retiers an existing derived row in place", async () => {
+  it("P12: re-tiering an already-derived row is a no-op — every tier grants the same thing", async () => {
     const tx = makeTx({
       mappings: [{ projectId: 5, mappedAccess: "PROJECTADMIN" }],
       existing: [
@@ -236,12 +204,32 @@ describe("materializeGroupProjectMappings", () => {
 
     await materializeGroupProjectMappings(tx as never, 1);
 
+    expect(tx.groupProjectPermission.upsert).not.toHaveBeenCalled();
+  });
+
+  it("P12b: converts a stale SPECIFIC_ROLE derived row from the old role-bridge behaviour", async () => {
+    // Rows written before the role bridge was removed carry a roleId; the
+    // materializer must bring them back to the current shape.
+    const tx = makeTx({
+      mappings: [{ projectId: 5, mappedAccess: "ADMIN" }],
+      existing: [
+        {
+          projectId: 5,
+          accessType: "SPECIFIC_ROLE",
+          roleId: 9,
+          derivedFromMapping: true,
+        },
+      ],
+    });
+
+    await materializeGroupProjectMappings(tx as never, 1);
+
     const args = tx.groupProjectPermission.upsert.mock.calls[0][0] as {
       update: Record<string, unknown>;
     };
     expect(args.update).toMatchObject({
-      accessType: "SPECIFIC_ROLE",
-      roleId: 9,
+      accessType: "GLOBAL_ROLE",
+      roleId: null,
       derivedFromMapping: true,
     });
   });

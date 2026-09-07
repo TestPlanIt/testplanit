@@ -50,15 +50,17 @@ If your identity provider sends a `roles` attribute on the user, you can also ma
 
 ## Per-project access
 
-The Mapped Access Tier above is org-wide. When a group should only carry weight on certain projects — "the QA leads are Project Admins on Banking, and ordinary users everywhere else" — use **Per-project access** in the group's edit dialog instead.
+The Mapped Access Tier above is org-wide. When a group should reach only certain projects — "the QA leads work on Banking, and nothing else" — use **Per-project access** in the group's edit dialog instead of granting access everywhere.
 
 Pick a project, choose the tier the group should grant there, and click **Add project**. Repeat for each project; change a tier from the same list, or remove one with the trash icon.
 
-| Tier | Effect on that project |
-| --- | --- |
-| **User** | Members get their own global role on the project. |
-| **Project Admin** | Members get the Project Admin role on the project. |
-| **Admin** | The same as Project Admin — within a single project, Project Admin is the strongest grant there is. Org-wide Admin comes from the Mapped Access Tier, not from here. |
+Every tier currently grants the same thing: members of the group gain access to that project and carry **their own global role** onto it. The tier is recorded for intent and shows up in the audit log, but it does not currently change what is granted.
+
+:::warning Per-project access does not make anyone a project admin
+"Project Admin" in the tier list is a **system access level**, not a per-project role. Project-admin authority on a project comes from being a system Admin, being the project's creator, holding a user-specific permission that assigns a role named `Project Admin`, or holding the system Project Admin access level while assigned to the project directly. A group grant is none of those, so per-project access never confers it — members get the per-area permissions their own role carries, and nothing more.
+
+If you need someone to administer a specific project, assign it to them in **Project Settings > Members** rather than through a group mapping.
+:::
 
 :::note Per-project access only grants
 It cannot take away access a project's own default already gives, which is why there is no **None** option. To deny access on a project, set that project's default access to **No access** and grant it explicitly to the groups that should have it.
@@ -67,10 +69,6 @@ It cannot take away access a project's own default already gives, which is why t
 Access flows through the project's normal permission rules alongside anything assigned directly in **Project Settings > Members**, and follows the same precedence — a user-specific permission beats a group one. Removing a mapping withdraws only the grant it created; a permission an admin assigned to the group by hand in project settings is left alone.
 
 Because access follows group membership, a user added to the group picks up its per-project access with no further configuration.
-
-:::warning Requires a "Project Admin" role
-The **Project Admin** and **Admin** tiers grant a role named exactly `Project Admin`, which is not created by default. If no such role exists, the mapping falls back to granting each member their own global role and records the shortfall in the audit log. Create the role under [Roles](./roles.md) before relying on these tiers.
-:::
 
 ## Deleting a Group
 

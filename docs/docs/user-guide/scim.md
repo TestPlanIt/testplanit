@@ -269,19 +269,17 @@ Selecting **No mapping** removes the mapping from that group — it no longer dr
 
 #### Grant a group access on one project
 
-The **Mapped Access Tier** above is org-wide. When a group should only carry weight on certain projects — "the QA leads are Project Admins on Banking, and ordinary users everywhere else" — use per-project access instead.
+The **Mapped Access Tier** above is org-wide. When a group should reach only certain projects — "the QA leads work on Banking, and nothing else" — use per-project access instead of granting access everywhere.
 
 1. Navigate to **Admin → Users & Groups → Groups** (`/admin/groups`) and open the group's edit dialog.
 2. Under **Per-project access**, pick a project and the tier the group should grant there.
 3. Click **Add project**. Repeat for each project. Change a tier from the same list, or remove one with the trash icon.
 
-How the tiers resolve on that project:
+Every tier currently grants the same thing: members gain access to that project and carry **their own global role** onto it. The tier is recorded for intent and appears in the audit log, but does not currently change what is granted.
 
-| Tier | Effect on the project |
-| --- | --- |
-| **User** | Members get their own global role on the project. |
-| **Project Admin** | Members get the Project Admin role on the project. |
-| **Admin** | The same as Project Admin — within a single project, Project Admin is the strongest grant there is. Org-wide Admin comes from the Mapped Access Tier, not from here. |
+:::warning Per-project access does not make anyone a project admin
+"Project Admin" in the tier list is a **system access level**, not a per-project role. Project-admin authority comes from being a system Admin, being the project's creator, holding a user-specific permission that assigns a role named `Project Admin`, or holding the system Project Admin access level while assigned to the project directly. A group grant is none of those, so per-project access never confers it. Assign project administrators in the project's own settings instead.
+:::
 
 :::note Per-project access only grants
 It cannot take away access a project's own default already gives, which is why there is no **None** option. To deny access on a project, set that project's default access to **No access** and grant it explicitly to the groups that should have it.

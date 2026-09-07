@@ -27,10 +27,7 @@ import {
   SCIM_SYSTEM_USER_ID,
   SYSTEM_PROJECT_ID,
 } from "~/lib/scim/constants";
-import {
-  PROJECT_ADMIN_ROLE_NAME,
-  materializeGroupProjectMappings,
-} from "~/lib/scim/access/projectMappings";
+import { materializeGroupProjectMappings } from "~/lib/scim/access/projectMappings";
 import { rotateScimToken } from "~/lib/scim/tokens";
 import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import {
@@ -79,7 +76,6 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
   const createdGroupIds: number[] = [];
   const createdRoleValues: string[] = [];
   let projectId: number;
-  let projectAdminRoleId: number;
   let defaultRoleId: number;
 
   beforeAll(async () => {
@@ -110,20 +106,6 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
     });
     if (!defaultRole) throw new Error("No default role configured");
     defaultRoleId = defaultRole.id;
-
-    // "Project Admin" is not seeded, so create it when a database lacks it.
-    const existingPa = await db.roles.findFirst({
-      where: { name: PROJECT_ADMIN_ROLE_NAME },
-      select: { id: true },
-    });
-    projectAdminRoleId =
-      existingPa?.id ??
-      (
-        await db.roles.create({
-          data: { name: PROJECT_ADMIN_ROLE_NAME, isDefault: false },
-          select: { id: true },
-        })
-      ).id;
 
     // NO_ACCESS default isolates the mapping's effect: without a grant the
     // member resolves to no role at all.
@@ -509,8 +491,10 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
         where: { groupId_projectId: { groupId, projectId } },
       });
       expect(row).not.toBeNull();
-      expect(row!.accessType).toBe("SPECIFIC_ROLE");
-      expect(row!.roleId).toBe(projectAdminRoleId);
+      // GLOBAL_ROLE regardless of tier: a group row cannot confer
+      // project-admin authority, and the mapping picks no role.
+      expect(row!.accessType).toBe("GLOBAL_ROLE");
+      expect(row!.roleId).toBeNull();
       expect(row!.derivedFromMapping).toBe(true);
     });
 
@@ -532,12 +516,13 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
         await materializeGroupProjectMappings(tx, groupId);
       });
 
+      // The member carries their own global role onto the project.
       const after = await resolveEffectiveProjectRoleId(
         userId,
         projectId,
         db as never
       );
-      expect(after).toBe(projectAdminRoleId);
+      expect(after).toBe(defaultRoleId);
     });
 
     it("V15: USER maps to GLOBAL_ROLE, so the member carries their own role onto the project", async () => {
@@ -572,7 +557,7 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
       });
       expect(
         await resolveEffectiveProjectRoleId(userId, projectId, db as never)
-      ).toBe(projectAdminRoleId);
+      ).toBe(defaultRoleId);
 
       await db.groupProjectAccessMapping.deleteMany({
         where: { groupId, projectId },
@@ -632,7 +617,7 @@ describeIntegration("SCIM v2 follow-ups (live DB)", () => {
         where: { groupId },
       });
       expect(rows).toHaveLength(1);
-      expect(rows[0].accessType).toBe("SPECIFIC_ROLE");
+      expect(rows[0].accessType).toBe("GLOBAL_ROLE");
     });
   });
 });

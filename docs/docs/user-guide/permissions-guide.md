@@ -280,6 +280,7 @@ TestPlanIt does not ship with pre-configured roles — administrators create the
 
 - **The default role** - one role can be marked as the default. Newly provisioned users (including SCIM-provisioned accounts) receive it automatically, and it cannot be deleted while it is the default.
 - **The role named `Project Admin`** - this exact name is special-cased. A user whose project permission is `SPECIFIC_ROLE` with a role named **Project Admin** counts as a *project admin* — alongside the project creator and `PROJECTADMIN`/`ADMIN` system access — for admin-gated project actions such as milestone sync, unlocking a run's composition, and managing project members.
+  - This applies to **user** permissions only. The same role granted to a *group* conveys that role's per-area permissions but does not confer project-admin authority, so group membership alone can never unlock those admin-gated actions. Assign project administrators individually in **Project Settings > Members**.
 
 ### Example Role Patterns
 
@@ -756,7 +757,7 @@ If the change still has not applied after a minute, it is not this cache. Confir
 - Create groups
 - Add/remove members
 - Set a **Mapped Access Tier** to drive members' global access level (see [Role mapping](./scim.md#role-mapping))
-- Grant **Per-project access** so the group carries a tier on specific projects only (see [Per-project access](./groups.md#per-project-access))
+- Grant **Per-project access** so the group reaches specific projects only (see [Per-project access](./groups.md#per-project-access))
 - View group projects
 - Delete groups
 - Audit group access

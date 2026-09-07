@@ -223,9 +223,8 @@ The other two mapping surfaces are audited the same way, each with the field-lev
 - Creating, retiering, or removing a **role mapping** is recorded against `ScimRoleMapping`, keyed by the role value. Removing a mapping is recorded as a `DELETE`; the per-user recompute it triggers is scoped to the holders of that role.
 - Granting, changing, or withdrawing **per-project access** for a group is recorded against `GroupProjectAccessMapping`, keyed by group and project.
 
-Two situations worth watching for, both recorded against the affected `GroupProjectPermission`:
+One situation worth watching for, recorded against the affected `GroupProjectPermission`:
 
-- `scimProjectRoleMissing` — a **Project Admin** or **Admin** per-project mapping could not grant the `Project Admin` role because no such role exists, so it fell back to granting each member their own global role.
 - `scimProjectMappingSupersededManual` — a per-project mapping took over a permission row an admin had previously assigned to that group by hand.
 
 ### SCIM token and cross-IdP events
