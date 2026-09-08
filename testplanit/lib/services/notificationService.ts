@@ -1,6 +1,6 @@
 import { ApplicationArea, NotificationType } from "~/zenstack/models";
-import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { getCurrentTenantId } from "../multiTenantDb";
+import { JOB_CREATE_NOTIFICATION } from "../queueNames";
 import { getNotificationQueue } from "../queues";
 
 interface CreateNotificationParams {

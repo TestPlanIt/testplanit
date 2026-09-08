@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Unit tests for reconcileStaleSchedulers (scheduler.ts). The function is
 // exercised directly with fake queues; scheduler.ts's import graph is mocked
-// so the test never touches Valkey, Prisma, or the worker modules.
+// so the test never touches Valkey or Prisma.
 
 vi.mock("./lib/queues", () => ({
   FORECAST_QUEUE_NAME: "forecast-updates",
@@ -18,21 +18,6 @@ vi.mock("./lib/queues", () => ({
 vi.mock("./lib/multiTenantDb", () => ({
   getAllTenantIds: () => [],
   isMultiTenantMode: () => true,
-}));
-
-vi.mock("./workers/forecastWorker", () => ({
-  JOB_UPDATE_ALL_CASES: "update-all-cases-forecast",
-  JOB_AUTO_COMPLETE_MILESTONES: "auto-complete-milestones",
-  JOB_MILESTONE_DUE_NOTIFICATIONS: "milestone-due-notifications",
-  JOB_REVIEW_REMINDERS: "review-reminders",
-}));
-
-vi.mock("./workers/notificationWorker", () => ({
-  JOB_SEND_DAILY_DIGEST: "send-daily-digest",
-}));
-
-vi.mock("./workers/repoCacheWorker", () => ({
-  JOB_REFRESH_EXPIRED_CACHES: "refresh-expired-caches",
 }));
 
 import { reconcileStaleSchedulers } from "./scheduler";

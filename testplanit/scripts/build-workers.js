@@ -44,11 +44,52 @@ const entryPoints = [
   "scheduler.ts",
 ];
 
+/**
+ * Fail the build if any bundle inlined another entry point's source file.
+ *
+ * Every worker starts itself behind `require.main === module`. Inside a CJS
+ * bundle that test is true for every inlined module, not just the entry, so
+ * a bundle that swallows a second worker boots both in one process: the
+ * extra worker steals that queue's jobs and its SIGTERM handler races the
+ * real one to `process.exit`. Shared job names belong in lib/queueNames.ts.
+ */
+function assertOneEntryPerBundle(metafile) {
+  const entries = new Set(entryPoints.map((p) => path.normalize(p)));
+  const problems = [];
+
+  for (const [outFile, output] of Object.entries(metafile.outputs)) {
+    if (!output.entryPoint) continue;
+    const own = path.normalize(output.entryPoint);
+
+    for (const input of Object.keys(output.inputs)) {
+      const normalized = path.normalize(input);
+      if (normalized === own || !entries.has(normalized)) continue;
+
+      const importers = Object.entries(metafile.inputs)
+        .filter(([, meta]) =>
+          meta.imports.some((imp) => path.normalize(imp.path) === normalized)
+        )
+        .map(([file]) => file);
+      problems.push(
+        `${outFile} inlines ${input} (imported by ${importers.join(", ") || "unknown"})`
+      );
+    }
+  }
+
+  if (problems.length > 0) {
+    console.error("✗ Each worker bundle must contain exactly one entry point:");
+    for (const problem of problems) {
+      console.error(`  - ${problem}`);
+    }
+    process.exit(1);
+  }
+}
+
 async function build() {
   try {
     console.log("Building workers...");
 
-    await esbuild.build({
+    const result = await esbuild.build({
       entryPoints,
       bundle: true, // Bundle to resolve all imports
       platform: "node",
@@ -60,7 +101,10 @@ async function build() {
       tsconfig: path.join(rootDir, "tsconfig.workers.json"),
       packages: "external", // Don't bundle node_modules, treat them as external
       logLevel: "info",
+      metafile: true,
     });
+
+    assertOneEntryPerBundle(result.metafile);
 
     console.log("✓ Workers built successfully");
 

@@ -13,7 +13,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/lib/queues", () => ({ getNotificationQueue: () => null }));
 
-const { claimRunReadyTransition, evaluateRunReadiness, runReadyCheckJobId } =
+const { claimRunReadyTransition, evaluateRunReadiness, runReadyDedupId } =
   await import("./runReadyCheck");
 
 interface Counts {
@@ -56,15 +56,13 @@ const READY_RUN = {
 
 beforeEach(() => vi.clearAllMocks());
 
-describe("runReadyCheckJobId", () => {
-  // The job id is the debounce: a bulk submission touching hundreds of cases
-  // must collapse onto one evaluation per run.
+describe("runReadyDedupId", () => {
+  // The deduplication id is the debounce: a bulk submission touching hundreds
+  // of cases must collapse onto one evaluation per run.
   it("is stable per run and tenant", () => {
-    expect(runReadyCheckJobId(42, "acme")).toBe("runready:acme:42");
-    expect(runReadyCheckJobId(42, undefined)).toBe("runready:default:42");
-    expect(runReadyCheckJobId(42, "acme")).not.toBe(
-      runReadyCheckJobId(43, "acme")
-    );
+    expect(runReadyDedupId(42, "acme")).toBe("runready:acme:42");
+    expect(runReadyDedupId(42, undefined)).toBe("runready:default:42");
+    expect(runReadyDedupId(42, "acme")).not.toBe(runReadyDedupId(43, "acme"));
   });
 });
 

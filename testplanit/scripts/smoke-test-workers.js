@@ -54,6 +54,13 @@ const WORKERS = [
   "magicSelectWorker",
   "stepSequenceScanWorker",
   "generateFromUrlWorker",
+  "iterationGenerationWorker",
+  "scimAccessRecomputeWorker",
+  "webhookDispatchWorker",
+  "webhookOutboxWorker",
+  "webhookRetentionWorker",
+  "dataChangeLogRetentionWorker",
+  "datasetLeaseSweepWorker",
 ];
 
 const entryPoints = [

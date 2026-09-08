@@ -45,7 +45,10 @@ spec:
               # Schema sync + DDL run on the direct (non-pooled) connection.
               export DATABASE_URL="${DIRECT_DATABASE_URL:-$DATABASE_URL}"
               echo "==> Applying migrations..."
-              zenstack migrate deploy --schema schema.zmodel --no-version-check
+              # Same guards as docker-entrypoint.sh: no telemetry egress, and
+              # the arm64 fresh-database workaround.
+              CHECKPOINT_DISABLE=1 DEBUG=prisma:engines \
+                zenstack migrate deploy --schema schema.zmodel --no-version-check
               echo "==> Applying audit triggers..."
               tsx scripts/apply-triggers.ts
               echo "==> Setting up PostgreSQL extensions..."
