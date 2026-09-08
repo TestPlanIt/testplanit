@@ -1,3 +1,14 @@
+## [1.0.2](https://github.com/TestPlanIt/testplanit/compare/v1.0.1...v1.0.2) (2026-09-08)
+
+### Features
+
+* **release:** publish the Helm chart alongside the self-host images ([#621](https://github.com/TestPlanIt/testplanit/issues/621)) ([6186511](https://github.com/TestPlanIt/testplanit/commit/618651123dabd67c10fc879182a98b36434da610))
+
+### Bug Fixes
+
+* **import:** import steps that have no expected result ([#626](https://github.com/TestPlanIt/testplanit/issues/626)) ([5bb98b8](https://github.com/TestPlanIt/testplanit/commit/5bb98b8d7453b1e34461b8ddf8b50f8732f52ec7))
+* **release:** dispatch the self-host image build on every release ([#619](https://github.com/TestPlanIt/testplanit/issues/619)) ([661ce5b](https://github.com/TestPlanIt/testplanit/commit/661ce5b8a53ee3e6d6424841e3edbdf6b2648bf5))
+
 ## [1.0.1](https://github.com/TestPlanIt/testplanit/compare/v1.0.0...v1.0.1) (2026-09-08)
 
 ### Bug Fixes
