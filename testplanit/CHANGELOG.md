@@ -1,3 +1,9 @@
+## [1.0.3](https://github.com/TestPlanIt/testplanit/compare/v1.0.2...v1.0.3) (2026-09-08)
+
+### Bug Fixes
+
+* **deploy:** stop worker bundles starting extra workers and unstick migrate deploy on fresh databases ([#627](https://github.com/TestPlanIt/testplanit/issues/627)) ([49afe64](https://github.com/TestPlanIt/testplanit/commit/49afe641c66645a988cc03cd665ed3943d75f500))
+
 ## [1.0.2](https://github.com/TestPlanIt/testplanit/compare/v1.0.1...v1.0.2) (2026-09-08)
 
 ### Features
