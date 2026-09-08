@@ -58,12 +58,12 @@
     "@testplanit/api": "workspace:^"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@vitest/coverage-v8": "^4.1.10",
-    "@wdio/reporter": "^9.29.1",
-    "@wdio/types": "^9.29.1",
+    "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@wdio/reporter": "^9.31.2",
+    "@wdio/types": "^9.31.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }

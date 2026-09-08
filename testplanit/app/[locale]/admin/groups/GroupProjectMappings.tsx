@@ -12,7 +12,7 @@
 
 import { useClientQueries } from "@zenstackhq/tanstack-query/react";
 import { schema } from "~/zenstack/schema";
-import { FolderKanban, Trash2 } from "lucide-react";
+import { FolderKanban, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -143,7 +143,7 @@ export function GroupProjectMappings({ groupId }: GroupProjectMappingsProps) {
             data-testid={`group-project-mapping-delete-${mapping.projectId}`}
             onClick={() => save(mapping.projectId, null)}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       ))}

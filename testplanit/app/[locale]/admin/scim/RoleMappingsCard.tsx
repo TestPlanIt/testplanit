@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SectionHeader } from "@/components/ui/typography";
-import { Trash2 } from "lucide-react";
+import { Trash } from "lucide-react";
 import { toast } from "sonner";
 
 import type { DowngradedUser } from "~/app/actions/scimMappingActions";
@@ -202,7 +202,7 @@ export function RoleMappingsCard() {
                   })
                 }
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
               </Button>
             </div>
           ))}
