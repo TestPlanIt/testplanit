@@ -78,16 +78,24 @@ jobs:
             echo "released=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Trigger Docker build
+      # Both image builds must be dispatched explicitly. semantic-release tags
+      # its own `chore(release): X [skip ci]` commit, and GitHub honours
+      # [skip ci] natively for tag pushes — so the `on: push: tags` triggers in
+      # release.yml and release-selfhost.yml never fire for a released version.
+      - name: Trigger image builds
         if: steps.release.outputs.released == 'true' && steps.release.outputs.version != '' && steps.release.outputs.version != 'v'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           VERSION="${{ steps.release.outputs.version }}"
-          if [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Triggering Docker build for version: $VERSION"
-            gh workflow run release.yml -f tag=$VERSION
-          else
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Error: Invalid version format: $VERSION"
             exit 1
           fi
+          # SaaS images (ghcr.io/testplanit/testplanit) — arm64, hosted fleet.
+          echo "Triggering Docker build for version: $VERSION"
+          gh workflow run release.yml -f tag=$VERSION
+          # Public self-host images (ghcr.io/testplanit/testplanit-selfhost) —
+          # multi-arch, what the Helm chart and compose self-hosters pull.
+          echo "Triggering self-host image build for version: $VERSION"
+          gh workflow run release-selfhost.yml -f tag=$VERSION
