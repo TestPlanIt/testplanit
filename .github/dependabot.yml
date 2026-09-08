@@ -19,6 +19,15 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "react-resizable-panels"
         update-types: ["version-update:semver-major"]
+      # TypeScript 7 is held: typescript-eslint refuses to load against it
+      # ("typescript-eslint does not support TS 7.0"), so `pnpm lint` dies
+      # before any test runs and the whole grouped PR fails its required check.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "undici"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "bullmq"
+        update-types: ["version-update:semver-major"]
     groups:
       dev-dependencies:
         dependency-type: "development"
