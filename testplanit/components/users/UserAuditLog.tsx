@@ -284,14 +284,13 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
         </div>
 
         <div className="w-[170px]">
-          <Label className="sr-only">{t("filterAction")}</Label>
           <Select
             value={actionFilter}
             onValueChange={(value) =>
               setActionFilter(value as AuditAction | "all")
             }
           >
-            <SelectTrigger>
+            <SelectTrigger aria-label={t("filterAction")}>
               <SelectValue placeholder={t("allActions")} />
             </SelectTrigger>
             <SelectContent>
@@ -306,9 +305,8 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
         </div>
 
         <div className="w-[170px]">
-          <Label className="sr-only">{t("filterEntityType")}</Label>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger>
+            <SelectTrigger aria-label={t("filterEntityType")}>
               <SelectValue placeholder={t("allEntityTypes")} />
             </SelectTrigger>
             <SelectContent>
@@ -323,9 +321,8 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
         </div>
 
         <div className="w-[170px]">
-          <Label className="sr-only">{tCommon("fields.project")}</Label>
           <Select value={projectFilter} onValueChange={setProjectFilter}>
-            <SelectTrigger>
+            <SelectTrigger aria-label={tCommon("fields.project")}>
               <SelectValue placeholder={t("allProjects")} />
             </SelectTrigger>
             <SelectContent>

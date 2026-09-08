@@ -9,7 +9,6 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -413,12 +412,14 @@ export function UserComments({ userId }: UserCommentsProps) {
           dataTestId="user-comments-search"
         />
         <div className="w-[200px]">
-          <Label className="sr-only">{t("filterLabel")}</Label>
           <Select
             value={scope}
             onValueChange={(value) => setScope(value as CommentScope)}
           >
-            <SelectTrigger data-testid="user-comments-scope-select">
+            <SelectTrigger
+              aria-label={t("filterLabel")}
+              data-testid="user-comments-scope-select"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
