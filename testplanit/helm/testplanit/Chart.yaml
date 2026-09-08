@@ -7,11 +7,13 @@ description: |
   Valkey, Elasticsearch, and MinIO that can each be swapped for managed services
   (RDS / ElastiCache / OpenSearch / S3).
 type: application
-# Chart version — bump on chart changes (independent of the app image version).
-version: 0.1.1
-# appVersion is intentionally unset: the application image is bring-your-own
-# (its domain is baked at build time), so the running app version is whatever
-# image tag the operator supplies via `image.tag`.
+# Chart version — tracks the app release line it ships against.
+version: 1.0.0
+# The application release this chart ships against. Surfaces on every object as
+# the standard app.kubernetes.io/version label. Operators who pin `image.tag`
+# to a different release should expect that label to reflect this value, not
+# their override.
+appVersion: "1.0.0"
 kubeVersion: ">=1.25.0-0"
 home: https://testplanit.com
 sources:
