@@ -22,9 +22,19 @@ TestPlanIt applies database schema changes with versioned migrations (`zenstack 
 A routine upgrade with Docker:
 
 ```bash
-docker pull ghcr.io/testplanit/testplanit:latest
+docker pull ghcr.io/testplanit/testplanit-selfhost:latest
 docker compose up -d   # pending migrations apply on startup
 ```
+
+:::note Which image to pull
+
+Self-hosted deployments use **`testplanit-selfhost`**. It is domain-agnostic, so
+one image serves any hostname, and it is published for both `linux/amd64` and
+`linux/arm64`. The `testplanit` image is built for the hosted service, bakes its
+domain in at build time, and is `arm64` only — pulling it on an x86 host fails
+with `no matching manifest for linux/amd64`.
+
+:::
 
 A routine upgrade from source:
 
@@ -51,7 +61,7 @@ npx zenstack migrate resolve --applied 20260625193632_init --schema schema.zmode
 # `docker compose run --rm --no-deps --entrypoint "" prod` for `docker run --rm --entrypoint ""`):
 docker run --rm --entrypoint "" \
   -e DATABASE_URL="postgresql://user:password@host:5432/testplanit" \
-  ghcr.io/testplanit/testplanit:latest \
+  ghcr.io/testplanit/testplanit-selfhost:latest \
   npx zenstack migrate resolve --applied 20260625193632_init --schema schema.zmodel
 ```
 
