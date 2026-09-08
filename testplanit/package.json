@@ -363,7 +363,7 @@
     "autoprefixer": "^10.5.5",
     "baseline-browser-mapping": "^2.11.21",
     "concurrently": "^10.0.5",
-    "conventional-changelog-conventionalcommits": "^10.4.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "dotenv-cli": "^11.0.0",
