@@ -1,20 +1,22 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
+import type {
   Color,
   ColorFamily,
   FieldIcon,
   Milestones,
   MilestoneTypes,
-} from "@prisma/client";
+} from "~/zenstack/models";
+import { MilestoneSourceIcon } from "@/components/MilestoneSourceIcon";
 import { Milestone } from "lucide-react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
-import { useFindManyColor } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import {
   createColorMap,
@@ -47,7 +49,9 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
   milestones,
 }) => {
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -78,7 +82,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
     <Popover>
       <PopoverTrigger>
         <Badge>
-          <Milestone className="w-4 h-4 mr-1" />
+          <Milestone className="w-4 h-4 me-1" />
           {milestones.length}
         </Badge>
       </PopoverTrigger>
@@ -108,6 +112,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
                     />
                   </div>
                   <div>{milestone.name}</div>
+                  <MilestoneSourceIcon milestone={milestone} />
                 </div>
               </Badge>
             </div>

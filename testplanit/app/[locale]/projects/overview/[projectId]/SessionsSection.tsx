@@ -1,11 +1,10 @@
-import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { Compass, LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
-import SessionResultsSummary from "~/components/SessionResultsSummary";
-import { useFindManySessions } from "~/lib/hooks";
-import { Link } from "~/lib/navigation";
+import SessionItem from "~/app/[locale]/projects/sessions/[projectId]/SessionItem";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 
 interface SessionsSectionProps {
   projectId: number;
@@ -14,7 +13,9 @@ interface SessionsSectionProps {
 const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
   const t = useTranslations();
 
-  const { data: sessions, isLoading: isLoadingSessions } = useFindManySessions({
+  const { data: sessions, isLoading: isLoadingSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -22,25 +23,40 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
         { isCompleted: false },
       ],
     },
+    // Mirrors the sessions page selection so SessionItem renders identically here.
+    select: {
+      id: true,
+      name: true,
+      isCompleted: true,
+      completedAt: true,
+      createdAt: true,
+      note: true,
+      projectId: true,
+      configurationGroupId: true,
+      configuration: true,
+      state: { include: { icon: true, color: true } },
+      createdBy: true,
+      assignedTo: true,
+      milestone: {
+        include: {
+          milestoneType: { include: { icon: true } },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 5,
   });
 
-  const { data: sessionsCount, isLoading: isLoadingCount } =
-    useFindManySessions({
-      where: {
-        AND: [
-          { projectId: Number(projectId) },
-          { isDeleted: false },
-          { isCompleted: false },
-        ],
-      },
-      select: {
-        id: true,
-      },
-    });
+  const sessionIds = React.useMemo(
+    () => sessions?.map((s) => s.id) ?? [],
+    [sessions]
+  );
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    sessionIds
+  );
 
-  if (isLoadingSessions || isLoadingCount) {
+  if (isLoadingSessions) {
     return (
       <div className="flex justify-center items-center py-8">
         <LoadingSpinner />
@@ -52,62 +68,19 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
 
   return (
     <div className="flex flex-col">
-      <p className="text-sm text-muted-foreground mb-4">
-        <Link className="group" href={`/projects/sessions/${projectId}`}>
-          {t("projects.overview.seeAllActiveSessions", {
-            count: sessionsCount?.length ?? 0,
-          })}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </Link>
-      </p>
-      <div className="flex flex-col">
-        <h2 className="text-primary mb-2">
-          {t("projects.overview.latestSessions")}
-        </h2>
-        <ul className="flex flex-col w-full space-y-4">
-          {sessions.map((testSession) => (
-            <li key={testSession.id} className="ml-6">
-              <div className="grid grid-cols-[1fr,2fr] gap-4 items-center">
-                {/* Left column - Session name and created date */}
-                <div className="flex flex-col space-y-1 min-w-0">
-                  {/* First row - Session name */}
-                  <Link
-                    href={`/projects/sessions/${projectId}/${testSession.id}`}
-                    className="block"
-                  >
-                    <div className="flex items-center group">
-                      <Compass className="h-5 w-5 shrink-0 mr-2" />
-                      <span className="font-medium truncate pr-1">
-                        {testSession.name}
-                      </span>
-                      <LinkIcon className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  </Link>
-
-                  {/* Second row - Created date */}
-                  <div className="text-sm text-muted-foreground ml-7 flex items-center min-w-0">
-                    <span className="shrink-0 whitespace-nowrap mr-1">
-                      {t("common.fields.created")}
-                      {": "}
-                    </span>
-                    <span className="truncate">
-                      <DateTextDisplay startDate={testSession.createdAt} />
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right column - SessionResultsSummary (spans both rows) */}
-                <div className="flex justify-end min-w-0">
-                  <SessionResultsSummary
-                    sessionId={testSession.id}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <h2 className="text-primary mb-2">
+        {t("projects.overview.latestSessions")}
+      </h2>
+      {sessions.map((testSession) => (
+        <SessionItem
+          key={testSession.id}
+          testSession={testSession}
+          isCompleted={testSession.isCompleted}
+          projectId={projectId}
+          showActions={false}
+          pendingRequest={pendingReviewsBySessionId.get(testSession.id)}
+        />
+      ))}
     </div>
   );
 };

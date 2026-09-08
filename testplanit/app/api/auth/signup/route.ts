@@ -2,6 +2,7 @@ import { hash } from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { isEmailServerConfigured } from "~/lib/email/emailConfig";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { db } from "~/server/db";
 
 /**
@@ -37,9 +38,10 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await hash(validatedData.password, 10);
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email: validatedData.email },
+    // Check if user already exists (case-insensitive — an address differing
+    // only by case is the same account).
+    const existingUser = await db.user.findFirst({
+      where: { email: { equals: validatedData.email, mode: "insensitive" } },
     });
 
     if (existingUser) {
@@ -138,8 +140,8 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("[Signup API] Error creating user:", error);
 
-    // Handle Prisma unique constraint violation
-    if (error.code === "P2002") {
+    // Handle unique constraint violation
+    if (isUniqueConstraintError(error)) {
       return NextResponse.json(
         {
           errorCode: "common.errors.userExists",

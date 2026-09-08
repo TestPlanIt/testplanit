@@ -11,8 +11,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: {
       findFirst: vi.fn(),
     },
@@ -42,7 +42,7 @@ vi.mock("~/lib/services/auditLog", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 
 describe("Bulk Edit API Route", () => {
@@ -76,8 +76,8 @@ describe("Bulk Edit API Route", () => {
       template: { templateName: "Template 1" },
       state: { name: "Not Started" },
       creator: { name: "Creator 1" },
-      tags: [{ name: "tag1" }],
-      issues: [],
+      caseTags: [{ tag: { name: "tag1" } }],
+      caseIssues: [],
       steps: [],
       caseFieldValues: [],
     },
@@ -95,8 +95,8 @@ describe("Bulk Edit API Route", () => {
       template: { templateName: "Template 1" },
       state: { name: "Not Started" },
       creator: { name: "Creator 1" },
-      tags: [],
-      issues: [],
+      caseTags: [],
+      caseIssues: [],
       steps: [],
       caseFieldValues: [],
     },
@@ -116,11 +116,11 @@ describe("Bulk Edit API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (prisma.projects.findFirst as any).mockResolvedValue(mockProject);
-    (prisma.repositoryCases.findMany as any).mockResolvedValue(mockCases);
+    (baseDb.projects.findFirst as any).mockResolvedValue(mockProject);
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue(mockCases);
 
     // Set up a default transaction mock with all necessary methods
-    (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+    (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
       const tx = {
         $executeRaw: vi.fn().mockResolvedValue([]),
         $queryRaw: vi.fn().mockResolvedValue([]),
@@ -144,6 +144,18 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+        repositoryCaseTag: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        repositoryCaseIssue: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
         appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
       return callback(tx);
@@ -221,7 +233,7 @@ describe("Bulk Edit API Route", () => {
     });
 
     it("returns 404 when project not found", async () => {
-      (prisma.projects.findFirst as any).mockResolvedValue(null);
+      (baseDb.projects.findFirst as any).mockResolvedValue(null);
 
       const [request, context] = createRequest({
         caseIds: [1, 2],
@@ -235,7 +247,7 @@ describe("Bulk Edit API Route", () => {
     });
 
     it("returns 400 when some cases not found", async () => {
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue([
         mockCases[0],
       ]);
 
@@ -279,12 +291,24 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });
 
-      (prisma.$transaction as any).mockImplementation(transactionMock);
+      (baseDb.$transaction as any).mockImplementation(transactionMock);
 
       const [request, context] = createRequest({
         caseIds: [1, 2],
@@ -298,7 +322,7 @@ describe("Bulk Edit API Route", () => {
       expect(data.success).toBe(true);
 
       // Verify the transaction was called
-      expect(prisma.$transaction).toHaveBeenCalled();
+      expect(baseDb.$transaction).toHaveBeenCalled();
 
       // Get the callback passed to $transaction and verify it updates stateId
       const transactionCallback = transactionMock.mock.calls[0][0];
@@ -325,6 +349,18 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+        repositoryCaseTag: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        repositoryCaseIssue: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
         appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
 
@@ -345,7 +381,7 @@ describe("Bulk Edit API Route", () => {
 
     it("handles state update with large ID value", async () => {
       // Override findMany to return just 1 case for this test
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue([
         mockCases[0],
       ]);
 
@@ -373,12 +409,24 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });
 
-      (prisma.$transaction as any).mockImplementation(transactionMock);
+      (baseDb.$transaction as any).mockImplementation(transactionMock);
 
       // Large state ID should be valid
       const [request, context] = createRequest({
@@ -415,6 +463,18 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+        repositoryCaseTag: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        repositoryCaseIssue: {
+          create: vi.fn(),
+          createMany: vi.fn().mockResolvedValue({ count: 0 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          findMany: vi.fn().mockResolvedValue([]),
+        },
         appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
 
@@ -433,7 +493,7 @@ describe("Bulk Edit API Route", () => {
   describe("Standard Field Updates", () => {
     it("updates name field correctly", async () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -453,6 +513,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -477,7 +549,7 @@ describe("Bulk Edit API Route", () => {
 
     it("updates automated field correctly", async () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -497,6 +569,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -517,7 +601,7 @@ describe("Bulk Edit API Route", () => {
 
     it("updates estimate field correctly", async () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -537,6 +621,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -557,7 +653,7 @@ describe("Bulk Edit API Route", () => {
 
     it("updates multiple fields at once", async () => {
       const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -577,6 +673,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -607,8 +715,11 @@ describe("Bulk Edit API Route", () => {
 
   describe("Tags Updates", () => {
     it("handles tags connect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      // Tag links now live on the explicit RepositoryCaseTag join model, so a
+      // connect becomes a createMany of {caseId, tagId} join rows (once per
+      // case in the loop) rather than a nested connect on the case update.
+      const mockTagCreateMany = vi.fn().mockResolvedValue({ count: 2 });
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -618,7 +729,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -628,6 +739,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: mockTagCreateMany,
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -645,16 +768,25 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.tags).toEqual({
-          connect: [{ id: 1 }, { id: 2 }],
+      // One createMany per case, each adding both tag links for that case.
+      expect(mockTagCreateMany).toHaveBeenCalledTimes(2);
+      mockTagCreateMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].data[0].caseId;
+        expect(call[0]).toEqual({
+          data: [
+            { caseId, tagId: 1 },
+            { caseId, tagId: 2 },
+          ],
+          skipDuplicates: true,
         });
       });
     });
 
     it("handles tags disconnect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      // A disconnect becomes a deleteMany of the matching join rows scoped to
+      // the case and the tag ids being removed.
+      const mockTagDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -664,7 +796,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -674,6 +806,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockTagDeleteMany,
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -691,9 +835,12 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.tags).toEqual({
-          disconnect: [{ id: 3 }],
+      // One deleteMany per case removing the tagId=3 join row.
+      expect(mockTagDeleteMany).toHaveBeenCalledTimes(2);
+      mockTagDeleteMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].where.caseId;
+        expect(call[0]).toEqual({
+          where: { caseId, tagId: { in: [3] } },
         });
       });
     });
@@ -701,8 +848,11 @@ describe("Bulk Edit API Route", () => {
 
   describe("Issues Updates", () => {
     it("handles issues connect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      // Issue links now live on the explicit RepositoryCaseIssue join model, so
+      // a connect becomes a createMany of {caseId, issueId} join rows (once per
+      // case in the loop) rather than a nested connect on the case update.
+      const mockIssueCreateMany = vi.fn().mockResolvedValue({ count: 1 });
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -712,7 +862,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -722,6 +872,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: mockIssueCreateMany,
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -739,16 +901,22 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.issues).toEqual({
-          connect: [{ id: 10 }],
+      // One createMany per case linking issueId=10.
+      expect(mockIssueCreateMany).toHaveBeenCalledTimes(2);
+      mockIssueCreateMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].data[0].caseId;
+        expect(call[0]).toEqual({
+          data: [{ caseId, issueId: 10 }],
+          skipDuplicates: true,
         });
       });
     });
 
     it("handles issues disconnect correctly", async () => {
-      const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      // A disconnect becomes a deleteMany of the matching join rows scoped to
+      // the case and the issue ids being removed.
+      const mockIssueDeleteMany = vi.fn().mockResolvedValue({ count: 1 });
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
@@ -757,7 +925,7 @@ describe("Bulk Edit API Route", () => {
           },
           repositoryCases: {
             findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: mockTxUpdate,
+            update: vi.fn().mockResolvedValue({}),
           },
           caseFieldValues: {
             create: vi.fn(),
@@ -767,6 +935,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: mockIssueDeleteMany,
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -784,9 +964,12 @@ describe("Bulk Edit API Route", () => {
 
       expect(response.status).toBe(200);
 
-      mockTxUpdate.mock.calls.forEach((call: any) => {
-        expect(call[0].data.issues).toEqual({
-          disconnect: [{ id: 10 }],
+      // One deleteMany per case removing the issueId=10 join row.
+      expect(mockIssueDeleteMany).toHaveBeenCalledTimes(2);
+      mockIssueDeleteMany.mock.calls.forEach((call: any) => {
+        const caseId = call[0].where.caseId;
+        expect(call[0]).toEqual({
+          where: { caseId, issueId: { in: [10] } },
         });
       });
     });
@@ -795,7 +978,7 @@ describe("Bulk Edit API Route", () => {
   describe("Custom Field Updates", () => {
     it("creates custom field value when it doesn't exist", async () => {
       const mockTxCreate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -815,6 +998,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -845,12 +1040,12 @@ describe("Bulk Edit API Route", () => {
         ...c,
         caseFieldValues: [{ id: 100, fieldId: 5, value: "Old Value" }],
       }));
-      (prisma.repositoryCases.findMany as any).mockResolvedValue(
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue(
         casesWithFieldValues
       );
 
       const mockTxUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -870,6 +1065,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -897,12 +1104,12 @@ describe("Bulk Edit API Route", () => {
         ...c,
         caseFieldValues: [{ id: 100, fieldId: 5, value: "Value to delete" }],
       }));
-      (prisma.repositoryCases.findMany as any).mockResolvedValue(
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue(
         casesWithFieldValues
       );
 
       const mockTxDelete = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -922,6 +1129,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -944,7 +1163,7 @@ describe("Bulk Edit API Route", () => {
     it("creates versions when createVersions is true", async () => {
       const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
       const mockCreateMany = vi.fn().mockResolvedValue({ count: 2 });
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -964,6 +1183,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -991,19 +1222,21 @@ describe("Bulk Edit API Route", () => {
       const preUpdateCase = {
         ...mockCases[0],
         id: 1,
-        issues: [{ id: 10, name: "BUG-10", externalId: "BUG-10" }],
+        caseIssues: [
+          { issue: { id: 10, name: "BUG-10", externalId: "BUG-10" } },
+        ],
       };
       const postUpdateCase = {
         ...mockCases[0],
         id: 1,
-        issues: [],
+        caseIssues: [],
       };
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue([
         preUpdateCase,
       ]);
 
       const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
@@ -1023,6 +1256,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1056,12 +1301,12 @@ describe("Bulk Edit API Route", () => {
         stateId: 2,
         state: { name: "New State" },
       };
-      (prisma.repositoryCases.findMany as any).mockResolvedValue([
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue([
         preUpdateCase,
       ]);
 
       const mockCreate = vi.fn().mockResolvedValue({ id: 1, version: 1 });
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           repositoryCaseVersions: {
@@ -1080,6 +1325,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1099,7 +1356,7 @@ describe("Bulk Edit API Route", () => {
 
     it("skips version creation when createVersions is false", async () => {
       const mockCreateMany = vi.fn().mockResolvedValue({ count: 0 });
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1116,6 +1373,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1137,8 +1406,9 @@ describe("Bulk Edit API Route", () => {
   describe("Steps Updates", () => {
     it("handles steps replace operation", async () => {
       const mockDeleteMany = vi.fn().mockResolvedValue({ count: 2 });
+      const mockUpdateMany = vi.fn().mockResolvedValue({ count: 2 });
       const mockCreate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1158,10 +1428,23 @@ describe("Bulk Edit API Route", () => {
           steps: {
             create: mockCreate,
             update: vi.fn(),
+            updateMany: mockUpdateMany,
             deleteMany: mockDeleteMany,
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1184,7 +1467,16 @@ describe("Bulk Edit API Route", () => {
       const response = await POST(request, context);
 
       expect(response.status).toBe(200);
-      expect(mockDeleteMany).toHaveBeenCalledTimes(2);
+      // Steps must be SOFT-deleted: TestRunStepResults.stepId cascades, so a
+      // hard delete here would destroy recorded run results for these cases.
+      expect(mockDeleteMany).not.toHaveBeenCalled();
+      expect(mockUpdateMany).toHaveBeenCalledTimes(2);
+      for (const caseId of [1, 2]) {
+        expect(mockUpdateMany).toHaveBeenCalledWith({
+          where: { testCaseId: caseId, isDeleted: false },
+          data: { isDeleted: true },
+        });
+      }
       expect(mockCreate).toHaveBeenCalled();
     });
 
@@ -1201,12 +1493,12 @@ describe("Bulk Edit API Route", () => {
           },
         ],
       }));
-      (prisma.repositoryCases.findMany as any).mockResolvedValue(
+      (baseDb.repositoryCases.findMany as any).mockResolvedValue(
         casesWithSteps
       );
 
       const mockStepUpdate = vi.fn().mockResolvedValue({});
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1230,6 +1522,18 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1257,7 +1561,7 @@ describe("Bulk Edit API Route", () => {
 
   describe("Audit Logging", () => {
     it("calls auditBulkUpdate after successful update", async () => {
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1277,6 +1581,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1302,7 +1618,7 @@ describe("Bulk Edit API Route", () => {
 
   describe("Error Handling", () => {
     it("returns 500 when transaction fails", async () => {
-      (prisma.$transaction as any).mockRejectedValue(new Error("DB Error"));
+      (baseDb.$transaction as any).mockRejectedValue(new Error("DB Error"));
 
       const [request, context] = createRequest({
         caseIds: [1, 2],
@@ -1317,35 +1633,45 @@ describe("Bulk Edit API Route", () => {
     });
 
     it("handles timeout gracefully", async () => {
-      (prisma.$transaction as any).mockImplementation(
-        async (callback: any, options: any) => {
-          // Verify extended timeout is passed
-          expect(options.timeout).toBe(60000);
-          return callback({
-            $executeRaw: vi.fn().mockResolvedValue([]),
-            $queryRaw: vi.fn().mockResolvedValue([]),
-            repositoryCaseVersions: {
-              create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
-              createMany: vi.fn().mockResolvedValue({ count: 2 }),
-            },
-            repositoryCases: {
-              findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-              update: vi.fn().mockResolvedValue({}),
-            },
-            caseFieldValues: {
-              create: vi.fn(),
-              update: vi.fn(),
-              delete: vi.fn(),
-            },
-            steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
-          });
-        }
-      );
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
+        // v3 $transaction options accept only { isolationLevel } (no
+        // maxWait/timeout), so there's no timeout option to assert here.
+        return callback({
+          $executeRaw: vi.fn().mockResolvedValue([]),
+          $queryRaw: vi.fn().mockResolvedValue([]),
+          repositoryCaseVersions: {
+            create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
+            createMany: vi.fn().mockResolvedValue({ count: 2 }),
+          },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
+          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          appConfig: {
+            findUnique: vi.fn().mockResolvedValue({ value: true }),
+          },
+        });
+      });
 
       const [request, context] = createRequest({
         caseIds: [1, 2],
@@ -1368,7 +1694,7 @@ describe("Bulk Edit API Route", () => {
       };
       (getServerSession as any).mockResolvedValue(adminSession);
 
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         return callback({
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1388,6 +1714,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
@@ -1402,7 +1740,7 @@ describe("Bulk Edit API Route", () => {
       expect(response.status).toBe(200);
 
       // Verify simplified query for admin
-      expect(prisma.projects.findFirst).toHaveBeenCalledWith({
+      expect(baseDb.projects.findFirst).toHaveBeenCalledWith({
         where: { id: 1, isDeleted: false },
       });
     });
@@ -1410,7 +1748,7 @@ describe("Bulk Edit API Route", () => {
 
   describe("Review Gate", () => {
     it("returns 403 with structured payload when ReviewGateError is thrown", async () => {
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1441,6 +1779,18 @@ describe("Bulk Edit API Route", () => {
           reviewRequest: {
             findFirst: vi.fn().mockResolvedValue(null),
           },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
@@ -1464,7 +1814,7 @@ describe("Bulk Edit API Route", () => {
 
     it("stamps consumedAt on every approval the strict-transitive gate returns (per case in the loop)", async () => {
       const txReviewRequestUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1492,6 +1842,18 @@ describe("Bulk Edit API Route", () => {
             // Consumption stamp fires after the case update succeeds.
             updateMany: txReviewRequestUpdateMany,
           },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
@@ -1515,7 +1877,7 @@ describe("Bulk Edit API Route", () => {
 
     it("returns 409 with PENDING_REVIEW_EXISTS when AlreadyPendingError is thrown", async () => {
       const { AlreadyPendingError } = await import("~/lib/utils/errors");
-      (prisma.$transaction as any).mockImplementation(async () => {
+      (baseDb.$transaction as any).mockImplementation(async () => {
         throw new AlreadyPendingError("CASE", 1, "existing-request-id");
       });
 
@@ -1532,7 +1894,7 @@ describe("Bulk Edit API Route", () => {
 
     it("skips the gate when stateId is not part of the update", async () => {
       const findUniqueMock = vi.fn().mockResolvedValue(null);
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+      (baseDb.$transaction as any).mockImplementation(async (callback: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -1552,6 +1914,18 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: findUniqueMock },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          repositoryCaseTag: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
+          repositoryCaseIssue: {
+            create: vi.fn(),
+            createMany: vi.fn().mockResolvedValue({ count: 0 }),
+            deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+            findMany: vi.fn().mockResolvedValue([]),
+          },
           appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);

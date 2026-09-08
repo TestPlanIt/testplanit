@@ -176,3 +176,37 @@ When viewing a test run that's part of a Configuration Group, you can:
 - Identify tests that pass in some configurations but fail in others
 
 See [Multi-Configuration Support](./projects/run-details.md#multi-configuration-support) in the Test Run Details documentation for more information.
+
+### Changing Group Membership Later
+
+A Configuration Group is usually created when a multi-configuration test run is
+created, but membership is not fixed. A common case: you create a single test
+run, duplicate it for other configurations, and only then realise the original
+is not grouped with its duplicates.
+
+The **Configuration Group** field on the test run and session detail pages
+shows the other members of the group and lets you correct that membership:
+
+1. Click **Edit** on the test run or session
+2. Under **Configuration Group**, choose one of:
+   - **Link to a test run** / **Link to a session** to join a group
+   - **Link to a different test run** / **Link to a different session** to move to another group
+   - **Unlink** to leave the group
+3. Click **Save**
+
+The change is applied when you save, alongside every other edit on the form.
+
+There is no "parent" run or session in a group — all members are equal peers.
+That has two consequences:
+
+- **Linking to a member links you to the whole group.** Picking a run that is
+  already grouped with four others puts you in a group of six, not a pair. The
+  picker shows a badge with the group's size so you can see this before you
+  choose.
+- **Leaving a group of two dissolves it.** A group needs at least two members,
+  so unlinking from a two-member group also unlinks the remaining member.
+
+Only runs and sessions in the same project can be grouped. Completed runs and
+sessions cannot be edited, so their group membership is fixed — and the field
+is unavailable while several configurations are selected at once, because it is
+ambiguous which member you mean.

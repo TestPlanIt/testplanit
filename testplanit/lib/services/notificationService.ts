@@ -1,6 +1,6 @@
-import { ApplicationArea, NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "~/zenstack/models";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
-import { getCurrentTenantId } from "../multiTenantPrisma";
+import { getCurrentTenantId } from "../multiTenantDb";
 import { getNotificationQueue } from "../queues";
 
 interface CreateNotificationParams {
@@ -87,6 +87,35 @@ export class NotificationService {
   }
 
   /**
+   * Notify the owner of an OAuth integration connection that it needs
+   * re-authorization — the access token expired or was revoked and cannot be
+   * refreshed. Fired once per expiry event (deduped by
+   * `AuthenticationService.markNeedsReauth`).
+   */
+  static async createIntegrationAuthExpiredNotification(params: {
+    userId: string;
+    integrationId: number;
+    integrationName: string;
+    provider?: string;
+    tenantId?: string;
+  }) {
+    return this.createNotification({
+      userId: params.userId,
+      type: NotificationType.INTEGRATION_AUTH_EXPIRED,
+      title: "Integration connection expired",
+      message: `Your connection to "${params.integrationName}" has expired. Reconnect to resume issue syncing.`,
+      relatedEntityId: String(params.integrationId),
+      relatedEntityType: "Integration",
+      data: {
+        integrationId: params.integrationId,
+        integrationName: params.integrationName,
+        ...(params.provider ? { provider: params.provider } : {}),
+      },
+      tenantId: params.tenantId,
+    });
+  }
+
+  /**
    * Mark notifications as read
    */
   static async markNotificationsAsRead(
@@ -142,6 +171,53 @@ export class NotificationService {
         isOverdue,
       },
     });
+  }
+
+  /**
+   * Tell everyone who can complete a run that every one of its cases has been
+   * executed.
+   *
+   * The persisted `title`/`message` hold an English fallback; the bell
+   * (NotificationContent) and the email worker re-render localized copy from
+   * `data` at display time, per the contract every notification type follows.
+   *
+   * `tenantId` is explicit because the caller is a worker, where the ambient
+   * tenant context that `createNotification` would otherwise read is absent.
+   */
+  static async createRunReadyToCompleteNotification(params: {
+    targetUserIds: string[];
+    testRunId: number;
+    testRunName: string;
+    projectId: number;
+    projectName: string;
+    caseCount: number;
+    tenantId?: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const title = "Test run ready to complete";
+    const message = `Every case in test run "${params.testRunName}" in project "${params.projectName}" has been executed.`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.RUN_READY_TO_COMPLETE,
+          title,
+          message,
+          relatedEntityId: params.testRunId.toString(),
+          relatedEntityType: "TestRuns",
+          tenantId: params.tenantId,
+          data: {
+            testRunId: params.testRunId,
+            testRunName: params.testRunName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            caseCount: params.caseCount,
+          },
+        })
+      )
+    );
   }
 
   /**
@@ -236,13 +312,13 @@ export class NotificationService {
     requesterUserId: string,
     options?: { requireCanApproveOn?: ApplicationArea }
   ): Promise<string[]> {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
 
     // Optional canApprove gate on the assigned role itself — when the role
     // doesn't carry canApprove on the requested area, the fanout is empty
     // by construction. Short-circuit instead of running four findManys.
     if (options?.requireCanApproveOn) {
-      const perm = await prisma.rolePermission.findUnique({
+      const perm = await baseDb.rolePermission.findUnique({
         where: {
           roleId_area: { roleId, area: options.requireCanApproveOn },
         },
@@ -251,7 +327,7 @@ export class NotificationService {
       if (!perm?.canApprove) return [];
     }
 
-    const specificRoleRows = await prisma.userProjectPermission.findMany({
+    const specificRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "SPECIFIC_ROLE",
@@ -261,7 +337,7 @@ export class NotificationService {
       select: { userId: true },
     });
 
-    const globalRoleRows = await prisma.userProjectPermission.findMany({
+    const globalRoleRows = await baseDb.userProjectPermission.findMany({
       where: {
         projectId,
         accessType: "GLOBAL_ROLE",
@@ -273,7 +349,7 @@ export class NotificationService {
     // Group-based SPECIFIC_ROLE: every active user in a group that has this
     // role on the project. The per-relation `assignedUsers.where` keeps the
     // returned member list filtered to active users only.
-    const groupSpecificRoleRows = await prisma.groupProjectPermission.findMany({
+    const groupSpecificRoleRows = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "SPECIFIC_ROLE", roleId },
       select: {
         group: {
@@ -289,7 +365,7 @@ export class NotificationService {
 
     // Group-based GLOBAL_ROLE: every active user in a group with GLOBAL_ROLE
     // access on the project whose `User.roleId` matches the assigned role.
-    const groupGlobalRoleRows = await prisma.groupProjectPermission.findMany({
+    const groupGlobalRoleRows = await baseDb.groupProjectPermission.findMany({
       where: { projectId, accessType: "GLOBAL_ROLE" },
       select: {
         group: {
@@ -373,6 +449,78 @@ export class NotificationService {
             fromStateName: params.fromStateName,
             toStateName: params.toStateName,
             commentText: params.commentText,
+          },
+        })
+      )
+    );
+  }
+
+  /**
+   * Dispatch ONE REVIEW_REQUESTED notification covering a whole bulk batch.
+   *
+   * A fifty-case bulk request would otherwise fire fifty of these at a single
+   * reviewer (plus fifty @mention notifications), burying every other
+   * notification in their bell and mailbox. The batch collapses to one row
+   * whose `data.bulkCount` drives alternate copy in the renderers, and whose
+   * link points at the review inbox rather than any one entity — no single
+   * case is the right destination for a request covering forty.
+   *
+   * The payload keeps the same shape as the single-request notification (a
+   * representative `entityId` / `entityName` are still carried) so the bell
+   * and email renderers reuse their existing REVIEW_REQUESTED branch and
+   * switch only the copy and the href on `bulkCount`.
+   */
+  static async createBulkReviewRequestNotification(params: {
+    targetUserIds: string[];
+    requesterUserId: string;
+    requesterName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    count: number;
+    sampleEntityId: number;
+    sampleEntityName: string;
+    sampleReviewRequestId: string;
+  }) {
+    if (params.targetUserIds.length === 0 || params.count === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? params.count === 1
+          ? "test case"
+          : "test cases"
+        : params.entityType === "RUN"
+          ? params.count === 1
+            ? "test run"
+            : "test runs"
+          : params.count === 1
+            ? "session"
+            : "sessions";
+
+    const title = "Review requested";
+    const message = `${params.requesterName} requested your review of ${params.count} ${entityLabel} in project "${params.projectName}"`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_REQUESTED,
+          title,
+          message,
+          relatedEntityId: params.sampleReviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.sampleReviewRequestId,
+            requesterUserId: params.requesterUserId,
+            requesterName: params.requesterName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.sampleEntityId,
+            entityName: params.sampleEntityName,
+            // Presence of a count > 1 is what flips the renderers to bulk
+            // copy; a single-entity request never sets it.
+            bulkCount: params.count,
           },
         })
       )

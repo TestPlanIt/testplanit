@@ -27,6 +27,7 @@ import MultiSelect from "react-select";
 import { emptyEditorContent } from "~/app/constants";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import StepsForm from "./StepsForm";
 
 interface RenderFieldProps {
@@ -109,7 +110,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                     {option.fieldOption.icon &&
                       option.fieldOption.iconColor && (
                         <DynamicIcon
-                          className="h-4 w-4 mr-1"
+                          className="h-4 w-4 me-1"
                           name={option.fieldOption.icon.name}
                           color={option.fieldOption.iconColor.value}
                         />
@@ -135,7 +136,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                     {option.fieldOption.icon &&
                       option.fieldOption.iconColor && (
                         <DynamicIcon
-                          className="h-4 w-4 mr-1"
+                          className="h-4 w-4 me-1"
                           name={option.fieldOption.icon.name}
                           color={option.fieldOption.iconColor.value}
                         />
@@ -184,7 +185,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
                         {option.fieldOption.icon &&
                           option.fieldOption.iconColor && (
                             <DynamicIcon
-                              className="h-4 w-4 mr-1"
+                              className="h-4 w-4 me-1"
                               name={option.fieldOption.icon.name}
                               color={option.fieldOption.iconColor.value}
                             />
@@ -300,20 +301,16 @@ const RenderField: React.FC<RenderFieldProps> = ({
 
         // Access initialHeight from the field definition
         const initialHeight = field.caseField.initialHeight;
-        const editorClassName = `ring-2 ring-muted rounded-lg ${
-          initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
-        }`;
 
         return (
-          <div className={editorClassName}>
+          <div className="ring-2 ring-muted rounded-lg">
             <TipTapEditor
               key={field.caseField.id}
               content={initialContent} // Use determined initial content
               onUpdate={handleEditorUpdate}
               projectId={String(projectId)}
-              className={
-                initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
-              }
+              className=""
+              style={editorMinHeightStyle(initialHeight)}
               readOnly={isDisabled}
             />
           </div>
@@ -364,7 +361,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
             {isFieldRestricted && (
               <span
                 title={tCommon("aria.restrictedField")}
-                className="ml-1 text-muted-foreground"
+                className="ms-1 text-muted-foreground"
               >
                 <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
               </span>

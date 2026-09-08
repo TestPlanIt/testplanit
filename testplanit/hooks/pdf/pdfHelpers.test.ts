@@ -37,6 +37,27 @@ describe("pdfHelpers", () => {
     it("leaves normal text unchanged", () => {
       expect(sanitizeTextForPdf("Hello World 123")).toBe("Hello World 123");
     });
+
+    it("transliterates smart quotes to straight quotes", () => {
+      expect(sanitizeTextForPdf("“AI Avatar”")).toBe('"AI Avatar"');
+      expect(sanitizeTextForPdf("it’s")).toBe("it's");
+    });
+
+    it("transliterates dashes and ellipsis to ASCII", () => {
+      expect(sanitizeTextForPdf("Real-Time — AI…")).toBe("Real-Time - AI...");
+      expect(sanitizeTextForPdf("a–b")).toBe("a-b");
+    });
+
+    it("replaces characters outside Latin-1 with a placeholder (no UTF-16 corruption)", () => {
+      // Emoji and CJK have no glyph in the standard PDF fonts; without this
+      // they trigger jsPDF's byte-interleaved UTF-16 fallback.
+      expect(sanitizeTextForPdf("done 😀")).toBe("done ??");
+      expect(sanitizeTextForPdf("测试")).toBe("??");
+    });
+
+    it("preserves accented Latin-1 characters", () => {
+      expect(sanitizeTextForPdf("café ñoël")).toBe("café ñoël");
+    });
   });
 
   describe("isEmbeddableImage", () => {

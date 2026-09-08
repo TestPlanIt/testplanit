@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock the prisma client used by forecastService.
+// Mock the raw DB client used by forecastService.
 const repoFindUnique = vi.fn();
 const repoFindMany = vi.fn();
 const repoUpdate = vi.fn();
@@ -10,8 +10,8 @@ const junitFindMany = vi.fn();
 const runsFindUnique = vi.fn();
 const runsUpdate = vi.fn();
 
-vi.mock("../lib/prismaBase", () => ({
-  prisma: {
+vi.mock("../lib/rawDb", () => ({
+  rawDb: {
     repositoryCases: {
       findUnique: (...a: any[]) => repoFindUnique(...a),
       findMany: (...a: any[]) => repoFindMany(...a),

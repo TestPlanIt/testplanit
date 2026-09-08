@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -7,18 +9,14 @@ import { useRouter } from "~/lib/navigation";
 
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyStatus, useUpdateStatus } from "~/lib/hooks";
+import { AbandonedRunPolicyCard } from "./AbandonedRunPolicyCard";
 import { getColumns } from "./columns";
 import { ResultEditingPolicyCard } from "./ResultEditingPolicyCard";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { AddStatus } from "./AddStatus";
 import { ExtendedStatus } from "./columns";
@@ -34,7 +32,8 @@ function Status() {
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { mutateAsync: updateStatus } = useUpdateStatus();
+  const { mutateAsync: updateStatus } =
+    useClientQueries(schema).status.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateStatusRef = useRef(updateStatus);
@@ -42,7 +41,7 @@ function Status() {
     updateStatusRef.current = updateStatus;
   });
 
-  const { data } = useFindManyStatus(
+  const { data } = useClientQueries(schema).status.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { order: "asc" },
@@ -174,49 +173,52 @@ function Status() {
 
   return (
     <main>
-      <ResultEditingPolicyCard />
-      <Card>
+      <Card className="mb-6">
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle>{tCommon("labels.statuses")}</CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setAddStatusOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.button")}</span>
-              </Button>
-              {addStatusOpen && (
-                <AddStatus
-                  open={addStatusOpen}
-                  onClose={() => setAddStatusOpen(false)}
-                />
-              )}
-            </div>
+              <HelpPopover helpKey="statuses" />
+            </SectionHeader>
+            <Button
+              onClick={() => setAddStatusOpen(true)}
+              aria-label={t("add.button")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                {t("add.button")}
+              </span>
+            </Button>
           </div>
-          <CardDescription>{t("description")}</CardDescription>
+          {addStatusOpen && (
+            <AddStatus
+              open={addStatusOpen}
+              onClose={() => setAddStatusOpen(false)}
+            />
+          )}
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row justify-between">
-            <div className="flex flex-col w-full sm:w-1/3 min-w-[150px]">
-              <ColumnSelection
-                key="status-column-selection"
-                storageKey="admin-statuses"
-                columns={columns}
-                onVisibilityChange={setColumnVisibility}
-              />
-            </div>
-          </div>
-          <div className="mt-4 w-fit">
+          <ColumnSelection
+            key="status-column-selection"
+            storageKey="admin-statuses"
+            columns={columns}
+            onVisibilityChange={setColumnVisibility}
+          />
+          <div className="mt-4">
             <DataTable
               columns={columns}
               data={statuses as any}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
+              storageKey="admin-statuses"
+              enableColumnMenu={false}
             />
           </div>
         </CardContent>
       </Card>
+      <ResultEditingPolicyCard />
+      <AbandonedRunPolicyCard />
       {editingStatus && (
         <EditStatus
           status={editingStatus}

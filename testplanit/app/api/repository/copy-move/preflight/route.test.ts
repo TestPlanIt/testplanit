@@ -5,23 +5,27 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockGetServerSession,
   mockEnhance,
-  mockPrismaUserFindUnique,
-  mockPrismaRepositoryCasesFindMany,
-  mockPrismaProjectsFindFirst,
-  mockPrismaTemplateProjectAssignmentFindMany,
-  mockPrismaTemplatesFindMany,
-  mockPrismaProjectWorkflowAssignmentFindMany,
-  mockPrismaRepositoriesFindFirst,
+  mockDbUserFindUnique,
+  mockDbRepositoryCasesFindMany,
+  mockDbProjectsFindFirst,
+  mockDbTemplateProjectAssignmentFindMany,
+  mockDbTemplatesFindMany,
+  mockDbProjectWorkflowAssignmentFindMany,
+  mockDbRepositoriesFindFirst,
+  mockDbWorkflowsFindMany,
+  mockDbAppConfigFindUnique,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
-  mockPrismaUserFindUnique: vi.fn(),
-  mockPrismaRepositoryCasesFindMany: vi.fn(),
-  mockPrismaProjectsFindFirst: vi.fn(),
-  mockPrismaTemplateProjectAssignmentFindMany: vi.fn(),
-  mockPrismaTemplatesFindMany: vi.fn(),
-  mockPrismaProjectWorkflowAssignmentFindMany: vi.fn(),
-  mockPrismaRepositoriesFindFirst: vi.fn(),
+  mockDbUserFindUnique: vi.fn(),
+  mockDbRepositoryCasesFindMany: vi.fn(),
+  mockDbProjectsFindFirst: vi.fn(),
+  mockDbTemplateProjectAssignmentFindMany: vi.fn(),
+  mockDbTemplatesFindMany: vi.fn(),
+  mockDbProjectWorkflowAssignmentFindMany: vi.fn(),
+  mockDbRepositoriesFindFirst: vi.fn(),
+  mockDbWorkflowsFindMany: vi.fn(),
+  mockDbAppConfigFindUnique: vi.fn(),
 }));
 
 // ─── Mock next-auth ───────────────────────────────────────────────────────────
@@ -30,38 +34,46 @@ vi.mock("next-auth", () => ({
   getServerSession: (...args: any[]) => mockGetServerSession(...args),
 }));
 
-// ─── Mock ZenStack enhance ────────────────────────────────────────────────────
+// ─── Mock ZenStack getAuthDb ────────────────────────────────────────────────────
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: (...args: any[]) => mockEnhance(...args),
+vi.mock("~/lib/zenstack", () => ({
+  getAuthDb: (...args: any[]) => mockEnhance(...args),
 }));
 
-// ─── Mock prisma ──────────────────────────────────────────────────────────────
+// ─── Mock baseDb ──────────────────────────────────────────────────────────────
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
-      findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
+      findUnique: (...args: any[]) => mockDbUserFindUnique(...args),
     },
     projects: {
-      findFirst: (...args: any[]) => mockPrismaProjectsFindFirst(...args),
+      findFirst: (...args: any[]) => mockDbProjectsFindFirst(...args),
     },
     repositoryCases: {
-      findMany: (...args: any[]) => mockPrismaRepositoryCasesFindMany(...args),
+      findMany: (...args: any[]) => mockDbRepositoryCasesFindMany(...args),
     },
     templateProjectAssignment: {
       findMany: (...args: any[]) =>
-        mockPrismaTemplateProjectAssignmentFindMany(...args),
+        mockDbTemplateProjectAssignmentFindMany(...args),
     },
     templates: {
-      findMany: (...args: any[]) => mockPrismaTemplatesFindMany(...args),
+      findMany: (...args: any[]) => mockDbTemplatesFindMany(...args),
     },
     projectWorkflowAssignment: {
       findMany: (...args: any[]) =>
-        mockPrismaProjectWorkflowAssignmentFindMany(...args),
+        mockDbProjectWorkflowAssignmentFindMany(...args),
     },
     repositories: {
-      findFirst: (...args: any[]) => mockPrismaRepositoriesFindFirst(...args),
+      findFirst: (...args: any[]) => mockDbRepositoriesFindFirst(...args),
+    },
+    // Source-state name resolution reads the workflows table directly.
+    workflows: {
+      findMany: (...args: any[]) => mockDbWorkflowsFindMany(...args),
+    },
+    // Review-gate feature flag (default-off in tests).
+    appConfig: {
+      findUnique: (...args: any[]) => mockDbAppConfigFindUnique(...args),
     },
   },
 }));
@@ -80,6 +92,8 @@ const mockEnhancedDb = {
   projectWorkflowAssignment: { findMany: vi.fn() },
   repositories: { findFirst: vi.fn() },
   templates: { findMany: vi.fn() },
+  workflows: { findMany: vi.fn() },
+  appConfig: { findUnique: vi.fn() },
 };
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -118,7 +132,7 @@ const baseTargetWorkflowAssignments = [
   },
 ];
 
-const _baseSourceWorkflowStates = [{ id: 100, name: "Not Started" }];
+const baseSourceWorkflowStates = [{ id: 100, name: "Not Started" }];
 
 const baseTargetRepository = { id: 200 };
 
@@ -141,12 +155,12 @@ const validBody = {
 
 function setupDefaultMocks() {
   mockGetServerSession.mockResolvedValue(baseSession);
-  mockPrismaUserFindUnique.mockResolvedValue(baseUser);
+  mockDbUserFindUnique.mockResolvedValue(baseUser);
   mockEnhance.mockReturnValue(mockEnhancedDb);
 
-  // Admin path uses raw prisma; non-admin uses enhancedDb. Seed both so
+  // Admin path uses raw baseDb; non-admin uses enhancedDb. Seed both so
   // tests work regardless of which user.access the test sets.
-  mockPrismaProjectsFindFirst
+  mockDbProjectsFindFirst
     .mockResolvedValueOnce({ id: 10 }) // source
     .mockResolvedValueOnce({ id: 20 }); // target
   mockEnhancedDb.projects.findFirst
@@ -154,32 +168,39 @@ function setupDefaultMocks() {
     .mockResolvedValueOnce({ id: 20 });
 
   // Source cases first, then collision check (both via reader).
-  mockPrismaRepositoryCasesFindMany
+  mockDbRepositoryCasesFindMany
     .mockResolvedValueOnce(baseSourceCases)
     .mockResolvedValueOnce([]);
   mockEnhancedDb.repositoryCases.findMany
     .mockResolvedValueOnce(baseSourceCases)
     .mockResolvedValueOnce([]);
 
-  mockPrismaTemplateProjectAssignmentFindMany.mockResolvedValue(
+  mockDbTemplateProjectAssignmentFindMany.mockResolvedValue(
     baseTargetTemplateAssignments
   );
   mockEnhancedDb.templateProjectAssignment.findMany.mockResolvedValue(
     baseTargetTemplateAssignments
   );
 
-  mockPrismaProjectWorkflowAssignmentFindMany.mockResolvedValue(
+  mockDbProjectWorkflowAssignmentFindMany.mockResolvedValue(
     baseTargetWorkflowAssignments
   );
   mockEnhancedDb.projectWorkflowAssignment.findMany.mockResolvedValue(
     baseTargetWorkflowAssignments
   );
 
-  mockPrismaRepositoriesFindFirst.mockResolvedValue(baseTargetRepository);
+  mockDbRepositoriesFindFirst.mockResolvedValue(baseTargetRepository);
   mockEnhancedDb.repositories.findFirst.mockResolvedValue(baseTargetRepository);
 
-  mockPrismaTemplatesFindMany.mockResolvedValue([]);
+  mockDbTemplatesFindMany.mockResolvedValue([]);
   mockEnhancedDb.templates.findMany.mockResolvedValue([]);
+
+  // Source-state names resolve from the workflows table by id.
+  mockDbWorkflowsFindMany.mockResolvedValue(baseSourceWorkflowStates);
+  mockEnhancedDb.workflows.findMany.mockResolvedValue(baseSourceWorkflowStates);
+  // Review feature flag row absent -> gate disabled.
+  mockDbAppConfigFindUnique.mockResolvedValue(null);
+  mockEnhancedDb.appConfig.findUnique.mockResolvedValue(null);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -212,7 +233,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 3
   it("returns 403 when user cannot read source project (non-admin)", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
+    mockDbUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockEnhancedDb.projects.findFirst.mockResolvedValue(null); // source not found
     const { POST } = await import("./route");
@@ -225,7 +246,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 4
   it("returns 403 when user cannot access target project (non-admin)", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
+    mockDbUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockEnhancedDb.projects.findFirst
       .mockResolvedValueOnce({ id: 10 }) // source found
@@ -237,12 +258,12 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(data.error).toMatch(/target/i);
   });
 
-  // Test 3b — admin path uses raw prisma; verify same denial behaviour.
+  // Test 3b — admin path uses raw baseDb; verify same denial behaviour.
   it("returns 403 when admin source project missing/deleted", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue(baseUser); // ADMIN
+    mockDbUserFindUnique.mockResolvedValue(baseUser); // ADMIN
     mockEnhance.mockReturnValue(mockEnhancedDb);
-    mockPrismaProjectsFindFirst.mockResolvedValue(null);
+    mockDbProjectsFindFirst.mockResolvedValue(null);
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(403);
@@ -254,11 +275,11 @@ describe("POST /api/repository/copy-move/preflight", () => {
   it("returns templateMismatch=true and missingTemplates array when source template not assigned to target", async () => {
     setupDefaultMocks();
     // Override: source case uses templateId 99 which is not in target assignments
-    mockPrismaRepositoryCasesFindMany
+    mockDbRepositoryCasesFindMany
       .mockReset()
       .mockResolvedValueOnce([{ ...baseSourceCases[0], templateId: 99 }])
       .mockResolvedValueOnce([]); // collision check
-    mockPrismaTemplateProjectAssignmentFindMany.mockResolvedValue([
+    mockDbTemplateProjectAssignmentFindMany.mockResolvedValue([
       { templateId: 10, template: { id: 10, name: "Default Template" } },
     ]);
 
@@ -284,7 +305,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 7
   it("returns canAutoAssignTemplates=true when user.access === ADMIN", async () => {
     setupDefaultMocks();
-    mockPrismaUserFindUnique.mockResolvedValue({
+    mockDbUserFindUnique.mockResolvedValue({
       ...baseUser,
       access: "ADMIN",
     });
@@ -298,7 +319,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 8
   it("returns canAutoAssignTemplates=true when user.access === PROJECTADMIN", async () => {
     setupDefaultMocks();
-    mockPrismaUserFindUnique.mockResolvedValue({
+    mockDbUserFindUnique.mockResolvedValue({
       ...baseUser,
       access: "PROJECTADMIN",
     });
@@ -312,7 +333,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 9
   it("returns canAutoAssignTemplates=false when user.access is USER", async () => {
     setupDefaultMocks();
-    mockPrismaUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
+    mockDbUserFindUnique.mockResolvedValue({ ...baseUser, access: "USER" });
     const { POST } = await import("./route");
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(200);
@@ -340,7 +361,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   it("returns workflowMappings with isDefaultFallback=true when state name not found in target", async () => {
     setupDefaultMocks();
     // Source case has a state "Custom State" (id=999) not in target workflow
-    mockPrismaRepositoryCasesFindMany
+    mockDbRepositoryCasesFindMany
       .mockReset()
       .mockResolvedValueOnce([{ ...baseSourceCases[0], stateId: 999 }])
       .mockResolvedValueOnce([]); // collision check
@@ -359,7 +380,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 12
   it("returns unmappedStates list for states that fell back to default", async () => {
     setupDefaultMocks();
-    mockPrismaRepositoryCasesFindMany
+    mockDbRepositoryCasesFindMany
       .mockReset()
       .mockResolvedValueOnce([{ ...baseSourceCases[0], stateId: 999 }])
       .mockResolvedValueOnce([]); // collision check
@@ -376,8 +397,8 @@ describe("POST /api/repository/copy-move/preflight", () => {
   // Test 13
   it("returns collisions array when target has cases with matching name/className/source", async () => {
     setupDefaultMocks();
-    // Admin path: both source cases and collision check go through prisma.
-    mockPrismaRepositoryCasesFindMany
+    // Admin path: both source cases and collision check go through baseDb.
+    mockDbRepositoryCasesFindMany
       .mockReset()
       .mockResolvedValueOnce(baseSourceCases) // source cases
       .mockResolvedValueOnce([
@@ -408,11 +429,11 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(data.collisions).toHaveLength(0);
   });
 
-  it("SELF-COLLISION: scopes the collision query out of moving source ids on move", async () => {
-    // Customer-reported: moving a case within the same project surfaced a
-    // Skip/Rename conflict because the (name, className, source) tuple
-    // matched the moving case itself. Fix excludes the source IDs from
-    // the collision lookup when operation === 'move'.
+  it("SELF-COLLISION: same-project move short-circuits with nothing to report", async () => {
+    // A same-project move only relocates rows, so preflight has nothing to
+    // preview: no collision query, no template/workflow warnings, and no
+    // target repository/template/state context (a relocation reads none of
+    // it). A case cannot conflict with itself.
     setupDefaultMocks();
     const { POST } = await import("./route");
     const res = await POST(
@@ -424,10 +445,16 @@ describe("POST /api/repository/copy-move/preflight", () => {
       })
     );
     expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.collisions).toHaveLength(0);
+    expect(data.workflowMappings).toHaveLength(0);
+    expect(data.templateMismatch).toBe(false);
+    expect(data.targetRepositoryId).toBeUndefined();
+    expect(data.targetDefaultWorkflowStateId).toBeUndefined();
+    expect(data.targetTemplateId).toBeUndefined();
 
-    // Collision check is the second findMany on the admin path
-    const collisionCall = mockPrismaRepositoryCasesFindMany.mock.calls[1]?.[0];
-    expect(collisionCall?.where?.id).toEqual({ notIn: [1, 2] });
+    // The short-circuit answers before any case rows are read.
+    expect(mockDbRepositoryCasesFindMany).not.toHaveBeenCalled();
   });
 
   it("SELF-COLLISION: does NOT scope the collision query out of source ids on copy", async () => {
@@ -438,7 +465,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
     const res = await POST(makeRequest(validBody));
     expect(res.status).toBe(200);
 
-    const collisionCall = mockPrismaRepositoryCasesFindMany.mock.calls[1]?.[0];
+    const collisionCall = mockDbRepositoryCasesFindMany.mock.calls[1]?.[0];
     expect(collisionCall?.where?.id).toBeUndefined();
   });
 
@@ -456,7 +483,7 @@ describe("POST /api/repository/copy-move/preflight", () => {
   it("checks hasSourceUpdateAccess for move operation — non-admin without canAddEdit", async () => {
     setupDefaultMocks();
     // User without canAddEdit on TestCaseRepository
-    mockPrismaUserFindUnique.mockResolvedValue({
+    mockDbUserFindUnique.mockResolvedValue({
       id: "user-1",
       access: "USER",
       role: {

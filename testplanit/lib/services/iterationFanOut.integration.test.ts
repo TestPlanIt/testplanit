@@ -4,13 +4,13 @@
  * Per feedback_prisma_helper_live_db_test: Phase 2 shipped a runtime bug
  * (helper wrote `parameters` to RepositoryCaseVersions before the column
  * existed) that 6 plans + 6127 unit tests missed because every integration
- * test mocked `tx` as `any`. This test exercises a REAL prisma.$transaction
+ * test mocked `tx` as `any`. This test exercises a REAL baseDb.$transaction
  * so unknown-column errors surface immediately.
  *
  * Execution model:
  *   - Skipped by default. Opt-in with `RUN_DB_INTEGRATION=1`.
  *   - Requires DATABASE_URL pointing at a development/test database.
- *   - Every test runs in its own prisma.$transaction and ROLLS BACK at the
+ *   - Every test runs in its own baseDb.$transaction and ROLLS BACK at the
  *     end so the DB is left untouched. This means tests are non-destructive
  *     and re-runnable against any environment.
  *   - Cleanup: the rollback throws an internal sentinel error that the
@@ -38,10 +38,10 @@ describeIntegration("materializeIterations (live DB)", () => {
   // Lazy-import to keep this module pure when skipped — avoids spinning up
   // Prisma in unit-test contexts where the DB is unreachable.
   const importDeps = async () => {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { materializeIterations, materializeForOneCase } =
       await import("./iterationFanOut");
-    return { prisma, materializeIterations, materializeForOneCase };
+    return { baseDb, materializeIterations, materializeForOneCase };
   };
 
   // Sentinel rolled-back transactions throw this so we can identify them.
@@ -52,14 +52,14 @@ describeIntegration("materializeIterations (live DB)", () => {
    * `body` returned — but the DB state is reverted before returning.
    */
   async function withRollback<T>(
-    prisma: any,
+    baseDb: any,
     body: (tx: any) => Promise<T>,
     timeoutMs = 60_000
   ): Promise<T> {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
-      await prisma.$transaction(
+      await baseDb.$transaction(
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -234,14 +234,14 @@ describeIntegration("materializeIterations (live DB)", () => {
   afterAll(async () => {
     // Explicit disconnect so the test process exits cleanly.
     if (RUN_INTEGRATION && HAS_DB_URL) {
-      const { prisma } = await import("~/lib/prisma");
-      await prisma.$disconnect();
+      const { baseDb } = await import("~/lib/db");
+      await baseDb.$disconnect();
     }
   });
 
   it("materializes one iteration row per dataset row with rowIndex (not iterationOrder)", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       const result = await materializeIterations(fx.testRunId, tx);
 
@@ -265,8 +265,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("snapshot row preserves dataset rows (rowsJson) and parameter schema (parametersJson)", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -296,8 +296,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("snapshot is immutable: editing source dataset after snapshot does NOT change snapshot rows", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -339,8 +339,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("each iteration's valuesJson matches the corresponding snapshot row by rowIndex", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -364,8 +364,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("updates TestRunCases.totalIterations to the row count", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -386,8 +386,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("links every iteration to the snapshot via dataSetSnapshotId FK", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -404,8 +404,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("non-parameterized cases are skipped (no snapshot, no iterations, totalIterations stays 0)", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       // Flip the case to non-parameterized.
       await tx.repositoryCases.update({
@@ -435,18 +435,18 @@ describeIntegration("materializeIterations (live DB)", () => {
     // transaction commits, the snapshot + iteration rows must NOT persist.
     //
     // We exercise this by running the full materialize inside a real
-    // prisma.$transaction that throws a sentinel error at the end. Prisma
+    // baseDb.$transaction that throws a sentinel error at the end. Prisma
     // rolls back; we then read OUTSIDE any transaction to confirm that no
     // TestRunCaseIteration rows survive. Since the seed data is also part
     // of the rolled-back transaction, this leaves the DB untouched.
-    const { prisma, materializeIterations } = await importDeps();
+    const { baseDb, materializeIterations } = await importDeps();
     const ROLLBACK_TAG = `__ITER06_ATOMIC_${Date.now()}__`;
     let snapshotIdFromInsideTx: number | undefined;
     let testRunCaseIdFromInsideTx: number | undefined;
 
     let thrown: unknown;
     try {
-      await prisma.$transaction(async (tx: any) => {
+      await baseDb.$transaction(async (tx: any) => {
         const fx = await seedFixture(tx);
         testRunCaseIdFromInsideTx = fx.testRunCaseId;
         const result = await materializeIterations(fx.testRunId, tx);
@@ -469,7 +469,7 @@ describeIntegration("materializeIterations (live DB)", () => {
 
     // Read OUTSIDE the tx — none of the in-tx writes should survive.
     const surviveSnapshot = snapshotIdFromInsideTx
-      ? await prisma.testRunCaseDataSetSnapshot.findUnique({
+      ? await baseDb.testRunCaseDataSetSnapshot.findUnique({
           where: { id: snapshotIdFromInsideTx },
           select: { id: true },
         })
@@ -477,7 +477,7 @@ describeIntegration("materializeIterations (live DB)", () => {
     expect(surviveSnapshot).toBeNull();
 
     const surviveIterations = testRunCaseIdFromInsideTx
-      ? await prisma.testRunCaseIteration.count({
+      ? await baseDb.testRunCaseIteration.count({
           where: { testRunCaseId: testRunCaseIdFromInsideTx },
         })
       : 0;
@@ -485,8 +485,8 @@ describeIntegration("materializeIterations (live DB)", () => {
   });
 
   it("emits progress callbacks at the configured cadence", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       const events: Array<{
         processedCases: number;

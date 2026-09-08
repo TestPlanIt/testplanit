@@ -15,18 +15,18 @@ import { GET } from "./route";
  *   - value === true    → enabled (true)
  *   - anything else     → disabled (false)
  */
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     appConfig: {
       findUnique: vi.fn(),
     },
   },
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 describe("GET /api/config/review-feature", () => {
-  const findUnique = prisma.appConfig.findUnique as ReturnType<typeof vi.fn>;
+  const findUnique = baseDb.appConfig.findUnique as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     findUnique.mockReset();

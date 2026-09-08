@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -33,8 +35,9 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { isCompleteNotPermittedError } from "~/utils/completionError";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
-import { useFindManyWorkflows, useUpdateTestRuns } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 
@@ -60,9 +63,10 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { mutateAsync: updateTestRun } = useUpdateTestRuns();
+  const { mutateAsync: updateTestRun } =
+    useClientQueries(schema).testRuns.useUpdate();
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -120,6 +124,15 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
       onClose();
     } catch (error) {
       console.error("Error completing test run:", error);
+      // The server enforces canClose on the completion write, so a user who
+      // reaches this dialog through a stale permission cache gets a 403. Say
+      // so — silently doing nothing reads as the button being broken.
+      toast.error(
+        isCompleteNotPermittedError(error)
+          ? t("common.errors.completeNotPermitted")
+          : t("common.errors.somethingWentWrong"),
+        { id: "complete-run-permission-error" }
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -194,7 +207,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-start font-normal",
                     !selectedDate && "text-muted-foreground"
                   )}
                 >

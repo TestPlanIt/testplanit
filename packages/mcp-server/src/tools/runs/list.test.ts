@@ -315,6 +315,130 @@ describe("registerRunsList", () => {
     expect(run10.statusCounts.find((c) => c.id === 99)).toBeUndefined();
   });
 
+  // ── Automated (JUnit-family) run rollups ─────────────────────────────────
+
+  it("automated run: rollup counts JUnit result attempts, not TestRunCases", async () => {
+    // Sequence: testRuns.findMany → jUnitTestSuite.findMany →
+    // jUnitTestResult.groupBy → status.findMany. NO testRunCases.groupBy —
+    // the page has no REGULAR runs.
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRun(92016, { testRunType: "MOCHA" }),
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      { id: 500, testRunId: 92016 },
+      { id: 501, testRunId: 92016 },
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      { testSuiteId: 500, statusId: 1, _count: { id: 80 } },
+      { testSuiteId: 501, statusId: 1, _count: { id: 7 } },
+      { testSuiteId: 500, statusId: 2, _count: { id: 44 } },
+      { testSuiteId: 501, statusId: 3, _count: { id: 6 } },
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      { id: 1, name: "Passed" },
+      { id: 2, name: "Failed" },
+      { id: 3, name: "Skipped" },
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_list",
+      arguments: { projectId: 7 },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(
+      mockZenstack.mock.calls.filter(
+        (c) => c[0] === "testRunCases" && c[1] === "groupBy",
+      ).length,
+    ).toBe(0);
+
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    expect(items[0].statusCounts).toEqual(
+      expect.arrayContaining([
+        { id: 1, name: "Passed", count: 87 },
+        { id: 2, name: "Failed", count: 44 },
+        { id: 3, name: "Skipped", count: 6 },
+      ]),
+    );
+    expect(items[0].untested).toBe(0);
+    expect(items[0].total).toBe(137);
+  });
+
+  it("mixed page: TestRunCases groupBy scoped to REGULAR ids only; ONE status findMany for both sources", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRun(10),
+      makeRawRun(20, { testRunType: "JUNIT" }),
+    ]);
+    // Promise.all order: testRunCases.groupBy fires first, then the suite
+    // lookup, then the junit groupBy once suites resolve.
+    mockZenstack.mockResolvedValueOnce([
+      { testRunId: 10, statusId: 1, _count: { id: 5 } },
+      { testRunId: 10, statusId: null, _count: { id: 2 } },
+    ]);
+    mockZenstack.mockResolvedValueOnce([{ id: 900, testRunId: 20 }]);
+    mockZenstack.mockResolvedValueOnce([
+      { testSuiteId: 900, statusId: 2, _count: { id: 9 } },
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      { id: 1, name: "Passed" },
+      { id: 2, name: "Failed" },
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_list",
+      arguments: { projectId: 7 },
+    });
+
+    const trcBody = getCallBody(1);
+    expect((trcBody?.where as Record<string, unknown>).testRunId).toEqual({
+      in: [10],
+    });
+    const suiteBody = getCallBody(2);
+    expect((suiteBody?.where as Record<string, unknown>).testRunId).toEqual({
+      in: [20],
+    });
+    const statusCalls = mockZenstack.mock.calls.filter(
+      (c) => c[0] === "status" && c[1] === "findMany",
+    );
+    expect(statusCalls.length).toBe(1);
+    const statusWhere = (statusCalls[0][2] as Record<string, unknown>)
+      .where as { id: { in: number[] } };
+    expect([...statusWhere.id.in].sort()).toEqual([1, 2]);
+
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    const regular = items.find((r) => r.id === 10)!;
+    expect(regular.total).toBe(7);
+    expect(regular.untested).toBe(2);
+    const automated = items.find((r) => r.id === 20)!;
+    expect(automated.statusCounts).toEqual([
+      { id: 2, name: "Failed", count: 9 },
+    ]);
+    expect(automated.untested).toBe(0);
+    expect(automated.total).toBe(9);
+  });
+
+  it("automated run with no suites yet: zero rollup, junit groupBy skipped", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRun(30, { testRunType: "CUCUMBER" }),
+    ]);
+    mockZenstack.mockResolvedValueOnce([]); // suites findMany → none
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_list",
+      arguments: { projectId: 7 },
+    });
+
+    // findMany + suites only — no junit groupBy, no status findMany.
+    expect(mockZenstack.mock.calls.length).toBe(2);
+    const items = structured(result).items as Array<Record<string, unknown>>;
+    expect(items[0].statusCounts).toEqual([]);
+    expect(items[0].untested).toBe(0);
+    expect(items[0].total).toBe(0);
+  });
+
   // ── Filters ──────────────────────────────────────────────────────────────
 
   it("filter: stateId", async () => {

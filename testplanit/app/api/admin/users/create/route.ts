@@ -1,9 +1,10 @@
 import { hash } from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
@@ -73,9 +74,11 @@ export const POST = withAuditContext(async (req: NextRequest) => {
   // Detection step: is there already a user (active or soft-deleted) with
   // this email? Doing this *before* the create avoids relying on a P2002
   // round-trip and lets us return RESTORE_REQUIRED with the user info the
-  // client needs to populate its restore dialog in one shot.
-  const existing = await prisma.user.findUnique({
-    where: { email: body.email },
+  // client needs to populate its restore dialog in one shot. Matched
+  // case-insensitively — an address differing only by case is the same
+  // account.
+  const existing = await baseDb.user.findFirst({
+    where: { email: { equals: body.email, mode: "insensitive" } },
     select: { id: true, name: true, email: true, isDeleted: true },
   });
 
@@ -152,9 +155,9 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // Race: another request created the same email between detection and
     // create. Fall back to the same detection logic so the client still
     // gets a structured RESTORE_REQUIRED / EXISTS_ACTIVE response.
-    if (err?.code === "P2002") {
-      const racing = await prisma.user.findUnique({
-        where: { email: body.email },
+    if (isUniqueConstraintError(err)) {
+      const racing = await baseDb.user.findFirst({
+        where: { email: { equals: body.email, mode: "insensitive" } },
         select: { id: true, name: true, email: true, isDeleted: true },
       });
       if (racing?.isDeleted) {

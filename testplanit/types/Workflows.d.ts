@@ -1,6 +1,6 @@
 // ~/types/Workflows.ts
 
-import { Workflows } from "@prisma/client";
+import type { Workflows } from "~/zenstack/models";
 
 interface DataRow {
   id: number;
@@ -16,10 +16,7 @@ export interface ExtendedWorkflows extends DataRow, Workflows {
     id: number;
     value: string;
   };
-  projects: {
-    projectId: number;
-    project: {
-      name: string;
-    };
-  }[];
+  _count: {
+    projects: number;
+  };
 }

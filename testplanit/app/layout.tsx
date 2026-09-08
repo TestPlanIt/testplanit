@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
 import { getLocale } from "next-intl/server";
 import Script from "next/script";
+import { getLocaleDirection } from "~/i18n/direction";
 import "~/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -23,14 +24,6 @@ export const metadata: Metadata = {
     description:
       "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
     siteName: "TestPlanIt",
-    images: [
-      {
-        url: "/tpi_logo_og.png",
-        width: 1200,
-        height: 630,
-        alt: "TestPlanIt Logo",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },
@@ -39,7 +32,6 @@ export const metadata: Metadata = {
     title: "TestPlanIt - Modern Test Management Platform",
     description:
       "Streamline your software testing with TestPlanIt's powerful test case management, execution tracking, and comprehensive reporting tools.",
-    images: ["/tpi_logo_og.png"],
   },
 };
 
@@ -67,9 +59,15 @@ export default async function RootLayout({
     isMultiTenant || (isHosted && !hasPublicEndpoint) ? "proxy" : "direct";
 
   const locale = await getLocale();
+  const dir = getLocaleDirection(locale);
 
   return (
-    <html lang={locale} className={`${notoSans.variable}`}>
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${notoSans.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <meta name="storage-mode" content={storageMode} />
         <Script
@@ -80,7 +78,12 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="text-foreground bg-background underline:text-link w-full">
+      {/* `flow-root` establishes a block formatting context so descendant top
+          margins (e.g. the app shell's `m-4`) don't collapse out through the
+          body. That keeps `document.body.getBoundingClientRect().top` at 0, which
+          the onboarding tour's spotlight positioning relies on to align with its
+          target elements. */}
+      <body className="flow-root text-foreground bg-background underline:text-link w-full">
         {children}
       </body>
     </html>

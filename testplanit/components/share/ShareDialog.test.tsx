@@ -22,18 +22,24 @@ vi.mock("next-auth/react", () => ({
 }));
 
 // Mock ~/lib/hooks useCreateShareLink
-vi.mock("~/lib/hooks", () => ({
-  useCreateShareLink: () => ({
-    mutateAsync: mockMutateAsync,
-    isPending: false,
-  }),
-  useFindFirstRegistrationSettings: () => ({
-    data: {
-      minPasswordLength: 8,
-      requireUppercase: false,
-      requireLowercase: false,
-      requireNumbers: false,
-      requiredSpecialChars: null,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    shareLink: {
+      useCreate: () => ({
+        mutateAsync: mockMutateAsync,
+        isPending: false,
+      }),
+    },
+    registrationSettings: {
+      useFindFirst: () => ({
+        data: {
+          minPasswordLength: 8,
+          requireUppercase: false,
+          requireLowercase: false,
+          requireNumbers: false,
+          requiredSpecialChars: null,
+        },
+      }),
     },
   }),
 }));
@@ -44,15 +50,6 @@ vi.mock("@/actions/share-links", () => ({
   prepareShareLinkData: vi
     .fn()
     .mockResolvedValue({ shareKey: "test-key", passwordHash: null }),
-}));
-
-// Mock @prisma/client ShareLinkMode enum
-vi.mock("@prisma/client", () => ({
-  ShareLinkMode: {
-    AUTHENTICATED: "AUTHENTICATED",
-    PASSWORD_PROTECTED: "PASSWORD_PROTECTED",
-    PUBLIC: "PUBLIC",
-  },
 }));
 
 // Mock ShareLinkCreated and ShareLinkList

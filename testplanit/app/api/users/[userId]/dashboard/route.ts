@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { resolveAccessibleProjectIds } from "~/lib/authContext";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export type UserDashboardData = {
@@ -21,6 +22,7 @@ export type UserDashboardData = {
     runForecastAutomated: number | null;
     projectId: number;
     projectName: string;
+    projectIconUrl: string | null;
   }>;
   assignedSessions: Array<{
     id: number;
@@ -30,6 +32,7 @@ export type UserDashboardData = {
     forecastAutomated: number | null;
     projectId: number;
     projectName: string;
+    projectIconUrl: string | null;
     totalElapsed: number;
   }>;
 };
@@ -46,13 +49,28 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only allow users to fetch their own dashboard
+    // Assignments are private to the user, with two exceptions: ADMIN sees
+    // them in full, PROJECTADMIN sees them filtered to projects the viewer
+    // can read. `scopeProjectIds === null` means unscoped.
+    let scopeProjectIds: number[] | null = null;
     if (session.user.id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      const viewer = await baseDb.user.findUnique({
+        where: { id: session.user.id },
+        select: { access: true, roleId: true },
+      });
+      if (viewer?.access === "PROJECTADMIN") {
+        scopeProjectIds = await resolveAccessibleProjectIds({
+          id: session.user.id,
+          access: viewer.access,
+          roleId: viewer.roleId,
+        });
+      } else if (viewer?.access !== "ADMIN") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     // Get untested status ID
-    const untestedStatus = await prisma.status.findFirst({
+    const untestedStatus = await baseDb.status.findFirst({
       where: {
         systemName: "untested",
         isDeleted: false,
@@ -61,7 +79,7 @@ export async function GET(
     });
 
     // Get assigned test run cases with optimized query
-    const testRunCases = await prisma.$queryRaw<
+    const testRunCases = await baseDb.$queryRaw<
       Array<{
         id: number;
         repositoryCaseId: number;
@@ -78,6 +96,7 @@ export async function GET(
         runForecastAutomated: number | null;
         projectId: number;
         projectName: string;
+        projectIconUrl: string | null;
       }>
     >`
       SELECT
@@ -95,7 +114,8 @@ export async function GET(
         tr."forecastManual" as "runForecastManual",
         tr."forecastAutomated" as "runForecastAutomated",
         p.id as "projectId",
-        p.name as "projectName"
+        p.name as "projectName",
+        p."iconUrl" as "projectIconUrl"
       FROM "TestRunCases" trc
       JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
       JOIN "TestRuns" tr ON trc."testRunId" = tr.id
@@ -111,13 +131,17 @@ export async function GET(
       LEFT JOIN "Status" latest_result_status ON latest_result."statusId" = latest_result_status.id
       WHERE trc."assignedToId" = ${userId}
         AND trc."isCompleted" = false
+        -- Removing a case from a run soft-deletes its TestRunCases row rather
+        -- than dropping it, so without this the assignee keeps seeing work that
+        -- is no longer part of any run.
+        AND trc."isDeleted" = false
         AND tr."isDeleted" = false
         AND p."isDeleted" = false
       ORDER BY tr.id, trc.id
     `;
 
     // Get assigned sessions with aggregated elapsed time
-    const sessions = await prisma.$queryRaw<
+    const sessions = await baseDb.$queryRaw<
       Array<{
         id: number;
         name: string;
@@ -126,6 +150,7 @@ export async function GET(
         forecastAutomated: number | null;
         projectId: number;
         projectName: string;
+        projectIconUrl: string | null;
         totalElapsed: number | null;
       }>
     >`
@@ -137,6 +162,7 @@ export async function GET(
         s."forecastAutomated",
         p.id as "projectId",
         p.name as "projectName",
+        p."iconUrl" as "projectIconUrl",
         COALESCE(elapsed_sum.total, 0) as "totalElapsed"
       FROM "Sessions" s
       JOIN "Projects" p ON s."projectId" = p.id
@@ -153,10 +179,16 @@ export async function GET(
       ORDER BY s.id
     `;
 
+    const scope = scopeProjectIds === null ? null : new Set(scopeProjectIds);
     const response: UserDashboardData = {
       untestedStatusId: untestedStatus?.id || null,
-      testRunCasesAssigned: testRunCases,
-      assignedSessions: sessions.map((s) => ({
+      testRunCasesAssigned: scope
+        ? testRunCases.filter((tc) => scope.has(tc.projectId))
+        : testRunCases,
+      assignedSessions: (scope
+        ? sessions.filter((s) => scope.has(s.projectId))
+        : sessions
+      ).map((s) => ({
         ...s,
         totalElapsed: Number(s.totalElapsed || 0),
       })),

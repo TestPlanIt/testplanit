@@ -541,6 +541,8 @@ interface TrackedTestResult {
     screenshots: string[];
     /** Retry attempt number (0-based) */
     retryAttempt: number;
+    /** Worker process id the test ran in (WebdriverIO cid, e.g. "0-1") */
+    worker?: string;
     /** Unique identifier for this test (cid + fullTitle) */
     uid: string;
     /** Spec file path */
@@ -630,6 +632,8 @@ interface ReporterState {
     folderPathMap: Map<string, number>;
     /** Dedup of in-flight step writes per case id (write steps at most once per case per run) */
     caseStepsMap: Map<number, Promise<void>>;
+    /** Map of case IDs to an in-flight/settled automated-flip check, so each explicitly linked case is checked once per run */
+    caseAutomatedMap: Map<number, Promise<void>>;
     /** Status ID mappings */
     statusIds: {
         passed?: number;
@@ -853,6 +857,14 @@ declare class TestPlanItReporter extends WDIOReporter {
      */
     private ensureCaseAutomated;
     /**
+     * Explicit-ID variant of the automated flip: only the case id from the
+     * title is known, so fetch the case once per run (memoized) and flip it to
+     * `automated: true` when it isn't already. Skips the write when the case is
+     * already automated and never throws — a failure logs and is swallowed so
+     * it can't abort reporting the result.
+     */
+    private ensureLinkedCaseAutomated;
+    /**
      * Get the full suite path as a string
      */
     private getFullSuiteName;
@@ -882,6 +894,13 @@ declare class TestPlanItReporter extends WDIOReporter {
     onAfterCommand(commandArgs: AfterCommandArgs): void;
     onTestPass(test: TestStats): void;
     onTestFail(test: TestStats): void;
+    /**
+     * A failing attempt that WebdriverIO is about to retry (Mocha/Jasmine
+     * per-test retries) arrives here INSTEAD of onTestFail. Report it like any
+     * failed attempt so a fail-then-pass sequence is visible as flaky in
+     * TestPlanIt; the retry itself still flows through onTestPass/onTestFail.
+     */
+    onTestRetry(test: TestStats): void;
     onTestSkip(test: TestStats): void;
     /**
      * Handle test completion

@@ -127,6 +127,34 @@ describe("GET /api/health", () => {
       expect(data.timestamp).toBeDefined();
       expect(() => new Date(data.timestamp)).not.toThrow();
     });
+
+    it("reports event-loop lag percentiles in milliseconds", async () => {
+      const response = await GET();
+      const data = await response.json();
+
+      for (const key of ["p50", "p90", "p99", "max", "sinceMs"]) {
+        expect(data.eventLoop[key]).toBeTypeOf("number");
+        expect(data.eventLoop[key]).toBeGreaterThanOrEqual(0);
+      }
+      // Nanoseconds would put an idle loop in the millions. Guards the unit
+      // conversion, which is the easiest thing to get wrong here.
+      expect(data.eventLoop.p50).toBeLessThan(1000);
+      expect(data.eventLoop.p99).toBeGreaterThanOrEqual(data.eventLoop.p50);
+      expect(data.eventLoop.max).toBeGreaterThanOrEqual(data.eventLoop.p99);
+    });
+
+    it("keeps event-loop lag out of the overall status", async () => {
+      // A blocked loop must never mark an instance unhealthy: that would pull it
+      // from the load balancer at its busiest and dump the traffic on its
+      // sibling. Assert it is reported alongside `checks`, not inside it.
+      const response = await GET();
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.status).toBe("healthy");
+      expect(data.checks.eventLoop).toBeUndefined();
+      expect(data.eventLoop).toBeDefined();
+    });
   });
 
   describe("Degraded state", () => {

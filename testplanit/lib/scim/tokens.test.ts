@@ -8,8 +8,8 @@ import {
   vi,
 } from "vitest";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     scimToken: {
       create: vi.fn(),
       update: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock("~/utils/encryption", () => ({
   decrypt: vi.fn(async (s: string) => s.replace(/^enc\((.*)\)$/, "$1")),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { encrypt, decrypt } from "~/utils/encryption";
 import {
   decryptScimSecret,
@@ -57,7 +57,7 @@ describe("SCIM tokens service", () => {
   describe("mintScimToken", () => {
     it("generates a plaintext that starts with the tps_ prefix and writes the encrypted secret + hashed token", async () => {
       const fakeRow = { id: "tk_1" } as any;
-      vi.mocked(prisma.scimToken.create).mockResolvedValue(fakeRow);
+      vi.mocked(baseDb.scimToken.create).mockResolvedValue(fakeRow);
 
       const result = await mintScimToken({
         name: "Okta production",
@@ -75,8 +75,8 @@ describe("SCIM tokens service", () => {
       expect(encrypt).toHaveBeenCalledWith(result.plaintext);
 
       // create() was called with the right shape
-      expect(prisma.scimToken.create).toHaveBeenCalledTimes(1);
-      const args = vi.mocked(prisma.scimToken.create).mock.calls[0][0] as {
+      expect(baseDb.scimToken.create).toHaveBeenCalledTimes(1);
+      const args = vi.mocked(baseDb.scimToken.create).mock.calls[0][0] as {
         data: Record<string, unknown>;
       };
       expect(args.data.name).toBe("Okta production");
@@ -98,7 +98,7 @@ describe("SCIM tokens service", () => {
     });
 
     it("passes through expiresAt when set", async () => {
-      vi.mocked(prisma.scimToken.create).mockResolvedValue({
+      vi.mocked(baseDb.scimToken.create).mockResolvedValue({
         id: "tk_2",
       } as any);
       const expiresAt = new Date("2027-01-01T00:00:00Z");
@@ -110,14 +110,14 @@ describe("SCIM tokens service", () => {
         createdById: "user_admin_2",
       });
 
-      const args = vi.mocked(prisma.scimToken.create).mock.calls[0][0] as {
+      const args = vi.mocked(baseDb.scimToken.create).mock.calls[0][0] as {
         data: { expiresAt: Date | null };
       };
       expect(args.data.expiresAt).toBe(expiresAt);
     });
 
     it("generates a fresh plaintext on each call", async () => {
-      vi.mocked(prisma.scimToken.create).mockResolvedValue({
+      vi.mocked(baseDb.scimToken.create).mockResolvedValue({
         id: "tk_x",
       } as any);
 
@@ -141,13 +141,13 @@ describe("SCIM tokens service", () => {
   describe("revokeScimToken", () => {
     it("sets isActive: false, revokedAt: Date, revokedById", async () => {
       const fakeRow = { id: "tk_1", isActive: false } as any;
-      vi.mocked(prisma.scimToken.update).mockResolvedValue(fakeRow);
+      vi.mocked(baseDb.scimToken.update).mockResolvedValue(fakeRow);
 
       const result = await revokeScimToken("tk_1", "user_admin_1");
       expect(result).toBe(fakeRow);
 
-      expect(prisma.scimToken.update).toHaveBeenCalledTimes(1);
-      const args = vi.mocked(prisma.scimToken.update).mock.calls[0][0] as {
+      expect(baseDb.scimToken.update).toHaveBeenCalledTimes(1);
+      const args = vi.mocked(baseDb.scimToken.update).mock.calls[0][0] as {
         where: { id: string };
         data: { isActive: boolean; revokedAt: Date; revokedById: string };
       };
@@ -161,28 +161,28 @@ describe("SCIM tokens service", () => {
   describe("getScimTokenById", () => {
     it("calls findUnique with { id } and returns the row", async () => {
       const fakeRow = { id: "tk_1", name: "thing" } as any;
-      vi.mocked(prisma.scimToken.findUnique).mockResolvedValue(fakeRow);
+      vi.mocked(baseDb.scimToken.findUnique).mockResolvedValue(fakeRow);
 
       const result = await getScimTokenById("tk_1");
       expect(result).toBe(fakeRow);
-      expect(prisma.scimToken.findUnique).toHaveBeenCalledWith({
+      expect(baseDb.scimToken.findUnique).toHaveBeenCalledWith({
         where: { id: "tk_1" },
       });
     });
 
     it("returns null when the row does not exist", async () => {
-      vi.mocked(prisma.scimToken.findUnique).mockResolvedValue(null);
+      vi.mocked(baseDb.scimToken.findUnique).mockResolvedValue(null);
       expect(await getScimTokenById("nope")).toBeNull();
     });
   });
 
   describe("listScimTokens", () => {
     it("filters by isActive: true when showRevoked is false", async () => {
-      vi.mocked(prisma.scimToken.findMany).mockResolvedValue([]);
+      vi.mocked(baseDb.scimToken.findMany).mockResolvedValue([]);
 
       await listScimTokens({ showRevoked: false });
 
-      const args = vi.mocked(prisma.scimToken.findMany).mock.calls[0][0] as {
+      const args = vi.mocked(baseDb.scimToken.findMany).mock.calls[0][0] as {
         where: { AND: Array<Record<string, unknown>> };
         orderBy: { createdAt: "asc" | "desc" };
       };
@@ -191,11 +191,11 @@ describe("SCIM tokens service", () => {
     });
 
     it("does NOT filter by isActive when showRevoked is true", async () => {
-      vi.mocked(prisma.scimToken.findMany).mockResolvedValue([]);
+      vi.mocked(baseDb.scimToken.findMany).mockResolvedValue([]);
 
       await listScimTokens({ showRevoked: true });
 
-      const args = vi.mocked(prisma.scimToken.findMany).mock.calls[0][0] as {
+      const args = vi.mocked(baseDb.scimToken.findMany).mock.calls[0][0] as {
         where: { AND: Array<Record<string, unknown>> };
       };
       // First AND clause should NOT contain an isActive filter
@@ -203,11 +203,11 @@ describe("SCIM tokens service", () => {
     });
 
     it("adds a case-insensitive name contains filter when search is set", async () => {
-      vi.mocked(prisma.scimToken.findMany).mockResolvedValue([]);
+      vi.mocked(baseDb.scimToken.findMany).mockResolvedValue([]);
 
       await listScimTokens({ showRevoked: false, search: "foo" });
 
-      const args = vi.mocked(prisma.scimToken.findMany).mock.calls[0][0] as {
+      const args = vi.mocked(baseDb.scimToken.findMany).mock.calls[0][0] as {
         where: { AND: Array<Record<string, unknown>> };
       };
       expect(args.where.AND[1]).toEqual({
@@ -216,11 +216,11 @@ describe("SCIM tokens service", () => {
     });
 
     it("treats missing opts as showRevoked: false", async () => {
-      vi.mocked(prisma.scimToken.findMany).mockResolvedValue([]);
+      vi.mocked(baseDb.scimToken.findMany).mockResolvedValue([]);
 
       await listScimTokens({});
 
-      const args = vi.mocked(prisma.scimToken.findMany).mock.calls[0][0] as {
+      const args = vi.mocked(baseDb.scimToken.findMany).mock.calls[0][0] as {
         where: { AND: Array<Record<string, unknown>> };
       };
       expect(args.where.AND[0]).toEqual({ isActive: true });
@@ -235,7 +235,7 @@ describe("SCIM tokens service", () => {
     });
 
     it("round-trips with mintScimToken", async () => {
-      vi.mocked(prisma.scimToken.create).mockResolvedValue({
+      vi.mocked(baseDb.scimToken.create).mockResolvedValue({
         id: "tk_rt",
       } as any);
 
@@ -246,7 +246,7 @@ describe("SCIM tokens service", () => {
         createdById: "u",
       });
 
-      const args = vi.mocked(prisma.scimToken.create).mock.calls[0][0] as {
+      const args = vi.mocked(baseDb.scimToken.create).mock.calls[0][0] as {
         data: { secret: string };
       };
       const decrypted = await decryptScimSecret(args.data.secret);

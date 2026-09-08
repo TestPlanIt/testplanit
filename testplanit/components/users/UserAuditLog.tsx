@@ -1,8 +1,10 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { DataTable } from "@/components/tables/DataTable";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, startOfDay } from "date-fns";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
@@ -28,13 +30,11 @@ import {
 } from "~/app/[locale]/admin/audit-logs/columns";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 
-const PAGE_SIZE = 50;
+// Rows fetched per scroll page — matches the admin audit-log surface: audit
+// rows are cheap (heavy Json columns excluded) and operationId grouping can
+// collapse a whole page into one visible row, so batch large.
+const PAGE_SIZE = 1000;
 
 interface UserAuditLogProps {
   userId: string;
@@ -42,9 +42,9 @@ interface UserAuditLogProps {
 
 export function UserAuditLog({ userId }: UserAuditLogProps) {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
   const tProfile = useTranslations("users.profile.auditLog");
 
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -148,7 +148,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -180,23 +180,25 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     [rows]
   );
 
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   // Filter options come from the distinct values this user has actually
   // generated, so each dropdown lists only relevant actions/types.
-  const { data: actionRows } = useFindManyAuditLog({
+  const { data: actionRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { userId },
     select: { action: true },
     distinct: ["action"],
     orderBy: { action: "asc" },
   });
-  const { data: typeRows } = useFindManyAuditLog({
+  const { data: typeRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { userId },
     select: { entityType: true },
     distinct: ["entityType"],
     orderBy: { entityType: "asc" },
   });
-  const { data: projectRows } = useFindManyAuditLog({
+  const { data: projectRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { userId, projectId: { not: null } },
     select: { projectId: true, project: { select: { name: true } } },
     distinct: ["projectId"],
@@ -226,6 +228,19 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
   const userPreferences = useMemo(
@@ -235,13 +250,7 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
 
   // Reuse the admin audit-log columns, but drop the user column — every row
   // belongs to the same user here.
-  const allColumns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const allColumns = useColumns(userPreferences, handleViewDetails, t, tCommon);
   const columns = useMemo(
     () => allColumns.filter((c) => c.id !== "userEmail"),
     [allColumns]
@@ -333,16 +342,19 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
 
       {/* Data Table — virtualized, infinite scroll. */}
       <div className="h-96">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}
           subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="entityName"
+          columnSizingStorageKey="user-audit-log"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}
@@ -356,10 +368,10 @@ export function UserAuditLog({ userId }: UserAuditLogProps) {
       </div>
 
       {rows.length > 0 && (
-        <p className="text-xs text-muted-foreground text-right">
+        <p className="text-xs text-muted-foreground text-end">
           {tProfile("showing", {
-            loaded: rows.length.toLocaleString(),
-            total: (totalCount ?? rows.length).toLocaleString(),
+            loaded: rows.length.toLocaleString(locale),
+            total: (totalCount ?? rows.length).toLocaleString(locale),
           })}
         </p>
       )}

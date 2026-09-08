@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { ColumnDef } from "@tanstack/react-table";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { ArrowRightLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -167,7 +167,7 @@ export const getColumns = (
     enableResizing: true,
     size: 100,
     cell: ({ row }) => (
-      <span className="text-right block">
+      <span className="text-end block">
         {(row.original.score * 100).toFixed(2)}
         {"%"}
       </span>

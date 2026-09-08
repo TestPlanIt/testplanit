@@ -1,7 +1,8 @@
 import { AsyncLocalStorage } from "async_hooks";
+import { runWithDbRouting } from "./db/routingContext";
 import { getTenantEncryptionKey } from "./tenantSecrets";
 
-// Duplicated from lib/multiTenantPrisma.ts (source of truth) so this module
+// Duplicated from lib/multiTenantDb.ts (source of truth) so this module
 // stays free of the Prisma transitive dep. The check is a one-line env read
 // and only used for a warning log here.
 function isMultiTenantMode(): boolean {
@@ -23,6 +24,26 @@ const storage = new AsyncLocalStorage<TenantContext>();
 
 export function getTenantContext(): TenantContext | undefined {
   return storage.getStore();
+}
+
+/**
+ * Best-effort tenant identifier for scoping PROCESS-LOCAL caches (e.g. the
+ * IntegrationManager adapter cache) and the cross-process invalidation
+ * messages that keep them coherent.
+ *
+ * Resolution deliberately mirrors getMasterKey's tenant domain so a cached
+ * entry is always scoped to the same tenant whose encryption key built it:
+ *   1. per-job tenant context — the shared multi-tenant worker serves many
+ *      tenants from ONE process (set by withTenantContext).
+ *   2. INSTANCE_TENANT_ID — an app pod is pinned to a single tenant.
+ *   3. "default" — single-tenant deployments and dev.
+ *
+ * Kept Prisma-free (plain env read) so this module keeps its light dep set.
+ */
+export function currentTenantScope(): string {
+  return (
+    getTenantContext()?.tenantId ?? process.env.INSTANCE_TENANT_ID ?? "default"
+  );
 }
 
 export async function runWithTenantContext<T>(
@@ -51,6 +72,11 @@ export function withTenantContext<
           "— encryption will fall back to process.env.ENCRYPTION_KEY or throw"
       );
     }
-    return runWithTenantContext(tenantId, () => processor(job));
+    // Establish a per-job DB routing frame so read-replica routing (when
+    // configured) auto-pins reads to the primary after the job's first write
+    // (read-your-own-writes). No-op when replicas aren't configured.
+    return runWithDbRouting(() =>
+      runWithTenantContext(tenantId, () => processor(job))
+    );
   };
 }

@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 /**
  * Maintains the denormalized RepositoryCases.hasParameters flag.
@@ -17,7 +17,7 @@ import type { Prisma } from "@prisma/client";
  */
 export async function updateHasParameters(
   caseId: number,
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<void> {
   const count = await tx.testCaseParameter.count({
     where: { testCaseId: caseId, isDeleted: false },

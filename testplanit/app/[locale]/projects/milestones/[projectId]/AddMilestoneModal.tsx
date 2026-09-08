@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import DynamicIcon from "@/components/DynamicIcon";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import {
@@ -41,12 +43,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  useCreateMilestones,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 function buildFormSchema(t: (key: any) => string) {
   return z.object({
@@ -87,9 +85,12 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
   const t = useTranslations();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createMilestones } = useCreateMilestones();
+  const { mutateAsync: createMilestones } =
+    useClientQueries(schema).milestones.useCreate();
 
-  const { data: milestoneTypes } = useFindManyMilestoneTypes({
+  const { data: milestoneTypes } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany({
     where: {
       AND: [
         {
@@ -110,22 +111,23 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
     include: { icon: true },
   });
 
-  const { data: milestones, isLoading: milestonesLoading } =
-    useFindManyMilestones({
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
-        isCompleted: false,
-      },
-      orderBy: [
-        { startedAt: "asc" },
-        { completedAt: "asc" },
-        { isStarted: "asc" },
-      ],
-      include: {
-        milestoneType: { select: { icon: true, name: true } },
-      },
-    });
+  const { data: milestones, isLoading: milestonesLoading } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      projectId: Number(projectId),
+      isDeleted: false,
+      isCompleted: false,
+    },
+    orderBy: [
+      { startedAt: "asc" },
+      { completedAt: "asc" },
+      { isStarted: "asc" },
+    ],
+    include: {
+      milestoneType: { select: { icon: true, name: true } },
+    },
+  });
 
   const milestoneTypesOptions =
     milestoneTypes?.map((milestoneType) => ({
@@ -136,7 +138,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
             className="w-5 h-5"
             name={milestoneType.icon?.name as IconName}
           />
-          <span className="ml-1">{milestoneType.name}</span>
+          <span className="ms-1">{milestoneType.name}</span>
         </div>
       ),
     })) || [];
@@ -245,7 +247,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
         setIsSubmitting(false);
       }
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: t("milestones.errors.nameExists"),
@@ -276,7 +278,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
         <React.Fragment key={milestone.value}>
           <SelectItem
             value={milestone.value}
-            style={{ paddingLeft: `${level * 20}px` }}
+            style={{ paddingInlineStart: `${level * 20}px` }}
           >
             {milestone.label}
           </SelectItem>
@@ -441,6 +443,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                       <DatePickerField
                         control={control}
                         name="startedAt"
+                        dateOnly
                         label={t("common.fields.startDate")}
                         placeholder={t("common.fields.startDate")}
                         helpKey="milestone.startDate"
@@ -480,6 +483,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
                       <DatePickerField
                         control={control}
                         name="completedAt"
+                        dateOnly
                         label={t("milestones.fields.dueDate")}
                         placeholder={t("milestones.fields.dueDate")}
                         helpKey="milestone.dueDate"

@@ -1,6 +1,33 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import { webhookEvents } from "~/lib/webhooks/events";
+
+/**
+ * Derive the cosmetic `SESSION` display key (e.g. `WEB-SN-1234`) for a session
+ * whose project `key` we don't already hold. Reads the record-key config and
+ * only spends the project lookup when the feature is enabled. Returns `null`
+ * when disabled or the project has no key configured.
+ */
+async function resolveSessionDisplayKey(
+  tx: TxClient,
+  projectId: number,
+  id: number
+): Promise<string | null> {
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  if (!enabled) return null;
+  const project = await tx.projects.findUnique({
+    where: { id: projectId },
+    select: { key: true },
+  });
+  return formatRecordKey({
+    projectKey: project?.key ?? null,
+    type: RECORD_TYPES.SESSION,
+    id,
+    tokens,
+  });
+}
 
 /**
  * Emit per-mutation outbound webhook events for Sessions lifecycle.
@@ -26,7 +53,7 @@ interface EmitOptions {
 
 export async function emitSessionCreated(
   row: SessionRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   let stateName: string | null = null;
@@ -45,12 +72,14 @@ export async function emitSessionCreated(
     stateColor = state?.color?.value ?? null;
     stateIsCompleted = state?.workflowType === "DONE";
   }
+  const displayKey = await resolveSessionDisplayKey(tx, row.projectId, row.id);
   await webhookEvents.emit(
     "session.created",
     {
       sessionId: row.id,
       sessionName: row.name,
       projectId: row.projectId,
+      displayKey,
       stateId: row.stateId,
       stateName,
       stateColor,
@@ -67,7 +96,7 @@ export async function emitSessionCreated(
 export async function emitSessionUpdateEvents(
   oldRow: SessionRow | null,
   newRow: SessionRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -80,6 +109,14 @@ export async function emitSessionUpdateEvents(
   const completedTransition =
     oldRow.isCompleted !== true && newRow.isCompleted === true;
   if (!stateChanged && !completedTransition) return;
+
+  // Resolve the cosmetic session key once; both the state_changed and
+  // completed payloads below share it.
+  const displayKey = await resolveSessionDisplayKey(
+    tx,
+    newRow.projectId,
+    newRow.id
+  );
 
   if (stateChanged) {
     const stateSelect = {
@@ -108,6 +145,7 @@ export async function emitSessionUpdateEvents(
         sessionId: newRow.id,
         sessionName: newRow.name,
         projectId: newRow.projectId,
+        displayKey,
         from: {
           stateId: oldRow.stateId,
           stateName: fromState?.name ?? null,
@@ -193,6 +231,7 @@ export async function emitSessionUpdateEvents(
         sessionId: newRow.id,
         sessionTitle: newRow.name,
         projectId: newRow.projectId,
+        displayKey,
         totalResults,
         totalElapsed, // seconds
         statusCounts,
@@ -216,7 +255,7 @@ export interface SessionResultRow {
 
 export async function emitSessionResultAdded(
   row: SessionResultRow,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const [session, status] = await Promise.all([
@@ -265,7 +304,7 @@ export async function emitSessionResultAdded(
 export async function emitSessionDuplicated(
   newSessionId: number,
   sourceSessionId: number,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions & { projectId: number }
 ): Promise<void> {
   const newSession = await tx.sessions.findUnique({

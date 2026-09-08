@@ -119,7 +119,7 @@ describe("CommentItem — hybrid-comments branch (D-21 follow-up)", () => {
     expect(badge).toHaveTextContent("comments.type.reviewRequest");
 
     const card = screen.getByTestId("comment-card-review_request");
-    expect(card.className).toMatch(/border-l-primary/);
+    expect(card.className).toMatch(/border-s-primary/);
   });
 
   it("REVIEW_DECISION + APPROVED renders 'Approved' badge with emerald accent", () => {
@@ -134,7 +134,7 @@ describe("CommentItem — hybrid-comments branch (D-21 follow-up)", () => {
     expect(badge).toHaveTextContent("comments.type.reviewDecision.approved");
 
     const card = screen.getByTestId("comment-card-review_decision");
-    expect(card.className).toMatch(/border-l-emerald-500/);
+    expect(card.className).toMatch(/border-s-emerald-500/);
   });
 
   it("REVIEW_DECISION + CHANGES_REQUESTED renders 'Changes requested' badge with amber accent", () => {
@@ -150,7 +150,7 @@ describe("CommentItem — hybrid-comments branch (D-21 follow-up)", () => {
     ).toHaveTextContent("comments.type.reviewDecision.changesRequested");
     expect(
       screen.getByTestId("comment-card-review_decision").className
-    ).toMatch(/border-l-amber-500/);
+    ).toMatch(/border-s-amber-500/);
   });
 
   it("REVIEW_DECISION + REJECTED renders 'Rejected' badge with destructive accent", () => {
@@ -166,7 +166,7 @@ describe("CommentItem — hybrid-comments branch (D-21 follow-up)", () => {
     ).toHaveTextContent("comments.type.reviewDecision.rejected");
     expect(
       screen.getByTestId("comment-card-review_decision").className
-    ).toMatch(/border-l-destructive/);
+    ).toMatch(/border-s-destructive/);
   });
 
   it("review-type comments suppress the edit/delete menu even for the creator", () => {

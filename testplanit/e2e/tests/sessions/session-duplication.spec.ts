@@ -138,11 +138,25 @@ test.describe("Session Duplication", () => {
     });
 
     await test.step("Modify the name and submit the form", async () => {
-      // Modify the name
       const nameInput = dialog!.locator('input[name="name"]');
       await expect(nameInput).toBeVisible({ timeout: 5000 });
-      await nameInput.clear();
-      await nameInput.fill(newName);
+
+      // Fill the new name under a retry loop instead of a single clear+fill. The
+      // AddSessionModal seeds its fields from a one-shot useEffect that calls
+      // reset() once the templates/workflows queries resolve, and that reset()
+      // rewrites the name back to "<original> - Duplicate". The effect fires
+      // strictly after the initial render, so a single fill done before it runs
+      // gets clobbered: the session is then created under the "- Duplicate" name
+      // and the read-back below never finds `newName` (it comes back null). The
+      // initial render already shows "- Duplicate" via defaultValues, so we
+      // can't distinguish "pre-reset" from "post-reset" by the field value
+      // alone. expect.toPass re-fills until the value sticks; because the reset
+      // is one-shot (guarded by a ref), once it has fired our fill wins for good.
+      await expect(async () => {
+        await nameInput.clear();
+        await nameInput.fill(newName);
+        await expect(nameInput).toHaveValue(newName, { timeout: 1000 });
+      }).toPass({ timeout: 15000 });
 
       // Submit the form
       const submitButton = dialog!.locator('button[type="submit"]');
@@ -154,18 +168,32 @@ test.describe("Session Duplication", () => {
     });
 
     await test.step("Verify the new duplicated session was created", async () => {
-      // Verify the new session was created
-      const newSessionResponse = await page.request.get(
-        `/api/model/sessions/findFirst?q=${encodeURIComponent(
-          JSON.stringify({
-            where: { projectId, name: newName, isDeleted: false },
-            select: { id: true },
-          })
-        )}`
-      );
-      expect(newSessionResponse.ok()).toBeTruthy();
-      newSessionData = await newSessionResponse.json();
-      expect(newSessionData!.data).not.toBeNull();
+      // Poll the read-back instead of reading once. The dialog closes as soon as
+      // the create mutation's promise resolves client-side, but the duplicate's
+      // row can be momentarily invisible to a brand-new request: the policy read
+      // path re-derives the actor with its own short-lived retry loop, so a
+      // single findFirst fired in that window can come back `data: null` even
+      // though the row is committed. expect.poll re-issues the query until the
+      // row is visible, making the check deterministic without a fixed delay.
+      await expect
+        .poll(
+          async () => {
+            const response = await page.request.get(
+              `/api/model/sessions/findFirst?q=${encodeURIComponent(
+                JSON.stringify({
+                  where: { projectId, name: newName, isDeleted: false },
+                  select: { id: true },
+                })
+              )}`
+            );
+            if (!response.ok()) return null;
+            newSessionData = await response.json();
+            return newSessionData?.data?.id ?? null;
+          },
+          { timeout: 15000 }
+        )
+        .not.toBeNull();
+
       expect(newSessionData!.data!.id).not.toBe(sessionId);
     });
 

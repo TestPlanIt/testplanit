@@ -21,8 +21,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: {
       findFirst: vi.fn(),
       update: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { PUT } from "./route";
 import { NextRequest } from "next/server";
 
@@ -52,8 +52,8 @@ function makeParams(projectId: string) {
 describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.projects.findFirst as any).mockResolvedValue({ id: 1 });
-    (prisma.projects.update as any).mockImplementation(async (args: any) => ({
+    (baseDb.projects.findFirst as any).mockResolvedValue({ id: 1 });
+    (baseDb.projects.update as any).mockImplementation(async (args: any) => ({
       id: 1,
       junitIterationPropertyNames: args.data.junitIterationPropertyNames,
     }));
@@ -101,7 +101,7 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.propertyNames).toEqual(["iteration", "iterationIndex"]);
-    expect(prisma.projects.update).toHaveBeenCalledWith({
+    expect(baseDb.projects.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { junitIterationPropertyNames: ["iteration", "iterationIndex"] },
       select: { id: true, junitIterationPropertyNames: true },
@@ -123,7 +123,7 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
     (getServerSession as any).mockResolvedValue({
       user: { id: "u1", access: "PROJECTADMIN" },
     });
-    (prisma.projects.findFirst as any).mockResolvedValue(null);
+    (baseDb.projects.findFirst as any).mockResolvedValue(null);
     const res = await PUT(
       makeRequest({ propertyNames: ["iteration"] }),
       makeParams("1")

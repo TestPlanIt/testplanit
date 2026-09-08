@@ -8,6 +8,13 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./vitest.setup.tsx",
+    // Unit tests must not require real runtime env vars. Without this, any test
+    // whose import graph reaches env.js fails at collection because
+    // @t3-oss/env validates DATABASE_URL/NEXTAUTH_URL at module load. (Set early,
+    // before setupFiles/test modules evaluate.)
+    env: {
+      SKIP_ENV_VALIDATION: "true",
+    },
     css: true,
     testTimeout: 30000,
     hookTimeout: 30000,
@@ -31,6 +38,14 @@ export default defineConfig({
           pool: "forks",
           isolate: true,
         }),
+    // The live-DB integration suite shares one database and some files depend
+    // on global state other files mutate (e.g. project access defaults), so
+    // their files must not interleave. This must apply in CI too: the CI
+    // branch's `singleThread` is a Vitest 3 option that Vitest 4 only honors
+    // under poolOptions.threads, so it does NOT serialize files there.
+    ...(process.env.RUN_DB_INTEGRATION === "1"
+      ? { fileParallelism: false }
+      : {}),
     exclude: [
       "node_modules/",
       "dist/",

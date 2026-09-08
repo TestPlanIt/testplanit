@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { ShareLinkList } from "@/components/share/ShareLinkList";
@@ -10,11 +12,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
 
 export default function ProjectSharesPage() {
   const params = useParams();
@@ -24,7 +29,9 @@ export default function ProjectSharesPage() {
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {
@@ -54,20 +61,22 @@ export default function ProjectSharesPage() {
     }
   );
 
-  // Access control check - must be ADMIN or PROJECTADMIN
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+  // Project-admin authority, resolved server-side by
+  // `authorizeProjectAdminForProject`: system ADMIN, the project's creator, a
+  // holder of the per-project "Project Admin" role, or a system PROJECTADMIN
+  // assigned to this project. Gating on `session.user.access` alone 404'd the
+  // creator/role-holder tiers that the settings APIs already accept.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+  // Access control check - must hold project-admin authority here
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   // Wait for session to load
   if (isAuthLoading) {
@@ -75,7 +84,7 @@ export default function ProjectSharesPage() {
   }
 
   // Wait for data to load
-  if (projectLoading) {
+  if (projectLoading || permissionsLoading) {
     return <Loading />;
   }
 
@@ -84,9 +93,9 @@ export default function ProjectSharesPage() {
     return (
       <Card className="flex flex-col w-full min-w-100 h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -99,12 +108,11 @@ export default function ProjectSharesPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{t("title")}</span>
-            </CardTitle>
-          </div>
-          <CardDescription className="uppercase">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("title")}</CardTitle>
+            <HelpPopover helpKey="projectShares" />
+          </SectionHeader>
+          <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}

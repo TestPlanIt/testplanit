@@ -17,7 +17,7 @@
  *   3. The non-mutating draft option + `treatMissingAsAdd: true` are passed to
  *      the underlying call so that partial PATCH failure leaves the input
  *      resource byte-identical. The service layer composes this wrapper inside a single
- *      `prisma.$transaction` and issues exactly one `tx.user.update` against
+ *      `db.$transaction` and issues exactly one `tx.user.update` against
  *      the returned draft — the RFC 7644 §3.5.2 atomicity contract becomes a
  *      consequence of this option instead of a discipline the caller has to
  *      remember on every code path.

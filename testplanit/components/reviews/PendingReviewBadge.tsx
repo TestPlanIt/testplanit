@@ -19,11 +19,7 @@ import { useTranslations } from "next-intl";
 export interface PendingReviewSummary {
   id: string;
   status:
-    | "PENDING"
-    | "APPROVED"
-    | "CHANGES_REQUESTED"
-    | "REJECTED"
-    | "CANCELLED";
+    "PENDING" | "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
   assigneeUserId?: string | null;
   assigneeRoleId?: number | null;
   assigneeUser?: { name?: string | null } | null;

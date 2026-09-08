@@ -1,13 +1,14 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Templates } from "@prisma/client";
+import type { Templates } from "~/zenstack/models";
 import { LayoutTemplate } from "lucide-react";
 import React from "react";
-import { useFindManyTemplates } from "~/lib/hooks";
 
 interface TemplateListProps {
   templates: { templateId: number; templateName: string }[];
@@ -18,19 +19,21 @@ export const TemplateListDisplay: React.FC<TemplateListProps> = ({
   templates,
   usePopover = true,
 }) => {
-  const { data: allTemplates } = useFindManyTemplates({
-    orderBy: { templateName: "asc" },
-    where: {
-      AND: [
-        {
-          id: {
-            in: (templates || []).map((template) => template.templateId),
+  const { data: allTemplates } = useClientQueries(schema).templates.useFindMany(
+    {
+      orderBy: { templateName: "asc" },
+      where: {
+        AND: [
+          {
+            id: {
+              in: (templates || []).map((template) => template.templateId),
+            },
           },
-        },
-        { isDeleted: false },
-      ],
-    },
-  });
+          { isDeleted: false },
+        ],
+      },
+    }
+  );
 
   if (!allTemplates || allTemplates.length === 0) {
     return null;
@@ -58,7 +61,7 @@ export const TemplateListDisplay: React.FC<TemplateListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <LayoutTemplate className="w-4 h-4 mr-1" />
+            <LayoutTemplate className="w-4 h-4 me-1" />
             {allTemplates.length}
           </Badge>
         </PopoverTrigger>

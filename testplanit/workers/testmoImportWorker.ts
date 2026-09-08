@@ -2,12 +2,18 @@ import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import {
   Access,
   ApplicationArea,
-  Prisma,
-  PrismaClient,
   WorkflowScope,
   WorkflowType,
-  type TestmoImportJob,
-} from "@prisma/client";
+} from "~/zenstack/models";
+import type { TestmoImportJob } from "~/zenstack/models";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonObject, JsonValue } from "@zenstackhq/orm";
+import type { DbClient, TxClient } from "~/lib/zenstack";
+import type {
+  StepsUncheckedCreateInput,
+  TestRunCasesUncheckedCreateInput,
+  TestmoImportJobUpdateArgs,
+} from "~/zenstack/input";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
@@ -17,12 +23,18 @@ import { Window as HappyDOMWindow } from "happy-dom";
 import { Readable } from "node:stream";
 import { emptyEditorContent } from "../app/constants/backend";
 import {
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../app/extensions/Table";
+import {
   disconnectAllTenantClients,
-  getPrismaClientForJob,
+  getDbClientForJob,
   isMultiTenantMode,
   validateMultiTenantJobData,
   type MultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { runWithAuditContext } from "../lib/auditContext";
 import {
   enqueueWithAuditContext,
@@ -148,7 +160,7 @@ const userNameCache = new Map<string, string>();
 const folderNameCache = new Map<number, string>();
 
 const getProjectName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   projectId: number
 ): Promise<string> => {
   if (projectNameCache.has(projectId)) {
@@ -166,7 +178,7 @@ const getProjectName = async (
 };
 
 const getTemplateName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   templateId: number
 ): Promise<string> => {
   if (templateNameCache.has(templateId)) {
@@ -184,7 +196,7 @@ const getTemplateName = async (
 };
 
 const getWorkflowName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   workflowId: number
 ): Promise<string> => {
   if (workflowNameCache.has(workflowId)) {
@@ -202,7 +214,7 @@ const getWorkflowName = async (
 };
 
 const getConfigurationName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configurationId: number
 ): Promise<string | null> => {
   if (configurationNameCache.has(configurationId)) {
@@ -222,7 +234,7 @@ const getConfigurationName = async (
 };
 
 const getMilestoneName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   milestoneId: number
 ): Promise<string | null> => {
   if (milestoneNameCache.has(milestoneId)) {
@@ -242,7 +254,7 @@ const getMilestoneName = async (
 };
 
 const getUserName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   userId: string | null | undefined
 ): Promise<string> => {
   if (!userId) {
@@ -264,7 +276,7 @@ const getUserName = async (
 };
 
 const getFolderName = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   folderId: number
 ): Promise<string> => {
   if (folderNameCache.has(folderId)) {
@@ -300,11 +312,6 @@ const IMPORT_TRANSACTION_TIMEOUT_MS = parseNumberEnv(
 const AUTOMATION_TRANSACTION_TIMEOUT_MS = parseNumberEnv(
   process.env.TESTMO_AUTOMATION_TRANSACTION_TIMEOUT_MS,
   45 * 60 * 1000
-);
-
-const IMPORT_TRANSACTION_MAX_WAIT_MS = parseNumberEnv(
-  process.env.TESTMO_IMPORT_TRANSACTION_MAX_WAIT_MS,
-  30_000
 );
 
 const bucketName = process.env.AWS_BUCKET_NAME;
@@ -484,11 +491,6 @@ const TEST_RUN_RESULT_CHUNK_SIZE = parseNumberEnv(
 const ISSUE_RELATIONSHIP_CHUNK_SIZE = parseNumberEnv(
   process.env.TESTMO_ISSUE_RELATIONSHIP_CHUNK_SIZE,
   1000
-);
-
-const REPOSITORY_FOLDER_TRANSACTION_TIMEOUT_MS = parseNumberEnv(
-  process.env.TESTMO_REPOSITORY_FOLDER_TRANSACTION_TIMEOUT_MS,
-  2 * 60 * 1000
 );
 
 const initializeEntityProgress = (
@@ -814,11 +816,7 @@ const normalizeEstimate = (
 ): {
   value: number | null;
   adjustment:
-    | "nanoseconds"
-    | "microseconds"
-    | "milliseconds"
-    | "clamped"
-    | null;
+    "nanoseconds" | "microseconds" | "milliseconds" | "clamped" | null;
 } => {
   if (value === null || !Number.isFinite(value)) {
     return { value: null, adjustment: null };
@@ -928,6 +926,15 @@ const TIPTAP_EXTENSIONS = [
       levels: [1, 2, 3, 4],
     },
   }),
+  // Testmo/CKEditor renders step tables as <figure class="table"><table>...
+  // Without these, ProseMirror's DOMParser has no rule for <table>/<tr>/<td>
+  // and silently splices cell text into the surrounding paragraph with no
+  // separators (e.g. "Opp_A$5000close date..."). Same node types the app's
+  // own step editor already registers (components/tiptap/TipTapEditor.tsx).
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader,
 ];
 
 // Reusable Happy-DOM window to avoid creating new contexts for each conversion
@@ -1142,14 +1149,14 @@ const isTipTapDocumentEmpty = (doc: Record<string, unknown>): boolean => {
   return false;
 };
 
-const convertToTipTapJsonValue = (
-  value: unknown
-): Prisma.InputJsonValue | null => {
+// Exported for scripts/syncTestmoCaseEdits.ts, which must produce byte-identical
+// step payloads to this importer.
+export const convertToTipTapJsonValue = (value: unknown): JsonValue | null => {
   const doc = convertToTipTapDocument(value);
   if (!doc || isTipTapDocumentEmpty(doc)) {
     return null;
   }
-  return doc as Prisma.InputJsonValue;
+  return doc as JsonValue;
 };
 
 const convertToTipTapJsonString = (value: unknown): string | null => {
@@ -1480,7 +1487,7 @@ const normalizeCaseFieldValue = (
 };
 
 async function importUsers(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   importJob: TestmoImportJob
 ): Promise<EntitySummaryResult> {
@@ -1560,7 +1567,9 @@ async function importUsers(
       );
     }
 
-    const existingByEmail = await tx.user.findUnique({ where: { email } });
+    const existingByEmail = await tx.user.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+    });
     if (existingByEmail) {
       config.action = "map";
       config.mappedTo = existingByEmail.id;
@@ -1655,7 +1664,7 @@ interface MilestonesImportResult {
 }
 
 const importProjects = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   importJob: TestmoImportJob,
   userIdMap: Map<number, string>,
@@ -1883,7 +1892,7 @@ const importProjects = async (
 };
 
 const importMilestones = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   milestoneTypeIdMap: Map<number, number>,
@@ -2071,7 +2080,7 @@ interface SessionsImportResult {
 }
 
 const importSessions = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   milestoneIdMap: Map<number, number>,
@@ -2339,7 +2348,7 @@ interface SessionResultsImportResult {
 }
 
 const importSessionResults = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   statusIdMap: Map<number, number>,
@@ -2452,7 +2461,7 @@ interface SessionValuesImportResult {
 }
 
 const importSessionValues = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>,
   testmoFieldValueMap: Map<number, { fieldId: number; name: string }>,
@@ -2593,7 +2602,7 @@ const importSessionValues = async (
 };
 
 const importRepositories = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   context: ImportContext,
@@ -2878,7 +2887,7 @@ const importRepositories = async (
 };
 
 const importRepositoryFolders = async (
-  prisma: PrismaClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -2956,7 +2965,7 @@ const importRepositoryFolders = async (
   ): Promise<number> => {
     let repositoryId = repositoryIdMap.get(repoSourceId);
     if (!repositoryId) {
-      const repository = await prisma.repositories.create({
+      const repository = await db.repositories.create({
         data: { projectId },
       });
       repositoryId = repository.id;
@@ -3087,45 +3096,39 @@ const importRepositoryFolders = async (
       );
       const createdAt = toDateValue(record.created_at) ?? new Date();
 
-      const transactionResult = await prisma.$transaction<{
+      const transactionResult = await db.$transaction<{
         folderId: number;
         created: boolean;
-      }>(
-        async (tx) => {
-          const existing = await tx.repositoryFolders.findFirst({
-            where: {
-              projectId,
-              repositoryId,
-              parentId,
-              name,
-              isDeleted: false,
-            },
-          });
+      }>(async (tx) => {
+        const existing = await tx.repositoryFolders.findFirst({
+          where: {
+            projectId,
+            repositoryId,
+            parentId,
+            name,
+            isDeleted: false,
+          },
+        });
 
-          if (existing) {
-            return { folderId: existing.id, created: false };
-          }
-
-          const folder = await tx.repositoryFolders.create({
-            data: {
-              projectId,
-              repositoryId,
-              parentId,
-              name,
-              order,
-              creatorId,
-              createdAt,
-              ...(docsValue !== null ? { docs: docsValue } : {}),
-            },
-          });
-
-          return { folderId: folder.id, created: true };
-        },
-        {
-          timeout: REPOSITORY_FOLDER_TRANSACTION_TIMEOUT_MS,
-          maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
+        if (existing) {
+          return { folderId: existing.id, created: false };
         }
-      );
+
+        const folder = await tx.repositoryFolders.create({
+          data: {
+            projectId,
+            repositoryId,
+            parentId,
+            name,
+            order,
+            creatorId,
+            createdAt,
+            ...(docsValue !== null ? { docs: docsValue } : {}),
+          },
+        });
+
+        return { folderId: folder.id, created: true };
+      });
 
       const folderId = transactionResult.folderId;
 
@@ -3173,7 +3176,7 @@ const importRepositoryFolders = async (
   return { summary, folderIdMap, repositoryRootFolderMap };
 };
 const importRepositoryCases = async (
-  prisma: PrismaClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3341,12 +3344,12 @@ const importRepositoryCases = async (
   initializeEntityProgress(context, "repositoryCases", canonicalCaseCount);
   let processedSinceLastPersist = 0;
 
-  const defaultTemplate = await prisma.templates.findFirst({
+  const defaultTemplate = await db.templates.findFirst({
     where: { isDefault: true },
     select: { id: true },
   });
 
-  const workflowResolver = createWorkflowResolver(prisma, workflowIdMap);
+  const workflowResolver = createWorkflowResolver(db, workflowIdMap);
 
   const fallbackCreator = importJob.createdById;
 
@@ -3356,7 +3359,7 @@ const importRepositoryCases = async (
       new Set(Array.from(caseFieldMap.values()))
     );
 
-    const caseFieldRecords = await prisma.caseFields.findMany({
+    const caseFieldRecords = await db.caseFields.findMany({
       where: {
         id: {
           in: uniqueCaseFieldIds,
@@ -3420,693 +3423,745 @@ const importRepositoryCases = async (
     if (records.length === 0) {
       return;
     }
-    await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
-        // capture. The audit_row_change() trigger early-returns when
-        // app.skip_audit is true, collapsing the ~9x per-row trigger overhead
-        // back to ~1x (SPIKE-02) so the import transaction does not blow its
-        // timeout. The job-level captureAuditEvent retains the semantic
-        // coverage for the import as a whole. SET LOCAL only inside a
-        // $transaction (Pitfall A).
-        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
-        for (const record of records) {
-          const caseSourceId = toNumberValue(record.id);
-          const projectSourceId = toNumberValue(record.project_id);
-          const repoSourceId = toNumberValue(record.repo_id);
-          const folderSourceId = toNumberValue(record.folder_id);
-          const caseName =
-            toStringValue(record.name) ?? `Imported Case ${caseSourceId ?? 0}`;
+    await db.$transaction(async (tx: TxClient) => {
+      // Phase 13 SAF-01 — opt this bulk import chunk out of row-level CDC
+      // capture. The audit_row_change() trigger early-returns when
+      // app.skip_audit is true, collapsing the ~9x per-row trigger overhead
+      // back to ~1x (SPIKE-02) so the import transaction does not blow its
+      // timeout. The job-level captureAuditEvent retains the semantic
+      // coverage for the import as a whole. SET LOCAL only inside a
+      // $transaction (Pitfall A).
+      await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
 
-          if (
-            caseSourceId === null ||
-            projectSourceId === null ||
-            repoSourceId === null
-          ) {
-            decrementEntityTotal(context, "repositoryCases");
+      // Phase 13 perf — batch-prefetch the existing-case dedup lookup for
+      // this chunk instead of issuing one findFirst per record against the
+      // (potentially multi-million row) repositoryCases table. Memory stays
+      // bounded by the chunk size: we hold at most one chunk's worth of
+      // {id, isDeleted} entries, freed when the chunk completes. The map is
+      // updated as cases are created below so intra-chunk duplicate
+      // (projectId, name, className) keys still dedupe exactly as the
+      // original per-row, self-write-visible findFirst did.
+      // NUL delimiter: Postgres text columns cannot contain \u0000, so this
+      // composite key is collision-free across name/className boundaries.
+      const existingCaseKey = (
+        pid: number,
+        name: string,
+        cls: string | null
+      ): string => `${pid}\u0000${name}\u0000${cls ?? ""}`;
+      const existingCaseByKey = new Map<
+        string,
+        { id: number; isDeleted: boolean }
+      >();
+      {
+        const prefetchProjectIds = new Set<number>();
+        const prefetchNames = new Set<string>();
+        for (const record of records) {
+          const projectSourceId = toNumberValue(record.project_id);
+          if (projectSourceId === null) {
             continue;
           }
-
           const projectId = projectIdMap.get(projectSourceId);
           if (!projectId) {
-            logMessage(
-              context,
-              "Skipping case due to missing project mapping",
-              {
-                caseSourceId,
-                projectSourceId,
-              }
-            );
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
             continue;
           }
+          const caseName =
+            toStringValue(record.name) ??
+            `Imported Case ${toNumberValue(record.id) ?? 0}`;
+          prefetchProjectIds.add(projectId);
+          prefetchNames.add(caseName);
+        }
+        if (prefetchProjectIds.size > 0 && prefetchNames.size > 0) {
+          const existingRows = await tx.repositoryCases.findMany({
+            where: {
+              source: "MANUAL",
+              projectId: { in: Array.from(prefetchProjectIds) },
+              name: { in: Array.from(prefetchNames) },
+            },
+            select: {
+              id: true,
+              projectId: true,
+              name: true,
+              className: true,
+              isDeleted: true,
+            },
+          });
+          for (const row of existingRows) {
+            existingCaseByKey.set(
+              existingCaseKey(row.projectId, row.name, row.className),
+              { id: row.id, isDeleted: row.isDeleted }
+            );
+          }
+        }
+      }
 
-          const targetRepoId = getPreferredRepositoryId(
+      for (const record of records) {
+        const caseSourceId = toNumberValue(record.id);
+        const projectSourceId = toNumberValue(record.project_id);
+        const repoSourceId = toNumberValue(record.repo_id);
+        const folderSourceId = toNumberValue(record.folder_id);
+        const caseName =
+          toStringValue(record.name) ?? `Imported Case ${caseSourceId ?? 0}`;
+
+        if (
+          caseSourceId === null ||
+          projectSourceId === null ||
+          repoSourceId === null
+        ) {
+          decrementEntityTotal(context, "repositoryCases");
+          continue;
+        }
+
+        const projectId = projectIdMap.get(projectSourceId);
+        if (!projectId) {
+          logMessage(context, "Skipping case due to missing project mapping", {
+            caseSourceId,
             projectSourceId,
-            repoSourceId,
-            canonicalRepoIdByProject
-          );
-          caseMetaMap.set(caseSourceId, { projectId, name: caseName });
+          });
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
 
-          if (targetRepoId === null) {
-            const existingFallback = await tx.repositoryCases.findFirst({
-              where: {
-                projectId,
-                name: caseName,
-                isDeleted: false,
-              },
-              select: { id: true },
-            });
+        const targetRepoId = getPreferredRepositoryId(
+          projectSourceId,
+          repoSourceId,
+          canonicalRepoIdByProject
+        );
+        caseMetaMap.set(caseSourceId, { projectId, name: caseName });
 
-            if (existingFallback) {
-              caseIdMap.set(caseSourceId, existingFallback.id);
-              summary.total += 1;
-              summary.mapped += 1;
-            }
-
-            logMessage(
-              context,
-              "Skipping case due to missing canonical repository",
-              {
-                caseSourceId,
-                projectSourceId,
-                repoSourceId,
-              }
-            );
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          let repositoryId = repositoryIdMap.get(targetRepoId);
-          if (repositoryId === undefined) {
-            const repository = await tx.repositories.create({
-              data: { projectId },
-            });
-            repositoryId = repository.id;
-            repositoryIdMap.set(targetRepoId, repositoryId);
-          }
-
-          const resolvedRepositoryId = repositoryId;
-
-          repositoryIdMap.set(repoSourceId, resolvedRepositoryId);
-
-          let folderId =
-            folderSourceId !== null
-              ? (folderIdMap.get(folderSourceId) ?? null)
-              : null;
-          if (folderId == null) {
-            const rootFolderId =
-              repositoryRootFolderMap.get(resolvedRepositoryId);
-            if (rootFolderId) {
-              folderId = rootFolderId;
-            } else {
-              const fallbackFolder = await tx.repositoryFolders.create({
-                data: {
-                  projectId,
-                  repositoryId: resolvedRepositoryId,
-                  name: "Imported",
-                  creatorId: fallbackCreator,
-                },
-              });
-              folderId = fallbackFolder.id;
-              repositoryRootFolderMap.set(
-                resolvedRepositoryId,
-                fallbackFolder.id
-              );
-            }
-          }
-
-          if (folderId == null) {
-            logMessage(context, "Skipping case due to missing folder mapping", {
-              caseSourceId,
-              folderSourceId,
-            });
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const resolvedFolderId = folderId;
-          const className = toStringValue(record.key);
-
-          // Check for existing case matching the unique constraint
-          // (projectId, name, className, source) — including soft-deleted
-          // records since the constraint does not include isDeleted
-          const existing = await tx.repositoryCases.findFirst({
+        if (targetRepoId === null) {
+          const existingFallback = await tx.repositoryCases.findFirst({
             where: {
               projectId,
               name: caseName,
-              className: className ?? null,
-              source: "MANUAL",
+              isDeleted: false,
             },
+            select: { id: true },
           });
 
-          if (existing) {
-            // Restore soft-deleted cases so they can be reused
-            if (existing.isDeleted) {
-              await tx.repositoryCases.update({
-                where: { id: existing.id },
-                data: { isDeleted: false },
-              });
-            }
-            caseIdMap.set(caseSourceId, existing.id);
-            const existingKey = toStringValue(record.key);
-            if (existingKey) {
-              caseKeyMap.set(`${projectSourceId}:${existingKey}`, existing.id);
-            }
+          if (existingFallback) {
+            caseIdMap.set(caseSourceId, existingFallback.id);
             summary.total += 1;
             summary.mapped += 1;
-            incrementEntityProgress(context, "repositoryCases", 0, 1);
-            processedSinceLastPersist += 1;
-            if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
-              const message = formatInProgressStatus(
-                context,
-                "repositoryCases"
-              );
-              await persistProgress("repositoryCases", message);
-              processedSinceLastPersist = 0;
+          }
+
+          logMessage(
+            context,
+            "Skipping case due to missing canonical repository",
+            {
+              caseSourceId,
+              projectSourceId,
+              repoSourceId,
             }
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const templateSourceId = toNumberValue(record.template_id);
-          const stateSourceId = toNumberValue(record.state_id);
-
-          let templateId: number | null = null;
-          if (templateSourceId !== null) {
-            const mappedTemplateId = templateIdMap.get(templateSourceId);
-            if (mappedTemplateId !== undefined) {
-              templateId = mappedTemplateId;
-            } else {
-              const templateName = templateNameBySourceId.get(templateSourceId);
-              if (templateName) {
-                templateId =
-                  resolvedTemplateIdsByName.get(templateName) ?? null;
-                if (!templateId) {
-                  const existingTemplate = await tx.templates.findFirst({
-                    where: { templateName },
-                  });
-
-                  if (existingTemplate) {
-                    templateId = existingTemplate.id;
-                  } else {
-                    const createdTemplate = await tx.templates.create({
-                      data: {
-                        templateName,
-                        isEnabled: true,
-                        isDefault: false,
-                      },
-                    });
-                    templateId = createdTemplate.id;
-                  }
-
-                  resolvedTemplateIdsByName.set(templateName, templateId);
-                  templateNameMap.set(templateName, templateId);
-                }
-
-                if (templateId !== null) {
-                  templateIdMap.set(templateSourceId, templateId);
-                }
-              }
-            }
-          }
-
-          templateId = templateId ?? defaultTemplate?.id ?? null;
-          const candidateWorkflowId =
-            stateSourceId !== null
-              ? (workflowIdMap.get(stateSourceId) ?? null)
-              : null;
-          const workflowIdRaw = await workflowResolver.resolve(
-            projectId,
-            WorkflowScope.CASES,
-            candidateWorkflowId
           );
-          const workflowId =
-            workflowIdRaw != null
-              ? ((await resolveCreateStateRemap(
-                  tx,
-                  projectId,
-                  WorkflowScope.CASES,
-                  workflowIdRaw
-                )) ?? workflowIdRaw)
-              : workflowIdRaw;
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
 
-          if (templateId == null || workflowId == null) {
-            logMessage(
-              context,
-              "Skipping case due to missing template or workflow mapping",
-              {
-                caseSourceId,
-                templateSourceId,
-                stateSourceId,
-              }
-            );
-            decrementEntityTotal(context, "repositoryCases");
-            canonicalCaseIds.delete(caseSourceId);
-            stepsByCaseId.delete(caseSourceId);
-            continue;
-          }
-
-          const resolvedTemplateId = templateId;
-          const resolvedWorkflowId = workflowId;
-
-          const creatorId = resolveUserId(
-            userIdMap,
-            fallbackCreator,
-            record.created_by
-          );
-          const createdAt = toDateValue(record.created_at) ?? new Date();
-          const order = toNumberValue(record.display_order) ?? 0;
-          const estimateValue = toNumberValue(record.estimate);
-          const { value: normalizedEstimate, adjustment: estimateAdjustment } =
-            normalizeEstimate(estimateValue);
-          if (
-            estimateAdjustment === "nanoseconds" ||
-            estimateAdjustment === "microseconds" ||
-            estimateAdjustment === "milliseconds"
-          ) {
-            summaryDetails.estimateAdjusted += 1;
-          } else if (estimateAdjustment === "clamped") {
-            summaryDetails.estimateClamped += 1;
-          }
-
-          const repositoryCase = await tx.repositoryCases.create({
-            data: {
-              projectId,
-              repositoryId: resolvedRepositoryId,
-              folderId: resolvedFolderId,
-              templateId: resolvedTemplateId,
-              name: caseName,
-              className: className ?? undefined,
-              stateId: resolvedWorkflowId,
-              estimate: normalizedEstimate ?? undefined,
-              order,
-              createdAt,
-              creatorId,
-              automated: toBooleanValue(record.automated ?? false),
-              currentVersion: 1,
-            },
+        let repositoryId = repositoryIdMap.get(targetRepoId);
+        if (repositoryId === undefined) {
+          const repository = await tx.repositories.create({
+            data: { projectId },
           });
+          repositoryId = repository.id;
+          repositoryIdMap.set(targetRepoId, repositoryId);
+        }
 
-          caseIdMap.set(caseSourceId, repositoryCase.id);
-          if (className) {
-            caseKeyMap.set(
-              `${projectSourceId}:${className}`,
-              repositoryCase.id
+        const resolvedRepositoryId = repositoryId;
+
+        repositoryIdMap.set(repoSourceId, resolvedRepositoryId);
+
+        let folderId =
+          folderSourceId !== null
+            ? (folderIdMap.get(folderSourceId) ?? null)
+            : null;
+        if (folderId == null) {
+          const rootFolderId =
+            repositoryRootFolderMap.get(resolvedRepositoryId);
+          if (rootFolderId) {
+            folderId = rootFolderId;
+          } else {
+            const fallbackFolder = await tx.repositoryFolders.create({
+              data: {
+                projectId,
+                repositoryId: resolvedRepositoryId,
+                name: "Imported",
+                creatorId: fallbackCreator,
+              },
+            });
+            folderId = fallbackFolder.id;
+            repositoryRootFolderMap.set(
+              resolvedRepositoryId,
+              fallbackFolder.id
             );
           }
-          const projectTemplateAssignments =
-            templateAssignmentsByProject.get(projectId) ?? new Set<number>();
-          projectTemplateAssignments.add(resolvedTemplateId);
-          templateAssignmentsByProject.set(
-            projectId,
-            projectTemplateAssignments
-          );
-          summary.total += 1;
-          summary.created += 1;
+        }
 
-          incrementEntityProgress(context, "repositoryCases", 1, 0);
+        if (folderId == null) {
+          logMessage(context, "Skipping case due to missing folder mapping", {
+            caseSourceId,
+            folderSourceId,
+          });
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
+
+        const resolvedFolderId = folderId;
+        const className = toStringValue(record.key);
+
+        // Check for existing case matching the unique constraint
+        // (projectId, name, className, source) — including soft-deleted
+        // records since the constraint does not include isDeleted. Resolved
+        // from the chunk prefetch map (updated as cases are created below)
+        // rather than a per-row findFirst.
+        const existing =
+          existingCaseByKey.get(
+            existingCaseKey(projectId, caseName, className ?? null)
+          ) ?? null;
+
+        if (existing) {
+          // Restore soft-deleted cases so they can be reused
+          if (existing.isDeleted) {
+            await tx.repositoryCases.update({
+              where: { id: existing.id },
+              data: { isDeleted: false },
+            });
+          }
+          caseIdMap.set(caseSourceId, existing.id);
+          const existingKey = toStringValue(record.key);
+          if (existingKey) {
+            caseKeyMap.set(`${projectSourceId}:${existingKey}`, existing.id);
+          }
+          summary.total += 1;
+          summary.mapped += 1;
+          incrementEntityProgress(context, "repositoryCases", 0, 1);
           processedSinceLastPersist += 1;
           if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
             const message = formatInProgressStatus(context, "repositoryCases");
             await persistProgress("repositoryCases", message);
             processedSinceLastPersist = 0;
           }
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
 
-          for (const [key, rawValue] of Object.entries(record)) {
-            if (!key.startsWith("custom_")) {
-              continue;
-            }
+        const templateSourceId = toNumberValue(record.template_id);
+        const stateSourceId = toNumberValue(record.state_id);
 
-            const fieldName = key.replace(/^custom_/, "");
-            const fieldId = caseFieldMap.get(fieldName);
-            if (!fieldId) {
-              continue;
-            }
+        let templateId: number | null = null;
+        if (templateSourceId !== null) {
+          const mappedTemplateId = templateIdMap.get(templateSourceId);
+          if (mappedTemplateId !== undefined) {
+            templateId = mappedTemplateId;
+          } else {
+            const templateName = templateNameBySourceId.get(templateSourceId);
+            if (templateName) {
+              templateId = resolvedTemplateIdsByName.get(templateName) ?? null;
+              if (!templateId) {
+                const existingTemplate = await tx.templates.findFirst({
+                  where: { templateName },
+                });
 
-            const fieldMetadata = caseFieldMetadataById.get(fieldId);
-            if (!fieldMetadata) {
-              recordFieldWarning("Missing case field metadata", {
-                field: fieldName,
-                fieldId,
-                caseSourceId,
-              });
-              continue;
-            }
-
-            if (
-              rawValue === null ||
-              rawValue === undefined ||
-              (typeof rawValue === "string" && rawValue.trim().length === 0)
-            ) {
-              continue;
-            }
-
-            const processedValue = normalizeCaseFieldValue(
-              rawValue,
-              fieldMetadata,
-              (message, details) =>
-                recordFieldWarning(message, {
-                  caseSourceId,
-                  field: fieldMetadata.systemName,
-                  displayName: fieldMetadata.displayName,
-                  ...details,
-                }),
-              testmoFieldValueMap
-            );
-
-            // Collect stats for multi-select fields only
-            if (fieldMetadata.type.toLowerCase().includes("multi-select")) {
-              console.log(`  Processed value:`, processedValue);
-              console.log(`  Processed value type: ${typeof processedValue}`);
-              console.log(`  Is Array: ${Array.isArray(processedValue)}`);
-              console.log(
-                `  Will save to DB:`,
-                processedValue !== null && processedValue !== undefined
-              );
-
-              const stats = dropdownStats.get(fieldMetadata.systemName) || {
-                totalAttempts: 0,
-                nullResults: 0,
-                successResults: 0,
-                sampleValues: new Set(),
-                sampleNulls: [],
-              };
-
-              stats.totalAttempts++;
-
-              if (processedValue === null || processedValue === undefined) {
-                stats.nullResults++;
-                if (stats.sampleNulls.length < 3) {
-                  stats.sampleNulls.push(rawValue);
+                if (existingTemplate) {
+                  templateId = existingTemplate.id;
+                } else {
+                  const createdTemplate = await tx.templates.create({
+                    data: {
+                      templateName,
+                      isEnabled: true,
+                      isDefault: false,
+                    },
+                  });
+                  templateId = createdTemplate.id;
                 }
-              } else {
-                stats.successResults++;
-                if (stats.sampleValues.size < 3) {
-                  stats.sampleValues.add(JSON.stringify(processedValue));
-                }
+
+                resolvedTemplateIdsByName.set(templateName, templateId);
+                templateNameMap.set(templateName, templateId);
               }
 
-              dropdownStats.set(fieldMetadata.systemName, stats);
+              if (templateId !== null) {
+                templateIdMap.set(templateSourceId, templateId);
+              }
+            }
+          }
+        }
+
+        templateId = templateId ?? defaultTemplate?.id ?? null;
+        const candidateWorkflowId =
+          stateSourceId !== null
+            ? (workflowIdMap.get(stateSourceId) ?? null)
+            : null;
+        const workflowIdRaw = await workflowResolver.resolve(
+          projectId,
+          WorkflowScope.CASES,
+          candidateWorkflowId
+        );
+        const workflowId =
+          workflowIdRaw != null
+            ? ((await resolveCreateStateRemap(
+                tx,
+                projectId,
+                WorkflowScope.CASES,
+                workflowIdRaw
+              )) ?? workflowIdRaw)
+            : workflowIdRaw;
+
+        if (templateId == null || workflowId == null) {
+          logMessage(
+            context,
+            "Skipping case due to missing template or workflow mapping",
+            {
+              caseSourceId,
+              templateSourceId,
+              stateSourceId,
+            }
+          );
+          decrementEntityTotal(context, "repositoryCases");
+          canonicalCaseIds.delete(caseSourceId);
+          stepsByCaseId.delete(caseSourceId);
+          continue;
+        }
+
+        const resolvedTemplateId = templateId;
+        const resolvedWorkflowId = workflowId;
+
+        const creatorId = resolveUserId(
+          userIdMap,
+          fallbackCreator,
+          record.created_by
+        );
+        const createdAt = toDateValue(record.created_at) ?? new Date();
+        const order = toNumberValue(record.display_order) ?? 0;
+        const estimateValue = toNumberValue(record.estimate);
+        const { value: normalizedEstimate, adjustment: estimateAdjustment } =
+          normalizeEstimate(estimateValue);
+        if (
+          estimateAdjustment === "nanoseconds" ||
+          estimateAdjustment === "microseconds" ||
+          estimateAdjustment === "milliseconds"
+        ) {
+          summaryDetails.estimateAdjusted += 1;
+        } else if (estimateAdjustment === "clamped") {
+          summaryDetails.estimateClamped += 1;
+        }
+
+        const repositoryCase = await tx.repositoryCases.create({
+          data: {
+            projectId,
+            repositoryId: resolvedRepositoryId,
+            folderId: resolvedFolderId,
+            templateId: resolvedTemplateId,
+            name: caseName,
+            className: className ?? undefined,
+            stateId: resolvedWorkflowId,
+            estimate: normalizedEstimate ?? undefined,
+            order,
+            createdAt,
+            creatorId,
+            automated: toBooleanValue(record.automated ?? false),
+            currentVersion: 1,
+          },
+        });
+
+        caseIdMap.set(caseSourceId, repositoryCase.id);
+        if (className) {
+          caseKeyMap.set(`${projectSourceId}:${className}`, repositoryCase.id);
+        }
+        // Keep the chunk dedup map current so a later record in this same
+        // chunk with the same (projectId, name, className) maps to this row
+        // instead of attempting a duplicate insert.
+        existingCaseByKey.set(
+          existingCaseKey(projectId, caseName, className ?? null),
+          { id: repositoryCase.id, isDeleted: false }
+        );
+        // Track field values created for this case so the multi-select pass
+        // below can resolve existing values in memory instead of issuing a
+        // findFirst per (case, field). Scoped per record — freed each
+        // iteration, so memory does not grow with the import.
+        const createdCaseFieldValueIdByFieldId = new Map<number, number>();
+        const projectTemplateAssignments =
+          templateAssignmentsByProject.get(projectId) ?? new Set<number>();
+        projectTemplateAssignments.add(resolvedTemplateId);
+        templateAssignmentsByProject.set(projectId, projectTemplateAssignments);
+        summary.total += 1;
+        summary.created += 1;
+
+        incrementEntityProgress(context, "repositoryCases", 1, 0);
+        processedSinceLastPersist += 1;
+        if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
+          const message = formatInProgressStatus(context, "repositoryCases");
+          await persistProgress("repositoryCases", message);
+          processedSinceLastPersist = 0;
+        }
+
+        for (const [key, rawValue] of Object.entries(record)) {
+          if (!key.startsWith("custom_")) {
+            continue;
+          }
+
+          const fieldName = key.replace(/^custom_/, "");
+          const fieldId = caseFieldMap.get(fieldName);
+          if (!fieldId) {
+            continue;
+          }
+
+          const fieldMetadata = caseFieldMetadataById.get(fieldId);
+          if (!fieldMetadata) {
+            recordFieldWarning("Missing case field metadata", {
+              field: fieldName,
+              fieldId,
+              caseSourceId,
+            });
+            continue;
+          }
+
+          if (
+            rawValue === null ||
+            rawValue === undefined ||
+            (typeof rawValue === "string" && rawValue.trim().length === 0)
+          ) {
+            continue;
+          }
+
+          const processedValue = normalizeCaseFieldValue(
+            rawValue,
+            fieldMetadata,
+            (message, details) =>
+              recordFieldWarning(message, {
+                caseSourceId,
+                field: fieldMetadata.systemName,
+                displayName: fieldMetadata.displayName,
+                ...details,
+              }),
+            testmoFieldValueMap
+          );
+
+          // Collect stats for multi-select fields only
+          if (fieldMetadata.type.toLowerCase().includes("multi-select")) {
+            console.log(`  Processed value:`, processedValue);
+            console.log(`  Processed value type: ${typeof processedValue}`);
+            console.log(`  Is Array: ${Array.isArray(processedValue)}`);
+            console.log(
+              `  Will save to DB:`,
+              processedValue !== null && processedValue !== undefined
+            );
+
+            const stats = dropdownStats.get(fieldMetadata.systemName) || {
+              totalAttempts: 0,
+              nullResults: 0,
+              successResults: 0,
+              sampleValues: new Set(),
+              sampleNulls: [],
+            };
+
+            stats.totalAttempts++;
+
+            if (processedValue === null || processedValue === undefined) {
+              stats.nullResults++;
+              if (stats.sampleNulls.length < 3) {
+                stats.sampleNulls.push(rawValue);
+              }
+            } else {
+              stats.successResults++;
+              if (stats.sampleValues.size < 3) {
+                stats.sampleValues.add(JSON.stringify(processedValue));
+              }
             }
 
-            if (processedValue === undefined || processedValue === null) {
-              continue;
-            }
+            dropdownStats.set(fieldMetadata.systemName, stats);
+          }
 
-            if (
-              isTipTapDocument(processedValue) &&
-              isTipTapDocumentEmpty(processedValue as Record<string, unknown>)
-            ) {
-              continue;
-            }
+          if (processedValue === undefined || processedValue === null) {
+            continue;
+          }
 
-            if (typeof processedValue === "string" && !processedValue.trim()) {
-              continue;
-            }
+          if (
+            isTipTapDocument(processedValue) &&
+            isTipTapDocumentEmpty(processedValue as Record<string, unknown>)
+          ) {
+            continue;
+          }
 
-            if (Array.isArray(processedValue) && processedValue.length === 0) {
-              continue;
-            }
+          if (typeof processedValue === "string" && !processedValue.trim()) {
+            continue;
+          }
 
-            await tx.caseFieldValues.create({
+          if (Array.isArray(processedValue) && processedValue.length === 0) {
+            continue;
+          }
+
+          const createdFieldValue = await tx.caseFieldValues.create({
+            data: {
+              testCaseId: repositoryCase.id,
+              fieldId,
+              value: toInputJsonValue(processedValue),
+            },
+          });
+          createdCaseFieldValueIdByFieldId.set(fieldId, createdFieldValue.id);
+        }
+
+        // Process multi-select values from repository_case_values dataset
+        // These are stored separately from the custom_ fields in repository_cases
+
+        // Build mapping from system names to Testmo field IDs from configuration
+        const testmoFieldIdBySystemName = new Map<string, number>();
+        for (const [key, fieldConfig] of Object.entries(
+          configuration.templateFields ?? {}
+        )) {
+          const testmoFieldId = Number(key);
+          if (fieldConfig && fieldConfig.systemName) {
+            testmoFieldIdBySystemName.set(
+              fieldConfig.systemName,
+              testmoFieldId
+            );
+          }
+        }
+
+        for (const [systemName, fieldId] of caseFieldMap.entries()) {
+          const fieldMetadata = caseFieldMetadataById.get(fieldId);
+          if (
+            !fieldMetadata ||
+            !fieldMetadata.type.toLowerCase().includes("multi-select")
+          ) {
+            continue;
+          }
+
+          // Get the Testmo field ID for this system name
+          const testmoFieldId = testmoFieldIdBySystemName.get(systemName);
+          if (!testmoFieldId) {
+            // No Testmo field mapping for this multi-select field
+            continue;
+          }
+
+          // Look up values for this case and field using Testmo IDs
+          const lookupKey = `${caseSourceId}:${testmoFieldId}`;
+          const valueIds = multiSelectValuesByCaseAndField.get(lookupKey);
+
+          if (!valueIds || valueIds.length === 0) {
+            continue;
+          }
+
+          // Process the multi-select values
+          const processedValue = normalizeCaseFieldValue(
+            valueIds,
+            fieldMetadata,
+            (message, details) =>
+              recordFieldWarning(message, {
+                caseSourceId,
+                field: fieldMetadata.systemName,
+                displayName: fieldMetadata.displayName,
+                source: "repository_case_values",
+                ...details,
+              }),
+            testmoFieldValueMap
+          );
+
+          if (processedValue === undefined || processedValue === null) {
+            continue;
+          }
+
+          if (Array.isArray(processedValue) && processedValue.length === 0) {
+            continue;
+          }
+
+          // Resolve any value already created for this field from the
+          // custom_ pass above via the per-record map. The case was created
+          // in this transaction, so no other source of pre-existing values
+          // is possible — this replaces a per-(case, field) findFirst.
+          const existingValueId = createdCaseFieldValueIdByFieldId.get(fieldId);
+
+          if (existingValueId !== undefined) {
+            await tx.caseFieldValues.update({
+              where: {
+                id: existingValueId,
+              },
+              data: {
+                value: toInputJsonValue(processedValue),
+              },
+            });
+          } else {
+            const createdFieldValue = await tx.caseFieldValues.create({
               data: {
                 testCaseId: repositoryCase.id,
                 fieldId,
                 value: toInputJsonValue(processedValue),
               },
             });
+            createdCaseFieldValueIdByFieldId.set(fieldId, createdFieldValue.id);
           }
+        }
 
-          // Process multi-select values from repository_case_values dataset
-          // These are stored separately from the custom_ fields in repository_cases
+        const caseSteps = stepsByCaseId.get(caseSourceId) ?? [];
+        const stepsForVersion: Array<{
+          step: unknown;
+          expectedResult: unknown;
+        }> = [];
+        if (caseSteps.length > 0) {
+          let generatedOrder = 0;
+          const stepEntries: Array<StepsUncheckedCreateInput> = [];
 
-          // Build mapping from system names to Testmo field IDs from configuration
-          const testmoFieldIdBySystemName = new Map<string, number>();
-          for (const [key, fieldConfig] of Object.entries(
-            configuration.templateFields ?? {}
-          )) {
-            const testmoFieldId = Number(key);
-            if (fieldConfig && fieldConfig.systemName) {
-              testmoFieldIdBySystemName.set(
-                fieldConfig.systemName,
-                testmoFieldId
-              );
-            }
-          }
+          for (const stepRecord of caseSteps) {
+            const stepAction = toStringValue(stepRecord.text1);
+            const stepData = toStringValue(stepRecord.text2);
+            const expectedResult = toStringValue(stepRecord.text3);
+            const expectedResultData = toStringValue(stepRecord.text4);
 
-          for (const [systemName, fieldId] of caseFieldMap.entries()) {
-            const fieldMetadata = caseFieldMetadataById.get(fieldId);
             if (
-              !fieldMetadata ||
-              !fieldMetadata.type.toLowerCase().includes("multi-select")
+              !stepAction &&
+              !stepData &&
+              !expectedResult &&
+              !expectedResultData
             ) {
               continue;
             }
 
-            // Get the Testmo field ID for this system name
-            const testmoFieldId = testmoFieldIdBySystemName.get(systemName);
-            if (!testmoFieldId) {
-              // No Testmo field mapping for this multi-select field
-              continue;
+            let orderValue = toNumberValue(stepRecord.display_order);
+            if (orderValue === null) {
+              generatedOrder += 1;
+              orderValue = generatedOrder;
+            } else {
+              generatedOrder = orderValue;
             }
 
-            // Look up values for this case and field using Testmo IDs
-            const lookupKey = `${caseSourceId}:${testmoFieldId}`;
-            const valueIds = multiSelectValuesByCaseAndField.get(lookupKey);
+            const stepEntry: StepsUncheckedCreateInput = {
+              testCaseId: repositoryCase.id,
+              order: orderValue,
+            };
 
-            if (!valueIds || valueIds.length === 0) {
-              continue;
+            // Combine step action (text1) with step data (text2)
+            if (stepAction || stepData) {
+              let combinedStepText = stepAction || "";
+              if (stepData) {
+                // Append data wrapped in <data> tag
+                combinedStepText +=
+                  (combinedStepText ? "\n" : "") + `<data>${stepData}</data>`;
+              }
+
+              const stepPayload = convertToTipTapJsonValue(combinedStepText);
+              if (stepPayload !== null) {
+                stepEntry.step = JSON.stringify(stepPayload);
+              }
             }
 
-            // Process the multi-select values
-            const processedValue = normalizeCaseFieldValue(
-              valueIds,
-              fieldMetadata,
-              (message, details) =>
-                recordFieldWarning(message, {
+            // Combine expected result (text3) with expected result data (text4)
+            if (expectedResult || expectedResultData) {
+              let combinedExpectedText = expectedResult || "";
+              if (expectedResultData) {
+                // Append data wrapped in <data> tag
+                combinedExpectedText +=
+                  (combinedExpectedText ? "\n" : "") +
+                  `<data>${expectedResultData}</data>`;
+              }
+
+              const expectedPayload =
+                convertToTipTapJsonValue(combinedExpectedText);
+              if (expectedPayload !== null) {
+                stepEntry.expectedResult = JSON.stringify(expectedPayload);
+              }
+            }
+
+            const parseJson = (value?: string) => {
+              if (!value) {
+                return emptyEditorContent;
+              }
+              try {
+                return JSON.parse(value);
+              } catch (error) {
+                console.warn("Failed to parse repository case step", {
                   caseSourceId,
-                  field: fieldMetadata.systemName,
-                  displayName: fieldMetadata.displayName,
-                  source: "repository_case_values",
-                  ...details,
-                }),
-              testmoFieldValueMap
-            );
+                  error,
+                });
+                return emptyEditorContent;
+              }
+            };
 
-            if (processedValue === undefined || processedValue === null) {
-              continue;
-            }
-
-            if (Array.isArray(processedValue) && processedValue.length === 0) {
-              continue;
-            }
-
-            // Check if we already created a value for this field from custom_ fields
-            const existingValue = await tx.caseFieldValues.findFirst({
-              where: {
-                testCaseId: repositoryCase.id,
-                fieldId,
-              },
+            stepsForVersion.push({
+              step: parseJson(stepEntry.step as string | undefined),
+              expectedResult: parseJson(
+                stepEntry.expectedResult as string | undefined
+              ),
             });
 
-            if (existingValue) {
-              await tx.caseFieldValues.update({
-                where: {
-                  id: existingValue.id,
-                },
-                data: {
-                  value: toInputJsonValue(processedValue),
-                },
-              });
-            } else {
-              await tx.caseFieldValues.create({
-                data: {
-                  testCaseId: repositoryCase.id,
-                  fieldId,
-                  value: toInputJsonValue(processedValue),
-                },
-              });
-            }
+            stepEntries.push(stepEntry);
           }
 
-          const caseSteps = stepsByCaseId.get(caseSourceId) ?? [];
-          const stepsForVersion: Array<{
-            step: unknown;
-            expectedResult: unknown;
-          }> = [];
-          if (caseSteps.length > 0) {
-            let generatedOrder = 0;
-            const stepEntries: Array<Prisma.StepsCreateManyInput> = [];
-
-            for (const stepRecord of caseSteps) {
-              const stepAction = toStringValue(stepRecord.text1);
-              const stepData = toStringValue(stepRecord.text2);
-              const expectedResult = toStringValue(stepRecord.text3);
-              const expectedResultData = toStringValue(stepRecord.text4);
-
-              if (
-                !stepAction &&
-                !stepData &&
-                !expectedResult &&
-                !expectedResultData
-              ) {
-                continue;
-              }
-
-              let orderValue = toNumberValue(stepRecord.display_order);
-              if (orderValue === null) {
-                generatedOrder += 1;
-                orderValue = generatedOrder;
-              } else {
-                generatedOrder = orderValue;
-              }
-
-              const stepEntry: Prisma.StepsCreateManyInput = {
-                testCaseId: repositoryCase.id,
-                order: orderValue,
-              };
-
-              // Combine step action (text1) with step data (text2)
-              if (stepAction || stepData) {
-                let combinedStepText = stepAction || "";
-                if (stepData) {
-                  // Append data wrapped in <data> tag
-                  combinedStepText +=
-                    (combinedStepText ? "\n" : "") + `<data>${stepData}</data>`;
-                }
-
-                const stepPayload = convertToTipTapJsonValue(combinedStepText);
-                if (stepPayload !== null) {
-                  stepEntry.step = JSON.stringify(stepPayload);
-                }
-              }
-
-              // Combine expected result (text3) with expected result data (text4)
-              if (expectedResult || expectedResultData) {
-                let combinedExpectedText = expectedResult || "";
-                if (expectedResultData) {
-                  // Append data wrapped in <data> tag
-                  combinedExpectedText +=
-                    (combinedExpectedText ? "\n" : "") +
-                    `<data>${expectedResultData}</data>`;
-                }
-
-                const expectedPayload =
-                  convertToTipTapJsonValue(combinedExpectedText);
-                if (expectedPayload !== null) {
-                  stepEntry.expectedResult = JSON.stringify(expectedPayload);
-                }
-              }
-
-              const parseJson = (value?: string) => {
-                if (!value) {
-                  return emptyEditorContent;
-                }
-                try {
-                  return JSON.parse(value);
-                } catch (error) {
-                  console.warn("Failed to parse repository case step", {
-                    caseSourceId,
-                    error,
-                  });
-                  return emptyEditorContent;
-                }
-              };
-
-              stepsForVersion.push({
-                step: parseJson(stepEntry.step as string | undefined),
-                expectedResult: parseJson(
-                  stepEntry.expectedResult as string | undefined
-                ),
-              });
-
-              stepEntries.push(stepEntry);
-            }
-
-            if (stepEntries.length > 0) {
-              await tx.steps.createMany({ data: stepEntries });
-            }
+          if (stepEntries.length > 0) {
+            await tx.steps.createMany({ data: stepEntries });
           }
+        }
 
-          const _projectName = await getProjectName(tx, projectId);
-          const _templateName = await getTemplateName(tx, resolvedTemplateId);
-          const workflowName = await getWorkflowName(tx, resolvedWorkflowId);
-          const _folderName = await getFolderName(tx, resolvedFolderId);
-          const creatorName = await getUserName(tx, creatorId);
-          const versionCaseName =
-            toStringValue(record.name) ?? repositoryCase.name;
+        const _projectName = await getProjectName(tx, projectId);
+        const _templateName = await getTemplateName(tx, resolvedTemplateId);
+        const workflowName = await getWorkflowName(tx, resolvedWorkflowId);
+        const _folderName = await getFolderName(tx, resolvedFolderId);
+        const creatorName = await getUserName(tx, creatorId);
+        const versionCaseName =
+          toStringValue(record.name) ?? repositoryCase.name;
 
-          // Create version snapshot using centralized helper
-          const caseVersion = await createTestCaseVersionInTransaction(
-            tx,
-            repositoryCase.id,
-            {
-              // Use repositoryCase.currentVersion (already set on the case)
-              creatorId,
-              creatorName,
-              createdAt: repositoryCase.createdAt ?? new Date(),
-              overrides: {
-                name: versionCaseName,
-                stateId: resolvedWorkflowId,
-                stateName: workflowName,
-                estimate: repositoryCase.estimate ?? null,
-                forecastManual: repositoryCase.forecastManual ?? null,
-                forecastAutomated: repositoryCase.forecastAutomated ?? null,
-                automated: repositoryCase.automated,
-                isArchived: repositoryCase.isArchived,
-                order,
-                steps:
-                  stepsForVersion.length > 0
-                    ? (stepsForVersion as Prisma.InputJsonValue)
-                    : null,
-                tags: [],
-                issues: [],
-                links: [],
-                attachments: [],
-              },
-            }
-          );
+        // Create version snapshot using centralized helper
+        const caseVersion = await createTestCaseVersionInTransaction(
+          tx,
+          repositoryCase.id,
+          {
+            // Use repositoryCase.currentVersion (already set on the case)
+            creatorId,
+            creatorName,
+            createdAt: repositoryCase.createdAt ?? new Date(),
+            overrides: {
+              name: versionCaseName,
+              stateId: resolvedWorkflowId,
+              stateName: workflowName,
+              estimate: repositoryCase.estimate ?? null,
+              forecastManual: repositoryCase.forecastManual ?? null,
+              forecastAutomated: repositoryCase.forecastAutomated ?? null,
+              automated: repositoryCase.automated,
+              isArchived: repositoryCase.isArchived,
+              order,
+              steps:
+                stepsForVersion.length > 0
+                  ? (stepsForVersion as JsonValue)
+                  : null,
+              tags: [],
+              issues: [],
+              links: [],
+              attachments: [],
+            },
+          }
+        );
 
-          const caseFieldValuesForVersion = await tx.caseFieldValues.findMany({
-            where: { testCaseId: repositoryCase.id },
-            include: {
-              field: {
-                select: {
-                  displayName: true,
-                  systemName: true,
-                },
+        const caseFieldValuesForVersion = await tx.caseFieldValues.findMany({
+          where: { testCaseId: repositoryCase.id },
+          include: {
+            field: {
+              select: {
+                displayName: true,
+                systemName: true,
               },
             },
+          },
+        });
+
+        if (caseFieldValuesForVersion.length > 0) {
+          await tx.caseFieldVersionValues.createMany({
+            data: caseFieldValuesForVersion.map((fieldValue) => ({
+              versionId: caseVersion.id,
+              field:
+                fieldValue.field.displayName || fieldValue.field.systemName,
+              value: fieldValue.value ?? JsonNull,
+            })),
           });
-
-          if (caseFieldValuesForVersion.length > 0) {
-            await tx.caseFieldVersionValues.createMany({
-              data: caseFieldValuesForVersion.map((fieldValue) => ({
-                versionId: caseVersion.id,
-                field:
-                  fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? Prisma.JsonNull,
-              })),
-            });
-          }
-
-          canonicalCaseIds.delete(caseSourceId);
-          stepsByCaseId.delete(caseSourceId);
         }
-      },
-      {
-        timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-        maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
+
+        canonicalCaseIds.delete(caseSourceId);
+        stepsByCaseId.delete(caseSourceId);
       }
-    );
+    });
 
     clearTipTapCache();
   };
@@ -4160,7 +4215,7 @@ const importRepositoryCases = async (
     }
 
     if (assignmentRows.length > 0) {
-      await prisma.templateProjectAssignment.createMany({
+      await db.templateProjectAssignment.createMany({
         data: assignmentRows,
         skipDuplicates: true,
       });
@@ -4205,7 +4260,7 @@ const importRepositoryCases = async (
 };
 
 const importTestRuns = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   _canonicalRepoIdByProject: Map<number, Set<number>>,
@@ -4412,7 +4467,7 @@ const importTestRuns = async (
 };
 
 const importTestRunCases = async (
-  prisma: PrismaClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   caseIdMap: Map<number, number>,
@@ -4484,7 +4539,7 @@ const importTestRunCases = async (
     await persistProgress(entityName, statusMessage);
   };
 
-  const completedStatusRecords = await prisma.status.findMany({
+  const completedStatusRecords = await db.status.findMany({
     select: { id: true, isCompleted: true },
   });
   const completedStatusIds = new Set<number>();
@@ -4518,7 +4573,7 @@ const importTestRunCases = async (
 
     const mappedRecords: Array<{
       record: Record<string, unknown>;
-      data: Prisma.TestRunCasesCreateManyInput;
+      data: TestRunCasesUncheckedCreateInput;
       runTestSourceId: number;
     }> = [];
     let duplicateMappingsInBatch = 0;
@@ -4572,7 +4627,7 @@ const importTestRunCases = async (
       if (!repositoryCaseId) {
         const meta = caseMetaMap.get(caseSourceId);
         if (meta) {
-          const fallbackCase = await prisma.repositoryCases.findFirst({
+          const fallbackCase = await db.repositoryCases.findFirst({
             where: {
               projectId: meta.projectId,
               name: meta.name,
@@ -4648,7 +4703,7 @@ const importTestRunCases = async (
 
     if (mappedRecords.length > 0) {
       // Execute database operations in a transaction per batch
-      const { createResult, persistedPairs } = await prisma.$transaction(
+      const { createResult, persistedPairs } = await db.$transaction(
         async (tx) => {
           // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
           // case chunk above). Opts these testRunCases.createMany rows out of
@@ -4676,10 +4731,6 @@ const importTestRunCases = async (
           });
 
           return { createResult, persistedPairs };
-        },
-        {
-          timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-          maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
         }
       );
 
@@ -4741,7 +4792,7 @@ const importTestRunCases = async (
 };
 
 const importTestRunResults = async (
-  prisma: PrismaClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -4782,7 +4833,7 @@ const importTestRunResults = async (
   }
 
   // Get the default "untested" status to use when source status is null
-  const untestedStatus = await prisma.status.findFirst({
+  const untestedStatus = await db.status.findFirst({
     where: { systemName: "untested" },
     select: { id: true },
   });
@@ -4804,164 +4855,158 @@ const importTestRunResults = async (
     if (records.length === 0) {
       return;
     }
-    await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
-        // case chunk above). Opts these testRunResults rows out of row-level
-        // CDC capture; the job-level captureAuditEvent retains the semantic
-        // event. SET LOCAL only inside a $transaction (Pitfall A).
-        await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
-        for (const record of records) {
-          const resultSourceId = toNumberValue(record.id);
-          const runSourceId = toNumberValue(record.run_id);
-          const runTestSourceId = toNumberValue(record.test_id);
+    await db.$transaction(async (tx: TxClient) => {
+      // Phase 13 SAF-01 — bulk-import skip_audit hatch (see the repository
+      // case chunk above). Opts these testRunResults rows out of row-level
+      // CDC capture; the job-level captureAuditEvent retains the semantic
+      // event. SET LOCAL only inside a $transaction (Pitfall A).
+      await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
+      for (const record of records) {
+        const resultSourceId = toNumberValue(record.id);
+        const runSourceId = toNumberValue(record.run_id);
+        const runTestSourceId = toNumberValue(record.test_id);
 
-          if (
-            resultSourceId === null ||
-            runSourceId === null ||
-            runTestSourceId === null
-          ) {
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
+        if (
+          resultSourceId === null ||
+          runSourceId === null ||
+          runTestSourceId === null
+        ) {
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          if (toBooleanValue(record.is_deleted)) {
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
+        if (toBooleanValue(record.is_deleted)) {
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          const testRunId = testRunIdMap.get(runSourceId);
-          if (!testRunId) {
-            logMessage(
-              context,
-              "Skipping test run result due to missing run mapping",
-              {
-                resultSourceId,
-                runSourceId,
-              }
-            );
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
-
-          const testRunCaseId = testRunCaseIdMap.get(runTestSourceId);
-          if (!testRunCaseId) {
-            logMessage(
-              context,
-              "Skipping test run result due to missing run case mapping",
-              {
-                resultSourceId,
-                runTestSourceId,
-              }
-            );
-            decrementEntityTotal(context, "testRunResults");
-            continue;
-          }
-
-          const statusSourceId = toNumberValue(record.status_id);
-          const statusId =
-            statusSourceId !== null
-              ? (statusIdMap.get(statusSourceId) ?? defaultStatusId)
-              : defaultStatusId;
-
-          const executedById = resolveUserId(
-            userIdMap,
-            importJob.createdById,
-            record.created_by
+        const testRunId = testRunIdMap.get(runSourceId);
+        if (!testRunId) {
+          logMessage(
+            context,
+            "Skipping test run result due to missing run mapping",
+            {
+              resultSourceId,
+              runSourceId,
+            }
           );
-          const executedAt = toDateValue(record.created_at) ?? new Date();
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          const elapsedValue = toNumberValue(record.elapsed);
-          const { value: normalizedElapsed, adjustment: elapsedAdjustment } =
-            normalizeEstimate(elapsedValue);
+        const testRunCaseId = testRunCaseIdMap.get(runTestSourceId);
+        if (!testRunCaseId) {
+          logMessage(
+            context,
+            "Skipping test run result due to missing run case mapping",
+            {
+              resultSourceId,
+              runTestSourceId,
+            }
+          );
+          decrementEntityTotal(context, "testRunResults");
+          continue;
+        }
 
-          if (
-            elapsedAdjustment === "microseconds" ||
-            elapsedAdjustment === "nanoseconds"
-          ) {
-            summaryDetails.elapsedAdjusted += 1;
-          } else if (elapsedAdjustment === "milliseconds") {
-            summaryDetails.elapsedAdjusted += 1;
-          } else if (elapsedAdjustment === "clamped") {
-            summaryDetails.elapsedClamped += 1;
-          }
+        const statusSourceId = toNumberValue(record.status_id);
+        const statusId =
+          statusSourceId !== null
+            ? (statusIdMap.get(statusSourceId) ?? defaultStatusId)
+            : defaultStatusId;
 
-          const comment = toStringValue(record.comment);
+        const executedById = resolveUserId(
+          userIdMap,
+          importJob.createdById,
+          record.created_by
+        );
+        const executedAt = toDateValue(record.created_at) ?? new Date();
 
-          let testRunCaseVersion = testRunCaseVersionCache.get(testRunCaseId);
-          if (testRunCaseVersion === undefined) {
-            const runCase = await tx.testRunCases.findUnique({
-              where: { id: testRunCaseId },
-              select: {
-                repositoryCase: {
-                  select: { currentVersion: true },
-                },
+        const elapsedValue = toNumberValue(record.elapsed);
+        const { value: normalizedElapsed, adjustment: elapsedAdjustment } =
+          normalizeEstimate(elapsedValue);
+
+        if (
+          elapsedAdjustment === "microseconds" ||
+          elapsedAdjustment === "nanoseconds"
+        ) {
+          summaryDetails.elapsedAdjusted += 1;
+        } else if (elapsedAdjustment === "milliseconds") {
+          summaryDetails.elapsedAdjusted += 1;
+        } else if (elapsedAdjustment === "clamped") {
+          summaryDetails.elapsedClamped += 1;
+        }
+
+        const comment = toStringValue(record.comment);
+
+        let testRunCaseVersion = testRunCaseVersionCache.get(testRunCaseId);
+        if (testRunCaseVersion === undefined) {
+          const runCase = await tx.testRunCases.findUnique({
+            where: { id: testRunCaseId },
+            select: {
+              repositoryCase: {
+                select: { currentVersion: true },
               },
-            });
-            testRunCaseVersion = runCase?.repositoryCase?.currentVersion ?? 1;
-            testRunCaseVersionCache.set(testRunCaseId, testRunCaseVersion);
-          }
-
-          const createdResult = await tx.testRunResults.create({
-            data: {
-              testRunId,
-              testRunCaseId,
-              testRunCaseVersion,
-              statusId,
-              executedById,
-              executedAt,
-              elapsed: normalizedElapsed ?? undefined,
-              notes: comment ? toInputJsonValue(comment) : undefined,
             },
           });
-
-          // Store the mapping from Testmo result ID to our result ID
-          testRunResultIdMap.set(resultSourceId, createdResult.id);
-
-          for (const [key, rawValue] of Object.entries(record)) {
-            if (!key.startsWith("custom_")) {
-              continue;
-            }
-            const fieldName = key.replace(/^custom_/, "");
-            const fieldId = resultFieldMap.get(fieldName);
-            if (!fieldId) {
-              continue;
-            }
-            if (
-              rawValue === null ||
-              rawValue === undefined ||
-              (typeof rawValue === "string" && rawValue.trim().length === 0)
-            ) {
-              continue;
-            }
-
-            await tx.resultFieldValues.create({
-              data: {
-                testRunResultsId: createdResult.id,
-                fieldId,
-                value: toInputJsonValue(rawValue),
-              },
-            });
-          }
-
-          summary.total += 1;
-          summary.created += 1;
-
-          incrementEntityProgress(context, "testRunResults", 1, 0);
-          processedSinceLastPersist += 1;
-
-          if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
-            const message = formatInProgressStatus(context, "testRunResults");
-            await persistProgress("testRunResults", message);
-            processedSinceLastPersist = 0;
-          }
+          testRunCaseVersion = runCase?.repositoryCase?.currentVersion ?? 1;
+          testRunCaseVersionCache.set(testRunCaseId, testRunCaseVersion);
         }
-      },
-      {
-        timeout: IMPORT_TRANSACTION_TIMEOUT_MS,
-        maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
+
+        const createdResult = await tx.testRunResults.create({
+          data: {
+            testRunId,
+            testRunCaseId,
+            testRunCaseVersion,
+            statusId,
+            executedById,
+            executedAt,
+            elapsed: normalizedElapsed ?? undefined,
+            notes: comment ? toInputJsonValue(comment) : undefined,
+          },
+        });
+
+        // Store the mapping from Testmo result ID to our result ID
+        testRunResultIdMap.set(resultSourceId, createdResult.id);
+
+        for (const [key, rawValue] of Object.entries(record)) {
+          if (!key.startsWith("custom_")) {
+            continue;
+          }
+          const fieldName = key.replace(/^custom_/, "");
+          const fieldId = resultFieldMap.get(fieldName);
+          if (!fieldId) {
+            continue;
+          }
+          if (
+            rawValue === null ||
+            rawValue === undefined ||
+            (typeof rawValue === "string" && rawValue.trim().length === 0)
+          ) {
+            continue;
+          }
+
+          await tx.resultFieldValues.create({
+            data: {
+              testRunResultsId: createdResult.id,
+              fieldId,
+              value: toInputJsonValue(rawValue),
+            },
+          });
+        }
+
+        summary.total += 1;
+        summary.created += 1;
+
+        incrementEntityProgress(context, "testRunResults", 1, 0);
+        processedSinceLastPersist += 1;
+
+        if (processedSinceLastPersist >= PROGRESS_UPDATE_INTERVAL) {
+          const message = formatInProgressStatus(context, "testRunResults");
+          await persistProgress("testRunResults", message);
+          processedSinceLastPersist = 0;
+        }
       }
-    );
+    });
 
     clearTipTapCache();
   };
@@ -5006,7 +5051,7 @@ const importTestRunResults = async (
 };
 
 const importTestRunStepResults = async (
-  prisma: PrismaClient,
+  db: DbClient,
   datasetRows: Map<string, any[]>,
   testRunResultIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -5101,7 +5146,7 @@ const importTestRunStepResults = async (
     return (async function* () {
       let nextRowIndex = 0;
       while (true) {
-        const stagedRows = await prisma.testmoImportStaging.findMany({
+        const stagedRows = await db.testmoImportStaging.findMany({
           where: {
             jobId: context.jobId!,
             datasetName: "run_result_steps",
@@ -5156,7 +5201,7 @@ const importTestRunStepResults = async (
       return;
     }
 
-    const cases = await prisma.testRunCases.findMany({
+    const cases = await db.testRunCases.findMany({
       where: { id: { in: uniqueIds } },
       select: { id: true, repositoryCaseId: true },
     });
@@ -5177,7 +5222,7 @@ const importTestRunStepResults = async (
     }
   };
 
-  const untestedStatus = await prisma.status.findFirst({
+  const untestedStatus = await db.status.findFirst({
     where: { systemName: "untested" },
     select: { id: true },
   });
@@ -5192,6 +5237,11 @@ const importTestRunStepResults = async (
 
   const chunkIterator = createChunkIterator();
   let processedCount = 0;
+  // Steps created already-soft-deleted to carry historical step results whose
+  // order the case no longer has (it was edited in Testmo after the run ran).
+  // Counted so the import log reports them rather than leaving them invisible.
+  let retiredStepsCreated = 0;
+  const retiredStepCaseIds = new Set<number>();
 
   for await (const chunk of chunkIterator) {
     const stepEntries: Array<{
@@ -5240,6 +5290,33 @@ const importTestRunStepResults = async (
 
     await ensureRepositoryCasesLoaded(caseIdsForChunk);
 
+    // Collect the repository case IDs for this chunk so we can pre-load their
+    // canonical steps. Steps are created once during importRepositoryCases; here
+    // we must reuse those rows rather than inserting a new Steps record for every
+    // run result — which would duplicate steps once per test run.
+    const repositoryCaseIdsForChunk = new Set<number>();
+    for (const testRunCaseId of caseIdsForChunk) {
+      const rcId = repositoryCaseIdByTestRunCaseId.get(testRunCaseId);
+      if (rcId) repositoryCaseIdsForChunk.add(rcId);
+    }
+
+    const existingStepRows = await db.steps.findMany({
+      where: { testCaseId: { in: [...repositoryCaseIdsForChunk] } },
+      select: { id: true, testCaseId: true, order: true, isDeleted: true },
+    });
+    // key: "caseId:order" → stepId. Soft-deleted rows are included so a re-import
+    // re-attaches to the retired steps this importer already created rather than
+    // creating a second copy, but a LIVE row always wins the key — a case can
+    // hold both once a step at that order has been removed and replaced.
+    const stepIdByKey = new Map<string, number>();
+    const stepDeletedByKey = new Map<string, boolean>();
+    for (const s of existingStepRows) {
+      const key = `${s.testCaseId}:${s.order}`;
+      if (stepIdByKey.has(key) && stepDeletedByKey.get(key) === false) continue;
+      stepIdByKey.set(key, s.id);
+      stepDeletedByKey.set(key, s.isDeleted);
+    }
+
     for (const stepEntry of stepEntries) {
       const { resultId, testRunCaseId, displayOrder, record } = stepEntry;
 
@@ -5251,46 +5328,80 @@ const importTestRunStepResults = async (
         continue;
       }
 
-      const stepAction = toStringValue(record.text1);
-      const stepData = toStringValue(record.text2);
-      const expectedResult = toStringValue(record.text3);
-      const expectedResultData = toStringValue(record.text4);
+      const stepKey = `${repositoryCaseId}:${displayOrder}`;
+      let stepId = stepIdByKey.get(stepKey);
 
-      let stepContent: string | null = null;
-      if (stepAction || stepData) {
-        stepContent = stepAction || "";
-        if (stepData) {
-          stepContent += (stepContent ? "\n" : "") + `<data>${stepData}</data>`;
+      if (!stepId) {
+        // Testmo snapshots the step list into each run result at execution time,
+        // so a historical result routinely references steps the case no longer
+        // has — it was edited after the run. Creating a LIVE step here is what
+        // injected phantom extra steps into current cases (often duplicating the
+        // tail of the real list). But `TestRunStepResults.stepId` is required, so
+        // dropping the row would also discard the step's recorded status, notes
+        // and elapsed time.
+        //
+        // Create the step already soft-deleted instead: the FK gets a target and
+        // the per-step history survives, while every path that builds a case's
+        // live step list filters `isDeleted: false` — the case editor, the run
+        // execution view, version snapshots, exports, copy/move and the
+        // Elasticsearch document — so it never shows up as a step of the case.
+        // The run-result read path deliberately does NOT filter it, which is what
+        // makes the historical detail still render.
+        const stepAction = toStringValue(record.text1);
+        const stepData = toStringValue(record.text2);
+        const expectedResult = toStringValue(record.text3);
+        const expectedResultData = toStringValue(record.text4);
+
+        let stepContent: string | null = null;
+        if (stepAction || stepData) {
+          stepContent = stepAction || "";
+          if (stepData) {
+            stepContent +=
+              (stepContent ? "\n" : "") + `<data>${stepData}</data>`;
+          }
         }
-      }
 
-      let expectedResultContent: string | null = null;
-      if (expectedResult || expectedResultData) {
-        expectedResultContent = expectedResult || "";
-        if (expectedResultData) {
-          expectedResultContent +=
-            (expectedResultContent ? "\n" : "") +
-            `<data>${expectedResultData}</data>`;
+        let expectedResultContent: string | null = null;
+        if (expectedResult || expectedResultData) {
+          expectedResultContent = expectedResult || "";
+          if (expectedResultData) {
+            expectedResultContent +=
+              (expectedResultContent ? "\n" : "") +
+              `<data>${expectedResultData}</data>`;
+          }
         }
+
+        const stepPayload = stepContent
+          ? convertToTipTapJsonValue(stepContent)
+          : null;
+        const expectedPayload = expectedResultContent
+          ? convertToTipTapJsonValue(expectedResultContent)
+          : null;
+
+        // `deletedAt` is deliberately left NULL. tpl_stamp_deleted_at_steps only
+        // stamps on an isDeleted UPDATE precisely so a row INSERTed already-deleted
+        // keeps it null, and a retention sweep keyed off deletedAt therefore never
+        // claims these rows — which is what must not happen here, since purging one
+        // would cascade away (onDelete: Cascade) the very step results it exists to
+        // hold. It is also the honest value: the step was never live on this case,
+        // so there is no moment at which it was deleted.
+        const createdStep = await db.steps.create({
+          data: {
+            testCaseId: repositoryCaseId,
+            order: displayOrder,
+            step: stepPayload ? JSON.stringify(stepPayload) : undefined,
+            expectedResult: expectedPayload
+              ? JSON.stringify(expectedPayload)
+              : undefined,
+            isDeleted: true,
+          },
+        });
+        stepId = createdStep.id;
+        stepIdByKey.set(stepKey, stepId);
+        stepDeletedByKey.set(stepKey, true);
+        retiredStepsCreated += 1;
+        retiredStepCaseIds.add(repositoryCaseId);
       }
-
-      const stepPayload = stepContent
-        ? convertToTipTapJsonValue(stepContent)
-        : null;
-      const expectedPayload = expectedResultContent
-        ? convertToTipTapJsonValue(expectedResultContent)
-        : null;
-
-      const createdStep = await prisma.steps.create({
-        data: {
-          testCaseId: repositoryCaseId,
-          order: displayOrder,
-          step: stepPayload ? JSON.stringify(stepPayload) : undefined,
-          expectedResult: expectedPayload
-            ? JSON.stringify(expectedPayload)
-            : undefined,
-        },
-      });
 
       const statusSourceId = toNumberValue(record.status_id);
       const statusId =
@@ -5302,10 +5413,10 @@ const importTestRunStepResults = async (
       const elapsed = toNumberValue(record.elapsed);
 
       try {
-        await prisma.testRunStepResults.create({
+        await db.testRunStepResults.create({
           data: {
             testRunResultId: resultId,
-            stepId: createdStep.id,
+            stepId,
             statusId,
             notes: comment ? toInputJsonValue(comment) : undefined,
             elapsed: elapsed ?? undefined,
@@ -5317,7 +5428,7 @@ const importTestRunStepResults = async (
       } catch (error) {
         logMessage(context, "Skipping duplicate step result", {
           resultId,
-          stepId: createdStep.id,
+          stepId,
           error: String(error),
         });
         decrementEntityTotal(context, entityName);
@@ -5333,11 +5444,22 @@ const importTestRunStepResults = async (
     }
   }
 
+  if (retiredStepsCreated > 0) {
+    logMessage(
+      context,
+      "Created retired (soft-deleted) steps to hold history for steps the test case no longer has",
+      {
+        steps: retiredStepsCreated,
+        cases: retiredStepCaseIds.size,
+      }
+    );
+  }
+
   return summary;
 };
 
 async function importStatuses(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -5541,7 +5663,7 @@ async function importStatuses(
 async function processImportMode(
   importJob: TestmoImportJob,
   jobId: string,
-  prisma: PrismaClient,
+  db: DbClient,
   tenantId?: string
 ) {
   if (FINAL_STATUSES.has(importJob.status)) {
@@ -5558,7 +5680,7 @@ async function processImportMode(
     importJob.configuration
   );
 
-  const datasetRecords = await prisma.testmoImportDataset.findMany({
+  const datasetRecords = await db.testmoImportDataset.findMany({
     where: { jobId },
     select: {
       name: true,
@@ -5622,7 +5744,7 @@ async function processImportMode(
     };
 
     try {
-      const stagedRows = await prisma.testmoImportStaging.findMany({
+      const stagedRows = await db.testmoImportStaging.findMany({
         where: {
           jobId,
           datasetName,
@@ -5650,7 +5772,7 @@ async function processImportMode(
       );
 
       // Get total count
-      const totalCount = await prisma.testmoImportStaging.count({
+      const totalCount = await db.testmoImportStaging.count({
         where: {
           jobId,
           datasetName,
@@ -5664,7 +5786,7 @@ async function processImportMode(
 
       for (let offset = 0; offset < totalCount; offset += batchSize) {
         try {
-          const stagedRows = await prisma.testmoImportStaging.findMany({
+          const stagedRows = await db.testmoImportStaging.findMany({
             where: {
               jobId,
               datasetName,
@@ -5779,7 +5901,7 @@ async function processImportMode(
       // Calculate progress metrics
       const metrics = calculateProgressMetrics(context, plannedTotalCount);
 
-      const data: Prisma.TestmoImportJobUpdateInput = {
+      const data: TestmoImportJobUpdateArgs["data"] = {
         currentEntity: entity,
         processedCount: context.processedCount,
         totalCount: plannedTotalCount,
@@ -5791,10 +5913,14 @@ async function processImportMode(
       if (statusMessage) {
         data.statusMessage = statusMessage;
       }
-      await prisma.testmoImportJob.update({
+      // Cast the update method to a non-generic signature: under TS 6 the v3
+      // ORM's generic `update` type instantiates too deeply here (TS2589) once
+      // the surrounding file carries the import's added Map/select types. The
+      // args are already validated via the TestmoImportJobUpdateArgs cast.
+      await (db.testmoImportJob.update as (args: unknown) => Promise<unknown>)({
         where: { id: jobId },
         data,
-      });
+      } as TestmoImportJobUpdateArgs);
 
       context.lastProgressUpdate = now;
     } catch (progressError) {
@@ -5835,7 +5961,7 @@ async function processImportMode(
 
   const importStart = new Date();
 
-  await prisma.testmoImportJob.update({
+  await db.testmoImportJob.update({
     where: { id: jobId },
     data: {
       status: "RUNNING",
@@ -5856,13 +5982,11 @@ async function processImportMode(
 
   try {
     const withTransaction = async <T>(
-      operation: (tx: Prisma.TransactionClient) => Promise<T>,
+      operation: (tx: TxClient) => Promise<T>,
       options?: { timeoutMs?: number }
     ): Promise<T> => {
-      return prisma.$transaction(operation, {
-        timeout: options?.timeoutMs ?? IMPORT_TRANSACTION_TIMEOUT_MS,
-        maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS,
-      });
+      void options;
+      return db.$transaction(operation);
     };
 
     logMessage(context, "Processing workflow mappings");
@@ -6379,7 +6503,7 @@ async function processImportMode(
         }
 
         return importRepositoryFolders(
-          prisma,
+          db,
           datasetRowsByName,
           projectImport.projectIdMap,
           repositoryImport.repositoryIdMap,
@@ -6466,7 +6590,7 @@ async function processImportMode(
         }
 
         return importRepositoryCases(
-          prisma,
+          db,
           datasetRowsByName,
           projectImport.projectIdMap,
           repositoryImport.repositoryIdMap,
@@ -6598,7 +6722,7 @@ async function processImportMode(
         }
 
         return importAutomationCases(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6645,7 +6769,7 @@ async function processImportMode(
         }
 
         return importAutomationRuns(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6689,7 +6813,7 @@ async function processImportMode(
         }
 
         return importAutomationRunTests(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6741,7 +6865,7 @@ async function processImportMode(
         }
 
         return importAutomationRunFields(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6781,7 +6905,7 @@ async function processImportMode(
         }
 
         return importAutomationRunLinks(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6816,7 +6940,7 @@ async function processImportMode(
       "automationRunTestFields",
       () =>
         importAutomationRunTestFields(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           projectImport.projectIdMap,
@@ -6857,7 +6981,7 @@ async function processImportMode(
         }
 
         return importAutomationRunTags(
-          prisma,
+          db,
           normalizedConfiguration,
           datasetRowsByName,
           automationRunImport.testRunIdMap,
@@ -7010,7 +7134,7 @@ async function processImportMode(
         }
 
         return importTestRunCases(
-          prisma,
+          db,
           datasetRowsByName,
           testRunImport.testRunIdMap,
           caseImport.caseIdMap,
@@ -7083,7 +7207,7 @@ async function processImportMode(
         }
 
         return importTestRunResults(
-          prisma,
+          db,
           datasetRowsByName,
           testRunImport.testRunIdMap,
           mergedTestRunCaseIdMap,
@@ -7114,7 +7238,7 @@ async function processImportMode(
       "testRunStepResults",
       () =>
         importTestRunStepResults(
-          prisma,
+          db,
           datasetRowsByName,
           testRunResultImport.testRunResultIdMap,
           mergedTestRunCaseIdMap,
@@ -7276,7 +7400,7 @@ async function processImportMode(
         }
 
         return importRepositoryCaseIssues(
-          prisma,
+          db,
           datasetRowsByName,
           caseImport.caseIdMap,
           issuesImport.issueIdMap,
@@ -7315,7 +7439,7 @@ async function processImportMode(
         }
 
         return importRunIssues(
-          prisma,
+          db,
           datasetRowsByName,
           testRunImport.testRunIdMap,
           issuesImport.issueIdMap,
@@ -7351,7 +7475,7 @@ async function processImportMode(
         }
 
         return importRunResultIssues(
-          prisma,
+          db,
           datasetRowsByName,
           testRunResultImport.testRunResultIdMap,
           issuesImport.issueIdMap,
@@ -7390,7 +7514,7 @@ async function processImportMode(
         }
 
         return importSessionIssues(
-          prisma,
+          db,
           datasetRowsByName,
           sessionImport.sessionIdMap,
           issuesImport.issueIdMap,
@@ -7429,7 +7553,7 @@ async function processImportMode(
         }
 
         return importSessionResultIssues(
-          prisma,
+          db,
           datasetRowsByName,
           sessionResultsImport.sessionResultIdMap,
           issuesImport.issueIdMap,
@@ -7488,7 +7612,7 @@ async function processImportMode(
     });
     await persistProgress(null, "Import completed successfully.");
 
-    const updatedJob = await prisma.testmoImportJob.update({
+    const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "COMPLETED",
@@ -7589,7 +7713,7 @@ async function processImportMode(
       normalizedConfiguration
     );
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "FAILED",
@@ -7635,7 +7759,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   validateMultiTenantJobData(job.data);
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   // Clear caches to prevent cross-tenant cache pollution
   projectNameCache.clear();
@@ -7647,7 +7771,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   folderNameCache.clear();
   clearAutomationImportCaches();
 
-  const importJob = await prisma.testmoImportJob.findUnique({
+  const importJob = await db.testmoImportJob.findUnique({
     where: { id: jobId },
   });
 
@@ -7660,7 +7784,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   if (mode === "import") {
-    return processImportMode(importJob, jobId, prisma, job.data.tenantId);
+    return processImportMode(importJob, jobId, db, job.data.tenantId);
   }
 
   if (mode !== "analyze") {
@@ -7678,7 +7802,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   }
 
   if (importJob.cancelRequested) {
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "CANCELED",
@@ -7690,9 +7814,9 @@ async function processorInner(job: Job<TestmoImportJobData>) {
     return { status: "CANCELED" };
   }
 
-  await prisma.testmoImportDataset.deleteMany({ where: { jobId } });
+  await db.testmoImportDataset.deleteMany({ where: { jobId } });
 
-  await prisma.testmoImportJob.update({
+  await db.testmoImportJob.update({
     where: { id: jobId },
     data: {
       status: "RUNNING",
@@ -7718,7 +7842,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
     `[Worker] Downloading file to temporary location: ${tempFilePath}`
   );
 
-  await prisma.testmoImportJob.update({
+  await db.testmoImportJob.update({
     where: { id: jobId },
     data: {
       statusMessage: "Preparing data...",
@@ -7756,7 +7880,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     console.log(`[Worker] Download complete. File saved to ${tempFilePath}`);
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         statusMessage: "Download complete. Starting analysis...",
@@ -7827,7 +7951,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       `[Worker] Progress update: ${percentage}% (${bytesRead}/${totalBytes} bytes)${etaDisplay}`
     );
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         statusMessage: `Scanning file... ${percentage}% complete`,
@@ -7846,22 +7970,20 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     const schemaValue =
       dataset.schema !== undefined && dataset.schema !== null
-        ? (JSON.parse(JSON.stringify(dataset.schema)) as Prisma.InputJsonValue)
-        : Prisma.JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.schema)) as JsonValue)
+        : JsonNull;
 
     const sampleRowsValue =
       dataset.sampleRows.length > 0
-        ? (JSON.parse(
-            JSON.stringify(dataset.sampleRows)
-          ) as Prisma.InputJsonValue)
-        : Prisma.JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.sampleRows)) as JsonValue)
+        : JsonNull;
 
     const allRowsValue =
       dataset.allRows && dataset.allRows.length > 0
-        ? (JSON.parse(JSON.stringify(dataset.allRows)) as Prisma.InputJsonValue)
-        : Prisma.JsonNull;
+        ? (JSON.parse(JSON.stringify(dataset.allRows)) as JsonValue)
+        : JsonNull;
 
-    await prisma.testmoImportDataset.create({
+    await db.testmoImportDataset.create({
       data: {
         jobId,
         name: dataset.name,
@@ -7874,7 +7996,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       },
     });
 
-    const updatedJob = await prisma.testmoImportJob.update({
+    const updatedJob = await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         processedDatasets,
@@ -7890,14 +8012,14 @@ async function processorInner(job: Job<TestmoImportJobData>) {
   };
 
   try {
-    const summary = await analyzeTestmoExport(bodyStream, jobId, prisma, {
+    const summary = await analyzeTestmoExport(bodyStream, jobId, db, {
       onDatasetComplete: handleDatasetComplete,
       onProgress: handleProgress,
       shouldAbort: () => cancelRequested,
     });
 
     if (cancelRequested) {
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data: {
           status: "CANCELED",
@@ -7924,7 +8046,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       },
     } satisfies Record<string, unknown>;
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "READY",
@@ -7936,9 +8058,9 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         processedRows,
         durationMs: summary.meta.durationMs,
         analysisGeneratedAt: new Date(),
-        configuration: Prisma.JsonNull,
-        options: Prisma.JsonNull,
-        analysis: analysisPayload as Prisma.JsonObject,
+        configuration: JsonNull,
+        options: JsonNull,
+        analysis: analysisPayload as JsonObject,
         processedCount: 0,
         errorCount: 0,
         skippedCount: 0,
@@ -7946,13 +8068,13 @@ async function processorInner(job: Job<TestmoImportJobData>) {
         currentEntity: null,
         estimatedTimeRemaining: null,
         processingRate: null,
-        activityLog: Prisma.JsonNull,
-        entityProgress: Prisma.JsonNull,
+        activityLog: JsonNull,
+        entityProgress: JsonNull,
       },
     });
 
     if (processedDatasets === 0 && summary.meta.totalDatasets === 0) {
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data: {
           statusMessage: "Analysis complete (no datasets found)",
@@ -7966,7 +8088,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
       cancelRequested ||
       (error instanceof Error && error.name === "AbortError")
     ) {
-      await prisma.testmoImportJob.update({
+      await db.testmoImportJob.update({
         where: { id: jobId },
         data: {
           status: "CANCELED",
@@ -7981,7 +8103,7 @@ async function processorInner(job: Job<TestmoImportJobData>) {
 
     console.error(`Testmo import job ${jobId} failed`, error);
 
-    await prisma.testmoImportJob.update({
+    await db.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "FAILED",

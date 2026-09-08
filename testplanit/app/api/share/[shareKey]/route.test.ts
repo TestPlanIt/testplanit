@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     shareLink: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -39,7 +39,7 @@ vi.mock("~/lib/services/notificationService", () => ({
 import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
 import { GET, POST } from "./route";
 
@@ -101,7 +101,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns share link metadata without authentication", async () => {
-    (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
     const [req, ctx] = createGetRequest("abc123");
     const response = await GET(req, ctx);
@@ -118,7 +118,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns 404 for non-existent shareKey", async () => {
-    (prisma.shareLink.findUnique as any).mockResolvedValue(null);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(null);
 
     const [req, ctx] = createGetRequest("nonexistent");
     const response = await GET(req, ctx);
@@ -129,7 +129,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns 404 for deleted share link", async () => {
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       isDeleted: true,
     });
@@ -143,7 +143,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns 403 for revoked share link", async () => {
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       isRevoked: true,
     });
@@ -157,7 +157,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns 403 for expired share link", async () => {
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       expiresAt: new Date("2020-01-01"),
     });
@@ -171,7 +171,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("sets requiresPassword=true for PASSWORD_PROTECTED mode", async () => {
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "PASSWORD_PROTECTED",
     });
@@ -185,7 +185,7 @@ describe("GET /api/share/[shareKey]", () => {
   });
 
   it("returns 500 on database error", async () => {
-    (prisma.shareLink.findUnique as any).mockRejectedValue(
+    (baseDb.shareLink.findUnique as any).mockRejectedValue(
       new Error("DB error")
     );
 
@@ -201,14 +201,14 @@ describe("GET /api/share/[shareKey]", () => {
 describe("POST /api/share/[shareKey]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (prisma.shareLinkAccessLog.create as any).mockResolvedValue({});
-    (prisma.shareLink.update as any).mockResolvedValue({});
-    (prisma.auditLog.create as any).mockResolvedValue({});
+    (baseDb.shareLinkAccessLog.create as any).mockResolvedValue({});
+    (baseDb.shareLink.update as any).mockResolvedValue({});
+    (baseDb.auditLog.create as any).mockResolvedValue({});
   });
 
   it("returns 404 when shareKey not found", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue(null);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(null);
 
     const [req, ctx] = createPostRequest("nonexistent", {});
     const response = await POST(req, ctx);
@@ -220,7 +220,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("returns 404 for deleted share link", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       isDeleted: true,
     });
@@ -234,7 +234,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("returns 403 for revoked share link", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       isRevoked: true,
     });
@@ -248,7 +248,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("returns 403 for expired share link", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       expiresAt: new Date("2020-01-01"),
     });
@@ -262,7 +262,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("allows PUBLIC mode access without auth", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
     const [req, ctx] = createPostRequest("abc123", {});
     const response = await POST(req, ctx);
@@ -275,7 +275,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("returns 401 for AUTHENTICATED mode without session", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "AUTHENTICATED",
     });
@@ -292,7 +292,7 @@ describe("POST /api/share/[shareKey]", () => {
     (getServerSession as any).mockResolvedValue({
       user: { id: "user-1", access: "USER" },
     });
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "AUTHENTICATED",
       project: {
@@ -313,7 +313,7 @@ describe("POST /api/share/[shareKey]", () => {
     (getServerSession as any).mockResolvedValue({
       user: { id: "admin-user", access: "ADMIN" },
     });
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "AUTHENTICATED",
       project: {
@@ -333,7 +333,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("returns 401 for PASSWORD_PROTECTED mode without password or token", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "PASSWORD_PROTECTED",
       passwordHash: "$2b$10$hashvalue",
@@ -349,7 +349,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("allows PASSWORD_PROTECTED mode with correct token", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "PASSWORD_PROTECTED",
       passwordHash: "$2b$10$hashvalue",
@@ -365,7 +365,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("returns 401 for PASSWORD_PROTECTED mode with wrong password", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "PASSWORD_PROTECTED",
       passwordHash: "$2b$10$hashvalue",
@@ -384,7 +384,7 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("allows PASSWORD_PROTECTED mode with correct password", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "PASSWORD_PROTECTED",
       passwordHash: "$2b$10$hashvalue",
@@ -403,13 +403,13 @@ describe("POST /api/share/[shareKey]", () => {
 
   it("logs access and increments view count on success", async () => {
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+    (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
     const [req, ctx] = createPostRequest("abc123", {});
     await POST(req, ctx);
 
-    expect(prisma.shareLinkAccessLog.create).toHaveBeenCalledOnce();
-    expect(prisma.shareLink.update).toHaveBeenCalledWith(
+    expect(baseDb.shareLinkAccessLog.create).toHaveBeenCalledOnce();
+    expect(baseDb.shareLink.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 1 },
         data: expect.objectContaining({
@@ -417,7 +417,7 @@ describe("POST /api/share/[shareKey]", () => {
         }),
       })
     );
-    expect(prisma.auditLog.create).toHaveBeenCalledOnce();
+    expect(baseDb.auditLog.create).toHaveBeenCalledOnce();
   });
 
   // Phase 64 Plan 05 Task 3 D-18 enforcement. Anonymous share access
@@ -436,7 +436,7 @@ describe("POST /api/share/[shareKey]", () => {
         access: "USER",
       },
     });
-    (prisma.shareLink.findUnique as any).mockResolvedValue({
+    (baseDb.shareLink.findUnique as any).mockResolvedValue({
       ...mockShareLink,
       mode: "AUTHENTICATED",
       project: {
@@ -456,8 +456,8 @@ describe("POST /api/share/[shareKey]", () => {
     });
     await POST(req, { params: Promise.resolve({ shareKey: "abc123" }) });
 
-    expect(prisma.auditLog.create).toHaveBeenCalled();
-    const createArgs = (prisma.auditLog.create as any).mock.calls[0][0];
+    expect(baseDb.auditLog.create).toHaveBeenCalled();
+    const createArgs = (baseDb.auditLog.create as any).mock.calls[0][0];
     const md = (createArgs.data.metadata ?? {}) as Record<string, unknown>;
     // The route reads ipAddress/userAgent from req.headers directly
     // and stores them in metadata — lift them to top level for the
@@ -477,7 +477,7 @@ describe("POST /api/share/[shareKey]", () => {
       // expectAuditRowComplete's requestId non-null guard. The wrap was
       // applied in the audit-context follow-ups PR (999.4) — the route
       // now runs inside an ALS frame seeded with request metadata. The
-      // inline `prisma.auditLog.create` here still doesn't read FROM
+      // inline `baseDb.auditLog.create` here still doesn't read FROM
       // ALS, however; migrating it to `captureAuditEvent` (which DOES
       // consume ALS) is the next step. Until that migration lands, the
       // inline audit row's metadata still won't carry requestId.
@@ -489,7 +489,7 @@ describe("POST /api/share/[shareKey]", () => {
   it("withAuditContext seeds ALS with request headers inside the POST handler", async () => {
     let capturedCtx: AuditContext | undefined;
     (getServerSession as any).mockResolvedValue(null);
-    (prisma.shareLink.findUnique as any).mockImplementation(() => {
+    (baseDb.shareLink.findUnique as any).mockImplementation(() => {
       capturedCtx = getAuditContext();
       return Promise.resolve(mockShareLink);
     });
@@ -522,7 +522,7 @@ describe("withAuditContext on share/[shareKey] GET", () => {
 
   it("seeds ALS with request headers inside the GET handler", async () => {
     let capturedCtx: AuditContext | undefined;
-    (prisma.shareLink.findUnique as any).mockImplementation(() => {
+    (baseDb.shareLink.findUnique as any).mockImplementation(() => {
       capturedCtx = getAuditContext();
       return Promise.resolve(mockShareLink);
     });

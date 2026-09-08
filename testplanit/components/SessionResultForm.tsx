@@ -1,5 +1,8 @@
 "use client";
+import type { JsonValue } from "@zenstackhq/orm";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { SimpleUnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -26,7 +29,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { Bug, CircleCheckBig, Clock, Paperclip, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -35,19 +38,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
-import {
-  useCreateAttachments,
-  useCreateSessionResults,
-  useFindFirstProjects,
-  useFindFirstSessions,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useFindManyWorkflows,
-  useUpdateSessions,
-} from "~/lib/hooks";
 import { getBackgroundStyle } from "~/utils/colorUtils";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import { Separator } from "@/components/ui/separator";
 // Import Spanish locale for parseDuration
 // @ts-expect-error - No type definitions for parse-duration locales
@@ -220,7 +214,7 @@ export function SessionResultForm({
     restrictedFieldPermissions?.canAddEdit ?? false;
 
   // Fetch project data to get integrations
-  const { data: projectData } = useFindFirstProjects({
+  const { data: projectData } = useClientQueries(schema).projects.useFindFirst({
     where: { id: Number(projectId) },
     select: {
       projectIntegrations: {
@@ -244,27 +238,29 @@ export function SessionResultForm({
   });
 
   // Fetch session data to get the template
-  const { data: sessionData, isLoading: isLoadingSession } =
-    useFindFirstSessions({
-      where: {
-        id: Number(sessionId),
-      },
-      include: {
-        template: true,
-        sessionResults: true,
-        _count: {
-          select: {
-            sessionResults: true,
-          },
+  const { data: sessionData, isLoading: isLoadingSession } = useClientQueries(
+    schema
+  ).sessions.useFindFirst({
+    where: {
+      id: Number(sessionId),
+    },
+    include: {
+      template: true,
+      sessionResults: true,
+      _count: {
+        select: {
+          sessionResults: true,
         },
       },
-    });
+    },
+  });
 
   // Fetch template result fields if we have a session with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: sessionData?.templateId || 0,
+        resultField: { isEnabled: true, isDeleted: false },
       },
       include: {
         resultField: {
@@ -275,6 +271,7 @@ export function SessionResultForm({
               },
             },
             fieldOptions: {
+              where: { fieldOption: { isEnabled: true, isDeleted: false } },
               select: {
                 fieldOption: {
                   select: {
@@ -295,7 +292,9 @@ export function SessionResultForm({
     });
 
   // Get statuses that can be used for session results
-  const { data: statuses, isLoading: isLoadingStatuses } = useFindManyStatus({
+  const { data: statuses, isLoading: isLoadingStatuses } = useClientQueries(
+    schema
+  ).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -324,7 +323,9 @@ export function SessionResultForm({
     },
   });
 
-  const { data: inProgressWorkflows } = useFindManyWorkflows({
+  const { data: inProgressWorkflows } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -341,9 +342,12 @@ export function SessionResultForm({
     },
   });
 
-  const { mutateAsync: createSessionResult } = useCreateSessionResults();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateSession } = useUpdateSessions();
+  const { mutateAsync: createSessionResult } =
+    useClientQueries(schema).sessionResults.useCreate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateSession } =
+    useClientQueries(schema).sessions.useUpdate();
 
   // Update useEffect to remove debug logging
   useEffect(() => {
@@ -596,7 +600,7 @@ export function SessionResultForm({
         data: {
           sessionId: sessionId,
           statusId: parseInt(values.statusId as string),
-          resultData: values.resultData || emptyEditorContent,
+          resultData: (values.resultData || emptyEditorContent) as JsonValue,
           elapsed: elapsedInSeconds,
           createdById: session.user.id,
           issues: {
@@ -812,7 +816,7 @@ export function SessionResultForm({
                         >
                           <div className="flex items-center w-full truncate">
                             <div
-                              className="w-3 h-3 rounded-full mr-2 shrink-0"
+                              className="w-3 h-3 rounded-full me-2 shrink-0"
                               style={{
                                 backgroundColor:
                                   status.color?.value || "#B1B2B3",
@@ -836,9 +840,7 @@ export function SessionResultForm({
         {
           // Get initialHeight
           const initialHeight = field.resultField.initialHeight;
-          const editorClassName = `min-h-[100px] border rounded-md w-full ${
-            initialHeight ? `min-h-[${initialHeight}px]` : ""
-          }`;
+          const editorClassName = "border rounded-md w-full";
 
           fieldComponent = (
             <FormField
@@ -863,6 +865,7 @@ export function SessionResultForm({
                       onUpdate={(content) => formField.onChange(content)}
                       projectId={projectId?.toString() ?? "0"}
                       className={editorClassName}
+                      style={editorMinHeightStyle(initialHeight)}
                       placeholder={`Enter ${displayName.toLowerCase()} here...`}
                       readOnly={isFieldDisabled}
                     />
@@ -970,7 +973,7 @@ export function SessionResultForm({
                               >
                                 <div className="flex items-center w-full truncate">
                                   <div
-                                    className="w-3 h-3 rounded-full mr-2 shrink-0"
+                                    className="w-3 h-3 rounded-full me-2 shrink-0"
                                     style={{
                                       backgroundColor:
                                         status.color?.value || "#B1B2B3",

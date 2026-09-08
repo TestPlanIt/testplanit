@@ -15,7 +15,7 @@
  * application/scim+json` explicitly set so IdPs can confirm the SCIM
  * surface even on an empty body.
  */
-import { Prisma } from "@prisma/client";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { NextRequest, NextResponse } from "next/server";
 import type { ScimPatch } from "scim-patch";
 import { z } from "zod/v4";
@@ -170,11 +170,7 @@ export async function PUT(
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === "P2002"
-    ) {
+    if (isUniqueConstraintError(e)) {
       return scimError(409, "uniqueness", "userName already exists");
     }
     console.error("[scim/Users/:id] PUT failed:", e);
@@ -232,11 +228,7 @@ export async function PATCH(
     if (e instanceof ScimUniquenessError) {
       return scimError(409, "uniqueness", e.message);
     }
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === "P2002"
-    ) {
+    if (isUniqueConstraintError(e)) {
       return scimError(409, "uniqueness", "userName already exists");
     }
     console.error("[scim/Users/:id] PATCH failed:", e);

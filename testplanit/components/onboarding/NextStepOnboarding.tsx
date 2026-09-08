@@ -1,8 +1,10 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -17,11 +19,6 @@ import {
 } from "nextstepjs";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useFindFirstUserPreferences,
-  useFindManyProjects,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 // Custom tour card component that respects Tailwind theme
@@ -942,7 +939,9 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   }, [pathname]);
 
   // Get user preferences to check tour completion status
-  const { data: userPreferences } = useFindFirstUserPreferences(
+  const { data: userPreferences } = useClientQueries(
+    schema
+  ).userPreferences.useFindFirst(
     {
       where: { userId: session?.user?.id || "" },
     },
@@ -950,10 +949,13 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   );
 
   // Hook to update user preferences
-  const { mutateAsync: updateUserPreferences } = useUpdateUserPreferences();
+  const { mutateAsync: updateUserPreferences } =
+    useClientQueries(schema).userPreferences.useUpdate();
 
   // Find Demo Project (React Query deduplicates with Header's identical query)
-  const { data: allProjects = [] } = useFindManyProjects({
+  const { data: allProjects = [] } = useClientQueries(
+    schema
+  ).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
     select: {
@@ -987,15 +989,15 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     reportingPerms &&
     (reportingPerms.canAddEdit || reportingPerms.canDelete)
   );
-  const { permissions: settingsPerms } = useProjectPermissions(
+  // Matches ProjectMenu and the settings pages: `isProjectAdmin` is the
+  // server's own `authorizeProjectAdminForProject` resolution. Nothing
+  // server-side honours the `Settings` area's `canAddEdit` bit, so steering
+  // the tour by it pointed users at pages that 404.
+  const { isProjectAdmin } = useProjectPermissions(
     safeProjectId,
     ApplicationArea.Settings
   );
-  const canSeeSettings = !!(
-    session?.user?.access === "ADMIN" ||
-    session?.user?.access === "PROJECTADMIN" ||
-    (settingsPerms && settingsPerms.canAddEdit)
-  );
+  const canSeeSettings = !!isProjectAdmin;
 
   // Check for tour state in URL parameters
   const tourParam = searchParams.get("tour");
@@ -1019,7 +1021,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleTourComplete = useCallback(
     (tourName: string | null) => {
-      (window as any).__activeTour = null;
+      window.__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
       // Clear active tour reference
@@ -1067,7 +1069,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleTourSkip = useCallback(
     async (_step: number, _tourName: string | null) => {
-      (window as any).__activeTour = null;
+      window.__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
       // Update user preferences if user is logged in and preferences exist
@@ -1173,7 +1175,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     (window as any).startOnboardingTour = (tourName: string = "mainTour") => {
       // Set active tour reference + global flag
       activeTourRef.current = tourName;
-      (window as any).__activeTour = tourName;
+      window.__activeTour = tourName;
 
       // Call the original Controller function
       originalStartTour(tourName);
@@ -1209,11 +1211,11 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     if (
       (tourParam === "projectTour" || tourParam === "demoProjectTour") &&
       !manualParam &&
-      !(window as any).__activeTour
+      !window.__activeTour
     ) {
       // Set active tour reference for restoration
       activeTourRef.current = tourParam;
-      (window as any).__activeTour = tourParam;
+      window.__activeTour = tourParam;
 
       // Small delay to ensure DOM is ready
       setTimeout(() => {

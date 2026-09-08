@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 import { NextRequest, NextResponse } from "next/server";
@@ -32,7 +32,11 @@ async function checkAdminAuth(
     userAccess = apiAuth.access;
 
     if (apiAuth.userId) {
-      enrichFromApiAuth({ userId: apiAuth.userId });
+      enrichFromApiAuth({
+        userId: apiAuth.userId,
+        userName: apiAuth.userName,
+        userEmail: apiAuth.userEmail,
+      });
     }
   }
 
@@ -43,7 +47,7 @@ async function checkAdminAuth(
   }
 
   if (!userAccess) {
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: userId },
       select: { access: true },
     });

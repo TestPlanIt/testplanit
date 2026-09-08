@@ -2,6 +2,23 @@
 
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
+// Attachment and inline-image ceilings are per-deployment. The bundled nginx
+// caps request bodies at 10 MB and operators raise that from nginx-local/, so
+// the app's own ceiling has to be able to move with it -- otherwise raising the
+// proxy limit alone does nothing. UPLOAD_MAX_MB is the single knob:
+// next.config.ts derives the server-action body limit from the same variable.
+//
+// Project icons and avatars are deliberately NOT covered: they are UI
+// thumbnails with fixed dimensions, not operator-sized user payloads.
+const DEFAULT_UPLOAD_MAX_MB = 10;
+
+function uploadMaxBytes(): number {
+  const parsed = Number(process.env.UPLOAD_MAX_MB);
+  const mb =
+    Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_UPLOAD_MAX_MB;
+  return mb * 1024 * 1024;
+}
+
 // Supported upload types and their configurations
 const UPLOAD_CONFIGS = {
   "project-icon": {
@@ -14,11 +31,11 @@ const UPLOAD_CONFIGS = {
   },
   docimage: {
     folder: "uploads/document-images",
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: uploadMaxBytes(),
   },
   attachment: {
     folder: "uploads/attachments",
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: uploadMaxBytes(),
   },
 } as const;
 

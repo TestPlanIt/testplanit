@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,20 +18,13 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
-import {
-  useUpsertIntegration,
-  useUpdateIntegration,
-} from "@/lib/hooks/integration";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  Integration,
-  IntegrationAuthType,
-  IntegrationProvider,
-} from "@prisma/client";
+import { IntegrationAuthType, IntegrationProvider } from "~/zenstack/models";
+import type { Integration } from "~/zenstack/models";
 import { Activity, Loader2, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import { IntegrationConfigForm } from "./IntegrationConfigForm";
@@ -98,16 +90,17 @@ export function IntegrationModal({
   const [testPassed, setTestPassed] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
 
-  // Upsert (not create) so re-adding an integration with the same name
-  // as a soft-deleted one resurrects the row with the new payload
-  // instead of failing on the unique-name constraint. The new-name
-  // collision against an ACTIVE row is still rejected by the API route's
-  // explicit duplicate-name check before the mutation runs.
-  const createIntegrationMutation = useUpsertIntegration();
-  const updateIntegrationMutation = useUpdateIntegration();
-
-  const isCreating = createIntegrationMutation.status === "pending";
-  const isUpdating = updateIntegrationMutation.status === "pending";
+  // Saves go through the admin API routes rather than a direct ZenStack
+  // mutation. The model write persists `credentials` as whatever JSON the
+  // client sent, so the client secrets typed into this form landed in the
+  // database in cleartext; the routes encrypt them at rest, merge partial
+  // credential edits over what is stored, and evict the cached adapter so an
+  // edited clientId takes effect without a restart.
+  //
+  // POST upserts by the unique `name` so re-adding an integration whose name
+  // belongs to a soft-deleted row resurrects it instead of failing the unique
+  // constraint; a collision against an ACTIVE row is rejected there.
+  const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<FormData>({
     resolver: standardSchemaResolver(formSchema),
@@ -125,23 +118,59 @@ export function IntegrationModal({
     },
   });
 
+  // useWatch creates proper field subscriptions that re-render when
+  // form.reset() fires — form.watch() in the render body does not reliably
+  // do so, causing stale authType/credentials/settings after edit open.
+  const watchedAuthType = useWatch({ control: form.control, name: "authType" });
+  const watchedCredentials = useWatch({
+    control: form.control,
+    name: "credentials",
+  });
+  const watchedSettings = useWatch({ control: form.control, name: "settings" });
+
   useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
     if (integration) {
+      const settings =
+        typeof integration.settings === "object" &&
+        integration.settings !== null &&
+        !Array.isArray(integration.settings)
+          ? (integration.settings as Record<string, string>)
+          : {};
       form.reset({
         name: integration.name,
         provider: integration.provider,
         authType: integration.authType,
         credentials: {},
-        settings:
-          typeof integration.settings === "object" &&
-          integration.settings !== null &&
-          !Array.isArray(integration.settings)
-            ? (integration.settings as Record<string, string>)
-            : {},
+        settings,
       });
+      // Explicit setValue calls are a belt-and-suspenders guard: form.reset()
+      // doesn't always flush synchronously through watch() subscriptions in
+      // React 18 batching, so provider/authType (both hidden in edit mode)
+      // can end up undefined in the schema validator, causing a silent save
+      // failure with no error toast.
+      form.setValue("provider", integration.provider);
+      form.setValue("authType", integration.authType);
       setSelectedType(integration.provider);
+    } else {
+      // Opening for a NEW integration: clear any state left over from a
+      // prior edit session in this (persistent) modal. Without this, stale
+      // credentials/settings/authType leak into the create flow and produce
+      // a misleading "missing required configuration" error on Test
+      // Connection even though the visible fields look filled in.
+      form.reset({
+        name: "",
+        provider: undefined,
+        authType: undefined,
+        credentials: {},
+        settings: {},
+      });
+      setSelectedType(null);
     }
-  }, [integration, form]);
+    setTestPassed(false);
+  }, [isOpen, integration, form]);
 
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -230,69 +259,79 @@ export function IntegrationModal({
   };
 
   const onSubmit = async (values: FormData) => {
-    const mutate = integration
-      ? updateIntegrationMutation.mutate
-      : createIntegrationMutation.mutate;
-
-    // Filter out empty credential values so we don't overwrite encrypted fields
+    // Secrets are never sent back to the browser, so the credential inputs
+    // start blank on edit. An untouched (empty) field means "keep what is
+    // stored" — the server merges what we send over the stored object — so
+    // send only what was actually typed.
     const filteredCredentials = Object.fromEntries(
       Object.entries(values.credentials || {}).filter(([, v]) => v !== "")
     );
-    // Only include credentials in the update if the user actually entered new values
     const hasNewCredentials = Object.keys(filteredCredentials).length > 0;
 
-    const submitData = {
-      ...values,
-      credentials: hasNewCredentials
-        ? filteredCredentials
-        : integration
-          ? undefined
-          : {},
-      settings: values.settings || {},
-      // Only a non-OAuth integration can be activated by a passing test.
-      // OAuth 2.0 (3LO) stays in its default (awaiting-authorization) state
-      // until a user completes the authorization flow and the callback
-      // stores a token — see the OAuth callback route.
-      ...(testPassed &&
-        !integration &&
-        values.authType !== IntegrationAuthType.OAUTH2 && {
-          status: "ACTIVE",
-        }),
-    };
+    // Only a non-OAuth integration can be activated by a passing test.
+    // OAuth 2.0 (3LO) stays in its default (awaiting-authorization) state
+    // until a user completes the authorization flow and the callback
+    // stores a token — see the OAuth callback route.
+    const activateOnCreate =
+      testPassed &&
+      !integration &&
+      values.authType !== IntegrationAuthType.OAUTH2;
 
-    // Edit path stays an update-by-id. Add path is an upsert keyed by
-    // the unique `name` so a soft-deleted row gets resurrected with the
-    // new payload + isDeleted: false; otherwise a fresh row is created.
-    const data = integration
-      ? { where: { id: integration.id }, data: submitData }
-      : {
-          where: { name: submitData.name },
-          create: submitData,
-          update: { ...submitData, isDeleted: false },
-        };
+    setIsSaving(true);
+    try {
+      const response = integration
+        ? await fetch(`/api/integrations/${integration.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: values.name,
+              authType: values.authType,
+              settings: values.settings || {},
+              // Omitted entirely when nothing was retyped, so the stored
+              // credentials are left untouched.
+              ...(hasNewCredentials
+                ? { credentials: filteredCredentials }
+                : {}),
+            }),
+          })
+        : await fetch("/api/integrations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: values.name,
+              type: values.provider,
+              authType: values.authType,
+              config: filteredCredentials,
+              settings: values.settings || {},
+              ...(activateOnCreate ? { status: "ACTIVE" } : {}),
+            }),
+          });
 
-    mutate(data as any, {
-      onSuccess: () => {
-        toast.success(
-          integration ? t("edit.successMessage") : t("add.successMessage"),
-          {
-            description: integration
-              ? t("edit.successDescription")
-              : t("add.successDescription"),
-          }
-        );
-        onSuccess?.();
-        handleClose();
-      },
-      onError: (error) => {
-        toast.error(t("errors.createFailed"), {
-          description: error.message,
-        });
-      },
-    });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || response.statusText);
+      }
+
+      toast.success(
+        integration ? t("edit.successMessage") : t("add.successMessage"),
+        {
+          description: integration
+            ? t("edit.successDescription")
+            : t("add.successDescription"),
+        }
+      );
+      onSuccess?.();
+      handleClose();
+    } catch (error) {
+      toast.error(t("errors.createFailed"), {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const isLoading = isCreating || isUpdating;
+  const isLoading = isSaving;
 
   const handleClose = () => {
     setTestPassed(false);
@@ -382,9 +421,9 @@ export function IntegrationModal({
 
                 <IntegrationConfigForm
                   provider={selectedType}
-                  authType={form.watch("authType")}
-                  credentials={form.watch("credentials") || {}}
-                  settings={form.watch("settings") || {}}
+                  authType={watchedAuthType}
+                  credentials={watchedCredentials || {}}
+                  settings={watchedSettings || {}}
                   onCredentialsChange={(credentials: Record<string, string>) =>
                     form.setValue("credentials", credentials)
                   }

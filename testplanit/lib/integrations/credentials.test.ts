@@ -46,10 +46,10 @@ describe("resolveStoredCredentials", () => {
     });
   });
 
-  it("accepts a cleartext secret, which is what the admin UI writes", async () => {
-    // The integration form saves through the generated ZenStack model
-    // endpoint, which stores credentials verbatim. Refusing this shape would
-    // break every integration created through the admin UI.
+  it("uses a secret stored in cleartext — it is readable, just badly stored", async () => {
+    // OAuth2 client credentials predate the encrypting write path, so these
+    // rows exist in the wild. Refusing them fails every adapter build for the
+    // integration, and no user action short of re-entering the secret fixes it.
     expect(
       await resolveStoredCredentials(
         { email: "a@b.com", apiToken: "plaintext-token" },
@@ -58,22 +58,28 @@ describe("resolveStoredCredentials", () => {
     ).toEqual({ email: "a@b.com", apiToken: "plaintext-token" });
   });
 
-  it("accepts a cleartext OAuth client secret", async () => {
-    expect(
-      await resolveStoredCredentials(
-        { clientId: "abc", clientSecret: "shh" },
-        "JIRA"
-      )
-    ).toEqual({ clientId: "abc", clientSecret: "shh" });
-  });
-
-  it("accepts a cleartext password on the Data Center credential shape", async () => {
+  it("uses a cleartext password on the Data Center credential shape", async () => {
     expect(
       await resolveStoredCredentials(
         { username: "svc", password: "hunter2" },
         "JIRA"
       )
     ).toEqual({ username: "svc", password: "hunter2" });
+  });
+
+  it("uses the cleartext OAuth2 client credentials that broke Jira OAuth", async () => {
+    // A clientSecret containing "-" is not base64, so isEncrypted correctly
+    // reports cleartext; the adapter still needs the value to build the
+    // authorize URL and to exchange the code.
+    expect(
+      await resolveStoredCredentials(
+        { clientId: "public-client-id", clientSecret: "ATOA-secret_value" },
+        "JIRA"
+      )
+    ).toEqual({
+      clientId: "public-client-id",
+      clientSecret: "ATOA-secret_value",
+    });
   });
 
   it("refuses an undecryptable blob rather than returning empty credentials", async () => {
@@ -88,6 +94,25 @@ describe("resolveStoredCredentials", () => {
 
   it("refuses a blob that decrypts to something that is not JSON", async () => {
     await expectCorrupt({ encrypted: await encrypt("not json at all") });
+  });
+
+  it("reads the bare-ciphertext-string shape instead of silently returning {}", async () => {
+    // Written by the since-removed storeApiKeyAuth. Returning {} here handed
+    // callers an integration that authenticated with nothing.
+    const raw = await encrypt(JSON.stringify({ apiToken: "secret-token" }));
+
+    expect(await resolveStoredCredentials(raw, "JIRA")).toEqual({
+      apiToken: "secret-token",
+    });
+  });
+
+  it("refuses a bare ciphertext string that will not decrypt", async () => {
+    const raw = await encrypt(JSON.stringify({ apiToken: "x" }));
+    await expectCorrupt(`${raw.slice(0, -5)}XXXXX`);
+  });
+
+  it("returns an empty map for an empty-string credential column", async () => {
+    expect(await resolveStoredCredentials("", "JIRA")).toEqual({});
   });
 
   it("passes non-secret identifiers through in the clear", async () => {

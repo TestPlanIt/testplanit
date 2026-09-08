@@ -2,8 +2,8 @@ import { LLM_FEATURES } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
-import { ProjectAccessType } from "@prisma/client";
+import { baseDb } from "@/lib/db";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -20,6 +20,13 @@ import {
   classifyLlmStreamError,
   type LlmStreamErrorCode,
 } from "../error-codes";
+import { classifyLlmParseFailure } from "../classify-parse-failure";
+import {
+  contextImageTokens,
+  toImageParts,
+  type ContextImage,
+} from "~/lib/llm/context-images";
+import { readContextImages } from "~/lib/llm/context-image-stash";
 
 function formatError(err: unknown): string {
   if (!(err instanceof Error)) return "AI generation failed";
@@ -54,6 +61,7 @@ export async function POST(req: NextRequest) {
     outline,
     autoGenerateTags,
     includeParameters,
+    contextImagesId,
   } = body as {
     projectId: number;
     issue: IssueData;
@@ -62,6 +70,10 @@ export async function POST(req: NextRequest) {
     outline: TestCaseOutline;
     autoGenerateTags?: boolean;
     includeParameters?: boolean;
+    // Server-side stash id from the outline response's enrichment envelope.
+    // Bytes never travel through the client; a missing/expired/foreign
+    // stash silently degrades to text-only generation.
+    contextImagesId?: string;
   };
 
   if (!projectId || !issue || !template || !outline) {
@@ -150,7 +162,7 @@ export async function POST(req: NextRequest) {
               ],
             };
 
-        const project = await prisma.projects.findFirst({
+        const project = await baseDb.projects.findFirst({
           where: projectAccessWhere,
           select: { id: true },
         });
@@ -164,8 +176,8 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        const manager = LlmManager.getInstance(prisma);
-        const resolver = new PromptResolver(prisma);
+        const manager = LlmManager.getInstance(baseDb);
+        const resolver = new PromptResolver(baseDb);
         const resolvedPrompt = await resolver.resolve(
           LLM_FEATURES.TEST_CASE_GENERATION,
           projectId
@@ -210,7 +222,7 @@ export async function POST(req: NextRequest) {
 
         let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
         const providerConfig = await (
-          prisma as any
+          baseDb as any
         ).llmProviderConfig.findFirst({
           where: { llmIntegrationId: resolved.integrationId },
         });
@@ -221,10 +233,38 @@ export async function POST(req: NextRequest) {
             4096;
         }
 
+        // Reload the outline call's context images from the server-side
+        // stash (owner-checked). All failure shapes — no id, expired,
+        // foreign owner, Valkey down, non-vision model — degrade to
+        // text-only: the outline already told the client what was included.
+        let contextImages: ContextImage[] = [];
+        if (contextImagesId) {
+          const stashed = await readContextImages(contextImagesId, {
+            userId: session.user.id,
+            projectId,
+          });
+          if (stashed?.length) {
+            const visionSupported = await manager.supportsVision(
+              resolved.integrationId,
+              resolved.model
+            );
+            if (visionSupported) contextImages = stashed;
+          }
+        }
+
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            {
+              role: "user",
+              content:
+                contextImages.length > 0
+                  ? [
+                      { type: "text" as const, text: userPrompt },
+                      ...toImageParts(contextImages),
+                    ]
+                  : userPrompt,
+            },
           ],
           temperature: resolvedPrompt.temperature,
           maxTokens,
@@ -237,6 +277,12 @@ export async function POST(req: NextRequest) {
             issueKey: issue.key,
             templateId: template.id,
             timestamp: new Date().toISOString(),
+            ...(contextImages.length > 0
+              ? {
+                  imageCount: contextImages.length,
+                  imageTokensEstimated: contextImageTokens(contextImages),
+                }
+              : {}),
           },
         };
 
@@ -264,12 +310,40 @@ export async function POST(req: NextRequest) {
           return;
         }
 
+        // The parser turns an empty response into a placeholder case.
+        if (!accumulated.trim()) {
+          const classified = classifyLlmParseFailure({
+            raw: accumulated,
+            finishReason,
+            errMsg: "empty response",
+          });
+          console.error("\n=== EXPAND EMPTY RESPONSE ===");
+          console.error("Finish reason:", finishReason ?? "<none>");
+          send(controller, {
+            type: "error",
+            code: classified.code satisfies LlmStreamErrorCode,
+            message:
+              finishReason === "length"
+                ? "AI ran out of output tokens before producing this test case"
+                : finishReason === "content_filter"
+                  ? "AI declined to generate this test case"
+                  : "AI returned an empty response",
+            details: classified.details,
+            suggestions: classified.suggestions,
+            finishReason,
+            responseLength: 0,
+            seemsTruncated: finishReason === "length",
+          });
+          return;
+        }
+
         const { testCases, parseError } = parseAndValidateTestCases(
           accumulated,
           template,
           issue,
           autoGenerateTags,
-          "just_one"
+          "just_one",
+          finishReason
         );
 
         if (parseError || testCases.length === 0) {

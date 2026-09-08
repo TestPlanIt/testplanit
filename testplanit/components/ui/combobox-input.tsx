@@ -97,7 +97,7 @@ export function ComboboxInput({
           <span className={cn("truncate", !value && "text-muted-foreground")}>
             {value || placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ms-2 h-3.5 w-3.5 shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -126,7 +126,7 @@ export function ComboboxInput({
                 >
                   {opt}
                   {value === opt && (
-                    <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                    <Check className="ms-auto h-4 w-4 text-muted-foreground" />
                   )}
                 </CommandItem>
               ))}

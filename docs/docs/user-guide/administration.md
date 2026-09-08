@@ -86,6 +86,33 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Define field types and validation rules
 - Configure result fields for test execution
 
+### AI Tools
+
+**AI Models** (`/admin/llm`)
+
+- Connect AI providers (OpenAI, Anthropic Claude, Google Gemini, Azure OpenAI, Ollama, or a custom OpenAI-compatible endpoint)
+- Set per-model token limits, rate limits, cost, and monthly budgets
+- Test connections and probe model capabilities
+
+For detailed configuration, see the [AI Models Documentation](./llm-integrations.md).
+
+**Prompt Configs** (`/admin/prompts`)
+
+- Create and edit the prompt configurations that shape how AI features behave
+- Optionally assign a specific AI model per prompt
+
+For details, see the [Prompt Configurations Documentation](./prompt-configurations.md).
+
+**QuickScript Templates** (`/admin/quickscripts`)
+
+- Manage the templates [QuickScript](./projects/quickscript.md) uses to turn manual test cases into automation scripts
+
+**Code Repositories** (`/admin/code-repositories`)
+
+- Connect source repositories so QuickScript can ground generated scripts in your real page objects and fixtures
+
+For details, see the [Code Repositories Documentation](./code-repositories.md).
+
 ### Audit & Compliance
 
 **Audit Logs** (`/admin/audit-logs`)

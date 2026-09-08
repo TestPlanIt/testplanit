@@ -1,10 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { resolveStoredCredentials } from "@/lib/integrations/credentials";
 import {
   isIntegrationApiError,
   responseStatusForIntegrationError,
 } from "@/lib/integrations/errors";
-import { IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -779,7 +779,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // If integrationId is provided, fetch the integration details
     if (integrationId) {
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: { id: integrationId },
       });
 
@@ -791,14 +791,23 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
 
       testProvider = integration.provider;
-      authType = integration.authType;
+      // The admin may be testing values edited in the form (including a
+      // changed auth type). Prefer what the request supplies and fall back to
+      // the stored integration only for fields the form didn't provide (e.g.
+      // an unchanged, still-encrypted secret). Previously the stored values
+      // unconditionally overrode the request, so editing an existing
+      // integration — or switching its auth type — could never be tested and
+      // always failed against the originally-saved config.
+      authType = body.authType ?? integration.authType;
 
-      // Decrypt stored credentials for testing. A failure here is reported to
-      // the admin instead of being worked around: the previous fallback sent
-      // the unreadable stored value upstream as if it were a credential.
+      // Decrypt stored credentials as a base; request-provided (form) values
+      // win. A failure here is reported to the admin instead of being worked
+      // around: the previous fallback sent the unreadable stored value
+      // upstream as if it were a credential.
+      const storedCredentials: Record<string, string> = {};
       try {
         Object.assign(
-          testCredentials,
+          storedCredentials,
           await resolveStoredCredentials(
             integration.credentials,
             integration.provider
@@ -817,9 +826,19 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         }
         throw error;
       }
+      // Fill only the credentials the form did not supply (request wins).
+      for (const [key, value] of Object.entries(storedCredentials)) {
+        if (testCredentials[key] === undefined || testCredentials[key] === "") {
+          testCredentials[key] = value;
+        }
+      }
 
       if (integration.settings && typeof integration.settings === "object") {
-        testSettings = integration.settings as Record<string, string>;
+        // Stored settings as a base; request-provided settings override them.
+        testSettings = {
+          ...(integration.settings as Record<string, string>),
+          ...testSettings,
+        };
       }
     }
 
@@ -883,7 +902,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // not that a user has authorized. Their status flips to ACTIVE in the
     // OAuth callback once a real user token is stored.
     if (integrationId && result.success && !result.requiresUserAuth) {
-      await prisma.integration.update({
+      await baseDb.integration.update({
         where: { id: integrationId },
         data: {
           status: "ACTIVE",

@@ -1,7 +1,8 @@
 "use client";
-import { Tags } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Tags } from "~/zenstack/models";
 import { useState } from "react";
-import { useUpdateTags } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -30,7 +31,7 @@ interface DeleteTagProps {
 
 export function DeleteTag({ tag, open, onClose }: DeleteTagProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTag } = useUpdateTags();
+  const { mutateAsync: updateTag } = useClientQueries(schema).tags.useUpdate();
 
   const form = useForm();
   const {
@@ -62,7 +63,7 @@ export function DeleteTag({ tag, open, onClose }: DeleteTagProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription>
@@ -89,7 +90,7 @@ export function DeleteTag({ tag, open, onClose }: DeleteTagProps) {
               <AlertDialogAction
                 onClick={form.handleSubmit(onSubmit)}
                 disabled={isSubmitting}
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
                   ? tCommon("actions.deleting")

@@ -14,8 +14,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
-import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import {
+  enrichFromApiAuth,
+  withAuditContext,
+} from "~/lib/auditContextWrappers";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 const mappingSchema = z.array(
@@ -49,6 +52,15 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         );
       }
       userId = apiAuth.userId;
+      if (apiAuth.userId) {
+        // Attribute the attachments' audit rows (CDC GUC actor) to the token owner.
+        enrichFromApiAuth({
+          userId: apiAuth.userId,
+          userName: apiAuth.userName,
+          userEmail: apiAuth.userEmail,
+          scopes: apiAuth.scopes,
+        });
+      }
     }
   }
 
@@ -103,7 +115,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     // Verify all JUnit test results exist
     const resultIds = [...new Set(mappings.map((m) => m.junitTestResultId))];
-    const existingResults = await prisma.jUnitTestResult.findMany({
+    const existingResults = await baseDb.jUnitTestResult.findMany({
       where: { id: { in: resultIds } },
       select: { id: true },
     });
@@ -176,7 +188,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         // Create the attachment record
         const objectUrl = `/api/storage/${objectKey}`;
-        const attachment = await prisma.attachments.create({
+        const attachment = await baseDb.attachments.create({
           data: {
             url: objectUrl,
             name: fileName,

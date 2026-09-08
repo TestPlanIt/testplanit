@@ -126,17 +126,22 @@ test("test-execution report groups results by tag with fan-out and a None group"
     tagA = await api.createTag(`tag-a-${ts}`);
     tagB = await api.createTag(`tag-b-${ts}`);
     // Give the tagged case two tags so it fans out into two rows.
-    const link = await request.patch(
-      `${baseURL}/api/model/repositoryCases/update`,
+    const linkA = await request.post(
+      `${baseURL}/api/model/repositoryCaseTag/create`,
       {
         headers: sameOrigin,
-        data: {
-          where: { id: taggedCase },
-          data: { tags: { connect: [{ id: tagA }, { id: tagB }] } },
-        },
+        data: { data: { caseId: taggedCase, tagId: tagA } },
       }
     );
-    expect(link.status(), await link.text()).toBeLessThan(300);
+    expect(linkA.status(), await linkA.text()).toBeLessThan(300);
+    const linkB = await request.post(
+      `${baseURL}/api/model/repositoryCaseTag/create`,
+      {
+        headers: sameOrigin,
+        data: { data: { caseId: taggedCase, tagId: tagB } },
+      }
+    );
+    expect(linkB.status(), await linkB.text()).toBeLessThan(300);
   });
 
   await test.step("Run both cases and record passing results", async () => {

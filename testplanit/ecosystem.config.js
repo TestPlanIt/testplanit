@@ -68,8 +68,16 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      // Large Testmo exports (multi-GB JSON) are streamed and analyzed here, so
+      // this worker needs far more headroom than the 512M default that
+      // OOM-killed big imports. Defaults to a 4G ceiling, which handles typical
+      // large exports on a modest host; installs that import very large exports
+      // can raise both values via env (host RAM permitting), e.g.
+      // TESTMO_IMPORT_MAX_MEMORY_RESTART=18G TESTMO_IMPORT_MAX_OLD_SPACE_MB=16384.
+      max_memory_restart: process.env.TESTMO_IMPORT_MAX_MEMORY_RESTART || "4G",
+      node_args: `--max-old-space-size=${
+        process.env.TESTMO_IMPORT_MAX_OLD_SPACE_MB || "3072"
+      }`,
       env: {
         NODE_ENV: "production",
       },
@@ -96,8 +104,19 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      // A full reindex sweeps every project's cases/runs/sessions/issues and
+      // bulk-loads them into Elasticsearch, so this worker needs far more
+      // headroom than the 512M default that OOM-killed full-DB reindexes: PM2
+      // SIGKILLs the worker mid-job, BullMQ redelivers the same job, and it
+      // restarts from the top — never finishing. Defaults to a 2G ceiling
+      // (matching the forecast worker's full-history sweeps); very large tenants
+      // can raise both via env (host RAM permitting), e.g.
+      // ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART=4G ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB=3072.
+      max_memory_restart:
+        process.env.ELASTICSEARCH_REINDEX_MAX_MEMORY_RESTART || "2G",
+      node_args: `--max-old-space-size=${
+        process.env.ELASTICSEARCH_REINDEX_MAX_OLD_SPACE_MB || "1536"
+      }`,
       env: {
         NODE_ENV: "production",
       },
@@ -337,6 +356,21 @@ module.exports = {
       args: isDev
         ? "workers/dataChangeLogRetentionWorker.ts"
         : "dist/workers/dataChangeLogRetentionWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "3G",
+      node_args: "--max-old-space-size=2304",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
+      name: "dataset-lease-sweep-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/datasetLeaseSweepWorker.ts"
+        : "dist/workers/datasetLeaseSweepWorker.js",
       instances: 1,
       autorestart: true,
       watch: false,

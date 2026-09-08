@@ -1,4 +1,5 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
 import {
   AttachmentChanges,
   AttachmentsDisplay,
@@ -17,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { Attachments, Tags } from "@prisma/client";
+import type { Attachments, Tags } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { CommentsSection } from "~/components/comments/CommentsSection";
@@ -44,6 +45,9 @@ interface TestCaseFormControlsProps {
   canCreateTags?: boolean;
   session?: any;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
+  /** When true (narrow pane), the read-only Attachments section collapses to a
+   * compact paperclip-count popover. Edit mode is unaffected. */
+  compact?: boolean;
 }
 
 const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
@@ -64,18 +68,26 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   canCreateTags = false,
   session,
   onAttachmentPendingChanges,
+  compact = false,
 }) => {
   const t = useTranslations();
 
+  const testcaseTags: Tags[] = (testcase?.caseTags ?? []).map(
+    (ct: any) => ct.tag
+  );
+  const testcaseIssues: any[] = (testcase?.caseIssues ?? []).map(
+    (ci: any) => ci.issue
+  );
+
   return (
     <div role="region" aria-label={t("repository.version.detailsRegion")}>
-      <ul className="ml-1 list-none" role="list">
+      <ul className="ms-1 list-none" role="list">
         {isEditMode && !isSubmitting ? (
           <>
             <FormField
               name="estimate"
               render={({ field }) => (
-                <li className="mb-2 mr-6">
+                <li className="mb-2 me-6">
                   <label htmlFor="estimate" className="font-bold">
                     {t("common.fields.estimate")}
                   </label>
@@ -104,7 +116,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             <FormField
               name="automated"
               render={({ field }) => (
-                <li className="mb-2 mr-6">
+                <li className="mb-2 me-6">
                   <div className="flex items-center gap-1">
                     <label htmlFor="automated" className="font-bold">
                       {t("common.fields.automated")}
@@ -217,7 +229,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
         ) : (
           <>
             {testcase.estimate != null && testcase.estimate > 0 && (
-              <li className="mb-2 mr-6">
+              <li className="mb-2 me-6">
                 <div id="estimate-display" className="font-bold">
                   {t("common.fields.estimate")}
                 </div>
@@ -231,30 +243,34 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               </li>
             )}
 
-            {testcase.forecastManual != null && testcase.forecastManual > 0 && (
-              <li className="mb-2 mr-6">
+            {((testcase.forecastManual != null &&
+              testcase.forecastManual > 0) ||
+              (testcase.forecastAutomated != null &&
+                testcase.forecastAutomated > 0)) && (
+              <li className="mb-2 me-6">
                 <div id="forecast-display" className="font-bold">
                   {t("common.fields.forecast")}
                 </div>
-                <div aria-labelledby="forecast-display">
-                  <ForecastDisplay seconds={testcase.forecastManual} />
-                </div>
+                {testcase.forecastManual != null &&
+                  testcase.forecastManual > 0 && (
+                    <div aria-labelledby="forecast-display">
+                      <ForecastDisplay seconds={testcase.forecastManual} />
+                    </div>
+                  )}
                 {testcase.forecastAutomated != null &&
                   testcase.forecastAutomated > 0 && (
-                    <>
-                      <div aria-labelledby="forecast-display">
-                        <ForecastDisplay
-                          seconds={testcase.forecastAutomated}
-                          round={false}
-                          type="automated"
-                        />
-                      </div>
-                      <Separator
-                        orientation="horizontal"
-                        className="mt-2 bg-primary/30"
+                    <div aria-labelledby="forecast-display">
+                      <ForecastDisplay
+                        seconds={testcase.forecastAutomated}
+                        round={false}
+                        type="automated"
                       />
-                    </>
+                    </div>
                   )}
+                <Separator
+                  orientation="horizontal"
+                  className="mt-2 bg-primary/30"
+                />
               </li>
             )}
 
@@ -275,7 +291,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               orientation="horizontal"
               className="mt-2 bg-primary/30"
             />
-            {testcase.tags && testcase.tags.length > 0 && (
+            {testcaseTags.length > 0 && (
               <li className="mt-2">
                 <div id="tags-display" className="font-bold mb-1">
                   {t("common.fields.tags")}
@@ -285,7 +301,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   aria-labelledby="tags-display"
                   role="list"
                 >
-                  {testcase.tags.map((tag: Tags) => (
+                  {testcaseTags.map((tag: Tags) => (
                     <div
                       key={tag.id}
                       className={
@@ -297,7 +313,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         id={tag.id}
                         name={tag.name}
                         link={`/projects/tags/${testcase.projectId}/${tag.id}`}
-                        size="large"
+                        size="small"
                       />
                     </div>
                   ))}
@@ -308,7 +324,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 />
               </li>
             )}
-            {testcase.issues && testcase.issues.length > 0 && (
+            {testcaseIssues.length > 0 && (
               <li className="mt-2">
                 <div id="issues-display" className="font-bold mb-1">
                   {t("common.fields.issues")}
@@ -318,7 +334,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   aria-labelledby="issues-display"
                   role="list"
                 >
-                  {testcase.issues.map((issue: any) => (
+                  {testcaseIssues.map((issue: any) => (
                     <div
                       key={issue.id}
                       className={
@@ -336,7 +352,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         title={issue.title}
                         status={issue.externalStatus}
                         projectIds={[testcase.projectId]}
-                        size="large"
+                        size="small"
                         data={issue.data}
                         integrationProvider={issue.integration?.provider}
                         integrationId={
@@ -360,11 +376,18 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   {t("common.fields.attachments")}
                 </div>
                 <div aria-labelledby="attachments-display">
-                  <AttachmentsDisplay
-                    attachments={testcase.attachments}
-                    onSelect={handleSelect}
-                    preventEditing={!canAddEdit}
-                  />
+                  {compact ? (
+                    <AttachmentsListDisplay
+                      attachments={testcase.attachments}
+                      onSelect={handleSelect}
+                    />
+                  ) : (
+                    <AttachmentsDisplay
+                      attachments={testcase.attachments}
+                      onSelect={handleSelect}
+                      preventEditing={!canAddEdit}
+                    />
+                  )}
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel
                       attachments={selectedAttachments}
@@ -391,7 +414,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 </li>
               )}
             {!isEditMode && !isSubmitting && session?.user && (
-              <li id="comments" className="mt-2 mr-1">
+              <li id="comments" className="mt-2 me-1">
                 <CommentsSection
                   projectId={testcase.projectId}
                   entityType="repositoryCase"

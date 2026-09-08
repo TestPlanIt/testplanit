@@ -1,6 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AssignSharedDatasetDialog } from "@/components/parameters/AssignSharedDatasetDialog";
 import { DatasetCell } from "@/components/parameters/DatasetCell";
 import { DatasetRowActions } from "@/components/parameters/DatasetRowActions";
@@ -78,7 +80,7 @@ import {
   MoreVertical,
   Plus,
   Table2,
-  Trash2,
+  Trash,
   Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -91,12 +93,6 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
-import {
-  useCountTestRunCases,
-  useFindFirstDataSetVersion,
-  useFindManyTestRunCaseIteration,
-  useFindUniqueCaseSharedDataSetAssignment,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import {
   buildRowSchemaFromParameters,
@@ -250,13 +246,17 @@ export function DatasetTab({
   // semantics), so the "last result" cross-link is meaningless and the
   // queries are skipped entirely to avoid hitting the API with the
   // caller-supplied placeholder caseId.
-  const { data: runHistoryCount } = useCountTestRunCases(
+  const { data: runHistoryCount } = useClientQueries(
+    schema
+  ).testRunCases.useCount(
     { where: { repositoryCaseId: caseId } },
     { enabled: !isShared }
   );
   const caseHasRunHistory = !isShared && (runHistoryCount ?? 0) > 0;
 
-  const { data: lastResultsRaw } = useFindManyTestRunCaseIteration(
+  const { data: lastResultsRaw } = useClientQueries(
+    schema
+  ).testRunCaseIteration.useFindMany(
     {
       where: {
         testRunCase: { repositoryCaseId: caseId },
@@ -354,7 +354,9 @@ export function DatasetTab({
   // shared-readonly modes the parent controls the entire surface and
   // there is no Local/Shared notion to switch between.
   const sourceToggleEnabled = !isShared;
-  const { data: assignmentRaw } = useFindUniqueCaseSharedDataSetAssignment(
+  const { data: assignmentRaw } = useClientQueries(
+    schema
+  ).caseSharedDataSetAssignment.useFindUnique(
     {
       where: { caseId },
       include: {
@@ -419,7 +421,9 @@ export function DatasetTab({
   // latest version of the assignment's dataset.
   const pinnedVersionId = assignment?.pinnedVersionId ?? null;
   const sharedDataSetId = assignment?.sharedDataSetId ?? null;
-  const { data: pinnedVersionData } = useFindFirstDataSetVersion(
+  const { data: pinnedVersionData } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindFirst(
     {
       where: { id: pinnedVersionId ?? -1 },
       select: { id: true, version: true, rowsJson: true },
@@ -428,7 +432,9 @@ export function DatasetTab({
       enabled: sharedAssignmentActive && pinnedVersionId !== null,
     }
   );
-  const { data: latestVersionData } = useFindFirstDataSetVersion(
+  const { data: latestVersionData } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindFirst(
     {
       where: { dataSetId: sharedDataSetId ?? -1 },
       orderBy: { version: "desc" },
@@ -624,15 +630,13 @@ export function DatasetTab({
   const rowSchema = useMemo(
     () =>
       buildRowSchemaFromParameters(
-        parameters.map(
-          (p): ParameterShape => ({
-            name: p.name,
-            type: p.type,
-            required: p.required,
-            allowedValuesJson: p.allowedValuesJson,
-            lookupAllowedValues: p.lookupAllowedValues,
-          })
-        )
+        parameters.map((p): ParameterShape => ({
+          name: p.name,
+          type: p.type,
+          required: p.required,
+          allowedValuesJson: p.allowedValuesJson,
+          lookupAllowedValues: p.lookupAllowedValues,
+        }))
       ),
     [parameters]
   );
@@ -1207,7 +1211,7 @@ export function DatasetTab({
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="px-1 py-0 h-auto ml-auto"
+                      className="px-1 py-0 h-auto ms-auto"
                       aria-label={t("datasetColumnMenuLabel", { name: p.name })}
                       data-testid={`dataset-column-menu-${p.name}`}
                     >
@@ -1222,7 +1226,7 @@ export function DatasetTab({
                       }
                       data-testid={`dataset-column-delete-${p.name}`}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                       {t("datasetColumnDelete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -1736,7 +1740,7 @@ export function DatasetTab({
                             // background in dark mode and pairs only with
                             // its own foreground token; we render plain
                             // muted text in the header.
-                            className="px-2 py-1 text-left bg-muted/50 border-b font-medium"
+                            className="px-2 py-1 text-start bg-muted/50 border-b font-medium"
                             style={
                               fixedWidth
                                 ? {
@@ -1792,14 +1796,14 @@ export function DatasetTab({
                           >
                             {dropIndicator === "top" && (
                               <div
-                                className="absolute top-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                className="absolute top-0 start-0 end-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-top-${row.original.id}`}
                               />
                             )}
                             {dropIndicator === "bottom" && (
                               <div
-                                className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                className="absolute bottom-0 start-0 end-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
                                 aria-hidden="true"
                                 data-testid={`dataset-row-drop-indicator-bottom-${row.original.id}`}
                               />
@@ -1863,7 +1867,7 @@ export function DatasetTab({
       )}
 
       <div
-        className="p-2 pl-4 pr-2 border-t flex items-center justify-end gap-3"
+        className="p-2 ps-4 pe-2 border-t flex items-center justify-end gap-3"
         data-testid="dataset-tab-footer"
       >
         {totalRows > 0 && (
@@ -2177,7 +2181,7 @@ export function DatasetTab({
                   onClick={commitDeleteColumn}
                   data-testid="dataset-column-delete-confirm"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash className="h-4 w-4" />
                   {t("datasetColumnDeleteConfirm")}
                 </Button>
               )}

@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExpandedState, VisibilityState } from "@tanstack/react-table";
 import { AlertCircle, BarChart3, ExternalLink, Loader2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import { Link } from "~/lib/navigation";
+import { formatDateRange } from "~/utils/dateFormat";
 
 interface StaticReportViewerProps {
   shareData: any;
@@ -36,6 +37,7 @@ export function StaticReportViewer({
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const t = useTranslations("reports.sharedReport");
+  const locale = useLocale();
 
   // Extract config from shareData
   const config = shareData.entityConfig;
@@ -62,6 +64,8 @@ export function StaticReportViewer({
           ? config.metrics.join(",")
           : config.metrics
       );
+    if (config.dimensionFilters)
+      params.set("dimensionFilters", JSON.stringify(config.dimensionFilters));
     return `/projects/reports/${shareData.projectId}?${params.toString()}`;
   }, [shareData.projectId, config]);
 
@@ -97,6 +101,19 @@ export function StaticReportViewer({
         prev?.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
   }, []);
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = useCallback(
+    (column: string, direction: "asc" | "desc" | null) => {
+      if (direction === null) {
+        setSortConfig(null);
+      } else {
+        setSortConfig({ column, direction });
+      }
+    },
+    []
+  );
 
   // CSV export — the shared payload holds the full result set in memory.
   const { isExporting: isExportingCsv, exportCsv } = useReportCsvExport();
@@ -245,8 +262,7 @@ export function StaticReportViewer({
             <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
               <span>{t("dateRange")}:</span>
               <span>
-                {new Date(config.startDate).toLocaleDateString()} -{" "}
-                {new Date(config.endDate).toLocaleDateString()}
+                {formatDateRange(config.startDate, config.endDate, { locale })}
               </span>
             </div>
           )}
@@ -286,6 +302,7 @@ export function StaticReportViewer({
           isExportingCsv={isExportingCsv}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           grouping={grouping}

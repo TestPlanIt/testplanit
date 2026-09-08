@@ -2,7 +2,8 @@ import { getEnhancedDb } from "@/lib/auth/utils";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import { paginatedFindManyWithRelations } from "~/lib/paginatedFindMany";
 import { authOptions } from "~/server/auth";
 
 // Accepts the same `where` / `orderBy` / `select` that the ZenStack
@@ -68,7 +69,7 @@ export async function POST(
     // folderId regardless of tree depth. Safe to use raw Prisma here: we already
     // gated on project read access, and RepositoryFolders read access is
     // derived from project read access (see schema.zmodel).
-    const descendantRows = await prisma.$queryRaw<Array<{ id: number }>>`
+    const descendantRows = await baseDb.$queryRaw<Array<{ id: number }>>`
       WITH RECURSIVE descendants AS (
         SELECT id
         FROM "RepositoryFolders"
@@ -108,10 +109,10 @@ export async function POST(
     const [totalCount, cases] = await Promise.all([
       db.repositoryCases.count({ where: enforcedWhere }),
       select
-        ? db.repositoryCases.findMany({
+        ? paginatedFindManyWithRelations(db.repositoryCases, {
             where: enforcedWhere,
-            orderBy: orderBy as never,
-            select: select as never,
+            orderBy,
+            select,
             skip,
             take,
           })

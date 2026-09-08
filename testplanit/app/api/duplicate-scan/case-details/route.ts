@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import { getEffectiveRunCaseStatuses } from "~/lib/services/effectiveCaseStatus";
 import { authOptions } from "~/server/auth";
 
 const querySchema = z.object({
@@ -10,7 +11,7 @@ const querySchema = z.object({
 });
 
 async function fetchCaseDetails(caseId: number) {
-  return prisma.repositoryCases.findUnique({
+  const result = await baseDb.repositoryCases.findUnique({
     where: { id: caseId },
     select: {
       id: true,
@@ -25,10 +26,11 @@ async function fetchCaseDetails(caseId: number) {
         orderBy: { order: "asc" },
         select: { id: true, step: true, expectedResult: true, order: true },
       },
-      tags: { select: { id: true, name: true } },
+      caseTags: { select: { tag: { select: { id: true, name: true } } } },
       template: {
         select: {
           caseFields: {
+            where: { caseField: { isEnabled: true, isDeleted: false } },
             orderBy: { order: "asc" },
             select: {
               caseFieldId: true,
@@ -73,6 +75,7 @@ async function fetchCaseDetails(caseId: number) {
         take: 1,
         select: {
           id: true,
+          testRunId: true,
           status: { select: { id: true, name: true } },
           createdAt: true,
           testRun: { select: { name: true } },
@@ -80,6 +83,32 @@ async function fetchCaseDetails(caseId: number) {
       },
     },
   });
+
+  if (!result) {
+    return result;
+  }
+
+  // The last run may be an automated one (JUnit, TestNG, Mocha, etc.), which
+  // records its outcome in JUnitTestResult and leaves TestRunCases.statusId
+  // empty. Without this the panel shows a run name and date with a blank
+  // status — which reads as "never executed" for the automation-heavy cases
+  // that dominate duplicate scans.
+  const lastRun = result.testRuns?.[0];
+  if (lastRun && lastRun.status == null) {
+    const effectiveStatuses = await getEffectiveRunCaseStatuses([lastRun.id]);
+    const resolved = effectiveStatuses.get(lastRun.id);
+    if (resolved) {
+      lastRun.status = { id: resolved.id, name: resolved.name };
+    }
+  }
+
+  // Remap the explicit join (caseTags) back to the prior tags shape so the
+  // API response shape stays identical for consumers.
+  const { caseTags, ...rest } = result;
+  return {
+    ...rest,
+    tags: caseTags.map((ct) => ct.tag),
+  };
 }
 
 export async function GET(request: Request) {

@@ -1,11 +1,12 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
-import { useFindManyTestRuns, useUpsertTestRunCases } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -22,7 +23,6 @@ import { StepsListDisplay } from "@/components/tables/StepsListDisplay";
 import { TagsListDisplay } from "@/components/tables/TagListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import PlainTextFromJson from "@/components/TextFromJson";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
+import { RepositoryCaseSource } from "~/zenstack/models";
+import type {
   Attachments,
   CaseFields,
   Color,
@@ -60,15 +61,13 @@ import {
   Issue,
   Projects,
   RepositoryCases,
-  RepositoryCaseSource,
   RepositoryFolders,
   Status,
   Steps,
   Tags,
   User,
   Workflows,
-} from "@prisma/client";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+} from "~/zenstack/models";
 import {
   Activity,
   ArrowRight,
@@ -81,6 +80,7 @@ import {
   GripVertical,
   LinkIcon,
   ListChecks,
+  Lock,
   MoreVertical,
   PlayCircle,
   Plus,
@@ -88,22 +88,19 @@ import {
   ScrollText,
   SquarePen,
   SquareStack,
-  Trash2,
+  Trash,
   UserCog,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import {
-  useFindManyRepositoryFolders,
-  useFindManyStatus,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { RecordId } from "@/components/RecordId";
+import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { AssignTestCaseModal } from "./AssignTestCase";
 import { DeleteCaseModal } from "./DeleteCase";
 
@@ -116,6 +113,11 @@ export interface ExtendedCases extends RepositoryCases {
   };
   attachments: Attachments[];
   tags?: Tags[];
+  // Explicit join-model relations (RepositoryCases.caseTags/caseIssues). The
+  // repository case query selects these; consumers derive tags/issues via
+  // caseTags.map((ct) => ct.tag) / caseIssues.map((ci) => ci.issue).
+  caseTags?: { tag: Tags }[];
+  caseIssues?: { issue: Issue }[];
   steps?: Steps[] | undefined;
   project: Projects;
   creator: User;
@@ -226,25 +228,10 @@ export interface ExtendedCases extends RepositoryCases {
   linksFrom?: { caseBId: number; isDeleted: boolean }[];
   linksTo?: { caseAId: number; isDeleted: boolean }[];
   testRunConfiguration?: { id: number; name: string } | null;
-  // Last test result for repository mode (most recent result across all test runs)
-  lastTestResult?: {
-    status: {
-      id: number;
-      name: string;
-      color?: {
-        value: string;
-      };
-    };
-    executedAt: Date;
-    testRun?: {
-      id: number;
-      name: string;
-    };
-  } | null;
 }
 
 /**
- * Renders the case-type icon (Bot / ListChecks / Trash2) and, when the
+ * Renders the case-type icon (Bot / ListChecks / Trash) and, when the
  * case carries parameterized steps, an adjacent SquareStack glyph
  * tinted in primary. Same shape the Tiptap toolbar's
  * InsertParameterToolbarButton uses, so the association is already
@@ -266,11 +253,11 @@ function TypeIconWithParamBadge({
 }) {
   const t = useTranslations("parameters");
   if (isSoftDeletedInRun) {
-    return <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />;
+    return <Trash className="w-4 h-4 me-1 text-muted-foreground shrink-0" />;
   }
   const Base = automated || isAutomatedCaseSource(source) ? Bot : ListChecks;
   return (
-    <span className="inline-flex items-center gap-1 shrink-0 mr-1">
+    <span className="inline-flex items-center gap-1 shrink-0 me-1">
       <Base className={cn("w-4 h-4 shrink-0", colorClass)} />
       {hasParameters && (
         <span
@@ -295,7 +282,6 @@ interface NameCellProps {
   projectId: number;
   isRunMode: boolean;
   isSelectionMode: boolean;
-  columnSize: number;
   onTestCaseClick?: (caseId: number) => void;
   folder?: {
     id: number;
@@ -318,7 +304,6 @@ const NameCell = React.memo(function NameCell({
   projectId,
   isRunMode,
   isSelectionMode,
-  columnSize,
   onTestCaseClick: _onTestCaseClick,
   folder,
   viewType,
@@ -337,7 +322,9 @@ const NameCell = React.memo(function NameCell({
   // DISABLED: Fetch all folders to build the path hierarchy
   // TODO: Replace with API endpoint that fetches only the path for a specific folder
   // This was causing performance issues by loading all folders for each case row
-  const { data: allFolders } = useFindManyRepositoryFolders(
+  const { data: allFolders } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindMany(
     {
       where: {
         projectId: projectId,
@@ -378,6 +365,11 @@ const NameCell = React.memo(function NameCell({
     return getFolderPath(folder.id);
   }, [folder, allFolders, folderPathMap]);
 
+  const showFolderInfo = Boolean(
+    (viewType && viewType !== "folders" && folder) ||
+    (showDescendants && folder)
+  );
+
   if (isRunMode && canAddEditResults) {
     const handleClick = () => {
       if (isSoftDeletedInRun) return;
@@ -386,12 +378,8 @@ const NameCell = React.memo(function NameCell({
       router.replace(`${pathname}?${params.toString()}`);
     };
 
-    const showFolderInfo =
-      (viewType && viewType !== "folders" && folder) ||
-      (showDescendants && folder);
-
     return (
-      <div className="flex items-center">
+      <div className="flex items-center min-w-0">
         <TypeIconWithParamBadge
           isSoftDeletedInRun={isSoftDeletedInRun}
           automated={automated}
@@ -405,19 +393,14 @@ const NameCell = React.memo(function NameCell({
         />
         <div
           className={cn(
-            "truncate whitespace-nowrap overflow-hidden group",
+            "truncate whitespace-nowrap overflow-hidden group min-w-0 flex-auto",
             isSoftDeletedInRun ? "cursor-default" : "cursor-pointer",
             isSoftDeletedInRun && "line-through text-muted-foreground"
           )}
-          style={{
-            maxWidth: showFolderInfo
-              ? Math.max(columnSize - 150, 150)
-              : columnSize,
-          }}
           onClick={handleClick}
         >
           {name}
-          <ArrowRight className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <ArrowRight className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         </div>
 
         {showFolderInfo && folder && (
@@ -426,7 +409,7 @@ const NameCell = React.memo(function NameCell({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 shrink-[9999] max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -436,8 +419,8 @@ const NameCell = React.memo(function NameCell({
                     router.push(`${pathname}?${params.toString()}`);
                   }}
                 >
-                  <Folder className="w-3 h-3 mr-1 shrink-0" />
-                  {folder.name}
+                  <Folder className="w-3 h-3 me-1 shrink-0" />
+                  <span className="truncate min-w-0">{folder.name}</span>
                 </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-md">
@@ -450,12 +433,8 @@ const NameCell = React.memo(function NameCell({
     );
   }
 
-  const showFolderInfo =
-    (viewType && viewType !== "folders" && folder) ||
-    (showDescendants && folder);
-
   return (
-    <div className="flex items-center">
+    <div className="flex items-center min-w-0">
       <TypeIconWithParamBadge
         isSoftDeletedInRun={isSoftDeletedInRun}
         automated={automated}
@@ -466,21 +445,40 @@ const NameCell = React.memo(function NameCell({
       <Link
         href={`/projects/repository/${projectId}/${id}`}
         className={cn(
-          "group",
+          "group min-w-0 flex-auto",
           isSoftDeletedInRun && "line-through text-muted-foreground"
         )}
         target={isSelectionMode ? "_blank" : undefined}
+        onClick={(e) => {
+          // In plain repository browsing, open the case in the docked details
+          // panel (via the `case` URL param) instead of navigating away — but let
+          // modified/middle clicks fall through so the full page still opens in
+          // a new tab. Run and selection modes keep their existing behavior.
+          if (isRunMode || isSelectionMode) return;
+          if (
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey ||
+            e.button !== 0
+          )
+            return;
+          e.preventDefault();
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("case", id.toString());
+          // push (not replace) so the browser Back button closes the panel.
+          router.push(`${pathname}?${params.toString()}`);
+        }}
       >
-        <div
-          className="truncate whitespace-nowrap overflow-hidden"
-          style={{
-            maxWidth: showFolderInfo
-              ? Math.max(columnSize - 150, 150)
-              : columnSize,
-          }}
-        >
+        <div className="truncate whitespace-nowrap overflow-hidden">
           {name}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          {/* The link icon signals "opens a new page" — only true when the
+              click navigates (selection mode → new tab, run mode → case page).
+              In plain repository browsing the click opens the docked details
+              panel, so hide it. */}
+          {(isRunMode || isSelectionMode) && (
+            <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          )}
         </div>
       </Link>
 
@@ -490,7 +488,7 @@ const NameCell = React.memo(function NameCell({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                className="ms-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded flex items-center min-w-0 shrink-[9999] max-w-[150px] hover:bg-muted/80 transition-colors cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -500,8 +498,8 @@ const NameCell = React.memo(function NameCell({
                   router.push(`${pathname}?${params.toString()}`);
                 }}
               >
-                <Folder className="w-3 h-3 mr-1 shrink-0" />
-                {folder.name}
+                <Folder className="w-3 h-3 me-1 shrink-0" />
+                <span className="truncate min-w-0">{folder.name}</span>
               </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-md">
@@ -528,6 +526,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   steps,
   isSoftDeletedInRun,
   onOpenAddResultModal,
+  onOpenAssignModal,
   totalIterations,
 }: {
   status: ExtendedCases["testRunStatus"];
@@ -556,6 +555,16 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     steps?: any[];
     configuration?: { id: number; name: string } | null;
   }) => void;
+  onOpenAssignModal?: (modalData: {
+    testRunId: number;
+    testRunCaseId?: number;
+    caseId: number;
+    caseName: string;
+    projectId: number;
+    currentAssigneeId?: string | null;
+    isBulkAssign: boolean;
+    selectedCases?: ExtendedCases[];
+  }) => void;
   totalIterations?: number;
 }) {
   // For parameterized cases, the status is derived from the iteration
@@ -570,13 +579,14 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   const [isInitialRender, setIsInitialRender] = useState(true);
   const t = useTranslations();
 
-  const { mutateAsync: _updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: _updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   useEffect(() => {
     setIsInitialRender(false);
   }, []);
 
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       AND: [
         { isEnabled: true },
@@ -653,25 +663,35 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     );
   };
 
-  const handleBulkAssign = () => {
+  // Prefer the parent-owned modal: state kept inside this cell is lost whenever
+  // the column defs are rebuilt (TanStack renders `columnDef.cell` as the
+  // component type), which silently closes the dialog.
+  const openAssignModal = (bulk: boolean) => {
     if (isCompleted) return;
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
-    setIsBulkAssign(true);
-    setShowAssignModal(true);
+    if (onOpenAssignModal) {
+      onOpenAssignModal({
+        testRunId,
+        testRunCaseId,
+        caseId,
+        caseName,
+        projectId,
+        currentAssigneeId: currentAssignee?.id,
+        isBulkAssign: bulk,
+        selectedCases: bulk ? getSelectedCases() : undefined,
+      });
+    } else {
+      setIsBulkAssign(bulk);
+      setShowAssignModal(true);
+    }
     onModalOpen?.(true);
   };
 
-  const handleSingleAssign = () => {
-    if (isCompleted) return;
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    setIsBulkAssign(false);
-    setShowAssignModal(true);
-    onModalOpen?.(true);
-  };
+  const handleBulkAssign = () => openAssignModal(true);
+
+  const handleSingleAssign = () => openAssignModal(false);
 
   const handleAssignModalClose = () => {
     setShowAssignModal(false);
@@ -739,11 +759,11 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
 
   return (
     <>
-      <div className="flex items-center justify-between w-fit">
+      <div className="flex items-center justify-between w-full">
         {isParameterized ? (
           <Button
             variant="outline"
-            className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
+            className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
             disabled={isSoftDeletedInRun}
             onClick={handleOpenParameterizedSheet}
             data-testid={`testrun-status-cell-parameterized-${caseId}`}
@@ -764,19 +784,19 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start"
+                className="flex-1 min-w-0 h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start overflow-hidden"
                 disabled={isDisabled}
               >
-                <div className="flex items-center space-x-1 whitespace-nowrap">
-                  <StatusDotDisplay
-                    name={displayStatus.name}
-                    color={
-                      hasColor(displayStatus)
-                        ? displayStatus.color.value
-                        : undefined
-                    }
-                  />
-                </div>
+                <StatusDotDisplay
+                  name={displayStatus.name}
+                  color={
+                    hasColor(displayStatus)
+                      ? displayStatus.color.value
+                      : undefined
+                  }
+                  className="flex items-center space-x-1 min-w-0 overflow-hidden"
+                  nameClassName="truncate"
+                />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-[140px]">
@@ -791,11 +811,11 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   <StatusDotDisplay
                     name={statusOption.name}
                     color={statusOption.color?.value}
-                    dotClassName="w-3 h-3 rounded-full mr-2"
+                    dotClassName="w-3 h-3 rounded-full me-2"
                     nameClassName="flex-1"
                   />
                   {statusOption.id === displayStatus.id && (
-                    <Check className="h-4 w-4 ml-2 text-muted-foreground" />
+                    <Check className="h-4 w-4 ms-2 text-muted-foreground" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -808,7 +828,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <Button
               variant="ghost"
               size="icon"
-              className={`h-8 w-8 ml-1 ${isMenuDisabled || isDisabled ? "text-muted-foreground opacity-30 cursor-not-allowed" : ""}`}
+              className={`h-8 w-8 ms-1 ${isMenuDisabled || isDisabled ? "text-muted-foreground opacity-30 cursor-not-allowed" : ""}`}
               disabled={isMenuDisabled || isDisabled}
             >
               <MoreVertical className="h-4 w-4" />
@@ -826,7 +846,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   disabled={isDisabled}
                   style={{ opacity: isDisabled ? 0.5 : 1 }}
                 >
-                  <UserCog className="mr-2 h-4 w-4" />
+                  <UserCog className="me-2 h-4 w-4" />
                   <span>
                     {t("common.actions.assignSelected", {
                       count: selectedCount,
@@ -840,7 +860,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     disabled={isDisabled}
                     style={{ opacity: isDisabled ? 0.5 : 1 }}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="me-2 h-4 w-4" />
                     <span>
                       {t("common.actions.addResultSelected", {
                         count: selectedCount,
@@ -857,7 +877,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   disabled={isDisabled}
                   style={{ opacity: isDisabled ? 0.5 : 1 }}
                 >
-                  <UserCog className="mr-2 h-4 w-4" />
+                  <UserCog className="me-2 h-4 w-4" />
                   <span>{t("common.actions.assign")}</span>
                 </DropdownMenuItem>
                 {!isParameterized && (
@@ -867,7 +887,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     disabled={isDisabled}
                     style={{ opacity: isDisabled ? 0.5 : 1 }}
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="me-2 h-4 w-4" />
                     <span>{t("common.actions.addResult")}</span>
                   </DropdownMenuItem>
                 )}
@@ -878,7 +898,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
               target="_blank"
             >
               <DropdownMenuItem className="flex items-center cursor-pointer">
-                <ExternalLink className="mr-2 h-4 w-4" />
+                <ExternalLink className="me-2 h-4 w-4" />
                 <span>{t("common.actions.viewInRepository")}</span>
               </DropdownMenuItem>
             </Link>
@@ -886,7 +906,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
         </DropdownMenu>
       </div>
 
-      {showAssignModal && (
+      {!onOpenAssignModal && showAssignModal && (
         <AssignTestCaseModal
           isOpen={showAssignModal}
           onClose={handleAssignModalClose}
@@ -912,13 +932,14 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   projectId: number;
 }) {
   const t = useTranslations();
-  const { mutateAsync: upsertTestRunCase } = useUpsertTestRunCases();
+  const { mutateAsync: upsertTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpsert();
 
   const {
     data: testRuns,
     isLoading: isLoadingTestRuns,
     refetch: refetchTestRuns,
-  } = useFindManyTestRuns({
+  } = useClientQueries(schema).testRuns.useFindMany({
     where: {
       AND: [
         { projectId: Number(projectId) },
@@ -939,7 +960,14 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
     orderBy: { name: "asc" },
   });
 
-  const handleAddToTestRun = async (testRunId: number) => {
+  const handleAddToTestRun = async (testRunId: number, isLocked: boolean) => {
+    // A composition-locked run's case set is frozen — the create would be
+    // rejected by the policy/DB guard (422). Stop early with a clear message
+    // instead of firing a doomed request.
+    if (isLocked) {
+      toast.error(t("runs.composition.addBlocked"));
+      return;
+    }
     try {
       // Get the current maximum order for the selected test run
       const maxOrder = await getMaxOrderInTestRun(testRunId);
@@ -993,10 +1021,24 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
       {testRuns?.map((testRun) => (
         <DropdownMenuItem
           key={testRun.id}
-          onClick={() => handleAddToTestRun(testRun.id)}
+          onClick={() =>
+            handleAddToTestRun(testRun.id, !!testRun.compositionLockedAt)
+          }
         >
-          <PlayCircle className="mr-1 h-4 w-4" />
+          <PlayCircle className="me-1 h-4 w-4" />
           <span>{testRun.name}</span>
+          {testRun.compositionLockedAt && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="ms-1 shrink-0">
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t("common.labels.compositionLocked")}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </DropdownMenuItem>
       ))}
     </div>
@@ -1014,6 +1056,7 @@ const ActionsCell = React.memo(function ActionsCell({
   canAddEdit,
   onQuickScript,
   onCopyMove,
+  onDeleteCase,
   excludeNotStartedFromRuns,
 }: {
   row: any;
@@ -1026,6 +1069,7 @@ const ActionsCell = React.memo(function ActionsCell({
   canAddEdit?: boolean;
   onQuickScript?: (caseId: number) => void;
   onCopyMove?: (caseId: number) => void;
+  onDeleteCase?: (testcase: ExtendedCases) => void;
   excludeNotStartedFromRuns?: boolean;
 }) {
   const isDraftCase =
@@ -1054,7 +1098,7 @@ const ActionsCell = React.memo(function ActionsCell({
               href={`/projects/repository/${row.original.projectId}/${row.original.id}?edit=true`}
             >
               <DropdownMenuItem data-testid={`edit-case-${row.original.id}`}>
-                <SquarePen className="mr-2 h-4 w-4" />
+                <SquarePen className="me-2 h-4 w-4" />
                 <span>{t("common.actions.edit")}</span>
               </DropdownMenuItem>
             </Link>
@@ -1068,7 +1112,7 @@ const ActionsCell = React.memo(function ActionsCell({
                 onClick={() => onQuickScript(row.original.id)}
                 data-testid={`quickscript-case-${row.original.id}`}
               >
-                <ScrollText className="mr-2 h-4 w-4" />
+                <ScrollText className="me-2 h-4 w-4" />
                 <span>{t("repository.cases.quickScript")}</span>
               </DropdownMenuItem>
             )}
@@ -1082,13 +1126,13 @@ const ActionsCell = React.memo(function ActionsCell({
                 data-testid={`add-to-test-run-draft-${row.original.id}`}
                 title={t("repository.cases.addToRunDraftBlocked")}
               >
-                <PlusSquare className="mr-2 h-4 w-4" />
+                <PlusSquare className="me-2 h-4 w-4" />
                 <span>{t("common.actions.addToTestRun")}</span>
               </DropdownMenuItem>
             ) : (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <PlusSquare className="mr-2 h-4 w-4" />
+                  <PlusSquare className="me-2 h-4 w-4" />
                   <span>{t("common.actions.addToTestRun")}</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
@@ -1104,26 +1148,41 @@ const ActionsCell = React.memo(function ActionsCell({
               onClick={() => onCopyMove(row.original.id)}
               data-testid={`copy-move-case-${row.original.id}`}
             >
-              <ArrowRightLeft className="mr-2 h-4 w-4" />
+              <ArrowRightLeft className="me-2 h-4 w-4" />
               <span>{t("repository.cases.copyMoveToProject")}</span>
             </DropdownMenuItem>
+          )}
+          {!isRunMode && (
+            <RecordKeyMenuItem
+              type="TEST_CASE"
+              id={row.original.id}
+              projectId={row.original.projectId}
+            />
           )}
           {canDelete && (
             <DropdownMenuItem
               onClick={(e) => {
                 e.preventDefault();
-                setShowDeleteModal(true);
+                // Prefer the parent-owned dialog: state kept inside this cell is
+                // lost whenever the column defs are rebuilt (TanStack renders
+                // `columnDef.cell` as the component type), which silently closes
+                // the confirmation dialog.
+                if (onDeleteCase) {
+                  onDeleteCase(row.original);
+                } else {
+                  setShowDeleteModal(true);
+                }
               }}
               className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash className="me-2 h-4 w-4" />
               <span>{t("common.actions.delete")}</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {canDelete && showDeleteModal && (
+      {canDelete && !onDeleteCase && showDeleteModal && (
         <DeleteCaseModal
           key={`delete-${row.original.id}`}
           testcase={row.original}
@@ -1148,7 +1207,17 @@ const AssigneeCell = React.memo(function AssigneeCell({
 }) {
   const [isAssigning, setIsAssigning] = useState(false);
   const t = useTranslations();
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(row.original.projectId, query, page, pageSize),
+    [row.original.projectId]
+  );
+
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
 
   const handleAssignmentChange = async (
     user: {
@@ -1210,14 +1279,12 @@ const AssigneeCell = React.memo(function AssigneeCell({
     <AsyncCombobox
       value={currentUser}
       onValueChange={handleAssignmentChange}
-      fetchOptions={(query, page, pageSize) =>
-        searchProjectMembers(row.original.projectId, query, page, pageSize)
-      }
+      fetchOptions={fetchMemberOptions}
       renderOption={(user) => <UserNameCell userId={user.id} hideLink />}
       getOptionValue={(user) => user.id}
       placeholder={t("sessions.placeholders.selectUser")}
       disabled={isDisabled}
-      className="h-8 w-[200px]"
+      className="h-8 w-full overflow-hidden"
       pageSize={20}
       showTotal={true}
       showUnassigned={true}
@@ -1226,68 +1293,6 @@ const AssigneeCell = React.memo(function AssigneeCell({
 });
 
 // Component for displaying last test result in repository mode
-const LastTestResultCell = React.memo(function LastTestResultCell({
-  lastTestResult,
-  projectId,
-  caseId,
-}: {
-  lastTestResult: ExtendedCases["lastTestResult"];
-  projectId: number;
-  caseId: number;
-}) {
-  const t = useTranslations();
-  const { data: session } = useSession();
-
-  if (!lastTestResult || !lastTestResult.status) {
-    return null;
-  }
-
-  const dateFormat = session?.user?.preferences?.dateFormat;
-  const timeFormat = session?.user?.preferences?.timeFormat;
-  const timezone = session?.user?.preferences?.timezone;
-  const formatString =
-    dateFormat && timeFormat ? `${dateFormat} ${timeFormat}` : undefined;
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Link
-            href={`/projects/repository/${projectId}/${caseId}#result-history`}
-            className="flex items-center gap-2 hover:underline"
-          >
-            <StatusDotDisplay
-              name={lastTestResult.status.name}
-              color={lastTestResult.status.color?.value}
-            />
-          </Link>
-        </TooltipTrigger>
-        <TooltipPrimitive.Portal>
-          <TooltipContent side="top" className="max-w-xs">
-            <div className="space-y-1 text-xs">
-              <div className="flex items-center gap-1">
-                <span>{t("repository.columns.testedOn")}:</span>
-                <DateFormatter
-                  date={lastTestResult.executedAt}
-                  formatString={formatString}
-                  timezone={timezone}
-                />
-              </div>
-              {lastTestResult.testRun && (
-                <TestRunNameDisplay
-                  testRun={lastTestResult.testRun}
-                  projectId={projectId}
-                  showIcon={true}
-                />
-              )}
-            </div>
-          </TooltipContent>
-        </TooltipPrimitive.Portal>
-      </Tooltip>
-    </TooltipProvider>
-  );
-});
-
 // Component for select all checkbox with shift-key detection and tooltip
 const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
   table,
@@ -1398,7 +1403,9 @@ export const getColumns = (
       };
     };
   },
-  uniqueCaseFieldList: CaseFields[],
+  uniqueCaseFieldList: (CaseFields & {
+    type?: { type?: string } | null;
+  })[],
   handleSelect: (attachments: Attachments[], index: number) => void,
   columnTranslations: {
     name: string;
@@ -1426,7 +1433,7 @@ export const getColumns = (
     clickToViewFullContent: string;
     comments: string;
     configuration: string;
-    lastTestResult: string;
+    latestResults: string;
     newBadge: string;
   },
   isRunMode: boolean = false,
@@ -1463,7 +1470,19 @@ export const getColumns = (
   showDescendants?: boolean,
   folderPathMap?: Map<number, string> | null,
   renderPendingBadge?: (caseId: number) => React.ReactNode,
-  excludeNotStartedFromRuns?: boolean
+  renderLatestResults?: (caseId: number, projectId: number) => React.ReactNode,
+  excludeNotStartedFromRuns?: boolean,
+  onDeleteCase?: (testcase: ExtendedCases) => void,
+  onOpenAssignModal?: (modalData: {
+    testRunId: number;
+    testRunCaseId?: number;
+    caseId: number;
+    caseName: string;
+    projectId: number;
+    currentAssigneeId?: string | null;
+    isBulkAssign: boolean;
+    selectedCases?: ExtendedCases[];
+  }) => void
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1516,7 +1535,7 @@ export const getColumns = (
       return (
         <div
           // Use the calculated showHandle to set padding
-          className={`flex items-center justify-center w-full ${showHandle ? "pl-6" : "pl-3"}`}
+          className={`flex items-center justify-center w-full ${showHandle ? "ps-6" : "ps-3"}`}
           onClick={(e) => e.stopPropagation()}
         >
           <SelectAllCheckbox
@@ -1588,7 +1607,14 @@ export const getColumns = (
       accessorFn: (row) =>
         row.caseFieldValues.find((cf: any) => cf.fieldId === field.id)?.value,
       header: field.displayName,
-      enableSorting: false,
+      // Dropdown fields sort by their admin-defined option order, resolved
+      // server-side (Cases.tsx sortedPageIds); repository view only — the run
+      // view has no ordering source for custom fields.
+      enableSorting:
+        !isRunMode &&
+        !isSelectionMode &&
+        !isCompleted &&
+        field.type?.type === "Dropdown",
       enableResizing: true,
       enableHiding: true,
       meta: {
@@ -1624,7 +1650,7 @@ export const getColumns = (
                       name={fieldOption.fieldOption.icon?.name as IconName}
                       color={fieldOption.fieldOption.iconColor?.value}
                     />
-                    <span className="pr-1">{fieldOption.fieldOption.name}</span>
+                    <span className="pe-1">{fieldOption.fieldOption.name}</span>
                     {index < fieldOptions.length - 1 && (
                       <Separator orientation="vertical" />
                     )}
@@ -1810,7 +1836,7 @@ export const getColumns = (
       size: 400,
       minSize: 100,
       maxSize: 1200,
-      cell: ({ row, column }) => {
+      cell: ({ row }) => {
         const isNew =
           row.original.createdAt &&
           Date.now() - new Date(row.original.createdAt).getTime() <
@@ -1821,7 +1847,7 @@ export const getColumns = (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Flame className="h-4 w-4 mr-1 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                    <Flame className="h-4 w-4 me-1 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
                   </TooltipTrigger>
                   <TooltipContent>{columnTranslations.newBadge}</TooltipContent>
                 </Tooltip>
@@ -1834,7 +1860,6 @@ export const getColumns = (
                 projectId={row.original.projectId}
                 isRunMode={isRunMode}
                 isSelectionMode={isSelectionMode}
-                columnSize={column.getSize()}
                 onTestCaseClick={onTestCaseClick}
                 folder={
                   row.original.folder
@@ -1856,7 +1881,7 @@ export const getColumns = (
               />
             </div>
             {renderPendingBadge ? (
-              <div className="ml-2 shrink-0">
+              <div className="ms-2 shrink-0">
                 {renderPendingBadge(row.original.id)}
               </div>
             ) : null}
@@ -1932,21 +1957,17 @@ export const getColumns = (
     ...(!isRunMode && !isSelectionMode
       ? [
           {
-            id: "lastTestResult",
-            header: columnTranslations.lastTestResult,
-            enableSorting: false,
+            id: "latestResults",
+            header: columnTranslations.latestResults,
+            enableSorting: !isCompleted,
             enableResizing: true,
             enableHiding: true,
             meta: { isVisible: true },
             size: 130,
-            minSize: 100,
-            cell: ({ row }: { row: { original: ExtendedCases } }) => (
-              <LastTestResultCell
-                lastTestResult={row.original.lastTestResult}
-                projectId={row.original.projectId}
-                caseId={row.original.id}
-              />
-            ),
+            minSize: 110,
+            cell: ({ row }: { row: { original: ExtendedCases } }) =>
+              renderLatestResults?.(row.original.id, row.original.projectId) ??
+              null,
           },
           {
             id: "testRuns",
@@ -2044,9 +2065,15 @@ export const getColumns = (
       meta: {
         isVisible: false,
       },
-      size: 50,
-      minSize: 50,
-      cell: ({ row }) => <div>{row.original.id}</div>,
+      size: 140,
+      minSize: 60,
+      cell: ({ row }) => (
+        <RecordId
+          type={RECORD_TYPES.TEST_CASE}
+          id={row.original.id}
+          projectId={row.original.projectId}
+        />
+      ),
     },
     {
       id: "currentVersion",
@@ -2306,8 +2333,12 @@ export const getColumns = (
     // Mode 2 (Test Run Edit): Only selection column
     orderedColumns.unshift(selectionColumn);
   } else if (isRunMode) {
-    // Mode 3 (Test Run Execute): Selection (with conditional handle inside)
-    orderedColumns.unshift(selectionColumn);
+    // Mode 3 (Test Run Execute): Selection (with conditional handle inside).
+    // A completed run is read-only — there is nothing to do with selected
+    // cases — so omit the selection checkboxes entirely.
+    if (!isCompleted) {
+      orderedColumns.unshift(selectionColumn);
+    }
   } else {
     // Mode 1 (Repository): Selection (with conditional handle inside)
     orderedColumns.unshift(selectionColumn);
@@ -2356,6 +2387,7 @@ export const getColumns = (
                     })
                 : undefined
             }
+            onOpenAssignModal={onOpenAssignModal}
             totalIterations={row.original.totalIterations}
           />
         );
@@ -2372,7 +2404,7 @@ export const getColumns = (
       orderedColumns.push({
         id: "actions",
         header: () => (
-          <div className="-ml-1 flex justify-center" style={{ width: 55 }}>
+          <div className="-ms-1 flex justify-center" style={{ width: 55 }}>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </div>
         ),
@@ -2393,6 +2425,7 @@ export const getColumns = (
             canAddEdit={canAddEdit}
             onQuickScript={onQuickScript}
             onCopyMove={onCopyMove}
+            onDeleteCase={onDeleteCase}
             excludeNotStartedFromRuns={excludeNotStartedFromRuns}
           />
         ),

@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
+import type { APIResponse } from "@playwright/test";
 
 /**
  * Inbound Webhook Body Cap E2E (Phase 3, plan 03-08)
@@ -35,7 +36,7 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     let configToken: string | undefined;
     let configId: string | undefined;
     let oversizeBody: string | undefined;
-    let response: Awaited<ReturnType<typeof request.post>> | undefined;
+    let response: APIResponse | undefined;
 
     await test.step("Provision an inbound Jira webhook config", async () => {
       // Provision a Jira config via the admin form. The body cap is route-
@@ -54,16 +55,16 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     });
 
     await test.step("Resolve the webhook config id from the database", async () => {
-      const prisma = new PrismaClient();
+      const db = createRawDbClient();
       try {
-        const config = await prisma.webhookConfig.findFirst({
+        const config = await db.webhookConfig.findFirst({
           where: { token: configToken!, direction: "INBOUND" },
           select: { id: true },
         });
         expect(config).not.toBeNull();
         configId = config!.id;
       } finally {
-        await prisma.$disconnect();
+        await db.$disconnect();
       }
     });
 
@@ -95,14 +96,14 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
       expect(response.status()).toBe(413);
     });
 
-    const prisma = new PrismaClient();
+    const db = createRawDbClient();
     try {
-      const deliveries = await prisma.webhookDelivery.findMany({
+      const deliveries = await db.webhookDelivery.findMany({
         where: { webhookConfigId: configId! },
       });
       expect(deliveries).toHaveLength(0);
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   });
 

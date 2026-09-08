@@ -39,8 +39,8 @@ const mockDeleteManyMentions = vi.fn();
 // exercise the no-access branch (redacted notification message).
 const mockProjectsFindFirst = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findMany: (...args: any[]) => mockFindManyUsers(...args),
     },

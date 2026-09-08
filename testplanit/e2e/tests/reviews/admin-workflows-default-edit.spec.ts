@@ -41,8 +41,7 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
         },
       });
       const wf = (await wfRes.json())?.data as
-        | { id: number; name: string }
-        | undefined;
+        { id: number; name: string } | undefined;
       expect(wf?.id).toBeTruthy();
       workflowId = wf!.id;
       workflowName = wf!.name;
@@ -92,14 +91,27 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
 
       // Save without changes. The submit button label depends on the edit
       // dialog implementation — accept "Save" / "Update" / "Submit".
+      //
+      // The click is retried in a guarded loop: the Projects multiselect
+      // populates asynchronously (one chip per live assigned project, and
+      // parallel workers create/delete projects throughout the run), so the
+      // dialog can reflow between Playwright's actionability check and the
+      // mouse events — mousedown and mouseup then land on different
+      // elements and the submit never fires, with no error reported. If the
+      // dialog is still open after a close-wait, click Submit again; a
+      // mid-submit retry is safe because the button is disabled while
+      // submitting (the inner click times out and the loop re-checks).
       const submit = dialog
         .getByRole("button", { name: /save|update|submit/i })
         .first();
-      await submit.click();
-
-      // Wait for dialog to close (success path) — error toast would keep it
-      // open, which we'd detect via the failed expect.
-      await expect(dialog).not.toBeVisible({ timeout: 30000 });
+      await expect(async () => {
+        if (await dialog.isVisible()) {
+          await submit.click({ timeout: 2000 });
+        }
+        // Dialog closes on success — an error toast/root error would keep
+        // it open, which we'd detect via this failing expect.
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+      }).toPass({ timeout: 30000 });
 
       // No error toast surfaced. Confirm by looking for sonner's default
       // role="status" element with the destructive variant — absence is the

@@ -377,6 +377,7 @@ interface JUnitTestResult {
     assertions?: number | null;
     file?: string | null;
     line?: number | null;
+    worker?: string | null;
     systemOut?: string | null;
     systemErr?: string | null;
     createdAt: string;
@@ -591,6 +592,64 @@ interface RequestStepDerivationOptions {
      * Default false (only stepless cases are enriched).
      */
     overwrite?: boolean;
+}
+/** Whether QuickScript emits one combined file or one file per case. */
+type QuickScriptOutputMode = 'combined' | 'perCase';
+interface GenerateQuickScriptOptions {
+    projectId: number;
+    /** Stored test cases to generate a script from (1–50). */
+    caseIds: number[];
+    /**
+     * Export template to use. Omit to use the project's default/assigned template.
+     * When a code repository is connected, generation follows the repo's existing
+     * framework/fixtures over the template's framework (intended behavior).
+     */
+    templateId?: number;
+    /**
+     * "combined" (default): a single file containing all cases.
+     * "perCase": one generated file per case.
+     */
+    outputMode?: QuickScriptOutputMode;
+    /**
+     * Override the request timeout (ms) for this call. Generation invokes an LLM
+     * and can be slow; defaults to 180000 (well above the client's default).
+     */
+    timeoutMs?: number;
+}
+/** One generated script file returned by {@link GenerateQuickScriptResult}. */
+interface QuickScriptFile {
+    /** The generated script text. */
+    code: string;
+    /**
+     * "ai" when the LLM produced the script; "template" when generation fell back
+     * to the deterministic template render (LLM failure or no integration).
+     */
+    generatedBy: 'ai' | 'template';
+    /** Present when generatedBy=template due to an LLM failure / no integration. */
+    error?: string;
+    /** True when the AI hit its token limit and output was cut off. */
+    truncated?: boolean;
+    caseId: number;
+    caseName: string;
+    /** Repository file paths included as AI context (absent when no repo connected). */
+    contextFiles?: string[];
+}
+interface GenerateQuickScriptResult {
+    projectId: number;
+    /** The export template that was resolved and used. */
+    templateId: number;
+    templateName: string;
+    /** Resolved framework (may come from the connected repo, not the template). */
+    framework: string;
+    language: string;
+    /** e.g. ".spec.ts" — suitable for naming the written file. */
+    fileExtension: string;
+    outputMode: QuickScriptOutputMode;
+    /** Whether repository context was available and fed to the model. */
+    hasCodeContext: boolean;
+    /** Requested caseIds not found in the project (omitted when all resolved). */
+    missingCaseIds?: number[];
+    results: QuickScriptFile[];
 }
 /**
  * A single normalized automation step, produced by a per-surface adapter
@@ -818,6 +877,8 @@ interface CreateJUnitTestResultOptions {
     assertions?: number;
     file?: string;
     line?: number;
+    /** Worker/thread id the test ran on (Playwright parallelIndex, WDIO cid). */
+    worker?: string;
     systemOut?: string;
     systemErr?: string;
 }
@@ -973,6 +1034,12 @@ declare class TestPlanItClient {
     private readonly retryDelay;
     private readonly headers;
     private statusCache;
+    /**
+     * Set after a create is rejected while carrying `worker` — an older server
+     * (schema without JUnitTestResult.worker) fails the whole create over this
+     * optional metadata, so stop sending it for the rest of the run.
+     */
+    private junitWorkerFieldUnsupported;
     constructor(config: TestPlanItClientConfig);
     /**
      * Make an authenticated request to the API
@@ -1246,6 +1313,15 @@ declare class TestPlanItClient {
         enqueued: boolean;
     }>;
     /**
+     * Generate a QuickScript (AI-authored automation script) from one or more
+     * stored test cases. The server resolves the project's export template and —
+     * when a code repository is connected — pulls repo context so the script
+     * follows the repo's existing framework/fixtures/page objects. On LLM failure
+     * or when no LLM integration is configured, each file falls back to the
+     * deterministic template render (`generatedBy: "template"`).
+     */
+    generateQuickScript(options: GenerateQuickScriptOptions): Promise<GenerateQuickScriptResult>;
+    /**
      * Add a test case to a test run
      */
     addTestCaseToRun(options: AddTestCaseToRunOptions): Promise<TestRunCase>;
@@ -1436,4 +1512,4 @@ declare function automationStepsToCaseSteps(steps: AutomationStep[]): CaseStepRo
  */
 declare function deriveCaseStepsIfFresh(steps: AutomationStep[], existingStepCount: number): CaseStepRow[];
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type RunMetadata, type RunMetadataValue, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, isUniqueConstraintViolation, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type AutomationStep, type BulkTestCaseInput, type BulkTestCaseResult, type BulkTestCaseStep, type CaseStepRow, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateStepOptions, type CreateStepsOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestCasesOptions, type CreateTestCasesResult, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseByCustomFieldOptions, type FindTestCaseOptions, type GenerateQuickScriptOptions, type GenerateQuickScriptResult, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type QuickScriptFile, type QuickScriptOutputMode, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type RequestStepDerivationCase, type RequestStepDerivationOptions, type RunMetadata, type RunMetadataValue, type Status, type Step, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestCaseOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState, automationStepsToCaseSteps, deriveCaseStepsIfFresh, isUniqueConstraintViolation, mergeRunMetadataIntoDoc, parseRunMetadataFromDoc, tipTapDoc };

@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import Image from "next/image";
 import React from "react";
 

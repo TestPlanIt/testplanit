@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define a new response type for getMaxOrderInTestRun
@@ -27,7 +27,7 @@ export async function getMaxOrderInTestRun(
   }
 
   try {
-    const maxOrderResult = await prisma.testRunCases.aggregate({
+    const maxOrderResult = await baseDb.testRunCases.aggregate({
       where: { testRunId, isDeleted: false },
       _max: { order: true },
     });
@@ -46,8 +46,8 @@ export async function getMaxOrderInTestRun(
  * @returns The created test run case
  *
  * Wrapped in withActionAuditContext: the
- * prisma.testRunCases.create call below triggers the TestRunCases
- * extension hook at lib/prisma.ts:1060 which emits auditCreate(
+ * baseDb.testRunCases.create call below triggers the TestRunCases
+ * extension hook at lib/baseDb.ts:1060 which emits auditCreate(
  * "TestRunCases", result). Without the wrapper that audit row would
  * have null ipAddress/userAgent/requestId; with the wrapper plus the
  * NextAuth session callback enrichment (Plan 01 Task 3) triggered by
@@ -61,7 +61,7 @@ export const addToTestRun = withActionAuditContext(
     }
 
     try {
-      const result = await prisma.testRunCases.upsert({
+      const result = await baseDb.testRunCases.upsert({
         where: {
           testRunId_repositoryCaseId: { testRunId, repositoryCaseId },
         },

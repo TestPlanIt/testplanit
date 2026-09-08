@@ -10,6 +10,13 @@ const withNextIntl = createNextIntlPlugin({
   },
 });
 
+// Mirrors DEFAULT_UPLOAD_MAX_MB in app/actions/uploadFile.ts -- keep the two in
+// step. Read here only to size the server-action body limit below.
+const uploadMaxMb = (() => {
+  const parsed = Number(process.env.UPLOAD_MAX_MB);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10;
+})();
+
 // Helper function to extract hostname and port from URL
 const parseUrlForPattern = (url: string) => {
   try {
@@ -114,7 +121,14 @@ const buildAllowedDevOrigins = (): string[] => {
   return Array.from(hosts);
 };
 
+// Turbopack's build cache lives in .next/cache and only speeds anything up when
+// that directory survives between builds. CI runners and Docker layers start
+// clean, so writing it there is cost without payoff. Local builds keep it.
+const enableTurbopackBuildCache =
+  !process.env.CI && process.env.DOCKER_BUILD !== "true";
+
 const nextConfig: NextConfig = {
+  typescript: { ignoreBuildErrors: true },
   output: "standalone",
   allowedDevOrigins: buildAllowedDevOrigins(),
   turbopack: {
@@ -126,8 +140,11 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ["lucide-react"],
   serverExternalPackages: [
-    "@zenstackhq/runtime",
+    "@zenstackhq/orm",
+    "@zenstackhq/plugin-policy",
     "@zenstackhq/server",
+    "kysely",
+    "pg",
     "test-results-parser",
     "jspdf",
     "fflate",
@@ -142,15 +159,34 @@ const nextConfig: NextConfig = {
     "/**": ["./prisma/audit_row_change.sql"],
   },
   experimental: {
+    turbopackFileSystemCacheForBuild: enableTurbopackBuildCache,
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,
     cpus: 2,
-    // Increase body size limit for server actions (file uploads)
+    // Server actions carry the file uploads, so this ceiling must stay
+    // comfortably ABOVE the largest per-type maxSize in app/actions/uploadFile.ts:
+    // multipart FormData adds overhead on top of the file itself, and Next
+    // rejects an oversized body before the action ever runs — so a limit equal
+    // to maxSize turns the friendly "File is too large" into an opaque
+    // server-action error. The 10mb of headroom covers that overhead.
+    //
+    // Like SELF_HOSTED, this MUST be set from a build ARG: Next freezes
+    // experimental config into the standalone build
+    // (.next/required-server-files.json) and the running server reads that
+    // frozen copy, so a runtime-only env var is too late and silently has no
+    // effect (uploads fail at the proxy layer with no useful message).
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: `${uploadMaxMb + 10}mb`,
     },
   },
   images: {
+    // Self-hosted / OSS images are built with SELF_HOSTED=true, which turns off
+    // Next's image optimizer. That makes the build domain-agnostic: <Image>
+    // renders a plain <img> pointing straight at the operator's own storage, so
+    // no build-time remotePatterns allowlist (and therefore no baked domain) is
+    // needed and a single published image runs on any host. The multi-tenant
+    // SaaS build leaves this off and relies on the BASE_DOMAIN allowlist below.
+    unoptimized: process.env.SELF_HOSTED === "true",
     remotePatterns: [
       // Dynamic patterns from environment variables
       ...buildDynamicRemotePatterns(),

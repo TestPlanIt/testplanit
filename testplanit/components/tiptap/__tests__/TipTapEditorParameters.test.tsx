@@ -9,11 +9,15 @@ vi.mock("next-intl", () => ({
 }));
 
 // Mock ZenStack hooks (TipTapEditor uses one)
-vi.mock("~/lib/hooks/project-llm-integration", () => ({
-  useFindManyProjectLlmIntegration: () => ({
-    data: [],
-    isLoading: false,
-    error: null,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projectLlmIntegration: {
+      useFindMany: () => ({
+        data: [],
+        isLoading: false,
+        error: null,
+      }),
+    },
   }),
 }));
 

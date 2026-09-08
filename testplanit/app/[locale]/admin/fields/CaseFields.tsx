@@ -1,14 +1,17 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
-import { CirclePlus, LayoutList } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddCaseFieldModal } from "./AddCaseField";
 import { ExtendedCaseFields, useColumns } from "./caseFieldColumns";
@@ -32,7 +35,8 @@ export default function CaseFields() {
     direction: "asc",
   });
 
-  const { mutateAsync: updateCaseField } = useUpdateCaseFields();
+  const { mutateAsync: updateCaseField } =
+    useClientQueries(schema).caseFields.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateCaseFieldRef = useRef(updateCaseField);
@@ -50,6 +54,19 @@ export default function CaseFields() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const handleToggle = useCallback(
     async (id: number, key: keyof ExtendedCaseFields, value: boolean) => {
       try {
@@ -64,7 +81,9 @@ export default function CaseFields() {
     []
   );
 
-  const { data: casefields, isLoading } = useFindManyCaseFields(
+  const { data: casefields, isLoading } = useClientQueries(
+    schema
+  ).caseFields.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig
@@ -127,31 +146,29 @@ export default function CaseFields() {
     return (
       <Card data-testid="case-fields-section">
         <CardHeader>
-          <div className="flex items-center justify-between text-primary">
-            <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-              <CardTitle>
-                <div className="flex items-center">
-                  <LayoutList className="mr-1" />
-                  {tGlobal("common.fields.caseFields")}
-                </div>
-              </CardTitle>
-            </div>
-            <div>
-              <Button
-                data-testid="add-case-field-button"
-                onClick={() => setAddCaseFieldOpen(true)}
-              >
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.title")}</span>
-              </Button>
-              {addCaseFieldOpen && (
-                <AddCaseFieldModal
-                  open={addCaseFieldOpen}
-                  onClose={() => setAddCaseFieldOpen(false)}
-                />
-              )}
-            </div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
+              <CardTitle>{tGlobal("common.fields.caseFields")}</CardTitle>
+              <HelpPopover helpKey="caseFields" />
+            </SectionHeader>
+            <Button
+              data-testid="add-case-field-button"
+              onClick={() => setAddCaseFieldOpen(true)}
+              aria-label={t("add.title")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("add.title")}
+              </span>
+            </Button>
           </div>
+          {addCaseFieldOpen && (
+            <AddCaseFieldModal
+              open={addCaseFieldOpen}
+              onClose={() => setAddCaseFieldOpen(false)}
+            />
+          )}
         </CardHeader>
         <CardContent>
           <div className="flex justify-between">
@@ -163,6 +180,8 @@ export default function CaseFields() {
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
               isLoading={isLoading}
+              storageKey="admin-case-fields"
+              onSortColumn={handleSortColumn}
             />
           </div>
         </CardContent>

@@ -1,5 +1,9 @@
 import type { User } from "next-auth";
 
+import { DbNull, JsonNull } from "@zenstackhq/orm";
+
+import { isUniqueConstraintError } from "~/lib/utils/errors";
+
 /**
  * Service for creating test case versions.
  * This provides a consistent interface for version creation across the application.
@@ -23,6 +27,18 @@ export interface CreateVersionOptions {
   creatorId?: string;
   creatorName?: string;
   createdAt?: Date;
+
+  /**
+   * Copy the case's current CaseFieldValues onto the new version as
+   * CaseFieldVersionValues.
+   *
+   * Off by default: this service has never written those rows, and the import
+   * paths (`testCaseImport`, `automationImports`, the wizard worker) create
+   * them themselves right after calling it — enabling this there would
+   * double-write. Any NEW caller should set it, otherwise the version renders
+   * in the history UI as though every custom field was deleted at that version.
+   */
+  copyFieldValues?: boolean;
 
   /**
    * Optional: data to override in the version
@@ -140,11 +156,14 @@ export async function createTestCaseVersionInTransaction(
       template: true,
       state: true,
       creator: true,
-      tags: { select: { name: true } },
-      issues: {
-        select: { id: true, name: true, externalId: true },
+      caseTags: { select: { tag: { select: { name: true } } } },
+      caseIssues: {
+        select: {
+          issue: { select: { id: true, name: true, externalId: true } },
+        },
       },
       steps: {
+        where: { isDeleted: false },
         orderBy: { order: "asc" },
         select: { step: true, expectedResult: true },
       },
@@ -162,6 +181,22 @@ export async function createTestCaseVersionInTransaction(
           sensitive: true,
           allowedValuesJson: true,
           lookupDataSetId: true,
+        },
+      },
+      attachments: {
+        where: { isDeleted: false },
+        orderBy: { id: "asc" },
+        select: {
+          id: true,
+          testCaseId: true,
+          url: true,
+          name: true,
+          note: true,
+          isDeleted: true,
+          mimeType: true,
+          size: true,
+          createdAt: true,
+          createdById: true,
         },
       },
     },
@@ -200,10 +235,48 @@ export async function createTestCaseVersionInTransaction(
 
   // Convert tags to array of tag names
   const tagsArray =
-    overrides.tags ?? testCase.tags.map((tag: { name: string }) => tag.name);
+    overrides.tags ??
+    testCase.caseTags.map((ct: { tag: { name: string } }) => ct.tag.name);
 
   // Convert issues to array of objects
-  const issuesArray = overrides.issues ?? testCase.issues;
+  const issuesArray =
+    overrides.issues ??
+    testCase.caseIssues.map(
+      (ci: { issue: { id: number; name: string; externalId?: string } }) =>
+        ci.issue
+    );
+
+  // Attachments the case carries right now. This used to be hardcoded to `[]`
+  // — the relation was never even loaded — so every snapshot recorded "no
+  // attachments" and the version-history diff showed them as deleted at that
+  // version. Shape must match what the UI save path and the importers write:
+  // `size` is a BigInt column serialized as a string, `createdAt` as ISO.
+  const attachmentsJson = (testCase.attachments ?? []).map(
+    (a: {
+      id: number;
+      testCaseId: number | null;
+      url: string;
+      name: string;
+      note: string | null;
+      isDeleted: boolean;
+      mimeType: string;
+      size: bigint;
+      createdAt: Date;
+      createdById: string;
+    }) => ({
+      id: a.id,
+      testCaseId: a.testCaseId,
+      url: a.url,
+      name: a.name,
+      note: a.note,
+      isDeleted: a.isDeleted,
+      mimeType: a.mimeType,
+      size: a.size.toString(),
+      createdAt:
+        a.createdAt instanceof Date ? a.createdAt.toISOString() : a.createdAt,
+      createdById: a.createdById,
+    })
+  );
 
   const parametersJson = (testCase.parameters ?? []).map(
     (p: {
@@ -263,31 +336,91 @@ export async function createTestCaseVersionInTransaction(
     isArchived: overrides.isArchived ?? testCase.isArchived,
     isDeleted: false, // Versions should never be marked as deleted
     version: versionNumber,
-    steps: stepsJson,
+    // v3 rejects raw `null` for nullable Json columns on create; DbNull writes
+    // SQL NULL when a case has no steps / no issues snapshot.
+    steps: stepsJson ?? DbNull,
     tags: tagsArray,
-    issues: issuesArray,
+    issues: issuesArray ?? DbNull,
+    // `links` is vestigial: nothing reads this column, no caller passes the
+    // override, and link-type items are stored as ATTACHMENTS (with a url and
+    // mimeType) rather than here. Left empty deliberately — populating it from
+    // RepositoryCaseLink would invent a shape no reader understands.
     links: overrides.links ?? [],
-    attachments: overrides.attachments ?? [],
+    attachments: overrides.attachments ?? attachmentsJson,
     parameters: parametersJson,
   };
 
-  // Create the version snapshot. The caller is responsible for having already
-  // updated currentVersion AND for choosing a free version number before
-  // calling this; we simply snapshot the current state.
-  //
-  // This runs inside the caller's interactive transaction, so we must NOT
-  // catch-and-retry a unique-constraint violation here. Once any statement in
-  // a Postgres transaction fails, the whole transaction is aborted and every
-  // subsequent query — a refetch, a retried insert — fails with the confusing
-  // downstream "current transaction is aborted" (25P02) error instead of the
-  // real cause. (The retry was also ineffective: a refetch inside the same
-  // transaction sees the same snapshot, so it would just re-insert the same
-  // colliding version.) Let the original error propagate — e.g. a 23505 on
-  // RepositoryCaseVersions_repositoryCaseId_version_key — so it surfaces
-  // loudly and rolls the transaction back cleanly.
-  const newVersion = await tx.repositoryCaseVersions.create({
-    data: versionData,
-  });
+  // Create the version with retry logic to handle race conditions
+  // Note: We expect the caller to have already updated currentVersion on the test case
+  // before calling this function. We simply snapshot the current state.
+  let newVersion;
+  let retryCount = 0;
+  const maxRetries = 3;
+  const baseDelay = 100; // milliseconds
+
+  while (retryCount <= maxRetries) {
+    try {
+      newVersion = await tx.repositoryCaseVersions.create({
+        data: versionData,
+      });
+      break; // Success, exit retry loop
+    } catch (error: any) {
+      // Check if it's a unique constraint violation
+      if (isUniqueConstraintError(error) && retryCount < maxRetries) {
+        retryCount++;
+        const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+        console.log(
+          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
+        );
+
+        // Wait before retrying
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        // Refetch the test case to get the latest currentVersion
+        const refetchedCase = await tx.repositoryCases.findUnique({
+          where: { id: caseId },
+          select: { currentVersion: true },
+        });
+
+        if (refetchedCase) {
+          // Update the version number with the refetched value
+          versionData.version = options.version ?? refetchedCase.currentVersion;
+        }
+      } else {
+        // Not a retryable error or max retries reached
+        throw error;
+      }
+    }
+  }
+
+  if (!newVersion) {
+    throw new Error(
+      `Failed to create version for case ${caseId} after retries`
+    );
+  }
+
+  if (options.copyFieldValues) {
+    const fieldValues = await tx.caseFieldValues.findMany({
+      where: { testCaseId: caseId },
+      include: {
+        field: { select: { displayName: true, systemName: true } },
+      },
+    });
+    if (fieldValues.length > 0) {
+      await tx.caseFieldVersionValues.createMany({
+        data: fieldValues.map(
+          (fieldValue: {
+            value: unknown;
+            field: { displayName: string | null; systemName: string };
+          }) => ({
+            versionId: newVersion.id,
+            field: fieldValue.field.displayName || fieldValue.field.systemName,
+            value: fieldValue.value ?? JsonNull,
+          })
+        ),
+      });
+    }
+  }
 
   return newVersion;
 }

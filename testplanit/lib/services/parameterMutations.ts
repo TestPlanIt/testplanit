@@ -20,6 +20,19 @@ import { updateHasParameters } from "~/lib/services/parameterMaintenance";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { rewriteParameterReferences } from "~/lib/services/parameterReferences";
 
+// v3 rejects raw `null` for nullable Json columns on write. A `DbNull` sentinel
+// would satisfy the Json validator, but the model-level @@validate treats it as
+// "set" (DbNull is not `== null`), breaking the SELECT/lookup XOR rule. So OMIT
+// null/undefined Json fields: the column then stores SQL NULL on create and the
+// @@validate sees them as absent.
+function omitNullJsonFields<T extends object>(d: T): T {
+  const out = { ...d } as Record<string, unknown>;
+  for (const k of ["defaultValue", "allowedValuesJson"]) {
+    if (out[k] === null || out[k] === undefined) delete out[k];
+  }
+  return out as T;
+}
+
 export interface ParameterMutationSession {
   id: string;
   name?: string | null;
@@ -80,10 +93,11 @@ export async function createParameterInTransaction(
   // (testCaseId, name) would 23505 a plain create. Upsert overwrites all
   // fields with the new payload and clears isDeleted so the case picks
   // up the new definition cleanly.
-  const { testCaseId, name, ...rest } = data;
+  const clean = omitNullJsonFields(data);
+  const { testCaseId, name, ...rest } = clean;
   const created = await tx.testCaseParameter.upsert({
     where: { testCaseId_name: { testCaseId, name } },
-    create: data,
+    create: clean,
     update: { ...rest, isDeleted: false },
   });
   await updateHasParameters(caseId, tx);
@@ -116,7 +130,7 @@ export async function updateParameterInTransaction(
 
   const updated = await tx.testCaseParameter.update({
     where: { id: paramId },
-    data,
+    data: omitNullJsonFields(data),
   });
   await updateHasParameters(caseId, tx);
   await bumpVersionAndSnapshot(tx, caseId, session);

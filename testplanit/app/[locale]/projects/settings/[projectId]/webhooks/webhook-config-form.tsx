@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +43,7 @@ import {
   Power,
   RotateCw,
   Send,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
@@ -58,10 +60,6 @@ import {
   sendTestWebhook,
   setWebhookActive,
 } from "~/app/actions/webhook-config";
-import {
-  useFindFirstProjectIntegration,
-  useFindManyWebhookConfig,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 
@@ -251,7 +249,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
 
-  const { data, isLoading, refetch } = useFindManyWebhookConfig({
+  const { data, isLoading, refetch } = useClientQueries(
+    schema
+  ).webhookConfig.useFindMany({
     where: { projectId, direction: "INBOUND" },
     orderBy: { createdAt: "desc" },
     select: {
@@ -281,7 +281,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   // can be added. `null` here means either no active integration exists
   // OR the active integration's provider isn't a supported inbound
   // adapter (e.g. SIMPLE_URL — link-only, no webhook surface).
-  const { data: activeIntegration } = useFindFirstProjectIntegration({
+  const { data: activeIntegration } = useClientQueries(
+    schema
+  ).projectIntegration.useFindFirst({
     where: {
       projectId,
       isActive: true,
@@ -730,7 +732,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         data-testid={`webhook-inbound-setup-steps-${adapterType.toLowerCase().replace("_", "-")}`}
       >
         <div className="text-xs font-medium">{t("setupStepsTitle")}</div>
-        <ol className="list-decimal space-y-1 pl-5 text-xs text-muted-foreground">
+        <ol className="list-decimal space-y-1 ps-5 text-xs text-muted-foreground">
           {stepKeys[adapterType].map((k) => (
             <li key={k}>{t(k as any)}</li>
           ))}
@@ -839,9 +841,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
   function renderActivityRow(
     labelKey:
-      | "activityLastDispatched"
-      | "activityLastSuccess"
-      | "activityLastFailure",
+      "activityLastDispatched" | "activityLastSuccess" | "activityLastFailure",
     value: Date | null
   ) {
     return (
@@ -917,9 +917,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {t("isActive")}
-                </span>
                 <Switch
                   checked={config.isActive}
                   onCheckedChange={(next: boolean) =>
@@ -927,6 +924,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   }
                   aria-label={t("isActive")}
                 />
+                <span className="text-sm text-muted-foreground">
+                  {t("isActive")}
+                </span>
               </div>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1092,14 +1092,14 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 <span>{t("reEnable")}</span>
               </Button>
             )}
-            <div className="ml-auto flex flex-wrap gap-2">
+            <div className="ms-auto flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant="destructive"
                 data-testid="webhook-delete-button"
                 onClick={() => setDeleteDialogConfigId(config.id)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash className="h-4 w-4" />
                 <span>{tActions("delete")}</span>
               </Button>
               {isRevealedHere && (

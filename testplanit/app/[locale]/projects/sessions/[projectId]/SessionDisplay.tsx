@@ -1,10 +1,13 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Loading } from "@/components/Loading";
+import { MilestoneGroupChevron } from "@/components/MilestoneGroupChevron";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
+import type {
   Color,
   Configurations,
   FieldIcon,
@@ -12,24 +15,21 @@ import {
   Templates,
   User,
   Workflows,
-} from "@prisma/client";
-import { CirclePlus } from "lucide-react";
+} from "~/zenstack/models";
+import { CheckCircle, CirclePlus, SquarePen, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import {
-  useFindManyColor,
-  useFindManyReviewRequest,
-  useFindManySessionFieldValues,
-  useFindUniqueSessions,
-} from "~/lib/hooks";
+import { BulkActionBar } from "@/components/bulk/BulkActionBar";
+import { transformMilestones } from "@/components/forms/MilestoneSelect";
+import type { OverflowAction } from "@/components/ui/action-bar";
 import {
   ColorMap,
   createColorMap,
-  getCondition,
   getStatus,
   getStatusStyle,
   MilestonesWithTypes,
@@ -39,7 +39,19 @@ import {
   AddSessionModal,
   type SessionDuplicationPreset,
 } from "./AddSessionModal";
+import BulkCompleteSessionsDialog from "./BulkCompleteSessionsDialog";
+import BulkDeleteSessionsDialog from "./BulkDeleteSessionsDialog";
+import BulkEditSessionsDialog from "./BulkEditSessionsDialog";
+import {
+  buildSessionListRows,
+  collapsedStorageKey,
+  collectRenderedMilestoneKeys,
+  parseStoredCollapsedGroups,
+  type SessionListRow,
+  UNSCHEDULED_GROUP_KEY,
+} from "./milestoneGroups";
 import SessionItem from "./SessionItem";
+import { WindowVirtualizedList } from "@/components/WindowVirtualizedList";
 import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
 
 export type SessionsWithDetails = Sessions & {
@@ -215,7 +227,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 }) => {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
+  const { data: colors, isLoading: isColorsLoading } = useClientQueries(
+    schema
+  ).color.useFindMany({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
   });
@@ -238,7 +252,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   );
   const { enabled: reviewFeatureEnabled } =
     useReviewFeatureEnabled(sessionProjectId);
-  const { data: pendingReviewsForVisibleSessions } = useFindManyReviewRequest(
+  const { data: pendingReviewsForVisibleSessions } = useClientQueries(
+    schema
+  ).reviewRequest.useFindMany(
     {
       where: {
         entityType: "SESSION",
@@ -263,13 +279,125 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   const pendingBySessionId = useMemo(() => {
     const map = new Map<number, PendingReviewSummary>();
     const rows = pendingReviewsForVisibleSessions as
-      | Array<PendingReviewSummary & { entityId: number }>
-      | undefined;
+      Array<PendingReviewSummary & { entityId: number }> | undefined;
     rows?.forEach((row) => {
       map.set(row.entityId, row);
     });
     return map;
   }, [pendingReviewsForVisibleSessions]);
+
+  // --- Bulk selection state ---
+  const numericProjectId = sessionProjectId ?? NaN;
+  const { permissions: sessionPermissions } = useProjectPermissions(
+    numericProjectId,
+    "Sessions"
+  );
+  const canDeleteSession = sessionPermissions?.canDelete ?? false;
+  const bulkSelectable = canAddEdit || canCloseSession || canDeleteSession;
+
+  const [selectedSessionIds, setSelectedSessionIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [bulkDialog, setBulkDialog] = useState<
+    "edit" | "complete" | "delete" | null
+  >(null);
+
+  // Prune selections that no longer exist in the list so bulk actions can't
+  // touch invisible rows.
+  useEffect(() => {
+    setSelectedSessionIds((prev) => {
+      const valid = new Set(testSessions.map((s) => s.id));
+      const next = new Set([...prev].filter((id) => valid.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [testSessions]);
+
+  const toggleSessionSelected = useCallback((id: number, checked: boolean) => {
+    setSelectedSessionIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+  const clearSessionSelection = useCallback(
+    () => setSelectedSessionIds(new Set()),
+    []
+  );
+
+  const selectedSessionsList = useMemo(
+    () => testSessions.filter((s) => selectedSessionIds.has(s.id)),
+    [testSessions, selectedSessionIds]
+  );
+  // Field edits and completion exclude completed sessions (their fields are
+  // frozen); delete applies to any selection.
+  const editEligibleIds = useMemo(
+    () => selectedSessionsList.filter((s) => !s.isCompleted).map((s) => s.id),
+    [selectedSessionsList]
+  );
+  const completeEligibleSessions = useMemo(
+    () => selectedSessionsList.filter((s) => !s.isCompleted),
+    [selectedSessionsList]
+  );
+  const deleteEligibleIds = useMemo(
+    () => selectedSessionsList.map((s) => s.id),
+    [selectedSessionsList]
+  );
+
+  const milestoneOptions = useMemo(
+    () => transformMilestones(milestones),
+    [milestones]
+  );
+
+  // Collapsed milestone groups, remembered per project. Keys are milestone
+  // ids as strings plus UNSCHEDULED_GROUP_KEY; absence means expanded, so a
+  // brand-new group shows up open rather than inheriting a stale collapse.
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  // Hydrated in an effect, not in the initializer: localStorage isn't
+  // available during SSR and reading it inline would hydrate-mismatch.
+  useEffect(() => {
+    if (isNaN(numericProjectId)) return;
+    try {
+      setCollapsedGroups(
+        parseStoredCollapsedGroups(
+          window.localStorage.getItem(collapsedStorageKey(numericProjectId))
+        )
+      );
+    } catch {
+      // localStorage unavailable (private mode) — start fully expanded.
+    }
+  }, [numericProjectId]);
+
+  const persistCollapsedGroups = useCallback(
+    (next: Set<string>) => {
+      if (isNaN(numericProjectId)) return;
+      try {
+        window.localStorage.setItem(
+          collapsedStorageKey(numericProjectId),
+          JSON.stringify(Array.from(next))
+        );
+      } catch {
+        // Persistence is best-effort.
+      }
+    },
+    [numericProjectId]
+  );
+
+  const setGroupOpen = useCallback(
+    (groupKey: string, open: boolean) => {
+      setCollapsedGroups((prev) => {
+        const next = new Set(prev);
+        if (open) next.delete(groupKey);
+        else next.add(groupKey);
+        persistCollapsedGroups(next);
+        return next;
+      });
+    },
+    [persistCollapsedGroups]
+  );
 
   // Single AddSessionModal state (handles both add and duplicate)
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -285,7 +413,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
   // Fetch source session data when duplicateSource is set
   const { data: duplicateSessionData, isLoading: isDuplicateLoading } =
-    useFindUniqueSessions(
+    useClientQueries(schema).sessions.useFindUnique(
       {
         where: { id: duplicateSource?.id ?? 0 },
         select: {
@@ -306,7 +434,9 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       { enabled: !!duplicateSource }
     );
 
-  const { data: duplicateFieldValues } = useFindManySessionFieldValues(
+  const { data: duplicateFieldValues } = useClientQueries(
+    schema
+  ).sessionFieldValues.useFindMany(
     {
       where: { sessionId: duplicateSource?.id ?? 0 },
       select: { fieldId: true, value: true },
@@ -318,6 +448,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   useEffect(() => {
     if (duplicateSource && duplicateSessionData && !isDuplicateLoading) {
       const preset: SessionDuplicationPreset = {
+        originalSessionId: duplicateSource.id,
         originalName: duplicateSessionData.name || duplicateSource.name,
         originalConfigId: duplicateSessionData.configId,
         originalConfigName:
@@ -398,8 +529,6 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
   if (!session) return null;
 
-  const dateFormat = session?.user?.preferences?.dateFormat || "MMM dd, yyyy";
-
   const handleOpenDialog = (testSession: SessionsWithDetails) => {
     setSelectedSession(testSession);
     setIsDialogOpen(true);
@@ -439,196 +568,197 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   const sortedMilestones = sortMilestones(milestones);
   const groupedSessions = groupSessions(sortedSessions, sortedMilestones);
 
-  const renderGroupedSessions = (
-    groupedSessions: GroupedSessions,
-    milestones: MilestonesWithTypes[],
-    handleOpenDialog: (testSession: SessionsWithDetails) => void,
-    dateFormat: string
+  // Every group key currently on screen — the alt-click expand/collapse-all
+  // gesture reaches exactly these.
+  const renderedGroupKeys: string[] = [];
+  if (groupedSessions.unscheduled.length > 0) {
+    renderedGroupKeys.push(UNSCHEDULED_GROUP_KEY);
+  }
+  buildMilestoneTree(sortedMilestones).forEach((milestone) => {
+    renderedGroupKeys.push(
+      ...collectRenderedMilestoneKeys(milestone, groupedSessions)
+    );
+  });
+
+  const setAllGroupsCollapsed = (collapsed: boolean) => {
+    const next = collapsed ? new Set(renderedGroupKeys) : new Set<string>();
+    setCollapsedGroups(next);
+    persistCollapsedGroups(next);
+  };
+
+  const sessionListRows = buildSessionListRows<
+    SessionsWithDetails,
+    MilestonesWithTypes
+  >({
+    unscheduled: groupedSessions.unscheduled,
+    grouped: groupedSessions,
+    tree: buildMilestoneTree(sortedMilestones),
+    collapsedGroups,
+    // No header means no chevron to reopen with, so the group has to stay
+    // expanded in that (sessions-all-completed) case regardless of stored state.
+    showUnscheduledHeader: groupedSessions.unscheduled.some(
+      (testSession) => !testSession.isCompleted
+    ),
+    getSessionId: (testSession) => testSession.id,
+  });
+
+  const renderSessionListRow = (
+    row: SessionListRow<SessionsWithDetails, MilestonesWithTypes>
   ) => {
-    const milestoneTree = buildMilestoneTree(milestones);
+    // Nesting is carried by indentation rather than by nested containers —
+    // the rows are siblings in one virtualizer, so there is nothing to nest in.
+    const indent = { paddingInlineStart: `${row.depth}rem` };
 
-    const hasSessions = (milestone: MilestonesWithTypes): boolean => {
-      if (groupedSessions.milestones[milestone.id]?.testSessions.length > 0) {
-        return true;
-      }
-
-      return milestone.children?.some(hasSessions) ?? false;
-    };
-
-    const renderMilestoneWithSessions = (
-      milestone: MilestonesWithTypes,
-      depth: number = 0,
-      dateFormat: string
-    ) => {
-      if (!hasSessions(milestone)) return null;
-
-      const status = getStatus(milestone);
-      const _condition = getCondition(milestone);
-      const { badge } = getStatusStyle(
-        status,
-        resolvedTheme || "light",
-        colorMap
-      );
-
-      // Check if there are sessions under this milestone
-      const hasSessionsUnderMilestone =
-        groupedSessions.milestones[milestone.id]?.testSessions.length > 0;
-
+    if (row.kind === "item") {
+      const testSession = row.item;
       return (
-        <div
-          key={milestone.id}
-          className={
-            depth > 0
-              ? "w-full pl-4 bg-muted rounded-lg mb-4"
-              : "w-full rounded-lg bg-muted mb-4"
-          }
-        >
-          <div
-            className={`milestone-grid bg-primary/10 p-2 pr-4 ${depth === 0 ? "rounded-t-lg" : ""}`}
-          >
-            {/* Milestone Name */}
-            <div className="flex items-center gap-1 justify-start min-w-0">
-              <div className="flex items-center gap-1 justify-start min-w-0">
-                {depth > 0 && (
-                  <DynamicIcon
-                    name="corner-down-right"
-                    className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
-                  />
-                )}
-                <div className="truncate">
-                  <MilestoneIconAndName milestone={milestone} />
-                </div>
-              </div>
-            </div>
-
-            {/* Status */}
-            <div className="milestone-status flex gap-2 justify-center">
-              <Badge
-                style={{ backgroundColor: badge }}
-                className="text-secondary-background border-2 border-secondary-foreground text-sm"
-              >
-                {tMilestones(`statusLabels.${status}` as any)}
-              </Badge>
-            </div>
-
-            {/* Dates */}
-            <div className="milestone-dates flex justify-end">
-              <div className="grow text-sm text-muted-foreground">
-                {canAddEdit && (
-                  <Button
-                    variant="link"
-                    className="p-0"
-                    onClick={() => handleOpenAddModal(milestone.id)}
-                  >
-                    <CirclePlus className="h-4 w-4" />
-                    <span className="hidden md:inline">{tCommon("add")}</span>
-                  </Button>
-                )}
-                <DateTextDisplay
-                  startDate={
-                    milestone.startedAt ? new Date(milestone.startedAt) : null
-                  }
-                  endDate={
-                    milestone.completedAt
-                      ? new Date(milestone.completedAt)
-                      : null
-                  }
-                  isCompleted={milestone.isCompleted}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Render sessions under this milestone FIRST */}
-          {hasSessionsUnderMilestone && (
-            <div className="sessions-container bg-muted pr-4 pb-2 mb-2">
-              {groupedSessions.milestones[milestone.id]?.testSessions.map(
-                (testSession) => (
-                  <div key={testSession.id} style={{ paddingLeft: "1.5rem" }}>
-                    <SessionItem
-                      key={testSession.id}
-                      testSession={testSession}
-                      isCompleted={testSession.isCompleted}
-                      onComplete={handleOpenDialog}
-                      onDuplicate={handleDuplicateSession}
-                      canComplete={canCloseSession}
-                      canDuplicate={canAddEdit}
-                      isNew={newSessionId === testSession.id}
-                      showMilestone={false}
-                      pendingRequest={pendingBySessionId.get(testSession.id)}
-                    />
-                  </div>
-                )
-              )}
-            </div>
-          )}
-
-          {/* THEN render child milestones */}
-          {milestone.children?.map((childMilestone) =>
-            renderMilestoneWithSessions(childMilestone, depth + 1, dateFormat)
-          )}
+        <div className="pe-4 ps-4" style={indent}>
+          <SessionItem
+            testSession={testSession}
+            isCompleted={testSession.isCompleted}
+            onComplete={handleOpenDialog}
+            onDuplicate={handleDuplicateSession}
+            canComplete={canCloseSession}
+            canDuplicate={canAddEdit}
+            isNew={newSessionId === testSession.id}
+            // Only the unscheduled group leaves the milestone unsaid by its
+            // own header, and its sessions are the ones at depth 0.
+            showMilestone={row.depth === 0}
+            pendingRequest={pendingBySessionId.get(testSession.id)}
+            selectable={bulkSelectable}
+            selected={selectedSessionIds.has(testSession.id)}
+            onSelectedChange={(checked) =>
+              toggleSessionSelected(testSession.id, checked)
+            }
+          />
         </div>
       );
-    };
+    }
+
+    if (row.kind === "unscheduled-header") {
+      const isOpen = !collapsedGroups.has(UNSCHEDULED_GROUP_KEY);
+      return (
+        <div className="@container milestone-grid bg-primary/10 p-4">
+          <div className="milestone-name flex items-center gap-1">
+            <MilestoneGroupChevron
+              isOpen={isOpen}
+              testId="milestone-group-toggle-unscheduled"
+              onClick={(e) => {
+                if (e.altKey) setAllGroupsCollapsed(isOpen);
+                else setGroupOpen(UNSCHEDULED_GROUP_KEY, !isOpen);
+              }}
+            />
+            <DynamicIcon name="calendar-off" className="w-6 h-6 shrink-0" />
+            <div className="truncate">{t("noMilestone")}</div>
+            <Badge
+              variant="outline"
+              className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
+              data-testid="milestone-group-count-unscheduled"
+            >
+              {t("milestoneGroup.sessionCount", {
+                count: groupedSessions.unscheduled.length,
+              })}
+            </Badge>
+          </div>
+          <div className="milestone-status"></div>
+          <div className="milestone-dates flex justify-end">
+            {canAddEdit && (
+              <Button
+                variant="default"
+                onClick={() => handleOpenAddModal()}
+                aria-label={t("actions.add")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("actions.add")}
+                </span>
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const { milestone, subtreeItemCount } = row;
+    const groupKey = String(milestone.id);
+    const isOpen = !collapsedGroups.has(groupKey);
+    const status = getStatus(milestone);
+    const { badge } = getStatusStyle(
+      status,
+      resolvedTheme || "light",
+      colorMap
+    );
 
     return (
-      <>
-        {groupedSessions.unscheduled.length > 0 && (
-          <div
-            className="w-full bg-muted rounded-lg p-0 pb-2"
-            key={JSON.stringify(groupedSessions)}
-          >
-            {groupedSessions.unscheduled.some(
-              (testSession) => !testSession.isCompleted
-            ) && (
-              <div className="milestone-grid bg-primary/10 rounded-t-lg p-4">
-                <div className="milestone-name flex items-center gap-1">
-                  <DynamicIcon
-                    name="calendar-off"
-                    className="w-6 h-6 shrink-0"
-                  />
-                  <div className="truncate">{t("noMilestone")}</div>
-                </div>
-                <div className="milestone-status"></div>
-                <div className="milestone-dates flex justify-end">
-                  {canAddEdit && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => handleOpenAddModal()}
-                    >
-                      <CirclePlus className="h-4 w-4" />
-                      <span className="hidden md:inline">
-                        {t("actions.add")}
-                      </span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
-            {groupedSessions.unscheduled.map((testSession) => (
-              <div key={testSession.id} className="pl-4 pr-4">
-                <SessionItem
-                  testSession={testSession}
-                  isCompleted={testSession.isCompleted}
-                  onComplete={handleOpenDialog}
-                  onDuplicate={handleDuplicateSession}
-                  canComplete={canCloseSession}
-                  canDuplicate={canAddEdit}
-                  isNew={newSessionId === testSession.id}
-                  showMilestone={false}
-                  pendingRequest={pendingBySessionId.get(testSession.id)}
-                />
-              </div>
-            ))}
+      <div
+        className="@container milestone-grid bg-primary/10 p-2 pe-4"
+        style={indent}
+      >
+        <div className="flex items-center gap-1 justify-start min-w-0">
+          {row.depth > 0 && (
+            <DynamicIcon
+              name="corner-down-right"
+              className="w-6 h-6 text-primary/50 shrink-0 bg-transparent"
+            />
+          )}
+          {/* Only the chevron toggles: the header also holds the milestone
+              link and the Add Session button, so a whole-row trigger would
+              swallow both. */}
+          <MilestoneGroupChevron
+            isOpen={isOpen}
+            testId={`milestone-group-toggle-${milestone.id}`}
+            onClick={(e) => {
+              if (e.altKey) setAllGroupsCollapsed(isOpen);
+              else setGroupOpen(groupKey, !isOpen);
+            }}
+          />
+          <div className="truncate min-w-0">
+            <MilestoneIconAndName milestone={milestone} />
           </div>
-        )}
-        <div className="rounded-b-lg mb-4"></div>
+          <Badge
+            variant="outline"
+            className="shrink-0 hidden @lg:inline-flex text-xs font-normal text-muted-foreground"
+            data-testid={`milestone-group-count-${milestone.id}`}
+          >
+            {t("milestoneGroup.sessionCount", { count: subtreeItemCount })}
+          </Badge>
+        </div>
 
-        {milestoneTree.map((milestone) =>
-          renderMilestoneWithSessions(milestone, 0, dateFormat)
-        )}
-      </>
+        <div className="milestone-status flex gap-2 justify-center">
+          <Badge
+            style={{ backgroundColor: badge }}
+            className="text-secondary-background border-2 border-secondary-foreground text-sm"
+          >
+            {tMilestones(`statusLabels.${status}` as any)}
+          </Badge>
+        </div>
+
+        <div className="milestone-dates flex justify-end">
+          <div className="grow text-sm text-muted-foreground">
+            {canAddEdit && (
+              <Button
+                variant="link"
+                className="p-0"
+                onClick={() => handleOpenAddModal(milestone.id)}
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="hidden md:inline">{tCommon("add")}</span>
+              </Button>
+            )}
+            <DateTextDisplay
+              responsive
+              startDate={
+                milestone.startedAt ? new Date(milestone.startedAt) : null
+              }
+              endDate={
+                milestone.completedAt ? new Date(milestone.completedAt) : null
+              }
+              isCompleted={milestone.isCompleted}
+            />
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -637,40 +767,126 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
       ? "completed"
       : "active";
 
+  const bulkActions: OverflowAction[] = [
+    {
+      key: "edit",
+      icon: SquarePen,
+      label: tCommon("bulk.editAction", { count: editEligibleIds.length }),
+      onClick: () => setBulkDialog("edit"),
+      disabled: editEligibleIds.length === 0,
+      hidden: !canAddEdit,
+      testId: "session-bulk-edit",
+    },
+    {
+      key: "complete",
+      icon: CheckCircle,
+      label: tCommon("bulk.completeAction", {
+        count: completeEligibleSessions.length,
+      }),
+      onClick: () => setBulkDialog("complete"),
+      disabled: completeEligibleSessions.length === 0,
+      hidden: !canCloseSession,
+      testId: "session-bulk-complete",
+    },
+    {
+      key: "delete",
+      icon: Trash,
+      label: tCommon("bulk.deleteAction", { count: deleteEligibleIds.length }),
+      onClick: () => setBulkDialog("delete"),
+      disabled: deleteEligibleIds.length === 0,
+      hidden: !canDeleteSession,
+      destructive: true,
+      testId: "session-bulk-delete",
+    },
+  ];
+
+  const bulkBar = bulkSelectable ? (
+    <BulkActionBar
+      selectedCount={selectedSessionIds.size}
+      onClearSelection={clearSessionSelection}
+      actions={bulkActions}
+      testIdPrefix="session"
+    />
+  ) : null;
+
+  const bulkDialogs = (
+    <>
+      {bulkDialog === "edit" && sessionProjectId != null && (
+        <BulkEditSessionsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          sessionIds={editEligibleIds}
+          projectId={sessionProjectId}
+          milestoneOptions={milestoneOptions}
+          onDone={clearSessionSelection}
+        />
+      )}
+      {bulkDialog === "complete" && sessionProjectId != null && (
+        <BulkCompleteSessionsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          sessions={completeEligibleSessions}
+          projectId={sessionProjectId}
+          onDone={clearSessionSelection}
+        />
+      )}
+      {bulkDialog === "delete" && (
+        <BulkDeleteSessionsDialog
+          open
+          onOpenChange={(open) => !open && setBulkDialog(null)}
+          sessionIds={deleteEligibleIds}
+          onDone={clearSessionSelection}
+        />
+      )}
+    </>
+  );
+
   return (
     <div className="flex flex-col items-center w-full">
-      <div className="w-full relative">
+      <div className="w-full">
         <div className="flex flex-col w-full">
+          {bulkBar}
           {displayMode === "active" ? (
-            // Render grouped sessions for active tab
-            renderGroupedSessions(
-              groupedSessions,
-              sortedMilestones,
-              handleOpenDialog,
-              dateFormat
-            )
+            <div className="w-full bg-muted rounded-lg pb-2">
+              <WindowVirtualizedList
+                items={sessionListRows}
+                getKey={(row) => row.key}
+                data-testid="session-list"
+                renderItem={renderSessionListRow}
+              />
+            </div>
           ) : (
-            // Render flat list for completed tab
-            <div className="space-y-2 mt-4">
-              {sortedSessions.map((testSession) => (
-                <SessionItem
-                  key={testSession.id}
-                  testSession={testSession}
-                  isCompleted={testSession.isCompleted}
-                  onComplete={handleOpenDialog}
-                  onDuplicate={handleDuplicateSession}
-                  canComplete={canCloseSession}
-                  canDuplicate={canAddEdit}
-                  isNew={newSessionId === testSession.id}
-                  showMilestone={true}
-                  pendingRequest={pendingBySessionId.get(testSession.id)}
-                />
-              ))}
+            // Flat, ungrouped list for the completed tab.
+            <div className="mt-4">
+              <WindowVirtualizedList
+                items={sortedSessions}
+                getKey={(testSession) => testSession.id}
+                data-testid="completed-session-list"
+                renderItem={(testSession) => (
+                  <SessionItem
+                    testSession={testSession}
+                    isCompleted={testSession.isCompleted}
+                    onComplete={handleOpenDialog}
+                    onDuplicate={handleDuplicateSession}
+                    canComplete={canCloseSession}
+                    canDuplicate={canAddEdit}
+                    isNew={newSessionId === testSession.id}
+                    showMilestone={true}
+                    pendingRequest={pendingBySessionId.get(testSession.id)}
+                    selectable={bulkSelectable}
+                    selected={selectedSessionIds.has(testSession.id)}
+                    onSelectedChange={(checked) =>
+                      toggleSessionSelected(testSession.id, checked)
+                    }
+                  />
+                )}
+              />
             </div>
           )}
         </div>
       </div>
 
+      {bulkDialogs}
       {selectedSession && (
         <CompleteSessionDialog
           open={isDialogOpen}

@@ -1,7 +1,9 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import DatasetNameDisplay from "@/components/parameters/DatasetNameDisplay";
@@ -10,11 +12,6 @@ import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import { searchProjectDataSets } from "~/app/actions/searchProjectDataSets";
 import { searchProjectMatrixConfigurations } from "~/app/actions/searchProjectMatrixConfigurations";
 import { searchProjectStatuses } from "~/app/actions/searchProjectStatuses";
-import {
-  useFindManyConfigurations,
-  useFindManyDataSet,
-  useFindManyStatus,
-} from "~/lib/hooks";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
 
 interface OptionRow {
@@ -54,12 +51,52 @@ interface DatasetOptionRow {
  *
  * Status hydration: when the URL pre-selects status ids (e.g. shared link
  * with `?status=2`), the combobox would otherwise show ID-only chips until
- * the user re-opens the picker. A single `useFindManyStatus` query rehydrates
+ * the user re-opens the picker. A single `useClientQueries(schema).status.useFindMany` query rehydrates
  * those ids to `{name, color}` so the chip shows the proper dot + label
  * on first paint.
  */
 export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   const t = useTranslations("projects.matrix");
+
+  // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchStatusOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectStatuses(projectId, query, page, pageSize),
+    [projectId]
+  );
+
+  // MultiAsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchDatasetOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectDataSets(projectId, query, page, pageSize),
+    [projectId]
+  );
+
+  // Same stability requirement as above.
+  const fetchConfigOptions = useCallback(
+    async (query: string, page: number, pageSize: number) => {
+      const real = await searchProjectMatrixConfigurations(
+        projectId,
+        query,
+        page,
+        pageSize
+      );
+      // Synthetic "(none)" sentinel matches the cell axis "(none)"
+      // column. Only show on the first page when there's no search
+      // query — otherwise it pollutes paginated results.
+      if (page === 0 && (!query || query.trim().length === 0)) {
+        return {
+          results: [{ id: 0, name: t("configNone") }, ...real.results],
+          total: real.total + 1,
+        };
+      }
+      return real;
+    },
+    [projectId, t]
+  );
+
   const { filters, setFilters } = useMatrixFilters();
 
   const statusIds = filters.statusIds ?? [];
@@ -67,7 +104,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   // Hydrate URL-loaded status ids → {name, color}. The combobox's `value` is
   // user-controlled; without a hydrate step, a fresh page load with
   // `?status=2` would show "#2" until the user re-opened the dropdown.
-  const { data: hydratedStatusesRaw } = useFindManyStatus(
+  const { data: hydratedStatusesRaw } = useClientQueries(
+    schema
+  ).status.useFindMany(
     {
       where: { id: { in: statusIds } },
       select: {
@@ -106,7 +145,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   // (id === 0) doesn't exist in the DB, so filter it out of the lookup.
   const configIds = filters.configIds ?? [];
   const realConfigIds = configIds.filter((id) => id !== 0);
-  const { data: hydratedConfigsRaw } = useFindManyConfigurations(
+  const { data: hydratedConfigsRaw } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
     {
       where: { id: { in: realConfigIds } },
       select: { id: true, name: true },
@@ -128,7 +169,9 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
   }, [configIds, hydratedConfigsRaw, t]);
 
   const datasetIds = filters.datasetIds ?? [];
-  const { data: hydratedDatasetsRaw } = useFindManyDataSet(
+  const { data: hydratedDatasetsRaw } = useClientQueries(
+    schema
+  ).dataSet.useFindMany(
     {
       where: { id: { in: datasetIds } },
       select: {
@@ -171,9 +214,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           onValueChange={(opts) =>
             setFilters({ statusIds: opts.map((o) => o.id) })
           }
-          fetchOptions={(query, page, pageSize) =>
-            searchProjectStatuses(projectId, query, page, pageSize)
-          }
+          fetchOptions={fetchStatusOptions}
           renderOption={(opt) => (
             <StatusDotDisplay name={opt.name} color={opt.color} />
           )}
@@ -194,24 +235,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           onValueChange={(opts) =>
             setFilters({ configIds: opts.map((o) => o.id) })
           }
-          fetchOptions={async (query, page, pageSize) => {
-            const real = await searchProjectMatrixConfigurations(
-              projectId,
-              query,
-              page,
-              pageSize
-            );
-            // Synthetic "(none)" sentinel matches the cell axis "(none)"
-            // column. Only show on the first page when there's no search
-            // query — otherwise it pollutes paginated results.
-            if (page === 0 && (!query || query.trim().length === 0)) {
-              return {
-                results: [{ id: 0, name: t("configNone") }, ...real.results],
-                total: real.total + 1,
-              };
-            }
-            return real;
-          }}
+          fetchOptions={fetchConfigOptions}
           renderOption={(opt) => <ConfigurationNameDisplay name={opt.name} />}
           renderSelectedOption={(opt) => (
             <ConfigurationNameDisplay name={opt.name} />
@@ -230,9 +254,7 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
           onValueChange={(opts) =>
             setFilters({ datasetIds: opts.map((o) => o.id) })
           }
-          fetchOptions={(query, page, pageSize) =>
-            searchProjectDataSets(projectId, query, page, pageSize)
-          }
+          fetchOptions={fetchDatasetOptions}
           renderOption={(opt) => (
             <DatasetNameDisplay
               name={opt.name}

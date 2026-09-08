@@ -16,9 +16,14 @@ import { expect, test } from "../../fixtures";
 
 test.describe("Project Overview Dashboard", () => {
   let testProjectId: number;
+  let testProjectName: string;
 
   test.beforeEach(async ({ api }) => {
-    testProjectId = await api.createProject(`E2E Overview ${Date.now()}`);
+    // Random suffix: with fullyParallel, two workers can run this hook in
+    // the same millisecond, and a bare Date.now() name then trips the
+    // Projects_name_key unique constraint.
+    testProjectName = `E2E Overview ${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    testProjectId = await api.createProject(testProjectName);
   });
 
   test("loads the project overview page with project header", async ({
@@ -43,16 +48,12 @@ test.describe("Project Overview Dashboard", () => {
       await page.waitForLoadState("networkidle");
     });
 
-    await test.step("Verify the project ID is shown in the header", async () => {
-      // ProjectHeader renders the project ID via next-intl's `{id, number}`
-      // ICU formatter, which inserts thousand separators (e.g. "57,996").
-      // Build a regex that splits each digit with an optional non-digit
-      // (matches "57996", "57,996", "57 996", etc.).
-      const idPattern = String(testProjectId).split("").join("\\D?");
-      const projectIdText = page.getByText(
-        new RegExp(`id[:\\s#]*${idPattern}`, "i")
-      );
-      await expect(projectIdText).toBeVisible({ timeout: 15000 });
+    await test.step("Verify the project name is shown in the header", async () => {
+      // The header shows the project name only; the numeric ID chip was
+      // removed from the overview header.
+      await expect(page.getByText(testProjectName).first()).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 
@@ -104,7 +105,9 @@ test.describe("Project Overview Dashboard", () => {
 
   test("can collapse and expand the left panel", async ({ page }) => {
     const milestonesHeading = page.getByText(/current milestones/i);
-    const leftPanel = page.locator('[data-panel="overview-left"]');
+    // v4 renders data-panel="true" and derives the element's data-testid from
+    // the panel's id ("overview-left"), so locate it by testid.
+    const leftPanel = page.getByTestId("overview-left");
     const collapseLeftBtn = page.getByTestId("collapse-left-panel");
 
     await test.step("Open the overview page and confirm the left panel loaded", async () => {
@@ -123,18 +126,27 @@ test.describe("Project Overview Dashboard", () => {
       // The left panel has a collapse button identified by data-testid.
       await expect(collapseLeftBtn).toBeVisible({ timeout: 5000 });
       await collapseLeftBtn.click();
-
-      // react-resizable-panels v4 removed the data-panel-size attribute, so
-      // verify the collapse by the panel content no longer being visible.
-      await expect(milestonesHeading).toBeHidden({ timeout: 10000 });
+      // react-resizable-panels v4 collapses the panel to width 0; its content is
+      // then clipped by the panel's overflow:hidden (see globals.css). Verify the
+      // collapse structurally — a clipped element keeps its layout bounding box,
+      // so a visibility check on the content text is unreliable here.
+      await expect
+        .poll(async () => (await leftPanel.boundingBox())?.width ?? 1, {
+          timeout: 10000,
+        })
+        .toBe(0);
     });
 
     await test.step("Re-expand the left panel and verify milestones are visible again", async () => {
       // Click the same button (now acts as expand) to re-expand
       await collapseLeftBtn.click();
 
-      // Panel should re-expand — size should be greater than 0
-      // Wait for the milestones heading to become visible again
+      // Panel re-expands to a non-zero width and its content shows again.
+      await expect
+        .poll(async () => (await leftPanel.boundingBox())?.width ?? 0, {
+          timeout: 10000,
+        })
+        .toBeGreaterThan(0);
       await expect(milestonesHeading).toBeVisible({ timeout: 10000 });
     });
   });
@@ -236,14 +248,14 @@ test.describe("Project Overview Dashboard", () => {
     });
 
     await test.step("Verify the resizable panel group and resize handles are present", async () => {
-      // The ResizablePanelGroup renders with the data-panel-group attribute.
-      // Note: autoSaveId is not the same as id — data-panel-group-id uses the id prop,
-      // which is auto-generated. Use the data-panel-group attribute instead.
-      const panelGroup = page.locator("[data-panel-group]");
+      // react-resizable-panels v4 renders the group with data-group and the
+      // resize handle as role="separator" (v3's data-panel-group /
+      // data-panel-resize-handle-id attributes were removed).
+      const panelGroup = page.locator("[data-group]");
       await expect(panelGroup).toBeVisible({ timeout: 15000 });
 
       // Verify there are resize handles present (indicating a resizable layout)
-      const resizeHandles = page.locator("[data-panel-resize-handle-id]");
+      const resizeHandles = page.locator('[role="separator"]');
       await expect(resizeHandles.first()).toBeVisible({ timeout: 5000 });
     });
   });

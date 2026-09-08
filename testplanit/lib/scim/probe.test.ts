@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/lib/scim/tokens", () => ({
-  getScimTokenById: vi.fn(),
+  getScimTokenWithSecret: vi.fn(),
   decryptScimSecret: vi.fn(),
 }));
 
@@ -9,7 +9,7 @@ vi.mock("~/lib/scim/responses", () => ({
   getScimBaseUrl: () => "http://localhost:3000",
 }));
 
-import { decryptScimSecret, getScimTokenById } from "~/lib/scim/tokens";
+import { decryptScimSecret, getScimTokenWithSecret } from "~/lib/scim/tokens";
 import { probeScimToken } from "./probe";
 
 const PLAINTEXT = "tps_test_plaintext_bearer_abc";
@@ -30,7 +30,7 @@ describe("probeScimToken", () => {
   });
 
   it("returns Token not found when the token does not exist", async () => {
-    vi.mocked(getScimTokenById).mockResolvedValue(null);
+    vi.mocked(getScimTokenWithSecret).mockResolvedValue(null);
 
     const result = await probeScimToken("missing");
 
@@ -43,7 +43,7 @@ describe("probeScimToken", () => {
   });
 
   it("returns Token inactive when the row is marked inactive", async () => {
-    vi.mocked(getScimTokenById).mockResolvedValue(
+    vi.mocked(getScimTokenWithSecret).mockResolvedValue(
       activeRow({ isActive: false })
     );
 
@@ -58,7 +58,7 @@ describe("probeScimToken", () => {
   });
 
   it("returns ok=true on HTTP 200", async () => {
-    vi.mocked(getScimTokenById).mockResolvedValue(activeRow());
+    vi.mocked(getScimTokenWithSecret).mockResolvedValue(activeRow());
     vi.mocked(decryptScimSecret).mockResolvedValue(PLAINTEXT);
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
@@ -71,7 +71,7 @@ describe("probeScimToken", () => {
   });
 
   it("returns ok=false with HTTP <status> reason on a 401 response", async () => {
-    vi.mocked(getScimTokenById).mockResolvedValue(activeRow());
+    vi.mocked(getScimTokenWithSecret).mockResolvedValue(activeRow());
     vi.mocked(decryptScimSecret).mockResolvedValue(PLAINTEXT);
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(null, { status: 401 })
@@ -87,7 +87,7 @@ describe("probeScimToken", () => {
   });
 
   it("returns ok=false with the error message when fetch throws", async () => {
-    vi.mocked(getScimTokenById).mockResolvedValue(activeRow());
+    vi.mocked(getScimTokenWithSecret).mockResolvedValue(activeRow());
     vi.mocked(decryptScimSecret).mockResolvedValue(PLAINTEXT);
     vi.spyOn(globalThis, "fetch").mockRejectedValue(
       new Error("ECONNREFUSED 127.0.0.1:3000")
@@ -103,7 +103,7 @@ describe("probeScimToken", () => {
   });
 
   it("sends Authorization Bearer <plaintext> and X-SCIM-Probe: 1 to /api/scim/v2/ServiceProviderConfig with cache: no-store", async () => {
-    vi.mocked(getScimTokenById).mockResolvedValue(activeRow());
+    vi.mocked(getScimTokenWithSecret).mockResolvedValue(activeRow());
     vi.mocked(decryptScimSecret).mockResolvedValue(PLAINTEXT);
     const fetchMock = vi
       .spyOn(globalThis, "fetch")

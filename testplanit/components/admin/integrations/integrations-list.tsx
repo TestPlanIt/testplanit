@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,16 +21,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Integration, ProjectIntegration } from "@prisma/client";
+import type { Integration, ProjectIntegration } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindManyIntegrationProject,
-  useFindManyWebhookConfig,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
   removeProjectIntegration,
@@ -62,13 +60,17 @@ export function IntegrationsList({
   // Conditional bullet in the Remove + Switch dialogs: shown only when an
   // inbound webhook actually exists for the project. Cheap query — same
   // shape the webhooks page uses, dedupes via React Query when both mount.
-  const { data: inboundConfigs } = useFindManyWebhookConfig({
+  const { data: inboundConfigs } = useClientQueries(
+    schema
+  ).webhookConfig.useFindMany({
     where: { projectId, direction: "INBOUND" },
     select: { id: true },
   });
   const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
 
-  const { data: linkedProjects } = useFindManyIntegrationProject(
+  const { data: linkedProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: currentIntegration?.id ?? "",
@@ -110,7 +112,7 @@ export function IntegrationsList({
       }
       // Server action bypasses ZenStack mutation hooks, so the React
       // Query cache (used by parent's useFindManyProjectIntegration +
-      // local useFindManyWebhookConfig) doesn't auto-invalidate. Wide
+      // local useClientQueries(schema).webhookConfig.useFindMany) doesn't auto-invalidate. Wide
       // invalidation under the `["zenstack"]` prefix refreshes all
       // related ZenStack-generated queries in one shot.
       await queryClient.invalidateQueries({ queryKey: ["zenstack"] });
@@ -174,7 +176,7 @@ export function IntegrationsList({
                 {integration.name}
               </CardTitle>
               {isActive && (
-                <Badge variant="default" className="ml-auto">
+                <Badge variant="default" className="ms-auto">
                   {tCommon("fields.isActive")}
                 </Badge>
               )}
@@ -288,7 +290,7 @@ export function IntegrationsList({
                 <p className="font-medium">
                   {t("integration.removeWarningTitle")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc ps-5 space-y-1">
                   <li>{t("integration.removeWarning1")}</li>
                   <li>{t("integration.removeWarning2")}</li>
                   <li>{t("integration.removeWarning3")}</li>
@@ -331,7 +333,7 @@ export function IntegrationsList({
                 <p className="font-medium">
                   {t("integration.switchWarningTitle")}
                 </p>
-                <ul className="list-disc pl-5 space-y-1 text-destructive">
+                <ul className="list-disc ps-5 space-y-1 text-destructive">
                   <li>{t("integration.switchWarning1")}</li>
                   <li>{t("integration.switchWarning2")}</li>
                   <li>{t("integration.switchWarning3")}</li>

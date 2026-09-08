@@ -1,28 +1,18 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import type { Prisma } from "@prisma/client";
-import {
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type {
+  GroupProjectPermissionUpsertArgs,
+  UserProjectPermissionUpsertArgs,
+} from "~/zenstack/input";
+import { ProjectAccessType } from "~/zenstack/models";
+import type {
   GroupProjectPermission,
-  ProjectAccessType,
   UserProjectPermission,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import {
-  useCreateManyProjectAssignment,
-  useDeleteManyGroupProjectPermission,
-  useDeleteManyProjectAssignment,
-  useDeleteManyUserProjectPermission,
-  useFindManyGroupProjectPermission,
-  useFindManyGroups,
-  useFindManyProjectAssignment,
-  useFindManyRoles,
-  useFindManyUser,
-  useFindManyUserProjectPermission,
-  useUpdateProjects,
-  useUpsertGroupProjectPermission,
-  useUpsertUserProjectPermission,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -76,6 +66,7 @@ import { toast } from "sonner";
 import { ExtendedProjects } from "./columns";
 import { ProjectGroupPermissions } from "./ProjectGroupPermissions";
 import { ProjectUserPermissions } from "./ProjectUserPermissions";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface EditProjectModalProps {
   project: ExtendedProjects;
@@ -149,8 +140,11 @@ export function EditProjectModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
 
-  const { mutateAsync: updateProject } = useUpdateProjects();
-  const { data: roles, isLoading: rolesLoading } = useFindManyRoles(
+  const { mutateAsync: updateProject } =
+    useClientQueries(schema).projects.useUpdate();
+  const { data: roles, isLoading: rolesLoading } = useClientQueries(
+    schema
+  ).roles.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -159,13 +153,15 @@ export function EditProjectModal({
   );
 
   const { data: userPermissionsData, isLoading: userPermsLoading } =
-    useFindManyUserProjectPermission(
+    useClientQueries(schema).userProjectPermission.useFindMany(
       {
         where: { projectId: project.id },
       },
       { enabled: isOpen }
     );
-  const { data: groupPermissionsData } = useFindManyGroupProjectPermission(
+  const { data: groupPermissionsData } = useClientQueries(
+    schema
+  ).groupProjectPermission.useFindMany(
     {
       where: { projectId: project.id },
       include: { group: true, role: true },
@@ -174,7 +170,7 @@ export function EditProjectModal({
   );
 
   const { data: projectAssignments, isLoading: assignmentsLoading } =
-    useFindManyProjectAssignment(
+    useClientQueries(schema).projectAssignment.useFindMany(
       {
         where: { projectId: project.id },
         select: { userId: true },
@@ -182,7 +178,9 @@ export function EditProjectModal({
       { enabled: isOpen }
     );
 
-  const { data: allUsers, isLoading: allUsersLoading } = useFindManyUser(
+  const { data: allUsers, isLoading: allUsersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany(
     {
       where: { isActive: true, isDeleted: false },
       include: { role: true },
@@ -191,7 +189,9 @@ export function EditProjectModal({
     { enabled: isOpen }
   );
 
-  const { data: allGroups, isLoading: groupsLoading } = useFindManyGroups(
+  const { data: allGroups, isLoading: groupsLoading } = useClientQueries(
+    schema
+  ).groups.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -205,7 +205,9 @@ export function EditProjectModal({
     { enabled: isOpen }
   );
 
-  const upsertUserPermission = useUpsertUserProjectPermission({
+  const upsertUserPermission = useClientQueries(
+    schema
+  ).userProjectPermission.useUpsert({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error upserting user permission:", error);
@@ -213,7 +215,9 @@ export function EditProjectModal({
     },
   });
 
-  const deleteManyUserPermission = useDeleteManyUserProjectPermission({
+  const deleteManyUserPermission = useClientQueries(
+    schema
+  ).userProjectPermission.useDeleteMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error deleting user permissions:", error);
@@ -221,7 +225,9 @@ export function EditProjectModal({
     },
   });
 
-  const upsertGroupPermission = useUpsertGroupProjectPermission({
+  const upsertGroupPermission = useClientQueries(
+    schema
+  ).groupProjectPermission.useUpsert({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error upserting group permission:", error);
@@ -229,7 +235,9 @@ export function EditProjectModal({
     },
   });
 
-  const deleteManyGroupPermission = useDeleteManyGroupProjectPermission({
+  const deleteManyGroupPermission = useClientQueries(
+    schema
+  ).groupProjectPermission.useDeleteMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error deleting group permissions:", error);
@@ -237,7 +245,9 @@ export function EditProjectModal({
     },
   });
 
-  const createManyProjectAssignment = useCreateManyProjectAssignment({
+  const createManyProjectAssignment = useClientQueries(
+    schema
+  ).projectAssignment.useCreateMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error creating project assignments:", error);
@@ -245,7 +255,9 @@ export function EditProjectModal({
     },
   });
 
-  const deleteManyProjectAssignment = useDeleteManyProjectAssignment({
+  const deleteManyProjectAssignment = useClientQueries(
+    schema
+  ).projectAssignment.useDeleteMany({
     onSuccess: () => {},
     onError: (error) => {
       console.error("Error deleting project assignments:", error);
@@ -527,7 +539,7 @@ export function EditProjectModal({
       }
 
       // --- Handle User Permission Changes ---
-      const permissionsToUpsert: Prisma.UserProjectPermissionUpsertArgs[] = [];
+      const permissionsToUpsert: UserProjectPermissionUpsertArgs[] = [];
       const permissionIdsToDelete: { userId: string; projectId: number }[] = [];
 
       const submittedPermissions = data.userPermissions || {};
@@ -562,7 +574,7 @@ export function EditProjectModal({
             continue; // Skip this potentially invalid permission
           }
 
-          const upsertData: Prisma.UserProjectPermissionUpsertArgs = {
+          const upsertData: UserProjectPermissionUpsertArgs = {
             where: { userId_projectId: { userId, projectId: project.id } },
             create: {
               userId,
@@ -626,8 +638,7 @@ export function EditProjectModal({
       }
 
       // --- Handle Group Permission Changes (Similar logic to users) ---
-      const groupPermissionsToUpsert: Prisma.GroupProjectPermissionUpsertArgs[] =
-        [];
+      const groupPermissionsToUpsert: GroupProjectPermissionUpsertArgs[] = [];
       const groupPermissionIdsToDelete: {
         groupId: string;
         projectId: number;
@@ -663,7 +674,7 @@ export function EditProjectModal({
             continue;
           }
 
-          const upsertData: Prisma.GroupProjectPermissionUpsertArgs = {
+          const upsertData: GroupProjectPermissionUpsertArgs = {
             // Use number for the actual DB operation if the schema expects numbers
             // Assuming Prisma schema uses Int for groupId in the relation table
             where: {
@@ -747,7 +758,7 @@ export function EditProjectModal({
       }
     } catch (err: any) {
       console.error("Failed to update project or permissions:", err);
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: tCommon("errors.projectNameExists"),
@@ -966,9 +977,9 @@ export function EditProjectModal({
                                   {role.name}
                                   {role.isDefault && (
                                     <Tooltip>
-                                      <TooltipTrigger className="ml-1" asChild>
+                                      <TooltipTrigger className="ms-1" asChild>
                                         <Badge variant="secondary">
-                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                          <Star className="h-3 w-3 fill-current" />
                                         </Badge>
                                       </TooltipTrigger>
                                       <TooltipContent>

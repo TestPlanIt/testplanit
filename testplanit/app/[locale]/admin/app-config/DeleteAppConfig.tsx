@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +17,6 @@ import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useDeleteAppConfig } from "~/lib/hooks";
 import { AppConfigRow } from "./types";
 
 interface DeleteAppConfigProps {
@@ -30,7 +31,8 @@ export function DeleteAppConfig({
   onClose,
 }: DeleteAppConfigProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: deleteAppConfig } = useDeleteAppConfig();
+  const { mutateAsync: deleteAppConfig } =
+    useClientQueries(schema).appConfig.useDelete();
   const tCommon = useTranslations("common");
 
   const form = useForm();
@@ -67,7 +69,7 @@ export function DeleteAppConfig({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {tCommon("actions.confirmDelete")}
               </AlertDialogTitle>
               <AlertDialogDescription>
@@ -97,7 +99,7 @@ export function DeleteAppConfig({
                 type="button"
                 onClick={onSubmit}
                 disabled={isSubmitting}
-                className="bg-destructive hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
                   ? tCommon("actions.deleting")

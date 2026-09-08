@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { access: true },
     });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     // If repositoryId provided, load from DB
     if (repositoryId && !credentials) {
-      const repo = await prisma.codeRepository.findUnique({
+      const repo = await baseDb.codeRepository.findUnique({
         where: { id: parseInt(repositoryId) },
         select: { credentials: true, settings: true, provider: true },
       });
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     // If repositoryId provided, update lastTestedAt and status in DB
     if (repositoryId) {
       if (result.success) {
-        await prisma.codeRepository.update({
+        await baseDb.codeRepository.update({
           where: { id: parseInt(repositoryId) },
           data: {
             lastTestedAt: new Date(),
@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
           },
         });
       } else {
-        await prisma.codeRepository.update({
+        await baseDb.codeRepository.update({
           where: { id: parseInt(repositoryId) },
           data: { status: "ERROR" },
         });

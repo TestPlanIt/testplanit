@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,10 +22,6 @@ import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
 import type { StepFormField } from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
 import StepsForm from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
-import {
-  useCreateManySharedStepItem,
-  useCreateSharedStepGroup,
-} from "~/lib/hooks";
 
 interface ManualSharedStepsDialogProps {
   open: boolean;
@@ -46,8 +44,10 @@ export function ManualSharedStepsDialog({
   const [groupName, setGroupName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const createSharedStepGroupMutation = useCreateSharedStepGroup();
-  const createManySharedStepItemMutation = useCreateManySharedStepItem();
+  const createSharedStepGroupMutation =
+    useClientQueries(schema).sharedStepGroup.useCreate();
+  const createManySharedStepItemMutation =
+    useClientQueries(schema).sharedStepItem.useCreateMany();
 
   // Initialize form with one empty step
   const form = useForm<{ steps: StepFormField[] }>({

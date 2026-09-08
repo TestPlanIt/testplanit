@@ -1,5 +1,9 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
+import { getProjectRelevantIssueIds } from "@/lib/projectIssueIds";
 import { NextRequest } from "next/server";
+import { getMilestoneCaseCompletion } from "~/lib/services/effectiveCaseStatus";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
+import { buildDateFilter } from "~/utils/reportUtils";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate
@@ -11,7 +15,7 @@ const DIMENSION_REGISTRY: Record<
   {
     id: string;
     label: string;
-    getValues: (prisma: any, projectId: number) => Promise<any[]>;
+    getValues: (baseDb: any, projectId: number) => Promise<any[]>;
     groupBy: string;
     join: any;
     display: (val: any) => any;
@@ -20,8 +24,8 @@ const DIMENSION_REGISTRY: Record<
   milestone: {
     id: "milestone",
     label: "Milestone",
-    getValues: async (prisma: any, projectId: number) =>
-      await prisma.milestones.findMany({
+    getValues: async (baseDb: any, projectId: number) =>
+      await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -62,9 +66,9 @@ const DIMENSION_REGISTRY: Record<
   creator: {
     id: "creator",
     label: "Creator",
-    getValues: async (prisma: any, projectId: number) => {
+    getValues: async (baseDb: any, projectId: number) => {
       // Get creators from milestones and issues
-      const milestoneCreators = await prisma.milestones.findMany({
+      const milestoneCreators = await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -77,30 +81,23 @@ const DIMENSION_REGISTRY: Record<
         distinct: ["createdBy"],
       });
 
-      const issueCreators = await prisma.issue.findMany({
-        where: {
-          OR: [
-            { repositoryCases: { some: { projectId: Number(projectId) } } },
-            {
-              sessions: {
-                some: { projectId: Number(projectId), isDeleted: false },
+      // Drive from the small issue<->entity join tables (see helper) rather
+      // than filtering the issue table by `{ relation: { some } }`, which
+      // ZenStack v3 compiles to correlated EXISTS scans of the large tables.
+      const relevantIssueIds = await getProjectRelevantIssueIds(
+        Number(projectId)
+      );
+      const issueCreators = relevantIssueIds.length
+        ? await baseDb.issue.findMany({
+            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            select: {
+              createdBy: {
+                select: { id: true, name: true, email: true },
               },
             },
-            {
-              testRuns: {
-                some: { projectId: Number(projectId), isDeleted: false },
-              },
-            },
-          ],
-          isDeleted: false,
-        },
-        select: {
-          createdBy: {
-            select: { id: true, name: true, email: true },
-          },
-        },
-        distinct: ["createdById"],
-      });
+            distinct: ["createdById"],
+          })
+        : [];
 
       const allCreators = [
         ...milestoneCreators.map((m: any) => m.creator),
@@ -128,9 +125,9 @@ const DIMENSION_REGISTRY: Record<
   date: {
     id: "date",
     label: "Activity Date",
-    getValues: async (prisma: any, projectId: number) => {
+    getValues: async (baseDb: any, projectId: number) => {
       // Get dates from milestones and issues
-      const milestoneDates = await prisma.milestones.findMany({
+      const milestoneDates = await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -140,27 +137,17 @@ const DIMENSION_REGISTRY: Record<
         orderBy: { createdAt: "asc" },
       });
 
-      const issueDates = await prisma.issue.findMany({
-        where: {
-          OR: [
-            { repositoryCases: { some: { projectId: Number(projectId) } } },
-            {
-              sessions: {
-                some: { projectId: Number(projectId), isDeleted: false },
-              },
-            },
-            {
-              testRuns: {
-                some: { projectId: Number(projectId), isDeleted: false },
-              },
-            },
-          ],
-          isDeleted: false,
-        },
-        select: { createdAt: true },
-        distinct: ["createdAt"],
-        orderBy: { createdAt: "asc" },
-      });
+      const relevantIssueIds = await getProjectRelevantIssueIds(
+        Number(projectId)
+      );
+      const issueDates = relevantIssueIds.length
+        ? await baseDb.issue.findMany({
+            where: { id: { in: relevantIssueIds }, isDeleted: false },
+            select: { createdAt: true },
+            distinct: ["createdAt"],
+            orderBy: { createdAt: "asc" },
+          })
+        : [];
 
       const allDates = [...milestoneDates, ...issueDates];
 
@@ -196,7 +183,7 @@ const METRIC_REGISTRY: Record<
     id: string;
     label: string;
     aggregate: (
-      prisma: any,
+      baseDb: any,
       projectId: number,
       groupBy: string[],
       filters?: any,
@@ -207,251 +194,85 @@ const METRIC_REGISTRY: Record<
   milestoneCompletion: {
     id: "milestoneCompletion",
     label: "Milestone Completion (%)",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
-      // Handle case where groupBy contains fields not available for direct grouping
-      const filteredGroupBy = groupBy.filter(
-        (field) => field !== "projectId" && field !== "createdBy"
-      );
-      const needsManualAggregation =
-        groupBy.some((field) => field === "createdBy") ||
-        groupBy.length === 0 ||
-        filteredGroupBy.length === 0 ||
-        groupBy.includes("createdAt"); // Always use manual aggregation for date grouping
-
-      if (needsManualAggregation) {
-        // Manual aggregation - get all milestones and calculate milestone completion
-        // Based on total test cases in test runs vs completed test results
-        const milestones = await prisma.milestones.findMany({
-          where: {
-            projectId: Number(projectId),
-            isDeleted: false,
-          },
-          include: {
-            ...(groupBy.includes("id")
-              ? {
-                  milestoneType: {
-                    include: { icon: true },
-                  },
-                }
-              : {}),
-            ...(groupBy.includes("createdBy") ? { creator: true } : {}),
-            ...(groupBy.includes("projectId") ? { project: true } : {}),
-            testRuns: {
-              where: {
-                isDeleted: false,
-              },
-              include: {
-                testCases: { where: { isDeleted: false } },
-                results: {
-                  where: {
-                    isDeleted: false,
-                  },
-                  include: {
-                    status: {
-                      select: {
-                        id: true,
-                        isCompleted: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        // Group manually and calculate milestone completion
-        // Total = TestRunCases count, Completed = TestRunResults with isCompleted=true
-        const grouped = new Map<string, any>();
-        milestones.forEach((milestone: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "createdAt") {
-                const date = new Date(milestone.createdAt);
-                date.setUTCHours(0, 0, 0, 0);
-                return date.toISOString();
-              }
-              if (field === "createdBy") {
-                // Use the createdBy string ID, not the creator object
-                return milestone.createdBy || "unknown";
-              }
-              return milestone[field] || "unknown";
-            })
-            .join("|");
-
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-
-            groupBy.forEach((field) => {
-              if (field === "createdAt") {
-                const date = new Date(milestone.createdAt);
-                date.setUTCHours(0, 0, 0, 0);
-                groupData.createdAt = date.toISOString();
-              } else if (field === "id") {
-                groupData.id = milestone.id;
-              } else if (field === "createdBy") {
-                groupData.createdBy = milestone.createdBy;
-              } else if (field === "projectId") {
-                groupData.projectId = milestone.projectId;
-              }
-            });
-
-            grouped.set(key, {
-              ...groupData,
-              ...(groupBy.includes("projectId")
-                ? { projectId: Number(projectId) }
-                : {}),
-              totalTestCases: 0,
-              completedTestCases: 0,
-            });
-          }
-
-          const group = grouped.get(key);
-
-          // Count total test cases (from TestRunCases) and completed results
-          milestone.testRuns.forEach((testRun: any) => {
-            // Add total test cases from TestRunCases
-            group.totalTestCases += testRun.testCases.length;
-
-            // Count completed test results from TestRunResults
-            testRun.results.forEach((result: any) => {
-              if (result.status?.isCompleted === true) {
-                group.completedTestCases++;
-              }
-            });
-          });
-        });
-
-        return Array.from(grouped.values()).map((group: any) => {
-          const milestoneCompletion =
-            group.totalTestCases > 0
-              ? Math.min(
-                  (group.completedTestCases / group.totalTestCases) * 100,
-                  100
-                ) // Cap at 100%
-              : 0;
-          return {
-            ...group,
-            milestoneCompletion,
-          };
-        });
-      }
-
-      // Regular aggregation - calculate milestone completion
-      // Total = TestRunCases count, Completed = TestRunResults with isCompleted=true
-      const results = await prisma.milestones.groupBy({
-        by: groupBy.filter(
-          (field) => field !== "projectId" && field !== "createdBy"
-        ),
+    aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
+      // Completion is counted from whichever table actually holds the outcome:
+      // manual runs roll their status up onto TestRunCases.statusId, while
+      // automated runs (JUnit, TestNG, Mocha, etc.) record theirs in
+      // JUnitTestResult and leave the run-case row empty. The shared accessor
+      // owns that split — the same one `calculateMilestoneCompletion` uses, so
+      // the report and the milestone page agree. It aggregates in Postgres
+      // rather than loading every run-case row into memory, which on a large
+      // project meant pulling ~1M rows to count them.
+      const milestones = await baseDb.milestones.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
+          ...buildDateFilter(filters, "createdAt"),
         },
-        _count: { _all: true },
+        select: {
+          id: true,
+          createdAt: true,
+          createdBy: true,
+          projectId: true,
+        },
       });
 
-      const enrichedResults = await Promise.all(
-        results.map(async (result: any) => {
-          // Build where clause for milestones in this group
-          const milestoneWhere: any = {
-            projectId: Number(projectId),
-            isDeleted: false,
-          };
+      if (milestones.length === 0) {
+        return groupBy.length === 0 ? [{ milestoneCompletion: null }] : [];
+      }
 
-          if (result.id) {
-            milestoneWhere.id = result.id;
-          }
-
-          if (result.createdAt) {
-            const startOfDay = new Date(result.createdAt);
-            startOfDay.setUTCHours(0, 0, 0, 0);
-            const endOfDay = new Date(startOfDay);
-            endOfDay.setUTCHours(23, 59, 59, 999);
-            milestoneWhere.createdAt = {
-              gte: startOfDay,
-              lte: endOfDay,
-            };
-          }
-
-          // Get total test cases (TestRunCases) in test runs for milestones in this group
-          const totalTestCases = await prisma.testRunCases.count({
-            where: {
-              isDeleted: false,
-              testRun: {
-                milestone: milestoneWhere,
-                isDeleted: false,
-              },
-            },
-          });
-
-          // Get completed test results (TestRunResults with isCompleted=true status)
-          const testResultCounts = await prisma.testRunResults.groupBy({
-            by: ["statusId"],
-            where: {
-              testRun: {
-                milestone: milestoneWhere,
-                isDeleted: false,
-              },
-              isDeleted: false,
-            },
-            _count: { _all: true },
-          });
-
-          // Get status information to check isCompleted flag
-          const statusIds = testResultCounts
-            .map((tr: any) => tr.statusId)
-            .filter(Boolean);
-          const statuses = await prisma.status.findMany({
-            where: {
-              id: { in: statusIds },
-            },
-            select: {
-              id: true,
-              isCompleted: true,
-            },
-          });
-
-          const statusMap = new Map(
-            statuses.map((s: any) => [s.id, s.isCompleted])
-          );
-
-          let completedTestCases = 0;
-
-          testResultCounts.forEach((tr: any) => {
-            const count = Number(tr._count._all);
-
-            // Count only completed test results
-            if (tr.statusId) {
-              const isCompleted = statusMap.get(tr.statusId);
-              if (isCompleted === true) {
-                completedTestCases += count;
-              }
-            }
-          });
-
-          const milestoneCompletion =
-            totalTestCases > 0
-              ? Math.min((completedTestCases / totalTestCases) * 100, 100) // Cap at 100%
-              : 0;
-
-          return {
-            ...result,
-            ...(groupBy.includes("projectId")
-              ? { projectId: Number(projectId) }
-              : {}),
-            milestoneCompletion,
-          };
-        })
+      const countsByMilestone = await getMilestoneCaseCompletion(
+        milestones.map((m: any) => m.id)
       );
 
-      return enrichedResults;
+      const grouped = new Map<string, any>();
+      milestones.forEach((milestone: any) => {
+        const keyFor = (field: string) => {
+          if (field === "createdAt") {
+            const date = new Date(milestone.createdAt);
+            date.setUTCHours(0, 0, 0, 0);
+            return date.toISOString();
+          }
+          return milestone[field] ?? "unknown";
+        };
+        const key = groupBy.map(keyFor).join("|");
+
+        if (!grouped.has(key)) {
+          const groupData: any = {
+            totalTestCases: 0,
+            completedTestCases: 0,
+          };
+          groupBy.forEach((field) => {
+            groupData[field] =
+              field === "createdAt" ? keyFor(field) : milestone[field];
+          });
+          grouped.set(key, groupData);
+        }
+
+        const group = grouped.get(key);
+        const counts = countsByMilestone.get(milestone.id);
+        if (counts) {
+          group.totalTestCases += counts.total;
+          group.completedTestCases += counts.completed;
+        }
+      });
+
+      // A group with no run-cases has no population — null renders "—",
+      // distinguishable from a real 0% (nothing completed yet).
+      return Array.from(grouped.values()).map((group: any) => ({
+        ...group,
+        milestoneCompletion:
+          group.totalTestCases > 0
+            ? (group.completedTestCases / group.totalTestCases) * 100
+            : null,
+      }));
     },
   },
 
   totalMilestones: {
     id: "totalMilestones",
     label: "Total Milestones",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, _dims) => {
       const filteredGroupBy = groupBy.filter(
         (field) => field !== "projectId" && field !== "createdBy"
       );
@@ -463,7 +284,7 @@ const METRIC_REGISTRY: Record<
         filteredGroupBy.length === 0;
 
       if (needsManualAggregation) {
-        const milestones = await prisma.milestones.findMany({
+        const milestones = await baseDb.milestones.findMany({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -528,7 +349,7 @@ const METRIC_REGISTRY: Record<
       }
 
       // Regular groupBy
-      return prisma.milestones
+      return baseDb.milestones
         .groupBy({
           by: groupBy.filter(
             (field) => field !== "projectId" && field !== "createdBy"
@@ -553,7 +374,7 @@ const METRIC_REGISTRY: Record<
   activeMilestones: {
     id: "activeMilestones",
     label: "Active Milestones",
-    aggregate: async (prisma, projectId, groupBy, _filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, _filters, _dims) => {
       const filteredGroupBy = groupBy.filter(
         (field) => field !== "projectId" && field !== "createdBy"
       );
@@ -565,7 +386,7 @@ const METRIC_REGISTRY: Record<
         filteredGroupBy.length === 0;
 
       if (needsManualAggregation) {
-        const milestones = await prisma.milestones.findMany({
+        const milestones = await baseDb.milestones.findMany({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -632,7 +453,7 @@ const METRIC_REGISTRY: Record<
       }
 
       // Regular groupBy
-      return prisma.milestones
+      return baseDb.milestones
         .groupBy({
           by: groupBy.filter(
             (field) => field !== "projectId" && field !== "createdBy"
@@ -679,6 +500,12 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
 
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
+
     if (!projectId) {
       return Response.json(
         { error: "Project ID is required" },
@@ -688,7 +515,7 @@ export async function GET(req: NextRequest) {
 
     const dimensions = await Promise.all(
       Object.values(DIMENSION_REGISTRY).map(async (dim) => {
-        const values = await dim.getValues(prisma, Number(projectId));
+        const values = await dim.getValues(baseDb, Number(projectId));
         return {
           id: dim.id,
           label: dim.label,
@@ -711,6 +538,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { projectId, dimensions, metrics } = await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
 
     if (!projectId || !dimensions || !metrics) {
       return Response.json(
@@ -756,7 +589,7 @@ export async function POST(req: NextRequest) {
     // Get dimension values for joins
     const dimValues = await Promise.all(
       dimensions.map((dim: string) =>
-        DIMENSION_REGISTRY[dim].getValues(prisma, Number(projectId))
+        DIMENSION_REGISTRY[dim].getValues(baseDb, Number(projectId))
       )
     );
 
@@ -774,7 +607,7 @@ export async function POST(req: NextRequest) {
       const metricConfig = METRIC_REGISTRY[metricKey];
       if (metricConfig && metricConfig.aggregate) {
         const metricResults = await metricConfig.aggregate(
-          prisma,
+          baseDb,
           Number(projectId),
           groupBy,
           {},
@@ -885,14 +718,14 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // Add metrics
+      // Add metrics. Percentage metrics with no population stay null so the
+      // UI renders "—" instead of a misleading 0%.
       for (const metricKey of metrics) {
         const metricConfig = METRIC_REGISTRY[metricKey];
-        if (row) {
-          out[metricConfig.label] = row[metricKey] ?? 0;
-        } else {
-          out[metricConfig.label] = 0;
-        }
+        const emptyValue = metricConfig.label.includes("(%)") ? null : 0;
+        out[metricConfig.label] = row
+          ? (row[metricKey] ?? emptyValue)
+          : emptyValue;
       }
 
       return out;
@@ -903,9 +736,10 @@ export async function POST(req: NextRequest) {
     const filteredResults = results.filter((result) => {
       const hasNonZeroCountMetric = metricLabels.some((label: string) => {
         const value = result[label];
-        // For percentage metrics (containing %), keep zero values (0% is valid)
+        // For percentage metrics (containing %), keep zero values (0% is
+        // valid) and null values (rendered "—" — no population).
         if (label.includes("(%)")) {
-          return value !== undefined && value !== null;
+          return value !== undefined;
         }
         // For count metrics, filter out zero values (0 milestones means no data)
         return value !== undefined && value !== null && value !== 0;

@@ -1,6 +1,18 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("~/lib/services/recordKeyConfig", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/recordKeyConfig")>();
+  return {
+    ...actual,
+    readRecordKeyConfig: async () => ({
+      enabled: false,
+      tokens: actual.DEFAULT_TYPE_TOKENS,
+    }),
+  };
+});
+
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
 }));
@@ -35,8 +47,8 @@ vi.mock("~/lib/matrix/matrixAggregation", async () => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: (...args: unknown[]) => userFindUniqueMock(...args) },
   },
 }));

@@ -1,59 +1,38 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CirclePlus, MessageSquareCode } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { toast } from "sonner";
-import {
-  useFindManyPromptConfig,
-  useUpdatePromptConfig,
-} from "~/lib/hooks/prompt-config";
 import { AddPromptConfig } from "./AddPromptConfig";
 import { ExtendedPromptConfig, useColumns } from "./columns";
 import { DeletePromptConfig } from "./DeletePromptConfig";
 import { EditPromptConfig } from "./EditPromptConfig";
 
 export default function PromptsAdminPage() {
-  return (
-    <PaginationProvider>
-      <PromptConfigList />
-    </PaginationProvider>
-  );
+  return <PromptConfigList />;
 }
 
 function PromptConfigList() {
+  const locale = useLocale();
   const t = useTranslations("admin.prompts");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -65,62 +44,22 @@ function PromptConfigList() {
   const debouncedSearchString = useDebounce(searchString, 500);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  const { mutateAsync: updatePromptConfig } = useUpdatePromptConfig();
+  const { mutateAsync: updatePromptConfig } =
+    useClientQueries(schema).promptConfig.useUpdate();
 
   const updatePromptConfigRef = useRef(updatePromptConfig);
   useEffect(() => {
     updatePromptConfigRef.current = updatePromptConfig;
   });
 
-  // Query for total filtered configs (for pagination)
-  const { data: totalFilteredConfigs } = useFindManyPromptConfig(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        prompts: {
-          include: {
-            llmIntegration: {
-              select: { id: true, name: true },
-            },
-          },
-        },
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive" as const,
-            },
-          },
-          { isDeleted: false },
-        ],
-      },
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  useEffect(() => {
-    if (totalFilteredConfigs) {
-      setTotalItems(totalFilteredConfigs.length);
-    }
-  }, [totalFilteredConfigs, setTotalItems]);
-
-  // Paginated query
+  // Single full-set fetch feeds the virtualized table directly; the table
+  // renders only the visible window so there's no page seam and no need for a
+  // separate count query (the loaded array length IS the total).
   const {
     data: configs,
     isLoading,
     refetch,
-  } = useFindManyPromptConfig(
+  } = useClientQueries(schema).promptConfig.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -146,8 +85,6 @@ function PromptConfigList() {
           { isDeleted: false },
         ],
       },
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled: !!session?.user,
@@ -160,16 +97,8 @@ function PromptConfigList() {
       if (currentIsDefault) return; // Can't un-default the current default
 
       try {
-        // Find and unset current default
-        const currentDefaults = configs?.filter((c) => c.isDefault) || [];
-        for (const config of currentDefaults) {
-          if (config.id !== id) {
-            await updatePromptConfigRef.current({
-              where: { id: config.id },
-              data: { isDefault: false },
-            });
-          }
-        }
+        // The single-default DB trigger (tpl_single_default_promptconfig)
+        // clears the previous default atomically.
 
         // Set new default (force active)
         await updatePromptConfigRef.current({
@@ -186,16 +115,6 @@ function PromptConfigList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [configs]
   );
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -228,6 +147,10 @@ function PromptConfigList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -243,30 +166,46 @@ function PromptConfigList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1);
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="prompts-admin-page-title">
-                <MessageSquareCode className="inline mr-2 h-8 w-8" />
                 {t("title")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("addPromptConfig")}</span>
-              </Button>
-            </div>
+              <HelpPopover helpKey="prompts" />
+            </SectionHeader>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              aria-label={t("addPromptConfig")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("addPromptConfig")}
+              </span>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -282,49 +221,39 @@ function PromptConfigList() {
                       storageKey="admin-prompts"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="prompts-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {(configs?.length ?? 0) > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: (configs?.length ?? 0).toLocaleString(locale),
+                  total: (configs?.length ?? 0).toLocaleString(locale),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between">
-            <DataTable<ExtendedPromptConfig, unknown>
-              columns={columns}
+          <div className="mt-4 w-full">
+            <DataTable
+              virtualized
+              fillViewport
+              columns={columns as any}
               data={(configs as ExtendedPromptConfig[]) || []}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
               isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-prompts-table"
+              rowTestIdPrefix="admin-prompt-row"
             />
           </div>
         </CardContent>

@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   startStubServer,
   type StubServerHandle,
@@ -47,18 +46,18 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook endpoint health — auto-disable + manual re-enable (consolidates D-36 #4 + #5)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
   let webhookConfigId: string;
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Auto Disable ${uniqueId}`);
     stub = await startStubServer(); // 200 by default — we never want HTTP fired while DISABLED
-    prisma = new PrismaClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("after the 10th consecutive terminal failure, badge flips to DISABLED + audit row + next dispatch writes endpoint_disabled (no HTTP)", async ({
@@ -98,7 +97,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
         }
       );
 
-      const config = await prisma.webhookConfig.findFirst({
+      const config = await db.webhookConfig.findFirst({
         where: { projectId, direction: "OUTBOUND" },
         select: { id: true },
       });
@@ -110,7 +109,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     //    the state lib/webhooks/health.ts produces after 9 prior terminal
     //    failures — the 10th will flip to DISABLED (DISABLED_THRESHOLD=10).
     await test.step("Seed 9 prior failures into a DEGRADED endpoint state", async () => {
-      await prisma.webhookConfig.update({
+      await db.webhookConfig.update({
         where: { id: webhookConfigId },
         data: {
           consecutiveFailureCount: 9,
@@ -128,7 +127,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     await test.step("Simulate the 10th terminal failure flipping endpoint to DISABLED", async () => {
       stubCallsBefore = stub.captures.length;
       const transitionTime = new Date();
-      await prisma.webhookConfig.update({
+      await db.webhookConfig.update({
         where: { id: webhookConfigId },
         data: {
           consecutiveFailureCount: 10,
@@ -136,7 +135,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
           lastFailureAt: transitionTime,
         },
       });
-      await prisma.auditLog.create({
+      await db.auditLog.create({
         data: {
           action: "WEBHOOK_HEALTH_CHANGED",
           entityType: "WebhookConfig",
@@ -156,7 +155,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
 
     // 4. Audit row exists with the expected shape.
     await test.step("Verify auto-disable audit row has from=DEGRADED, to=DISABLED, reason=auto_threshold", async () => {
-      const disabledAudit = await prisma.auditLog.findFirst({
+      const disabledAudit = await db.auditLog.findFirst({
         where: {
           action: "WEBHOOK_HEALTH_CHANGED",
           entityType: "WebhookConfig",
@@ -203,7 +202,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
       );
       await api.completeTestRunViaStateChange(testRunId, projectId);
 
-      const disabledDelivery = await waitForDelivery(prisma, {
+      const disabledDelivery = await waitForDelivery(db, {
         where: {
           webhookConfigId,
           direction: "OUTBOUND",
@@ -261,7 +260,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
         timeout: 10_000,
       });
 
-      const reEnableAudit = await waitForAudit(prisma, {
+      const reEnableAudit = await waitForAudit(db, {
         where: {
           action: "WEBHOOK_HEALTH_CHANGED",
           entityType: "WebhookConfig",
@@ -286,7 +285,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
 
     // 3. WebhookConfig row reflects HEALTHY + counter reset to 0.
     await test.step("Verify the config is HEALTHY with the failure counter reset to 0", async () => {
-      const reEnabledConfig = await prisma.webhookConfig.findUnique({
+      const reEnabledConfig = await db.webhookConfig.findUnique({
         where: { id: webhookConfigId },
         select: { endpointHealth: true, consecutiveFailureCount: true },
       });
@@ -304,7 +303,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
       );
       await api.completeTestRunViaStateChange(testRunId, projectId);
 
-      const successDelivery = await waitForDelivery(prisma, {
+      const successDelivery = await waitForDelivery(db, {
         where: {
           webhookConfigId,
           direction: "OUTBOUND",
@@ -322,7 +321,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
 });
 
 async function waitForDelivery(
-  prisma: PrismaClient,
+  db: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     timeoutMs: number;
@@ -336,7 +335,7 @@ async function waitForDelivery(
 > {
   const startedAt = Date.now();
   while (Date.now() - startedAt < args.timeoutMs) {
-    const rows = await prisma.webhookDelivery.findMany({
+    const rows = await db.webhookDelivery.findMany({
       where: args.where,
       orderBy: { receivedAt: "desc" },
       select: { id: true, statusCode: true, error: true },
@@ -351,7 +350,7 @@ async function waitForDelivery(
 }
 
 async function waitForAudit(
-  prisma: PrismaClient,
+  db: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     predicate: (row: { metadata: unknown }) => boolean;
@@ -360,7 +359,7 @@ async function waitForAudit(
 ): Promise<{ metadata: unknown } | null> {
   const startedAt = Date.now();
   while (Date.now() - startedAt < args.timeoutMs) {
-    const rows = await prisma.auditLog.findMany({
+    const rows = await db.auditLog.findMany({
       where: args.where,
       orderBy: { timestamp: "desc" },
       select: { metadata: true },

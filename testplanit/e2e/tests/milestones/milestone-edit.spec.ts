@@ -30,7 +30,7 @@ test.describe("Milestone details — Edit action", () => {
       );
 
       await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
     });
 
     await test.step("Click Edit while watching for update calls", async () => {
@@ -61,7 +61,7 @@ test.describe("Milestone details — Edit action", () => {
       const milestoneId = await api.createMilestone(projectId, `Save ${ts}`);
 
       await page.goto(`/en-US/projects/milestones/${projectId}/${milestoneId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
     });
 
     await test.step("Enter edit mode", async () => {

@@ -1,8 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
-    $queryRaw: vi.fn(),
+// listScimConflictsAction issues its filtered query via Kysely
+// `sql`...`.execute(baseDb.$qb). Mock $qb as a capturing executor: transform/
+// compile pass the raw node through (so tests can inspect its SQL fragments and
+// bound parameters) and executeQuery returns the { rows } shape the action reads.
+const { qbCompileQuery, qbExecuteQuery } = vi.hoisted(() => ({
+  qbCompileQuery: vi.fn((node: unknown) => node),
+  qbExecuteQuery: vi.fn(),
+}));
+
+vi.mock("~/lib/db", () => ({
+  baseDb: {
+    $qb: {
+      getExecutor: () => ({
+        transformQuery: (n: unknown) => n,
+        compileQuery: qbCompileQuery,
+        executeQuery: qbExecuteQuery,
+      }),
+    },
     auditLog: {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -29,7 +44,7 @@ vi.mock("~/lib/webhooks/event-emitters/groupEvents", () => ({
   emitScimGroupMemberAdded: vi.fn(),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { emitScimGroupMemberAdded } from "~/lib/webhooks/event-emitters/groupEvents";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { getServerAuthSession } from "~/server/auth";
@@ -75,8 +90,10 @@ function makeAuditRow(overrides: Record<string, unknown> = {}) {
 describe("scimConflictLogActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    qbCompileQuery.mockImplementation((node: unknown) => node);
+    qbExecuteQuery.mockResolvedValue({ rows: [] });
     // Default tx behavior: invoke the callback with a fake tx client.
-    vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
+    vi.mocked(baseDb.$transaction).mockImplementation(async (cb: any) => {
       const txStub = {
         auditLog: {
           create: vi.fn(async ({ data }: any) => ({
@@ -91,33 +108,33 @@ describe("scimConflictLogActions", () => {
   });
 
   describe("listScimConflictsAction", () => {
-    it("L1: rejects non-admin caller and does NOT call $queryRaw", async () => {
+    it("L1: rejects non-admin caller and does not issue the query", async () => {
       mockNonAdminSession();
 
       const result = await listScimConflictsAction({});
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
 
-    it("L2: rejects missing session and does NOT call $queryRaw", async () => {
+    it("L2: rejects missing session and does not issue the query", async () => {
       mockNoSession();
 
       const result = await listScimConflictsAction({});
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
-      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(qbExecuteQuery).not.toHaveBeenCalled();
     });
 
-    it("L3: admin session calls $queryRaw with the SCIM filter literal", async () => {
+    it("L3: admin session issues the query with the SCIM filter literal", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       await listScimConflictsAction({ startIndex: 0, count: 50 });
 
-      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(qbExecuteQuery).toHaveBeenCalledTimes(1);
       // The Prisma.sql template fragments are stored on the first arg.
-      const call = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as any;
+      const call = qbCompileQuery.mock.calls[0][0] as any;
       // Prisma.sql arg is a Sql object: stringify by walking its values+strings.
       const rendered = JSON.stringify(call);
       expect(rendered).toContain("metadata->>'source' = 'scim'");
@@ -136,7 +153,7 @@ describe("scimConflictLogActions", () => {
       const rows = Array.from({ length: 51 }, (_, i) =>
         makeAuditRow({ id: `audit-${i}` })
       );
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce(rows as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows } as any);
 
       const result = await listScimConflictsAction({ count: 50 });
 
@@ -147,7 +164,7 @@ describe("scimConflictLogActions", () => {
 
     it("L5: default startIndex=0, count=50 when input is empty", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       const result = await listScimConflictsAction({});
 
@@ -158,7 +175,7 @@ describe("scimConflictLogActions", () => {
 
     it("L6: respects cursor input — passes cursor.timestamp and cursor.id to query", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       await listScimConflictsAction({
         cursor: {
@@ -167,15 +184,15 @@ describe("scimConflictLogActions", () => {
         },
       });
 
-      const call = vi.mocked(prisma.$queryRaw).mock.calls[0][0] as any;
+      const call = qbCompileQuery.mock.calls[0][0] as any;
       const rendered = JSON.stringify(call);
       // The cursor must appear as a bound value, not interpolated text.
       expect(rendered).toContain("audit-cursor-id");
     });
 
-    it("L7: $queryRaw failure returns generic error and does NOT leak err.message", async () => {
+    it("L7: query failure returns generic error and does NOT leak err.message", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockRejectedValueOnce(
+      qbExecuteQuery.mockRejectedValueOnce(
         new Error('column "foo" does not exist')
       );
 
@@ -188,11 +205,11 @@ describe("scimConflictLogActions", () => {
 
     it("L8: list action does NOT write any audit row (read-only)", async () => {
       mockAdminSession();
-      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([] as any);
+      qbExecuteQuery.mockResolvedValueOnce({ rows: [] } as any);
 
       await listScimConflictsAction({});
 
-      expect(prisma.auditLog.create).not.toHaveBeenCalled();
+      expect(baseDb.auditLog.create).not.toHaveBeenCalled();
     });
   });
 
@@ -203,13 +220,13 @@ describe("scimConflictLogActions", () => {
       const result = await reEmitScimMemberEventAction("audit-1");
 
       expect(result).toEqual({ success: false, error: "Unauthorized" });
-      expect(prisma.auditLog.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.auditLog.findUnique).not.toHaveBeenCalled();
       expect(emitScimGroupMemberAdded).not.toHaveBeenCalled();
     });
 
     it("R2: returns 'Audit row not found' when findUnique returns null", async () => {
       mockAdminSession();
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(null as any);
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(null as any);
 
       const result = await reEmitScimMemberEventAction("missing-id");
 
@@ -222,7 +239,7 @@ describe("scimConflictLogActions", () => {
 
     it("R3: returns 'No skipped members to re-emit' when metadata lacks scimSkippedMemberIds", async () => {
       mockAdminSession();
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           metadata: { source: "scim", scimLinked: true },
         }) as any
@@ -239,7 +256,7 @@ describe("scimConflictLogActions", () => {
 
     it("R4: emits only the now-valid subset and audits remaining skipped members", async () => {
       mockAdminSession("admin42");
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           id: "audit-orig",
           entityType: "Groups",
@@ -250,14 +267,14 @@ describe("scimConflictLogActions", () => {
           },
         }) as any
       );
-      vi.mocked(prisma.groups.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.groups.findUnique).mockResolvedValueOnce({
         id: 42,
         name: "Engineering",
         externalId: "ext-1",
         scimDisplayName: "Engineering",
         isDeleted: false,
       } as any);
-      vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
+      vi.mocked(baseDb.user.findMany).mockResolvedValueOnce([
         { id: "u1" },
       ] as any);
 
@@ -277,7 +294,7 @@ describe("scimConflictLogActions", () => {
 
     it("R5: emits all skipped members when all are now valid", async () => {
       mockAdminSession();
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           metadata: {
             source: "scim",
@@ -285,14 +302,14 @@ describe("scimConflictLogActions", () => {
           },
         }) as any
       );
-      vi.mocked(prisma.groups.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.groups.findUnique).mockResolvedValueOnce({
         id: 42,
         name: "Engineering",
         externalId: "ext-1",
         scimDisplayName: "Engineering",
         isDeleted: false,
       } as any);
-      vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
+      vi.mocked(baseDb.user.findMany).mockResolvedValueOnce([
         { id: "u1" },
         { id: "u2" },
       ] as any);
@@ -306,7 +323,7 @@ describe("scimConflictLogActions", () => {
 
     it("R6: emit failure inside tx rolls back the transaction", async () => {
       mockAdminSession();
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           metadata: {
             source: "scim",
@@ -314,14 +331,14 @@ describe("scimConflictLogActions", () => {
           },
         }) as any
       );
-      vi.mocked(prisma.groups.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.groups.findUnique).mockResolvedValueOnce({
         id: 42,
         name: "Engineering",
         externalId: "ext-1",
         scimDisplayName: "Engineering",
         isDeleted: false,
       } as any);
-      vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
+      vi.mocked(baseDb.user.findMany).mockResolvedValueOnce([
         { id: "u1" },
       ] as any);
       vi.mocked(emitScimGroupMemberAdded).mockRejectedValueOnce(
@@ -333,8 +350,8 @@ describe("scimConflictLogActions", () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe("Re-emit failed");
       // The tx callback throwing rolls back; no new audit row in the outer
-      // mock (auditLog.create on the outer prisma is never called).
-      expect(prisma.auditLog.create).not.toHaveBeenCalled();
+      // mock (auditLog.create on the outer baseDb is never called).
+      expect(baseDb.auditLog.create).not.toHaveBeenCalled();
     });
 
     it("R7: new audit row carries metadata.source 'scim' and discriminator fields", async () => {
@@ -343,11 +360,11 @@ describe("scimConflictLogActions", () => {
         id: "new-audit-1",
         ...data,
       }));
-      vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (cb: any) => {
         return cb({ auditLog: { create: txAuditCreate } });
       });
 
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           id: "audit-orig",
           metadata: {
@@ -356,14 +373,14 @@ describe("scimConflictLogActions", () => {
           },
         }) as any
       );
-      vi.mocked(prisma.groups.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.groups.findUnique).mockResolvedValueOnce({
         id: 42,
         name: "Engineering",
         externalId: "ext-1",
         scimDisplayName: "Engineering",
         isDeleted: false,
       } as any);
-      vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
+      vi.mocked(baseDb.user.findMany).mockResolvedValueOnce([
         { id: "u1" },
       ] as any);
 
@@ -382,7 +399,7 @@ describe("scimConflictLogActions", () => {
 
     it("R8: target Group missing or tombstoned returns 'Group not found'", async () => {
       mockAdminSession();
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           metadata: {
             source: "scim",
@@ -390,7 +407,7 @@ describe("scimConflictLogActions", () => {
           },
         }) as any
       );
-      vi.mocked(prisma.groups.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.groups.findUnique).mockResolvedValueOnce({
         id: 42,
         name: "Engineering",
         externalId: "ext-1",
@@ -409,7 +426,7 @@ describe("scimConflictLogActions", () => {
 
     it("R9: rejects audit rows whose entityType is not 'Groups'", async () => {
       mockAdminSession();
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           entityType: "User",
           metadata: {
@@ -428,7 +445,7 @@ describe("scimConflictLogActions", () => {
 
     it("R10: returns newAuditLogId + emittedMembers on success", async () => {
       mockAdminSession("admin1");
-      vi.mocked(prisma.$transaction).mockImplementation(async (cb: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (cb: any) => {
         return cb({
           auditLog: {
             create: vi.fn(async () => ({ id: "new-audit-42" })),
@@ -436,7 +453,7 @@ describe("scimConflictLogActions", () => {
         });
       });
 
-      vi.mocked(prisma.auditLog.findUnique).mockResolvedValueOnce(
+      vi.mocked(baseDb.auditLog.findUnique).mockResolvedValueOnce(
         makeAuditRow({
           metadata: {
             source: "scim",
@@ -444,14 +461,14 @@ describe("scimConflictLogActions", () => {
           },
         }) as any
       );
-      vi.mocked(prisma.groups.findUnique).mockResolvedValueOnce({
+      vi.mocked(baseDb.groups.findUnique).mockResolvedValueOnce({
         id: 42,
         name: "Engineering",
         externalId: "ext-1",
         scimDisplayName: "Engineering",
         isDeleted: false,
       } as any);
-      vi.mocked(prisma.user.findMany).mockResolvedValueOnce([
+      vi.mocked(baseDb.user.findMany).mockResolvedValueOnce([
         { id: "u1" },
       ] as any);
 

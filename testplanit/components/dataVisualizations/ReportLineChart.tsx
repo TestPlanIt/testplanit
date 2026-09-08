@@ -1,15 +1,22 @@
 "use client";
 import * as d3 from "d3";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { SimpleChartDataPoint } from "./ReportChart";
+import { durationTickFormat, localeTickFormat } from "~/utils/formatNumber";
 
 interface ReportLineChartProps {
   data: SimpleChartDataPoint[];
+  /** Format Y-axis ticks as durations (values are seconds). */
+  durationTicks?: boolean;
 }
 
-export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
+export const ReportLineChart: React.FC<ReportLineChartProps> = ({
+  data,
+  durationTicks = false,
+}) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -83,7 +90,15 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale));
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickFormat(
+            durationTicks ? durationTickFormat() : localeTickFormat(locale)
+          )
+      );
 
     const line = d3
       .line<SimpleChartDataPoint>()
@@ -129,9 +144,15 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .on("mouseover", (event, d) => {
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "block";
-          tooltipRef.current.innerHTML = `<strong>${
-            d.name
-          }</strong><br/>Value: ${d.formattedValue}`;
+          const dt = new Date(d.name);
+          const dateLabel = isNaN(dt.getTime())
+            ? d.name
+            : d3.timeFormat("%b %d, %Y")(dt);
+          // When a label is present (e.g. a milestone name plotted on its date),
+          // lead with it and show the date beneath; otherwise the date is the title.
+          tooltipRef.current.innerHTML = d.label
+            ? `<strong>${d.label}</strong><br/>${dateLabel}<br/>Value: ${d.formattedValue}`
+            : `<strong>${dateLabel}</strong><br/>Value: ${d.formattedValue}`;
         }
       })
       .on("mousemove", (event) => {
@@ -154,7 +175,7 @@ export const ReportLineChart: React.FC<ReportLineChartProps> = ({ data }) => {
       .ease(d3.easeBackOut.overshoot(1.3))
       .attr("r", 5)
       .style("opacity", 1);
-  }, [data, width, height, t]);
+  }, [data, width, height, t, locale, durationTicks]);
 
   return (
     <div

@@ -1,7 +1,8 @@
 "use client";
-import { Configurations } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Configurations } from "~/zenstack/models";
 import { useState } from "react";
-import { useUpdateConfigurations } from "~/lib/hooks";
 
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
@@ -32,7 +33,8 @@ export function DeleteConfiguration({
   onClose,
 }: DeleteConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
+  const { mutateAsync: updateConfiguration } =
+    useClientQueries(schema).configurations.useUpdate();
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -69,7 +71,7 @@ export function DeleteConfiguration({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("delete.title")}
               </AlertDialogTitle>
               <AlertDialogDescription>

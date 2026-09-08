@@ -70,13 +70,14 @@ describe("parseSavedSearchConfig", () => {
     );
   });
 
-  it("revives a milestone dueDateRange", () => {
+  it("revives a milestone dateRange", () => {
     const config = buildSavedSearchConfig(
       buildCriteria({
         selectedEntities: [SearchableEntityType.MILESTONE],
         filters: {
           milestone: {
-            dueDateRange: {
+            dateRange: {
+              field: "createdAt",
               from: new Date("2026-03-01T00:00:00.000Z"),
               to: new Date("2026-03-31T00:00:00.000Z"),
             },
@@ -85,7 +86,23 @@ describe("parseSavedSearchConfig", () => {
       })
     );
     const parsed = parseSavedSearchConfig(JSON.parse(JSON.stringify(config)));
-    expect(parsed!.filters.milestone?.dueDateRange?.from).toBeInstanceOf(Date);
+    expect(parsed!.filters.milestone?.dateRange?.from).toBeInstanceOf(Date);
+  });
+
+  it("revives a session duration range", () => {
+    const config = buildSavedSearchConfig(
+      buildCriteria({
+        selectedEntities: [SearchableEntityType.SESSION],
+        filters: {
+          session: { estimateRange: { min: 300, max: 3600 } },
+        },
+      })
+    );
+    const parsed = parseSavedSearchConfig(JSON.parse(JSON.stringify(config)));
+    expect(parsed!.filters.session?.estimateRange).toEqual({
+      min: 300,
+      max: 3600,
+    });
   });
 
   it("preserves custom-field values without coercing them", () => {
@@ -110,6 +127,35 @@ describe("parseSavedSearchConfig", () => {
     expect(parsed!.filters.repositoryCase?.customFields?.[0]?.value).toBe(
       "High"
     );
+  });
+
+  it("accepts a custom field whose value key was dropped by JSON serialization", () => {
+    // An unset value serializes to `undefined`, and JSON.stringify removes the
+    // key entirely — the schema must treat the absent key as valid, not reject
+    // the whole config.
+    const config = buildSavedSearchConfig(
+      buildCriteria({
+        filters: {
+          repositoryCase: {
+            customFields: [
+              {
+                fieldId: 42,
+                fieldName: "Priority",
+                fieldType: "Select",
+                operator: "equals",
+                value: undefined,
+              },
+            ],
+          },
+        },
+      })
+    );
+    const wire = JSON.parse(JSON.stringify(config));
+    expect("value" in wire.filters.repositoryCase.customFields[0]).toBe(false);
+
+    const parsed = parseSavedSearchConfig(wire);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.filters.repositoryCase?.customFields?.[0]?.fieldId).toBe(42);
   });
 
   it("returns null for an unrecognized version", () => {

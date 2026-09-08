@@ -46,7 +46,7 @@ Repository file listings are cached (in Valkey) for fast access during AI genera
 
 - **Enable file caching** — on by default. When off, files are fetched live from the provider on every export (no copy is stored in TestPlanIt).
 - **Cache Duration (days)** — 1–30, default 7.
-- **Cache Status** — shows the last fetch result; **Refresh Cache** re-fetches the file listing and contents now.
+- **Cache Status** — the last fetch result, plus **Files Cached** (how many files were listed) and **Contents Cached** (how many file _contents_ were stored). If contents are incomplete, a warning appears — generated scripts won't reference the missing files. **Refresh Cache** re-fetches now; the file list and contents are pulled in a single repository archive download.
 
 Click **Save Configuration** to persist the binding. Changing the repository, branch, or path patterns invalidates the cache; changing only the duration or the cache toggle does not.
 

@@ -1,9 +1,11 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { DbNull } from "@zenstackhq/orm";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -89,7 +91,7 @@ export const POST = withAuditContext(
       const validatedData = createVersionSchema.parse(body);
 
       // Fetch the current test case with all necessary relations
-      const testCase = await prisma.repositoryCases.findUnique({
+      const testCase = await baseDb.repositoryCases.findUnique({
         where: { id: caseId },
         include: {
           project: true,
@@ -97,11 +99,14 @@ export const POST = withAuditContext(
           template: true,
           state: true,
           creator: true,
-          tags: { select: { name: true } },
-          issues: {
-            select: { id: true, name: true, externalId: true },
+          caseTags: { select: { tag: { select: { name: true } } } },
+          caseIssues: {
+            select: {
+              issue: { select: { id: true, name: true, externalId: true } },
+            },
           },
           steps: {
+            where: { isDeleted: false },
             orderBy: { order: "asc" },
             select: { step: true, expectedResult: true },
           },
@@ -151,10 +156,18 @@ export const POST = withAuditContext(
       // Convert tags to array of tag names
       const tagsArray =
         overrides.tags ??
-        testCase.tags.map((tag: { name: string }) => tag.name);
+        testCase.caseTags.map(
+          (caseTag: { tag: { name: string } }) => caseTag.tag.name
+        );
 
       // Convert issues to array of objects
-      const issuesArray = overrides.issues ?? testCase.issues;
+      const issuesArray =
+        overrides.issues ??
+        testCase.caseIssues.map(
+          (caseIssue: {
+            issue: { id: number; name: string; externalId: string | null };
+          }) => caseIssue.issue
+        );
 
       // Prepare version data
       const versionData = {
@@ -190,9 +203,10 @@ export const POST = withAuditContext(
         isArchived: overrides.isArchived ?? testCase.isArchived,
         isDeleted: false, // Versions should never be marked as deleted
         version: versionNumber,
-        steps: stepsJson,
+        // v3 rejects raw `null` for nullable Json columns; DbNull writes SQL NULL.
+        steps: stepsJson ?? DbNull,
         tags: tagsArray,
-        issues: issuesArray,
+        issues: issuesArray ?? DbNull,
         links: overrides.links ?? [],
         attachments: overrides.attachments ?? [],
       };
@@ -207,13 +221,13 @@ export const POST = withAuditContext(
 
       while (retryCount <= maxRetries) {
         try {
-          result = await prisma.repositoryCaseVersions.create({
+          result = await baseDb.repositoryCaseVersions.create({
             data: versionData,
           });
           break; // Success, exit retry loop
         } catch (error: any) {
-          // Check if it's a unique constraint violation (P2002)
-          if (error.code === "P2002" && retryCount < maxRetries) {
+          // Check if it's a unique constraint violation
+          if (isUniqueConstraintError(error) && retryCount < maxRetries) {
             retryCount++;
             const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
             console.log(
@@ -224,7 +238,7 @@ export const POST = withAuditContext(
             await new Promise((resolve) => setTimeout(resolve, delay));
 
             // Refetch the test case to get the latest currentVersion
-            const refetchedCase = await prisma.repositoryCases.findUnique({
+            const refetchedCase = await baseDb.repositoryCases.findUnique({
               where: { id: caseId },
               select: { currentVersion: true },
             });

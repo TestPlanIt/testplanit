@@ -15,6 +15,7 @@ const eslintConfig = [
       "**/playwright-report/**",
       "e2e/test-results/**",
       "coverage/**",
+      "zenstack/**",
     ],
   },
   {

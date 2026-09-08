@@ -1,10 +1,10 @@
-import { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import { toNumberValue } from "./helpers";
 import type { EntitySummaryResult } from "./types";
 
 export async function importRepositoryCaseTags(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   caseIdMap: Map<number, number>
@@ -48,9 +48,11 @@ export async function importRepositoryCaseTags(
     const existing = await tx.repositoryCases.findFirst({
       where: {
         id: caseId,
-        tags: {
+        caseTags: {
           some: {
-            id: tagId,
+            tag: {
+              id: tagId,
+            },
           },
         },
       },
@@ -62,12 +64,10 @@ export async function importRepositoryCaseTags(
     }
 
     // Create the tag assignment by connecting the tag to the case
-    await tx.repositoryCases.update({
-      where: { id: caseId },
+    await tx.repositoryCaseTag.create({
       data: {
-        tags: {
-          connect: { id: tagId },
-        },
+        caseId,
+        tagId,
       },
     });
 
@@ -78,7 +78,7 @@ export async function importRepositoryCaseTags(
 }
 
 export async function importRunTags(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>
@@ -152,7 +152,7 @@ export async function importRunTags(
 }
 
 export async function importSessionTags(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   sessionIdMap: Map<number, number>

@@ -250,31 +250,33 @@ Export test cases and related data to CSV format.
 
 #### Export Options
 
-1. **Scope Selection**
-   - Current folder only
-   - Current folder and subfolders
-   - Selected test cases
-   - Entire repository
+1. **Export** (scope)
+   - **Selected** — only the test cases you have checked in the table. Disabled when nothing is selected.
+   - **All in View** — every test case matching the current filters, including those on pages you have not scrolled to.
+   - **All in Project** — every test case in the project, ignoring both selections and filters.
 
-2. **Field Selection**
-   - Choose which fields to include
-   - Custom field inclusion
-   - Relationship data (tags, attachments)
+   Each option shows a live count of the cases it would export.
 
-3. **Format Options**
-   - **Text Long format**: JSON (raw TipTap JSON), Plain Text (stripped formatting), or Markdown
-   - **Steps format**: JSON, Plain Text, or Markdown
-   - Attachment format: JSON, Names, or Embedded
-   - Custom delimiter selection (comma, semicolon, colon, pipe)
-   - Row mode: single or multi-row per test case
+2. **Format**
+   - **CSV** or **PDF**
+
+3. **CSV Options** — the options below appear only when the format is CSV
+   - **Columns**: **All** (every available field, including template custom fields) or **Visible** (only the columns currently shown in the table)
+   - **Delimiter**: Comma (`,`), Semicolon (`;`), Colon (`:`), or Pipe (`|`)
+   - **Rich Text Format**: JSON (raw TipTap JSON), Plain Text (stripped formatting), or Markdown
+   - **Steps Format**: JSON, Plain Text, or Markdown
+   - **Test Case Rows**: Single Row per Case or Single Row per Step
+   - **Attachment Format**: JSON, Names, or Embed Images
 
 #### Export Process
 
 1. Navigate to Repository
 2. Click **Export** button
 3. Configure export options
-4. Click **Generate Export**
-5. Download generated CSV file
+4. Click **Export**
+5. Download the generated file
+
+![The Export Test Cases dialog open over the repository, showing the scope selection alongside the field and format options](/img/screenshots/user-guide/projects/repository/export-cases-dialog.png)
 
 ## Automated Test Results Import
 

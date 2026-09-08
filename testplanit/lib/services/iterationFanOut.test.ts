@@ -2,7 +2,7 @@
  * Mocked-tx unit tests for materializeIterations.
  *
  * Companion to iterationFanOut.integration.test.ts (which exercises a real
- * prisma.$transaction). This file covers:
+ * db.$transaction). This file covers:
  *   - The `rowIndex` (NOT iterationOrder) field name at the type level
  *   - Progress callback cadence math
  *   - Empty-result short-circuit (no parameterized cases)

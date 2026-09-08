@@ -1,5 +1,10 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { AutomationRunsCard } from "@/components/AutomationRunsCard";
+import { CollapsibleSummarySection } from "@/components/CollapsibleSummarySection";
+import { SummaryCardGrid } from "@/components/SummaryCardGrid";
 import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
 import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
@@ -30,19 +35,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApplicationArea } from "@prisma/client";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { ApplicationArea } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CirclePlus, Maximize2, Upload } from "lucide-react";
+import {
+  CircleCheck,
+  CircleDot,
+  CirclePlus,
+  Maximize2,
+  Upload,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -59,16 +64,6 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCreateTestRuns,
-  useFindFirstJUnitTestResult,
-  useFindFirstProjects,
-  useFindFirstTestRunResults,
-  useFindManyJUnitTestResult,
-  useFindManyMilestones,
-  useFindManyTestRunResults,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -76,7 +71,16 @@ import AddTestRunModal from "./AddTestRunModal";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "./DuplicateTestRunDialog";
-import TestRunDisplay from "./TestRunDisplay";
+import { RunFilterChips } from "./RunFilterChips";
+import {
+  EMPTY_RUN_FILTERS,
+  isAnyRunFilterActive,
+  parseStoredRunFilters,
+  runFiltersStorageKey,
+  runTypeFilterFor,
+  type RunFilters,
+} from "./runFilters";
+import TestRunDisplay, { type TestRunsWithDetails } from "./TestRunDisplay";
 
 interface ProjectTestRunsProps {
   params: Promise<{ projectId: string }>;
@@ -134,12 +138,52 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     500
   );
 
-  // Test Run Type Filter State (for both Active and Completed tabs) - persisted in URL
-  type RunTypeFilter = "both" | "manual" | "automated";
-  const [runTypeFilter, setRunTypeFilter] = useTabState("runType", "both") as [
-    RunTypeFilter,
-    (value: RunTypeFilter) => void,
-  ];
+  // Run list filters (Manual / Automated / My Test Runs), applied to both the
+  // Active and Completed tabs and remembered per project in localStorage: they
+  // are a personal working preference on a page people return to constantly,
+  // not something to re-pick every visit.
+  //
+  // "My Test Runs" = the signed-in user created the run, is assigned a case in
+  // it, or recorded a result in it — the same three roles the row's
+  // contributor avatars credit (see TestRunItem's MemberList).
+  const [runFilters, setRunFilters] = useState<RunFilters>(EMPTY_RUN_FILTERS);
+  const [filtersHydrated, setFiltersHydrated] = useState(false);
+
+  // Read in an effect, not in the initializer: localStorage isn't available
+  // during SSR and reading it inline would hydrate-mismatch.
+  useEffect(() => {
+    try {
+      setRunFilters(
+        parseStoredRunFilters(
+          window.localStorage.getItem(runFiltersStorageKey(projectId))
+        )
+      );
+    } catch {
+      // localStorage unavailable (private mode) — no filters.
+    } finally {
+      setFiltersHydrated(true);
+    }
+  }, [projectId]);
+
+  const handleRunFiltersChange = useCallback(
+    (next: RunFilters) => {
+      setRunFilters(next);
+      try {
+        window.localStorage.setItem(
+          runFiltersStorageKey(projectId),
+          JSON.stringify(next)
+        );
+      } catch {
+        // Persistence is best-effort.
+      }
+    },
+    [projectId]
+  );
+
+  const runTypeFilter = runTypeFilterFor(runFilters);
+  const participantFilterActive = runFilters.mine;
+  const participantFilter = participantFilterActive ? "mine" : "all";
+  const anyRunFilterActive = isAnyRunFilterActive(runFilters);
 
   // Calculate pagination for completed runs
   const effectiveCompletedPageSize =
@@ -169,6 +213,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const [modalSelectedTestCases, setModalSelectedTestCases] = useState<
     number[]
   >([]);
+  // Optional handoff extras (create-run-from-milestone-issues): issues to
+  // pre-link and the milestone to pre-select on the Add Run form.
+  const [modalLinkedIssueIds, setModalLinkedIssueIds] = useState<number[]>([]);
+  const [modalDefaultMilestoneId, setModalDefaultMilestoneId] = useState<
+    number | undefined
+  >(undefined);
 
   // Debug: Log when modalSelectedTestCases changes
   useEffect(() => {
@@ -182,8 +232,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     router.replace(pathname, { scroll: false });
     // Clear sessionStorage when modal closes
     sessionStorage.removeItem("createTestRun_selectedCases");
+    sessionStorage.removeItem("createTestRun_linkedIssues");
+    sessionStorage.removeItem("createTestRun_milestoneId");
     // Clear selected test cases
     setModalSelectedTestCases([]);
+    setModalLinkedIssueIds([]);
+    setModalDefaultMilestoneId(undefined);
   }, [router, setIsAddTestRunModalOpen, pathname]);
 
   // New state for DuplicateTestRunDialog and subsequent AddTestRunModal for duplication
@@ -262,6 +316,22 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
       // console.log("Parsed cases from storage:", casesFromStorage);
       setModalSelectedTestCases(casesFromStorage);
+
+      const storedIssues = sessionStorage.getItem("createTestRun_linkedIssues");
+      const issuesFromStorage = storedIssues ? JSON.parse(storedIssues) : [];
+      setModalLinkedIssueIds(
+        Array.isArray(issuesFromStorage) ? issuesFromStorage : []
+      );
+
+      const storedMilestoneId = sessionStorage.getItem(
+        "createTestRun_milestoneId"
+      );
+      const parsedMilestoneId = storedMilestoneId
+        ? Number(storedMilestoneId)
+        : NaN;
+      setModalDefaultMilestoneId(
+        Number.isInteger(parsedMilestoneId) ? parsedMilestoneId : undefined
+      );
 
       // Don't clear sessionStorage here - clear it when modal closes to avoid fast refresh issues
     }
@@ -349,7 +419,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     data: allIncompleteTestRuns,
     isLoading: isLoadingIncompleteRuns,
     refetch: refetchIncompleteTestRuns,
-  } = useFindManyTestRuns(
+  } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         AND: [
@@ -366,22 +436,85 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }
   ) ?? { data: [], isLoading: false, refetch: () => {} };
 
-  // Apply type filter to incomplete (active) runs
+  // In-progress automated runs for the summary card — unaffected by the
+  // list's manual/automated filter; the card always reflects what CI is
+  // doing right now.
+  const activeAutomatedRuns = useMemo(
+    () =>
+      (allIncompleteTestRuns ?? []).filter((run) =>
+        isAutomatedTestRunType(run.testRunType)
+      ),
+    [allIncompleteTestRuns]
+  );
+
+  // Ids of the ACTIVE runs the signed-in user participates in. Kept as its own
+  // id-only query rather than folded into the list query above for two
+  // reasons: the AutomationRunsCard reads that list and must keep reflecting
+  // every in-progress automated run regardless of this filter, and toggling
+  // the filter then costs one small round trip instead of refetching the whole
+  // list payload. The completed tab filters server-side instead — it is
+  // already paginated there (see /api/test-runs/completed).
+  const currentUserId = session?.user?.id;
+  const { data: participantRunRows, isLoading: isLoadingParticipantRuns } =
+    useClientQueries(schema).testRuns.useFindMany(
+      {
+        where: {
+          projectId: numericProjectId ?? undefined,
+          isCompleted: false,
+          isDeleted: false,
+          OR: [
+            { createdById: currentUserId },
+            {
+              testCases: {
+                some: { isDeleted: false, assignedToId: currentUserId },
+              },
+            },
+            {
+              results: {
+                some: { isDeleted: false, executedById: currentUserId },
+              },
+            },
+          ],
+        },
+        select: { id: true },
+      },
+      {
+        enabled:
+          participantFilterActive &&
+          !!numericProjectId &&
+          !!currentUserId &&
+          activeTab === "active",
+        staleTime: 30000,
+      }
+    ) ?? { data: [], isLoading: false };
+
+  const participantRunIds = useMemo(
+    () => new Set((participantRunRows ?? []).map((run) => run.id)),
+    [participantRunRows]
+  );
+
+  // Apply type + participation filters to incomplete (active) runs
   const incompleteTestRuns = useMemo(() => {
     if (!allIncompleteTestRuns) return [];
-    if (runTypeFilter === "both") return allIncompleteTestRuns;
+    let runs = allIncompleteTestRuns;
 
     if (runTypeFilter === "manual") {
-      return allIncompleteTestRuns.filter(
-        (run) => !isAutomatedTestRunType(run.testRunType)
-      );
-    } else {
-      // automated filter
-      return allIncompleteTestRuns.filter((run) =>
-        isAutomatedTestRunType(run.testRunType)
-      );
+      runs = runs.filter((run) => !isAutomatedTestRunType(run.testRunType));
+    } else if (runTypeFilter === "automated") {
+      runs = runs.filter((run) => isAutomatedTestRunType(run.testRunType));
     }
-  }, [allIncompleteTestRuns, runTypeFilter]);
+
+    if (participantFilterActive) {
+      runs = runs.filter((run) => participantRunIds.has(run.id));
+    }
+
+    return runs;
+  }, [
+    allIncompleteTestRuns,
+    runTypeFilter,
+    participantFilterActive,
+    participantRunIds,
+  ]);
 
   // Handle tab change with query invalidation
   const handleTabChange = useCallback(
@@ -434,7 +567,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }),
   });
 
-  const { data: project, isLoading: isProjectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: isProjectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         AND: [
@@ -452,7 +587,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     }
   );
 
-  const _createTestRun = useCreateTestRuns();
+  const _createTestRun = useClientQueries(schema).testRuns.useCreate();
 
   // NOTE: Disabled due to performance optimization - results data is no longer fetched in the main query
   const _numNotStartedActiveTestRuns = 0;
@@ -479,6 +614,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         effectiveCompletedPageSize,
         debouncedCompletedRunsSearchString,
         runTypeFilter,
+        participantFilter,
       ],
       queryFn: async () => {
         if (!numericProjectId) return null;
@@ -489,6 +625,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           pageSize: effectiveCompletedPageSize.toString(),
           search: debouncedCompletedRunsSearchString,
           runType: runTypeFilter,
+          participant: participantFilter,
         });
 
         const response = await fetch(`/api/test-runs/completed?${params}`);
@@ -497,7 +634,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         }
         return response.json();
       },
-      enabled: !!numericProjectId && activeTab === "completed",
+      // Waits for the stored filters so this fires once with them, rather
+      // than once unfiltered and again a tick later.
+      enabled:
+        !!numericProjectId && activeTab === "completed" && filtersHydrated,
       staleTime: 30000, // Cache for 30 seconds
       refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
     });
@@ -518,12 +658,17 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setCompletedRunsPage(1);
   }, [debouncedCompletedRunsSearchString, setCompletedRunsPage]);
 
-  // Reset to first page when page size or run type filter changes
+  // Reset to first page when page size or either list filter changes
   useEffect(() => {
     setCompletedRunsPage(1);
-  }, [completedRunsPageSize, runTypeFilter, setCompletedRunsPage]);
+  }, [
+    completedRunsPageSize,
+    runTypeFilter,
+    participantFilter,
+    setCompletedRunsPage,
+  ]);
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: numericProjectId ?? undefined,
       isDeleted: false,
@@ -560,7 +705,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const {
     data: completedRunsLast6Months,
     isLoading: isLoadingCompletedRunsData,
-  } = useFindManyTestRuns(
+  } = useClientQueries(schema).testRuns.useFindMany(
     {
       where: {
         projectId: numericProjectId ?? undefined,
@@ -581,7 +726,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Manual Test Run Results (two-query approach) ---
   // Query 1: Get the most recent result to determine the date range
-  const { data: latestManualResult } = useFindFirstTestRunResults(
+  const { data: latestManualResult } = useClientQueries(
+    schema
+  ).testRunResults.useFindFirst(
     {
       where: {
         testRun: { projectId: numericProjectId ?? undefined },
@@ -610,7 +757,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // Query 2: Get all results within 7 days of the latest result
   const { data: rawRecentResults, isLoading: isLoadingRecentResults } =
-    useFindManyTestRunResults(
+    useClientQueries(schema).testRunResults.useFindMany(
       {
         where: {
           testRun: { projectId: numericProjectId ?? undefined },
@@ -719,7 +866,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // --- Fetch Recent Automated (JUnit) Test Results (two-query approach) ---
   // Query 1: Get the most recent automated result to determine the date range
-  const { data: latestAutomatedResult } = useFindFirstJUnitTestResult(
+  const { data: latestAutomatedResult } = useClientQueries(
+    schema
+  ).jUnitTestResult.useFindFirst(
     {
       where: {
         testSuite: {
@@ -750,7 +899,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // Query 2: Get all automated results within 7 days of the latest result
   const { data: rawAutomatedResults, isLoading: isLoadingAutomatedResults } =
-    useFindManyJUnitTestResult(
+    useClientQueries(schema).jUnitTestResult.useFindMany(
       {
         where: {
           testSuite: {
@@ -979,9 +1128,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -1004,58 +1153,61 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         <Card className="flex w-full min-w-[400px]">
           <div className="flex-1 w-full">
             <CardHeader id="test-runs-page-header">
-              <CardTitle>
-                <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                  <div>
-                    <CardTitle>
-                      {tGlobal("enums.ApplicationArea.TestRuns")}
-                    </CardTitle>
-                  </div>
-                  <div>
-                    {canAddEdit && (
-                      <div className="flex flex-row gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => setImportDialogOpen(true)}
-                        >
-                          <Upload className="h-4 w-4" />
-                          {tCommon("actions.junit.import.title")}
-                        </Button>
-                        {importDialogOpen && (
-                          <TestResultsImportDialog
-                            projectId={parseInt(projectId)}
-                            onSuccess={() => {
-                              router.refresh();
-                              void refetchIncompleteTestRuns();
-                            }}
-                            open={importDialogOpen}
-                            onClose={() => {
-                              setImportDialogOpen(false);
-                              setDroppedFiles([]);
-                            }}
-                            initialFiles={
-                              droppedFiles.length > 0 ? droppedFiles : undefined
-                            }
-                          />
-                        )}
-                        <Button
-                          type="button"
-                          variant="default"
-                          data-testid="new-run-button"
-                          onClick={() => setIsAddTestRunModalOpen(true)}
-                        >
-                          <CirclePlus className="h-4 w-4" />
-                          <span className="hidden md:inline">
-                            {t("add.title")}
-                          </span>
-                        </Button>
-                      </div>
+              <div className="flex items-center justify-between gap-2">
+                <SectionHeader className="flex items-center gap-2">
+                  <CardTitle>
+                    {tGlobal("enums.ApplicationArea.TestRuns")}
+                  </CardTitle>
+                  <HelpPopover helpKey="projectRuns" />
+                </SectionHeader>
+                {canAddEdit && (
+                  <div className="flex flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setImportDialogOpen(true)}
+                      aria-label={tCommon("actions.junit.import.title")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {tCommon("actions.junit.import.title")}
+                      </span>
+                    </Button>
+                    {importDialogOpen && (
+                      <TestResultsImportDialog
+                        projectId={parseInt(projectId)}
+                        onSuccess={() => {
+                          router.refresh();
+                          void refetchIncompleteTestRuns();
+                        }}
+                        open={importDialogOpen}
+                        onClose={() => {
+                          setImportDialogOpen(false);
+                          setDroppedFiles([]);
+                        }}
+                        initialFiles={
+                          droppedFiles.length > 0 ? droppedFiles : undefined
+                        }
+                      />
                     )}
+                    <Button
+                      type="button"
+                      variant="default"
+                      data-testid="new-run-button"
+                      onClick={() => setIsAddTestRunModalOpen(true)}
+                      aria-label={t("add.title")}
+                      className="group gap-0 transition-all duration-200 hover:gap-2"
+                    >
+                      <CirclePlus className="h-4 w-4" />
+                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                        {t("add.title")}
+                      </span>
+                    </Button>
                   </div>
-                </div>
-              </CardTitle>
-              <CardDescription className="uppercase">
-                <span className="flex items-center gap-2 uppercase shrink-0">
+                )}
+              </div>
+              <CardDescription>
+                <span className="flex items-center gap-2">
                   <ProjectIcon iconUrl={project?.iconUrl} />
                   {project?.name}
                 </span>
@@ -1063,337 +1215,332 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             </CardHeader>
             <CardContent className="flex flex-col">
               {/* Summary Metrics Display */}
-              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Card 1: Work Distribution - Conditional Render */}
-                {(isLoadingIncompleteRuns ||
-                  (sunburstChartData.children &&
-                    sunburstChartData.children.length > 0)) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {tGlobal("runs.summary.workDistributionTitle")}
-                        </CardTitle>
-                        <CardDescription>
-                          <div className="flex flex-row gap-1">
-                            <p>
-                              {tGlobal(
-                                "sessions.summary.workDistributionDescription"
-                              )}
-                            </p>
-                            <p>
-                              {toHumanReadable(
-                                totalRemainingEstimateForDisplay,
-                                {
-                                  isSeconds: true,
-                                  locale,
-                                }
-                              )}
-                            </p>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "sunburst",
-                            title: tGlobal(
-                              "runs.summary.workDistributionTitle"
-                            ),
-                            data: sunburstChartData,
-                            projectId: projectId,
-                            onLegendDataGenerated: handleLegendDataGenerated,
-                            onTotalCalculated: handleSunburstTotalCalculated,
-                            onTestRunClick: handleTestRunSunburstClick,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoadingIncompleteRuns ? (
-                        <LoadingSpinner />
-                      ) : sunburstChartData.children &&
-                        sunburstChartData.children.length > 0 ? (
-                        <SummarySunburstChart
-                          data={sunburstChartData}
-                          projectId={projectId}
-                          onLegendDataGenerated={handleLegendDataGenerated}
-                          onTotalCalculated={handleSunburstTotalCalculated}
-                          onTestRunClick={handleTestRunSunburstClick}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center w-full h-[210px] flex items-center justify-center">
-                          {tGlobal("milestones.empty.forecasts")}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Card 2: Recent Results - Conditional Render */}
-                {(isLoadingRecentResults ||
-                  recentResultsChartData.length > 0) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div className="w-full">
-                        <CardTitle className="font-medium">
-                          {t("summary.recentResultsTitle")}
-                        </CardTitle>
-                        <CardDescription>
-                          {!isLoadingRecentResults &&
-                            recentResultsDateRange.first &&
-                            recentResultsDateRange.last && (
-                              <span>
-                                <DateFormatter
-                                  date={recentResultsDateRange.first}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat +
-                                    " " +
-                                    session?.user.preferences?.timeFormat
+              <CollapsibleSummarySection
+                storageKey={`tpi.runs.${numericProjectId}.summaryCollapsed`}
+              >
+                <SummaryCardGrid>
+                  {numericProjectId != null &&
+                    activeAutomatedRuns.length > 0 && (
+                      <AutomationRunsCard
+                        projectId={numericProjectId}
+                        runs={activeAutomatedRuns}
+                      />
+                    )}
+                  {/* Card 1: Work Distribution - Conditional Render */}
+                  {(isLoadingIncompleteRuns ||
+                    (sunburstChartData.children &&
+                      sunburstChartData.children.length > 0)) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {tGlobal("runs.summary.workDistributionTitle")}
+                          </CardTitle>
+                          <CardDescription>
+                            <div className="flex flex-row gap-1">
+                              <p>
+                                {tGlobal(
+                                  "sessions.summary.workDistributionDescription"
+                                )}
+                              </p>
+                              <p>
+                                {toHumanReadable(
+                                  totalRemainingEstimateForDisplay,
+                                  {
+                                    isSeconds: true,
+                                    locale,
                                   }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                                {" – "}
-                                <DateFormatter
-                                  date={recentResultsDateRange.last}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat +
-                                    " " +
-                                    session?.user.preferences?.timeFormat
-                                  }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                              </span>
-                            )}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "donut",
-                            title: t("summary.recentResultsTitle"),
-                            data: recentResultsChartData,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex justify-center items-center p-2">
-                      {isLoadingRecentResults ? (
-                        <LoadingSpinner />
-                      ) : recentResultsChartData.length > 0 ? (
-                        <RecentResultsDonut data={recentResultsChartData} />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("summary.noRecentResults")}
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex flex-row items-center justify-center">
-                      {!isLoadingRecentResults &&
-                        recentResultsChartData.length > 0 && (
-                          <span className="font-semibold">{`${recentResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                                )}
+                              </p>
+                            </div>
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "sunburst",
+                              title: tGlobal(
+                                "runs.summary.workDistributionTitle"
+                              ),
+                              data: sunburstChartData,
+                              projectId: projectId,
+                              onLegendDataGenerated: handleLegendDataGenerated,
+                              onTotalCalculated: handleSunburstTotalCalculated,
+                              onTestRunClick: handleTestRunSunburstClick,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent>
+                        {isLoadingIncompleteRuns ? (
+                          <LoadingSpinner />
+                        ) : sunburstChartData.children &&
+                          sunburstChartData.children.length > 0 ? (
+                          <SummarySunburstChart
+                            data={sunburstChartData}
+                            projectId={projectId}
+                            onLegendDataGenerated={handleLegendDataGenerated}
+                            onTotalCalculated={handleSunburstTotalCalculated}
+                            onTestRunClick={handleTestRunSunburstClick}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center w-full h-[210px] flex items-center justify-center">
+                            {tGlobal("milestones.empty.forecasts")}
+                          </p>
                         )}
-                    </CardFooter>
-                  </Card>
-                )}
+                      </CardContent>
+                    </Card>
+                  )}
 
-                {/* Card 3: Automated Results - Conditional Render */}
-                {(isLoadingAutomatedResults ||
-                  automatedResultsChartData.length > 0) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div className="w-full">
-                        <CardTitle className="font-medium">
-                          {t("summary.recentAutomatedResultsTitle")}
-                        </CardTitle>
-                        <CardDescription>
-                          {!isLoadingAutomatedResults &&
-                            automatedResultsDateRange.first &&
-                            automatedResultsDateRange.last && (
-                              <span>
-                                <DateFormatter
-                                  date={automatedResultsDateRange.first}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat +
-                                    " " +
-                                    session?.user.preferences?.timeFormat
-                                  }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                                {" – "}
-                                <DateFormatter
-                                  date={automatedResultsDateRange.last}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat +
-                                    " " +
-                                    session?.user.preferences?.timeFormat
-                                  }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                              </span>
-                            )}
-                        </CardDescription>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "donut",
-                            title: t("summary.recentAutomatedResultsTitle"),
-                            data: automatedResultsChartData,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="flex justify-center items-center p-2">
-                      {isLoadingAutomatedResults ? (
-                        <LoadingSpinner />
-                      ) : automatedResultsChartData.length > 0 ? (
-                        <RecentResultsDonut data={automatedResultsChartData} />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("summary.noRecentAutomatedResults")}
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter className="flex flex-row items-center justify-center">
-                      {!isLoadingAutomatedResults &&
-                        automatedResultsChartData.length > 0 && (
-                          <span className="font-semibold">{`${automatedResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                  {/* Card 2: Recent Results - Conditional Render */}
+                  {(isLoadingRecentResults ||
+                    recentResultsChartData.length > 0) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div className="w-full">
+                          <CardTitle className="font-medium">
+                            {t("summary.recentResultsTitle")}
+                          </CardTitle>
+                          <CardDescription>
+                            {!isLoadingRecentResults &&
+                              recentResultsDateRange.first &&
+                              recentResultsDateRange.last && (
+                                <span>
+                                  <DateFormatter
+                                    date={recentResultsDateRange.first}
+                                    formatString={
+                                      session?.user.preferences?.dateFormat +
+                                      " " +
+                                      session?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      session?.user.preferences?.timezone
+                                    }
+                                  />
+                                  {" – "}
+                                  <DateFormatter
+                                    date={recentResultsDateRange.last}
+                                    formatString={
+                                      session?.user.preferences?.dateFormat +
+                                      " " +
+                                      session?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      session?.user.preferences?.timezone
+                                    }
+                                  />
+                                </span>
+                              )}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "donut",
+                              title: t("summary.recentResultsTitle"),
+                              data: recentResultsChartData,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="flex justify-center items-center p-2">
+                        {isLoadingRecentResults ? (
+                          <LoadingSpinner />
+                        ) : recentResultsChartData.length > 0 ? (
+                          <RecentResultsDonut data={recentResultsChartData} />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("summary.noRecentResults")}
+                          </p>
                         )}
-                    </CardFooter>
-                  </Card>
-                )}
+                      </CardContent>
+                      <CardFooter className="flex flex-row items-center justify-center">
+                        {!isLoadingRecentResults &&
+                          recentResultsChartData.length > 0 && (
+                            <span className="font-semibold">{`${recentResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                          )}
+                      </CardFooter>
+                    </Card>
+                  )}
 
-                {/* Card 4: Completion Trend - Conditional Render Updated Check */}
-                {(isLoadingCompletedRunsData ||
-                  completedRunsMonthlyData.some(
-                    (monthData) => monthData.count > 0
-                  )) && (
-                  <Card>
-                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
-                      <div>
-                        <CardTitle className="font-medium">
-                          {t("summary.completionTrendTitle")}
-                        </CardTitle>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() =>
-                          handleOpenChartOverlay({
-                            type: "line",
-                            title: t("summary.completionTrendTitle"),
-                            data: completedRunsMonthlyData,
-                          })
-                        }
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">
-                          {tCommon("actions.expand")}
-                        </span>
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="p-2">
-                      {isLoadingCompletedRunsData ? (
-                        <LoadingSpinner />
-                      ) : completedRunsMonthlyData.some(
-                          (monthData) => monthData.count > 0
-                        ) ? (
-                        <CompletedRunsLineChart
-                          data={completedRunsMonthlyData}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {tGlobal("sessions.summary.noCompletedRuns")}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
+                  {/* Card 3: Automated Results - Conditional Render */}
+                  {(isLoadingAutomatedResults ||
+                    automatedResultsChartData.length > 0) && (
+                    <Card>
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div className="w-full">
+                          <CardTitle className="font-medium">
+                            {t("summary.recentAutomatedResultsTitle")}
+                          </CardTitle>
+                          <CardDescription>
+                            {!isLoadingAutomatedResults &&
+                              automatedResultsDateRange.first &&
+                              automatedResultsDateRange.last && (
+                                <span>
+                                  <DateFormatter
+                                    date={automatedResultsDateRange.first}
+                                    formatString={
+                                      session?.user.preferences?.dateFormat +
+                                      " " +
+                                      session?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      session?.user.preferences?.timezone
+                                    }
+                                  />
+                                  {" – "}
+                                  <DateFormatter
+                                    date={automatedResultsDateRange.last}
+                                    formatString={
+                                      session?.user.preferences?.dateFormat +
+                                      " " +
+                                      session?.user.preferences?.timeFormat
+                                    }
+                                    timezone={
+                                      session?.user.preferences?.timezone
+                                    }
+                                  />
+                                </span>
+                              )}
+                          </CardDescription>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "donut",
+                              title: t("summary.recentAutomatedResultsTitle"),
+                              data: automatedResultsChartData,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="flex justify-center items-center p-2">
+                        {isLoadingAutomatedResults ? (
+                          <LoadingSpinner />
+                        ) : automatedResultsChartData.length > 0 ? (
+                          <RecentResultsDonut
+                            data={automatedResultsChartData}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {t("summary.noRecentAutomatedResults")}
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="flex flex-row items-center justify-center">
+                        {!isLoadingAutomatedResults &&
+                          automatedResultsChartData.length > 0 && (
+                            <span className="font-semibold">{`${automatedResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                          )}
+                      </CardFooter>
+                    </Card>
+                  )}
+
+                  {/* Card 4: Completion Trend - Conditional Render Updated Check */}
+                  {(isLoadingCompletedRunsData ||
+                    completedRunsMonthlyData.some(
+                      (monthData) => monthData.count > 0
+                    )) && (
+                    <Card className="flex flex-col">
+                      <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                        <div>
+                          <CardTitle className="font-medium">
+                            {t("summary.completionTrendTitle")}
+                          </CardTitle>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            handleOpenChartOverlay({
+                              type: "line",
+                              title: t("summary.completionTrendTitle"),
+                              data: completedRunsMonthlyData,
+                            })
+                          }
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">
+                            {tCommon("actions.expand")}
+                          </span>
+                        </Button>
+                      </CardHeader>
+                      <CardContent className="p-2 flex-1">
+                        {isLoadingCompletedRunsData ? (
+                          <LoadingSpinner />
+                        ) : completedRunsMonthlyData.some(
+                            (monthData) => monthData.count > 0
+                          ) ? (
+                          <CompletedRunsLineChart
+                            data={completedRunsMonthlyData}
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                            {tGlobal("sessions.summary.noCompletedRuns")}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </SummaryCardGrid>
+              </CollapsibleSummarySection>
+
+              <RunFilterChips
+                filters={runFilters}
+                onChange={handleRunFiltersChange}
+              />
 
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
+                    <CircleDot className="h-4 w-4 me-2" />
                     {tCommon("fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
+                    <CircleCheck className="h-4 w-4 me-2" />
                     {tCommon("fields.completed")}
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="active">
                   <div className="flex flex-col">
-                    {/* Test Run Type Filter */}
-                    <div className="mb-4 flex flex-row items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {t("typeFilter.label")}:
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            {runTypeFilter === "both"
-                              ? t("typeFilter.both")
-                              : runTypeFilter === "manual"
-                                ? tCommon("fields.manual")
-                                : tCommon("fields.automated")}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuLabel>
-                            {t("typeFilter.label")}
-                          </DropdownMenuLabel>
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("both")}
-                            >
-                              {t("typeFilter.both")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("manual")}
-                            >
-                              {tCommon("fields.manual")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("automated")}
-                            >
-                              {tCommon("fields.automated")}
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    {incompleteTestRuns?.length === 0 ? (
+                    {participantFilterActive && isLoadingParticipantRuns ? (
+                      <div className="mt-4 flex justify-center">
+                        <LoadingSpinner />
+                      </div>
+                    ) : incompleteTestRuns?.length === 0 ? (
                       <div className="mt-4 flex flex-col items-center justify-center gap-4">
                         <p className="text-center text-muted-foreground">
-                          {tCommon("messages.emptyActive")}
+                          {anyRunFilterActive
+                            ? t("empty.noMatchingActive")
+                            : tCommon("messages.emptyActive")}
                         </p>
-                        {canAddEdit && (
+                        {canAddEdit && !anyRunFilterActive && (
                           <Button
                             variant="default"
                             onClick={() => setIsAddTestRunModalOpen(true)}
@@ -1407,7 +1554,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                       </div>
                     ) : (
                       <TestRunDisplay
-                        testRuns={incompleteTestRuns || []}
+                        testRuns={
+                          (incompleteTestRuns ||
+                            []) as unknown as TestRunsWithDetails[]
+                        }
                         milestones={milestones || []}
                         onDuplicateTestRun={handleOpenDuplicateDialog}
                       />
@@ -1416,45 +1566,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 </TabsContent>
                 <TabsContent value="completed">
                   <div className="flex flex-col">
-                    {/* Test Run Type Filter */}
-                    <div className="mb-4 flex flex-row items-center gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {t("typeFilter.label")}:
-                      </span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            {runTypeFilter === "both"
-                              ? t("typeFilter.both")
-                              : runTypeFilter === "manual"
-                                ? tCommon("fields.manual")
-                                : tCommon("fields.automated")}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuLabel>
-                            {t("typeFilter.label")}
-                          </DropdownMenuLabel>
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("both")}
-                            >
-                              {t("typeFilter.both")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("manual")}
-                            >
-                              {tCommon("fields.manual")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => setRunTypeFilter("automated")}
-                            >
-                              {tCommon("fields.automated")}
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
                     {/* Filter and Pagination Controls */}
                     <div className="flex flex-row items-start mb-4">
                       <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
@@ -1500,7 +1611,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                     {/* Test Runs Display */}
                     {completedTestRuns?.length === 0 ? (
                       <div className="mt-4 text-center text-muted-foreground">
-                        {completedRunsSearchString
+                        {completedRunsSearchString || anyRunFilterActive
                           ? t("empty.noMatchingCompleted")
                           : tCommon("messages.emptyCompleted")}
                       </div>
@@ -1610,6 +1721,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             onClose={handleCloseAddTestRunModal}
             initialSelectedCaseIds={modalSelectedTestCases}
             onSelectedCasesChange={setModalSelectedTestCases}
+            initialLinkedIssueIds={modalLinkedIssueIds}
+            defaultMilestoneId={modalDefaultMilestoneId}
           />
         )}
       </SimpleDndProvider>

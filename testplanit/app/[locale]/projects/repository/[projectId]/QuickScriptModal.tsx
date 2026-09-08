@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -9,15 +11,8 @@ import {
   generateAiExportBatch,
   type AiExportResult,
 } from "~/app/actions/aiExportActions";
-import {
-  fetchCasesForQuickScript,
-  type QuickScriptCaseData,
-} from "~/app/actions/quickScriptActions";
-import {
-  useFindManyCaseExportTemplate,
-  useFindManyCaseExportTemplateProjectAssignment,
-  useFindUniqueProjects,
-} from "~/lib/hooks";
+import { fetchCasesForQuickScript } from "~/app/actions/quickScriptActions";
+import type { QuickScriptCaseData } from "~/lib/services/quickscript-generation";
 import { logDataExport } from "~/lib/services/auditClient";
 
 import { Badge } from "@/components/ui/badge";
@@ -215,7 +210,9 @@ export function QuickScriptModal({
   // cancelled run resetting isExporting after a new export has already started.
   const exportRunIdRef = useRef(0);
 
-  const { data: templates } = useFindManyCaseExportTemplate({
+  const { data: templates } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -224,12 +221,14 @@ export function QuickScriptModal({
   });
 
   // Fetch project template assignments (EXPORT-01, EXPORT-03)
-  const { data: assignments } = useFindManyCaseExportTemplateProjectAssignment({
+  const { data: assignments } = useClientQueries(
+    schema
+  ).caseExportTemplateProjectAssignment.useFindMany({
     where: { projectId },
   });
 
   // Fetch project for defaultCaseExportTemplateId (EXPORT-02)
-  const { data: project } = useFindUniqueProjects({
+  const { data: project } = useClientQueries(schema).projects.useFindUnique({
     where: { id: projectId },
     select: { defaultCaseExportTemplateId: true },
   });
@@ -759,7 +758,7 @@ export function QuickScriptModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          showPreview ? "sm:max-w-225 h-[95vh]" : "sm:max-w-125",
+          showPreview ? "sm:max-w-225 max-h-[95vh]" : "sm:max-w-125",
           "transition-all overflow-hidden flex flex-col"
         )}
         data-testid="quickscript-dialog"
@@ -818,9 +817,9 @@ export function QuickScriptModal({
                             : t("templatePlaceholder")}
                           {selectedTemplate?.isDefault && (
                             <Tooltip>
-                              <TooltipTrigger className="ml-1" asChild>
+                              <TooltipTrigger className="ms-1" asChild>
                                 <Badge variant="secondary">
-                                  <Star className="h-3 w-3 fill-current text-primary-background" />
+                                  <Star className="h-3 w-3 fill-current" />
                                 </Badge>
                               </TooltipTrigger>
                               <TooltipContent>
@@ -829,7 +828,7 @@ export function QuickScriptModal({
                             </Tooltip>
                           )}
                         </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -855,7 +854,7 @@ export function QuickScriptModal({
                                   >
                                     <Check
                                       className={cn(
-                                        "mr-2 h-4 w-4",
+                                        "me-2 h-4 w-4",
                                         effectiveTemplateId === String(tmpl.id)
                                           ? "opacity-100"
                                           : "opacity-0"
@@ -865,11 +864,11 @@ export function QuickScriptModal({
                                     {tmpl.isDefault && (
                                       <Tooltip>
                                         <TooltipTrigger
-                                          className="ml-1"
+                                          className="ms-1"
                                           asChild
                                         >
                                           <Badge variant="secondary">
-                                            <Star className="h-3 w-3 fill-current text-primary-background" />
+                                            <Star className="h-3 w-3 fill-current" />
                                           </Badge>
                                         </TooltipTrigger>
                                         <TooltipContent>

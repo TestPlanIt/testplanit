@@ -1,16 +1,34 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
-import { prisma } from "~/lib/prisma";
+import type {
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesGetPayload,
+  RepositoryCasesSelect,
+  RepositoryCasesWhereInput,
+} from "~/zenstack/input";
+import { baseDb } from "~/lib/db";
+import {
+  filterOrphanedFieldValues,
+  matchesPostFetchFilters,
+  type PostFetchFilter,
+} from "~/lib/repositoryCaseFieldMatchers";
+import { reviveWhereFromTransport } from "~/lib/repository/whereTransport";
 import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 
 // Define the arguments type based on Prisma generated types
 interface FetchCasesArgs {
-  orderBy: Prisma.RepositoryCasesOrderByWithRelationInput;
-  where: Prisma.RepositoryCasesWhereInput;
+  orderBy: NonNullable<RepositoryCasesFindManyArgs["orderBy"]>;
+  where: RepositoryCasesWhereInput;
   scope?: "allFiltered" | "allProject"; // Add scope indicator
   projectId?: number; // Add projectId, needed for allProject scope
+  // Active text/link/steps operator filters — SQL can only pre-filter these
+  // (value-not-null); the real row selection happens via the shared matchers,
+  // exactly as the table hooks apply them.
+  postFetchFilters?: PostFetchFilter[];
+  // Elasticsearch id set of an active search. "All filtered" must mean the
+  // intersection the table shows, never the un-searched superset.
+  searchCaseIds?: number[];
 }
 
 // Define the precise select clause to match the client-side query
@@ -122,14 +140,24 @@ const exportSelectClause = {
       sharedStepGroupId: true,
     },
   },
-  tags: {
+  caseTags: {
     where: {
-      isDeleted: false,
+      tag: {
+        isDeleted: false,
+      },
+    },
+    include: {
+      tag: true,
     },
   },
-  issues: {
+  caseIssues: {
     where: {
-      isDeleted: false,
+      issue: {
+        isDeleted: false,
+      },
+    },
+    include: {
+      issue: true,
     },
   },
   // Include the testRuns relation for export
@@ -157,10 +185,10 @@ const exportSelectClause = {
       isDeleted: true,
     },
   },
-} satisfies Prisma.RepositoryCasesSelect; // Satisfies helps ensure the select matches the type
+} satisfies RepositoryCasesSelect; // Satisfies helps ensure the select matches the type
 
 // Define the return type based on the select clause
-export type ExportCaseData = Prisma.RepositoryCasesGetPayload<{
+export type ExportCaseData = RepositoryCasesGetPayload<{
   select: typeof exportSelectClause;
 }>;
 
@@ -184,7 +212,11 @@ export async function fetchAllCasesForExport(
   }
 
   try {
-    let finalWhereClause = args.where;
+    // The client's where carries ZenStack's Json-null sentinels, which React
+    // Flight cannot encode — without this they arrive as opaque temporary
+    // references and ZenStack rejects the whole query, so every export with a
+    // custom-field filter active came back empty.
+    let finalWhereClause = reviveWhereFromTransport(args.where);
 
     // If scope is allProject, override the where clause
     if (args.scope === "allProject") {
@@ -209,13 +241,38 @@ export async function fetchAllCasesForExport(
       //   "Server Action: Fetching FILTERED cases for export with where clause:",
       //   args.where
       // );
+      if (args.searchCaseIds) {
+        finalWhereClause = {
+          AND: [finalWhereClause, { id: { in: args.searchCaseIds } }],
+        };
+      }
     }
 
-    const allDataRaw = await prisma.repositoryCases.findMany({
+    let allDataRaw = await baseDb.repositoryCases.findMany({
       where: finalWhereClause, // Use the determined where clause
       orderBy: args.orderBy,
       select: exportSelectClause,
     });
+    // Apply the table's post-fetch text/link/steps matchers so the export row
+    // set matches what the filtered table shows. Runs BEFORE shared-step
+    // expansion: steps filters count shared-group placeholders as one step,
+    // like the table's steps select. "allProject" scope ignores filters, same
+    // as it ignores the where clause. Matching is done against the
+    // orphan-filtered view of each row (as the table hooks do) without
+    // altering the exported row content.
+    if (
+      args.scope !== "allProject" &&
+      args.postFetchFilters &&
+      args.postFetchFilters.length > 0
+    ) {
+      const postFetchFilters = args.postFetchFilters;
+      allDataRaw = allDataRaw.filter((row: any) =>
+        matchesPostFetchFilters(
+          filterOrphanedFieldValues(row),
+          postFetchFilters
+        )
+      );
+    }
     // Resolve shared step references (expand placeholders into actual step items)
     const allData = await resolveSharedSteps(allDataRaw);
     // Cast source to RepositoryCaseSource for type safety

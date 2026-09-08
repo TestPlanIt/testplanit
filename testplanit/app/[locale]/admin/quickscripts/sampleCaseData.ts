@@ -44,8 +44,7 @@ const DUMMY_FALLBACK = "Sample value";
 
 export function buildSampleFields(
   caseFields:
-    | Array<{ systemName: string; type?: { type: string } | null }>
-    | undefined
+    Array<{ systemName: string; type?: { type: string } | null }> | undefined
 ): Record<string, string> {
   if (!caseFields || caseFields.length === 0) return {};
   const fields: Record<string, string> = {};

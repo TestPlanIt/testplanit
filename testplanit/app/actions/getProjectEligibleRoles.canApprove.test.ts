@@ -1,12 +1,12 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRolesFindMany = vi.fn();
 const mockUserProjectPermissionFindMany = vi.fn();
 const mockGroupProjectPermissionFindMany = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     roles: { findMany: (...args: unknown[]) => mockRolesFindMany(...args) },
     userProjectPermission: {
       findMany: (...args: unknown[]) =>

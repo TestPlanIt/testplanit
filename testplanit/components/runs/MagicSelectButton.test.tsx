@@ -12,8 +12,10 @@ const { mockUseFindFirstProjects, mockMagicSelectDialog } = vi.hoisted(() => ({
 
 // --- Mocks ---
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstProjects: mockUseFindFirstProjects,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindFirst: mockUseFindFirstProjects },
+  }),
 }));
 
 vi.mock("next-intl", () => ({

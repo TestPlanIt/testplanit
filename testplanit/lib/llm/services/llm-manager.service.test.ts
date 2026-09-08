@@ -1,4 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
+import { Decimal } from "decimal.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmRequest, LlmStreamResponse } from "../types";
 import { LlmManager } from "./llm-manager.service";
@@ -115,7 +116,7 @@ vi.mock("../adapters", () => ({
 }));
 
 // Create mock Prisma client
-const createMockPrisma = () => ({
+const createMockDb = () => ({
   llmIntegration: {
     findUnique: vi.fn(),
     findMany: vi.fn(),
@@ -141,7 +142,7 @@ const createMockPrisma = () => ({
 });
 
 describe("LlmManager", () => {
-  let mockPrisma: ReturnType<typeof createMockPrisma>;
+  let mockDb: ReturnType<typeof createMockDb>;
   let manager: LlmManager;
 
   const mockLlmIntegration = {
@@ -162,8 +163,8 @@ describe("LlmManager", () => {
       maxTokensPerRequest: 4096,
       maxRequestsPerMinute: 60,
       maxRequestsPerDay: null,
-      costPerInputToken: new Prisma.Decimal("0.00003"),
-      costPerOutputToken: new Prisma.Decimal("0.00006"),
+      costPerInputToken: new Decimal("0.00003"),
+      costPerOutputToken: new Decimal("0.00006"),
       monthlyBudget: null,
       defaultTemperature: 0.7,
       defaultMaxTokens: 1000,
@@ -179,10 +180,10 @@ describe("LlmManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockPrisma = createMockPrisma();
+    mockDb = createMockDb();
     // Reset singleton for each test
     (LlmManager as any).instance = undefined;
-    manager = LlmManager.getInstance(mockPrisma as unknown as PrismaClient);
+    manager = LlmManager.getInstance(mockDb as unknown as DbClient);
   });
 
   afterEach(() => {
@@ -191,12 +192,8 @@ describe("LlmManager", () => {
 
   describe("getInstance", () => {
     it("should return singleton instance", () => {
-      const instance1 = LlmManager.getInstance(
-        mockPrisma as unknown as PrismaClient
-      );
-      const instance2 = LlmManager.getInstance(
-        mockPrisma as unknown as PrismaClient
-      );
+      const instance1 = LlmManager.getInstance(mockDb as unknown as DbClient);
+      const instance2 = LlmManager.getInstance(mockDb as unknown as DbClient);
 
       expect(instance1).toBe(instance2);
     });
@@ -204,19 +201,17 @@ describe("LlmManager", () => {
 
   describe("getAdapter", () => {
     it("should create and cache OpenAI adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const adapter1 = await manager.getAdapter(1);
       const adapter2 = await manager.getAdapter(1);
 
       expect(adapter1).toBe(adapter2);
-      expect(mockPrisma.llmIntegration.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockDb.llmIntegration.findUnique).toHaveBeenCalledTimes(1);
     });
 
     it("should throw error when integration not found", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(null);
+      mockDb.llmIntegration.findUnique.mockResolvedValue(null);
 
       await expect(manager.getAdapter(999)).rejects.toThrow(
         "LLM Integration with id 999 not found"
@@ -224,7 +219,7 @@ describe("LlmManager", () => {
     });
 
     it("should throw error when provider config not found", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         llmProviderConfig: null,
       });
@@ -235,7 +230,7 @@ describe("LlmManager", () => {
     });
 
     it("should create Anthropic adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "ANTHROPIC",
       });
@@ -246,7 +241,7 @@ describe("LlmManager", () => {
     });
 
     it("should create Azure OpenAI adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "AZURE_OPENAI",
         credentials: {
@@ -265,7 +260,7 @@ describe("LlmManager", () => {
     });
 
     it("should create Gemini adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "GEMINI",
       });
@@ -276,7 +271,7 @@ describe("LlmManager", () => {
     });
 
     it("should create Ollama adapter with public URL", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "OLLAMA",
         credentials: { baseUrl: "https://ollama.example.com:11434" },
@@ -288,7 +283,7 @@ describe("LlmManager", () => {
     });
 
     it("should create OpenAI adapter with custom proxy URL (e.g., LiteLLM)", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "OPENAI",
         credentials: {
@@ -303,7 +298,7 @@ describe("LlmManager", () => {
     });
 
     it("should create Gemini adapter with custom proxy URL", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "GEMINI",
         credentials: {
@@ -321,7 +316,7 @@ describe("LlmManager", () => {
       const original = process.env.ALLOWED_PRIVATE_HOSTS;
       process.env.ALLOWED_PRIVATE_HOSTS = "";
 
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "OLLAMA",
         credentials: { baseUrl: "http://localhost:11434" },
@@ -335,7 +330,7 @@ describe("LlmManager", () => {
     });
 
     it("should create Custom LLM adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "CUSTOM_LLM",
       });
@@ -346,7 +341,7 @@ describe("LlmManager", () => {
     });
 
     it("should throw error for unsupported provider", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+      mockDb.llmIntegration.findUnique.mockResolvedValue({
         ...mockLlmIntegration,
         provider: "UNSUPPORTED",
       });
@@ -359,14 +354,12 @@ describe("LlmManager", () => {
 
   describe("chat", () => {
     it("should make chat request and track usage", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         mockLlmIntegration.llmProviderConfig
       );
-      mockPrisma.llmUsage.create.mockResolvedValue({});
-      mockPrisma.llmRateLimit.upsert.mockResolvedValue({});
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       const request: LlmRequest = {
         messages: [{ role: "user", content: "Hello" }],
@@ -379,12 +372,17 @@ describe("LlmManager", () => {
 
       expect(response.content).toBe("OpenAI response");
       expect(response.model).toBe("gpt-4");
-      expect(mockPrisma.llmUsage.create).toHaveBeenCalledWith({
+      expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          llmIntegrationId: 1,
-          userId: "user-123",
-          projectId: 1,
+          // v3 requires relation connects, not scalar FKs, and plain-number
+          // costs (not Decimal instances).
+          llmIntegration: { connect: { id: 1 } },
+          user: { connect: { id: "user-123" } },
+          project: { connect: { id: 1 } },
           feature: "test",
+          inputCost: expect.any(Number),
+          outputCost: expect.any(Number),
+          totalCost: expect.any(Number),
           success: true,
         }),
       });
@@ -392,10 +390,8 @@ describe("LlmManager", () => {
 
     it("should track error on failed chat request", async () => {
       const mockError = new Error("API error");
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
-      mockPrisma.llmUsage.create.mockResolvedValue({});
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmUsage.create.mockResolvedValue({});
 
       // Get the adapter first
       const adapter = await manager.getAdapter(1);
@@ -411,7 +407,7 @@ describe("LlmManager", () => {
 
       await expect(manager.chat(1, request)).rejects.toThrow("API error");
 
-      expect(mockPrisma.llmUsage.create).toHaveBeenCalledWith({
+      expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           success: false,
           error: "API error",
@@ -422,14 +418,12 @@ describe("LlmManager", () => {
 
   describe("chatStream", () => {
     it("should stream chat response and track usage", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
-      mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
         mockLlmIntegration.llmProviderConfig
       );
-      mockPrisma.llmUsage.create.mockResolvedValue({});
-      mockPrisma.llmRateLimit.upsert.mockResolvedValue({});
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
 
       const request: LlmRequest = {
         messages: [{ role: "user", content: "Hello" }],
@@ -447,26 +441,91 @@ describe("LlmManager", () => {
       expect(chunks[1].delta).toBe(" world");
 
       // Should track stream usage with estimated tokens
-      expect(mockPrisma.llmUsage.create).toHaveBeenCalledWith({
+      expect(mockDb.llmUsage.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          llmIntegrationId: 1,
+          llmIntegration: { connect: { id: 1 } },
           success: true,
           completionTokens: expect.any(Number),
         }),
       });
     });
+
+    it("records estimated PROMPT tokens and input cost (not 0)", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+        mockLlmIntegration.llmProviderConfig
+      );
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
+
+      const request: LlmRequest = {
+        // 400 chars → 100 estimated prompt tokens (chars/4).
+        messages: [{ role: "user", content: "a".repeat(400) }],
+        userId: "user-123",
+        feature: "test",
+      };
+
+      for await (const _chunk of manager.chatStream(1, request)) {
+        // drain
+      }
+
+      const created = mockDb.llmUsage.create.mock.calls.at(-1)?.[0].data;
+      expect(created.promptTokens).toBe(100);
+      expect(created.completionTokens).toBeGreaterThan(0);
+      expect(created.totalTokens).toBe(
+        created.promptTokens + created.completionTokens
+      );
+      expect(Number(created.inputCost)).toBeGreaterThan(0);
+      expect(Number(created.totalCost)).toBeCloseTo(
+        Number(created.inputCost) + Number(created.outputCost),
+        10
+      );
+    });
+
+    it("charges the flat image estimate for image parts in the prompt", async () => {
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
+      mockDb.llmProviderConfig.findUnique.mockResolvedValue(
+        mockLlmIntegration.llmProviderConfig
+      );
+      mockDb.llmUsage.create.mockResolvedValue({});
+      mockDb.llmRateLimit.upsert.mockResolvedValue({});
+
+      const request: LlmRequest = {
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "a".repeat(400) },
+              { type: "image", mimeType: "image/png", base64: "iVBORw0KGgo=" },
+            ],
+          },
+        ],
+        userId: "user-123",
+        feature: "test",
+      };
+
+      for await (const _chunk of manager.chatStream(1, request)) {
+        // drain
+      }
+
+      const created = mockDb.llmUsage.create.mock.calls.at(-1)?.[0].data;
+      // 400 text chars → 100 tokens, plus the "[image: attached image]"
+      // marker text the flattener adds, plus IMAGE_TOKEN_ESTIMATE (1600).
+      expect(created.promptTokens).toBeGreaterThanOrEqual(1700);
+      expect(created.promptTokens).toBeLessThan(1750);
+    });
   });
 
   describe("getDefaultIntegration", () => {
     it("should return default integration ID", async () => {
-      mockPrisma.llmProviderConfig.findFirst.mockResolvedValue({
+      mockDb.llmProviderConfig.findFirst.mockResolvedValue({
         llmIntegrationId: 5,
       });
 
       const result = await manager.getDefaultIntegration();
 
       expect(result).toBe(5);
-      expect(mockPrisma.llmProviderConfig.findFirst).toHaveBeenCalledWith({
+      expect(mockDb.llmProviderConfig.findFirst).toHaveBeenCalledWith({
         where: {
           llmIntegration: {
             isDeleted: false,
@@ -481,7 +540,7 @@ describe("LlmManager", () => {
     });
 
     it("should return null when no default integration exists", async () => {
-      mockPrisma.llmProviderConfig.findFirst.mockResolvedValue(null);
+      mockDb.llmProviderConfig.findFirst.mockResolvedValue(null);
 
       const result = await manager.getDefaultIntegration();
 
@@ -491,7 +550,7 @@ describe("LlmManager", () => {
 
   describe("listAvailableIntegrations", () => {
     it("should return list of active integrations", async () => {
-      mockPrisma.llmIntegration.findMany.mockResolvedValue([
+      mockDb.llmIntegration.findMany.mockResolvedValue([
         { id: 1, name: "OpenAI", provider: "OPENAI" },
         { id: 2, name: "Anthropic", provider: "ANTHROPIC" },
       ]);
@@ -502,7 +561,7 @@ describe("LlmManager", () => {
         { id: 1, name: "OpenAI", provider: "OPENAI" },
         { id: 2, name: "Anthropic", provider: "ANTHROPIC" },
       ]);
-      expect(mockPrisma.llmIntegration.findMany).toHaveBeenCalledWith({
+      expect(mockDb.llmIntegration.findMany).toHaveBeenCalledWith({
         where: {
           isDeleted: false,
           status: "ACTIVE",
@@ -518,9 +577,7 @@ describe("LlmManager", () => {
 
   describe("testConnection", () => {
     it("should return true when connection succeeds", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const result = await manager.testConnection(1);
 
@@ -528,9 +585,7 @@ describe("LlmManager", () => {
     });
 
     it("should return false when connection fails", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       // Get the adapter and spy on testConnection to make it fail
       const adapter = await manager.getAdapter(1);
@@ -550,9 +605,7 @@ describe("LlmManager", () => {
 
   describe("getAvailableModels", () => {
     it("should return available models from adapter", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const result = await manager.getAvailableModels(1);
 
@@ -562,7 +615,7 @@ describe("LlmManager", () => {
 
   describe("checkRateLimit", () => {
     it("should return true when no rate limit exists", async () => {
-      mockPrisma.llmRateLimit.findFirst.mockResolvedValue(null);
+      mockDb.llmRateLimit.findFirst.mockResolvedValue(null);
 
       const result = await manager.checkRateLimit(1, "user-123");
 
@@ -571,7 +624,7 @@ describe("LlmManager", () => {
 
     it("should return true when rate limit window expired", async () => {
       const expiredWindow = new Date(Date.now() - 120000); // 2 minutes ago
-      mockPrisma.llmRateLimit.findFirst.mockResolvedValue({
+      mockDb.llmRateLimit.findFirst.mockResolvedValue({
         id: 1,
         windowStart: expiredWindow,
         windowSize: 60,
@@ -579,17 +632,17 @@ describe("LlmManager", () => {
         maxRequests: 60,
         blockOnExceed: true,
       });
-      mockPrisma.llmRateLimit.update.mockResolvedValue({});
+      mockDb.llmRateLimit.update.mockResolvedValue({});
 
       const result = await manager.checkRateLimit(1, "user-123");
 
       expect(result).toBe(true);
-      expect(mockPrisma.llmRateLimit.update).toHaveBeenCalled();
+      expect(mockDb.llmRateLimit.update).toHaveBeenCalled();
     });
 
     it("should return false when rate limit exceeded and blocking", async () => {
       const recentWindow = new Date(Date.now() - 30000); // 30 seconds ago
-      mockPrisma.llmRateLimit.findFirst.mockResolvedValue({
+      mockDb.llmRateLimit.findFirst.mockResolvedValue({
         id: 1,
         windowStart: recentWindow,
         windowSize: 60,
@@ -605,7 +658,7 @@ describe("LlmManager", () => {
 
     it("should return true when rate limit exceeded but not blocking", async () => {
       const recentWindow = new Date(Date.now() - 30000);
-      mockPrisma.llmRateLimit.findFirst.mockResolvedValue({
+      mockDb.llmRateLimit.findFirst.mockResolvedValue({
         id: 1,
         windowStart: recentWindow,
         windowSize: 60,
@@ -621,7 +674,7 @@ describe("LlmManager", () => {
 
     it("should return true when under rate limit", async () => {
       const recentWindow = new Date(Date.now() - 30000);
-      mockPrisma.llmRateLimit.findFirst.mockResolvedValue({
+      mockDb.llmRateLimit.findFirst.mockResolvedValue({
         id: 1,
         windowStart: recentWindow,
         windowSize: 60,
@@ -638,9 +691,7 @@ describe("LlmManager", () => {
 
   describe("clearCache", () => {
     it("should clear specific adapter from cache", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const adapter1 = await manager.getAdapter(1);
       manager.clearCache(1);
@@ -650,9 +701,7 @@ describe("LlmManager", () => {
     });
 
     it("should clear all adapters from cache", async () => {
-      mockPrisma.llmIntegration.findUnique.mockResolvedValue(
-        mockLlmIntegration
-      );
+      mockDb.llmIntegration.findUnique.mockResolvedValue(mockLlmIntegration);
 
       const adapter1 = await manager.getAdapter(1);
       manager.clearCache();
@@ -664,19 +713,19 @@ describe("LlmManager", () => {
 
   describe("resolveIntegration", () => {
     let resolveManager: LlmManager;
-    let resolvePrisma: ReturnType<typeof createMockPrisma>;
+    let resolveDb: ReturnType<typeof createMockDb>;
 
     beforeEach(() => {
-      resolvePrisma = createMockPrisma();
+      resolveDb = createMockDb();
       // Use createForWorker to get a fresh (non-singleton) instance per test
       resolveManager = LlmManager.createForWorker(
-        resolvePrisma as unknown as PrismaClient
+        resolveDb as unknown as DbClient
       );
     });
 
     // Level 1 — LlmFeatureConfig override
     it("returns LlmFeatureConfig integration when active", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         llmIntegrationId: 10,
         model: "gpt-4o",
         llmIntegration: { isDeleted: false, status: "ACTIVE" },
@@ -689,7 +738,7 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — includes model field when set on LlmFeatureConfig", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         llmIntegrationId: 10,
         model: "claude-3-opus",
         llmIntegration: { isDeleted: false, status: "ACTIVE" },
@@ -702,7 +751,7 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — model is undefined when LlmFeatureConfig model is null", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         llmIntegrationId: 10,
         model: null,
         llmIntegration: { isDeleted: false, status: "ACTIVE" },
@@ -715,13 +764,13 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — skips LlmFeatureConfig when integration is deleted", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         llmIntegrationId: 10,
         model: null,
         llmIntegration: { isDeleted: true, status: "ACTIVE" },
       });
       // Should fall through to Level 3 (no resolvedPrompt provided)
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue({
         llmIntegrationId: 5,
       });
       const result = await resolveManager.resolveIntegration(
@@ -732,12 +781,12 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — skips LlmFeatureConfig when integration status is not ACTIVE", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         llmIntegrationId: 10,
         model: null,
         llmIntegration: { isDeleted: false, status: "INACTIVE" },
       });
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue({
         llmIntegrationId: 5,
       });
       const result = await resolveManager.resolveIntegration(
@@ -748,12 +797,12 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — skips LlmFeatureConfig when llmIntegration relation is null", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         llmIntegrationId: 10,
         model: null,
         llmIntegration: null,
       });
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue({
         llmIntegrationId: 5,
       });
       const result = await resolveManager.resolveIntegration(
@@ -765,14 +814,14 @@ describe("LlmManager", () => {
 
     // Level 1 — explicit "No LLM" override (enabled: false, no integration)
     it("Level 1 — returns null when feature config is explicitly disabled", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         enabled: false,
         llmIntegrationId: null,
         model: null,
         llmIntegration: null,
       });
       // Level 3 would return an integration, but the disabled override should block it
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue({
         llmIntegrationId: 5,
       });
       const result = await resolveManager.resolveIntegration(
@@ -783,13 +832,13 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — disabled override blocks Level 2 per-prompt fallback", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         enabled: false,
         llmIntegrationId: null,
         model: null,
         llmIntegration: null,
       });
-      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+      resolveDb.llmIntegration.findUnique.mockResolvedValue({
         isDeleted: false,
         status: "ACTIVE",
       });
@@ -802,7 +851,7 @@ describe("LlmManager", () => {
     });
 
     it("Level 1 — enabled override with integration still resolves normally", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue({
         enabled: true,
         llmIntegrationId: 10,
         model: "gpt-4o",
@@ -817,8 +866,8 @@ describe("LlmManager", () => {
 
     // Level 2 — per-prompt assignment
     it("Level 2 — returns per-prompt integration when Level 1 is empty", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
-      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolveDb.llmIntegration.findUnique.mockResolvedValue({
         isDeleted: false,
         status: "ACTIVE",
       });
@@ -831,8 +880,8 @@ describe("LlmManager", () => {
     });
 
     it("Level 2 — returns undefined model when no modelOverride provided", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
-      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolveDb.llmIntegration.findUnique.mockResolvedValue({
         isDeleted: false,
         status: "ACTIVE",
       });
@@ -845,12 +894,12 @@ describe("LlmManager", () => {
     });
 
     it("Level 2 — skips per-prompt when integration is inactive, falls to Level 3", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
-      resolvePrisma.llmIntegration.findUnique.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolveDb.llmIntegration.findUnique.mockResolvedValue({
         isDeleted: false,
         status: "INACTIVE",
       });
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue({
         llmIntegrationId: 3,
       });
       const result = await resolveManager.resolveIntegration(
@@ -863,8 +912,8 @@ describe("LlmManager", () => {
 
     // Level 3 — project default
     it("Level 3 — returns project default integration when Levels 1 and 2 are empty", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue({
         llmIntegrationId: 5,
       });
       const result = await resolveManager.resolveIntegration(
@@ -875,9 +924,9 @@ describe("LlmManager", () => {
     });
 
     it("Level 3 — falls back to system default when no project integration exists", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue(null);
-      resolvePrisma.llmProviderConfig.findFirst.mockResolvedValue({
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue(null);
+      resolveDb.llmProviderConfig.findFirst.mockResolvedValue({
         llmIntegrationId: 1,
       });
       const result = await resolveManager.resolveIntegration(
@@ -888,9 +937,9 @@ describe("LlmManager", () => {
     });
 
     it("returns null when no integration found at any level", async () => {
-      resolvePrisma.llmFeatureConfig.findUnique.mockResolvedValue(null);
-      resolvePrisma.projectLlmIntegration.findFirst.mockResolvedValue(null);
-      resolvePrisma.llmProviderConfig.findFirst.mockResolvedValue(null);
+      resolveDb.llmFeatureConfig.findUnique.mockResolvedValue(null);
+      resolveDb.projectLlmIntegration.findFirst.mockResolvedValue(null);
+      resolveDb.llmProviderConfig.findFirst.mockResolvedValue(null);
       const result = await resolveManager.resolveIntegration(
         "test_case_generation",
         1

@@ -1,11 +1,12 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
-import { CirclePlus } from "lucide-react";
+import { PackagePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { emptyEditorContent } from "~/app/constants";
-import { useCreateMilestones } from "~/lib/hooks";
 import { MilestoneFormDialog } from "./MilestoneFormDialog";
 import { ProjectSelectionDialog } from "./ProjectSelectionDialog";
 
@@ -26,7 +27,8 @@ const AddMilestonesToProjectsWizard = (): React.ReactElement => {
   const [step, setStep] = useState(0);
   const [selectedProjectIds, setSelectedProjectIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: createMilestones } = useCreateMilestones();
+  const { mutateAsync: createMilestones } =
+    useClientQueries(schema).milestones.useCreate();
   const t = useTranslations("admin.milestones");
 
   const handleNextProjects = (projectIds: number[]) => {
@@ -87,9 +89,17 @@ const AddMilestonesToProjectsWizard = (): React.ReactElement => {
 
   return (
     <>
-      <Button variant="secondary" onClick={() => setStep(1)} type="button">
-        <CirclePlus className="w-4" />
-        <span className="hidden md:inline">{t("addMilestones")}</span>
+      <Button
+        variant="secondary"
+        onClick={() => setStep(1)}
+        type="button"
+        aria-label={t("addMilestones")}
+        className="group gap-0 transition-all duration-200 hover:gap-2"
+      >
+        <PackagePlus className="h-4 w-4" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+          {t("addMilestones")}
+        </span>
       </Button>
       <ProjectSelectionDialog
         open={step === 1}

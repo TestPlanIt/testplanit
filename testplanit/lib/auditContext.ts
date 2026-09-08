@@ -87,18 +87,18 @@ export interface AuditContext {
   /**
    * Suppression hatch for the generic entity-audit helpers (auditCreate/
    * auditUpdate/auditDelete and the auditBulk* variants) emitted by the
-   * lib/prisma.ts `$extends` hooks. The ZenStack RPC route sets this for
+   * lib/db.ts `$extends` hooks. The ZenStack RPC route sets this for
    * mutations it audits canonically via its own post-RPC shim, so the
    * `$extends` hook does not double-emit a (partial, `select:{id:true}`-shaped)
    * generic row on that path. The generic helpers consult it themselves; the
    * bespoke security/config hooks (apiToken, appConfig, ssoProvider) instead
-   * check `isEntityAuditSuppressed()` at their own call sites in lib/prisma.ts,
+   * check `isEntityAuditSuppressed()` at their own call sites in lib/db.ts,
    * since on the RPC path the shim now emits their canonical semantic row
    * (API_KEY_*, SYSTEM_CONFIG_CHANGED, SSO_CONFIG_CHANGED). The underlying
    * specialized helpers (auditRoleChange, auditSsoConfigChange,
    * auditSystemConfigChange) remain ungated so admin routes that call them
    * directly off the RPC path still audit. Defaults to undefined (= no
-   * suppression); non-RPC paths (workers, custom routes, direct prisma) leave
+   * suppression); non-RPC paths (workers, custom routes, direct db) leave
    * it unset so the hooks audit normally.
    */
   suppressEntityAudit?: boolean;

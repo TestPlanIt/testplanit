@@ -106,10 +106,10 @@ function fieldValues(
       return single(folderId);
     }
     case "tagId": {
-      const tags: Array<{ id: number }> =
-        result.testRunCase?.repositoryCase?.tags ?? result.tags ?? [];
-      if (tags.length === 0) return [{ key: "null", value: null }];
-      return tags.map((tag) => ({ key: String(tag.id), value: tag.id }));
+      const caseTags: Array<{ tagId: number }> =
+        result.testRunCase?.repositoryCase?.caseTags ?? result.caseTags ?? [];
+      if (caseTags.length === 0) return [{ key: "null", value: null }];
+      return caseTags.map((ct) => ({ key: String(ct.tagId), value: ct.tagId }));
     }
     default:
       // Scalar fields that live directly on the row (repository-stats:
@@ -176,12 +176,12 @@ export function groupResults<A>(
  * round trip; the chain is walked in memory with a depth guard against cycles.
  */
 export async function buildFolderAncestorMap(
-  prisma: any,
+  db: any,
   projectId: number | undefined,
   isProjectSpecific: boolean
 ): Promise<Map<number, number[]>> {
   const folders: Array<{ id: number; parentId: number | null }> =
-    await prisma.repositoryFolders.findMany({
+    await db.repositoryFolders.findMany({
       where: {
         ...(isProjectSpecific && projectId
           ? { projectId: Number(projectId) }
@@ -218,10 +218,10 @@ export async function buildFolderAncestorMap(
  * results from its whole subtree, matching the displayed count.
  */
 export async function getFolderSubtreeIds(
-  prisma: any,
+  db: any,
   folderId: number
 ): Promise<number[]> {
-  const rows: Array<{ id: number }> = await prisma.$queryRaw`
+  const rows: Array<{ id: number }> = await db.$queryRaw`
     WITH RECURSIVE subtree AS (
       SELECT id FROM "RepositoryFolders"
       WHERE id = ${folderId} AND "isDeleted" = false

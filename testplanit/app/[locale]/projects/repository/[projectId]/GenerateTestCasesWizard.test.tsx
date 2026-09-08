@@ -68,8 +68,10 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     const expandFetchIdx = src.indexOf('"/api/llm/generate-test-cases/expand"');
     expect(expandFetchIdx).toBeGreaterThan(-1);
     const expandSnippet = src.slice(expandFetchIdx, expandFetchIdx + 1500);
+    // The expand call reads its payload from `expandPayloadRef` so a single
+    // card can be retried; both flags must still travel together.
     expect(expandSnippet).toMatch(
-      /autoGenerateTags,\s*\n\s*includeParameters,/
+      /autoGenerateTags: payload\.autoGenerateTags,\s*\n\s*includeParameters: payload\.includeParameters,/
     );
   });
 
@@ -79,7 +81,7 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
       '"/api/llm/generate-test-cases/outline"'
     );
     expect(outlineFetchIdx).toBeGreaterThan(-1);
-    const outlineSnippet = src.slice(outlineFetchIdx, outlineFetchIdx + 1000);
+    const outlineSnippet = src.slice(outlineFetchIdx, outlineFetchIdx + 1500);
     expect(outlineSnippet).toMatch(/includeParameters,?\s*\n/);
   });
 
@@ -90,6 +92,25 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     const urlSnippet = src.slice(urlFetchIdx, urlFetchIdx + 1500);
     expect(urlSnippet).toMatch(
       /includeParameters: includeParameters \|\| undefined/
+    );
+  });
+
+  it("threads issueRef into the outline POST body so linked cases become context", () => {
+    const src = readWizard();
+    // Built only for issue sources; the milestone flow adds the internal
+    // Issue.id, which matches exactly even for manual (un-synced) issues.
+    expect(src).toMatch(
+      /const issueRefPayload =\s*\n\s*sourceType === "issue" && selectedIssue/
+    );
+    expect(src).toMatch(
+      /\.\.\.\(seedIssue\?\.issueId \? \{ issueId: seedIssue\.issueId \} : \{\}\)/
+    );
+    const outlineFetchIdx = src.indexOf(
+      '"/api/llm/generate-test-cases/outline"'
+    );
+    expect(outlineFetchIdx).toBeGreaterThan(-1);
+    expect(src.slice(outlineFetchIdx, outlineFetchIdx + 1500)).toMatch(
+      /\.\.\.\(issueRefPayload \? \{ issueRef: issueRefPayload \} : \{\}\)/
     );
   });
 
@@ -118,6 +139,108 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     expect(src).toContain("generateTestCases.parametersSection");
     expect(src).toContain("generateTestCases.starterDatasetSection");
     expect(src).toContain("generateTestCases.datasetTruncatedWarning");
+  });
+});
+
+describe("GenerateTestCasesWizard — case-field eligibility", () => {
+  it("filters the template caseFields query to enabled, non-deleted fields", () => {
+    const src = readWizard();
+    // The templates query must constrain caseFields to fields that are still
+    // enabled and not soft-deleted so disabled/deleted fields are never
+    // selectable for generation.
+    expect(src).toMatch(
+      /caseField:\s*\{\s*isEnabled:\s*true,\s*isDeleted:\s*false\s*\}/
+    );
+  });
+
+  it("reads the TestCaseRestrictedFields add/edit permission", () => {
+    const src = readWizard();
+    expect(src).toMatch(
+      /useProjectPermissions\(\s*projectId,\s*ApplicationArea\.TestCaseRestrictedFields\s*\)/
+    );
+    // Super admins bypass; everyone else needs explicit add/edit.
+    expect(src).toMatch(
+      /const canEditRestrictedFields =\s*\(restrictedFieldsPermissions\?\.canAddEdit \?\? false\) \|\| isAdmin/
+    );
+  });
+
+  it("gates restricted fields on canEditRestrictedFields via isTemplateFieldVisible", () => {
+    const src = readWizard();
+    // The predicate hides disabled/deleted fields and any restricted field the
+    // user lacks permission to edit.
+    expect(src).toMatch(
+      /const isTemplateFieldVisible = useCallback\([\s\S]*?isRestricted \|\| canEditRestrictedFields/
+    );
+  });
+
+  it("seeds the field selection once per template so deselections survive step changes", () => {
+    const src = readWizard();
+    // The auto-select-all effect re-runs on every `currentStep` change and on
+    // every `templates` identity change. Without the per-template seed guard it
+    // re-checks every field after the user advances past the template step, so
+    // generation silently includes fields the user unselected.
+    expect(src).toMatch(
+      /const seededFieldsTemplateIdRef = useRef<number \| null>\(null\)/
+    );
+    expect(src).toMatch(
+      /seededFieldsTemplateIdRef\.current !== selectedTemplateId\s*\)\s*\{/
+    );
+    // resetWizard must release the seed — it re-selects the same default
+    // template id, which would otherwise leave the selection empty.
+    const resetIdx = src.indexOf("const resetWizard = () => {");
+    expect(resetIdx).toBeGreaterThan(-1);
+    expect(src.slice(resetIdx, resetIdx + 2500)).toMatch(
+      /seededFieldsTemplateIdRef\.current = null/
+    );
+    // The restore path sets selectedFieldIds explicitly, so it must claim the
+    // seed to keep the effect from overwriting it.
+    const restoreIdx = src.indexOf("const restoreTemplateFromResult =");
+    expect(restoreIdx).toBeGreaterThan(-1);
+    expect(src.slice(restoreIdx, restoreIdx + 1500)).toMatch(
+      /seededFieldsTemplateIdRef\.current = resultTemplateId/
+    );
+  });
+
+  it("seeds the selection from the per-template generation defaults", () => {
+    const src = readWizard();
+    // The templates query must fetch the admin-configured default flag.
+    expect(src).toMatch(/generateDefaultEnabled:\s*true,/);
+    // Seeding selects default-enabled fields plus required fields — required
+    // fields can never be deselected, so a default-off required field must
+    // still start checked.
+    expect(src).toMatch(
+      /cf\.generateDefaultEnabled !== false \|\| cf\.caseField\.isRequired/
+    );
+    // A loaded template whose fields are all default-off must still claim the
+    // seed; keying the guard on the selection size would let a templates
+    // refetch wipe the user's manual selections.
+    expect(src).toMatch(/if \(visibleFields\.length > 0\)/);
+  });
+
+  it("sends the deselected field names so the prompt can forbid them", () => {
+    const src = readWizard();
+    // Only visible-but-unchecked fields are named — hidden fields must not leak
+    // into the prompt.
+    expect(src).toMatch(
+      /const excludedFieldNamesFor = useCallback\([\s\S]*?\.filter\(isTemplateFieldVisible\)[\s\S]*?!fieldIds\.has\(cf\.caseFieldId\)/
+    );
+    // Both template payloads (expand path and URL-stream path) must carry it.
+    expect(src).toMatch(
+      /excludedFields: excludedFieldNamesFor\(template, selectedFieldIds\)/
+    );
+    expect(src).toMatch(
+      /excludedFields: excludedFieldNamesFor\(template, fieldIds\)/
+    );
+  });
+
+  it("applies the visibility filter to selection, auto-select, and restore paths", () => {
+    const src = readWizard();
+    // Only visible fields are ever added to selectedFieldIds or rendered in
+    // the field-selection list.
+    const matches = src.match(/\.filter\(isTemplateFieldVisible\)/g) ?? [];
+    // field-selection list + selectAllFields + auto-select effect + sanitizer
+    // + restoreTemplateFromResult.
+    expect(matches.length).toBeGreaterThanOrEqual(4);
   });
 });
 

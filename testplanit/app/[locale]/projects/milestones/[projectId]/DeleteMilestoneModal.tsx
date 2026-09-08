@@ -1,4 +1,6 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -9,11 +11,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Milestones } from "@prisma/client";
+import type { Milestones } from "~/zenstack/models";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
-import { useUpdateMilestones } from "~/lib/hooks";
+import { useMemo, useState } from "react";
 
 interface DeleteMilestoneModalProps {
   milestone: Milestones;
@@ -32,9 +33,26 @@ export function DeleteMilestoneModal({
 }: DeleteMilestoneModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { mutateAsync: updateMilestone } = useUpdateMilestones();
+  const { mutateAsync: updateMilestone } =
+    useClientQueries(schema).milestones.useUpdate();
   const t = useTranslations("milestones.delete");
   const tCommon = useTranslations("common");
+
+  // Deleting a parent recursively soft-deletes every descendant (see
+  // updateDescendants below) — count them so the confirmation says so.
+  const descendantCount = useMemo(() => {
+    let count = 0;
+    const walk = (parentId: number) => {
+      for (const m of milestones) {
+        if (m.parentId === parentId) {
+          count += 1;
+          walk(m.id);
+        }
+      }
+    };
+    walk(milestone.id);
+    return count;
+  }, [milestone.id, milestones]);
 
   async function handleDelete() {
     setIsSubmitting(true);
@@ -79,13 +97,21 @@ export function DeleteMilestoneModal({
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center">
-            <TriangleAlert className="w-6 h-6 mr-2" />
+            <TriangleAlert className="w-6 h-6 me-2" />
             {t("title")}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t("confirmMessage", {
               name: milestone.name,
             })}
+            {descendantCount > 0 && (
+              <>
+                {" "}
+                <span className="font-semibold">
+                  {t("childrenWarning", { count: descendantCount })}
+                </span>
+              </>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="bg-destructive text-destructive-foreground p-2">

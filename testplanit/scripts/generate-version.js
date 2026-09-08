@@ -10,7 +10,7 @@ const version = packageJson.version;
 let gitCommit = "unknown";
 let gitBranch = "unknown";
 let gitTag = "";
-let isTaggedRelease = false;
+let isExactTag = false;
 let buildDate = new Date().toISOString();
 
 try {
@@ -23,8 +23,7 @@ try {
     gitTag = execSync("git describe --exact-match --tags HEAD")
       .toString()
       .trim();
-    // Check if this tag matches our version format
-    isTaggedRelease = gitTag === `v${version}` || gitTag === version;
+    isExactTag = true;
   } catch {
     // Not on a tag, try to get the most recent tag for reference
     try {
@@ -38,6 +37,23 @@ try {
   console.warn("Git information not available:", error.message);
 }
 
+// Betas ship from the `beta` branch, where package.json still carries the last
+// stable semantic-release version (e.g. 0.40.9); the 1.0 line is expressed only
+// as `vX.Y.Z-beta.N` tags. Show the prerelease tag as the app version so a beta
+// build reports the beta it came from rather than the package.json number.
+let displayVersion = version;
+const prereleaseTag = gitTag.match(/^v?(\d+\.\d+\.\d+-[0-9A-Za-z.-]+)$/);
+if (prereleaseTag) {
+  displayVersion = prereleaseTag[1];
+}
+
+const isTaggedRelease =
+  isExactTag &&
+  (gitTag === `v${displayVersion}` ||
+    gitTag === displayVersion ||
+    gitTag === `v${version}` ||
+    gitTag === version);
+
 // Determine environment based on various factors
 let environment = process.env.NODE_ENV || "development";
 if (process.env.VERCEL) {
@@ -48,7 +64,7 @@ if (process.env.VERCEL) {
 
 // Create version info object
 const versionInfo = {
-  version,
+  version: displayVersion,
   gitCommit,
   gitBranch,
   gitTag,
@@ -60,7 +76,7 @@ const versionInfo = {
 // Write to appropriate .env file based on environment
 const envContent = `# Auto-generated version information
 # Generated at: ${buildDate}
-NEXT_PUBLIC_APP_VERSION=${version}
+NEXT_PUBLIC_APP_VERSION=${displayVersion}
 NEXT_PUBLIC_GIT_COMMIT=${gitCommit}
 NEXT_PUBLIC_GIT_BRANCH=${gitBranch}
 NEXT_PUBLIC_GIT_TAG=${gitTag}
@@ -100,7 +116,7 @@ try {
 }
 
 console.log("Version information generated:");
-console.log(`  Version: ${version}`);
+console.log(`  Version: ${displayVersion}`);
 console.log(`  Commit: ${gitCommit}`);
 console.log(`  Branch: ${gitBranch}`);
 console.log(`  Tag: ${gitTag || "none"}`);

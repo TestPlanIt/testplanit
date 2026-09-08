@@ -34,6 +34,7 @@ describe("WEBHOOK_EVENT_CATALOG", () => {
       "session",
       "issue",
       "review",
+      "dataset",
       "system",
     ]);
     for (const entry of WEBHOOK_EVENT_CATALOG) {
@@ -232,6 +233,45 @@ describe("scim.group.* catalog entries", () => {
       "scim.user.deactivated",
       "scim.user.deleted",
     ]);
+  });
+});
+
+describe("dataset.row.* lease catalog entries (999.12)", () => {
+  it("dataset.row.acquired is present with category 'dataset' and identifier-only payloadKeys", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "dataset.row.acquired"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("dataset");
+    expect(def?.payloadKeys).toEqual([
+      "dataSetId",
+      "rowId",
+      "rowIndex",
+      "label",
+      "projectId",
+      "leasedById",
+      "leaseExpiresAt",
+    ]);
+  });
+
+  it("dataset.row.released is present with category 'dataset' and carries a reason", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "dataset.row.released"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("dataset");
+    expect(def?.payloadKeys).toContain("reason");
+  });
+
+  it("SECURITY: no dataset event advertises valuesJson in its payload", () => {
+    const datasetEntries = WEBHOOK_EVENT_CATALOG.filter(
+      (e) => e.category === "dataset"
+    );
+    expect(datasetEntries.length).toBeGreaterThan(0);
+    for (const entry of datasetEntries) {
+      expect(entry.payloadKeys).not.toContain("valuesJson");
+      expect(entry.payloadKeys).not.toContain("values");
+    }
   });
 });
 

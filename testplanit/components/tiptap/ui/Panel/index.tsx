@@ -90,7 +90,7 @@ export const PanelHeadline = forwardRef<
   { asChild?: boolean } & React.HTMLAttributes<HTMLDivElement>
 >(({ asChild, className, children, ...rest }, ref) => {
   const headlineClass = cn(
-    "text-black/80 dark:text-white/80 text-xs font-medium mb-2 ml-1.5",
+    "text-black/80 dark:text-white/80 text-xs font-medium mb-2 ms-1.5",
     className
   );
 

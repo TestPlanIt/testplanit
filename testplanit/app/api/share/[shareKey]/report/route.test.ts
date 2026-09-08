@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { internalReportBypassToken } from "~/lib/internalReportBypass";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth/next", () => ({
@@ -9,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     shareLink: {
       findUnique: vi.fn(),
     },
@@ -28,7 +29,7 @@ import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
 } from "~/lib/config/reportTypes";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { GET } from "./route";
 
 const createRequest = (
@@ -100,7 +101,7 @@ describe("GET /api/share/[shareKey]/report", () => {
   describe("Share link validation", () => {
     it("returns 404 for non-existent shareKey", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue(null);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(null);
 
       const [req, ctx] = createRequest("nonexistent");
       const response = await GET(req, ctx);
@@ -112,7 +113,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns 403 for revoked share link", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         isRevoked: true,
       });
@@ -127,7 +128,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns 403 for expired share link", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         expiresAt: new Date("2020-01-01"),
       });
@@ -144,7 +145,7 @@ describe("GET /api/share/[shareKey]/report", () => {
   describe("Access control", () => {
     it("allows PUBLIC mode without authentication", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
       mockFetch
         .mockResolvedValueOnce({
@@ -164,7 +165,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns 401 for AUTHENTICATED mode without session", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "AUTHENTICATED",
       });
@@ -181,7 +182,7 @@ describe("GET /api/share/[shareKey]/report", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "other-user", access: "USER" },
       });
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "AUTHENTICATED",
         project: {
@@ -203,7 +204,7 @@ describe("GET /api/share/[shareKey]/report", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin", access: "ADMIN" },
       });
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "AUTHENTICATED",
       });
@@ -226,7 +227,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns 401 for PASSWORD_PROTECTED mode without valid token", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "PASSWORD_PROTECTED",
       });
@@ -241,7 +242,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("allows PASSWORD_PROTECTED mode with valid token in query", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         mode: "PASSWORD_PROTECTED",
       });
@@ -266,7 +267,7 @@ describe("GET /api/share/[shareKey]/report", () => {
   describe("Report entity validation", () => {
     it("returns 400 for non-REPORT entity type", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         entityType: "TEST_PLAN",
       });
@@ -281,7 +282,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns 400 when entityConfig is null", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         entityConfig: null,
       });
@@ -296,7 +297,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns 400 for unsupported report type", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         entityConfig: { reportType: "unknown-report-type" },
       });
@@ -313,7 +314,7 @@ describe("GET /api/share/[shareKey]/report", () => {
   describe("Report data fetching", () => {
     it("returns report data with dimensions and metrics for dynamic report", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
       mockFetch
         .mockResolvedValueOnce({
@@ -344,7 +345,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("returns report data with empty dimensions/metrics for pre-built report", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue({
+      (baseDb.shareLink.findUnique as any).mockResolvedValue({
         ...mockShareLink,
         entityConfig: {
           reportType: "test-execution",
@@ -376,7 +377,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("propagates error from report metadata fetch failure", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -394,7 +395,7 @@ describe("GET /api/share/[shareKey]/report", () => {
 
     it("adds x-shared-report-bypass header to internal fetch calls", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
+      (baseDb.shareLink.findUnique as any).mockResolvedValue(mockShareLink);
 
       mockFetch
         .mockResolvedValueOnce({
@@ -413,7 +414,7 @@ describe("GET /api/share/[shareKey]/report", () => {
         expect.any(String),
         expect.objectContaining({
           headers: expect.objectContaining({
-            "x-shared-report-bypass": "true",
+            "x-shared-report-bypass": internalReportBypassToken(),
           }),
         })
       );
@@ -423,7 +424,7 @@ describe("GET /api/share/[shareKey]/report", () => {
   describe("Error handling", () => {
     it("returns 500 when database throws", async () => {
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockRejectedValue(
+      (baseDb.shareLink.findUnique as any).mockRejectedValue(
         new Error("DB error")
       );
 
@@ -440,7 +441,7 @@ describe("GET /api/share/[shareKey]/report", () => {
     it("seeds ALS with request headers inside the GET handler", async () => {
       let capturedCtx: AuditContext | undefined;
       (getServerSession as any).mockResolvedValue(null);
-      (prisma.shareLink.findUnique as any).mockImplementation(() => {
+      (baseDb.shareLink.findUnique as any).mockImplementation(() => {
         capturedCtx = getAuditContext();
         return Promise.resolve(mockShareLink);
       });

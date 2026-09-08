@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Search and paginate datasets scoped to a single project.
@@ -38,7 +38,7 @@ export async function searchProjectDataSets(
     }
 
     const [rows, total] = await Promise.all([
-      prisma.dataSet.findMany({
+      baseDb.dataSet.findMany({
         where: whereClause,
         select: {
           id: true,
@@ -50,7 +50,7 @@ export async function searchProjectDataSets(
         take: pageSize,
         orderBy: { name: "asc" },
       }),
-      prisma.dataSet.count({ where: whereClause }),
+      baseDb.dataSet.count({ where: whereClause }),
     ]);
 
     const results = rows.map((r) => ({

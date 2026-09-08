@@ -44,7 +44,7 @@ test.describe("Configuration Project Scoping - Admin", () => {
       await filterInput.fill(configName);
       await page.waitForTimeout(500);
 
-      row = page.getByTestId(`case-row-${configId}`);
+      row = page.getByTestId(`admin-configuration-row-${configId}`);
       await expect(row).toBeVisible({ timeout: 10000 });
     });
 
@@ -107,10 +107,14 @@ test.describe("Configuration Project Scoping - Admin", () => {
 
     await test.step("Verify the assigned configuration is shown and the unassigned one is hidden", async () => {
       // The assigned configuration is visible; the unassigned one is filtered out.
-      await expect(page.getByTestId(`case-row-${assignedId}`)).toBeVisible({
+      await expect(
+        page.getByTestId(`admin-configuration-row-${assignedId}`)
+      ).toBeVisible({
         timeout: 10000,
       });
-      await expect(page.getByTestId(`case-row-${unassignedId}`)).toHaveCount(0);
+      await expect(
+        page.getByTestId(`admin-configuration-row-${unassignedId}`)
+      ).toHaveCount(0);
     });
   });
 });

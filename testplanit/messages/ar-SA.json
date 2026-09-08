@@ -3,6 +3,18 @@
     "name": "الاسم",
     "cancel": "إلغاء",
     "dismiss": "إغلاق",
+    "bulk": {
+      "selectItem": "تحديد عنصر",
+      "editAction": "تعديل ({count})",
+      "completeAction": "إكمال ({count})",
+      "deleteAction": "حذف ({count})",
+      "editTitle": "تعديل جماعي ({count})",
+      "applyToCount": "تُطبَّق التغييرات على {count, plural, zero {# عنصر} one {عنصر واحد} two {عنصرين} few {# عناصر} many {# عنصرًا} other {# عنصر}}.",
+      "tagsAdditiveHint": "تتم إضافة الوسوم المحددة إلى كل عنصر؛ ويتم الاحتفاظ بالوسوم الحالية.",
+      "completeSuccess": "{count, plural, zero {# عنصر مكتمل} one {عنصر واحد مكتمل} two {عنصران مكتملان} few {# عناصر مكتملة} many {# عنصرًا مكتملًا} other {# عنصر مكتمل}}",
+      "deleteSuccess": "{count, plural, zero {# عنصر محذوف} one {عنصر واحد محذوف} two {عنصران محذوفان} few {# عناصر محذوفة} many {# عنصرًا محذوفًا} other {# عنصر محذوف}}",
+      "partialFailure": "تعذر تحديث {failedCount} من أصل {totalCount} عنصر"
+    },
     "of": "من",
     "on": "في",
     "at": "عند",
@@ -13,11 +25,13 @@
     "file": "الملف",
     "selectMultiple": "اختر عدة عناصر...",
     "searchUsers": "البحث عن المستخدمين...",
+    "searchGroups": "البحث عن مجموعات...",
     "searchCases": "{count, plural, =0 {البحث في الحالات} one {البحث في # حالة} other {البحث في # حالات}}",
     "searchProjects": "{count, plural, =0 {البحث في المشاريع} one {البحث في # مشروع} other {البحث في # مشاريع}}",
     "searchTags": "البحث عن العلامات...",
     "searchRuns": "{count, plural, =0 {البحث في تشغيلات الاختبار} one {البحث في # تشغيل اختبار} other {البحث في # تشغيلات اختبار}}",
     "searchSessions": "{count, plural, =0 {البحث في الجلسات} one {البحث في # جلسة} other {البحث في # جلسات}}",
+    "searchMilestones": "{count, plural, =0 {البحث في المعالم} one {البحث عن معلم واحد} two {البحث عن معلمين} few {البحث عن # معالم} many {البحث عن # معلمًا} other {البحث عن # معلم}}",
     "search": "بحث...",
     "defaultOption": "الخيار الافتراضي",
     "yes": "نعم",
@@ -27,6 +41,7 @@
     "lastEditedBy": "آخر تعديل بواسطة",
     "actions": {
       "edit": "تعديل",
+      "editTestCase": "تعديل حالة الاختبار",
       "save": "حفظ",
       "delete": "حذف",
       "create": "إنشاء",
@@ -73,6 +88,7 @@
       "editResult": "تعديل نتيجة الاختبار",
       "resultDetails": "تفاصيل النتيجة",
       "actionsLabel": "الإجراءات",
+      "actionsWithAlerts": "الإجراءات ({count, number} غير مقروء)",
       "assign": "تعيين",
       "assignSelected": "تعيين {count, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}}",
       "refresh": "تحديث",
@@ -216,8 +232,11 @@
       "high": "عالية"
     },
     "filters": {
+      "all": "الكل",
       "allStatuses": "جميع الحالات",
-      "allPriorities": "جميع الأولويات"
+      "allPriorities": "جميع الأولويات",
+      "allIssueTypes": "جميع أنواع المشكلات",
+      "noIssueType": "بدون نوع مشكلة"
     },
     "fields": {
       "groupName": "اسم المجموعة",
@@ -240,6 +259,13 @@
       "totalElapsed": "إجمالي الوقت المنقضي",
       "totalEstimate": "الوقت المتبقي المقدر",
       "completionRate": "معدل الإكمال",
+      "runDuration": "مدة التشغيل",
+      "passRate": "معدل النجاح",
+      "parallelization": "التوازي",
+      "avgTestTime": "متوسط وقت الاختبار",
+      "medianTestTime": "الوسيط الزمني للاختبار",
+      "retries": "إعادة المحاولات",
+      "flakyTests": "الاختبارات المتقلبة",
       "attachments": "المرفقات",
       "documentation": "الوثائق",
       "state": "الحالة",
@@ -290,6 +316,7 @@
       "account": "الحساب",
       "accountHistory": "سجل الحساب",
       "activity": "النشاط",
+      "activityLog": "سجل النشاط",
       "lastActive": "آخر نشاط",
       "theme": "السمة",
       "locale": "اللغة",
@@ -317,12 +344,17 @@
       "fieldType": "نوع الحقل",
       "templates": "القوالب",
       "started": "بدأ",
+      "ended": "انتهى",
       "startDate": "تاريخ البدء",
       "automated": "مؤتمت",
       "manual": "يدوي",
       "notAutomated": "غير مؤتمت",
       "parameterized": "معلمن",
       "notParameterized": "غير معلمن",
+      "hasAttachments": "يحتوي على مرفقات",
+      "noAttachments": "بلا مرفقات",
+      "inReview": "قيد المراجعة",
+      "notInReview": "ليس قيد المراجعة",
       "testRuns": "تشغيلات الاختبار",
       "title": "العنوان",
       "project": "المشروع",
@@ -378,7 +410,8 @@
         "notificationSettings": "إعداد الإشعارات العام",
         "elasticsearch_replicas": "نسخ Elasticsearch المتماثلة",
         "review_feature_enabled": "تفعيل المراجعة والموافقات",
-        "review_reminder_threshold_days": "أيام حد تذكير المراجعين"
+        "review_reminder_threshold_days": "أيام حد تذكير المراجعين",
+        "record_key_enabled": "تفعيل مفاتيح السجلات"
       },
       "options": {
         "label": "التسمية",
@@ -415,7 +448,8 @@
         "stateRequired": "الحالة مطلوبة",
         "urlRequired": "عنوان URL مطلوب",
         "invalidUrl": "صيغة عنوان URL غير صالحة"
-      }
+      },
+      "worker": "عامل"
     },
     "filter": {
       "placeholder": "تصفية {item}..."
@@ -524,6 +558,15 @@
       "selectState": "حدد الحالة",
       "selectConfiguration": "حدد التكوين",
       "selectConfigurations": "اختر التكوينات",
+      "selectFolders": "حدد المجلدات",
+      "selectIssues": "حدد المشكلات",
+      "selectMilestones": "حدد المعالم الرئيسية",
+      "selectProjects": "حدد المشاريع",
+      "selectStates": "حدد الحالات",
+      "selectTags": "حدد الوسوم",
+      "addFieldTo": "إضافة حقل إلى {section}",
+      "selectTemplates": "حدد القوالب",
+      "selectUsers": "حدد المستخدمين",
       "selectOption": "حدد خيارًا",
       "date": "حدد تاريخًا",
       "selectEncoding": "حدد الترميز...",
@@ -543,12 +586,15 @@
       "stepCount": "عدد الخطوات",
       "enterText": "أدخل نصًا...",
       "enterUrl": "أدخل عنوان URL",
+      "enterUrlPattern": "أدخل نمط الرابط...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "حدد قيم الأولوية (أو اتركه فارغًا للكل)"
     },
     "errors": {
       "error": "خطأ",
       "somethingWentWrong": "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا.",
+      "completeNotPermitted": "ليس لديك إذن لإكمال هذا العنصر.",
       "emailRequired": "أدخل عنوان بريدك الإلكتروني.",
       "emailInvalid": "هذا ليس عنوان بريد إلكتروني صالحًا.",
       "passwordRequired": "كلمة المرور مطلوبة.",
@@ -718,6 +764,24 @@
       "selectDeselectAllApprove": "تحديد أو إلغاء تحديد الموافقة لجميع المناطق ذات الصلة",
       "selectDeselectAllReadSensitive": "تحديد أو إلغاء تحديد القراءة الحساسة لجميع المناطق ذات الصلة"
     },
+    "configurationGroup": {
+      "title": "مجموعة التكوين",
+      "notLinkedRun": "غير مرتبط بأي تشغيل اختبار آخر.",
+      "notLinkedSession": "غير مرتبط بأي جلسة أخرى.",
+      "linkRun": "ربط بتشغيل اختبار",
+      "linkSession": "ربط بجلسة",
+      "changeRun": "ربط بتشغيل اختبار مختلف",
+      "changeSession": "ربط بجلسة مختلفة",
+      "unlink": "إلغاء الربط",
+      "pending": "احفظ لتطبيق هذا التغيير.",
+      "saveError": "فشل تحديث مجموعة التكوين",
+      "candidateInGroupRun": "{count, plural, zero {لا توجد تشغيلات} one {# تشغيل} two {تشغيلان} few {# تشغيلات} many {# تشغيلاً} other {# تشغيل}}",
+      "candidateInGroupSession": "{count, plural, zero {لا توجد جلسات} one {# جلسة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+      "linkHintRun": "الربط بتشغيل اختبار يربطك أيضاً بكل تشغيل اختبار آخر مجمّع معه بالفعل.",
+      "linkHintSession": "الربط بجلسة يربطك أيضاً بكل جلسة أخرى مجمّعة معها بالفعل.",
+      "candidateInGroupTooltipRun": "{count, plural, zero {لا تشغيلات في هذه المجموعة} one {# تشغيل في هذه المجموعة} two {تشغيلان في هذه المجموعة} few {# تشغيلات في هذه المجموعة} many {# تشغيلاً في هذه المجموعة} other {# تشغيل في هذه المجموعة}}",
+      "candidateInGroupTooltipSession": "{count, plural, zero {لا جلسات في هذه المجموعة} one {# جلسة في هذه المجموعة} two {جلستان في هذه المجموعة} few {# جلسات في هذه المجموعة} many {# جلسة في هذه المجموعة} other {# جلسة في هذه المجموعة}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# مشروع} other {# مشروع}}",
       "templates": "القوالب والحقول",
@@ -731,6 +795,16 @@
       "existingAttachments": "المرفقات الحالية",
       "new": "جديد",
       "noElapsedTime": "لم يتم تسجيل وقت",
+      "runDurationHint": "الوقت من أول نتيجة إلى آخر نتيجة",
+      "totalElapsedHint": "مجموع أوقات الاختبارات الفردية",
+      "parallelizationHint": "متوسط عدد الاختبارات التي تعمل في نفس الوقت",
+      "parallelizationPeakHint": "ذروة {peak, number} اختبار قيد التشغيل في وقت واحد، بمعدل {average}× في المتوسط",
+      "passRateHint": "نجح {passed, number} من {total, number} اختبار",
+      "retriesHint": "المحاولات بعد أول تشغيل لكل اختبار",
+      "flakyTestHint": "فشل، ثم نجح عند إعادة المحاولة في هذا التشغيل",
+      "executionMetrics": "مقاييس التنفيذ",
+      "metricsAndCharts": "المقاييس والرسوم البيانية",
+      "slowestTests": "أبطأ الاختبارات",
       "untested": "غير مُختبر",
       "noResults": "لا توجد نتائج",
       "resultsWithNoElapsedTime": "لا يوجد وقت مسجل للنتائج",
@@ -738,6 +812,7 @@
       "noCases": "لا توجد حالات اختبار",
       "unknown": "غير معروف",
       "selectedTestCases": "حالات الاختبار المحددة",
+      "selectedTestCasesCount": "{count, plural, zero {# حالة اختبار محددة} one {حالة اختبار محددة واحدة} two {حالتا اختبار محددتان} few {# حالات اختبار محددة} many {# حالة اختبار محددة} other {# حالة اختبار محددة}}",
       "editToModifyCasesTitle": "لا يمكن تعديل هذه القائمة.",
       "editToModifyCases": "عدّل تشغيل الاختبار واضغط على حالات الاختبار المحددة لتعديل القائمة.",
       "noTestCasesSelected": "لم يتم تحديد حالات اختبار",
@@ -749,9 +824,13 @@
       "sortByDate": "الترتيب حسب التاريخ",
       "testRuns": "{count, plural, =0 {لا توجد تشغيلات اختبار} =1 {تشغيل اختبار واحد} other {# تشغيلات اختبار}}",
       "sessions": "{count, plural, =0 {لا توجد جلسات} =1 {جلسة واحدة} other {# جلسات}}",
+      "issues": "{count, plural, =0 {لا توجد مشكلات} =1 {مشكلة واحدة} two {مشكلتان} few {# مشكلات} many {# مشكلة} other {# مشكلة}}",
       "noOptions": "لا توجد خيارات متاحة",
       "multiConfiguration": "جزء من مجموعة متعددة التكوينات",
+      "compositionLocked": "التركيبة مقفلة — مجموعة الحالات مجمّدة",
       "otherConfigurations": "تكوينات أخرى",
+      "noConfiguration": "بلا تكوين",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "المحدد: {count}",
       "defaultProjectAccess": "الوصول الافتراضي للمشروع",
       "defaultAccessType": "نوع الوصول الافتراضي",
@@ -794,7 +873,8 @@
     "table": {
       "columns": {
         "columns": "الأعمدة",
-        "required": "(مطلوب)"
+        "required": "(مطلوب)",
+        "resetColumns": "إعادة تعيين الأعمدة إلى الافتراضي"
       },
       "filter": "تصفية القائمة...",
       "selectNone": "إلغاء تحديد الكل",
@@ -802,7 +882,13 @@
       "sortAscending": "مرتب تصاعديًا",
       "sortDescending": "مرتب تنازليًا",
       "sortNone": "غير مرتب",
-      "resize": "تغيير حجم العمود"
+      "resize": "تغيير حجم العمود",
+      "reorderColumn": "اسحب لإعادة ترتيب العمود",
+      "sortAsc": "ترتيب تصاعدي",
+      "sortDesc": "ترتيب تنازلي",
+      "removeSort": "إزالة الترتيب",
+      "hideColumn": "إخفاء العمود",
+      "columnOptions": "خيارات العمود"
     },
     "pagination": {
       "selectPage": "حدد الصفحة",
@@ -815,7 +901,8 @@
       "showing": "عرض",
       "total": "الإجمالي {count, plural, =1 {# عنصر} zero {# عنصر} two {عنصران} few {# عناصر} many {# عنصر} other {# عنصر}}",
       "filtered": "مُصفّى من",
-      "pageOfPages": "الصفحة {current} من {total}"
+      "pageOfPages": "الصفحة {current} من {total}",
+      "loadedOfTotal": "{loaded, number} من {total, number}"
     },
     "upload": {
       "title": "تحميل صورة ملف شخصي جديدة",
@@ -824,7 +911,7 @@
         "title": "تحميل المرفقات",
         "description": "اسحب وأسقط ملفاتك أو اضغط على الزر أدناه لتحديد ملفات.",
         "selectFiles": "{count, plural, =0 {تحديد الملفات} one {ملف واحد محدد} other {# ملفات محددة}}",
-        "selectFile": "{count, plural, =0 {Select File} other {1 Selected File}}",
+        "selectFile": "{count, plural, =0 {اختيار ملف} other {ملف واحد محدد}}",
         "filesSelected": "{count, plural, zero {# ملف محدد} one {ملف واحد محدد} two {ملفان محددان} few {# ملفات محددة} many {# ملفاً محدداً} other {# ملف محدد}}",
         "addMoreFiles": "إضافة ملفات أخرى...",
         "replaceFile": "استبدال الملف...",
@@ -1006,10 +1093,10 @@
       },
       "charts": {
         "resultsDistribution": "توزيع النتائج",
-        "statusTimeline": "الجدول الزمني للحالة",
+        "executionTimeline": "الجدول الزمني للتنفيذ",
         "testDurationHistogram": "مدرج تكراري لمدة الاختبار",
         "zoomDonutChart": "تكبير المخطط الدائري",
-        "zoomStatusTimeline": "تكبير الجدول الزمني للحالة",
+        "zoomExecutionTimeline": "تكبير الجدول الزمني للتنفيذ",
         "zoomHistogramChart": "تكبير المخطط المدرج التكراري",
         "duration": "المدة: {seconds} ثانية",
         "durationLabel": "المدة"
@@ -1053,7 +1140,35 @@
     "invalidProject": "معرّف مشروع غير صالح.",
     "visualization": "التصور البصري",
     "results": "النتائج",
-    "loading": "جارٍ التحميل..."
+    "loading": "جارٍ التحميل...",
+    "operators": {
+      "eq": "يساوي",
+      "ne": "لا يساوي",
+      "lt": "أصغر من",
+      "lte": "أصغر من أو يساوي",
+      "gt": "أكبر من",
+      "gte": "أكبر من أو يساوي",
+      "between": "بين",
+      "contains": "يحتوي على",
+      "notContains": "لا يحتوي على",
+      "startsWith": "يبدأ بـ",
+      "endsWith": "ينتهي بـ",
+      "domain": "النطاق يحتوي على",
+      "on": "في",
+      "before": "قبل",
+      "after": "بعد",
+      "last7": "آخر 7 أيام",
+      "last30": "آخر 30 يومًا",
+      "last90": "آخر 90 يومًا",
+      "thisYear": "هذا العام",
+      "anyOf": "أي من",
+      "allOf": "كل من",
+      "noneOf": "لا شيء من",
+      "is": "هو",
+      "in": "هو أي من",
+      "hasValue": "يحتوي على قيمة",
+      "isEmpty": "فارغ"
+    }
   },
   "api": {
     "testResults": {
@@ -1253,15 +1368,15 @@
     "overview": {
       "title": "نظرة عامة",
       "currentMilestones": "المعالم الرئيسية الحالية",
-      "seeAllMilestones": "{count, plural, =1 {عرض # معلم رئيسي} other {عرض كل # معالم رئيسية}}",
-      "seeAllTestCases": "{count, plural, =1 {عرض # حالة اختبار} other {عرض كل # حالات الاختبار}}",
+      "seeAllMilestones": "{count, plural, =1 {عرض # معلم} =2 {عرض كلا المعلمين (#)} other {عرض جميع # معالم}}",
+      "seeAllTestCases": "{count, plural, =1 {عرض # حالة اختبار} =2 {عرض كلا حالتي الاختبار (#)} other {عرض جميع # حالات اختبار}}",
       "latestTestCases": "أحدث حالات الاختبار",
       "createdOn": "تم الإنشاء في",
-      "seeAllTags": "عرض جميع الوسوم",
-      "seeAllActiveSessions": "{count, plural, =1 {عرض # جلسة نشطة} other {عرض كل # الجلسات النشطة}}",
+      "seeAllTagsCount": "{count, plural, =1 {عرض # علامة} =2 {عرض كلا العلامتين (#)} other {عرض جميع # علامات}}",
+      "seeAllActiveSessions": "{count, plural, =1 {عرض # جلسة نشطة} =2 {عرض كلا الجلستين النشطتين (#)} other {عرض جميع # جلسات نشطة}}",
       "latestSessions": "أحدث الجلسات",
       "activeTestRuns": "تشغيلات الاختبار النشطة",
-      "seeAllActiveTestRuns": "{count, plural, =1 {عرض # تشغيل اختبار نشط} other {عرض كل # تشغيلات الاختبار النشطة}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {عرض # تشغيل اختبار نشط} =2 {عرض كلا تشغيلي الاختبار النشطين (#)} other {عرض جميع # تشغيلات اختبار نشطة}}",
       "latestTestRuns": "أحدث تشغيلات الاختبار",
       "testCaseBreakdown": "تفصيل حالات الاختبار",
       "noTestCases": "مستودع المشروع فارغ. أضف حالات اختبار باستخدام المستودع.",
@@ -1292,7 +1407,14 @@
         "saveButton": "حفظ",
         "saveSuccess": "تم حفظ أسماء خصائص التكرار.",
         "saveError": "تعذّر حفظ أسماء خصائص التكرار.",
-        "removeAria": "إزالة {name}"
+        "removeAria": "إزالة {name}",
+        "counter": "{count}/{max}",
+        "constraints": "بحد أقصى {max} خاصية، كل منها {maxLength} حرفًا أو أقل، بدون مسافات.",
+        "limitReached": "لقد وصلت إلى الحد الأقصى البالغ {max} خاصية. أزل واحدة لإضافة أخرى.",
+        "errorTooLong": "اجعل اسم كل خاصية {maxLength} حرفًا أو أقل.",
+        "errorWhitespace": "لا يمكن أن تحتوي أسماء الخصائص على مسافات.",
+        "errorReserved": "\"{name}\" كلمة محجوزة ولا يمكن استخدامها.",
+        "errorDuplicate": "\"{name}\" موجودة بالفعل في القائمة."
       },
       "integrations": {
         "description": "إدارة تكاملات المشكلات من جهات خارجية لهذا المشروع",
@@ -1379,7 +1501,19 @@
           "importStart": "استيراد",
           "importStarted": "بدأ الاستيراد. ستظهر المشكلات قريبًا.",
           "importFailed": "فشل الاستيراد",
-          "importPreviewFailed": "تعذّر تقدير التطابقات"
+          "importPreviewFailed": "تعذّر تقدير التطابقات",
+          "milestoneSync": {
+            "title": "مزامنة المعالم",
+            "description": "مزامنة معالم TestPlanIt من عناصر هذا المتتبع الزمنية.",
+            "enableLabel": "تمكين مزامنة المعالم",
+            "releasesLabel": "الإصدارات",
+            "sprintsLabel": "السبرنتات",
+            "kindsLabel": "الأنواع المطلوب مزامنتها",
+            "autoTrackLabel": "إضافة العناصر الجديدة تلقائيًا",
+            "autoTrackProjectsLabel": "فحص هذه المشاريع المتصلة بحثًا عن معالم جديدة",
+            "settingsSaved": "تم حفظ إعدادات مزامنة المعالم",
+            "saveError": "فشل حفظ إعدادات مزامنة المعالم"
+          }
         },
         "integrationAssigned": "تم تعيين التكامل بنجاح",
         "integrationAssignError": "فشل تعيين تكامل المشكلات للمشروع",
@@ -1621,6 +1755,7 @@
         "setupStepsGiteaStep5": "انقر على \"إضافة خطاف شبكي\". استخدم \"إرسال خطاف شبكي تجريبي\" أدناه للتحقق من خط الأنابيب.",
         "deliveriesTab": "عمليات التسليم",
         "filterConfigPlaceholder": "جميع الخطاطيف الشبكية",
+        "filterEventPlaceholder": "جميع الأحداث",
         "filterStatusAll": "الكل",
         "filterStatusFailed": "فاشل",
         "filterStatusSuccess": "ناجح",
@@ -1634,6 +1769,7 @@
         "deliveriesLoadMore": "تحميل المزيد",
         "tableHeaderConfig": "الخطاف الشبكي",
         "tableHeaderEvent": "الحدث",
+        "tableHeaderSubjectRef": "مرجع",
         "tableHeaderStatus": "الحالة",
         "tableHeaderError": "الخطأ",
         "tableHeaderReceivedAt": "تاريخ الاستلام",
@@ -1651,6 +1787,7 @@
         "drawerLabelError": "الخطأ",
         "drawerLabelPayloadDigest": "ملخص الحمولة",
         "drawerLabelEventId": "معرّف الحدث",
+        "drawerLabelSubjectRef": "مرجع",
         "drawerLabelAttempt": "المحاولة",
         "drawerLabelReceivedAt": "وقت الاستلام",
         "drawerNoError": "—",
@@ -1897,7 +2034,9 @@
           "description": "يتم تخزين الملفات مؤقتاً في Valkey للوصول السريع خلال إنشاء الذكاء الاصطناعي.",
           "enableLabel": "تفعيل التخزين المؤقت للملفات",
           "disabledWarning": "التخزين المؤقت للملفات معطّل. سيتم جلب ملفات المستودع مباشرة من مزودك عند وقت التصدير ولن يتم تخزينها في TestPlanIt. سيستمر QuickScript المدعوم بالذكاء الاصطناعي في تضمين سياق الكود، ولكن كل تصدير سيقوم بطلب مباشر إلى مستودعك.",
-          "ttlLabel": "مدة التخزين المؤقت (بالأيام)",
+          "ttlBefore": "التخزين المؤقت لمدة",
+          "ttlDays": "{count, plural, zero {يوم} one {يوم} two {يومان} few {أيام} many {يومًا} other {يوم}}",
+          "ttlAriaLabel": "مدة التخزين المؤقت بالأيام",
           "statusTitle": "حالة التخزين المؤقت",
           "refreshButton": "تحديث التخزين المؤقت",
           "listingFiles": "جارٍ سرد الملفات…",
@@ -1906,6 +2045,8 @@
           "statusPending": "جارٍ التحديث...",
           "lastFetched": "آخر جلب",
           "filesCached": "الملفات المخزنة مؤقتاً",
+          "contentsCached": "المحتويات مخزّنة مؤقتًا",
+          "contentsIncomplete": "تم تخزين {cached} من {total} من محتويات الملفات مؤقتًا فقط — لن تستخدم النصوص البرمجية المُنشأة الملفات المفقودة. أعد التحديث للإكمال.",
           "totalSize": "الحجم الإجمالي"
         },
         "save": "حفظ التكوين",
@@ -1949,9 +2090,20 @@
       "advanced": {
         "title": "متقدم",
         "description": "مفاتيح تبديل خاصة بالمشروع للميزات الاختيارية. ستظهر هنا مفاتيح التبديل الجديدة عند تقديمها.",
+        "recordKey": {
+          "label": "رمز المشروع",
+          "description": "رمز قصير يُستخدم في مفاتيح السجلات الشكلية مثل {example}. من 2 إلى 10 أحرف كبيرة، بدون أرقام. اتركه فارغًا لإظهار المعرفات الرقمية العادية.",
+          "placeholder": "مثال: PROJECT",
+          "previewLabel": "مثال المفتاح:",
+          "useSuggestion": "استخدم الرمز المقترح: {code}",
+          "invalid": "استخدم من 2 إلى 10 أحرف كبيرة (بدون أرقام).",
+          "taken": "هذا الرمز مستخدم بالفعل من قبل مشروع آخر. اختر رمزًا مختلفًا.",
+          "savedToast": "تم حفظ رمز المشروع.",
+          "saveError": "تعذّر حفظ رمز المشروع. قد يكون مستخدمًا بالفعل من قبل مشروع آخر."
+        },
         "reviewWorkflow": {
           "label": "تمكين سير عمل المراجعة",
-          "description": "عند التمكين، يتم التحكم في الانتقالات إلى الحالات التي تتطلب مراجعة عبر طلب مراجعة معتمد. يرى المختبرون زر طلب المراجعة؛ ويتلقى المراجعون الإشعارات.",
+          "description": "عند التمكين، يتم تقييد الانتقالات إلى الحالات التي تتطلب مراجعة بطلب مراجعة معتمد. يرى المختبرون زر طلب المراجعة؛ ويستلم المراجعون إشعارات، والموافقة على الطلب تُطبّق الانتقال.",
           "enabledToast": "تم تمكين سير عمل المراجعة لهذا المشروع",
           "disabledToast": "تم تعطيل سير عمل المراجعة لهذا المشروع",
           "saveError": "فشل تحديث إعداد سير عمل المراجعة",
@@ -1982,13 +2134,23 @@
           "saveError": "فشل تحديث إعداد استبعاد الحالات المسودة",
           "skippedToast": "{count, plural, =1 {تم تخطي حالة مسودة واحدة لأنها في حالة لم تبدأ} other {تم تخطي # حالة مسودة لأنها في حالة لم تبدأ}}"
         },
+        "autoLockComposition": {
+          "label": "قفل تركيبة تشغيل الاختبار عند بدء التنفيذ",
+          "description": "عند التمكين، تُقفل تركيبة حالات تشغيل الاختبار تلقائيًا في اللحظة التي ينتقل فيها التشغيل إلى حالة قيد التنفيذ. يجمّد القفل الحالات الموجودة في التشغيل (بدون إضافة أو إزالة أو إعادة ترتيب) بينما يستمر التنفيذ والتخصيص. يمكن لمنشئ التشغيل أو مسؤول المشروع إلغاء القفل لتغيير مجموعة الحالات.",
+          "enabledToast": "ستقفل عمليات تشغيل الاختبار تركيبتها عند بدء التنفيذ",
+          "disabledToast": "لن تقفل عمليات تشغيل الاختبار تركيبتها تلقائيًا بعد الآن",
+          "saveError": "فشل تحديث إعداد القفل التلقائي للتركيبة"
+        },
         "editWindow": {
           "label": "نافذة تعديل النتيجة",
           "description": "المدة التي يمكن خلالها تعديل النتيجة في مكانها بعد تسجيلها. بعد إغلاق النافذة، تتطلب التصحيحات محاولة جديدة. يمكن لمسؤولي النظام التعديل دائمًا.",
-          "modeInherit": "وراثة الإعداد الافتراضي للنظام",
+          "modeInheritMinutes": "وراثة الإعداد الافتراضي للنظام ({minutes, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}})",
+          "modeInheritNoLimit": "وراثة الإعداد الافتراضي للنظام (بدون حد)",
           "modeDisable": "تعطيل التعديل لهذا المشروع",
           "modeCustom": "نافذة مخصصة",
-          "minutesLabel": "قابل للتعديل لمدة (بالدقائق)",
+          "minutesBefore": "قابل للتعديل لمدة",
+          "minutesUnit": "{minutes, plural, zero {دقيقة} one {دقيقة} two {دقيقتان} few {دقائق} many {دقيقة} other {دقيقة}}",
+          "minutesAriaLabel": "نافذة التعديل بالدقائق",
           "systemMaxHint": "الحد الأقصى للنظام: {minutes} دقيقة",
           "systemLockedTitle": "التعديل معطل على مستوى النظام",
           "systemLockedDescription": "قام مسؤول النظام بتعطيل تعديل النتيجة في مكانها لجميع المشاريع، لذلك لا يمكن لهذا المشروع تمكينه.",
@@ -1996,6 +2158,23 @@
           "save": "حفظ نافذة التعديل",
           "savedToast": "تم تحديث نافذة التعديل لهذا المشروع",
           "saveError": "فشل تحديث إعداد نافذة التعديل"
+        },
+        "abandonedRuns": {
+          "label": "تنظيف الأتمتة المهجورة",
+          "description": "المدة التي يجب انتظارها للحصول على النتيجة التالية قبل إغلاق التشغيل الآلي باعتباره مهجورًا. لا تتأثر عمليات التشغيل اليدوية أبدًا.",
+          "modeInheritMinutes": "وراثة الإعداد الافتراضي للنظام ({minutes, plural, zero {# دقيقة} one {دقيقة واحدة} two {دقيقتان} few {# دقائق} many {# دقيقة} other {# دقيقة}})",
+          "modeInheritOff": "وراثة الإعداد الافتراضي للنظام (معطل)",
+          "modeDisable": "تعطيل لهذا المشروع",
+          "modeCustom": "حد الخمول المخصص",
+          "minutesBefore": "الإغلاق عند الخمول لمدة",
+          "minutesUnit": "{minutes, plural, zero {دقيقة} one {دقيقة} two {دقيقتان} few {دقائق} many {دقيقة} other {دقيقة}}",
+          "minutesAriaLabel": "حد الخمول بالدقائق",
+          "invalidMinutes": "أدخل {min} دقيقة على الأقل",
+          "targetStateLabel": "نقل عمليات التشغيل المغلقة إلى",
+          "targetStateAria": "الحالة المستهدفة لعمليات التشغيل المهجورة",
+          "save": "حفظ إعدادات التنظيف",
+          "savedToast": "تم تحديث تنظيف الأتمتة المهجورة لهذا المشروع",
+          "saveError": "فشل تحديث تنظيف الأتمتة المهجورة"
         }
       }
     },
@@ -2044,6 +2223,9 @@
   },
   "milestones": {
     "title": "تفاصيل المعلم الرئيسي",
+    "auditLog": {
+      "description": "جميع التغييرات مسجّلة لهذا المعلم."
+    },
     "fields": {
       "parent": "المعلم الرئيسي الأصلي",
       "dueDate": "تاريخ الاستحقاق",
@@ -2067,7 +2249,18 @@
       "description": "لم يتم تقديم وصف",
       "documentation": "لم يتم تقديم وثائق",
       "testRuns": "لا توجد تشغيلات اختبار",
+      "noMatchingTestRuns": "لا توجد تشغيلات اختبار تطابق عوامل التصفية الخاصة بك.",
+      "noMatchingSessions": "لا توجد جلسات تطابق عوامل التصفية الخاصة بك.",
       "forecasts": "لا توجد بيانات توقع متاحة"
+    },
+    "cardFilters": {
+      "labelRuns": "تصفية تشغيلات الاختبار",
+      "labelSessions": "تصفية الجلسات"
+    },
+    "browser": {
+      "kindAll": "جميع المعالم",
+      "kindReleases": "الإصدارات المتزامنة",
+      "kindSprints": "السبرنتات المتزامنة"
     },
     "statusLabels": {
       "NOT_STARTED": "لم يبدأ",
@@ -2111,6 +2304,7 @@
     "delete": {
       "title": "حذف المعلم الرئيسي",
       "confirmMessage": "هل أنت متأكد أنك تريد حذف المعلم الرئيسي {name}؟",
+      "childrenWarning": "{count, plural, one {# معلم فرعي تابع له} other {# معالم فرعية ومنحدرة تابعة له}} سيُحذف أيضًا.",
       "warning": "سيتم إزالة هذا المعلم الرئيسي من المشروع. ستبقى البيانات التاريخية لهذا المعلم الرئيسي في المشروع.",
       "toast": {
         "loading": "جارٍ حذف المعلم الرئيسي...",
@@ -2138,12 +2332,128 @@
     "notifications": {
       "dueSoon": "المعلم \"{name}\" مستحق في {dueDate}",
       "overdue": "كان المعلم \"{name}\" مستحقًا في {dueDate}"
+    },
+    "import": {
+      "importTitle": "استيراد من Jira",
+      "importDescription": "اختر إصدارات الإصلاح والسبرنتات في Jira لمزامنتها كمعالم TestPlanIt.",
+      "showClosed": "إظهار المغلقة",
+      "alreadyLinked": "مرتبط بالفعل",
+      "selectedCount": "{count, plural, one {# محدد} other {# محدد}}",
+      "confirmSelection": "استيراد المحدد",
+      "confirmSelectionCount": "{count, plural, zero {استيراد # معلم رئيسي} one {استيراد معلم رئيسي واحد} two {استيراد معلمين رئيسيين} few {استيراد # معالم رئيسية} many {استيراد # معلمًا رئيسيًا} other {استيراد # معلم رئيسي}}",
+      "empty": "لم يتم العثور على معالم",
+      "previewFailed": "فشل تحميل المعالم من Jira",
+      "importFailed": "فشل استيراد المعالم المحددة",
+      "requestTimedOut": "استغرق Jira وقتًا طويلاً للاستجابة وانتهت مهلة الطلب. يعني هذا عادةً أن مشاريع Jira المرتبطة تحتوي على عدد كبير من الإصدارات أو اللوحات. حاول مرة أخرى، واترك خيار \"إظهار المغلقة\" معطلاً لتضييق نطاق الطلب.",
+      "serviceUnavailable": "الخادم غير متوفر مؤقتًا. يرجى المحاولة مرة أخرى بعد قليل.",
+      "unexpectedResponse": "استجابة غير متوقعة من الخادم (HTTP {status}). يرجى المحاولة مرة أخرى، والتواصل مع المسؤول إذا استمرت هذه المشكلة.",
+      "importStarted": "بدأ الاستيراد",
+      "kindRelease": "إصدار",
+      "kindSprint": "سبرنت",
+      "selectAll": "تحديد الكل",
+      "searchPlaceholder": "البحث في الإصدارات والسبرنتات...",
+      "emptyFiltered": "لا توجد معالم تطابق عوامل التصفية الخاصة بك.",
+      "partialWarning": "تعذّر جلب بعض مشاريع Jira:",
+      "importing": "استيراد {count, plural, one {# معلم} other {# معالم}} من Jira…",
+      "completed": "تم استيراد {count, plural, one {# معلم} other {# معالم}} من Jira",
+      "stillRunning": "لا تزال عملية الاستيراد قيد التشغيل في الخلفية — ستظهر المعالم عند اكتمالها."
+    },
+    "sync": {
+      "managedByJira": "تتم إدارتها عبر Jira",
+      "lastSynced": "آخر مزامنة {time}",
+      "openInJira": "فتح في Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "مزامنة الآن",
+      "unlinkMenuItem": "إلغاء الربط من {provider}",
+      "unlinkConfirmTitle": "إلغاء ربط المعلم؟",
+      "unlinkConfirmDescription": "يوقف هذا المزامنة مع المتتبع: تصبح الحقول قابلة للتحرير مرة أخرى، وتصبح روابط المشكلات المتزامنة يدوية (يمكنك الاحتفاظ بها أو إزالتها)، ويمكن إعادة الربط لاحقًا عن طريق استيراد هذا العنصر مرة أخرى.",
+      "unlinkConfirmAction": "إلغاء الربط",
+      "unlinkSuccess": "تم إلغاء ربط المعلم من المتتبع.",
+      "unlinkError": "فشل إلغاء ربط المعلم.",
+      "sourceRemoved": "تمت إزالة المصدر في {provider}",
+      "mergedInto": "تم دمجه في {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# ضمن النطاق} other {# ضمن النطاق}}",
+      "foundInTesting": "{count, plural, one {# تم العثور عليه في الاختبار} other {# تم العثور عليه في الاختبار}}",
+      "includesChildMilestones": "يشمل المعالم الفرعية"
+    },
+    "burndown": {
+      "title": "مخطط الاحتراق",
+      "remaining": "العناصر المتبقية",
+      "ideal": "المثالي",
+      "today": "اليوم",
+      "tooltipRemaining": "{count, number} متبقٍ",
+      "heatAhead": "متقدم عن المثالي",
+      "heatOnTrack": "على المسار الصحيح",
+      "heatBehind": "متأخر عن المثالي",
+      "tooltipBehind": "{count, number} متأخر عن المثالي",
+      "tooltipAhead": "{count, number} متقدم عن المثالي"
+    },
+    "members": {
+      "cardTitle": "المشكلات",
+      "casesOtherProjects": "{count, plural, zero {# حالة اختبار في مشاريع أخرى} one {حالة اختبار واحدة في مشروع آخر} two {حالتا اختبار في مشروعين آخرين} few {# حالات اختبار في مشاريع أخرى} many {# حالة اختبار في مشاريع أخرى} other {# حالة اختبار في مشاريع أخرى}}",
+      "inScope": "ضمن النطاق",
+      "foundInTesting": "تم العثور عليه في الاختبار",
+      "foundInTestingEmpty": "لم يتم العثور على مشكلات في الاختبار.",
+      "inScopeCrossBadge": "ضمن النطاق",
+      "refresh": "تحديث",
+      "columnKey": "الاسم",
+      "columnStatus": "الحالة",
+      "columnCoverage": "التغطية",
+      "columnSource": "المصدر",
+      "sourceSynced": "متزامن",
+      "sourceManual": "يدوي",
+      "coveragePassed": "ناجح",
+      "coverageFailed": "فاشل",
+      "coverageInProgress": "قيد التنفيذ",
+      "coverageNotRun": "لم يُشغّل",
+      "coverageUncovered": "غير مغطى",
+      "filterAllCoverage": "جميع مستويات التغطية",
+      "filterAllSources": "جميع المصادر",
+      "filterAllTypes": "جميع الأنواع",
+      "empty": "لا توجد مشكلات مرتبطة بهذا المعلم حتى الآن.",
+      "emptyFiltered": "لا توجد مشكلات تطابق عوامل التصفية الحالية.",
+      "unlink": "إلغاء الربط",
+      "managedByJira": "تتم إدارتها عبر Jira — أزلها من الإصدار/السبرنت في Jira",
+      "linkSuccess": "تم ربط المشكلة بهذا المعلم.",
+      "linkError": "فشل ربط المشكلة بهذا المعلم.",
+      "unlinkSuccess": "تمت إزالة المشكلة من هذا المعلم.",
+      "unlinkError": "فشل إزالة المشكلة من هذا المعلم.",
+      "overflowTitle": "مزيد من المشكلات في Jira",
+      "overflowDescription": "توجد هذه المشكلات في إصدار/سبرنت Jira المرتبط ولكنها لم تُربط هنا بعد.",
+      "overflowCapped": "محدد بحد أقصى {cap, number} — يوجد {overflowTotal, number} إضافية في Jira",
+      "overflowMoreAvailable": "يتوفر {overflowTotal, number} إضافية في Jira",
+      "overflowImportAction": "استيراد وربط",
+      "overflowImportSuccess": "بدأ الاستيراد — ستظهر المشكلات عند مزامنتها.",
+      "overflowImportError": "فشل استيراد مشكلات الأعضاء من Jira.",
+      "emptyCta": "اربط مشكلة للبدء.",
+      "columnDescription": "الوصف",
+      "unlinkConfirmTitle": "إلغاء ربط المشكلة؟",
+      "unlinkConfirmDescription": "يزيل هذا المشكلة من هذا المعلم. تبقى المشكلة نفسها ويمكن ربطها مرة أخرى لاحقًا.",
+      "totalsUncovered": "{count, plural, one {# مشكلة غير مغطاة} other {# مشكلات غير مغطاة}}",
+      "percentReady": "{percent, number}% جاهز",
+      "readinessSummary": "{passed, number} ناجح · {failed, number} فاشل · {inProgress, number} قيد التنفيذ · {notRun, number} لم يُشغّل · {uncovered, number} غير مغطى (من إجمالي {total, number} مشكلة)",
+      "filterHasUntested": "يحتوي على حالات غير مختبرة",
+      "createRunNoCases": "لا تحتوي أي من المشكلات المحددة على حالات اختبار مرتبطة.",
+      "createTestRunDetailed": "إنشاء تشغيل اختبار ({issues, plural, one {# مشكلة} other {# مشكلات}} · {cases, plural, one {# حالة} other {# حالات}})"
+    },
+    "complete": {
+      "skippedForPermission": "تم إكمال المعلم البارز. تُركت جلسات الاختبار وجولات الاختبار الخاصة به مفتوحة لأنك لا تملك صلاحية إكمالها.",
+      "skippedTestRunsForPermission": "تم إكمال المعلم البارز. تُركت جولات الاختبار الخاصة به مفتوحة لأنك لا تملك صلاحية إكمالها.",
+      "skippedSessionsForPermission": "تم إكمال المعلم البارز. تُركت الجلسات الخاصة به مفتوحة لأنك لا تملك صلاحية إكمالها."
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "إكمال {count, plural, zero {# جلسة} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+      "completeDescription": "هل أنت متأكد أنك تريد إكمال {count, plural, zero {هذه الجلسات} one {هذه الجلسة} two {هاتين الجلستين} few {هذه الجلسات} many {هذه الجلسات} other {هذه الجلسات}}؟",
+      "deleteTitle": "حذف {count, plural, zero {# جلسة} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}",
+      "deleteDescription": "هل أنت متأكد أنك تريد حذف {count, plural, zero {هذه الجلسات} one {هذه الجلسة} two {هاتين الجلستين} few {هذه الجلسات} many {هذه الجلسات} other {هذه الجلسات}}؟"
+    },
     "auditLog": {
       "trigger": "النشاط",
-      "title": "سجل النشاط",
       "description": "جميع التغييرات المسجلة لهذه الجلسة."
     },
     "title": "{count, plural, =1 {جلسة} other {جلسات}}",
@@ -2153,7 +2463,12 @@
       "overtime": "تجاوز التقدير بمقدار: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "لا توجد جلسات مكتملة تطابق المرشح الخاص بك."
+      "noMatchingCompleted": "لا توجد جلسات مكتملة تطابق المرشح الخاص بك.",
+      "noMatchingActive": "لا توجد جلسات نشطة تطابق المرشحات الخاصة بك."
+    },
+    "sessionFilters": {
+      "label": "تصفية الجلسات",
+      "mine": "جلساتي"
     },
     "filter": {
       "placeholder": "تصفية الجلسات..."
@@ -2167,6 +2482,9 @@
       "viewSessionDetails": "عرض الجلسة"
     },
     "noMilestone": "لا يوجد معلم رئيسي",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, zero {# جلسة} one {جلسة واحدة} two {جلستان} few {# جلسات} many {# جلسة} other {# جلسة}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "لا توجد سير عمل إكمال مُهيأة لهذا المشروع. يرجى تهيئة سير العمل في إعدادات الإدارة لتمكين إكمال الجلسة."
     },
@@ -2313,6 +2631,12 @@
       "adminAddProject": "أضف مشروعك الأول للبدء!",
       "footer": "الوصول مطلوب لعرض والمشاركة في أنشطة تخطيط الاختبار."
     },
+    "getStarted": {
+      "title": "ابدأ الآن",
+      "description": "أضف مشروعك الخاص عندما تكون جاهزًا لبدء التخطيط.",
+      "adminAddProject": "أنشئ مشروعك الأول",
+      "footer": "يحتوي المشروع التجريبي على بيانات نموذجية يمكنك استكشافها أو إزالتها في أي وقت."
+    },
     "noProjectAccess": {
       "description": "ليس لديك وصول إلى هذا المشروع.",
       "contact": "تواصل مع مسؤول مشروعك لطلب الوصول."
@@ -2321,6 +2645,7 @@
       "testCases": "{count, plural, =0 {# حالات اختبار} =1 {# حالة اختبار} other {# حالات اختبار}}",
       "activeMilestones": "{count, plural, =0 {# معالم رئيسية نشطة} =1 {# معلم رئيسي نشط} other {# معالم رئيسية نشطة}}",
       "activeRuns": "{count, plural, =0 {# تشغيلات نشطة} =1 {# تشغيل نشط} other {# تشغيلات نشطة}}",
+      "automationRunsInProgress": "{count, plural, =0 {# تشغيل أتمتة قيد التقدم} =1 {# تشغيل أتمتة قيد التقدم} other {# تشغيل أتمتة قيد التقدم}}",
       "activeSessions": "{count, plural, =0 {# جلسات نشطة} =1 {# جلسة نشطة} other {# جلسات نشطة}}",
       "issues": "{count, plural, =0 {# مشكلات} =1 {# مشكلة} other {# مشكلات}}"
     }
@@ -2349,6 +2674,13 @@
       },
       "access": {
         "title": "الوصول"
+      },
+      "assignments": {
+        "title": "المهام",
+        "empty": "لا توجد مهام مفتوحة.",
+        "reviews": "{count, plural, =1 {# مراجعة} zero {لا توجد مراجعات} two {مراجعتان} few {# مراجعات} many {# مراجعة} other {# مراجعة}}",
+        "remaining": "المتبقي",
+        "pendingRuns": "{count, plural, =1 {# تشغيل اختبار نشط يتضمن} zero {لا توجد تشغيلات اختبار نشطة تتضمن} two {تشغيلا اختبار نشطان يتضمنان} few {# تشغيلات اختبار نشطة تتضمن} many {# تشغيلًا اختباريًا نشطًا يتضمن} other {# تشغيل اختبار نشط يتضمن}} {cases, plural, =1 {# حالة اختبار} zero {لا حالات اختبار} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}}"
       },
       "directory": {
         "title": "الملف الشخصي في الدليل",
@@ -2421,12 +2753,18 @@
         "noMatchingEntries": "لا توجد إدخالات تطابق عوامل التصفية المحددة.",
         "showing": "{loaded} من {total} إدخال"
       },
-      "mentionedComments": {
-        "title": "تمت الإشارة إليك في التعليقات",
-        "description": "التعليقات التي تمت الإشارة إليك فيها",
-        "noComments": "لم تتم الإشارة إليك في أي تعليقات بعد.",
-        "comment": "تعليق",
-        "showingResults": "عرض {start} - {end} من {total}"
+      "myComments": {
+        "title": "تعليقاتي",
+        "description": "التعليقات التي كتبتها أو تمت الإشارة إليك فيها",
+        "noComments": "لم تكتب أو تتم الإشارة إليك في أي تعليقات بعد.",
+        "noMatchingComments": "لا توجد تعليقات تطابق عوامل التصفية الحالية.",
+        "searchPlaceholder": "بحث في التعليقات",
+        "filterLabel": "تصفية التعليقات",
+        "filterAll": "جميع التعليقات",
+        "filterMentioned": "تشير إليّ",
+        "filterAuthored": "كتبتها أنا",
+        "showing": "عرض {loaded} من {total} تعليق",
+        "matching": "{matched} مطابقة · تم البحث في {loaded} من {total} تعليق"
       },
       "twoFactor": {
         "enable": "تمكين المصادقة الثنائية (2FA)",
@@ -2500,7 +2838,8 @@
       "green": "أخضر",
       "purple": "بنفسجي",
       "orange": "برتقالي",
-      "accessible": "سهل الوصول"
+      "accessible": "سهل الوصول",
+      "accessibledark": "سهل الوصول (داكن)"
     }
   },
   "repository": {
@@ -2508,13 +2847,12 @@
       "notFound": "لم يتم العثور على إصدار حالة الاختبار.",
       "detailsRegion": "تفاصيل حالة الاختبار",
       "metadataRegion": "بيانات حالة الاختبار الوصفية",
-      "versionCreated": "تم إنشاء الإصدار {version}",
-      "latestVersionUpdated": "تم تحديث آخر إصدار {version, number}",
+      "versionCreated": "الإصدار {version}",
+      "latestVersionUpdated": "الإصدار {version, number} (الأحدث)",
       "historyView": "عرض سجل حالة الاختبار"
     },
     "auditLog": {
       "trigger": "النشاط",
-      "title": "سجل النشاط",
       "description": "جميع التغييرات المسجلة لهذه الحالة الاختبارية."
     },
     "fields": {
@@ -2537,6 +2875,7 @@
       "add": "إضافة خطوة",
       "addSharedSteps": "إضافة خطوات مشتركة",
       "delete": "حذف الخطوة",
+      "removedFromCase": "تمت الإزالة من حالة الاختبار",
       "confirmDelete": "تأكيد حذف الخطوة {number, number}؟",
       "createSharedSteps": "إنشاء {number, plural, one {خطوة} other {خطوات}} مشتركة",
       "sharedStepsName": "اسم الخطوات المشتركة",
@@ -2547,7 +2886,8 @@
         "sharedStepGroupCreatedSuccess": "تم إنشاء الخطوات المشتركة بنجاح!",
         "genericSharedStepCreationError": "حدث خطأ غير معروف أثناء إنشاء الخطوات المشتركة. يرجى المحاولة مرة أخرى.",
         "errorCreatingSharedGroup": "فشل إنشاء الخطوات المشتركة. يرجى المحاولة مرة أخرى.",
-        "sharedGroupCreatedSuccess": "تم إنشاء مجموعة الخطوات المشتركة بنجاح!"
+        "sharedGroupCreatedSuccess": "تم إنشاء مجموعة الخطوات المشتركة بنجاح!",
+        "failedToCreateSharedGroupError": "فشل إنشاء المجموعة المشتركة. يرجى المحاولة مرة أخرى."
       },
       "selectSharedStepsTitle": "حدد الخطوات المشتركة",
       "selectSharedStepsDescription": "اختر خطوات مشتركة لإضافتها إلى حالة الاختبار.",
@@ -2564,7 +2904,8 @@
       "reviewSelectedStepsTitle": "مراجعة الخطوات المحددة",
       "noStepsInSelectedGroup": "المجموعة المحددة لا تحتوي على خطوات.",
       "sharedGroupSuffix": "(خطوات مشتركة)",
-      "unnamedSharedGroup": "خطوات مشتركة غير مسماة"
+      "unnamedSharedGroup": "خطوات مشتركة غير مسماة",
+      "noStepsInSelectedSharedGroup": "المجموعة المشتركة المحددة لا تحتوي على خطوات."
     },
     "testCase": {
       "toggleAutomated": "تبديل الاختبار المؤتمت",
@@ -2573,7 +2914,7 @@
     },
     "templateNotAssignedWarning": "تستخدم حالة الاختبار هذه القالب \"{templateName}\" غير المخصص حاليًا للمشروع \"{projectName}\". قد تحتاج إلى تخصيص هذا القالب للمشروع أو تغيير حالة الاختبار لاستخدام قالب مختلف.",
     "orphanedStepsWarning": "تحتوي حالة الاختبار هذه على خطوات، لكن القالب الحالي \"{templateName}\" لا يتضمن حقل الخطوات. لا يمكن تعديل الخطوات حتى يكون لدى حالة الاختبار قالب يحتوي على حقل الخطوات.",
-    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
+    "orphanedFieldsWarning": "لدى حالة الاختبار هذه {count, plural, =1 {# قيمة حقل} zero {# قيمة حقل} two {قيمتا حقل} few {# قيم حقول} many {# قيمة حقل} other {# قيمة حقل}} {count, plural, =1 {غير مضمنة} zero {غير مضمنة} two {غير مضمنتين} few {غير مضمنة} many {غير مضمنة} other {غير مضمنة}} في القالب الحالي \"{templateName}\". {count, plural, =1 {هذا الحقل معروض} zero {لا يوجد حقل معروض} two {هذان الحقلان معروضان} few {هذه الحقول معروضة} many {هذه الحقول معروضة} other {هذه الحقول معروضة}} أدناه، ولكن قد لا تكون قابلة للتحرير حتى تتم إضافتها إلى القالب.",
     "title": "مستودع حالات الاختبار",
     "folders": "المجلدات",
     "showDescendants": "إظهار جميع العناصر التابعة",
@@ -2586,9 +2927,16 @@
     "deselectAllShiftTooltip": "إلغاء تحديد/تحديد جميع الحالات عبر جميع الصفحات",
     "shiftClickHint": "اضغط مع الاستمرار على Shift لتحديد/إلغاء تحديد جميع الصفحات",
     "treeView": {
-      "expandAll": "توسيع الكل",
-      "collapseAll": "طي الكل",
-      "altKey": "اضغط مع الاستمرار على مفتاح Alt لتوسيع/طي كل العناصر الفرعية"
+      "expandFolder": "توسيع المجلد",
+      "collapseFolder": "طي المجلد",
+      "expandSubfolders": "توسيع جميع المجلدات الفرعية",
+      "collapseSubfolders": "طي جميع المجلدات الفرعية",
+      "expandAll": "توسيع جميع المجلدات",
+      "collapseAll": "طي جميع المجلدات",
+      "altHintMac": "اضغط مع الاستمرار على ⌥ لتوسيع أو طي جميع المجلدات الفرعية",
+      "altHintWin": "اضغط مع الاستمرار على Alt لتوسيع أو طي جميع المجلدات الفرعية",
+      "altHintAllMac": "اضغط مع الاستمرار على ⌥ لتوسيع أو طي كل مجلد",
+      "altHintAllWin": "اضغط مع الاستمرار على Alt لتوسيع أو طي كل مجلد"
     },
     "dragDrop": {
       "move": "نقل",
@@ -2605,7 +2953,13 @@
       "dragPreviewCase": "حالة الاختبار",
       "dragPreviewCount": "{count, plural, =1 {# حالة اختبار} zero {# حالة اختبار} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}}",
       "modifierHintMac": "اضغط مع الاستمرار على ⇧ للنقل أو ⌥ للنسخ أثناء السحب لتخطي هذه القائمة.",
-      "modifierHintWin": "اضغط مع الاستمرار على Shift للنقل أو Ctrl للنسخ أثناء السحب لتخطي هذه القائمة."
+      "modifierHintWin": "اضغط مع الاستمرار على Shift للنقل أو Ctrl للنسخ أثناء السحب لتخطي هذه القائمة.",
+      "dropZoneReorder": "أفلت لإعادة الترتيب",
+      "dropZoneFolder": "أفلت على مجلد للتضمين، أو بين المجلدات لإعادة الترتيب",
+      "dropZoneTreeMac": "أفلت على مجلد — اضغط باستمرار على ⇧ للنقل، و⌥ للنسخ",
+      "dropZoneTreeWin": "أفلت على مجلد — اضغط باستمرار على Shift للنقل، و Ctrl للنسخ",
+      "dropZoneTreeMove": "أفلت على مجلد للنقل",
+      "dropZoneTreeCopy": "أفلت على مجلد للنسخ"
     },
     "folderActions": {
       "edit": "تعديل المجلد",
@@ -2618,12 +2972,22 @@
       "selectCases": "حدد حالات الاختبار",
       "noTestCases": "لا توجد حالات اختبار لعرضها.",
       "addCase": "إضافة حالة",
+      "caseDetails": "تفاصيل حالة الاختبار",
+      "expandDetails": "توسيع إلى العرض الكامل",
+      "collapseDetails": "طي إلى عرض مقسم",
+      "openFullPage": "فتح الصفحة الكاملة",
+      "previousCase": "حالة الاختبار السابقة",
+      "nextCase": "حالة الاختبار التالية",
+      "caseNavPosition": "{position} من {total}",
       "notFound": "لم يتم العثور على حالة الاختبار.",
       "selectFilter": "حدد المرشح",
       "testResultHistory": "سجل نتائج الاختبار",
       "testResultHistoryDescription": "عرض سجل نتائج الاختبار لهذه حالة الاختبار",
+      "viewElapsedTimeReport": "تقرير الوقت المنقضي",
       "noTestResults": "لم يتم العثور على نتائج اختبار لهذه حالة الاختبار",
       "unknownRun": "تشغيل غير معروف",
+      "currentRunBadge": "الحالي",
+      "currentRunTooltip": "التشغيل الاختباري الذي تعرضه حاليًا",
       "attempt": "المحاولة",
       "invalidProject": "مشروع غير صالح",
       "noSearchResults": "لا توجد حالات مطابقة لمعايير البحث.",
@@ -2651,7 +3015,9 @@
         "title": "استيراد حالات الاختبار",
         "fields": {
           "workflowState": "حالة سير العمل",
-          "column": "العمود {number}"
+          "column": "العمود {number}",
+          "caseId": "معرّف الحالة",
+          "caseIdDescription": "معرّف الحالة في TestPlanIt"
         },
         "success": {
           "description": "تم استيراد {count, plural, zero {# حالة اختبار} one {حالة اختبار واحدة} two {حالتي اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}} بنجاح"
@@ -2661,7 +3027,15 @@
           "folderRequired": "تحديد المجلد مطلوب لموقع الاستيراد هذا",
           "fileRequired": "مطلوب ملف CSV أو Markdown",
           "markdownParseFailed": "فشل تحليل ملف Markdown",
-          "markdownLlmFailed": "التحليل بالذكاء الاصطناعي غير متوفر، يتم استخدام المحلل القياسي"
+          "markdownLlmFailed": "التحليل بالذكاء الاصطناعي غير متوفر، يتم استخدام المحلل القياسي",
+          "validationTitle": "فشل التحقق من صحة الاستيراد",
+          "validationSummary": "تم العثور على {count, plural, zero {# مشكلة} one {مشكلة واحدة} two {مشكلتان} few {# مشاكل} many {# مشكلة} other {# مشكلة}} في ملفك. لم يتم استيراد أي حالات اختبار.",
+          "validationEntry": "الصف {row, number} · {field}: {message}",
+          "validationEntryNamed": "الصف {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, zero {# مشكلة أخرى غير معروضة} one {مشكلة أخرى واحدة غير معروضة} two {مشكلتان أخريان غير معروضتين} few {# مشاكل أخرى غير معروضة} many {# مشكلة أخرى غير معروضة} other {# مشكلة أخرى غير معروضة}}.",
+          "validationMultiRowNote": "تشير أرقام الصفوف إلى حالات الاختبار المجمّعة الظاهرة في المعاينة، وليس إلى أسطر CSV الأصلية.",
+          "partialTitle": "لم يتم استيراد بعض حالات الاختبار",
+          "partialSummary": "تعذر استيراد {failed, plural, zero {# صف} one {صف واحد} two {صفان} few {# صفوف} many {# صفًا} other {# صف}}. تم استيراد {imported, plural, zero {# حالة اختبار} one {حالة اختبار واحدة} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}} بنجاح."
         },
         "page1": {
           "fileType": {
@@ -2693,7 +3067,8 @@
           "title": "تخطيط أعمدة CSV إلى الحقول",
           "description": "خطّط كل عمود CSV إلى حقل في القالب أو اختر تجاهله.",
           "ignoreColumn": "تجاهل العمود",
-          "requiredFieldsWarning": "{count, plural, zero {# حقل مطلوب غير معين} one {حقل مطلوب واحد غير معين} two {حقلان مطلوبان غير معينين} few {# حقول مطلوبة غير معينة} many {# حقل مطلوب غير معين} other {# حقل مطلوب غير معين}}"
+          "requiredFieldsWarning": "{count, plural, zero {# حقل مطلوب غير معين} one {حقل مطلوب واحد غير معين} two {حقلان مطلوبان غير معينين} few {# حقول مطلوبة غير معينة} many {# حقل مطلوب غير معين} other {# حقل مطلوب غير معين}}",
+          "caseIdHint": "يجب أن يكون هذا هو معرّف الحالة الرقمي — يتم استبدال الحالات المطابقة."
         },
         "page3": {
           "title": "ملخص تخطيط الحقول",
@@ -2737,7 +3112,7 @@
     "columns": {
       "selectCase": "حدد الحالة",
       "runOrder": "ترتيب التشغيل",
-      "lastTestResult": "آخر نتيجة",
+      "latestResults": "أحدث النتائج",
       "testedOn": "آخر اختبار"
     },
     "actions": {
@@ -2768,6 +3143,8 @@
     "views": {
       "byAutomation": "الأتمتة",
       "byParameterized": "المعلمة",
+      "byAttachments": "المرفقات",
+      "byReview": "مراجعة",
       "allTemplates": "جميع القوالب",
       "allStates": "جميع الحالات",
       "allCreators": "جميع المُنشِئين",
@@ -2890,7 +3267,7 @@
       "searchPlaceholder": "بحث في القوالب...",
       "noTemplatesFound": "لم يتم العثور على قوالب.",
       "outputModeLabel": "نمط الإخراج",
-      "outputModeSingle": "ملف واحد ({count, plural, zero {# حالة} one {حالة واحدة} two {جميع الحالتين} few {جميع # الحالات} many {جميع # حالة} other {جميع # حالة}})",
+      "outputModeSingle": "ملف واحد ({count, plural, one {# حالة} =2 {كلا الحالتين} other {جميع # حالة}})",
       "outputModeIndividual": "{count, plural, zero {ملفات فردية (.zip)} one {ملف فردي (.zip)} two {ملفان فرديان (.zip)} few {ملفات فردية (.zip)} many {ملفات فردية (.zip)} other {ملفات فردية (.zip)}}",
       "casesToExport": "{count, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} للتصدير",
       "exportSuccess": "تم التصدير بنجاح.",
@@ -2924,7 +3301,6 @@
       "scanFailed": "فشل تحليل التكرارات",
       "scanFailedDescription": "حدث خطأ غير متوقع",
       "pageTitle": "المرشحون للتكرار",
-      "pageDescription": "راجع حالات الاختبار المكررة المحتملة التي تم العثور عليها خلال الفحص الأخير.",
       "rescan": "إعادة الفحص",
       "cancelScan": "إلغاء الفحص",
       "loading": "جارٍ تحميل المرشحين للتكرار...",
@@ -3203,7 +3579,63 @@
       },
       "linkedIssuesDroppedTitle": "لم يتم تضمين بعض المشكلات المرتبطة",
       "linkedIssuesDropped": "{count, plural, =1 {تم حذف مشكلة مرتبطة واحدة} zero {تم حذف # مشكلة مرتبطة} two {تم حذف مشكلتين مرتبطتين} few {تم حذف # مشكلات مرتبطة} many {تم حذف # مشكلة مرتبطة} other {تم حذف # مشكلة مرتبطة}} بسبب حدود الرموز: {keys}.",
-      "linkedIssuesPreviewHeading": "المشكلات المرتبطة التي سيتم تضمينها"
+      "linkedIssuesPreviewHeading": "المشكلات المرتبطة التي سيتم تضمينها",
+      "contextImages": {
+        "pickerHeading": "الصور المراد تضمينها كسياق (حتى {max})",
+        "tooLarge": "كبير جدًا",
+        "noVisionHint": "نموذج الذكاء الاصطناعي المهيأ لا يدعم إدخال الصور — لن يتم إرسال الصور المحددة.",
+        "visionSkippedTitle": "لم يتم إرسال الصور",
+        "visionSkipped": "{count, plural, =1 {# صورة} other {# صور}} لم يتم إرسالها — النموذج الذكي المُهيأ لا يدعم إدخال الصور.",
+        "includedSummary": "{count, plural, =1 {# صورة} other {# صور}} تم إرسالها كسياق: {names}",
+        "skippedSummary": "{count, plural, =1 {# صورة} other {# صور}} تم تخطيها (كبيرة جدًا أو غير مدعومة): {names}",
+        "includeUrlScreenshots": "تضمين لقطات شاشة الصفحة عند توفرها"
+      }
+    },
+    "filterBar": {
+      "addFilter": "إضافة مرشح",
+      "removeFilter": "إزالة المرشح: {name}",
+      "editFilter": "تعديل المرشح: {name}",
+      "activeCount": "{count, plural, =1 {# فلتر نشط} other {# فلاتر نشطة}}",
+      "assignedToMe": "معيّن إليّ",
+      "noFilters": "لا توجد مرشحات نشطة",
+      "noMatchingCases": "لا توجد حالات اختبار تطابق مرشحاتك",
+      "searchTruncated": "التصفية ضمن أفضل {count, number} نتيجة مطابقة",
+      "sortedByRelevance": "مرتب حسب الصلة",
+      "countsUpdating": "جارٍ تحديث الأعداد...",
+      "filterLimitReached": "تم الوصول إلى الحد الأقصى للمرشحات ({count} كحد أقصى)",
+      "valueLimitReached": "تم الوصول إلى الحد الأقصى للقيم ({count} كحد أقصى لكل مرشح)",
+      "filtersTruncated": "تم تجاهل بعض المرشحات ({count} كحد أقصى)",
+      "valuesTruncated": "{count, plural, =1 {# قيمة} other {# قيم}} كحد أقصى لكل عامل تصفية — تم حذف القيم الزائدة"
+    },
+    "savedViews": {
+      "title": "طرق العرض المحفوظة",
+      "save": "حفظ طريقة العرض",
+      "saveTitle": "حفظ طريقة العرض",
+      "saveDescription": "قم بتسمية طريقة العرض هذه للرجوع إلى هذه المرشحات لاحقًا.",
+      "namePlaceholder": "مثال: حالات الدخان، غير مؤتمتة",
+      "descriptionPlaceholder": "الغرض من طريقة العرض هذه",
+      "nameRequired": "أدخل اسمًا لطريقة العرض هذه.",
+      "loginRequired": "يجب تسجيل الدخول لحفظ طرق العرض.",
+      "nothingToSave": "أضف مرشحًا أو تجميعًا أولاً.",
+      "saved": "تم حفظ طريقة العرض",
+      "savedDescription": "\"{name}\" أصبح الآن ضمن طرق العرض المحفوظة لديك.",
+      "saveFailed": "تعذّر حفظ طريقة العرض. يرجى المحاولة مرة أخرى.",
+      "empty": "لا توجد طرق عرض محفوظة بعد",
+      "emptyHint": "احفظ المرشحات الحالية للرجوع إليها لاحقًا.",
+      "apply": "تطبيق طريقة العرض: {name}",
+      "applied": "تم تطبيق \"{name}\"",
+      "droppedFilters": "{count, plural, =1 {# فلتر لم يعد موجوداً وتم تخطيه} other {# فلاتر لم تعد موجودة وتم تخطيها}}",
+      "droppedGrouping": "لم يعد تجميعها متوفرًا، لذا يتم استخدام التجميع الافتراضي.",
+      "unreadable": "{count, plural, =1 {# طريقة عرض محفوظة} other {# طرق عرض محفوظة}} تعذرت قراءتها",
+      "rename": "إعادة تسمية",
+      "renameTitle": "إعادة تسمية طريقة العرض المحفوظة",
+      "renamed": "تم تحديث طريقة العرض المحفوظة",
+      "renameFailed": "تعذّر تحديث طريقة العرض. يرجى المحاولة مرة أخرى.",
+      "delete": "حذف",
+      "deleteTitle": "هل تريد حذف طريقة العرض المحفوظة؟",
+      "deleteConfirm": "سيتم إزالة \"{name}\" من طرق العرض المحفوظة لديك. لا يمكن التراجع عن هذا الإجراء.",
+      "deleted": "تم حذف طريقة العرض المحفوظة",
+      "deleteFailed": "تعذّر حذف طريقة العرض. يرجى المحاولة مرة أخرى."
     }
   },
   "tags": {
@@ -3251,11 +3683,20 @@
     "delete": {
       "confirmMessage": "هل أنت متأكد أنك تريد حذف هذا المرفق؟",
       "deferredMessage": "سيتم حذف هذا المرفق عند الحفظ."
+    },
+    "preview": {
+      "unavailable": "المعاينة غير متوفرة",
+      "tooLarge": "هذا الملف كبير جدًا لمعاينته.",
+      "empty": "يبدو أن هذا المستند خالٍ.",
+      "download": "تنزيل للعرض",
+      "slideCounter": "الشريحة {current} من {total}",
+      "previousSlide": "الشريحة السابقة",
+      "nextSlide": "الشريحة التالية"
     }
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "طُلبت المراجعة من <assignee></assignee> للانتقال <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "في انتظار المراجعة من قبل <assignee></assignee> للانتقال من <fromState></fromState> ← <toState></toState> <ago></ago>",
       "changesRequestedTitle": "طُلبت تغييرات",
       "rejectedTitle": "رُفضت المراجعة",
       "requestAgain": "طلب المراجعة مرة أخرى",
@@ -3268,6 +3709,13 @@
       "success": "تم إلغاء طلب المراجعة.",
       "error": "تعذر إلغاء طلب المراجعة. حاول مرة أخرى بعد قليل."
     },
+    "nudge": {
+      "success": "{count, plural, zero {لم يتم إرسال أي تذكير إلى المراجعين.} one {تم إرسال تذكير إلى مراجع واحد.} two {تم إرسال تذكير إلى مراجعين اثنين.} few {تم إرسال تذكير إلى # مراجعين.} many {تم إرسال تذكير إلى # مراجعًا.} other {تم إرسال تذكير إلى # مراجع.}}",
+      "error": "تعذر إرسال التذكير. حاول مرة أخرى بعد قليل.",
+      "tooSoon": "تم إرسال تذكير لهذا الطلب بالفعل خلال الساعة الماضية. حاول مرة أخرى لاحقًا.",
+      "cooldownTooltip": "تم إرسال التذكير بالفعل {ago}",
+      "noRecipients": "لا يمكن لأحد اتخاذ إجراء بشأن هذا الطلب حاليًا. تحقق من أن المسؤول لا يزال يملك صلاحية الوصول إلى المشروع."
+    },
     "list": {
       "pendingTooltip": "مراجعة معلقة من {assignee}"
     },
@@ -3276,35 +3724,43 @@
       "gatedOptionBadge": "يتطلب مراجعة",
       "gatedStatesNotSelectable": "لا يمكن اختيار الحالات عند بوابة محكومة أو بعدها عند الإنشاء. اختر حالة قبل البوابة الأولى، ثم استخدم طلب المراجعة لتجاوزها.",
       "saveBlockedByFormErrors": "حل أخطاء النموذج المميزة قبل الحفظ.",
-      "bulkBlockedSummary": "{count, plural, zero {# حالة} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} محظورة بواسطة بوابة \"{gateName}\": {sampleNames}{more, plural, =0 {} other {، و# أخرى}}. تحتاج كل حالة محظورة إلى مراجعة معتمدة لـ \"{gateName}\" قبل هذا الانتقال.",
-      "toastReviewRequired": "الموافقة مطلوبة قبل هذا الانتقال. اطلب مراجعة وحاول مرة أخرى بعد الموافقة عليها.",
+      "bulkBlockedHeading": "{count, plural, zero {لا حالات} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} محظورة بواسطة البوابة \"{gateName}\":",
+      "bulkBlockedHeadingMixed": "{count, plural, zero {لا حالات} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} تحتاج إلى موافقة قبل هذا الانتقال:",
+      "bulkBlockedMore": "و {count, plural, zero {لا حالات أخرى} one {حالة واحدة أخرى} two {حالتان أخريان} few {# حالات أخرى} many {# حالة أخرى} other {# حالة أخرى}}",
+      "bulkBlockedFooter": "تحتاج كل حالة محظورة إلى مراجعة معتمدة قبل هذا الانتقال.",
+      "toastReviewRequired": "الموافقة مطلوبة قبل هذا الانتقال. اطلب مراجعة — يتم تطبيق الانتقال نيابةً عنك بعد الموافقة عليها.",
       "toastPendingReviewExists": "توجد بالفعل مراجعة معلقة لهذا الانتقال. انتظر القرار أو ألغِها قبل إعادة المحاولة."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {صندوق المراجعة} one {صندوق المراجعة، # معلقة} two {صندوق المراجعة، # معلقتان} few {صندوق المراجعة، # معلقة} many {صندوق المراجعة، # معلقة} other {صندوق المراجعة، # معلقة}}",
       "pageTitle": "المراجعات",
-      "pageDescription": "طلبات المراجعة المعلقة المعينة لك (مباشرة أو عبر دور تحمله).",
-      "pageDescriptionDecided": "طلبات المراجعة التي قررت بشأنها بالفعل.",
       "tabPending": "معلقة",
       "tabDecided": "تم البت فيها",
-      "emptyDecided": "لم تقرر بشأن أي مراجعات بعد.",
-      "empty": "لا توجد مراجعات معلقة. أنت على اطلاع بكل شيء.",
+      "emptyDecided": "لا توجد مراجعات مقررة حتى الآن. المراجعات التي تقررها، والقرارات المتعلقة بالمراجعات التي تطلبها، ستظهر هنا.",
+      "empty": "لا توجد مراجعات معلقة. لا شيء ينتظرك، وقد تم البت في كل مراجعة طلبتها.",
       "featureDisabled": "ميزة سير عمل المراجعة معطلة حاليًا. يتم الاحتفاظ بالمراجعات المعلقة وستظهر مرة أخرى عند إعادة تمكين الميزة.",
       "columnEntity": "الكيان",
       "columnProject": "المشروع",
       "columnRequester": "مقدم الطلب",
+      "columnAssignee": "المسؤول",
       "columnTransition": "الانتقال",
-      "columnTransitionFrom": "من",
-      "columnTransitionTo": "إلى",
       "columnRequestedAt": "طُلب في",
+      "columnDecidedBy": "تم اتخاذ القرار بواسطة",
       "columnDecidedAt": "تم البت فيها في",
       "columnStatus": "الحالة",
       "columnActions": "الإجراءات",
       "actionApprove": "موافقة",
       "actionRequestChanges": "طلب تغييرات",
       "actionReject": "رفض",
+      "actionNudge": "إرسال تذكير",
       "filterEntityType": "نوع الكيان",
       "filterProject": "المشروع",
+      "filterRequester": "مقدم الطلب",
+      "filterAllRequesters": "جميع مقدمي الطلبات",
+      "filterDecidedBy": "تم اتخاذ القرار بواسطة",
+      "filterAllDeciders": "جميع متخذي القرار",
+      "filterStatus": "الحالة",
+      "filterAllStatuses": "جميع الحالات",
       "filterAllEntityTypes": "جميع أنواع الكيانات",
       "filterEntityTypeCase": "حالات الاختبار",
       "filterEntityTypeRun": "تشغيلات الاختبار",
@@ -3316,7 +3772,7 @@
       "sheetDescription": "أرسل هذا الكيان للمراجعة قبل الانتقال إلى الحالة المستهدفة.",
       "assigneeLabel": "المسؤول",
       "assigneePlaceholder": "اختر مستخدمًا أو دورًا",
-      "usersHoldRole": "{count, plural, zero {# مستخدم يحمل هذا الدور} one {مستخدم واحد يحمل هذا الدور} two {مستخدمان يحملان هذا الدور} few {# مستخدمين يحملون هذا الدور} many {# مستخدمًا يحملون هذا الدور} other {# مستخدم يحملون هذا الدور}}",
+      "usersNotified": "{count, plural, =0 {لن يتم إشعار أي مستخدم} one {سيتم إشعار مستخدم واحد} two {سيتم إشعار مستخدمين اثنين} few {سيتم إشعار # مستخدمين} many {سيتم إشعار # مستخدمًا} other {سيتم إشعار # مستخدم}}",
       "targetStateLabel": "الحالة المستهدفة",
       "targetStatePlaceholder": "اختر حالة مستهدفة",
       "commentLabel": "تعليق",
@@ -3332,6 +3788,20 @@
       "ineligibleAssigneeErrorUser": "لا يمكن لـ {name} الموافقة على المراجعات لهذه المنطقة. اختر مستخدمًا آخر أو دورًا.",
       "ineligibleAssigneeErrorRole": "لا يمكن لدور {roleName} الموافقة على المراجعات لهذه المنطقة. اختر دورًا آخر أو مستخدمًا."
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "حفظ وطلب مراجعة",
+      "sheetDescription": "{count, plural, zero {لا حالات محددة} one {حالة محددة واحدة} two {حالتان محددتان} few {# حالات محددة} many {# حالة محددة} other {# حالة محددة}} تحتاج إلى موافقة قبل الوصول إلى \"{targetStateName}\". يتم تقديم كل حالة إلى أول حالة مقيدة يجب أن تمر بها.",
+      "breakdownLabel": "المراجعات المطلوب طلبها",
+      "breakdownRow": "{count, plural, zero {لا حالات} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}}",
+      "autoCommentNote": "تحصل كل حالة على تعليق تلقائي يسمّي انتقالها الخاص، ويتم إشعار المراجع مرة واحدة للمجموعة بأكملها.",
+      "otherEditsNote": "يتم تطبيق تعديلات الحقول الأخرى الخاصة بك عند الإرسال. يبقى تغيير الحالة في انتظار الموافقة.",
+      "pendingSkipNote": "{count, plural, zero {لا حالات} one {حالة واحدة} two {حالتان} few {# حالات} many {# حالة} other {# حالة}} بالفعل في انتظار المراجعة وسيتم تجاهلها.",
+      "submitSuccess": "{count, plural, zero {لم يتم إنشاء أي طلب مراجعة} one {تم إنشاء طلب مراجعة واحد} two {تم إنشاء طلبي مراجعة} few {تم إنشاء # طلبات مراجعة} many {تم إنشاء # طلب مراجعة} other {تم إنشاء # طلب مراجعة}}.",
+      "submitSuccessWithSkips": "{created, plural, zero {لم يتم إنشاء أي طلب مراجعة} one {تم إنشاء طلب مراجعة واحد} two {تم إنشاء طلبي مراجعة} few {تم إنشاء # طلبات مراجعة} many {تم إنشاء # طلب مراجعة} other {تم إنشاء # طلب مراجعة}}، {skipped, plural, zero {لم يتم تجاهل أي طلب} one {تم تجاهل طلب واحد} two {تم تجاهل طلبين} few {تم تجاهل # طلبات} many {تم تجاهل # طلبًا} other {تم تجاهل # طلب}} (في انتظار المراجعة بالفعل).",
+      "nothingToRequest": "لم تكن هناك حاجة إلى طلبات مراجعة للحالات المحددة.",
+      "editsAppliedNoRequests": "تم حفظ تعديلاتك. لم تكن هناك حاجة إلى طلبات مراجعة.",
+      "selectionTooLarge": "تم تحديد عدد كبير جدًا من الحالات لطلب المراجعة دفعة واحدة. حدد عددًا أقل وحاول مرة أخرى."
+    },
     "assigneeChip": {
       "emptyMembers": "لا يوجد أعضاء مؤهلون للمشروع يحملون هذا الدور.",
       "unnamedUser": "(مستخدم غير مسمى)"
@@ -3341,7 +3811,7 @@
       "requestChanges": "طلب تغييرات",
       "reject": "رفض",
       "approveConfirmTitle": "الموافقة على طلب المراجعة هذا؟",
-      "approveConfirmDescription": "ستسمح الموافقة لـ <requester></requester> بالانتقال بـ <name></name> إلى <state></state>.",
+      "approveConfirmDescription": "الموافقة تنقل <name></name> إلى <state></state> لصالح <requester></requester>.",
       "approvalNoteLabel": "ملاحظة الموافقة",
       "approvalNotePlaceholder": "أضف ملاحظة اختيارية لمقدم الطلب (تظهر بجانب الموافقة).",
       "requestChangesDescription": "أخبر مقدم الطلب بما يحتاج إلى تغييره قبل أن تتمكن من الموافقة على هذا الانتقال.",
@@ -3361,9 +3831,60 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "إكمال {count, plural, zero {# دورة اختبار} one {دورة اختبار واحدة} two {دورتا اختبار} few {# دورات اختبار} many {# دورة اختبار} other {# دورة اختبار}}",
+      "completeDescription": "هل أنت متأكد أنك تريد إكمال {count, plural, zero {دورات الاختبار هذه} one {دورة الاختبار هذه} two {دورتا الاختبار هاتان} few {دورات الاختبار هذه} many {دورات الاختبار هذه} other {دورات الاختبار هذه}}؟",
+      "deleteTitle": "حذف {count, plural, zero {# دورة اختبار} one {دورة اختبار واحدة} two {دورتا اختبار} few {# دورات اختبار} many {# دورة اختبار} other {# دورة اختبار}}",
+      "deleteDescription": "هل أنت متأكد أنك تريد حذف {count, plural, zero {دورات الاختبار هذه} one {دورة الاختبار هذه} two {دورتا الاختبار هاتان} few {دورات الاختبار هذه} many {دورات الاختبار هذه} other {دورات الاختبار هذه}}؟ سيتم الاحتفاظ بالنتائج للتحليل التاريخي."
+    },
+    "composition": {
+      "lock": "الحالات مقفلة",
+      "unlocked": "الحالات غير المقفلة",
+      "unlock": "إلغاء القفل",
+      "locked": "التركيبة مقفلة",
+      "lockHint": "تجميد الحالات الموجودة في هذا التشغيل. يمكن للمستخدمين تخصيص وتنفيذ حالات الاختبار.",
+      "lockedBy": "تم قفل التركيبة من قبل {name}.",
+      "lockedAutomatically": "تم قفل التركيبة تلقائيًا عند بدء التنفيذ.",
+      "frozenNotice": "التركيبة مقفلة — لا يمكن إضافة حالات الاختبار أو إزالتها أو إعادة ترتيبها. لا يزال بإمكانك تخصيص وتنفيذ حالات الاختبار.",
+      "lockError": "فشل قفل تركيبة التشغيل",
+      "unlockError": "فشل إلغاء قفل تركيبة التشغيل",
+      "addBlocked": "تركيبة هذا التشغيل مقفلة، لذا لا يمكن إضافة حالات اختبار. قم بإلغاء القفل أولاً لتغيير مجموعة الحالات."
+    },
+    "distribute": {
+      "title": "توزيع التكليفات",
+      "description": "توزيع حالات اختبار هذا التشغيل بالتساوي على أعضاء الفريق، مع الحفاظ على الحالات المرتبطة معًا.",
+      "selectUsers": "أعضاء الفريق",
+      "usersPlaceholder": "اختر أعضاء الفريق",
+      "scopeAllConfigs": "جميع التكوينات",
+      "scopeThisRun": "هذا التشغيل فقط",
+      "strategyLabel": "استراتيجية التكوين",
+      "strategyKeepTogether": "الحفاظ على التكوينات معًا",
+      "strategyKeepTogetherHint": "يمتلك كل مختبِر مجموعة من الحالات في جميع التكوينات.",
+      "strategySplitByConfig": "تقسيم حسب التكوين",
+      "strategySplitByConfigHint": "يمتلك كل مختبِر تكوينات كاملة.",
+      "groupingLabel": "تجميع الحالات المتشابهة",
+      "groupingHint": "الحفاظ على الحالات الموجودة في القسم نفسه والتي تتشارك في الوسوم مع مختبِر واحد.",
+      "balancingLabel": "التوازن حسب",
+      "balancingEffort": "الوقت المقدر",
+      "balancingCount": "عدد الحالات",
+      "balancingFallbackHint": "لا توجد تقديرات لهذه الحالات — سيتم التوازن حسب عدد الحالات بدلاً من ذلك.",
+      "existingLabel": "التكليفات الحالية",
+      "existingOnlyUnassigned": "تعبئة الحالات غير المخصصة فقط",
+      "existingReassignAll": "إعادة تخصيص الكل",
+      "previewTitle": "معاينة",
+      "previewNoUsers": "اختر أعضاء الفريق لمعاينة التوزيع.",
+      "previewUser": "عضو الفريق",
+      "previewCases": "الحالات",
+      "previewSkipped": "{count, plural, one {# حالة تم تخطيها} other {# حالات تم تخطيها}} (تم تخصيصها أو إكمالها بالفعل)",
+      "confirming": "جارٍ التخصيص…",
+      "success": "تم توزيع {count, plural, one {# حالة} other {# حالات}} على {users, plural, one {# عضو} other {# أعضاء}}",
+      "errorGeneric": "فشل توزيع التكليفات",
+      "errorRunCompleted": "اكتمل هذا التشغيل ولا يمكن تغييره بعد الآن",
+      "errorNeedUsers": "اختر عضوًا واحدًا على الأقل من أعضاء المشروع للتوزيع عليه",
+      "errorNoAssignable": "لا توجد حالات للتوزيع في هذا التشغيل"
+    },
     "auditLog": {
       "trigger": "النشاط",
-      "title": "سجل النشاط",
       "description": "جميع التغييرات المسجلة لهذه الجولة الاختبارية."
     },
     "notFound": "تشغيل الاختبار غير موجود.",
@@ -3466,6 +3987,8 @@
       "recentResultsDescription": "عرض النتائج الأخيرة لتشغيل الاختبار",
       "recentAutomatedResultsTitle": "النتائج الآلية الأخيرة",
       "noRecentAutomatedResults": "لم يتم العثور على نتائج آلية حديثة.",
+      "automationRunsInProgress": "{count, plural, =1 {# عملية تشغيل تلقائي قيد التنفيذ} other {# عمليات تشغيل تلقائي قيد التنفيذ}}",
+      "automationRunsInProgressDescription": "حالة مباشرة لتشغيلات الاختبار الآلي الجارية.",
       "recentResultsDateRange": "نطاق التاريخ",
       "recentResultsElapsed": "الوقت المنقضي",
       "noRecentResults": "لم يتم العثور على نتائج حديثة.",
@@ -3498,20 +4021,43 @@
           "copy": "نسخ تعيينات حالة الاختبار الحالية",
           "assign": "ستحتفظ جميع حالات الاختبار في تشغيل الاختبار المكرَّر بتعييناتها الحالية",
           "unassign": "سيتم إلغاء تعيين جميع حالات الاختبار في تشغيل الاختبار المكرَّر"
+        },
+        "configurationGroup": {
+          "label": "مجموعة التكوين",
+          "separate": "يتم تجميع النسخ مع بعضها البعض فقط. يبقى تشغيل الاختبار الذي تم تكراره خارج تلك المجموعة",
+          "join": "ينضم تشغيل الاختبار الذي يتم تكراره وكل نسخة إلى نفس مجموعة التكوين"
         }
       },
       "successMessage": "تم تكرار تشغيل الاختبار '{name}' بنجاح.",
       "errorMessage": "فشل تكرار تشغيل الاختبار. الخطأ: {error}"
     },
+    "removeCasesDialog": {
+      "title": "إزالة حالات الاختبار",
+      "description": "هل أنت متأكد أنك تريد إزالة حالات الاختبار هذه من تشغيل الاختبار هذا؟",
+      "warning": "لا يمكن التراجع عن هذا الإجراء. ستفقد أي نتائج مسجلة لهذه حالات الاختبار في هذا التشغيل. ستبقى حالات الاختبار نفسها في المستودع."
+    },
     "filter": {
       "placeholder": "تصفية تشغيلات الاختبار..."
     },
+    "empty": {
+      "noMatchingCompleted": "لا توجد تشغيلات اختبار مكتملة تطابق المرشح الخاص بك.",
+      "noMatchingActive": "لا توجد تشغيلات اختبار نشطة تطابق المرشحات الخاصة بك."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, zero {# تشغيل} one {تشغيل واحد} two {تشغيلان} few {# تشغيلات} many {# تشغيلاً} other {# تشغيل}}",
+      "altHintMac": "اضغط مع الاستمرار على ⌥ لتوسيع أو طي كل المجموعات",
+      "altHintWin": "اضغط مع الاستمرار على Alt لتوسيع أو طي كل المجموعات"
+    },
+    "runFilters": {
+      "label": "تصفية تشغيلات الاختبار",
+      "mine": "تشغيلات الاختبار الخاصة بي"
+    },
     "typeFilter": {
-      "label": "إظهار",
       "both": "يدوي وآلي"
     },
-    "empty": {
-      "noMatchingCompleted": "لا توجد تشغيلات اختبار مكتملة تطابق المرشح الخاص بك."
+    "junitFilters": {
+      "retried": "أُعيدت المحاولة",
+      "clear": "مسح الفلاتر"
     }
   },
   "admin": {
@@ -3530,6 +4076,7 @@
       "tags": "العلامات",
       "issues": "المشكلات",
       "appConfig": "تكوين التطبيق",
+      "recordKeys": "مفاتيح السجلات",
       "notifications": "الإشعارات",
       "imports": "استيراد البيانات",
       "integrations": "تكاملات المشكلات",
@@ -3559,6 +4106,7 @@
       "peopleAndAccess": "الأشخاص والوصول",
       "authentication": "المصادقة",
       "toolsAndIntegrations": "الأدوات والتكاملات",
+      "aiTools": "أدوات الذكاء الاصطناعي",
       "system": "النظام"
     },
     "imports": {
@@ -3735,7 +4283,8 @@
           "namePlaceholder": "أدخل اسم سير العمل",
           "scopePlaceholder": "اختر النطاق",
           "iconColorLabel": "الأيقونة واللون",
-          "typeLabel": "نوع سير العمل"
+          "typeLabel": "نوع سير العمل",
+          "scopeLabel": "نطاق سير العمل"
         },
         "mappingDatasets": "مجموعات البيانات التي تتطلب مراجعة",
         "mappingImportConfiguration": "استيراد التكوين",
@@ -3761,6 +4310,12 @@
           "actionMap": "التعيين إلى موجود",
           "actionCreate": "إنشاء جديد",
           "workflowTypePlaceholder": "اختر النوع",
+          "workflowScope": {
+            "default": "أخرى",
+            "cases": "حالات الاختبار",
+            "runs": "تشغيلات الاختبار",
+            "sessions": "الجلسات"
+          },
           "noWorkflowsAvailable": "لا توجد سير عمل متاحة.",
           "noStatusesAvailable": "لا توجد حالات متاحة.",
           "noGroupsAvailable": "لا توجد مجموعات متاحة.",
@@ -3885,7 +4440,9 @@
           "templateFieldTemplateLabelPlural": "قوالب",
           "templateFieldTargetGroupCase": "حقول الحالة",
           "templateFieldTargetGroupResult": "حقول النتيجة",
-          "columnAction": "الإجراء"
+          "columnAction": "الإجراء",
+          "configurationVariantSelectPlaceholder": "اختر متغير الإعداد",
+          "configurationVariantCategoryPlaceholder": "اختر الفئة"
         },
         "nextSteps": "بعد اكتمال الاستيراد في الخلفية، يمكنك مراجعة البيانات المُرحّلة من المشاريع الهدف.",
         "nextStepsDescription": "تعمل عمليات الاستيراد في الخلفية بشكل غير متزامن. يمكنك مراقبة الحالة أعلاه أو تحديث الصفحة لعرض التحديثات."
@@ -4297,6 +4854,10 @@
           "warning": "سيتم إزالة حقل الحالة من جميع القوالب. لا يمكن التراجع عن هذا الإجراء."
         }
       },
+      "generateDefaultOn": "مُضمّن افتراضيًا في معالج إنشاء حالات الاختبار. انقر لاستبعاده افتراضيًا.",
+      "generateDefaultOff": "مُستبعد افتراضيًا في معالج إنشاء حالات الاختبار. انقر لتضمينه افتراضيًا.",
+      "jiraPanelOn": "يظهر في لوحة إضافة Jira لحالات الاختبار المرتبطة. انقر لإخفائه.",
+      "jiraPanelOff": "مخفي من لوحة إضافة Jira. انقر لإظهاره لحالات الاختبار المرتبطة.",
       "resultFields": {
         "description": "إدارة حقول النتيجة",
         "add": {
@@ -4396,7 +4957,6 @@
       "allFileExtensions": "جميع الامتدادات",
       "allLanguages": "جميع اللغات",
       "showEnabled": "المفعّل فقط",
-      "showAll": "الكل",
       "variableInserter": {
         "placeholder": "إدراج متغير...",
         "groups": {
@@ -4656,6 +5216,7 @@
     },
     "workflows": {
       "description": "إدارة سير عمل حالات الاختبار",
+      "reviewsTitle": "سير عمل المراجعة",
       "systemFeatureCard": {
         "title": "سير عمل المراجعة",
         "description": "فرض المراجعات عن طريق تقييد انتقالات سير العمل حتى تُمنح الموافقة. عند التمكين، يمكن للمشاريع الاختيار الفردي عبر إعداداتها المتقدمة. عطّل لمنع بوابات موافقة سير العمل.",
@@ -4664,10 +5225,10 @@
         "updateSuccessEnabled": "تم تمكين سير عمل المراجعة.",
         "updateSuccessDisabled": "تم تعطيل سير عمل المراجعة.",
         "updateError": "فشل تحديث إعداد سير عمل المراجعة. حاول مرة أخرى بعد قليل.",
-        "remindersToggleLabel": "إرسال إشعارات تذكير للمراجعات المعلقة",
+        "remindersToggleLabel": "إرسال إشعارات تذكير للمراجعات المعلقة بعد",
         "remindersToggleAriaLabel": "تبديل إشعارات تذكير المراجعة",
         "thresholdLabel": "تذكير المراجعين بعد",
-        "thresholdUnit": "يوم (أيام)",
+        "thresholdUnit": "{count, plural, zero {يوم} one {يوم} two {يومان} few {أيام} many {يومًا} other {يوم}}",
         "thresholdSaveButton": "حفظ",
         "thresholdHelp": "عدد الأيام التي يمكن أن يبقى فيها طلب المراجعة معلقًا قبل أن يتلقى المراجعون إشعار تذكير. تبدأ الطلبات الجديدة العد من وقت التقديم.",
         "thresholdUpdateSuccess": "تم تحديث إعدادات تذكير المراجعة.",
@@ -4716,6 +5277,10 @@
     },
     "roles": {
       "description": "حدد الإجراءات التي يمكن للمستخدمين تنفيذها عن طريق تبديل الأذونات لكل منطقة من التطبيق.",
+      "confirmDefaultDescription": "هل أنت متأكد أنك تريد تعيين هذا الدور كافتراضي؟",
+      "defaultWarning": "سيتم تعيين هذا الدور للمستخدمين الجدد بشكل افتراضي.",
+      "defaultLockedTitle": "الدور الافتراضي",
+      "defaultLockedDescription": "لتغيير الافتراضي، عدّل دورًا آخر وعيّنه كافتراضي.",
       "filterPlaceholder": "تصفية الأدوار...",
       "add": {
         "button": "إضافة دور",
@@ -4750,11 +5315,24 @@
         "modeNone": "لا يوجد قيود (تقرر المشاريع)",
         "modeDisabled": "تعطيل التعديل في كل مكان",
         "modeMax": "السماح بالتعديل حتى حد أقصى للنافذة",
-        "minutesLabel": "الحد الأقصى للنافذة (بالدقائق)",
+        "minutesBefore": "الحد الأقصى للنافذة:",
+        "minutesUnit": "{minutes, plural, zero {دقيقة} one {دقيقة} two {دقيقتان} few {دقائق} many {دقيقة} other {دقيقة}}",
+        "minutesAriaLabel": "الحد الأقصى للنافذة بالدقائق",
         "invalidMinutes": "أدخل عدد دقائق أكبر من الصفر",
         "save": "حفظ السياسة",
         "savedToast": "تم تحديث سياسة تعديل النتيجة",
         "saveError": "فشل تحديث سياسة تعديل النتيجة"
+      },
+      "abandonedRunPolicy": {
+        "title": "تنظيف الأتمتة المهجورة",
+        "modeOn": "إغلاق عمليات التشغيل الآلية المهجورة تلقائيًا",
+        "minutesBefore": "خامل لمدة لا تقل عن:",
+        "minutesUnit": "{minutes, plural, zero {دقيقة} one {دقيقة} two {دقيقتان} few {دقائق} many {دقيقة} other {دقيقة}}",
+        "minutesAriaLabel": "حد الخمول بالدقائق",
+        "invalidMinutes": "أدخل {min} دقيقة على الأقل",
+        "save": "حفظ السياسة",
+        "savedToast": "تم تحديث تنظيف الأتمتة المهجورة",
+        "saveError": "فشل تحديث سياسة تنظيف الأتمتة المهجورة"
       },
       "add": {
         "button": "إضافة حالة",
@@ -4793,6 +5371,20 @@
         "forSession": "للجلسة",
         "color": "اللون"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "تكوين معرّفات شكلية مسبوقة برمز المشروع مثل PROJECT-TC-1234 تجعل من السهل معرفة المشروع الذي ينتمي إليه السجل ونوعه. يبقى المعرّف الرقمي الأساسي دون تغيير ويستمر في العمل في كل مكان.",
+      "title": "مفاتيح السجلات المسبوقة برمز المشروع",
+      "description": "عند التمكين، تعرض السجلات مفتاحًا اختياريًا يجمع بين رمز المشروع، ورمز النوع، والمعرّف الرقمي للسجل. عيّن رمز كل مشروع في إعدادات المشروع ← متقدم.",
+      "toggleAriaLabel": "تبديل مفاتيح السجلات المسبوقة برمز المشروع",
+      "tokensHeading": "رموز الأنواع",
+      "tokensHelp": "الرمز المستخدم لكل نوع من السجلات. من 1 إلى 6 أحرف كبيرة، بدون أرقام أو شرطات. يجب أن تكون الرموز فريدة.",
+      "invalidToken": "غير صالح",
+      "duplicateToken": "رمز مكرر",
+      "tokensSaved": "تم حفظ رموز الأنواع.",
+      "enableSuccess": "تم تمكين مفاتيح السجلات المسبوقة برمز المشروع.",
+      "disableSuccess": "تم تعطيل مفاتيح السجلات المسبوقة برمز المشروع.",
+      "saveError": "تعذّر الحفظ. يرجى المحاولة مرة أخرى."
     },
     "appConfig": {
       "description": "إدارة تكوينات التطبيق العامة",
@@ -4936,6 +5528,8 @@
       "confirmDefault": "تأكيد الافتراضي",
       "confirmDefaultDescription": "هل أنت متأكد أنك تريد تعيين نوع المعلم الرئيسي هذا كالافتراضي؟",
       "warning": "سيتم إضافة نوع المعلم الرئيسي هذا إلى جميع المشاريع.",
+      "defaultLockedTitle": "نوع المعلم الافتراضي",
+      "defaultLockedDescription": "لتغيير الافتراضي، عدّل نوع معلم آخر وعيّنه كافتراضي.",
       "wizard": {
         "selectProjects": "اختر المشاريع",
         "projectsSelected": "{count, plural, =0 {لم يتم تحديد أي مشروع} one {تم تحديد # مشروع} other {تم تحديد # مشاريع}}",
@@ -5033,7 +5627,8 @@
         "repositoryCaseVersions": "إصدارات حالات المستودع",
         "testRunStepResults": "نتائج خطوة تشغيل الاختبار",
         "issueConfigs": "تكوينات المشكلات",
-        "sharedStepGroups": "مجموعات الخطوات المشتركة"
+        "sharedStepGroups": "مجموعات الخطوات المشتركة",
+        "dataSets": "مجموعات البيانات"
       },
       "table": {
         "title": "محذوفات {itemType}",
@@ -5043,7 +5638,9 @@
         "noResults": "لم يتم العثور على محذوفات {itemType} مطابقة لبحثك عن \"{query}\".",
         "restoreConfirmationMessage": "هل أنت متأكد أنك تريد استعادة هذا الصف من جدول {itemType}؟ يمكن أيضًا استعادة البيانات المرتبطة.",
         "purgeConfirmationMessage": "هل أنت متأكد أنك تريد حذف هذا الصف نهائيًا من جدول {itemType}؟ لا يمكن التراجع عن هذا الإجراء وقد يزيل البيانات المرتبطة."
-      }
+      },
+      "filterTypesPlaceholder": "تصفية أنواع العناصر...",
+      "summary": "{count, plural, =0 {سلة المهملات فارغة} one {# عنصر في سلة المهملات} two {# عنصران في سلة المهملات} few {# عناصر في سلة المهملات} many {# عنصرًا في سلة المهملات} other {# عنصر في سلة المهملات}}"
     },
     "notifications": {
       "title": "إدارة الإشعارات",
@@ -5210,19 +5807,19 @@
         "authType": "نوع المصادقة",
         "authTypeHelp": "اختر كيفية المصادقة مع الخدمة الخارجية",
         "emailPlaceholder": "your-email@example.com",
-        "emailHelp": "Your account email address. Required for Jira Cloud (paired with an API token below). Not used for Jira Server / Data Center — leave blank there and use either the API Token field alone (Personal Access Token) or the Username / Password fields below.",
+        "emailHelp": "عنوان البريد الإلكتروني لحسابك. مطلوب لـ Jira Cloud (يُستخدم مع رمز API أدناه). لا يُستخدم لـ Jira Server / Data Center — اتركه فارغًا هناك واستخدم حقل رمز API فقط (رمز الوصول الشخصي) أو حقلي اسم المستخدم / كلمة المرور أدناه.",
         "apiToken": "رمز واجهة برمجة التطبيقات",
         "apiTokenPlaceholder": "أدخل رمز واجهة برمجة التطبيقات الخاص بك",
-        "apiTokenHelp": "Jira Cloud: generate an API token from your Atlassian account settings and pair it with your email above. Jira Server / Data Center: paste a Personal Access Token (sent as Bearer). Leave this blank if you're using the Username / Password fields below instead.",
-        "username": "Username",
-        "usernamePlaceholder": "Enter your username",
-        "usernameHelp": "Jira Server / Data Center only — your account username, paired with the password below (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
-        "password": "Password",
-        "passwordPlaceholder": "Enter your password",
-        "passwordHelp": "Jira Server / Data Center only — your account password, paired with the username above (Basic auth). Leave blank for Jira Cloud or when using a Personal Access Token in the API Token field.",
+        "apiTokenHelp": "Jira Cloud: أنشئ رمز API من إعدادات حساب Atlassian الخاص بك واستخدمه مع بريدك الإلكتروني أعلاه. Jira Server / Data Center: ألصق رمز وصول شخصي (يُرسل كـ Bearer). اترك هذا الحقل فارغًا إذا كنت تستخدم حقلي اسم المستخدم / كلمة المرور أدناه بدلاً من ذلك.",
+        "username": "اسم المستخدم",
+        "usernamePlaceholder": "أدخل اسم المستخدم",
+        "usernameHelp": "لـ Jira Server / Data Center فقط — اسم المستخدم لحسابك، يُستخدم مع كلمة المرور أدناه (المصادقة الأساسية). اتركه فارغًا لـ Jira Cloud أو عند استخدام رمز وصول شخصي في حقل رمز API.",
+        "password": "كلمة المرور",
+        "passwordPlaceholder": "أدخل كلمة المرور",
+        "passwordHelp": "لـ Jira Server / Data Center فقط — كلمة مرور حسابك، تُستخدم مع اسم المستخدم أعلاه (المصادقة الأساسية). اتركه فارغًا لـ Jira Cloud أو عند استخدام رمز وصول شخصي في حقل رمز API.",
         "jiraUrl": "رابط Jira",
-        "jiraUrlPlaceholder": "https://your-site.atlassian.net or https://jira.mycompany.domain",
-        "jiraUrlHelp": "The base URL of your Jira instance — Atlassian Cloud (https://your-site.atlassian.net) or self-hosted Server / Data Center (https://jira.mycompany.domain).",
+        "jiraUrlPlaceholder": "https://your-site.atlassian.net أو https://jira.mycompany.domain",
+        "jiraUrlHelp": "عنوان URL الأساسي لمثيل Jira الخاص بك — Atlassian Cloud (https://your-site.atlassian.net) أو Server / Data Center مستضاف ذاتيًا (https://jira.mycompany.domain).",
         "clientId": "معرّف العميل",
         "clientIdPlaceholder": "أدخل معرّف عميل OAuth الخاص بك",
         "clientIdHelp": "معرّف العميل من تطبيق OAuth الخاص بك",
@@ -5264,6 +5861,7 @@
         "encrypted": "مشفّر",
         "encryptedHelp": "هذا الحقل مشفّر ومخزّن بشكل آمن",
         "changeCredential": "تغيير",
+        "leaveBlankToKeep": "اتركه فارغًا للاحتفاظ بالقيمة الحالية",
         "apiKeyWarningTitle": "تنبيه بشأن المصادقة بمفتاح واجهة برمجة التطبيقات",
         "apiKeyWarningDescription": "مع مصادقة مفتاح API، قد لا يتطابق المُبلغ عن المشكلات المُنشأة مع مستخدم TestPlanIt الذي أنشأها — حتى عندما تتطابق رسائل البريد الإلكتروني:",
         "apiKeyWarningPoint1": "يتطلب تعيين المُبلغ في Jira أن يكون حساب رمز API يمتلك صلاحية مسؤول Jira (\"تعديل المُبلغ\"). بدونها، يتجاهل Jira المُبلغ ويُسجَّل مالك رمز API كمُنشئ.",
@@ -5384,6 +5982,8 @@
         "billingPeriodStartDayDescription": "يوم الشهر (1-31) الذي تبدأ فيه فترة الفوترة. تستخدم القيم 29-31 آخر يوم في الأشهر الأقصر.",
         "defaultTemperature": "درجة الحرارة الافتراضية",
         "defaultMaxTokens": "الحد الأقصى الافتراضي للرموز",
+        "repoContextBudgetLabel": "موازنة سياق المستودع (QuickScript)",
+        "repoContextBudgetAuto": "يُحدَّد حجمه تلقائيًا من نافذة سياق النموذج البالغة ~{window} — حوالي {budget} رمزًا من كود المستودع لكل عملية إنشاء.",
         "timeout": "مهلة الطلب (ميلي ثانية)",
         "timeoutDescription": "الحد الأقصى لوقت انتظار استجابة نموذج الذكاء الاصطناعي (5000-600000 مللي ثانية). لا ينطبق على الطلبات المتدفقة.",
         "streamingEnabled": "تمكين البث",
@@ -5393,6 +5993,12 @@
         "fetchingModels": "جارٍ جلب النماذج...",
         "failedToFetchModels": "فشل جلب النماذج المتاحة",
         "selectModel": "اختر نموذجًا",
+        "modelsFound": "{count, plural, zero {تم العثور على {count} نموذج متاح} one {تم العثور على {count} نموذج متاح} two {تم العثور على {count} نموذجين متاحين} few {تم العثور على {count} نماذج متاحة} many {تم العثور على {count} نموذجًا متاحًا} other {تم العثور على {count} نموذج متاح}}",
+        "modelsFoundDescription": "تم اختيار \"{model}\" كنموذج افتراضي",
+        "noModelsFoundDescription": "لم يُرجع المزود أي نماذج متاحة",
+        "pricingAutoFilled": "تم ملء تسعير النموذج تلقائيًا",
+        "pricingAutoFilledDescription": "{model}: ${input} إدخال / ${output} إخراج لكل 1M رمز",
+        "customLlmModelsHint": "أدخل عنوان URL لنقطة النهاية الخاصة بك. إذا كانت متوافقة مع OpenAI (مثل LiteLLM)، سيتم جلب النماذج والتسعير تلقائيًا.",
         "connectionSuccessfulDescription": "تم التحقق من اتصال نموذج الذكاء الاصطناعي وهو يعمل بشكل صحيح",
         "failedToConnect": "فشل الاتصال بمزود نموذج الذكاء الاصطناعي",
         "integrationCreated": "تم إنشاء تكامل نموذج الذكاء الاصطناعي بنجاح",
@@ -5409,6 +6015,7 @@
         "statusDescription": "تمكين أو تعطيل هذا التكامل",
         "apiKeyPlaceholder": "أدخل مفتاح API جديدًا للتحديث...",
         "update": "تحديث",
+        "modelListUpdated": "تم تحديث قائمة النماذج بنجاح",
         "integrationUpdated": "تم تحديث تكامل نموذج الذكاء الاصطناعي بنجاح",
         "failedToUpdate": "فشل تحديث تكامل نموذج الذكاء الاصطناعي",
         "validation": {
@@ -5517,6 +6124,11 @@
     "elasticsearch": {
       "title": "إدارة Elasticsearch",
       "description": "إدارة فهرسة وصيانة محرك البحث",
+      "health": {
+        "healthy": "سليم",
+        "warning": "تحذير",
+        "unhealthy": "غير سليم"
+      },
       "status": {
         "title": "حالة Elasticsearch",
         "description": "حالة الاتصال والصحة الحالية لمحرك البحث",
@@ -5540,7 +6152,7 @@
         "error": "خطأ في حفظ الإعدادات",
         "errorDescription": "فشل حفظ التكوين. يرجى المحاولة مرة أخرى.",
         "note": {
-          "description": "تُطبَّق التغييرات على الفهارس الجديدة فورًا. يتم تحديث الفهارس الموجودة عند الحفظ. قم بتعيين النسخ المتماثلة إلى 0 لحل حالة YELLOW في المجموعات ذات العقدة الواحدة."
+          "description": "تُطبَّق التغييرات على الفهارس الجديدة فورًا. يتم تحديث الفهارس الحالية عند الحفظ. عيّن النسخ المتماثلة إلى 0 لحل حالة التحذير في المجموعات ذات العقدة الواحدة."
         }
       },
       "reindex": {
@@ -5687,7 +6299,6 @@
     },
     "auditLogs": {
       "description": "عرض مسار التدقيق على مستوى النظام لتتبع الأمان والامتثال",
-      "projectDescription": "عرض سجل تدقيق الإجراءات المنفذة في هذا المشروع.",
       "filterPlaceholder": "البحث بواسطة الكيان أو المستخدم أو الإجراء...",
       "filterAction": "الإجراء",
       "filterEntityType": "نوع الكيان",
@@ -5709,7 +6320,8 @@
         "entityName": "اسم الكيان",
         "userId": "معرّف المستخدم",
         "ipAddress": "عنوان IP",
-        "userAgent": "وكيل المستخدم"
+        "userAgent": "وكيل المستخدم",
+        "source": "المصدر"
       },
       "exportCsv": "تصدير CSV",
       "timeRange": "النطاق الزمني",
@@ -5807,6 +6419,13 @@
         "reviewEntityLabelCase": "حالة اختبار",
         "reviewEntityLabelRun": "تشغيل اختبار",
         "reviewEntityLabelSession": "جلسة",
+        "reviewBulkEntityLabelCase": "حالات الاختبار",
+        "reviewBulkEntityLabelRun": "تشغيلات الاختبار",
+        "reviewBulkEntityLabelSession": "الجلسات",
+        "reviewBulkSummaryCase": "{count} حالة اختبار",
+        "reviewBulkSummaryRun": "{count} تشغيل اختبار",
+        "reviewBulkSummarySession": "{count} جلسة",
+        "reviewBulkRequestedEmailMessage": "طلب {actorName} مراجعتك لـ {count} {entityLabel} في المشروع \"{projectName}\".",
         "reviewTransition": "الانتقال: {from} → {to}",
         "reviewCommentPreview": "تعليق: {comment}",
         "reviewRequestedEmailMessage": "طلب {actorName} مراجعتك لـ {entityLabel} \"{entityName}\" في مشروع \"{projectName}\".",
@@ -5820,7 +6439,14 @@
         "reviewReminderHoursPending": "معلق منذ {hoursPending, plural, zero {# ساعة} one {ساعة واحدة} two {ساعتان} few {# ساعات} many {# ساعة} other {# ساعة}}",
         "aiStepsDerivedTitle": "خطوات اختبار مشتقة بالذكاء الاصطناعي جاهزة",
         "aiStepsDerivedMessage": "{count, plural, zero {لم تُمنح أي حالة اختبار} one {تم منح حالة اختبار واحدة} two {تم منح حالتي اختبار} few {تم منح # حالات اختبار} many {تم منح # حالة اختبار} other {تم منح # حالة اختبار}} خطوات مشتقة بالذكاء الاصطناعي — راجعها للتأكد من الدقة.",
-        "aiStepsDerivedReviewLink": "مراجعة جولة الاختبار"
+        "aiStepsDerivedReviewLink": "مراجعة جولة الاختبار",
+        "integrationAuthExpiredTitle": "انتهت صلاحية اتصال التكامل",
+        "integrationAuthExpiredMessage": "انتهت صلاحية اتصالك بـ \"{integrationName}\". أعد الاتصال لاستئناف مزامنة المشكلات.",
+        "integrationAuthExpiredReconnect": "إعادة الاتصال",
+        "runReadyToCompleteTitle": "دورة الاختبار جاهزة للإكمال",
+        "runReadyToCompleteExecuted": "{count, plural, one {تم تنفيذ حالة واحدة} =2 {تم تنفيذ كلتا الحالتين} other {تم تنفيذ جميع الـ# حالة}}.",
+        "runReadyToCompleteEmailMessage": "{caseCount, plural, one {تم تنفيذ حالة واحدة} =2 {تم تنفيذ كلتا الحالتين} other {تم تنفيذ جميع الـ# حالة}} في تشغيل الاختبار \"{testRunName}\" (المشروع \"{projectName}\"). التشغيل جاهز لتحديده كمكتمل.",
+        "runReadyToCompleteReason": "تصلك هذه الرسالة لأنك تستطيع إكمال دورات الاختبار في هذا المشروع."
       }
     },
     "issues": {
@@ -5998,7 +6624,13 @@
     "filterAll": "الكل",
     "fanOutPartialFailure": "تعذّر الوصول إلى {count, number} مشروع (مشاريع). يتم عرض النتائج من {successCount, number} مشروع (مشاريع).",
     "projectSelectorLabel": "المشروع",
-    "searchFailedTitle": "فشل البحث"
+    "searchFailedTitle": "فشل البحث",
+    "authComplete": {
+      "successTitle": "اكتمل التفويض",
+      "successDescription": "تم ربط حسابك الآن. يمكنك إغلاق هذه النافذة والعودة إلى ما كنت تفعله.",
+      "errorTitle": "فشل التفويض",
+      "errorDescription": "تعذر إكمال التفويض. أغلق هذه النافذة وحاول مرة أخرى."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6044,7 +6676,9 @@
     "testCases": "{count, plural, one {# حالة اختبار} other {# حالات اختبار}}",
     "estimate": "التقدير: {value}",
     "partOf": "(جزء من {parent})",
-    "status": "الحالة: {status}"
+    "status": "الحالة: {status}",
+    "lane": "الممر {number}",
+    "worker": "العامل {id}"
   },
   "linkedCases": {
     "title": "حالات الاختبار المرتبطة",
@@ -6073,9 +6707,85 @@
     "starts": "يبدأ:",
     "scheduledCompletion": "الإكمال المجدول:",
     "estWorkEffort": "جهد العمل المقدر:",
-    "noTasks": "لا توجد مهام لعرضها في مخطط جانت."
+    "noTasks": "لا توجد مهام لعرضها في مخطط جانت.",
+    "businessHours": "{hours, number, ::.0} ساعة عمل"
   },
   "help": {
+    "auditLogs": "## سجلات التدقيق\nعرض سجل التدقيق على مستوى النظام لتتبع الأمان والامتثال",
+    "statuses": "## الحالات\nإدارة الحالات التي يعينها المختبرون عند تسجيل نتيجة اختبار، مثل ناجح، فاشل، ومحظور.",
+    "configurations": "## التكوينات\nالتكوينات هي مزيج من الفئات والمتغيرات المستخدمة لتحديد بيئة الاختبار. على سبيل المثال، نظام التشغيل/المتصفح، خادم الاختبار، اللغة، إلخ.",
+    "categories": "## الفئات\nتجمع الفئات المتغيرات ذات الصلة - مثل المتصفح أو نظام التشغيل - التي تتحد لتحديد بيئة الاختبار.",
+    "stepDuplicates": "## تكرارات تسلسل الخطوات\nراجع تسلسلات الخطوات المتطابقة عبر حالات الاختبار. حوّل التطابقات إلى مجموعات خطوات مشتركة أو تجاهل النتائج الإيجابية الكاذبة.",
+    "templates": "## القوالب\nإدارة قوالب وحقول حالات الاختبار",
+    "caseFields": "## حقول الحالة\nحقول مخصصة متاحة في حالات الاختبار، تُعيَّن للقوالب للتحكم في الحالات التي تستخدمها.",
+    "resultFields": "## حقول النتيجة\nحقول مخصصة تُلتقط عند تسجيل نتيجة اختبار، وتُعيَّن للقوالب للتحكم في مكان تطبيقها.",
+    "milestoneTypes": "## أنواع المعالم\nتصنّف أنواع المعالم المعالم - مثل السبرنت أو الإصدار أو النسخة - ويمكن إعادة استخدامها عبر المشاريع.",
+    "tags": "## الوسوم\nتُصنّف الوسوم وتنظّم حالات الاختبار والجلسات حتى تتمكن من تجميع العمل ذي الصلة والعثور عليه عبر المشاريع.",
+    "issues": "## المشكلات\nالمشكلات هي عناصر تتبع خارجية - من Jira وGitHub وAzure DevOps وتكاملات أخرى - تتم مزامنتها مع TestPlanIt حتى يمكن ربطها بحالات الاختبار والتشغيلات والجلسات.",
+    "crossProjectReports": "## التقارير عبر المشاريع\nأنشئ التقارير التي تمتد عبر مشاريع متعددة وشغّلها وحلّلها، مثل اتجاهات الأتمتة عبر مجموعة الاختبار بأكملها.",
+    "users": "## المستخدمون\nدليل بالأشخاص الذين تتعاون معهم — المستخدمون الذين يشاركونك مشروعًا واحدًا على الأقل — والمشاريع التي تشاركها مع كل منهم. يرى المسؤولون جميع المستخدمين وقائمة مشاريعهم الكاملة.",
+    "documentation": "## التوثيق\nتوثيق حر لهذا المشروع - ملاحظات ومراجع وتفاصيل التأهيل.",
+    "projectMilestones": "## المعالم\nتجمّع المعالم عمل هذا المشروع وتتبعه حسب الهدف - الإصدارات أو السبرنتات أو الأنواع المخصصة - عبر الحالات النشطة والمكتملة.",
+    "projectRepository": "## مستودع حالات الاختبار\nمكتبة حالات الاختبار الخاصة بهذا المشروع، منظمة في مجلدات.",
+    "repositoryDuplicates": "## المرشحون للتكرار\nحالات الاختبار المكررة المحتملة التي تم العثور عليها أثناء الفحص الأخير لمستودع هذا المشروع. تؤدي إعادة الفحص إلى تحليل المستودع مرة أخرى وتحديث القائمة بأحدث المرشحين.",
+    "projectSharedSteps": "## الخطوات المشتركة\nمجموعات قابلة لإعادة الاستخدام من خطوات الاختبار يمكن لعدة حالات اختبار مشاركتها - تحديث مجموعة يحدّث كل حالة تشير إليها.",
+    "projectRuns": "## تشغيلات الاختبار\nتنفّذ تشغيلات الاختبار مجموعة مختارة من حالات الاختبار وتسجّل نتائجها، متتبعة التقدم من البداية إلى الاكتمال.",
+    "projectSessions": "## الجلسات\nجلسات الاختبار الاستكشافي - اختبار محدد الوقت وغير مكتوب مسبقًا يُسجَّل كملاحظات ونتائج عبر الحالات النشطة والمكتملة.",
+    "projectTags": "## الوسوم\nتُصنّف الوسوم وتجمّع حالات اختبار هذا المشروع وجلساته وتشغيلاته حتى يسهل العثور على العمل ذي الصلة.",
+    "projectIssues": "## المشكلات\nالمشكلات من أدوات التتبع المتصلة بهذا المشروع، مرتبطة بحالات الاختبار والتشغيلات والجلسات التي عُثر عليها أو أُشير إليها فيها.",
+    "projectReports": "## التقارير\nتلخّص التقارير اختبار هذا المشروع - التشغيلات والجلسات والنتائج - كرسوم بيانية وجداول يمكنك تصفيتها وتصديرها.",
+    "projectAuditLogs": "## سجلات التدقيق\nسجل التدقيق للإجراءات المنفذة في هذا المشروع - من غيّر ماذا ومتى - لتتبع الأمان والامتثال.",
+    "projectIntegrations": "## تكاملات المشكلات\nاربط هذا المشروع بأداة تتبع المشكلات حتى تتمكن حالات اختباره وتشغيلاته وجلساته من الربط والمزامنة مع المشكلات والمعالم الخارجية.",
+    "projectWebhooks": "## الخطافات\nأرسل واستقبل إشعارات الأحداث لهذا المشروع - تجلب الخطافات الواردة التغييرات الخارجية، وتدفع الخطافات الصادرة أحداث الاختبار إلى الخارج، وتسجّل عمليات التسليم ما تم إرساله.",
+    "projectAiModels": "## نماذج الذكاء الاصطناعي\nاختر نموذج الذكاء الاصطناعي وتكوين المطالبة التي يستخدمها هذا المشروع لميزاته المدعومة بالذكاء الاصطناعي، مثل إنشاء حالات الاختبار والوسم التلقائي.",
+    "projectQuickScript": "## QuickScript\nاربط مستودع كود حتى يتمكن هذا المشروع من إنشاء حالات اختبار من ملفات الاختبار الآلي الخاصة بك، مع اختيار الفرع والمسارات المراد تضمينها.",
+    "projectParameters": "## معاملات حالة الاختبار\nقم بتكوين الاختبار المعتمد على البيانات لهذا المشروع - أسماء خصائص التكرار في JUnit للنتائج المستوردة ومجموعات البيانات القابلة لإعادة الاستخدام للحالات ذات المعاملات.",
+    "projectAdvanced": "## متقدم\nالإعدادات المتقدمة لهذا المشروع - بادئة معرف السجل، وسير عمل مراجعة النتائج، وإنشاء المشكلات تلقائيًا عند الفشل، ونافذة تعديل النتائج.",
+    "projectShares": "## إدارة المشاركات\nروابط قابلة للمشاركة لتقارير هذا المشروع، لكل منها مستوى وصول خاص به - عام، أو يتطلب تسجيل الدخول، أو محمي بكلمة مرور. يؤدي إلغاء الرابط إلى قطع وصوله.",
+    "groups": "## المجموعات\nتتيح لك المجموعات تعيين وصول المشروع والأدوار للعديد من المستخدمين دفعة واحدة. أضف الأعضاء مباشرة، أو اربط مجموعة من موفر الهوية الخاص بك.",
+    "roles": "## الأدوار\nتتحكم الأدوار فيما يمكن للمستخدمين فعله - يبدّل كل دور الأذونات لكل منطقة تطبيق. عيّن دورًا للمستخدمين مباشرة أو كافتراضي للمشروع.",
+    "sso": "## المصادقة\nإدارة كيفية تسجيل دخول المستخدمين وما إذا كان بإمكان الحسابات الجديدة التسجيل.",
+    "ssoProviders": "## موفرو تسجيل الدخول\nقم بتكوين كيفية تسجيل دخول المستخدمين إلى تطبيقك.",
+    "ssoRegistration": "## إعدادات التسجيل\nتحكم في من يمكنه التسجيل للحصول على حسابات جديدة.",
+    "ssoAllowRegistration": "## السماح بالتسجيل الذاتي\nعند التعطيل، لا يمكن للمستخدمين الجدد التسجيل مباشرة أو إنشاء حساب عبر تسجيل الدخول الموحد. يمكن للمستخدمين الحاليين الاستمرار في تسجيل الدخول.",
+    "ssoDefaultAccess": "## مستوى الوصول الافتراضي\nمستوى الوصول للنظام المخصص للمستخدمين الجدد عند التسجيل.",
+    "ssoRequireEmailVerification": "## طلب التحقق من البريد الإلكتروني\nيجب على المستخدمين التحقق من عنوان بريدهم الإلكتروني قبل الوصول إلى النظام.",
+    "ssoRestrictDomains": "## تقييد نطاقات البريد الإلكتروني\nالسماح بالتسجيل فقط من نطاقات بريد إلكتروني محددة.",
+    "security": "## الأمان\nقم بتكوين فرض تسجيل الدخول، وسياسة كلمة المرور، وإعدادات القفل، وإجراءات الفرض.",
+    "securitySignInEnforcement": "## فرض تسجيل الدخول\nطلب تسجيل الدخول الموحد وفرض المصادقة الثنائية.",
+    "securityForceSso": "## فرض تسجيل الدخول الموحد\nتعطيل تسجيل الدخول بالبريد الإلكتروني وإلزام المستخدمين باستخدام تسجيل الدخول الموحد.",
+    "securityForce2FANonSSO": "## طلب المصادقة الثنائية (2FA) لتسجيلات الدخول بكلمة المرور\nيجب على المستخدمين الذين يسجلون الدخول بالبريد الإلكتروني/كلمة المرور إعداد المصادقة الثنائية (2FA) واستخدامها.",
+    "securityForce2FAAllLogins": "## طلب المصادقة الثنائية (2FA) لجميع تسجيلات الدخول\nيجب على جميع المستخدمين التحقق باستخدام المصادقة الثنائية (2FA) بعد تسجيل الدخول، بما في ذلك مستخدمي تسجيل الدخول الموحد (SSO).",
+    "securityPasswordPolicy": "## سياسة كلمة المرور\nتعيين متطلبات كلمات مرور المستخدمين.",
+    "securityLockoutPolicy": "## سياسة القفل\nقم بتكوين قفل الحساب بعد محاولات تسجيل الدخول الفاشلة.",
+    "securityEnforcement": "## إجراءات الفرض\nفرض تغيير كلمة المرور للمستخدمين المعتمدين على بيانات الاعتماد.",
+    "apiTokens": "## رموز واجهة برمجة التطبيقات\nعرض وإدارة رموز واجهة برمجة التطبيقات عبر جميع المستخدمين. ألغِ الرموز إذا كانت هناك مخاوف أمنية.",
+    "scim": "## تزويد SCIM\nقم بتزويد المستخدمين من موفر الهوية الخاص بك إلى TestPlanIt عبر SCIM 2.0.",
+    "scimConflicts": "## سجل تعارض المعرف الخارجي\nأحداث هوية SCIM التي تطلبت تدخل النظام (الربط، الإحياء، الكتابة فوق اسم العرض، الأعضاء المتجاوزون).",
+    "scimFallbackDefault": "## الوصول المعيّن الافتراضي\nمستوى الوصول المخصص للمستخدمين غير المشمولين بأي تعيين مجموعة.",
+    "integrations": "## تكاملات المشكلات\nإدارة تكاملات الأطراف الثالثة لتتبع المشكلات.",
+    "notifications": "## إدارة الإشعارات\nتعيين تفضيلات الإشعارات الافتراضية (يمكن للمستخدمين تجاوزها) وإرسال إشعارات النظام.",
+    "notificationsSystem": "## إشعارات النظام\nإرسال إعلانات مهمة لجميع المستخدمين.",
+    "notificationsHistory": "## سجل الإشعارات\nإشعارات النظام المرسلة سابقًا لجميع المستخدمين.",
+    "aiModels": "## نماذج الذكاء الاصطناعي\nإدارة موفري نماذج الذكاء الاصطناعي والاتصالات المستخدمة للميزات المدعومة بالذكاء الاصطناعي، بما في ذلك حدود الاستخدام والميزانيات.",
+    "prompts": "## تكوينات المطالبات\nإدارة تكوينات المطالبات التي تستخدمها ميزات الذكاء الاصطناعي لإنشاء المحتوى، وتعيينها للمشاريع.",
+    "quickscripts": "## قوالب QuickScript\nإدارة القوالب التي يستخدمها QuickScript لتحويل حالات الاختبار إلى نصوص أتمتة.",
+    "codeRepositories": "## مستودعات الكود\nإدارة اتصالات مستودع الكود لسياق QuickScript.",
+    "recordKeys": "## مفاتيح السجل\nقم بتكوين معرّفات تجميلية مسبوقة بالمشروع مثل PROJECT-TC-1234 تسهّل معرفة المشروع الذي ينتمي إليه السجل ونوع السجل. يظل المعرّف الرقمي الأساسي دون تغيير ويستمر في العمل في كل مكان.",
+    "recordKeysEnabled": "## مفاتيح السجل المسبوقة بالمشروع\nعند التفعيل، تعرض السجلات مفتاحًا اختياريًا يجمع بين رمز المشروع، ورمز النوع، والمعرّف الرقمي للسجل. عيّن رمز كل مشروع في إعدادات المشروع ← متقدم.",
+    "imports": "## استيراد البيانات\nاستيراد البيانات من أدوات إدارة الاختبار الخارجية إلى TestPlanIt.",
+    "elasticsearchStatus": "## حالة Elasticsearch\nحالة الاتصال والصحة الحالية لمحرك البحث.",
+    "elasticsearchConfig": "## تكوين Elasticsearch\nقم بتكوين إعدادات Elasticsearch لنشرك.",
+    "elasticsearchReindex": "## إعادة فهرسة البيانات\nإعادة بناء فهارس البحث لتحسين أداء البحث.",
+    "queues": "## قوائم انتظار المهام في الخلفية\nمراقبة وإدارة قوائم انتظار معالجة المهام في الخلفية.",
+    "trash": "## سلة المحذوفات\nاستعادة السجلات المحذوفة مؤقتًا أو حذفها نهائيًا عبر النظام.",
+    "systemWebhooks": "## خطافات النظام\nوجهات الخطافات الصادرة لأحداث مستوى النظام غير المرتبطة بمشروع واحد - حاليًا أحداث دورة حياة المستخدم والمجموعة في SCIM 2.0. قم بتكوين الخطافات الواردة والخطافات الصادرة الخاصة بالمشروع من صفحة إعدادات المشروع بدلاً من ذلك.",
+    "workflows": "## سير العمل\nإدارة حالات سير العمل لحالات الاختبار وتشغيلات الاختبار والجلسات.",
+    "workflowReviews": "## سير عمل المراجعة\nفرض المراجعات عن طريق تقييد انتقالات سير العمل حتى تُمنح الموافقة. عند التفعيل، يمكن للمشاريع الاشتراك أو عدم الاشتراك بشكل فردي عبر إعداداتها المتقدمة. عطّل لمنع بوابات موافقة سير العمل.",
+    "reviewReminders": "## تذكيرات المراجعة\nعدد الأيام التي يمكن أن يظل فيها طلب المراجعة معلقًا قبل أن يتلقى المراجعون إشعار تذكير. تبدأ الطلبات الجديدة العد عند التقديم.",
+    "reviews": "## المراجعات\nطلبات المراجعة المسندة إليك، سواء بشكل مباشر أو من خلال دور تشغله. تمثل قائمة \"قيد الانتظار\" طلباتك التي لا تزال بانتظار قرار؛ بينما تعرض قائمة \"تم البت فيها\" الطلبات التي سبق أن وافقت عليها أو رفضتها أو طلبت إجراء تغييرات عليها.",
+    "resultEditingPolicy": "## سياسة تعديل النتائج\nتحكم في المدة التي يمكن خلالها تعديل النتيجة في مكانها بعد تسجيلها، عبر جميع المشاريع. يمكن للمشاريع تشديد ذلك في إعداداتها المتقدمة لكن لا يمكنها تخفيفه أبدًا. يمكن لمسؤولي النظام التعديل دائمًا.",
+    "abandonedRunPolicy": "## تنظيف عمليات التشغيل الآلي المهملة\nعندما يتم إجهاض مهمة CI أو يتعطل وكيلها، فإن تشغيل الاختبار الآلي الذي أنشأته لا يتلقى أبدًا استدعاء الإكمال الخاص به ويظل في حالة \"قيد التنفيذ\" إلى الأبد. عند تفعيل هذه السياسة، تعمل عملية تنظيف في الخلفية كل 15 دقيقة وتغلق أي تشغيل آلي غير مكتمل لم يتلقَّ أي نتائج خلال مدة الخمول المحددة (15 دقيقة كحد أدنى). لا تتأثر عمليات التشغيل اليدوية أبدًا. يمكن لكل مشروع تجاوز هذا الحد — أو إلغاء تفعيله — من خلال إعداداته المتقدمة، ويمكنه اختيار حالة التشغيل التي يتم نقل عمليات التشغيل المُنظَّفة إليها. اختر مدة خمول أطول بشكل مريح من أطول فترة هدوء لتشغيل سليم؛ يُعد يوم كامل خيارًا افتراضيًا آمنًا.",
     "project": {
       "name": "## اسم المشروع\nالمُعرّف الفريد لمشروعك.\n\n- يجب أن يكون فريدًا بين جميع المشاريع\n- يُستخدم في التنقل والتقارير\n- ينبغي أن يكون واضحًا ووصفيًا\n- يساعد أعضاء الفريق على تحديد نطاق المشروع",
       "description": "## وصف المشروع\nتفاصيل إضافية حول الغرض من المشروع ونطاقه.\n\n- اختياري ولكنه مُوصى به\n- يساعد أعضاء الفريق على فهم أهداف المشروع\n- يمكن أن يتضمن الأهداف الرئيسية أو المتطلبات\n- محدد بـ 256 حرفًا",
@@ -6086,6 +6796,7 @@
       "issueTracker": "## تكوين متتبع المشكلات\nحدد تكوين متتبع المشكلات المراد استخدامه لإدارة المشكلات المتعلقة بهذا المشروع."
     },
     "projects": {
+      "overview": "## المشاريع\nالمشاريع هي الحاويات ذات المستوى الأعلى لحالات الاختبار والتشغيلات والجلسات والمعالم الخاصة بك. أنشئ وأدر كل مشروع من هنا.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## المشروع الخارجي\nاختر المشروع أو المستودع في النظام الخارجي لربطه بمشروع TestPlanIt هذا.\n\n- سيتم إنشاء المشكلات التي تُنشأ من TestPlanIt في هذا المشروع\n- يُمكّن تكامل تتبع المشكلات بين الأنظمة\n- يجب أن تكون لديك الأذونات المناسبة في النظام الخارجي",
@@ -6125,12 +6836,14 @@
       "description": "## الوصف\nمعلومات تفصيلية حول غرض المعلم الرئيسي ومتطلباته ونطاقه.\n\n- يوفر سياقًا لأعضاء الفريق\n- يوثّق المتطلبات والأهداف الرئيسية\n- يدعم التعاون والتوافق",
       "documentation": "## الوثائق\nتفاصيل إضافية، ومراجع، ومواد داعمة.\n\n- المواصفات التقنية\n- وثائق التصميم\n- مراجع خارجية\n- ملاحظات الاجتماعات والقرارات",
       "automaticCompletion": "## الإكمال التلقائي في تاريخ الاستحقاق\nيضع علامة على هذا المعلم كمكتمل تلقائيًا عند الوصول إلى تاريخ استحقاقه.\n\n- سيتم إكمال المعلم في الوقت المحدد في تاريخ الاستحقاق\n- مفيد للمعالم المحددة بوقت والتي يجب إغلاقها بغض النظر عن حالة الإكمال\n- يمكن تجاوزه بإكمال المعلم يدويًا قبل تاريخ الاستحقاق\n- يتطلب تعيين تاريخ استحقاق",
-      "notifyDaysBefore": "## الإشعار قبل أيام من تاريخ الاستحقاق\nإرسال إشعارات إلى أعضاء الفريق المُعيَّنين عند اقتراب تاريخ استحقاق المعلم.\n\n- قم بالتفعيل لتمكين الإشعارات، والإيقاف لتعطيلها\n- أدخل عدد الأيام قبل تاريخ الاستحقاق لبدء إرسال التذكيرات\n- تُرسل الإشعارات إلى المستخدمين المُعيَّنين لتشغيلات الاختبار والجلسات ضمن هذا المعلم\n- ستستمر المعالم المتأخرة في إرسال التذكيرات حتى الإكمال"
+      "notifyDaysBefore": "## الإشعار قبل أيام من تاريخ الاستحقاق\nإرسال إشعارات إلى أعضاء الفريق المُعيَّنين عند اقتراب تاريخ استحقاق المعلم.\n\n- قم بالتفعيل لتمكين الإشعارات، والإيقاف لتعطيلها\n- أدخل عدد الأيام قبل تاريخ الاستحقاق لبدء إرسال التذكيرات\n- تُرسل الإشعارات إلى المستخدمين المُعيَّنين لتشغيلات الاختبار والجلسات ضمن هذا المعلم\n- ستستمر المعالم المتأخرة في إرسال التذكيرات حتى الإكمال",
+      "managedByJira": "## يُدار بواسطة Jira\nيتم إدارة اسم هذا المعلم وتواريخه وحالته عبر Jira. قم بإجراء التغييرات هناك لتحديثها هنا."
     },
     "session": {
       "name": "## اسم الجلسة\nاسم واضح ووصفي يحدد الغرض من جلسة الاختبار الخاصة بك.\n\n- يجب أن يكون فريدًا وذا معنى\n- يساعد أعضاء الفريق على فهم ما يتم اختباره\n- يُستخدم في التقارير والتتبع",
       "template": "## القالب\nتحدد القوالب بنية ومحتوى جلسة الاختبار.\n\n- توفر صيغة متسقة لتوثيق الاختبار\n- تتضمن أقسامًا وحقولًا محددة مسبقًا\n- تساعد على الحفاظ على معايير الاختبار عبر مشروعك",
       "configuration": "## التكوين\nالبيئة أو الإعداد المحدد المطلوب لجلسة الاختبار هذه.\n\n- بيئة الاختبار (مثل: التجهيز، الإنتاج)\n- تكوينات أو إعدادات خاصة\n- بيانات أو شروط اختبار مطلوبة",
+      "configurationGroup": "## مجموعة التكوين\nتغطي الجلسات في مجموعة التكوين نفس الاختبار ضمن تكوينات مختلفة، بحيث يمكنك التبديل بينها ومقارنة نتائجها في مكان واحد.\n\nيتم تجميع الجلسات التي تُنشأ معاً لعدة تكوينات تلقائياً. اربط جلسة هنا عندما تكون قد أُنشئت بمفردها.\n\nأنت تربط بجلسة واحدة، لكنك تنضم إلى كل ما ترتبط به تلك الجلسة بالفعل — فالمجموعة ليس لها مالك، لذا يرتبط كل عضو بكل عضو آخر.\n\nلا يغيّر التجميع سوى طريقة عرض الجلسات معاً. فهو لا ينقل حالات الاختبار أو النتائج أبداً.",
       "milestone": "## المعلم الرئيسي\nيربط هذه الجلسة بمعلم رئيسي للمشروع.\n\n- يساعد على تتبع تقدم الاختبار نحو أهداف المشروع\n- يجمع جلسات الاختبار ذات الصلة\n- يدعم التقارير المستندة إلى المعالم الرئيسية",
       "description": "## الوصف\nنظرة عامة موجزة حول ما تشمله جلسة الاختبار هذه.\n\n- المجالات أو الميزات الرئيسية التي يتم اختبارها\n- السياق أو الخلفية المهمة\n- الاعتبارات أو المتطلبات الخاصة",
       "mission": "## المهمة\nتحدد المهمة الأهداف والغايات المحددة لجلسة الاختبار هذه.\n\n- ماذا تختبر؟\n- ما هي مجالات التركيز الرئيسية؟\n- ما هي النتائج المتوقعة؟\n\nتساعد المهمة الواضحة على إبقاء الاختبار مركّزًا ومنتجًا.",
@@ -6146,6 +6859,7 @@
       "name": "## اسم تشغيل الاختبار\nأدخل اسمًا وصفيًا لتشغيل الاختبار هذا لتسهيل تحديده لاحقًا.",
       "description": "## الوصف\nقدّم ملخصًا موجزًا أو ملاحظات حول تشغيل الاختبار هذا.",
       "configuration": "## التكوينات\nحدد تكوينًا واحدًا أو أكثر (مثل البيئة والمتصفح والجهاز) التي سيتم تنفيذ تشغيلات الاختبار تحتها. سيؤدي تحديد تكوينات متعددة إلى إنشاء تشغيلات اختبار منفصلة لكل منها.",
+      "configurationGroup": "## مجموعة التكوين\nتغطي تشغيلات الاختبار في مجموعة التكوين نفس الاختبار ضمن تكوينات مختلفة، بحيث يمكنك التبديل بينها ومقارنة نتائجها في مكان واحد.\n\nيتم تجميع تشغيلات الاختبار التي تُنشأ معاً لعدة تكوينات تلقائياً. اربط تشغيل اختبار هنا عندما يكون قد أُنشئ بمفرده — على سبيل المثال، تشغيل قمت بتكراره لاحقاً لتكوين آخر.\n\nأنت تربط بتشغيل اختبار واحد، لكنك تنضم إلى كل ما يرتبط به ذلك التشغيل بالفعل — فالمجموعة ليس لها مالك، لذا يرتبط كل عضو بكل عضو آخر.\n\nلا يغيّر التجميع سوى طريقة عرض تشغيلات الاختبار معاً. فهو لا ينقل حالات الاختبار أو النتائج أبداً.",
       "milestone": "## المعلم الرئيسي\nربط تشغيل الاختبار هذا بمعلم رئيسي محدد للمشروع لتتبع التقدم نحو أهداف أكبر.",
       "docs": "## الوثائق\nتضمين أي وثائق أو روابط أو ملاحظات تفصيلية ذات صلة بتشغيل الاختبار هذا.",
       "state": "## الحالة\nحدد الحالة أو النتيجة الحالية لتشغيل الاختبار هذا وفقًا لسير عمل مشروعك.",
@@ -6154,7 +6868,8 @@
       "attachments": "## المرفقات\nحمّل أي ملفات داعمة، لقطات شاشة، أو سجلات متعلقة بتشغيل الاختبار هذا.",
       "duplicate": {
         "statusesToInclude": "## الحالات المراد تضمينها\nحدد حالات حالات الاختبار التي تريد تضمينها في تشغيل الاختبار المكرَّر.",
-        "copyAssignments": "## نسخ التعيينات\nإذا تم تمكين هذا، سيتم نسخ تعيينات حالات الاختبار إلى تشغيل الاختبار المكرَّر."
+        "copyAssignments": "## نسخ التعيينات\nإذا تم تمكين هذا، سيتم نسخ تعيينات حالات الاختبار إلى تشغيل الاختبار المكرَّر.",
+        "configurationGroup": "## مجموعة التكوين\nتشترك تشغيلات الاختبار التي تغطي نفس العمل عبر تكوينات مختلفة في مجموعة تكوين واحدة، ويتنقل محدد التكوين بينها.\n\nاترك هذا الخيار معطلاً وستُجمّع النسخ مع بعضها البعض فقط، تماماً كما كانت من قبل. فعّله وسينضم تشغيل الاختبار الذي يتم تكراره إلى تلك المجموعة نفسها، بحيث يظهر هو وكل نسخة كأشقاء — وتنضم حتى نسخة واحدة."
       }
     },
     "appConfig": {
@@ -6190,7 +6905,7 @@
       "name": "## اسم القالب\nاسم فريد ووصفي لهذا القالب (مثل: 'حالة اختبار قياسية'، 'نتائج اختبار API').",
       "isEnabled": "## مفعّل\nإذا تم التحديد، سيكون هذا القالب متاحًا للتحديد عند إنشاء حالات اختبار جديدة أو تحديد بنى تشغيل الاختبار. إذا تم تعيين قالب كـ 'افتراضي'، يجب أن يكون 'مفعّلًا' أيضًا.",
       "isDefault": "## افتراضي\nإذا تم التحديد، سيتم تحديد هذا القالب تلقائيًا للمشاريع الجديدة أو كالافتراضي لجميع المشاريع إذا لم يتم تعيين افتراضي خاص بمشروع. يمكن أن يكون قالب واحد فقط هو الافتراضي عبر جميع المشاريع. سيؤدي تفعيل هذا إلى تعطيل أي قالب آخر مُعيَّن حاليًا كالافتراضي.",
-      "caseFields": "## حقول الحالة\nحدد ورتّب الحقول المخصصة التي ستكون متاحة عند إنشاء أو تعديل حالات الاختبار باستخدام هذا القالب.\n\n- أضف الحقول من القائمة المنسدلة لتضمينها في القالب\n- اسحب وأفلت لإعادة ترتيب الحقول\n- يحدد الترتيب كيفية ظهور الحقول في النماذج\n- تتوفر للاختيار فقط حقول الحالة المُمكّنة\n- تحدد حقول الحالة البنية والبيانات المُسجّلة لحالات الاختبار",
+      "caseFields": "## حقول الحالة\nحدد ورتّب الحقول المخصصة التي ستكون متاحة عند إنشاء أو تعديل حالات الاختبار باستخدام هذا القالب.\n\n- أضف الحقول من القائمة المنسدلة لتضمينها في القالب\n- اسحب وأفلت لإعادة ترتيب الحقول\n- يحدد الترتيب كيفية ظهور الحقول في النماذج\n- تتوفر للاختيار فقط حقول الحالة المُمكّنة\n- تحدد حقول الحالة البنية والبيانات المُسجّلة لحالات الاختبار\n- يتحكم مفتاح التبديل ذو النجوم في ما إذا كان الحقل يبدأ محددًا في معالج إنشاء حالات الاختبار؛ ويمكن للمستخدمين تغيير التحديد هناك",
       "resultFields": "## حقول النتيجة\nحدد ورتّب الحقول المخصصة التي ستكون متاحة عند إضافة نتائج الاختبار باستخدام هذا القالب.\n\n- أضف الحقول من القائمة المنسدلة لتضمينها في القالب\n- اسحب وأفلت لإعادة ترتيب الحقول\n- يحدد الترتيب كيفية ظهور الحقول عند إدخال نتائج الاختبار\n- تتوفر للاختيار فقط حقول النتيجة المُمكّنة\n- تسجّل حقول النتيجة بيانات إضافية خاصة بنتائج تنفيذ الاختبار",
       "projects": "## المشاريع المرتبطة\nحدد المشاريع التي سيكون هذا القالب متاحًا لها. إذا لم يتم تحديد أي مشاريع، سيكون القالب متاحًا عالميًا. تعيين قالب لمشاريع محددة يقيّد استخدامه على تلك المشاريع فقط."
     },
@@ -6200,12 +6915,13 @@
       "apiKey": "## مفتاح API\nمفتاح المصادقة الخاص بك لواجهة API لمزود نموذج اللغة الكبير.\n\n- احصل عليه من وحدة تحكم المطورين لدى مزودك\n- يبقى مشفراً ولا يُعرض أبداً بعد الحفظ\n- غير مطلوب لـ Ollama (النشر المحلي)",
       "endpoint": "## نقطة نهاية API\nعنوان URL الأساسي لواجهة برمجة تطبيقات مزود النموذج اللغوي الكبير.\n\n- اتركه فارغًا لـ OpenAI و Anthropic و Gemini — يتم استخدام العناوين الرسمية تلقائيًا\n- مطلوب لـ Ollama (مثل `http://localhost:11434`) و Azure OpenAI و LLM المخصص\n- اختياري لأي مزود — يمكنك الإشارة إلى وكيل متوافق مع OpenAI (مثل LiteLLM) عن طريق إدخال عنوانه\n- **العناوين الخاصة/الداخلية** (localhost وIP 127.0.0.1 والعناوين الخاصة وبيانات تعريف السحابة) محظورة إلا إذا سُمح بها بشكل صريح عبر متغير البيئة `ALLOWED_PRIVATE_HOSTS`",
       "deploymentName": "## اسم نشر Azure\nاسم نشر نموذج Azure OpenAI الخاص بك.\n\n- يوجد في Azure OpenAI Studio ضمن Deployments\n- يختلف عن اسم النموذج — على سبيل المثال `my-gpt4-deploy` يقابل `gpt-4`\n- مطلوب فقط لـ Azure OpenAI",
-      "defaultModel": "## النموذج الافتراضي\nالنموذج المستخدم لطلبات الذكاء الاصطناعي مع هذا التكامل.\n\n- بالنسبة لـ OpenAI و Anthropic و Gemini — تُجلب النماذج المتوفرة تلقائياً من مفتاح API الخاص بك\n- تأكد من تفعيل النموذج في حساب مزودك\n- مثال: `gpt-4o`، `claude-3-5-sonnet-20241022`، `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## الحد الأقصى للرموز لكل طلب\n**السقف الأقصى** لرموز الإخراج لأي طلب واحد.\n\n- الطلبات التي تتجاوز هذا الحد **تُرفض بخطأ** قبل الوصول إلى نموذج اللغة الكبير\n- اضبط هذا على السعة القصوى الفعلية لرموز الإخراج لنموذجك\n- مثال: `16384` لـ GPT-4o، `8192` لـ Claude 3.5 Sonnet\n- ضبط هذا على قيمة منخفضة جداً يتسبب في فشل ميزات الذكاء الاصطناعي أو إنتاج إخراج مقتطع",
-      "defaultMaxTokens": "## الحد الأقصى الافتراضي للرموز\nحد رموز الإخراج **الاحتياطي** المستخدم عندما لا يحدد الطلب حده الخاص.\n\n- تحدد كل ميزة ذكاء اصطناعي (إنشاء الاختبار، تصدير الكود، إلخ) حدها الخاص في **الإدارة ← تكوين المُوجّه**\n- تُستخدم هذه القيمة فقط كاحتياط للميزات التي لا يوجد لها حد محدد مكوّن\n- يجب أن تكون ≤ الحد الأقصى للرموز لكل طلب",
+      "defaultModel": "## النموذج الافتراضي\nالنموذج المستخدم لطلبات الذكاء الاصطناعي مع هذا التكامل.\n\n- بالنسبة لـ OpenAI و Anthropic و Gemini و Ollama ونقاط النهاية المخصصة المتوافقة مع OpenAI (مثل LiteLLM) — تُجلب النماذج المتوفرة تلقائيًا\n- عندما يُبلغ المزود أيضًا عن تسعير النموذج، تُملأ حقول التكلفة تلقائيًا عند الاختيار\n- تأكد من تفعيل النموذج في حساب مزودك\n- مثال: `gpt-4o`، `claude-3-5-sonnet-20241022`، `gemini-1.5-pro`",
+      "maxTokensPerRequest": "## الحد الأقصى للرموز لكل طلب\n**الحد الأعلى الصارم لرموز _الإخراج_** التي يمكن للنموذج توليدها في استجابة واحدة.\n\n- يحدد طول **رد** النموذج — لا كمية السياق الذي ترسله إليه\n- يتم **رفض الطلبات التي تطلب أكثر من هذا الحد قبل الوصول إلى النموذج**\n- عيّنه على الحد الأقصى الفعلي لإخراج نموذجك — مثل `128000` لـ Claude Opus/Sonnet، و`64000` لـ Claude Haiku، و`65536` لـ Gemini، و`16384` لـ GPT-4o\n- إذا كانت القيمة منخفضة جدًا ← تفشل ميزات الذكاء الاصطناعي أو تُنتج إخراجًا مبتورًا",
+      "defaultMaxTokens": "## الحد الأقصى الافتراضي للرموز\n**طول _الإخراج_** الذي تطلبه هذا النموذج من الذكاء الاصطناعي، محدودًا بـ _الحد الأقصى للرموز لكل طلب_.\n\n- تستخدم دائمًا هذه القيمة كل من **إنشاء حالات الاختبار** (من أي مصدر، بما في ذلك لوحة مشكلة Jira)، و**تحليل حالات الاختبار بصيغة Markdown**، و**مساعد الكتابة في المحرر**، و**الاختيار الذكي لحالات الاختبار** — ولا يتم تطبيق _الحد الأقصى لرموز الإخراج_ الخاص بتكوين المطالبة عليها\n- يستخدم كل من **إنشاء كود التصدير**، و**اقتراحات وسم الذكاء الاصطناعي**، و**استنتاج خطوات الذكاء الاصطناعي**، و**تقرير مرشحي الأتمتة** قيمة _الحد الأقصى لرموز الإخراج_ الخاصة به من **الإدارة ← تكوين المطالبة** بدلاً من ذلك\n- النماذج التي تفكر قبل الإجابة (مثل Claude Opus 5) تستهلك جزءًا من هذه الموازنة في التفكير — اترك مساحة كافية للرد\n- **لا** يتحكم في كمية كود المستودع التي يرسلها QuickScript إلى النموذج — يتم اشتقاق تلك الموازنة تلقائيًا من نافذة سياق النموذج\n- احرص على أن تكون أقل من أو تساوي _الحد الأقصى للرموز لكل طلب_",
+      "repoContextBudget": "## موازنة سياق المستودع\nمقدار كود مستودعك المتصل الذي يزوّد به QuickScript النموذج عند إنشاء نص برمجي.\n\n- **يُحدَّد تلقائيًا** من نافذة سياق الإدخال للنموذج المحدد — لا حاجة لتكوين أي شيء هنا\n- تحصل النماذج ذات السياق الأكبر (Claude، Gemini) على كمية أكبر؛ وتحصل النماذج المحلية الصغيرة على كمية آمنة لا تتجاوز الحد\n- يجعل السياق الأكبر النص البرمجي أكثر ارتباطًا بكائنات صفحاتك وتركيباتك الحقيقية — ولا يغيّر طول النص البرمجي المُنشأ",
       "maxRequestsPerMinute": "## الحد الأقصى للطلبات في الدقيقة\nيحدد عدد استدعاءات API التي يمكن إجراؤها لهذا المزود في الدقيقة.\n\n- اضبطه لمطابقة حد المعدل لخطة مزودك\n- تُوضع الطلبات الزائدة في قائمة انتظار، ولا تُرفض\n- راجع وثائق مزودك لمعرفة حد خطتك",
-      "costPerInputToken": "## التكلفة لكل رمز إدخال (بالدولار الأمريكي)\nالتكلفة بالدولار الأمريكي لكل رمز إدخال (مُوجّه) يتم إرساله إلى النموذج.\n\n- يُستخدم لتتبع التكلفة وتنبيهات الميزانية\n- يمكن الحصول عليه من صفحة أسعار مزودك\n- مثال: `0.000005` = 5 دولارات لكل مليون رمز إدخال",
-      "costPerOutputToken": "## التكلفة لكل رمز إخراج (بالدولار الأمريكي)\nالتكلفة بالدولار الأمريكي لكل رمز إخراج (إكمال) يُنشئه النموذج.\n\n- غالباً أعلى من تكلفة رمز الإدخال\n- يُستخدم لتتبع التكلفة وتنبيهات الميزانية\n- مثال: `0.000015` = 15 دولاراً لكل مليون رمز إخراج",
+      "costPerInputToken": "## التكلفة لكل 1M رمز إدخال (بالدولار الأمريكي)\nالتكلفة بالدولار الأمريكي لكل **مليون** رمز إدخال (المُطالبة) يتم إرسالها إلى النموذج.\n\n- تُستخدم لتتبع التكاليف وتنبيهات الميزانية\n- يتم ملؤها تلقائيًا عندما يُبلّغ مزوّد الخدمة عن تسعير النموذج (LiteLLM، OpenRouter، Together AI) — يتم التطبيق عند اختيار نموذج أو تشغيل اختبار الاتصال\n- بخلاف ذلك، يمكنك العثور عليها في صفحة تسعير المزوّد\n- مثال: `0.15` = 0.15 دولار لكل مليون رمز إدخال",
+      "costPerOutputToken": "## التكلفة لكل 1M رمز إخراج (بالدولار الأمريكي)\nالتكلفة بالدولار الأمريكي لكل **مليون** رمز إخراج (الإكمال) يتم توليدها بواسطة النموذج.\n\n- عادةً ما تكون أعلى من تكلفة رمز الإدخال\n- تُستخدم لتتبع التكاليف وتنبيهات الميزانية\n- يتم ملؤها تلقائيًا عندما يُبلّغ مزوّد الخدمة عن تسعير النموذج (LiteLLM، OpenRouter، Together AI) — يتم التطبيق عند اختيار نموذج أو تشغيل اختبار الاتصال\n- بخلاف ذلك، يمكنك العثور عليها في صفحة تسعير المزوّد\n- مثال: `0.60` = 0.60 دولار لكل مليون رمز إخراج",
       "monthlyBudget": "## الميزانية الشهرية (بالدولار الأمريكي)\nهدف إنفاق اختياري لهذا التكامل.\n\n- اضبطه على `0` لتعطيل تتبع الميزانية\n- الميزانية **معلوماتية فقط** — لا تمنع استخدام نموذج اللغة الكبير\n- ستتلقى إشعارات عند 80% و90% و100% من الميزانية\n- تُحسب التكاليف باستخدام معدلات الرمز الواحد المذكورة أعلاه",
       "billingPeriodStartDay": "## يوم بداية فترة الفوترة\nيوم الشهر (1-31) الذي تبدأ فيه فترة الفوترة.\n\n- القيمة الافتراضية `1` تتوافق مع الشهر التقويمي\n- عيّنها إلى `15` لدورة تمتد من 15 إلى 15 (مثلاً لتطابق تاريخ فاتورة المزود)\n- تُضبط القيم `29-31` تلقائيًا إلى آخر يوم في الأشهر الأقصر (فبراير في السنوات غير الكبيسة، إلخ)\n- تؤثر على نافذة إنفاق **الموازنة الشهرية** وإجراء **إعادة تعيين الإنفاق**",
       "defaultTemperature": "## درجة الحرارة الافتراضية\nتتحكم في عشوائية استجابات النموذج (0–2).\n\n- **0:** حتمية — إخراج متطابق لنفس الإدخال\n- **0.3:** مركّزة — يُنصح بها لإنشاء الاختبار وإخراج الكود\n- **1+:** إبداعية — استجابات أكثر تنوعاً\n- يمكن للميزات الفردية تجاوز هذا في تكوين المُوجّه",
@@ -6292,7 +7008,7 @@
       "isDefault": "## افتراضي\nيشير إلى ما إذا كان سير العمل هذا هو الافتراضي لمشروعك.\n\n- يُحدَّد سير العمل الافتراضي مسبقًا لتشغيلات الاختبار والجلسات والأتمتة الجديدة.",
       "isEnabled": "## مفعّل\nيشير إلى ما إذا كان سير العمل هذا مفعّلًا.",
       "isActive": "## نشط\nيشير إلى ما إذا كانت حالة سير العمل هذه نشطة ومتاحة للاستخدام.\n\n- يمكن تحديد سير العمل النشط عند تحديث تشغيلات الاختبار أو الجلسات أو الأتمتة\n- يُخفى سير العمل غير النشط من الاختيار لكنه يبقى محفوظًا في العناصر الموجودة",
-      "requiresReview": "## يتطلب مراجعة\nعند التفعيل، يتم تقييد انتقال حالة، أو تشغيل اختبار، أو جلسة إلى هذه الحالة بطلب مراجعة معتمد. بدون طلب معتمد، يُحظر الانتقال.\n\n- يتم الاحتفاظ بالمراجعات المعلقة الحالية بصمت عندما تكون الميزة على مستوى النظام معطلة، وتظهر مرة أخرى عند إعادة تمكينها.\n- يتم اختيار المراجع عندما ينقر المختبر على طلب المراجعة من صفحة تفاصيل الكيان.\n\nإذا كانت الميزة على مستوى النظام معطلة، فسيتم قفل هذا المفتاح. أعد تمكينها من بطاقة سير عمل المراجعة أعلاه لتبديل هذا.",
+      "requiresReview": "## يتطلب مراجعة\nعند التمكين، يتم تقييد الانتقال بحالة اختبار أو تشغيل اختبار أو جلسة إلى هذه الحالة بطلب مراجعة معتمد. بدون طلب معتمد، يتم حظر الانتقال.\n\n- الموافقة على الطلب تنفذ الانتقال. تنقل موافقة المراجع الحالة أو التشغيل أو الجلسة إلى الحالة المطلوبة؛ ولا يكرر الطالب تغيير الحالة يدويًا.\n- يتم الاحتفاظ بالمراجعات المعلقة الحالية بصمت عند تعطيل الميزة على مستوى النظام، وتظهر مرة أخرى عند إعادة تمكينها.\n- يتم اختيار المراجع عندما ينقر المختبر على زر طلب المراجعة من صفحة تفاصيل الكائن.\n\nإذا كانت الميزة على مستوى النظام معطلة، يكون هذا المفتاح مقفلاً. أعد تمكينه من بطاقة سير عمل المراجعة أعلاه لتفعيل هذا الخيار.",
       "projects": "## المشاريع\nيشير إلى المشاريع التي يمكنها استخدام سير العمل هذا."
     },
     "testResult": {
@@ -6392,7 +7108,15 @@
       "issueCount": "## عدد المشكلات\nإجمالي عدد المشكلات المتتبعة.",
       "milestoneCount": "## عدد المعالم الرئيسية\nإجمالي عدد المعالم الرئيسية.",
       "milestoneCompletionRate": "## معدل إكمال المعالم الرئيسية\nنسبة المعالم الرئيسية المكتملة.",
-      "averageMilestoneDuration": "## متوسط مدة المعلم الرئيسي\nمتوسط مدة المعالم الرئيسية بالأيام."
+      "averageMilestoneDuration": "## متوسط مدة المعلم الرئيسي\nمتوسط مدة المعالم الرئيسية بالأيام.",
+      "llmCallCount": "## استدعاءات LLM\nعدد طلبات LLM التي تم إجراؤها في هذه المجموعة، بما في ذلك الاستدعاءات الفاشلة.",
+      "promptTokens": "## رموز المُوجّه\nالرموز المرسلة إلى النموذج كمدخل في جميع الاستدعاءات في هذه المجموعة.",
+      "completionTokens": "## رموز الإكمال\nالرموز التي أنشأها النموذج في جميع الاستدعاءات في هذه المجموعة.",
+      "totalTokens": "## إجمالي الرموز\nإجمالي رموز المُوجّه والإكمال في جميع الاستدعاءات في هذه المجموعة.",
+      "totalCost": "## إجمالي التكلفة\nالتكلفة المقدرة لدى المزود بالدولار الأمريكي للاستدعاءات في هذه المجموعة. النماذج المستضافة محليًا تُسجّل تكلفة صفرية.",
+      "avgLatency": "## متوسط زمن الاستجابة\nمتوسط الوقت الذي استغرقه المزود للرد على استدعاء في هذه المجموعة.",
+      "successRate": "## معدل النجاح\nنسبة الاستدعاءات في هذه المجموعة التي اكتملت دون حدوث خطأ.",
+      "errorCount": "## الاستدعاءات الفاشلة\nعدد الاستدعاءات في هذه المجموعة التي انتهت بخطأ."
     },
     "reportDimensions": {
       "user": "## بُعد المستخدم\nيجمع النتائج حسب المستخدم الذي نفّذ الاختبارات أو المعيَّن إلى العناصر.",
@@ -6415,12 +7139,17 @@
       "issueStatus": "## بُعد حالة المشكلة\nيجمع النتائج بحسب الحالة الحالية للمشكلات (مثل مفتوحة، قيد التنفيذ، تم حلها، مغلقة).",
       "priority": "## بُعد الأولوية\nيجمع النتائج بحسب مستوى أولوية المشكلة (مثل عالية، متوسطة، منخفضة).",
       "source": "## بُعد المصدر\nيجمع النتائج حسب مصدر تنفيذ الاختبار (مثل: يدوي، JUnit، API).",
-      "date": "## بُعد التاريخ\nيجمع النتائج حسب التاريخ للتحليل والاتجاهات المستندة إلى الوقت."
+      "date": "## بُعد التاريخ\nيجمع النتائج حسب التاريخ للتحليل والاتجاهات المستندة إلى الوقت.",
+      "feature": "## بُعد الميزة\nيجمع استخدام LLM حسب ميزة التطبيق التي أجرت الاستدعاء (مثل إنشاء حالات الاختبار).",
+      "model": "## بُعد النموذج\nيجمع استخدام LLM حسب النموذج الذي خدم الاستدعاء.",
+      "integration": "## بُعد التكامل\nيجمع استخدام LLM حسب تكامل LLM المُهيَّأ الذي تعامل مع الاستدعاء.",
+      "outcome": "## بُعد النتيجة\nيقسم استخدام LLM إلى استدعاءات ناجحة وفاشلة."
     },
     "reportBuilder": {
       "dimensions": "## الأبعاد\nحدد الأبعاد التي تريد تحليلها في تقريرك. الأبعاد هي خصائص تصنّف بياناتك، مثل التاريخ، المستخدم، الحالة، إلخ. يمكنك السحب لإعادة ترتيبها.",
       "metrics": "## المقاييس\nحدد المقاييس التي تريد قياسها في تقريرك. المقاييس هي قياسات كمية مستمدة من بياناتك، مثل عدد نتائج الاختبار، معدل النجاح، متوسط الوقت المنقضي، إلخ. يمكنك السحب لإعادة ترتيبها.",
-      "dateRange": "## نطاق التاريخ\nصفِّ بيانات تقريرك حسب فترة زمنية محددة. يمكنك التحديد من نطاقات محددة مسبقًا مثل 'آخر 7 أيام' أو 'الشهر الماضي'، أو تحديد نطاق تاريخ مخصص. ينطبق هذا المرشح على حقل التاريخ ذي الصلة لكل نوع تقرير (مثل: تاريخ التنفيذ لنتائج الاختبار، تاريخ الإنشاء لحالات الاختبار)."
+      "dateRange": "## نطاق التاريخ\nصفِّ بيانات تقريرك حسب فترة زمنية محددة. يمكنك التحديد من نطاقات محددة مسبقًا مثل 'آخر 7 أيام' أو 'الشهر الماضي'، أو تحديد نطاق تاريخ مخصص. ينطبق هذا المرشح على حقل التاريخ ذي الصلة لكل نوع تقرير (مثل: تاريخ التنفيذ لنتائج الاختبار، تاريخ الإنشاء لحالات الاختبار).",
+      "dimensionFilters": "## الفلاتر\nقم بتضييق نطاق التقرير إلى قيم محددة لكل بُعد مختار. اترك الفلتر فارغًا لتضمين جميع القيم لهذا البُعد. تُصفّى أبعاد التاريخ باستخدام أداة اختيار نطاق التاريخ بدلاً من ذلك."
     },
     "codeRepository": {
       "name": "## اسم المستودع\nاسم عرض ودي لهذا اتصال المستودع.\n\n- يُستخدم لتعريفه في إعدادات سياق كود المشروع.\n- لا يلزم أن يطابق اسم المستودع لدى المزود.",
@@ -6453,7 +7182,7 @@
       "systemPrompt": "## مُوجّه النظام\nتعليمات تُرسل إلى نموذج الذكاء الاصطناعي قبل أي إدخال من المستخدم. تحدد دور النموذج، وتنسيق الإخراج، والقيود.\n\n- يدعم عناصر نائبة بين أقواس مزدوجة (مثل FRAMEWORK، LANGUAGE، CASE_NAME) يتم استبدالها في وقت التشغيل.\n- التغييرات هنا تؤثر على كل مشروع يستخدم هذا التكوين.",
       "userPrompt": "## مُوجّه المستخدم\nالرسالة المُرسلة إلى الذكاء الاصطناعي بالنيابة عن المستخدم. اتركه فارغاً إذا كانت الميزة تُنشئ رسالة المستخدم بالكامل في الكود.\n\n- يدعم عناصر نائبة بين أقواس مزدوجة (مثل ISSUE_TITLE، CASE_NAME، CODE_CONTEXT) يتم استبدالها في وقت التشغيل.\n- العناصر النائبة المتوفرة لكل ميزة مذكورة في قسم المتغيرات أدناه.",
       "temperature": "## درجة الحرارة\nتتحكم في عشوائية إخراج الذكاء الاصطناعي. النطاق: 0–2.\n\n- **0.0–0.3** — حتمية للغاية، الأفضل للإخراج المنظم (JSON، الكود).\n- **0.4–0.7** — متوازنة، جيدة لإنشاء حالات الاختبار.\n- **0.8–2.0** — أكثر إبداعاً وتنوعاً، مناسبة للنصوص المفتوحة.",
-      "maxOutputTokens": "## الحد الأقصى لرموز الإخراج\nالعدد الأقصى للرموز التي سيُنشئها النموذج في استجابة واحدة.\n\n- تسمح القيم الأعلى باستجابات أطول ولكنها تزيد التكلفة والكمون.\n- النطاقات النموذجية: 2048 للنص القصير، 4096 لإنشاء الكود، 6000+ لإخراج متعدد الحالات."
+      "maxOutputTokens": "## الحد الأقصى لرموز الإخراج\nالعدد الأقصى للرموز التي سيُنشئها النموذج في استجابة واحدة.\n\n- تسمح القيم الأعلى باستجابات أطول ولكنها تزيد التكلفة والكمون.\n- النطاقات النموذجية: 2048 للنص القصير، 4096 لإنشاء الكود، 6000+ لإخراج متعدد الحالات.\n- ينطبق على إنشاء كود التصدير، واقتراحات وسم الذكاء الاصطناعي، واستنتاج خطوات الذكاء الاصطناعي، وتقرير مرشحي الأتمتة.\n- يستخدم كل من إنشاء حالات الاختبار، وتحليل حالات الاختبار بصيغة Markdown، ومساعد الكتابة في المحرر، والاختيار الذكي لحالات الاختبار _الحد الأقصى الافتراضي للرموز_ الخاص بنموذج الذكاء الاصطناعي بدلاً من ذلك."
     },
     "menu": {
       "startTour": "جولة ترحيبية موجَّهة",
@@ -6708,7 +7437,9 @@
           "content": "قم بإدارة التكاملات على مستوى المشروع، وتكوينات نموذج الذكاء الاصطناعي، وروابط المشاركة من هنا."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## تصفية تشغيلات الاختبار\n\nقم بتبديل شريحة لتضييق القائمة. تنطبق الشرائح على كلا التبويبين النشط والمكتمل، ويتم تذكرها على هذا الجهاز لهذا المشروع.\n\n- **يدوي** / **آلي** — حصر القائمة على ذلك النوع من التشغيل. تفعيل كلاهما (أو تعطيل كلاهما) يعرض كل التشغيلات.\n- **تشغيلات الاختبار الخاصة بي** — فقط التشغيلات التي تشارك فيها: أنشأت التشغيل، أو تم تعيين حالة اختبار لك فيه، أو سجلت نتيجة اختبار فيه.",
+    "projectSessionsFilters": "## تصفية الجلسات\n\nقم بتبديل شريحة لتضييق نطاق القائمة. تنطبق الشرائح على كل من علامتي التبويب النشطة والمكتملة، ويتم تذكرها على هذا الجهاز لهذا المشروع.\n\n- **جلساتي** — الجلسات التي تشارك فيها فقط: أنت من أنشأ الجلسة، أو تم تعيينها لك."
   },
   "reports": {
     "ui": {
@@ -6816,6 +7547,10 @@
         "projectHealth": {
           "label": "صحة المشروع",
           "description": "تقدم المشروع، والمعالم الرئيسية، وحالة الإكمال"
+        },
+        "milestoneReadiness": {
+          "label": "جاهزية المعلم",
+          "description": "جاهزية الإصدار لكل معلم: نسبة المشكلات ضمن النطاق الناجحة بالكامل، وعدد الحالات لكل مرحلة"
         },
         "sessionAnalysis": {
           "label": "تحليل الجلسة",
@@ -6955,7 +7690,7 @@
         "heuristicBadge": "استدلالي",
         "heuristicBadgeTooltip": "لا يوجد تكامل نموذج لغة كبير مُهيأ لهذا المشروع، لذا تم بناء هذا التصنيف مباشرة من مقياس استراتيجية الاختيار. قم بتهيئة نموذج لغة كبير (الإدارة ← نماذج الذكاء الاصطناعي) للحصول على منطق أغنى يزن الحقول المخصصة، وسياق المشكلات المرتبطة، ومحتوى الحالة.",
         "sourcedFromNewestN": "أعلى {ranked} من {total} حالة يدوية مؤهلة عبر {strategy}",
-        "sourcedFromAll": "تم تصنيف جميع {total} حالة يدوية مؤهلة عبر {strategy}",
+        "sourcedFromAll": "تم ترتيب {total, plural, one {حالة واحدة يدوية مؤهلة} =2 {كلتا الحالتين اليدويتين المؤهلتين} other {جميع الـ# حالة يدوية مؤهلة}} عبر {strategy}",
         "metric": {
           "executions": "{count} تشغيل",
           "forecast": "توقع {value}",
@@ -7054,7 +7789,7 @@
         "detailView": "تفصيلي (حسب حالة الاختبار)",
         "issue": "المشكلة",
         "testCase": "حالة الاختبار",
-        "testCases": "{count, plural, =1 {Test Case} other {Test Cases}}",
+        "testCases": "{count, plural, =1 {حالة اختبار} zero {# حالة اختبار} two {حالتا اختبار} few {# حالات اختبار} many {# حالة اختبار} other {# حالة اختبار}}",
         "issueStatus": "الحالة",
         "priority": "الأولوية",
         "linkedTests": "الاختبارات المرتبطة",
@@ -7101,6 +7836,10 @@
           "label": "تتبع المشكلات عبر المشاريع",
           "description": "إنشاء المشكلات، وحلها، وتحليل التأثير عبر المشاريع"
         },
+        "llmUsage": {
+          "label": "استخدام LLM",
+          "description": "استخدام الرموز والتكلفة وموثوقية ميزات LLM عبر المشاريع"
+        },
         "automationTrends": {
           "label": "اتجاهات الأتمتة عبر المشاريع",
           "description": "تتبع تقدم الأتمتة أسبوعًا بعد أسبوع حسب الأولوية عبر المشاريع"
@@ -7125,6 +7864,9 @@
       "folderDescendants": {
         "label": "تضمين المجلدات الفرعية",
         "description": "احتساب النتائج من المجلدات الفرعية ضمن كل مجلد أصل."
+      },
+      "dimensionFilters": {
+        "allValues": "جميع القيم"
       }
     },
     "errors": {
@@ -7169,9 +7911,20 @@
       "issueType": "نوع المشكلة",
       "issueTracker": "متتبع المشكلات",
       "issueStatus": "حالة المشكلة",
-      "tag": "الوسم"
+      "tag": "الوسم",
+      "feature": "الميزة",
+      "model": "النموذج",
+      "integration": "التكامل",
+      "outcome": "النتيجة"
     },
     "metrics": {
+      "percentReady": "جاهز (%)",
+      "passed": "ناجح",
+      "failed": "فاشل",
+      "inProgress": "قيد التنفيذ",
+      "notRun": "لم يُشغّل",
+      "uncovered": "غير مغطى",
+      "totalIssues": "إجمالي المشكلات",
       "testResults": "نتائج الاختبار",
       "testResultCount": "عدد نتائج الاختبار",
       "passRate": "معدل النجاح (%)",
@@ -7206,7 +7959,15 @@
       "activeMilestones": "المعالم الرئيسية النشطة",
       "milestoneCompletion": "إكمال المعلم (%)",
       "averageDuration": "متوسط المدة",
-      "totalDuration": "إجمالي المدة"
+      "totalDuration": "إجمالي المدة",
+      "llmCallCount": "استدعاءات LLM",
+      "promptTokens": "رموز المُوجّه",
+      "completionTokens": "رموز الإكمال",
+      "totalTokens": "إجمالي الرموز",
+      "totalCost": "إجمالي التكلفة",
+      "avgLatency": "متوسط زمن الاستجابة",
+      "successRate": "معدل النجاح (%)",
+      "errorCount": "الاستدعاءات الفاشلة"
     },
     "drillDown": {
       "title": "السجلات التفصيلية",
@@ -7387,7 +8148,7 @@
       },
       "attempts": {
         "noAttemptsRemaining": "لا توجد محاولات متبقية. يرجى المحاولة مرة أخرى لاحقاً.",
-        "attemptsRemaining": "{count, plural, =1 {1 attempt} other {# attempts}} remaining."
+        "attemptsRemaining": "{count, plural, =1 {1 محاولة متبقية.} zero {لا توجد محاولات متبقية.} two {محاولتان متبقيتان.} few {# محاولات متبقية.} many {# محاولة متبقية.} other {# محاولة متبقية.}}"
       }
     },
     "sharedReport": {
@@ -7400,7 +8161,7 @@
       "fromProject": "من المشروع:",
       "dateRange": "النطاق الزمني:",
       "readOnlyNotice": "هذا عرض مشترك للقراءة فقط",
-      "viewCount": "{count, plural, =1 {1 view} other {# views}}",
+      "viewCount": "{count, plural, =1 {1 مشاهدة} zero {لا مشاهدات} two {مشاهدتان} few {# مشاهدات} many {# مشاهدة} other {# مشاهدة}}",
       "viewInFullApp": "عرض في التطبيق الكامل",
       "pagination": {
         "showing": "عرض",
@@ -7486,15 +8247,19 @@
     },
     "stepDuplicates": {
       "pageTitle": "تكرارات تسلسل الخطوات",
-      "pageDescription": "راجع تسلسلات الخطوات المتطابقة عبر حالات الاختبار. حوّل التطابقات إلى مجموعات خطوات مشتركة أو تجاهل النتائج الإيجابية الخاطئة.",
       "noResultsFound": "لم يتم العثور على تكرارات في تسلسل الخطوات",
       "noResultsDescription": "شغّل فحصًا لاكتشاف تسلسلات الخطوات المتكررة عبر حالات الاختبار.",
       "filterPlaceholder": "تصفية باسم الحالة...",
+      "minCasesLabel": "الحد الأدنى للحالات",
+      "minStepsLabel": "الحد الأدنى للخطوات",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "لا توجد تطابقات تلبي عوامل التصفية الحالية. قلل الحدود الدنيا لتوسيع النتائج.",
       "selected": "{count, plural, zero {# محدد} one {# محدد} two {محددان} few {# محددة} many {# محدد} other {# محدد}}",
       "bulkDismiss": "تجاهل ({count, number})",
       "bulkDismissSuccess": "{count, plural, zero {# تطابق مرفوض} one {تطابق واحد مرفوض} two {تطابقان مرفوضان} few {# تطابقات مرفوضة} many {# تطابقًا مرفوضًا} other {# تطابق مرفوض}}",
       "bulkError": "فشلت بعض العمليات. يرجى المحاولة مرة أخرى.",
       "tableHint": "انقر على صف لمعاينة الخطوات المتطابقة. حدد الصفوف باستخدام خانات الاختيار لتنفيذ إجراءات جماعية.",
+      "matchedStepsCount": "{count, plural, zero {# خطوة مطابقة} one {خطوة مطابقة واحدة} two {خطوتان مطابقتان} few {# خطوات مطابقة} many {# خطوة مطابقة} other {# خطوة مطابقة}}",
       "columns": {
         "matchedSteps": "الخطوات المتطابقة",
         "casesCount": "الحالات",
@@ -7526,6 +8291,7 @@
         "viewSharedStep": "عرض مجموعة الخطوات المشتركة",
         "skippedWarning": "{count, plural, zero {تم تخطي # حالة} one {تم تخطي حالة واحدة} two {تم تخطي حالتين} few {تم تخطي # حالات} many {تم تخطي # حالة} other {تم تخطي # حالة}} (قديمة أو محوّلة مسبقًا).",
         "noCasesSelected": "حدد حالة واحدة على الأقل للتحويل.",
+        "stepsUnavailable": "لم تعد الخطوات المتطابقة موجودة في حالة الاختبار هذه. تجاهل هذا التطابق وشغّل فحصًا جديدًا.",
         "selectAll": "تحديد الكل"
       }
     },
@@ -7640,7 +8406,6 @@
       "apply": "تطبيق المرشحات",
       "common": "المرشحات الشائعة",
       "entitySpecific": "مرشحات خاصة بالنوع",
-      "searchPlaceholder": "بحث خيارات المرشح...",
       "states": "حالات سير العمل",
       "createdAt": "تاريخ الإنشاء",
       "updatedAt": "تاريخ التحديث",
@@ -7658,9 +8423,7 @@
       "elapsedRange": "نطاق الوقت المنقضي",
       "minValue": "الحد الأدنى",
       "maxValue": "الحد الأقصى",
-      "hasExternalId": "يحتوي على معرّف خارجي",
       "dueDateRange": "نطاق تاريخ الاستحقاق",
-      "hasParent": "يحتوي على معلم رئيسي أصلي",
       "milestoneType": "نوع المعلم الرئيسي",
       "minutes": "دقائق",
       "hours": "ساعات",
@@ -7669,6 +8432,8 @@
       "includeDeleted": "تضمين العناصر المحذوفة",
       "filterActive": "عامل التصفية نشط:",
       "applyFilter": "تطبيق عامل التصفية",
+      "invalidDate": "تاريخ غير صالح",
+      "stepsCount": "{count, plural, zero {لا توجد خطوات} one {خطوة واحدة} two {خطوتان} few {# خطوات} many {# خطوة} other {# خطوة}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "يجب أن تكون القيمة الأولى أصغر من القيمة الثانية",
         "firstDateMustBeBeforeSecond": "يجب أن يكون التاريخ الأول قبل التاريخ الثاني"
@@ -7718,6 +8483,7 @@
   },
   "comments": {
     "title": "التعليقات",
+    "titleWithCount": "{count, plural, =0 {لا تعليقات} =1 {# تعليق} zero {# تعليق} two {تعليقان} few {# تعليقات} many {# تعليقًا} other {# تعليق}}",
     "placeholder": "اكتب تعليقًا... (استخدم @ للإشارة إلى المستخدمين)",
     "editPlaceholder": "عدّل تعليقك...",
     "postComment": "نشر التعليق",
@@ -7901,7 +8667,7 @@
     "selectSourceConfirm": "تغيير المصدر",
     "datasetRowSelectAria": "تحديد الصف",
     "datasetSelectAllPageTooltip": "انقر لتحديد كل صف في هذه الصفحة. اضغط مع Shift للتحديد على مستوى كل الصفحات.",
-    "datasetSelectAllAcrossPagesTooltip": "تحديد كل {count, plural, =1 {# صف} other {# صفوف}} عبر جميع الصفحات",
+    "datasetSelectAllAcrossPagesTooltip": "تحديد {count, plural, =1 {# صف} =2 {كلا الصفين} other {كل # صف}} عبر جميع الصفحات",
     "datasetDeselectAllAcrossPagesTooltip": "إلغاء تحديد كل الصفوف عبر جميع الصفحات",
     "datasetLabelColumn": "التسمية",
     "datasetAddRow": "إضافة صف",
@@ -8145,5 +8911,35 @@
     "mappingSkipColumn": "تخطي العمود",
     "mappingRequiredAlert": "المعلمات المطلوبة غير معينة: {names}.",
     "mappingRequiredUnmapped": "المعلمة المطلوبة \"@{name}\" لا يوجد عمود معين لها."
+  },
+  "linkPreview": {
+    "siteName": "TestPlanIt",
+    "genericTitle": "{label} · TestPlanIt",
+    "namedTitle": "{name} · {project}",
+    "signInCta": "تسجيل الدخول إلى TestPlanIt",
+    "testCaseLabel": "حالة الاختبار",
+    "testRunLabel": "تشغيل الاختبار",
+    "sessionLabel": "جلسة استكشافية",
+    "projectLabel": "المشروع",
+    "milestoneLabel": "المعلم",
+    "appLabel": "إدارة الاختبار",
+    "testCaseGeneric": "حالة اختبار في TestPlanIt. سجّل الدخول لعرض خطواتها ونتائجها وسجلها.",
+    "testRunGeneric": "تشغيل اختبار في TestPlanIt. سجّل الدخول لعرض تقدمه ونتائجه.",
+    "sessionGeneric": "جلسة اختبار استكشافي في TestPlanIt. سجّل الدخول لعرض ملاحظاتها ونتائجها.",
+    "projectGeneric": "مشروع في TestPlanIt. سجّل الدخول لعرض حالات الاختبار والتشغيلات والتقارير الخاصة به.",
+    "milestoneGeneric": "معلم في TestPlanIt. سجّل الدخول لعرض نطاقه وتقدمه.",
+    "appGeneric": "إدارة اختبار حديثة — خطط ونفّذ وتتبع اختباراتك في مكان واحد.",
+    "shareReportLabel": "تقرير مشترك",
+    "shareDashboardLabel": "لوحة تحكم مشتركة",
+    "shareSearchLabel": "بحث مشترك",
+    "shareViewLabel": "عرض مشترك",
+    "shareGeneric": "تمت مشاركته معك من TestPlanIt.",
+    "shareUnavailable": "هذا الرابط المشترك غير متوفر بعد الآن.",
+    "shareInProject": "تمت المشاركة من {project}",
+    "signInTitle": "تسجيل الدخول إلى TestPlanIt",
+    "signInDescription": "سجّل الدخول إلى مساحة عمل TestPlanIt للتخطيط والتنفيذ وتتبع اختباراتك.",
+    "inProject": "{label} في {project}",
+    "testRunSummary": "{count, plural, =0 {لا توجد حالات اختبار} =1 {{count} حالة اختبار} other {{count} حالات اختبار}} في {project}",
+    "projectSummary": "{cases, plural, =1 {{cases} حالة اختبار} other {{cases} حالات اختبار}} · {runs, plural, =1 {{runs} عملية تشغيل اختبار} other {{runs} عمليات تشغيل اختبار}}"
   }
 }

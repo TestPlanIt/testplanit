@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mockAggregate = vi.fn();
 const mockUpsert = vi.fn();
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     testRunCases: {
       aggregate: (...args: any[]) => mockAggregate(...args),
       upsert: (...args: any[]) => mockUpsert(...args),

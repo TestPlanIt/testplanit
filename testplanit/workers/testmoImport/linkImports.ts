@@ -1,4 +1,5 @@
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
@@ -201,7 +202,7 @@ function appendLinksToDoc(
 const prepareDocsForUpdate = (
   existingDocs: unknown,
   updatedDocs: Record<string, unknown>
-): string | Prisma.InputJsonValue => {
+): string | JsonValue => {
   if (typeof existingDocs === "string") {
     return JSON.stringify(updatedDocs);
   }
@@ -213,7 +214,7 @@ const prepareDocsForUpdate = (
  * Converts links to TipTap JSON format and appends to existing docs
  */
 export const importProjectLinks = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
@@ -286,7 +287,7 @@ export const importProjectLinks = async (
  * Converts links to TipTap JSON format and appends to existing docs
  */
 export const importMilestoneLinks = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   milestoneIdMap: Map<number, number>,
@@ -359,7 +360,7 @@ export const importMilestoneLinks = async (
  * Converts links to TipTap JSON format and appends to existing docs
  */
 export const importRunLinks = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,

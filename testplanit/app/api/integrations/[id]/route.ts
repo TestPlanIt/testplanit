@@ -1,8 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { decrypt, encrypt } from "@/utils/encryption";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
+import { resolveStoredCredentials } from "~/lib/integrations/credentials";
+import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import { authOptions } from "~/server/auth";
 
 export const GET = withAuditContext(
@@ -17,7 +19,7 @@ export const GET = withAuditContext(
       }
 
       // Check if user is admin
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { access: true },
       });
@@ -27,7 +29,7 @@ export const GET = withAuditContext(
       }
 
       const { id } = await params;
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: {
           id: parseInt(id),
           isDeleted: false,
@@ -93,7 +95,7 @@ export const PUT = withAuditContext(
       }
 
       // Check if user is admin
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { access: true },
       });
@@ -111,21 +113,53 @@ export const PUT = withAuditContext(
       if (status !== undefined) updateData.status = status;
       if (settings !== undefined) updateData.settings = settings;
 
-      // Encrypt credentials if provided
+      const { id } = await params;
+
+      // Encrypt credentials if provided.
+      //
+      // The client sends only the fields the admin actually retyped — secrets
+      // are never sent back to the browser, so a blank input means "leave it
+      // alone", not "clear it". Writing just those fields would replace the
+      // whole credential object and silently drop the rest: re-entering only a
+      // clientSecret would take clientId with it and break the integration.
+      // Merge over what is already stored instead.
       if (credentials !== undefined) {
-        const credentialsString = JSON.stringify(credentials);
-        const encryptedCredentials = await encrypt(credentialsString);
+        const existing = await baseDb.integration.findUnique({
+          where: { id: parseInt(id) },
+          select: { credentials: true, provider: true },
+        });
+
+        let stored: Record<string, string> = {};
+        try {
+          stored = await resolveStoredCredentials(
+            existing?.credentials,
+            existing?.provider ?? "unknown"
+          );
+        } catch {
+          // Unreadable stored credentials are exactly what this save is here
+          // to replace, so start from empty rather than refusing the write.
+          stored = {};
+        }
+
+        const merged = { ...stored, ...credentials };
+        const encryptedCredentials = await encrypt(JSON.stringify(merged));
         updateData.credentials = { encrypted: encryptedCredentials };
       }
 
-      const { id } = await params;
-      const integration = await prisma.integration.update({
+      const integration = await baseDb.integration.update({
         where: {
           id: parseInt(id),
           isDeleted: false,
         },
         data: updateData,
       });
+
+      // Drop any cached adapter for this integration. IntegrationManager caches
+      // adapters (with their decrypted OAuth client credentials) in memory, and
+      // getAdapter serves that cached instance even to the OAuth authorize route
+      // — so without this, editing clientId/clientSecret/settings keeps emitting
+      // the old client_id in the authorize URL until the process restarts.
+      IntegrationManager.getInstance().clearAdapter(id);
 
       return NextResponse.json(integration);
     } catch (error) {
@@ -150,7 +184,7 @@ export const DELETE = withAuditContext(
       }
 
       // Check if user is admin
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { access: true },
       });
@@ -161,7 +195,7 @@ export const DELETE = withAuditContext(
 
       // Check if integration has active connections
       const { id } = await params;
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: {
           id: parseInt(id),
           isDeleted: false,
@@ -192,10 +226,14 @@ export const DELETE = withAuditContext(
       }
 
       // Soft delete
-      await prisma.integration.update({
+      await baseDb.integration.update({
         where: { id: parseInt(id) },
         data: { isDeleted: true },
       });
+
+      // Evict the cached adapter so a deleted integration can't keep serving
+      // requests from memory until the process restarts.
+      IntegrationManager.getInstance().clearAdapter(id);
 
       return NextResponse.json({ success: true });
     } catch (error) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -30,12 +32,6 @@ import {
 import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  useCreateConfigurations,
-  useFindManyConfigCategories,
-  useFindManyConfigurations,
-  useFindManyProjects,
-} from "~/lib/hooks";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { ProjectIcon } from "@/components/ProjectIcon";
@@ -101,9 +97,12 @@ const AddConfigurationWizard = (): React.ReactElement => {
 
   const form = useForm();
 
-  const { mutateAsync: createConfigurations } = useCreateConfigurations();
+  const { mutateAsync: createConfigurations } =
+    useClientQueries(schema).configurations.useCreate();
 
-  const { data: categories } = useFindManyConfigCategories({
+  const { data: categories } = useClientQueries(
+    schema
+  ).configCategories.useFindMany({
     where: { isDeleted: false },
     include: {
       variants: {
@@ -113,12 +112,14 @@ const AddConfigurationWizard = (): React.ReactElement => {
     },
   });
 
-  const { data: existingConfigurations } = useFindManyConfigurations({
+  const { data: existingConfigurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
     where: { isDeleted: false },
     include: { variants: true },
   });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true, iconUrl: true },
@@ -403,9 +404,16 @@ const AddConfigurationWizard = (): React.ReactElement => {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} type="button">
-        <PlusCircle className="w-4" />
-        <span className="hidden md:inline">{t("addConfiguration")}</span>
+      <Button
+        onClick={() => setOpen(true)}
+        type="button"
+        aria-label={t("addConfiguration")}
+        className="group gap-0 transition-all duration-200 hover:gap-2"
+      >
+        <PlusCircle className="h-4 w-4" />
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+          {t("addConfiguration")}
+        </span>
       </Button>
 
       <Dialog
@@ -469,7 +477,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                 {stepTitles[currentStep]}
               </div>
 
-              <ScrollArea className="flex-1 min-h-0 pr-4">
+              <ScrollArea className="flex-1 min-h-0 pe-4">
                 {currentStep === WizardStep.VARIANTS && (
                   <div className="space-y-4">
                     {categories
@@ -482,9 +490,9 @@ const AddConfigurationWizard = (): React.ReactElement => {
                               onClick={() => toggleCategory(category.id)}
                             >
                               {expandedCategories.has(category.id) ? (
-                                <ChevronDown className="mr-2" />
+                                <ChevronDown className="me-2" />
                               ) : (
-                                <ChevronRight className="mr-2" />
+                                <ChevronRight className="me-2" />
                               )}
                               {category.name}
                             </FormLabel>
@@ -514,7 +522,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
                             // column-2, then column-3 — same pattern as
                             // ColumnSelection. Keeps shift+click range
                             // selection visually intuitive.
-                            <div className="pl-6 flex gap-4">
+                            <div className="ps-6 flex gap-4">
                               {splitIntoColumns(category.variants, 3).map(
                                 (colVariants, colIdx) => (
                                   <div

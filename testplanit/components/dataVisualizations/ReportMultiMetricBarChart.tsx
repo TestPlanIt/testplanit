@@ -1,7 +1,9 @@
 "use client";
 import * as d3 from "d3";
+import { useLocale } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
+import { localeTickFormat } from "~/utils/formatNumber";
 
 export interface MultiMetricDataPoint {
   group: string; // The dimension value (e.g., 'User A')
@@ -18,6 +20,7 @@ interface ReportMultiMetricBarChartProps {
 export const ReportMultiMetricBarChart: React.FC<
   ReportMultiMetricBarChartProps
 > = ({ data }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -112,7 +115,9 @@ export const ReportMultiMetricBarChart: React.FC<
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").call(d3.axisLeft(yScale));
+    g.append("g").call(
+      d3.axisLeft(yScale).tickFormat(localeTickFormat(locale))
+    );
 
     // Create bars with animations
     const bars = g
@@ -201,7 +206,7 @@ export const ReportMultiMetricBarChart: React.FC<
       .style("font-size", "12px")
       .style("fill", "currentColor")
       .text((d) => d);
-  }, [data, width, height]);
+  }, [data, width, height, locale]);
 
   return (
     <div

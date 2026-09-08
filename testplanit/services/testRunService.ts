@@ -1,6 +1,7 @@
 "use server";
-import type { TestRunCases } from "@prisma/client";
-import { prisma } from "~/lib/prismaBase";
+import type { TestRunCases } from "~/zenstack/models";
+import { rawDb } from "~/lib/rawDb";
+import { syncTestRunToElasticsearch } from "./testRunSearch";
 
 // Define a type for the structure returned by the findMany query
 type TestRunCaseWithForecast = TestRunCases & {
@@ -23,7 +24,7 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
     // Exclude soft-deleted run memberships (cases removed from the run) so
     // their forecast never counts toward the run total.
     const testRunCases: TestRunCaseWithForecast[] =
-      await prisma.testRunCases.findMany({
+      await rawDb.testRunCases.findMany({
         where: { testRunId: testRunId, isDeleted: false },
         include: {
           repositoryCase: {
@@ -59,12 +60,22 @@ export async function updateTestRunForecast(testRunId: number): Promise<void> {
     );
 
     // Update the TestRun record
-    await prisma.testRuns.update({
+    await rawDb.testRuns.update({
       where: { id: testRunId },
       data: {
         forecastManual: totalForecastManual,
         forecastAutomated: totalForecastAutomated,
       },
+    });
+
+    // `rawDb` skips `sideEffectsPlugin`, so nothing else reindexes this run —
+    // and both forecast fields are part of the indexed run document.
+    // Best-effort: search drift must not fail the forecast update.
+    await syncTestRunToElasticsearch(testRunId).catch((error: unknown) => {
+      console.error(
+        `Failed to sync run ${testRunId} forecast to Elasticsearch:`,
+        error
+      );
     });
 
     console.log(

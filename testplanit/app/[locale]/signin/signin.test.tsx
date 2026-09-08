@@ -3,17 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 
-// Mock @prisma/client (SsoProviderType enum)
-vi.mock("@prisma/client", () => ({
-  SsoProviderType: {
-    GOOGLE: "GOOGLE",
-    APPLE: "APPLE",
-    MICROSOFT: "MICROSOFT",
-    SAML: "SAML",
-    MAGIC_LINK: "MAGIC_LINK",
-  },
-}));
-
 // Mock simple-icons
 vi.mock("simple-icons", () => ({
   siGoogle: { path: "M1 1" },
@@ -41,17 +30,20 @@ vi.mock("~/lib/navigation", () => ({
 
 // Mock ZenStack SSO provider hook
 const mockUseFindManySsoProvider = vi.fn();
-vi.mock("~/lib/hooks/sso-provider", () => ({
-  useFindManySsoProvider: (...args: any[]) =>
-    mockUseFindManySsoProvider(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    ssoProvider: {
+      useFindMany: (...args: any[]) => mockUseFindManySsoProvider(...args),
+    },
+    registrationSettings: {
+      useFindFirst: (...args: any[]) =>
+        mockUseFindFirstRegistrationSettings(...args),
+    },
+  }),
 }));
 
 // Mock ZenStack registration settings hook
 const mockUseFindFirstRegistrationSettings = vi.fn();
-vi.mock("~/lib/hooks/registration-settings", () => ({
-  useFindFirstRegistrationSettings: (...args: any[]) =>
-    mockUseFindFirstRegistrationSettings(...args),
-}));
 
 // Mock next-auth signIn
 const mockSignIn = vi.fn();

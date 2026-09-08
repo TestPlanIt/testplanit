@@ -3,6 +3,18 @@
     "name": "Name",
     "cancel": "Cancel",
     "dismiss": "Dismiss",
+    "bulk": {
+      "selectItem": "Select item",
+      "editAction": "Edit ({count})",
+      "completeAction": "Complete ({count})",
+      "deleteAction": "Delete ({count})",
+      "editTitle": "Bulk Edit ({count})",
+      "applyToCount": "Changes apply to {count, plural, one {# item} other {# items}}.",
+      "tagsAdditiveHint": "Selected tags are added to each item; existing tags are kept.",
+      "completeSuccess": "{count, plural, one {# item completed} other {# items completed}}",
+      "deleteSuccess": "{count, plural, one {# item deleted} other {# items deleted}}",
+      "partialFailure": "{failedCount} of {totalCount} items could not be updated"
+    },
     "of": "of",
     "on": "on",
     "at": "at",
@@ -13,11 +25,13 @@
     "file": "File",
     "selectMultiple": "Select multiple...",
     "searchUsers": "Search for users...",
+    "searchGroups": "Search for groups...",
     "searchCases": "{count, plural, =0 {Search cases} one {Search # case} other {Search # cases}}",
     "searchProjects": "{count, plural, =0 {Search projects} one {Search # project} other {Search # projects}}",
     "searchTags": "Search for tags...",
     "searchRuns": "{count, plural, =0 {Search test runs} one {Search # test run} other {Search # test runs}}",
     "searchSessions": "{count, plural, =0 {Search sessions} one {Search # session} other {Search # sessions}}",
+    "searchMilestones": "{count, plural, =0 {Search milestones} one {Search # milestone} other {Search # milestones}}",
     "search": "Search...",
     "defaultOption": "Default Option",
     "yes": "Yes",
@@ -27,6 +41,7 @@
     "lastEditedBy": "Last edited by",
     "actions": {
       "edit": "Edit",
+      "editTestCase": "Edit Test Case",
       "save": "Save",
       "delete": "Delete",
       "create": "Create",
@@ -73,6 +88,7 @@
       "editResult": "Edit Test Result",
       "resultDetails": "Result Details",
       "actionsLabel": "Actions",
+      "actionsWithAlerts": "Actions ({count, number} unread)",
       "assign": "Assign",
       "assignSelected": "Assign {count, plural, one {# case} other {# cases}}",
       "refresh": "Refresh",
@@ -216,8 +232,11 @@
       "high": "High"
     },
     "filters": {
+      "all": "All",
       "allStatuses": "All Statuses",
-      "allPriorities": "All Priorities"
+      "allPriorities": "All Priorities",
+      "allIssueTypes": "All Issue Types",
+      "noIssueType": "No Issue Type"
     },
     "fields": {
       "groupName": "Group Name",
@@ -240,6 +259,13 @@
       "totalElapsed": "Total Elapsed Time",
       "totalEstimate": "Estimated Time Remaining",
       "completionRate": "Completion Rate",
+      "runDuration": "Run Duration",
+      "passRate": "Pass Rate",
+      "parallelization": "Parallelization",
+      "avgTestTime": "Average Test Time",
+      "medianTestTime": "Median Test Time",
+      "retries": "Retries",
+      "flakyTests": "Flaky Tests",
       "attachments": "Attachments",
       "documentation": "Documentation",
       "state": "State",
@@ -290,6 +316,7 @@
       "account": "Account",
       "accountHistory": "Account History",
       "activity": "Activity",
+      "activityLog": "Activity Log",
       "lastActive": "Last Active",
       "theme": "Theme",
       "locale": "Language",
@@ -317,12 +344,17 @@
       "fieldType": "Field Type",
       "templates": "Templates",
       "started": "Started",
+      "ended": "Ended",
       "startDate": "Start Date",
       "automated": "Automated",
       "manual": "Manual",
       "notAutomated": "Not Automated",
       "parameterized": "Parameterized",
       "notParameterized": "Not Parameterized",
+      "hasAttachments": "Has Attachments",
+      "noAttachments": "No Attachments",
+      "inReview": "In Review",
+      "notInReview": "Not In Review",
       "testRuns": "Test Runs",
       "title": "Title",
       "project": "Project",
@@ -378,7 +410,8 @@
         "notificationSettings": "Notification Global Setting",
         "elasticsearch_replicas": "Elasticsearch Replicas",
         "review_feature_enabled": "Review and Approvals Enabled",
-        "review_reminder_threshold_days": "Remind Reviewers Threshold Days"
+        "review_reminder_threshold_days": "Remind Reviewers Threshold Days",
+        "record_key_enabled": "Record Keys Enabled"
       },
       "options": {
         "label": "Label",
@@ -415,7 +448,8 @@
         "stateRequired": "State is required",
         "urlRequired": "URL is required",
         "invalidUrl": "Invalid URL format"
-      }
+      },
+      "worker": "Worker"
     },
     "filter": {
       "placeholder": "Filter {item}..."
@@ -524,6 +558,15 @@
       "selectState": "Select state",
       "selectConfiguration": "Select configuration",
       "selectConfigurations": "Select configurations",
+      "selectFolders": "Select folders",
+      "selectIssues": "Select issues",
+      "selectMilestones": "Select milestones",
+      "selectProjects": "Select projects",
+      "selectStates": "Select states",
+      "selectTags": "Select tags",
+      "addFieldTo": "Add a field to {section}",
+      "selectTemplates": "Select templates",
+      "selectUsers": "Select users",
       "selectOption": "Select an option",
       "date": "Select a date",
       "selectEncoding": "Select encoding...",
@@ -543,12 +586,15 @@
       "stepCount": "Step count",
       "enterText": "Enter text...",
       "enterUrl": "Enter URL",
+      "enterUrlPattern": "Enter URL pattern...",
+      "domainExample": "example.com",
       "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Select priority values (or leave empty for all)"
     },
     "errors": {
       "error": "Error",
       "somethingWentWrong": "An unexpected error occurred. Please try again later.",
+      "completeNotPermitted": "You do not have permission to complete this item.",
       "emailRequired": "Enter your email address.",
       "emailInvalid": "This is not a valid email address.",
       "passwordRequired": "Password is required.",
@@ -718,6 +764,24 @@
       "selectDeselectAllApprove": "Select or deselect approve for all relevant areas",
       "selectDeselectAllReadSensitive": "Select or deselect read sensitive for all relevant areas"
     },
+    "configurationGroup": {
+      "title": "Configuration Group",
+      "notLinkedRun": "Not linked to any other test run.",
+      "notLinkedSession": "Not linked to any other session.",
+      "linkRun": "Link to a test run",
+      "linkSession": "Link to a session",
+      "changeRun": "Link to a different test run",
+      "changeSession": "Link to a different session",
+      "unlink": "Unlink",
+      "pending": "Save to apply this change.",
+      "saveError": "Failed to update the configuration group",
+      "candidateInGroupRun": "{count, plural, one {# run} other {# runs}}",
+      "candidateInGroupSession": "{count, plural, one {# session} other {# sessions}}",
+      "linkHintRun": "Linking to a run also links you to every run already grouped with it.",
+      "linkHintSession": "Linking to a session also links you to every session already grouped with it.",
+      "candidateInGroupTooltipRun": "{count, plural, one {# run in this group} other {# runs in this group}}",
+      "candidateInGroupTooltipSession": "{count, plural, one {# session in this group} other {# sessions in this group}}"
+    },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",
       "templates": "Templates & Fields",
@@ -731,6 +795,16 @@
       "existingAttachments": "Existing Attachments",
       "new": "New",
       "noElapsedTime": "No time recorded",
+      "runDurationHint": "Time from first to last result",
+      "totalElapsedHint": "Sum of individual test times",
+      "parallelizationHint": "Average number of tests running at the same time",
+      "parallelizationPeakHint": "Peak of {peak, number} tests running at once, {average}× on average",
+      "passRateHint": "{passed, number} of {total, number} tests passed",
+      "retriesHint": "Attempts beyond each test's first run",
+      "flakyTestHint": "Failed, then passed on retry in this run",
+      "executionMetrics": "Execution Metrics",
+      "metricsAndCharts": "Metrics & Charts",
+      "slowestTests": "Slowest Tests",
       "untested": "Untested",
       "noResults": "No Results",
       "resultsWithNoElapsedTime": "No time recorded for results",
@@ -738,6 +812,7 @@
       "noCases": "No test cases",
       "unknown": "Unknown",
       "selectedTestCases": "Selected Test Cases",
+      "selectedTestCasesCount": "{count, plural, one {# Selected Test Case} other {# Selected Test Cases}}",
       "editToModifyCasesTitle": "This list can not be modified.",
       "editToModifyCases": "Edit the Test Run and click Selected Test Cases to modify the list.",
       "noTestCasesSelected": "No test cases selected",
@@ -749,9 +824,13 @@
       "sortByDate": "Sort by date",
       "testRuns": "{count, plural, =0 {No Test Runs} =1 {1 Test Run} other {# Test Runs}}",
       "sessions": "{count, plural, =0 {No Sessions} =1 {1 Session} other {# Sessions}}",
+      "issues": "{count, plural, =0 {No Issues} =1 {1 Issue} other {# Issues}}",
       "noOptions": "No options available",
       "multiConfiguration": "Part of a multi-configuration group",
+      "compositionLocked": "Composition locked — the case set is frozen",
       "otherConfigurations": "Other configurations",
+      "noConfiguration": "No configuration",
+      "configurationWithName": "{configuration} — {name}",
       "selected": "Selected: {count}",
       "defaultProjectAccess": "Default Project Access",
       "defaultAccessType": "Default Access Type",
@@ -794,7 +873,8 @@
     "table": {
       "columns": {
         "columns": "Columns",
-        "required": "(required)"
+        "required": "(required)",
+        "resetColumns": "Reset columns to default"
       },
       "filter": "Filter list...",
       "selectNone": "Select None",
@@ -802,7 +882,13 @@
       "sortAscending": "Sorted ascending",
       "sortDescending": "Sorted descending",
       "sortNone": "Not sorted",
-      "resize": "Resize column"
+      "resize": "Resize column",
+      "reorderColumn": "Drag to reorder column",
+      "sortAsc": "Sort ascending",
+      "sortDesc": "Sort descending",
+      "removeSort": "Remove sort",
+      "hideColumn": "Hide column",
+      "columnOptions": "Column options"
     },
     "pagination": {
       "selectPage": "Select page",
@@ -815,7 +901,8 @@
       "showing": "Showing",
       "total": "total {count, plural, =1 {# item} other {# items}}",
       "filtered": "filtered from",
-      "pageOfPages": "Page {current} of {total}"
+      "pageOfPages": "Page {current} of {total}",
+      "loadedOfTotal": "{loaded, number} of {total, number}"
     },
     "upload": {
       "title": "Upload New Profile Picture",
@@ -1006,10 +1093,10 @@
       },
       "charts": {
         "resultsDistribution": "Results Distribution",
-        "statusTimeline": "Status Timeline",
+        "executionTimeline": "Execution Timeline",
         "testDurationHistogram": "Test Duration Histogram",
         "zoomDonutChart": "Zoom Donut Chart",
-        "zoomStatusTimeline": "Zoom Status Timeline",
+        "zoomExecutionTimeline": "Zoom Execution Timeline",
         "zoomHistogramChart": "Zoom Histogram Chart",
         "duration": "Duration: {seconds} seconds",
         "durationLabel": "Duration"
@@ -1053,7 +1140,35 @@
     "invalidProject": "Invalid project ID.",
     "visualization": "Visualization",
     "results": "Results",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "operators": {
+      "eq": "Equals",
+      "ne": "Not equals",
+      "lt": "Less than",
+      "lte": "Less than or equal",
+      "gt": "Greater than",
+      "gte": "Greater than or equal",
+      "between": "Between",
+      "contains": "Contains",
+      "notContains": "Does not contain",
+      "startsWith": "Starts with",
+      "endsWith": "Ends with",
+      "domain": "Domain contains",
+      "on": "On",
+      "before": "Before",
+      "after": "After",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "last90": "Last 90 days",
+      "thisYear": "This year",
+      "anyOf": "Any of",
+      "allOf": "All of",
+      "noneOf": "None of",
+      "is": "Is",
+      "in": "Is any of",
+      "hasValue": "Has value",
+      "isEmpty": "Is empty"
+    }
   },
   "api": {
     "testResults": {
@@ -1253,15 +1368,15 @@
     "overview": {
       "title": "Overview",
       "currentMilestones": "Current Milestones",
-      "seeAllMilestones": "{count, plural, =1 {See # Milestone} other {See all # Milestones}}",
-      "seeAllTestCases": "{count, plural, =1 {See # Test Case} other {See all # Test Cases}}",
+      "seeAllMilestones": "{count, plural, =1 {See # Milestone} =2 {See both Milestones} other {See all # Milestones}}",
+      "seeAllTestCases": "{count, plural, =1 {See # Test Case} =2 {See both Test Cases} other {See all # Test Cases}}",
       "latestTestCases": "Latest Test Cases",
       "createdOn": "Created on",
-      "seeAllTags": "See All Tags",
-      "seeAllActiveSessions": "{count, plural, =1 {See # Active Session} other {See all # Active Sessions}}",
+      "seeAllTagsCount": "{count, plural, =1 {See # Tag} =2 {See both Tags} other {See all # Tags}}",
+      "seeAllActiveSessions": "{count, plural, =1 {See # Active Session} =2 {See both Active Sessions} other {See all # Active Sessions}}",
       "latestSessions": "Latest Sessions",
       "activeTestRuns": "Active Test Runs",
-      "seeAllActiveTestRuns": "{count, plural, =1 {See # Active Test Run} other {See all # Active Test Runs}}",
+      "seeAllActiveTestRuns": "{count, plural, =1 {See # Active Test Run} =2 {See both Active Test Runs} other {See all # Active Test Runs}}",
       "latestTestRuns": "Latest Test Runs",
       "testCaseBreakdown": "Test Case Breakdown",
       "noTestCases": "The project repository is empty. Add test cases using the Repository.",
@@ -1292,7 +1407,14 @@
         "saveButton": "Save",
         "saveSuccess": "Iteration property names saved.",
         "saveError": "Could not save iteration property names.",
-        "removeAria": "Remove {name}"
+        "removeAria": "Remove {name}",
+        "counter": "{count}/{max}",
+        "constraints": "Up to {max} properties, each {maxLength} characters or fewer, with no spaces.",
+        "limitReached": "You've reached the maximum of {max} properties. Remove one to add another.",
+        "errorTooLong": "Keep each property name to {maxLength} characters or fewer.",
+        "errorWhitespace": "Property names can't contain spaces.",
+        "errorReserved": "“{name}” is a reserved word and can't be used.",
+        "errorDuplicate": "“{name}” is already in the list."
       },
       "integrations": {
         "description": "Manage third-party issue integrations for this project",
@@ -1379,7 +1501,19 @@
           "importStart": "Import",
           "importStarted": "Import started. Issues will appear shortly.",
           "importFailed": "Import failed",
-          "importPreviewFailed": "Couldn't estimate matches"
+          "importPreviewFailed": "Couldn't estimate matches",
+          "milestoneSync": {
+            "title": "Milestone Sync",
+            "description": "Sync TestPlanIt Milestones from this tracker's time-based artifacts.",
+            "enableLabel": "Enable milestone sync",
+            "releasesLabel": "Releases",
+            "sprintsLabel": "Sprints",
+            "kindsLabel": "Kinds to sync",
+            "autoTrackLabel": "Automatically add new ones",
+            "autoTrackProjectsLabel": "Scan these connected projects for new milestones",
+            "settingsSaved": "Milestone sync settings saved",
+            "saveError": "Failed to save milestone sync settings"
+          }
         },
         "integrationAssigned": "Integration assigned successfully",
         "integrationAssignError": "Failed to assign issue integration to project",
@@ -1621,6 +1755,7 @@
         "setupStepsGiteaStep5": "Click \"Add Webhook\". Use \"Send test webhook\" below to verify the pipeline.",
         "deliveriesTab": "Deliveries",
         "filterConfigPlaceholder": "All webhooks",
+        "filterEventPlaceholder": "All events",
         "filterStatusAll": "All",
         "filterStatusFailed": "Failed",
         "filterStatusSuccess": "Success",
@@ -1634,6 +1769,7 @@
         "deliveriesLoadMore": "Load more",
         "tableHeaderConfig": "Webhook",
         "tableHeaderEvent": "Event",
+        "tableHeaderSubjectRef": "Reference",
         "tableHeaderStatus": "Status",
         "tableHeaderError": "Error",
         "tableHeaderReceivedAt": "Received",
@@ -1651,6 +1787,7 @@
         "drawerLabelError": "Error",
         "drawerLabelPayloadDigest": "Payload digest",
         "drawerLabelEventId": "Event ID",
+        "drawerLabelSubjectRef": "Reference",
         "drawerLabelAttempt": "Attempt",
         "drawerLabelReceivedAt": "Received at",
         "drawerNoError": "—",
@@ -1897,7 +2034,9 @@
           "description": "Files are cached in Valkey for fast access during AI generation.",
           "enableLabel": "Enable file caching",
           "disabledWarning": "File caching is disabled. Repository files will be fetched directly from your provider at export time and will not be stored in TestPlanIt. AI-powered QuickScript will still include code context, but each export will make a live request to your repository.",
-          "ttlLabel": "Cache Duration (days)",
+          "ttlBefore": "Cache for",
+          "ttlDays": "{count, plural, one {day} other {days}}",
+          "ttlAriaLabel": "Cache duration in days",
           "statusTitle": "Cache Status",
           "refreshButton": "Refresh Cache",
           "listingFiles": "Listing files…",
@@ -1906,6 +2045,8 @@
           "statusPending": "Refreshing...",
           "lastFetched": "Last Fetched",
           "filesCached": "Files Cached",
+          "contentsCached": "Contents Cached",
+          "contentsIncomplete": "Only {cached} of {total} file contents are cached — generated scripts won't use the missing files. Refresh again to complete.",
           "totalSize": "Total Size"
         },
         "save": "Save Configuration",
@@ -1949,9 +2090,20 @@
       "advanced": {
         "title": "Advanced",
         "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "recordKey": {
+          "label": "Project code",
+          "description": "A short code used in cosmetic record keys like {example}. 2–10 uppercase letters, no digits. Leave blank to show plain numeric IDs.",
+          "placeholder": "e.g. PROJECT",
+          "previewLabel": "Example key:",
+          "useSuggestion": "Use suggested code: {code}",
+          "invalid": "Use 2–10 uppercase letters (no digits).",
+          "taken": "That code is already used by another project. Choose a different one.",
+          "savedToast": "Project code saved.",
+          "saveError": "Could not save the project code. It may already be used by another project."
+        },
         "reviewWorkflow": {
           "label": "Enable review workflow",
-          "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",
+          "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications, and approving a request applies the transition.",
           "enabledToast": "Review workflow enabled for this project",
           "disabledToast": "Review workflow disabled for this project",
           "saveError": "Failed to update review workflow setting",
@@ -1982,13 +2134,23 @@
           "saveError": "Failed to update draft-case exclusion setting",
           "skippedToast": "{count, plural, =1 {1 draft case was skipped because it is in Not Started state} other {# draft cases were skipped because they are in Not Started state}}"
         },
+        "autoLockComposition": {
+          "label": "Lock Test Run composition when execution starts",
+          "description": "When enabled, a test run's case composition is automatically locked the moment the run moves into an In Progress state. Locking freezes which cases are in the run (no adding, removing, or reordering) while execution and assignment continue. The run's creator or a Project Admin can unlock it to change the case set.",
+          "enabledToast": "Test Runs will lock their composition when execution starts",
+          "disabledToast": "Test Runs will no longer auto-lock their composition",
+          "saveError": "Failed to update the composition auto-lock setting"
+        },
         "editWindow": {
           "label": "Result edit window",
           "description": "How long after a result is recorded it can still be edited in place. After the window closes, corrections require a new attempt. System administrators can always edit.",
-          "modeInherit": "Inherit system default",
+          "modeInheritMinutes": "Inherit system default ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeInheritNoLimit": "Inherit system default (no limit)",
           "modeDisable": "Disable editing for this project",
           "modeCustom": "Custom window",
-          "minutesLabel": "Editable for (minutes)",
+          "minutesBefore": "Editable for",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Edit window in minutes",
           "systemMaxHint": "System maximum: {minutes} minutes",
           "systemLockedTitle": "Editing is disabled system-wide",
           "systemLockedDescription": "A system administrator has disabled in-place result editing for all projects, so this project cannot enable it.",
@@ -1996,6 +2158,23 @@
           "save": "Save edit window",
           "savedToast": "Edit window updated for this project",
           "saveError": "Failed to update the edit window setting"
+        },
+        "abandonedRuns": {
+          "label": "Abandoned automation cleanup",
+          "description": "How long to wait for the next result before an automated run is closed as abandoned. Manual runs are never affected.",
+          "modeInheritMinutes": "Inherit system default ({minutes, plural, one {# minute} other {# minutes}})",
+          "modeInheritOff": "Inherit system default (off)",
+          "modeDisable": "Disable for this project",
+          "modeCustom": "Custom idle threshold",
+          "minutesBefore": "Close when idle for",
+          "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+          "minutesAriaLabel": "Idle threshold in minutes",
+          "invalidMinutes": "Enter at least {min} minutes",
+          "targetStateLabel": "Move closed runs to",
+          "targetStateAria": "Target state for abandoned runs",
+          "save": "Save cleanup settings",
+          "savedToast": "Abandoned automation cleanup updated for this project",
+          "saveError": "Failed to update abandoned automation cleanup"
         }
       }
     },
@@ -2044,6 +2223,9 @@
   },
   "milestones": {
     "title": "Milestone Details",
+    "auditLog": {
+      "description": "All changes recorded for this milestone."
+    },
     "fields": {
       "parent": "Parent Milestone",
       "dueDate": "Due Date",
@@ -2067,7 +2249,18 @@
       "description": "No description provided",
       "documentation": "No documentation provided",
       "testRuns": "No test runs",
+      "noMatchingTestRuns": "No test runs match your filters.",
+      "noMatchingSessions": "No Sessions match your filters.",
       "forecasts": "No forecast data available"
+    },
+    "cardFilters": {
+      "labelRuns": "Filter test runs",
+      "labelSessions": "Filter sessions"
+    },
+    "browser": {
+      "kindAll": "All milestones",
+      "kindReleases": "Synced releases",
+      "kindSprints": "Synced sprints"
     },
     "statusLabels": {
       "NOT_STARTED": "Not Started",
@@ -2111,6 +2304,7 @@
     "delete": {
       "title": "Delete Milestone",
       "confirmMessage": "Are you sure you want to delete the milestone {name}?",
+      "childrenWarning": "{count, plural, one {Its # child milestone} other {Its # child and descendant milestones}} will also be deleted.",
       "warning": "This milestone will be removed from the project. Historical data for this milestone will still remain in the project.",
       "toast": {
         "loading": "Deleting milestone...",
@@ -2138,12 +2332,128 @@
     "notifications": {
       "dueSoon": "Milestone \"{name}\" is due on {dueDate}",
       "overdue": "Milestone \"{name}\" was due on {dueDate}"
+    },
+    "import": {
+      "importTitle": "Import from Jira",
+      "importDescription": "Select the Jira Fix Versions and Sprints to sync as TestPlanIt Milestones.",
+      "showClosed": "Show closed",
+      "alreadyLinked": "Already linked",
+      "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+      "confirmSelection": "Import Selected",
+      "confirmSelectionCount": "{count, plural, one {Import # Milestone} other {Import # Milestones}}",
+      "empty": "No milestones found",
+      "previewFailed": "Failed to load milestones from Jira",
+      "importFailed": "Failed to import selected milestones",
+      "requestTimedOut": "Jira took too long to respond and the request timed out. This usually means the linked Jira projects have a large number of versions or boards. Try again, and keep \"Show closed\" turned off to narrow the request.",
+      "serviceUnavailable": "The server is temporarily unavailable. Please try again in a moment.",
+      "unexpectedResponse": "Unexpected response from the server (HTTP {status}). Please try again, and contact your administrator if this keeps happening.",
+      "importStarted": "Import started",
+      "kindRelease": "Release",
+      "kindSprint": "Sprint",
+      "selectAll": "Select all",
+      "searchPlaceholder": "Search releases and sprints...",
+      "emptyFiltered": "No milestones match your filters.",
+      "partialWarning": "Some Jira projects could not be fetched:",
+      "importing": "Importing {count, plural, one {# milestone} other {# milestones}} from Jira…",
+      "completed": "Imported {count, plural, one {# milestone} other {# milestones}} from Jira",
+      "stillRunning": "The import is still running in the background — milestones will appear when it finishes."
+    },
+    "sync": {
+      "managedByJira": "Managed by Jira",
+      "lastSynced": "Last synced {time}",
+      "openInJira": "Open in Jira",
+      "providerJira": "Jira",
+      "sourceBadge": "{provider} · {kind} · {state}",
+      "syncNow": "Sync now",
+      "unlinkMenuItem": "Unlink from {provider}",
+      "unlinkConfirmTitle": "Unlink milestone?",
+      "unlinkConfirmDescription": "This stops syncing with the tracker: fields become editable again, synced issue links become manual (yours to keep or remove), and re-linking is possible later by importing this artifact again.",
+      "unlinkConfirmAction": "Unlink",
+      "unlinkSuccess": "Milestone unlinked from the tracker.",
+      "unlinkError": "Failed to unlink the milestone.",
+      "sourceRemoved": "source removed in {provider}",
+      "mergedInto": "merged into {target}"
+    },
+    "summary": {
+      "inScope": "{count, plural, one {# in scope} other {# in scope}}",
+      "foundInTesting": "{count, plural, one {# found in testing} other {# found in testing}}",
+      "includesChildMilestones": "Includes child milestones"
+    },
+    "burndown": {
+      "title": "Burndown",
+      "remaining": "Items Remaining",
+      "ideal": "Ideal",
+      "today": "Today",
+      "tooltipRemaining": "{count, number} remaining",
+      "heatAhead": "Ahead of ideal",
+      "heatOnTrack": "On track",
+      "heatBehind": "Behind ideal",
+      "tooltipBehind": "{count, number} behind ideal",
+      "tooltipAhead": "{count, number} ahead of ideal"
+    },
+    "members": {
+      "cardTitle": "Issues",
+      "casesOtherProjects": "{count, plural, one {# test case in another project} other {# test cases in other projects}}",
+      "inScope": "In scope",
+      "foundInTesting": "Found in testing",
+      "foundInTestingEmpty": "No issues found in testing.",
+      "inScopeCrossBadge": "In scope",
+      "refresh": "Refresh",
+      "columnKey": "Name",
+      "columnStatus": "Status",
+      "columnCoverage": "Coverage",
+      "columnSource": "Source",
+      "sourceSynced": "Synced",
+      "sourceManual": "Manual",
+      "coveragePassed": "Passed",
+      "coverageFailed": "Failed",
+      "coverageInProgress": "In Progress",
+      "coverageNotRun": "Not Run",
+      "coverageUncovered": "Uncovered",
+      "filterAllCoverage": "All coverage",
+      "filterAllSources": "All sources",
+      "filterAllTypes": "All types",
+      "empty": "No issues linked to this milestone yet.",
+      "emptyFiltered": "No issues match the current filters.",
+      "unlink": "Unlink",
+      "managedByJira": "Managed by Jira — remove it from the version/sprint in Jira",
+      "linkSuccess": "Issue linked to this milestone.",
+      "linkError": "Failed to link the issue to this milestone.",
+      "unlinkSuccess": "Issue removed from this milestone.",
+      "unlinkError": "Failed to remove the issue from this milestone.",
+      "overflowTitle": "More issues in Jira",
+      "overflowDescription": "These issues are in the linked Jira version/sprint but aren't linked here yet.",
+      "overflowCapped": "Capped at {cap, number} — {overflowTotal, number} more in Jira",
+      "overflowMoreAvailable": "{overflowTotal, number} more available in Jira",
+      "overflowImportAction": "Import & link",
+      "overflowImportSuccess": "Import started — issues will appear as they sync.",
+      "overflowImportError": "Failed to import member issues from Jira.",
+      "emptyCta": "Link an issue to get started.",
+      "columnDescription": "Description",
+      "unlinkConfirmTitle": "Unlink issue?",
+      "unlinkConfirmDescription": "This removes the issue from this milestone. The issue itself is kept and can be linked again later.",
+      "totalsUncovered": "{count, plural, one {# uncovered issue} other {# uncovered issues}}",
+      "percentReady": "{percent, number}% ready",
+      "readinessSummary": "{passed, number} passed · {failed, number} failed · {inProgress, number} in progress · {notRun, number} not run · {uncovered, number} uncovered (of {total, number} issues)",
+      "filterHasUntested": "Has untested cases",
+      "createRunNoCases": "None of the selected issues have linked test cases.",
+      "createTestRunDetailed": "Create test run ({issues, plural, one {# issue} other {# issues}} · {cases, plural, one {# case} other {# cases}})"
+    },
+    "complete": {
+      "skippedForPermission": "The milestone was completed. Its test runs and sessions were left open because you do not have permission to complete them.",
+      "skippedTestRunsForPermission": "The milestone was completed. Its test runs were left open because you do not have permission to complete them.",
+      "skippedSessionsForPermission": "The milestone was completed. Its Sessions were left open because you do not have permission to complete them."
     }
   },
   "sessions": {
+    "bulk": {
+      "completeTitle": "Complete {count, plural, one {# Session} other {# Sessions}}",
+      "completeDescription": "Are you sure you want to complete {count, plural, one {this Session} other {these Sessions}}?",
+      "deleteTitle": "Delete {count, plural, one {# Session} other {# Sessions}}",
+      "deleteDescription": "Are you sure you want to delete {count, plural, one {this Session} other {these Sessions}}?"
+    },
     "auditLog": {
       "trigger": "Activity",
-      "title": "Activity Log",
       "description": "All changes recorded for this session."
     },
     "title": "{count, plural, =1 {Session} other {Sessions}}",
@@ -2153,7 +2463,12 @@
       "overtime": "Over the Estimate by: {time}"
     },
     "empty": {
-      "noMatchingCompleted": "No completed Sessions match your filter."
+      "noMatchingCompleted": "No completed Sessions match your filter.",
+      "noMatchingActive": "No active Sessions match your filters."
+    },
+    "sessionFilters": {
+      "label": "Filter sessions",
+      "mine": "My Sessions"
     },
     "filter": {
       "placeholder": "Filter sessions..."
@@ -2167,6 +2482,9 @@
       "viewSessionDetails": "View Session"
     },
     "noMilestone": "No Milestone",
+    "milestoneGroup": {
+      "sessionCount": "{count, plural, one {# session} other {# sessions}}"
+    },
     "completeDialog": {
       "noWorkflowsConfigured": "No completion workflows are configured for this project. Please configure workflows in the admin settings to enable session completion."
     },
@@ -2313,6 +2631,12 @@
       "adminAddProject": "Add your first Project to get started!",
       "footer": "Access is required to view and participate in test planning activities."
     },
+    "getStarted": {
+      "title": "Get started",
+      "description": "Add your own Project when you're ready to start planning.",
+      "adminAddProject": "Create your first Project",
+      "footer": "The Demo Project contains sample data you can explore or remove at any time."
+    },
     "noProjectAccess": {
       "description": "You do not have access to this project.",
       "contact": "Contact your project administrator to request access."
@@ -2321,6 +2645,7 @@
       "testCases": "{count, plural, =0 {# Test Cases} =1 {# Test Case} other {# Test Cases}}",
       "activeMilestones": "{count, plural, =0 {# Active Milestones} =1 {# Active Milestone} other {# Active Milestones}}",
       "activeRuns": "{count, plural, =0 {# Active Runs} =1 {# Active Run} other {# Active Runs}}",
+      "automationRunsInProgress": "{count, plural, =0 {# Automation Runs in Progress} =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
       "activeSessions": "{count, plural, =0 {# Active Sessions} =1 {# Active Session} other {# Active Sessions}}",
       "issues": "{count, plural, =0 {# Issues} =1 {# Issue} other {# Issues}}"
     }
@@ -2349,6 +2674,13 @@
       },
       "access": {
         "title": "Access"
+      },
+      "assignments": {
+        "title": "Assignments",
+        "empty": "No open assignments.",
+        "reviews": "{count, plural, =1 {# Review} other {# Reviews}}",
+        "remaining": "Remaining",
+        "pendingRuns": "{count, plural, =1 {# Active Test Run includes} other {# Active Test Runs include}} {cases, plural, =1 {# test case} other {# test cases}}"
       },
       "directory": {
         "title": "Directory Profile",
@@ -2421,12 +2753,18 @@
         "noMatchingEntries": "No entries match the selected filters.",
         "showing": "{loaded} of {total} entries"
       },
-      "mentionedComments": {
-        "title": "Mentioned in Comments",
-        "description": "Comments where you are mentioned",
-        "noComments": "You haven't been mentioned in any comments yet.",
-        "comment": "Comment",
-        "showingResults": "Showing {start} - {end} of {total}"
+      "myComments": {
+        "title": "My Comments",
+        "description": "Comments you wrote or were mentioned in",
+        "noComments": "You haven't written or been mentioned in any comments yet.",
+        "noMatchingComments": "No comments match the current filters.",
+        "searchPlaceholder": "Search comments",
+        "filterLabel": "Filter comments",
+        "filterAll": "All Comments",
+        "filterMentioned": "Mentioning Me",
+        "filterAuthored": "Written by Me",
+        "showing": "Showing {loaded} of {total} comments",
+        "matching": "{matched} matching · searched {loaded} of {total} comments"
       },
       "twoFactor": {
         "enable": "Enable 2FA",
@@ -2500,7 +2838,8 @@
       "green": "Green",
       "purple": "Purple",
       "orange": "Orange",
-      "accessible": "Accessible"
+      "accessible": "Accessible",
+      "accessibledark": "Accessible (Dark)"
     }
   },
   "repository": {
@@ -2508,13 +2847,12 @@
       "notFound": "Test case version not found.",
       "detailsRegion": "Test case details",
       "metadataRegion": "Test case metadata",
-      "versionCreated": "Version {version} Created",
-      "latestVersionUpdated": "Latest Version {version, number} Updated",
+      "versionCreated": "Version {version}",
+      "latestVersionUpdated": "Version {version, number} (Latest)",
       "historyView": "Test Case History View"
     },
     "auditLog": {
       "trigger": "Activity",
-      "title": "Activity Log",
       "description": "All changes recorded for this test case."
     },
     "fields": {
@@ -2537,6 +2875,7 @@
       "add": "Add Step",
       "addSharedSteps": "Add Shared Steps",
       "delete": "Delete Step",
+      "removedFromCase": "Removed from test case",
       "confirmDelete": "Confirm delete Step {number, number}?",
       "createSharedSteps": "Create Shared {number, plural, one {Step} other {Steps}}",
       "sharedStepsName": "Shared Steps Name",
@@ -2547,7 +2886,8 @@
         "sharedStepGroupCreatedSuccess": "Shared steps created successfully!",
         "genericSharedStepCreationError": "An unknown error occurred while creating the shared steps. Please try again.",
         "errorCreatingSharedGroup": "Failed to create shared steps. Please try again.",
-        "sharedGroupCreatedSuccess": "Shared step group created successfully!"
+        "sharedGroupCreatedSuccess": "Shared step group created successfully!",
+        "failedToCreateSharedGroupError": "Failed to create the shared group. Please try again."
       },
       "selectSharedStepsTitle": "Select Shared Steps",
       "selectSharedStepsDescription": "Choose shared steps to add to your test case.",
@@ -2564,7 +2904,8 @@
       "reviewSelectedStepsTitle": "Review Selected Steps",
       "noStepsInSelectedGroup": "The selected group has no steps.",
       "sharedGroupSuffix": "(Shared Steps)",
-      "unnamedSharedGroup": "Unnamed Shared Steps"
+      "unnamedSharedGroup": "Unnamed Shared Steps",
+      "noStepsInSelectedSharedGroup": "The selected shared group has no steps."
     },
     "testCase": {
       "toggleAutomated": "Toggle automated testing",
@@ -2586,9 +2927,16 @@
     "deselectAllShiftTooltip": "Deselect/Select all cases across all pages",
     "shiftClickHint": "Hold Shift to select/deselect all pages",
     "treeView": {
-      "expandAll": "Expand all",
-      "collapseAll": "Collapse all",
-      "altKey": "Hold Alt key to expand/collapse all children"
+      "expandFolder": "Expand folder",
+      "collapseFolder": "Collapse folder",
+      "expandSubfolders": "Expand all subfolders",
+      "collapseSubfolders": "Collapse all subfolders",
+      "expandAll": "Expand all folders",
+      "collapseAll": "Collapse all folders",
+      "altHintMac": "Hold ⌥ to expand or collapse all subfolders",
+      "altHintWin": "Hold Alt to expand or collapse all subfolders",
+      "altHintAllMac": "Hold ⌥ to expand or collapse every folder",
+      "altHintAllWin": "Hold Alt to expand or collapse every folder"
     },
     "dragDrop": {
       "move": "Move",
@@ -2605,7 +2953,13 @@
       "dragPreviewCase": "Test Case",
       "dragPreviewCount": "{count, plural, =1 {# test case} other {# test cases}}",
       "modifierHintMac": "Hold ⇧ to move or ⌥ to copy while dragging to skip this menu.",
-      "modifierHintWin": "Hold Shift to move or Ctrl to copy while dragging to skip this menu."
+      "modifierHintWin": "Hold Shift to move or Ctrl to copy while dragging to skip this menu.",
+      "dropZoneReorder": "Drop to reorder",
+      "dropZoneFolder": "Drop on a folder to nest, or between folders to reorder",
+      "dropZoneTreeMac": "Drop on a folder — hold ⇧ to move, ⌥ to copy",
+      "dropZoneTreeWin": "Drop on a folder — hold Shift to move, Ctrl to copy",
+      "dropZoneTreeMove": "Drop on a folder to move",
+      "dropZoneTreeCopy": "Drop on a folder to copy"
     },
     "folderActions": {
       "edit": "Edit Folder",
@@ -2618,12 +2972,22 @@
       "selectCases": "Select Test Cases",
       "noTestCases": "No test cases to display.",
       "addCase": "Add Case",
+      "caseDetails": "Test case details",
+      "expandDetails": "Expand to full width",
+      "collapseDetails": "Collapse to split view",
+      "openFullPage": "Open full page",
+      "previousCase": "Previous test case",
+      "nextCase": "Next test case",
+      "caseNavPosition": "{position} of {total}",
       "notFound": "Test case not found.",
       "selectFilter": "Select Filter",
       "testResultHistory": "Test Result History",
       "testResultHistoryDescription": "View the history of test results for this test case",
+      "viewElapsedTimeReport": "Elapsed time report",
       "noTestResults": "No test results found for this test case",
       "unknownRun": "Unknown Run",
+      "currentRunBadge": "Current",
+      "currentRunTooltip": "The test run you are viewing",
       "attempt": "Attempt",
       "invalidProject": "Invalid project",
       "noSearchResults": "No cases match your search criteria.",
@@ -2651,7 +3015,9 @@
         "title": "Import Test Cases",
         "fields": {
           "workflowState": "Workflow State",
-          "column": "Column {number}"
+          "column": "Column {number}",
+          "caseId": "Case ID",
+          "caseIdDescription": "TestPlanIt Case ID"
         },
         "success": {
           "description": "{count, plural, one {# test case} other {# test cases}} imported successfully"
@@ -2661,7 +3027,15 @@
           "folderRequired": "Folder selection is required for this import location",
           "fileRequired": "A CSV or Markdown file is required",
           "markdownParseFailed": "Failed to parse Markdown file",
-          "markdownLlmFailed": "AI parsing unavailable, using standard parser"
+          "markdownLlmFailed": "AI parsing unavailable, using standard parser",
+          "validationTitle": "Import validation failed",
+          "validationSummary": "{count, plural, one {# problem was} other {# problems were}} found in your file. No test cases were imported.",
+          "validationEntry": "Row {row, number} · {field}: {message}",
+          "validationEntryNamed": "Row {row, number} \"{name}\" · {field}: {message}",
+          "validationMore": "{count, plural, one {# more problem is} other {# more problems are}} not shown.",
+          "validationMultiRowNote": "Row numbers refer to the grouped test cases shown in the preview, not to raw CSV lines.",
+          "partialTitle": "Some test cases were not imported",
+          "partialSummary": "{failed, plural, one {# row} other {# rows}} could not be imported. {imported, plural, one {# test case was} other {# test cases were}} imported successfully."
         },
         "page1": {
           "fileType": {
@@ -2693,7 +3067,8 @@
           "title": "Map CSV Columns to Fields",
           "description": "Map each CSV column to a field in the template or choose to ignore it.",
           "ignoreColumn": "Ignore Column",
-          "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped"
+          "requiredFieldsWarning": "{count, plural, one {# required field is} other {# required fields are}} not mapped",
+          "caseIdHint": "This must be the numeric Case ID — matching cases are overwritten."
         },
         "page3": {
           "title": "Field Mapping Summary",
@@ -2737,7 +3112,7 @@
     "columns": {
       "selectCase": "Select Case",
       "runOrder": "Run Order",
-      "lastTestResult": "Last Result",
+      "latestResults": "Latest Results",
       "testedOn": "Last Tested"
     },
     "actions": {
@@ -2768,6 +3143,8 @@
     "views": {
       "byAutomation": "Automation",
       "byParameterized": "Parameterization",
+      "byAttachments": "Attachments",
+      "byReview": "Review",
       "allTemplates": "All Templates",
       "allStates": "All States",
       "allCreators": "All Creators",
@@ -2890,7 +3267,7 @@
       "searchPlaceholder": "Search templates...",
       "noTemplatesFound": "No templates found.",
       "outputModeLabel": "Output Mode",
-      "outputModeSingle": "Single file ({count, plural, one {# case} other {all # cases}})",
+      "outputModeSingle": "Single file ({count, plural, one {# case} =2 {both cases} other {all # cases}})",
       "outputModeIndividual": "{count, plural, one {Individual file (.zip)} other {Individual files (.zip)}}",
       "casesToExport": "{count, plural, one {# case} other {# cases}} to export",
       "exportSuccess": "Export completed successfully.",
@@ -2924,7 +3301,6 @@
       "scanFailed": "Duplicate analysis failed",
       "scanFailedDescription": "An unexpected error occurred",
       "pageTitle": "Duplicate Candidates",
-      "pageDescription": "Review potential duplicate test cases found during the last scan.",
       "rescan": "Rescan",
       "cancelScan": "Cancel scan",
       "loading": "Loading duplicate candidates...",
@@ -3203,7 +3579,63 @@
       },
       "linkedIssuesDroppedTitle": "Some linked issues were not included",
       "linkedIssuesDropped": "{count, plural, =1 {# linked issue was dropped} other {# linked issues were dropped}} due to token budget: {keys}.",
-      "linkedIssuesPreviewHeading": "Linked issues that will be included"
+      "linkedIssuesPreviewHeading": "Linked issues that will be included",
+      "contextImages": {
+        "pickerHeading": "Images to include as context (up to {max})",
+        "tooLarge": "Too large",
+        "noVisionHint": "The configured AI model does not support image input — selected images will not be sent.",
+        "visionSkippedTitle": "Images were not sent",
+        "visionSkipped": "{count, plural, =1 {# image was} other {# images were}} not sent — the configured AI model does not support image input.",
+        "includedSummary": "{count, plural, =1 {# image} other {# images}} sent as context: {names}",
+        "skippedSummary": "{count, plural, =1 {# image} other {# images}} skipped (too large or unsupported): {names}",
+        "includeUrlScreenshots": "Include page screenshots when available"
+      }
+    },
+    "filterBar": {
+      "addFilter": "Add Filter",
+      "removeFilter": "Remove filter: {name}",
+      "editFilter": "Edit filter: {name}",
+      "activeCount": "{count, plural, =1 {# active filter} other {# active filters}}",
+      "assignedToMe": "Assigned to me",
+      "noFilters": "No active filters",
+      "noMatchingCases": "No test cases match your filters",
+      "searchTruncated": "Filtering within the top {count, number} matches",
+      "sortedByRelevance": "Sorted by relevance",
+      "countsUpdating": "Updating counts...",
+      "filterLimitReached": "Filter limit reached ({count} maximum)",
+      "valueLimitReached": "Value limit reached ({count} maximum per filter)",
+      "filtersTruncated": "Some filters were dropped ({count} maximum)",
+      "valuesTruncated": "{count, plural, =1 {# value} other {# values}} per filter maximum — extra values were dropped"
+    },
+    "savedViews": {
+      "title": "Saved views",
+      "save": "Save view",
+      "saveTitle": "Save view",
+      "saveDescription": "Name this view so you can return to these filters later.",
+      "namePlaceholder": "e.g. Smoke cases, not automated",
+      "descriptionPlaceholder": "What this view is for",
+      "nameRequired": "Enter a name for this view.",
+      "loginRequired": "You must be signed in to save views.",
+      "nothingToSave": "Add a filter or a grouping first.",
+      "saved": "View saved",
+      "savedDescription": "“{name}” is now in your saved views.",
+      "saveFailed": "Couldn't save the view. Please try again.",
+      "empty": "No saved views yet",
+      "emptyHint": "Save the current filters to return to them later.",
+      "apply": "Apply view: {name}",
+      "applied": "Applied “{name}”",
+      "droppedFilters": "{count, plural, =1 {# filter no longer exists and was skipped} other {# filters no longer exist and were skipped}}",
+      "droppedGrouping": "Its grouping is no longer available, so the default is used.",
+      "unreadable": "{count, plural, =1 {# saved view} other {# saved views}} couldn't be read",
+      "rename": "Rename",
+      "renameTitle": "Rename saved view",
+      "renamed": "Saved view updated",
+      "renameFailed": "Couldn't update the view. Please try again.",
+      "delete": "Delete",
+      "deleteTitle": "Delete saved view?",
+      "deleteConfirm": "“{name}” will be removed from your saved views. This can't be undone.",
+      "deleted": "Saved view deleted",
+      "deleteFailed": "Couldn't delete the view. Please try again."
     }
   },
   "tags": {
@@ -3251,11 +3683,20 @@
     "delete": {
       "confirmMessage": "Are you sure you want to delete this attachment?",
       "deferredMessage": "This attachment will be deleted when you save."
+    },
+    "preview": {
+      "unavailable": "Preview unavailable",
+      "tooLarge": "This file is too large to preview.",
+      "empty": "This document appears to be empty.",
+      "download": "Download to view",
+      "slideCounter": "Slide {current} of {total}",
+      "previousSlide": "Previous slide",
+      "nextSlide": "Next slide"
     }
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Review requested from <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Pending review by <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Changes requested",
       "rejectedTitle": "Review rejected",
       "requestAgain": "Request review again",
@@ -3268,6 +3709,13 @@
       "success": "Review request cancelled.",
       "error": "Could not cancel the review request. Try again in a moment."
     },
+    "nudge": {
+      "success": "{count, plural, one {Reminder sent to # reviewer.} other {Reminder sent to # reviewers.}}",
+      "error": "Could not send the reminder. Try again in a moment.",
+      "tooSoon": "A reminder for this request already went out in the last hour. Try again later.",
+      "cooldownTooltip": "Reminder already sent {ago}",
+      "noRecipients": "No one can act on this request right now. Check that the assignee still has access to the project."
+    },
     "list": {
       "pendingTooltip": "Pending review from {assignee}"
     },
@@ -3276,35 +3724,43 @@
       "gatedOptionBadge": "Requires review",
       "gatedStatesNotSelectable": "States at or beyond a gated state can't be selected when creating. Pick a state before the first gate, then use Request review to cross it.",
       "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving.",
-      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
-      "toastReviewRequired": "Approval required before this transition. Request a review and try again after it's approved.",
+      "bulkBlockedHeading": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\":",
+      "bulkBlockedHeadingMixed": "{count, plural, one {# case needs} other {# cases need}} approval before this transition:",
+      "bulkBlockedMore": "and {count, plural, one {# more case} other {# more cases}}",
+      "bulkBlockedFooter": "Each blocked case needs an approved review before this transition.",
+      "toastReviewRequired": "Approval required before this transition. Request a review — the transition is applied for you once it's approved.",
       "toastPendingReviewExists": "A review is already pending for this transition. Wait for the decision or cancel it before retrying."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
       "pageTitle": "Reviews",
-      "pageDescription": "Pending review requests assigned to you (directly or via a role you hold).",
-      "pageDescriptionDecided": "Review requests you've already decided.",
       "tabPending": "Pending",
       "tabDecided": "Decided",
-      "emptyDecided": "You haven't decided any reviews yet.",
-      "empty": "No pending reviews. You're all caught up.",
+      "emptyDecided": "No decided reviews yet. Reviews you decide, and decisions on reviews you request, will appear here.",
+      "empty": "No pending reviews. Nothing is waiting on you, and every review you've requested has been decided.",
       "featureDisabled": "The review workflow feature is currently disabled. Pending reviews are preserved and will reappear when the feature is re-enabled.",
       "columnEntity": "Entity",
       "columnProject": "Project",
       "columnRequester": "Requester",
+      "columnAssignee": "Assignee",
       "columnTransition": "Transition",
-      "columnTransitionFrom": "From",
-      "columnTransitionTo": "To",
       "columnRequestedAt": "Requested at",
+      "columnDecidedBy": "Decided by",
       "columnDecidedAt": "Decided at",
       "columnStatus": "Status",
       "columnActions": "Actions",
       "actionApprove": "Approve",
       "actionRequestChanges": "Request changes",
       "actionReject": "Reject",
+      "actionNudge": "Send reminder",
       "filterEntityType": "Entity type",
       "filterProject": "Project",
+      "filterRequester": "Requester",
+      "filterAllRequesters": "All requesters",
+      "filterDecidedBy": "Decided by",
+      "filterAllDeciders": "All deciders",
+      "filterStatus": "Status",
+      "filterAllStatuses": "All statuses",
       "filterAllEntityTypes": "All entity types",
       "filterEntityTypeCase": "Test cases",
       "filterEntityTypeRun": "Test runs",
@@ -3316,7 +3772,7 @@
       "sheetDescription": "Send this entity for review before transitioning to the target state.",
       "assigneeLabel": "Assignee",
       "assigneePlaceholder": "Select a user or role",
-      "usersHoldRole": "{count, plural, one {# user holds this role} other {# users hold this role}}",
+      "usersNotified": "{count, plural, =0 {No one will be notified} one {# user will be notified} other {# users will be notified}}",
       "targetStateLabel": "Target state",
       "targetStatePlaceholder": "Select a target state",
       "commentLabel": "Comment",
@@ -3332,6 +3788,20 @@
       "ineligibleAssigneeErrorUser": "{name} can't approve reviews for this area. Pick another user or a role.",
       "ineligibleAssigneeErrorRole": "The {roleName} role can't approve reviews for this area. Pick another role or a user."
     },
+    "bulkRequester": {
+      "saveAndRequestButton": "Save & request review",
+      "sheetDescription": "{count, plural, one {# selected case needs} other {# selected cases need}} approval before reaching \"{targetStateName}\". Each one is submitted for the first gated state it must cross.",
+      "breakdownLabel": "Reviews to request",
+      "breakdownRow": "{count, plural, one {# case} other {# cases}}",
+      "autoCommentNote": "Each case gets an automatic comment naming its own transition, and the reviewer is notified once for the whole batch.",
+      "otherEditsNote": "Your other field edits are applied when you submit. The state change waits for approval.",
+      "pendingSkipNote": "{count, plural, one {# case is} other {# cases are}} already awaiting review and will be skipped.",
+      "submitSuccess": "{count, plural, one {# review request created} other {# review requests created}}.",
+      "submitSuccessWithSkips": "{created, plural, one {# review request created} other {# review requests created}}, {skipped, plural, one {# skipped} other {# skipped}} (already awaiting review).",
+      "nothingToRequest": "No review requests were needed for the selected cases.",
+      "editsAppliedNoRequests": "Your edits were saved. No review requests were needed.",
+      "selectionTooLarge": "Too many cases selected to request review at once. Select fewer and try again."
+    },
     "assigneeChip": {
       "emptyMembers": "No project-eligible members hold this role.",
       "unnamedUser": "(unnamed user)"
@@ -3341,7 +3811,7 @@
       "requestChanges": "Request changes",
       "reject": "Reject",
       "approveConfirmTitle": "Approve this review request?",
-      "approveConfirmDescription": "Approving will permit <requester></requester> to transition <name></name> to <state></state>.",
+      "approveConfirmDescription": "Approving moves <name></name> to <state></state> for <requester></requester>.",
       "approvalNoteLabel": "Approval note",
       "approvalNotePlaceholder": "Add an optional note for the requester (visible alongside the approval).",
       "requestChangesDescription": "Tell the requester what needs to change before you can approve this transition.",
@@ -3361,9 +3831,60 @@
     }
   },
   "runs": {
+    "bulk": {
+      "completeTitle": "Complete {count, plural, one {# Test Run} other {# Test Runs}}",
+      "completeDescription": "Are you sure you want to complete {count, plural, one {this test run} other {these test runs}}?",
+      "deleteTitle": "Delete {count, plural, one {# Test Run} other {# Test Runs}}",
+      "deleteDescription": "Are you sure you want to delete {count, plural, one {this test run} other {these test runs}}? Results will be retained for historical analysis."
+    },
+    "composition": {
+      "lock": "Cases Locked",
+      "unlocked": "Cases Unlocked",
+      "unlock": "Unlock",
+      "locked": "Composition locked",
+      "lockHint": "Freeze which cases are in this run. Users can still assign and execute test cases.",
+      "lockedBy": "Composition locked by {name}.",
+      "lockedAutomatically": "Composition locked automatically when execution started.",
+      "frozenNotice": "Composition is locked — test cases can't be added, removed, or reordered. You can still assign and execute test cases.",
+      "lockError": "Failed to lock the run composition",
+      "unlockError": "Failed to unlock the run composition",
+      "addBlocked": "This run's composition is locked, so test cases can't be added. Unlock it first to change the case set."
+    },
+    "distribute": {
+      "title": "Distribute assignments",
+      "description": "Evenly assign this run's test cases across team members, keeping related cases together.",
+      "selectUsers": "Team members",
+      "usersPlaceholder": "Select team members",
+      "scopeAllConfigs": "All configurations",
+      "scopeThisRun": "This run only",
+      "strategyLabel": "Configuration strategy",
+      "strategyKeepTogether": "Keep configurations together",
+      "strategyKeepTogetherHint": "Each tester owns a set of cases across every configuration.",
+      "strategySplitByConfig": "Split by configuration",
+      "strategySplitByConfigHint": "Each tester owns whole configurations.",
+      "groupingLabel": "Group similar cases",
+      "groupingHint": "Keep cases in the same section and sharing tags with one tester.",
+      "balancingLabel": "Balance by",
+      "balancingEffort": "Estimated time",
+      "balancingCount": "Number of cases",
+      "balancingFallbackHint": "No estimates on these cases — balancing by number of cases instead.",
+      "existingLabel": "Existing assignments",
+      "existingOnlyUnassigned": "Only fill unassigned cases",
+      "existingReassignAll": "Reassign everything",
+      "previewTitle": "Preview",
+      "previewNoUsers": "Select team members to preview the distribution.",
+      "previewUser": "Team Member",
+      "previewCases": "Cases",
+      "previewSkipped": "{count, plural, one {# case skipped} other {# cases skipped}} (already assigned or completed)",
+      "confirming": "Assigning…",
+      "success": "Distributed {count, plural, one {# case} other {# cases}} across {users, plural, one {# member} other {# members}}",
+      "errorGeneric": "Failed to distribute assignments",
+      "errorRunCompleted": "This run is completed and can no longer be changed",
+      "errorNeedUsers": "Select at least one project member to distribute to",
+      "errorNoAssignable": "There are no cases to distribute in this run"
+    },
     "auditLog": {
       "trigger": "Activity",
-      "title": "Activity Log",
       "description": "All changes recorded for this test run."
     },
     "notFound": "Test run not found.",
@@ -3466,6 +3987,8 @@
       "recentResultsDescription": "View the recent results of the test run",
       "recentAutomatedResultsTitle": "Recent Automated Results",
       "noRecentAutomatedResults": "No recent automated results found.",
+      "automationRunsInProgress": "{count, plural, =1 {# Automation Run in Progress} other {# Automation Runs in Progress}}",
+      "automationRunsInProgressDescription": "Live status of running automated test runs.",
       "recentResultsDateRange": "Date Range",
       "recentResultsElapsed": "Elapsed",
       "noRecentResults": "No recent results found.",
@@ -3498,20 +4021,43 @@
           "copy": "Copy existing test case assignments",
           "assign": "All test cases in the duplicated test run will retain their existing assignments",
           "unassign": "All test cases in the duplicated test run will be unassigned"
+        },
+        "configurationGroup": {
+          "label": "Configuration Group",
+          "separate": "The copies are grouped with each other only. The test run being duplicated stays outside that group",
+          "join": "The test run being duplicated and every copy join the same configuration group"
         }
       },
       "successMessage": "Successfully duplicated test run '{name}'.",
       "errorMessage": "Failed to duplicate test run. Error: {error}"
     },
+    "removeCasesDialog": {
+      "title": "Remove Test Cases",
+      "description": "Are you sure you want to remove these test cases from this test run?",
+      "warning": "This action cannot be undone. Any results recorded for these test cases in this run will be lost. The test cases themselves will remain in the repository."
+    },
     "filter": {
       "placeholder": "Filter test runs..."
     },
+    "empty": {
+      "noMatchingCompleted": "No completed test runs match your filter.",
+      "noMatchingActive": "No active test runs match your filters."
+    },
+    "milestoneGroup": {
+      "runCount": "{count, plural, one {# run} other {# runs}}",
+      "altHintMac": "Hold ⌥ to expand or collapse all groups",
+      "altHintWin": "Hold Alt to expand or collapse all groups"
+    },
+    "runFilters": {
+      "label": "Filter test runs",
+      "mine": "My Test Runs"
+    },
     "typeFilter": {
-      "label": "Show",
       "both": "Manual & Automated"
     },
-    "empty": {
-      "noMatchingCompleted": "No completed test runs match your filter."
+    "junitFilters": {
+      "retried": "Retried",
+      "clear": "Clear filters"
     }
   },
   "admin": {
@@ -3530,6 +4076,7 @@
       "tags": "Tags",
       "issues": "Issues",
       "appConfig": "Application Configuration",
+      "recordKeys": "Record Keys",
       "notifications": "Notifications",
       "imports": "Data Imports",
       "integrations": "Issue Integrations",
@@ -3559,6 +4106,7 @@
       "peopleAndAccess": "People & Access",
       "authentication": "Authentication",
       "toolsAndIntegrations": "Tools & Integrations",
+      "aiTools": "AI Tools",
       "system": "System"
     },
     "imports": {
@@ -3735,7 +4283,8 @@
           "namePlaceholder": "Enter a workflow name",
           "scopePlaceholder": "Select scope",
           "iconColorLabel": "Icon & color",
-          "typeLabel": "Workflow type"
+          "typeLabel": "Workflow type",
+          "scopeLabel": "Workflow scope"
         },
         "mappingDatasets": "Datasets requiring review",
         "mappingImportConfiguration": "Import configuration",
@@ -3761,6 +4310,12 @@
           "actionMap": "Map to existing",
           "actionCreate": "Create new",
           "workflowTypePlaceholder": "Select type",
+          "workflowScope": {
+            "default": "Other",
+            "cases": "Test Cases",
+            "runs": "Test Runs",
+            "sessions": "Sessions"
+          },
           "noWorkflowsAvailable": "No workflows available.",
           "noStatusesAvailable": "No statuses available.",
           "noGroupsAvailable": "No groups available.",
@@ -3885,7 +4440,9 @@
           "templateFieldTemplateLabelPlural": "templates",
           "templateFieldTargetGroupCase": "Case fields",
           "templateFieldTargetGroupResult": "Result fields",
-          "columnAction": "Action"
+          "columnAction": "Action",
+          "configurationVariantSelectPlaceholder": "Select configuration variant",
+          "configurationVariantCategoryPlaceholder": "Select category"
         },
         "nextSteps": "After the background import completes you can review the migrated data from the target projects.",
         "nextStepsDescription": "Background imports run asynchronously. You can monitor the status above or refresh the page to view updates."
@@ -4297,6 +4854,10 @@
           "warning": "Case Field will be removed from any Templates. This action cannot be undone."
         }
       },
+      "generateDefaultOn": "Included by default in the Generate Test Cases wizard. Click to exclude it by default.",
+      "generateDefaultOff": "Excluded by default in the Generate Test Cases wizard. Click to include it by default.",
+      "jiraPanelOn": "Shown in the Jira plugin panel for linked test cases. Click to hide it.",
+      "jiraPanelOff": "Hidden from the Jira plugin panel. Click to show it for linked test cases.",
       "resultFields": {
         "description": "Manage result fields",
         "add": {
@@ -4396,7 +4957,6 @@
       "allFileExtensions": "All Extensions",
       "allLanguages": "All Languages",
       "showEnabled": "Enabled only",
-      "showAll": "All",
       "variableInserter": {
         "placeholder": "Insert variable...",
         "groups": {
@@ -4656,6 +5216,7 @@
     },
     "workflows": {
       "description": "Manage test case workflows",
+      "reviewsTitle": "Review Workflow",
       "systemFeatureCard": {
         "title": "Review Workflow",
         "description": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
@@ -4664,10 +5225,10 @@
         "updateSuccessEnabled": "Review workflow enabled.",
         "updateSuccessDisabled": "Review workflow disabled.",
         "updateError": "Failed to update review workflow setting. Try again in a moment.",
-        "remindersToggleLabel": "Send reminder notifications for pending reviews",
+        "remindersToggleLabel": "Send reminder notifications for pending reviews after",
         "remindersToggleAriaLabel": "Toggle review reminder notifications",
         "thresholdLabel": "Remind reviewers after",
-        "thresholdUnit": "day(s)",
+        "thresholdUnit": "{count, plural, one {day} other {days}}",
         "thresholdSaveButton": "Save",
         "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
         "thresholdUpdateSuccess": "Review reminder settings updated.",
@@ -4716,6 +5277,10 @@
     },
     "roles": {
       "description": "Define what actions users can perform by toggling permissions for each application area.",
+      "confirmDefaultDescription": "Are you sure you want to set this Role as the Default?",
+      "defaultWarning": "New users will be assigned this Role by default.",
+      "defaultLockedTitle": "Default Role",
+      "defaultLockedDescription": "To change the default, edit a different Role and set it as the default.",
       "filterPlaceholder": "Filter roles...",
       "add": {
         "button": "Add Role",
@@ -4750,11 +5315,24 @@
         "modeNone": "No restriction (projects decide)",
         "modeDisabled": "Disable editing everywhere",
         "modeMax": "Allow editing up to a maximum window",
-        "minutesLabel": "Maximum window (minutes)",
+        "minutesBefore": "Maximum window:",
+        "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+        "minutesAriaLabel": "Maximum window in minutes",
         "invalidMinutes": "Enter a number of minutes greater than zero",
         "save": "Save policy",
         "savedToast": "Result editing policy updated",
         "saveError": "Failed to update the result editing policy"
+      },
+      "abandonedRunPolicy": {
+        "title": "Abandoned automation cleanup",
+        "modeOn": "Close abandoned automated runs automatically",
+        "minutesBefore": "Idle for at least:",
+        "minutesUnit": "{minutes, plural, one {minute} other {minutes}}",
+        "minutesAriaLabel": "Idle threshold in minutes",
+        "invalidMinutes": "Enter at least {min} minutes",
+        "save": "Save policy",
+        "savedToast": "Abandoned automation cleanup updated",
+        "saveError": "Failed to update the abandoned automation cleanup policy"
       },
       "add": {
         "button": "Add Status",
@@ -4793,6 +5371,20 @@
         "forSession": "For Session",
         "color": "Color"
       }
+    },
+    "recordKeys": {
+      "pageDescription": "Configure cosmetic, project-prefixed identifiers such as PROJECT-TC-1234 that make it easy to tell which project a record belongs to and what kind of record it is. The underlying numeric ID is unchanged and continues to work everywhere.",
+      "title": "Project-prefixed record keys",
+      "description": "When enabled, records display an optional key combining the project code, a type token, and the record's numeric ID. Set each project's code in Project Settings → Advanced.",
+      "toggleAriaLabel": "Toggle project-prefixed record keys",
+      "tokensHeading": "Type tokens",
+      "tokensHelp": "The token used for each kind of record. 1–6 uppercase letters, no digits or hyphens. Tokens must be unique.",
+      "invalidToken": "Invalid",
+      "duplicateToken": "Duplicate token",
+      "tokensSaved": "Type tokens saved.",
+      "enableSuccess": "Project-prefixed record keys enabled.",
+      "disableSuccess": "Project-prefixed record keys disabled.",
+      "saveError": "Could not save. Please try again."
     },
     "appConfig": {
       "description": "Manage global application configurations",
@@ -4936,6 +5528,8 @@
       "confirmDefault": "Confirm Default",
       "confirmDefaultDescription": "Are you sure you want to set this Milestone Type as the Default?",
       "warning": "This Milestone Type will be added to all Projects.",
+      "defaultLockedTitle": "Default Milestone Type",
+      "defaultLockedDescription": "To change the default, edit a different Milestone Type and set it as the default.",
       "wizard": {
         "selectProjects": "Select Projects",
         "projectsSelected": "{count, plural, =0 {No projects selected} one {# project selected} other {# projects selected}}",
@@ -5033,7 +5627,8 @@
         "repositoryCaseVersions": "Repository Case Versions",
         "testRunStepResults": "Test Run Step Results",
         "issueConfigs": "Issue Configs",
-        "sharedStepGroups": "Shared Step Groups"
+        "sharedStepGroups": "Shared Step Groups",
+        "dataSets": "Datasets"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -5043,7 +5638,9 @@
         "noResults": "No deleted {itemType} found matching your search for \"{query}\".",
         "restoreConfirmationMessage": "Are you sure you want to restore this row from the {itemType} table? Associated data might also be restored.",
         "purgeConfirmationMessage": "Are you sure you want to permanently delete this row from the {itemType} table? This action cannot be undone and might remove associated data."
-      }
+      },
+      "filterTypesPlaceholder": "Filter item types...",
+      "summary": "{count, plural, =0 {Trash is empty} one {# item in trash} other {# items in trash}}"
     },
     "notifications": {
       "title": "Notification Administration",
@@ -5264,6 +5861,7 @@
         "encrypted": "Encrypted",
         "encryptedHelp": "This field is encrypted and stored securely",
         "changeCredential": "Change",
+        "leaveBlankToKeep": "Leave blank to keep existing value",
         "apiKeyWarningTitle": "API Key Authentication Notice",
         "apiKeyWarningDescription": "With API key authentication, the reporter on created issues may not match the TestPlanIt user who created them — even when emails match:",
         "apiKeyWarningPoint1": "Setting the Jira reporter requires the API token account to have Jira administrator (\"Modify Reporter\") permission. Without it, Jira ignores the reporter and the API token owner is recorded as the creator.",
@@ -5384,6 +5982,8 @@
         "billingPeriodStartDayDescription": "Day of month (1-31) when your billing period starts. Values 29-31 use the last day of shorter months.",
         "defaultTemperature": "Default Temperature",
         "defaultMaxTokens": "Default Max Tokens",
+        "repoContextBudgetLabel": "Repository Context Budget (QuickScript)",
+        "repoContextBudgetAuto": "Auto-sized from the model's ~{window} context window — about {budget} tokens of repository code per generation.",
         "timeout": "Request Timeout (ms)",
         "timeoutDescription": "Maximum time to wait for AI model response (5000-600000ms). Does not apply to streaming requests.",
         "streamingEnabled": "Enable Streaming",
@@ -5393,6 +5993,12 @@
         "fetchingModels": "Fetching models...",
         "failedToFetchModels": "Failed to fetch available models",
         "selectModel": "Select a model",
+        "modelsFound": "{count, plural, one {Found {count} available model} other {Found {count} available models}}",
+        "modelsFoundDescription": "Selected \"{model}\" as default model",
+        "noModelsFoundDescription": "The provider returned no available models",
+        "pricingAutoFilled": "Model pricing auto-filled",
+        "pricingAutoFilledDescription": "{model}: ${input} input / ${output} output per 1M tokens",
+        "customLlmModelsHint": "Enter your endpoint URL. If it is OpenAI-compatible (e.g. LiteLLM), models and pricing are fetched automatically.",
         "connectionSuccessfulDescription": "The AI model connection has been verified and is working correctly",
         "failedToConnect": "Failed to connect to the AI model provider",
         "integrationCreated": "AI model integration created successfully",
@@ -5409,6 +6015,7 @@
         "statusDescription": "Enable or disable this integration",
         "apiKeyPlaceholder": "Enter new API key to update...",
         "update": "Update",
+        "modelListUpdated": "Model list updated successfully",
         "integrationUpdated": "AI model integration updated successfully",
         "failedToUpdate": "Failed to update AI model integration",
         "validation": {
@@ -5517,6 +6124,11 @@
     "elasticsearch": {
       "title": "Elasticsearch Management",
       "description": "Manage search engine indexing and maintenance",
+      "health": {
+        "healthy": "Healthy",
+        "warning": "Warning",
+        "unhealthy": "Unhealthy"
+      },
       "status": {
         "title": "Elasticsearch Status",
         "description": "Current connection and health status of the search engine",
@@ -5540,7 +6152,7 @@
         "error": "Error Saving Settings",
         "errorDescription": "Failed to save configuration. Please try again.",
         "note": {
-          "description": "Changes apply to new indices immediately. Existing indices are updated when you save. Set replicas to 0 to resolve YELLOW status on single-node clusters."
+          "description": "Changes apply to new indices immediately. Existing indices are updated when you save. Set replicas to 0 to resolve Warning status on single-node clusters."
         }
       },
       "reindex": {
@@ -5687,7 +6299,6 @@
     },
     "auditLogs": {
       "description": "View system-wide audit trail for security and compliance tracking",
-      "projectDescription": "View the audit trail of actions performed in this project.",
       "filterPlaceholder": "Search by entity, user, or action...",
       "filterAction": "Action",
       "filterEntityType": "Entity Type",
@@ -5709,7 +6320,8 @@
         "entityName": "Entity Name",
         "userId": "User ID",
         "ipAddress": "IP Address",
-        "userAgent": "User Agent"
+        "userAgent": "User Agent",
+        "source": "Source"
       },
       "exportCsv": "Export CSV",
       "timeRange": "Time range",
@@ -5807,6 +6419,13 @@
         "reviewEntityLabelCase": "test case",
         "reviewEntityLabelRun": "test run",
         "reviewEntityLabelSession": "session",
+        "reviewBulkEntityLabelCase": "test cases",
+        "reviewBulkEntityLabelRun": "test runs",
+        "reviewBulkEntityLabelSession": "sessions",
+        "reviewBulkSummaryCase": "{count} test cases",
+        "reviewBulkSummaryRun": "{count} test runs",
+        "reviewBulkSummarySession": "{count} sessions",
+        "reviewBulkRequestedEmailMessage": "{actorName} requested your review of {count} {entityLabel} in project \"{projectName}\".",
         "reviewTransition": "Transition: {from} → {to}",
         "reviewCommentPreview": "Comment: {comment}",
         "reviewRequestedEmailMessage": "{actorName} requested your review of {entityLabel} \"{entityName}\" in project \"{projectName}\".",
@@ -5820,7 +6439,14 @@
         "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}",
         "aiStepsDerivedTitle": "AI-Derived Test Steps Ready",
         "aiStepsDerivedMessage": "{count, plural, one {# test case was} other {# test cases were}} given AI-derived steps — review for accuracy.",
-        "aiStepsDerivedReviewLink": "Review test run"
+        "aiStepsDerivedReviewLink": "Review test run",
+        "integrationAuthExpiredTitle": "Integration Connection Expired",
+        "integrationAuthExpiredMessage": "Your connection to \"{integrationName}\" has expired. Reconnect to resume issue syncing.",
+        "integrationAuthExpiredReconnect": "Reconnect",
+        "runReadyToCompleteTitle": "Test Run Ready to Complete",
+        "runReadyToCompleteExecuted": "{count, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed.",
+        "runReadyToCompleteEmailMessage": "{caseCount, plural, one {# case has} =2 {Both cases have} other {All # cases have}} been executed in test run \"{testRunName}\" (project \"{projectName}\"). The run is ready to be marked completed.",
+        "runReadyToCompleteReason": "You are receiving this because you can complete test runs in this project."
       }
     },
     "issues": {
@@ -5998,7 +6624,13 @@
     "filterAll": "All",
     "fanOutPartialFailure": "{count, number} project(s) could not be reached. Showing results from {successCount, number} project(s).",
     "projectSelectorLabel": "Project",
-    "searchFailedTitle": "Search failed"
+    "searchFailedTitle": "Search failed",
+    "authComplete": {
+      "successTitle": "Authorization complete",
+      "successDescription": "Your account is now connected. You can close this window and return to what you were doing.",
+      "errorTitle": "Authorization failed",
+      "errorDescription": "The authorization could not be completed. Close this window and try again."
+    }
   },
   "Pages": {
     "Issues": {
@@ -6044,7 +6676,9 @@
     "testCases": "{count, plural, one {# test case} other {# test cases}}",
     "estimate": "Est: {value}",
     "partOf": "(Part of {parent})",
-    "status": "Status: {status}"
+    "status": "Status: {status}",
+    "lane": "Lane {number}",
+    "worker": "Worker {id}"
   },
   "linkedCases": {
     "title": "Linked Test Cases",
@@ -6073,9 +6707,85 @@
     "starts": "Starts:",
     "scheduledCompletion": "Scheduled Completion:",
     "estWorkEffort": "Est. Work Effort:",
-    "noTasks": "No tasks to display in the Gantt chart."
+    "noTasks": "No tasks to display in the Gantt chart.",
+    "businessHours": "{hours, number, ::.0} business hours"
   },
   "help": {
+    "auditLogs": "## Audit Logs\nView system-wide audit trail for security and compliance tracking",
+    "statuses": "## Statuses\nManage the statuses testers assign when recording a test result, such as Passed, Failed, and Blocked.",
+    "configurations": "## Configurations\nConfigurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
+    "categories": "## Categories\nCategories group related variants — like Browser or Operating System — that combine to define a test environment.",
+    "stepDuplicates": "## Step Sequence Duplicates\nReview matched step sequences across test cases. Convert matches to Shared Step groups or dismiss false positives.",
+    "templates": "## Templates\nManage test case templates and fields",
+    "caseFields": "## Case Fields\nCustom fields available on test cases, assigned to templates to control which cases use them.",
+    "resultFields": "## Result Fields\nCustom fields captured when recording a test result, assigned to templates to control where they apply.",
+    "milestoneTypes": "## Milestone Types\nMilestone types categorize milestones — like Sprint, Release, or Version — and can be reused across projects.",
+    "tags": "## Tags\nTags label and organize test cases and sessions so you can group and find related work across projects.",
+    "issues": "## Issues\nIssues are external tracker items — from Jira, GitHub, Azure DevOps, and other integrations — synced into TestPlanIt so they can be linked to test cases, runs, and sessions.",
+    "crossProjectReports": "## Cross-Project Reports\nBuild, run, and analyze reports that span multiple projects, such as automation trends across your entire test suite.",
+    "users": "## Users\nA directory of the people you collaborate with — users who share at least one project with you — and the projects you share with each of them. Administrators see every user and their full project list.",
+    "documentation": "## Documentation\nFree-form documentation for this project — notes, references, and onboarding details.",
+    "projectMilestones": "## Milestones\nMilestones group and track this project's work by target — releases, sprints, or custom types — across active and completed states.",
+    "projectRepository": "## Test Case Repository\nThis project's library of test cases, organized into folders.",
+    "repositoryDuplicates": "## Duplicate Candidates\nPotential duplicate test cases found during the last scan of this project's repository. Rescanning analyzes the repository again and refreshes the list with the latest candidates.",
+    "projectSharedSteps": "## Shared Steps\nReusable groups of test steps that multiple test cases can share — updating a group updates every case that references it.",
+    "projectRuns": "## Test Runs\nTest runs execute a chosen set of test cases and record their results, tracking progress from start to completion.",
+    "projectSessions": "## Sessions\nExploratory testing sessions — time-boxed, unscripted testing captured as notes and results across active and completed states.",
+    "projectTags": "## Tags\nTags label and group this project's test cases, sessions, and runs so related work is easy to find.",
+    "projectIssues": "## Issues\nIssues from this project's connected trackers, linked to the test cases, runs, and sessions where they were found or referenced.",
+    "projectReports": "## Reports\nReports summarize this project's testing — test runs, sessions, and results — as charts and tables you can filter and export.",
+    "projectAuditLogs": "## Audit Logs\nThe audit trail of actions performed in this project — who changed what, and when — for security and compliance tracking.",
+    "projectIntegrations": "## Issue Integrations\nConnect this project to an issue tracker so its test cases, runs, and sessions can link to and sync with external issues and milestones.",
+    "projectWebhooks": "## Webhooks\nSend and receive event notifications for this project — inbound hooks bring external changes in, outbound hooks push test events out, and deliveries record what was sent.",
+    "projectAiModels": "## AI Models\nChoose the AI model and prompt configuration this project uses for its AI-assisted features, such as test-case generation and auto-tagging.",
+    "projectQuickScript": "## QuickScript\nConnect a code repository so this project can generate test cases from your automated test files, choosing which branch and paths to include.",
+    "projectParameters": "## Test Case Parameters\nConfigure this project's data-driven testing — JUnit iteration property names for imported results and reusable data sets for parameterized cases.",
+    "projectAdvanced": "## Advanced\nAdvanced settings for this project — the record ID prefix, result review workflow, automatic issue creation on failure, and the result edit window.",
+    "projectShares": "## Manage Shares\nShareable links to this project's reports, each with its own access level — public, sign-in required, or password protected. Revoking a link cuts off its access.",
+    "groups": "## Groups\nGroups let you assign project access and roles to many users at once. Add members directly, or map a group from your identity provider.",
+    "roles": "## Roles\nRoles control what users can do — each one toggles permissions per application area. Assign a role to users directly or as a project default.",
+    "sso": "## Authentication\nManage how users sign in and whether new accounts can register.",
+    "ssoProviders": "## Sign-in Providers\nConfigure how users can sign in to your application.",
+    "ssoRegistration": "## Registration Settings\nControl who can register for new accounts.",
+    "ssoAllowRegistration": "## Allow Self-Registration\nWhen disabled, new users cannot sign up directly or create an account via SSO. Existing users can still sign in.",
+    "ssoDefaultAccess": "## Default Access Level\nThe system access level assigned to new users when they register.",
+    "ssoRequireEmailVerification": "## Require Email Verification\nUsers must verify their email address before accessing the system.",
+    "ssoRestrictDomains": "## Restrict Email Domains\nOnly allow registration from specific email domains.",
+    "security": "## Security\nConfigure sign-in enforcement, password policy, lockout settings, and enforcement actions.",
+    "securitySignInEnforcement": "## Sign-in Enforcement\nRequire SSO and enforce two-factor authentication.",
+    "securityForceSso": "## Force SSO Login\nDisable email login and require users to use SSO.",
+    "securityForce2FANonSSO": "## Require 2FA for Password Logins\nUsers signing in with email/password must set up and use two-factor authentication.",
+    "securityForce2FAAllLogins": "## Require 2FA for All Logins\nAll users must verify with 2FA after signing in, including SSO users.",
+    "securityPasswordPolicy": "## Password Policy\nSet requirements for user passwords.",
+    "securityLockoutPolicy": "## Lockout Policy\nConfigure account lockout after failed login attempts.",
+    "securityEnforcement": "## Enforcement Actions\nForce password changes for credential-based users.",
+    "apiTokens": "## API Tokens\nView and manage API tokens across all users. Revoke tokens if there are security concerns.",
+    "scim": "## SCIM Provisioning\nProvision users from your identity provider into TestPlanIt over SCIM 2.0.",
+    "scimConflicts": "## External-ID Conflict Log\nSCIM identity events that required system intervention (linking, resurrection, displayName overwrite, skipped members).",
+    "scimFallbackDefault": "## Default Mapped Access\nAccess tier assigned to users not covered by any group mapping.",
+    "integrations": "## Issue Integrations\nManage third-party integrations for issue tracking.",
+    "notifications": "## Notification Administration\nSet the default notification preferences (users can override) and send out System Notifications.",
+    "notificationsSystem": "## System Notifications\nSend important announcements to all users.",
+    "notificationsHistory": "## Notification History\nSystem notifications previously sent to all users.",
+    "aiModels": "## AI Models\nManage the AI model providers and connections used for AI-assisted features, including usage limits and budgets.",
+    "prompts": "## Prompt Configurations\nManage the prompt configurations AI features use to generate content, and assign them to projects.",
+    "quickscripts": "## QuickScript Templates\nManage templates used by QuickScript to convert test cases into automation scripts.",
+    "codeRepositories": "## Code Repositories\nManage code repository connections for QuickScript context.",
+    "recordKeys": "## Record Keys\nConfigure cosmetic, project-prefixed identifiers such as PROJECT-TC-1234 that make it easy to tell which project a record belongs to and what kind of record it is. The underlying numeric ID is unchanged and continues to work everywhere.",
+    "recordKeysEnabled": "## Project-Prefixed Record Keys\nWhen enabled, records display an optional key combining the project code, a type token, and the record's numeric ID. Set each project's code in Project Settings → Advanced.",
+    "imports": "## Data Imports\nBring data from external test management tools into TestPlanIt.",
+    "elasticsearchStatus": "## Elasticsearch Status\nCurrent connection and health status of the search engine.",
+    "elasticsearchConfig": "## Elasticsearch Configuration\nConfigure Elasticsearch settings for your deployment.",
+    "elasticsearchReindex": "## Reindex Data\nRebuild search indices for improved search performance.",
+    "queues": "## Background Job Queues\nMonitor and manage background job processing queues.",
+    "trash": "## Trash\nRestore or permanently purge soft-deleted records across the system.",
+    "systemWebhooks": "## System Webhooks\nOutbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead.",
+    "workflows": "## Workflows\nManage the workflow states for test cases, test runs, and sessions.",
+    "workflowReviews": "## Review Workflow\nEnforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
+    "reviewReminders": "## Review Reminders\nHow many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
+    "reviews": "## Reviews\nReview requests assigned to you, either directly or through a role you hold. Pending is your queue of requests still waiting on a decision; Decided lists the ones you have already approved, rejected, or asked for changes on.",
+    "resultEditingPolicy": "## Result Editing Policy\nControl how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
+    "abandonedRunPolicy": "## Abandoned Automation Cleanup\nWhen a CI job is aborted or its agent dies, the automated test run it created never receives its completion call and stays In Progress forever. With this policy on, a background sweep runs every 15 minutes and closes any incomplete automated run that has received no results for the configured idle time (minimum 15 minutes). Manual runs are never affected. Each project can override the threshold — or opt out — in its Advanced settings, and can choose which run state swept runs are moved into. Pick an idle time comfortably longer than the longest quiet stretch of a healthy run; a full day is a safe default.",
     "project": {
       "name": "## Project Name\nThe unique identifier for your project.\n\n- Must be unique across all projects\n- Used in navigation and reports\n- Should be clear and descriptive\n- Helps team members identify the project scope",
       "description": "## Project Description\nAdditional details about the project's purpose and scope.\n\n- Optional but recommended\n- Helps team members understand project goals\n- Can include key objectives or requirements\n- Limited to 256 characters",
@@ -6086,6 +6796,7 @@
       "issueTracker": "## Issue Tracker Configuration\nSelect the issue tracker configuration to be used for managing issues related to this project."
     },
     "projects": {
+      "overview": "## Projects\nProjects are the top-level containers for your test cases, runs, sessions, and milestones. Create and manage every project from here.",
       "settings": {
         "integrations": {
           "externalProjectHelp": "## External Project\nSelect the project or repository in the external system to link with this TestPlanIt project.\n\n- Issues created from TestPlanIt will be created in this project\n- Enables issue tracking integration between systems\n- Must have appropriate permissions in the external system",
@@ -6125,12 +6836,14 @@
       "description": "## Description\nDetailed information about the milestone's purpose, requirements, and scope.\n\n- Provides context for team members\n- Documents key requirements and objectives\n- Supports collaboration and alignment",
       "documentation": "## Documentation\nAdditional details, references, and supporting materials.\n\n- Technical specifications\n- Design documents\n- External references\n- Meeting notes and decisions",
       "automaticCompletion": "## Auto-Complete on Due Date\nAutomatically marks this milestone as completed when its due date is reached.\n\n- Milestone will be completed at the scheduled time on the due date\n- Useful for time-boxed milestones that should close regardless of completion status\n- Can be overridden by manually completing the milestone before the due date\n- Requires a due date to be set",
-      "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed"
+      "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed",
+      "managedByJira": "## Managed by Jira\nThis milestone's name, dates, and status are managed by Jira. Make changes there to update them here."
     },
     "session": {
       "name": "## Session Name\nA clear, descriptive name that identifies the purpose of your testing session.\n\n- Should be unique and meaningful\n- Helps team members understand what is being tested\n- Used in reports and tracking",
       "template": "## Template\nTemplates define the structure and content of your testing session.\n\n- Provides a consistent format for test documentation\n- Includes predefined sections and fields\n- Helps maintain testing standards across your project",
       "configuration": "## Configuration\nThe specific environment or setup required for this testing session.\n\n- Test environment (e.g., Staging, Production)\n- Special configurations or settings\n- Required test data or conditions",
+      "configurationGroup": "## Configuration Group\nSessions in a configuration group cover the same testing under different configurations, so you can switch between them and compare their results in one place.\n\nSessions created together for several configurations are grouped automatically. Link a session here when it was created on its own.\n\nYou link to one session, but you join everything that session is already grouped with — a group has no owner, so every member is linked to every other.\n\nGrouping only changes how the sessions are presented together. It never moves test cases or results.",
       "milestone": "## Milestone\nAssociates this session with a project milestone.\n\n- Helps track testing progress towards project goals\n- Groups related testing sessions\n- Supports milestone-based reporting",
       "description": "## Description\nA brief overview of what this testing session covers.\n\n- Key areas or features being tested\n- Important context or background\n- Special considerations or requirements",
       "mission": "## Mission\nThe mission defines the specific objectives and goals for this testing session.\n\n- What are you testing?\n- What are the key areas of focus?\n- What are the expected outcomes?\n\nA clear mission helps keep testing focused and productive.",
@@ -6146,6 +6859,7 @@
       "name": "## Test Run Name\nEnter a descriptive name for this test run to easily identify it later.",
       "description": "## Description\nProvide a brief summary or notes about this test run.",
       "configuration": "## Configurations\nSelect one or more configurations (e.g., environment, browser, device) under which test runs will be executed. Selecting multiple configurations will create separate test runs for each.",
+      "configurationGroup": "## Configuration Group\nRuns in a configuration group cover the same testing under different configurations, so you can switch between them and compare their results in one place.\n\nRuns created together for several configurations are grouped automatically. Link a run here when it was created on its own — for example, one you duplicated later for another configuration.\n\nYou link to one run, but you join everything that run is already grouped with — a group has no owner, so every member is linked to every other.\n\nGrouping only changes how the runs are presented together. It never moves test cases or results.",
       "milestone": "## Milestone\nAssociate this test run with a specific project milestone to track progress towards larger goals.",
       "docs": "## Documentation\nInclude any relevant documentation, links, or detailed notes for this test run.",
       "state": "## State\nIndicate the current status or outcome of this test run according to your project's workflow.",
@@ -6154,7 +6868,8 @@
       "attachments": "## Attachments\nUpload any supporting files, screenshots, or logs related to this test run.",
       "duplicate": {
         "statusesToInclude": "## Statuses to Include\nSelect the statuses of test cases you want to include in the duplicated test run.",
-        "copyAssignments": "## Copy Assignments\nIf enabled, the assignments of the test cases will be copied to the duplicated test run."
+        "copyAssignments": "## Copy Assignments\nIf enabled, the assignments of the test cases will be copied to the duplicated test run.",
+        "configurationGroup": "## Configuration Group\nTest runs that cover the same work across different configurations share a configuration group, and the configuration switcher moves between them.\n\nLeave this off and the copies are grouped with each other only, exactly as before. Turn it on and the test run being duplicated joins that same group, so it and every copy appear as siblings — a single copy joins too."
       }
     },
     "appConfig": {
@@ -6190,7 +6905,7 @@
       "name": "## Template Name\nA unique and descriptive name for this template (e.g., 'Standard Test Case', 'API Test Results').",
       "isEnabled": "## Enabled\nIf checked, this template will be available for selection when creating new test cases or defining test run structures. If a template is set as 'Default', it must also be 'Enabled'.",
       "isDefault": "## Default\nIf checked, this template will be automatically selected for new projects or as the default for all projects if no project-specific default is set. Only one template can be the default across all projects. Enabling this will disable any other template currently set as default.",
-      "caseFields": "## Case Fields\nSelect and order the custom fields that will be available when creating or editing test cases using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear in forms\n- Only enabled case fields are available for selection\n- Case fields define the structure and data captured for test cases",
+      "caseFields": "## Case Fields\nSelect and order the custom fields that will be available when creating or editing test cases using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear in forms\n- Only enabled case fields are available for selection\n- Case fields define the structure and data captured for test cases\n- The sparkles toggle controls whether a field starts selected in the Generate Test Cases wizard; users can still change the selection there",
       "resultFields": "## Result Fields\nSelect and order the custom fields that will be available when adding test results using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear when entering test results\n- Only enabled result fields are available for selection\n- Result fields capture additional data specific to test execution outcomes",
       "projects": "## Associated Projects\nSelect which projects this template will be available for. If no projects are selected, the template will be available globally. Assigning a template to specific projects restricts its use to only those projects."
     },
@@ -6200,12 +6915,13 @@
       "apiKey": "## API Key\nYour authentication key for the LLM provider's API.\n\n- Obtain this from your provider's developer console\n- Kept encrypted and never displayed after saving\n- Not required for Ollama (local deployment)",
       "endpoint": "## API Endpoint\nThe base URL for the LLM provider's API.\n\n- Leave blank for OpenAI, Anthropic, and Gemini — official URLs are used automatically\n- Required for Ollama (e.g. `http://localhost:11434`), Azure OpenAI, and Custom LLM\n- Optional for any provider — point at an OpenAI-compatible proxy (e.g., LiteLLM) by entering its URL\n- **Private/internal addresses** (localhost, 127.0.0.1, private IPs, cloud metadata) are blocked unless explicitly allowed via the `ALLOWED_PRIVATE_HOSTS` environment variable",
       "deploymentName": "## Azure Deployment Name\nThe name of your Azure OpenAI model deployment.\n\n- Found in Azure OpenAI Studio under Deployments\n- Different from the model name — e.g. `my-gpt4-deploy` maps to `gpt-4`\n- Required only for Azure OpenAI",
-      "defaultModel": "## Default Model\nThe model used for AI requests with this integration.\n\n- For OpenAI, Anthropic, and Gemini — available models are fetched automatically from your API key\n- Ensure the model is enabled in your provider account\n- Example: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
-      "maxTokensPerRequest": "## Max Tokens Per Request\nThe **hard ceiling** on output tokens for any single request.\n\n- Requests exceeding this are **rejected with an error** before reaching the LLM\n- Set this to your model's actual maximum output token capacity\n- Example: `16384` for GPT-4o, `8192` for Claude 3.5 Sonnet\n- Setting this too low causes AI features to fail or produce truncated output",
-      "defaultMaxTokens": "## Default Max Tokens\nThe **fallback** output token limit used when a request doesn't specify its own.\n\n- Each AI feature (test generation, code export, etc.) sets its own limit in **Admin → Prompt Config**\n- This value is only used as a fallback for features with no specific limit configured\n- Should be ≤ Max Tokens Per Request",
+      "defaultModel": "## Default Model\nThe model used for AI requests with this integration.\n\n- For OpenAI, Anthropic, Gemini, Ollama, and OpenAI-compatible custom endpoints (e.g. LiteLLM) — available models are fetched automatically\n- When the provider also reports model pricing, the cost fields are filled in automatically on selection\n- Ensure the model is enabled in your provider account\n- Example: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "maxTokensPerRequest": "## Max Tokens Per Request\nThe **hard ceiling on _output_ tokens** the model may generate in a single response.\n\n- Limits the length of the model's **reply** — not how much context you send it\n- Requests that ask for more than this are **rejected before reaching the model**\n- Set it to your model's real maximum output — e.g. `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o\n- Too low → AI features fail or produce truncated output",
+      "defaultMaxTokens": "## Default Max Tokens\nThe **_output_ length** requests on this AI model ask for, bounded by _Max Tokens Per Request_.\n\n- **Test Case Generation** (every source, including the Jira issue panel), **Markdown Test Case Parsing**, **Editor Writing Assistant**, and **Smart Test Case Selection** always use this value — their Prompt Config _Max Output Tokens_ is not applied\n- **Export Code Generation**, **AI Tag Suggestions**, **AI Step Derivation**, and the **Automation Candidates Report** use their own _Max Output Tokens_ from **Admin → Prompt Config** instead\n- Models that think before answering (e.g. Claude Opus 5) spend part of this budget on reasoning — leave room for the reply\n- It does **not** control how much repository code QuickScript sends the model — that budget is derived automatically from the model's context window\n- Keep it ≤ _Max Tokens Per Request_",
+      "repoContextBudget": "## Repository Context Budget\nHow much of your connected repository's code QuickScript feeds the model when generating a script.\n\n- **Set automatically** from the selected model's input context window — there's nothing to configure here\n- Larger-context models (Claude, Gemini) get more; small local models get a safe amount that won't overflow\n- More context grounds the script in your real page objects and fixtures — it does not change how long the generated script is",
       "maxRequestsPerMinute": "## Max Requests Per Minute\nLimits how many API calls can be made to this provider per minute.\n\n- Set to match your provider plan's rate limit\n- Excess requests are queued, not rejected\n- Check your provider's documentation for your plan's limit",
-      "costPerInputToken": "## Cost Per Input Token (USD)\nThe cost in USD for each input (prompt) token sent to the model.\n\n- Used for cost tracking and budget alerts\n- Find this on your provider's pricing page\n- Example: `0.000005` = $5 per million input tokens",
-      "costPerOutputToken": "## Cost Per Output Token (USD)\nThe cost in USD for each output (completion) token generated by the model.\n\n- Usually higher than the input token cost\n- Used for cost tracking and budget alerts\n- Example: `0.000015` = $15 per million output tokens",
+      "costPerInputToken": "## Cost Per 1M Input Tokens (USD)\nThe cost in USD per **million** input (prompt) tokens sent to the model.\n\n- Used for cost tracking and budget alerts\n- Filled in automatically when your provider reports model pricing (LiteLLM, OpenRouter, Together AI) — applied when you select a model or run Test Connection\n- Otherwise, find it on your provider's pricing page\n- Example: `0.15` = $0.15 per million input tokens",
+      "costPerOutputToken": "## Cost Per 1M Output Tokens (USD)\nThe cost in USD per **million** output (completion) tokens generated by the model.\n\n- Usually higher than the input token cost\n- Used for cost tracking and budget alerts\n- Filled in automatically when your provider reports model pricing (LiteLLM, OpenRouter, Together AI) — applied when you select a model or run Test Connection\n- Otherwise, find it on your provider's pricing page\n- Example: `0.60` = $0.60 per million output tokens",
       "monthlyBudget": "## Monthly Budget (USD)\nAn optional spending target for this integration.\n\n- Set to `0` to disable budget tracking\n- Budget is **informational only** — it does not block LLM usage\n- You'll receive notifications at 80%, 90%, and 100% of the budget\n- Costs are calculated using the per-token rates above",
       "billingPeriodStartDay": "## Billing Period Start Day\nThe day of month (1–31) when your billing period starts.\n\n- Default `1` aligns with the calendar month\n- Set to `15` for a 15th-to-15th cycle (e.g., to match your provider invoice date)\n- Values `29–31` automatically clamp to the last day of shorter months (Feb in non-leap years, etc.)\n- Affects the **Monthly Budget** spend window and the **Reset Spend** action",
       "defaultTemperature": "## Default Temperature\nControls the randomness of model responses (0–2).\n\n- **0:** Deterministic — identical output for the same input\n- **0.3:** Focused — recommended for test generation and code output\n- **1+:** Creative — more varied responses\n- Individual features can override this in Prompt Config",
@@ -6292,7 +7008,7 @@
       "isDefault": "## Default\nIndicates whether this workflow is the default for your project.\n\n- Default workflow is pre-selected for new test runs, sessions and automation.",
       "isEnabled": "## Enabled\nIndicates whether this workflow is enabled.",
       "isActive": "## Active\nIndicates whether this workflow state is active and available for use.\n\n- Active workflows can be selected when updating test runs, sessions, or automation\n- Inactive workflows are hidden from selection but preserved in existing items",
-      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow card above to toggle this on.",
+      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Approving a request performs the transition. The reviewer's approval moves the case, run, or session into the requested state; the requester does not repeat the state change by hand.\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow card above to toggle this on.",
       "projects": "## Projects\nIndicates the projects that can use this workflow."
     },
     "testResult": {
@@ -6300,11 +7016,11 @@
       "elapsedTime": "## Elapsed Time\nEnter the total time taken to execute this test case. You can use units like **s** for seconds, **m** for minutes, **h** for hours (e.g., 30s, 5m, 1h 20m).",
       "resultData": "## Result Details\nProvide detailed notes, observations, or any other relevant data about the overall test execution. This can include setup details, steps followed if deviating from the plan, or general comments.",
       "evidence": "## Evidence/Attachments\nUpload any files (e.g., screenshots, logs, data files) that serve as evidence for this test result. These attachments will be linked to this specific result.",
-      "issues": "## Linked Issues\nLink any issues from your integrated issue tracker that are related to this test result. This helps in tracking defects or tasks associated with the outcome of this test.",
+      "issues": "## Linked Issues\nLink any issues from your integrated issue tracker that are related to this test result. This helps in tracking defects or tasks associated with the outcome of this test.\n\nLinking an issue sets the overall status to the first failure status unless you have already chosen one. You can still change it before saving.",
       "stepStatus": "## Step Status\nSelect the status for this specific test step. This allows for granular tracking of progress within a single test case.",
       "stepElapsedTime": "## Step Elapsed Time\nEnter the time taken to execute this specific step. Use units like **s**, **m**, **h** (e.g., 10s, 2m). This is optional.",
       "stepNotes": "## Step Notes\nAdd any notes, observations, or data specific to the execution of this test step.",
-      "stepIssues": "## Step Linked Issues\nLink issues from your issue tracker that are specifically related to the outcome or observations of this test step."
+      "stepIssues": "## Step Linked Issues\nLink issues from your issue tracker that are specifically related to the outcome or observations of this test step.\n\nLinking an issue sets this step, and the overall result, to the first failure status unless one is already chosen. You can still change either before saving."
     },
     "case": {
       "name": "## Test Case Name\nA clear, descriptive name for the test case.",
@@ -6392,7 +7108,15 @@
       "issueCount": "## Issue Count\nTotal number of issues tracked.",
       "milestoneCount": "## Milestone Count\nTotal number of milestones.",
       "milestoneCompletionRate": "## Milestone Completion Rate\nPercentage of milestones completed.",
-      "averageMilestoneDuration": "## Average Milestone Duration\nAverage duration of milestones in days."
+      "averageMilestoneDuration": "## Average Milestone Duration\nAverage duration of milestones in days.",
+      "llmCallCount": "## LLM Calls\nNumber of LLM requests made in this group, including failed calls.",
+      "promptTokens": "## Prompt Tokens\nTokens sent to the model as input across all calls in this group.",
+      "completionTokens": "## Completion Tokens\nTokens generated by the model across all calls in this group.",
+      "totalTokens": "## Total Tokens\nCombined prompt and completion tokens across all calls in this group.",
+      "totalCost": "## Total Cost\nEstimated provider cost in USD for the calls in this group. Locally hosted models record zero cost.",
+      "avgLatency": "## Avg. Latency\nAverage time the provider took to answer a call in this group.",
+      "successRate": "## Success Rate\nPercentage of calls in this group that completed without an error.",
+      "errorCount": "## Failed Calls\nNumber of calls in this group that ended in an error."
     },
     "reportDimensions": {
       "user": "## User Dimension\nGroups results by the user who executed the tests or is assigned to the items.",
@@ -6415,12 +7139,17 @@
       "issueStatus": "## Issue Status Dimension\nGroups results by the current status of issues (e.g., Open, In Progress, Resolved, Closed).",
       "priority": "## Priority Dimension\nGroups results by issue priority level (e.g., High, Medium, Low).",
       "source": "## Source Dimension\nGroups results by the source of test execution (e.g., Manual, JUnit, API).",
-      "date": "## Date Dimension\nGroups results by date for time-based analysis and trends."
+      "date": "## Date Dimension\nGroups results by date for time-based analysis and trends.",
+      "feature": "## Feature Dimension\nGroups LLM usage by the application feature that made the call (e.g., Test Case Generation).",
+      "model": "## Model Dimension\nGroups LLM usage by the model that served the call.",
+      "integration": "## Integration Dimension\nGroups LLM usage by the configured LLM integration that handled the call.",
+      "outcome": "## Outcome Dimension\nSplits LLM usage into successful and failed calls."
     },
     "reportBuilder": {
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
       "metrics": "## Metrics\nSelect the metrics you want to measure in your report. Metrics are quantitative measurements derived from your data, such as Test Results Count, Pass Rate, Average Elapsed Time, etc. You can drag to reorder them.",
-      "dateRange": "## Date Range\nFilter your report data by a specific time period. You can select from predefined ranges like 'Last 7 days' or 'Previous month', or define a custom date range. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases)."
+      "dateRange": "## Date Range\nFilter your report data by a specific time period. You can select from predefined ranges like 'Last 7 days' or 'Previous month', or define a custom date range. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases).",
+      "dimensionFilters": "## Filters\nNarrow the report to specific values of each selected dimension. Leave a filter empty to include all values for that dimension. Date dimensions are filtered with the date range picker instead."
     },
     "codeRepository": {
       "name": "## Repository Name\nA friendly display name for this repository connection.\n\n- Used to identify it in project code context settings.\n- Does not need to match the repository name on the provider.",
@@ -6453,7 +7182,7 @@
       "systemPrompt": "## System Prompt\nInstructions sent to the AI model before any user input. Defines the model's role, output format, and constraints.\n\n- Supports double-brace placeholders (e.g. FRAMEWORK, LANGUAGE, CASE_NAME) that are substituted at runtime.\n- Changes here affect every project using this configuration.",
       "userPrompt": "## User Prompt\nThe message sent to the AI on behalf of the user. Leave blank if the feature constructs the user message entirely in code.\n\n- Supports double-brace placeholders (e.g. ISSUE_TITLE, CASE_NAME, CODE_CONTEXT) that are substituted at runtime.\n- The available placeholders for each feature are listed in the Variables section below.",
       "temperature": "## Temperature\nControls the randomness of the AI output. Range: 0–2.\n\n- **0.0–0.3** — Highly deterministic, best for structured output (JSON, code).\n- **0.4–0.7** — Balanced, good for test case generation.\n- **0.8–2.0** — More creative and varied, suitable for open-ended text.",
-      "maxOutputTokens": "## Max Output Tokens\nThe maximum number of tokens the model will generate in a single response.\n\n- Higher values allow longer responses but increase cost and latency.\n- Typical ranges: 2048 for short text, 4096 for code generation, 6000+ for multi-case output."
+      "maxOutputTokens": "## Max Output Tokens\nThe maximum number of tokens the model will generate in a single response.\n\n- Higher values allow longer responses but increase cost and latency.\n- Typical ranges: 2048 for short text, 4096 for code generation, 6000+ for multi-case output.\n- Applies to Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report.\n- Test Case Generation, Markdown Test Case Parsing, Editor Writing Assistant, and Smart Test Case Selection use the AI model's _Default Max Tokens_ instead."
     },
     "menu": {
       "startTour": "Guided Welcome Tour",
@@ -6708,7 +7437,9 @@
           "content": "Manage project-level integrations, AI model configurations, and shared links from here."
         }
       }
-    }
+    },
+    "projectRunsFilters": "## Filtering test runs\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **Manual** / **Automated** — limit the list to that kind of run. Turning both on (or both off) shows every run.\n- **My Test Runs** — only runs you take part in: you created the run, you are assigned a test case in it, or you recorded a test result in it.",
+    "projectSessionsFilters": "## Filtering sessions\n\nToggle a chip to narrow the list. Chips apply to both the Active and Completed tabs, and are remembered on this device for this project.\n\n- **My Sessions** — only sessions you take part in: you created the session, or it is assigned to you."
   },
   "reports": {
     "ui": {
@@ -6816,6 +7547,10 @@
         "projectHealth": {
           "label": "Project Health",
           "description": "Project progress, milestones, and completion status"
+        },
+        "milestoneReadiness": {
+          "label": "Milestone Readiness",
+          "description": "Release readiness per milestone: % of in-scope issues fully passing, and the per-state counts"
         },
         "sessionAnalysis": {
           "label": "Session Analysis",
@@ -6955,7 +7690,7 @@
         "heuristicBadge": "Heuristic",
         "heuristicBadgeTooltip": "No LLM integration is configured for this project, so this ranking was built from the selection-strategy metric directly. Configure an LLM (Admin → AI Models) for richer reasoning that weighs custom fields, linked-issue context, and case content.",
         "sourcedFromNewestN": "Top {ranked} of {total} eligible manual cases via {strategy}",
-        "sourcedFromAll": "Ranked all {total} eligible manual cases via {strategy}",
+        "sourcedFromAll": "Ranked {total, plural, one {# eligible manual case} =2 {both eligible manual cases} other {all # eligible manual cases}} via {strategy}",
         "metric": {
           "executions": "{count} runs",
           "forecast": "{value} forecast",
@@ -7101,6 +7836,10 @@
           "label": "Cross-Project Issue Tracking",
           "description": "Issue creation, resolution, and impact analysis across projects"
         },
+        "llmUsage": {
+          "label": "LLM Usage",
+          "description": "Token usage, cost, and reliability of LLM features across projects"
+        },
         "automationTrends": {
           "label": "Cross-Project Automation Trends",
           "description": "Track automation progress week-over-week by priority across projects"
@@ -7125,6 +7864,9 @@
       "folderDescendants": {
         "label": "Include subfolders",
         "description": "Count results from subfolders toward each parent folder."
+      },
+      "dimensionFilters": {
+        "allValues": "All values"
       }
     },
     "errors": {
@@ -7169,9 +7911,20 @@
       "issueType": "Issue Type",
       "issueTracker": "Issue Tracker",
       "issueStatus": "Issue Status",
-      "tag": "Tag"
+      "tag": "Tag",
+      "feature": "Feature",
+      "model": "Model",
+      "integration": "Integration",
+      "outcome": "Outcome"
     },
     "metrics": {
+      "percentReady": "Ready (%)",
+      "passed": "Passed",
+      "failed": "Failed",
+      "inProgress": "In Progress",
+      "notRun": "Not Run",
+      "uncovered": "Uncovered",
+      "totalIssues": "Total Issues",
       "testResults": "Test Results",
       "testResultCount": "Test Results Count",
       "passRate": "Pass Rate (%)",
@@ -7206,7 +7959,15 @@
       "activeMilestones": "Active Milestones",
       "milestoneCompletion": "Milestone Completion (%)",
       "averageDuration": "Average Duration",
-      "totalDuration": "Total Duration"
+      "totalDuration": "Total Duration",
+      "llmCallCount": "LLM Calls",
+      "promptTokens": "Prompt Tokens",
+      "completionTokens": "Completion Tokens",
+      "totalTokens": "Total Tokens",
+      "totalCost": "Total Cost",
+      "avgLatency": "Avg. Latency",
+      "successRate": "Success Rate (%)",
+      "errorCount": "Failed Calls"
     },
     "drillDown": {
       "title": "Detailed Records",
@@ -7486,15 +8247,19 @@
     },
     "stepDuplicates": {
       "pageTitle": "Step Sequence Duplicates",
-      "pageDescription": "Review matched step sequences across test cases. Convert matches to Shared Step groups or dismiss false positives.",
       "noResultsFound": "No step sequence duplicates found",
       "noResultsDescription": "Run a scan to detect repeated step sequences across your test cases.",
       "filterPlaceholder": "Filter by case name...",
+      "minCasesLabel": "Min. Cases",
+      "minStepsLabel": "Min. Steps",
+      "minThresholdOption": "{count, number}+",
+      "noMatchesForFilters": "No matches meet the current filters. Lower the minimums to widen the results.",
       "selected": "{count, plural, one {# selected} other {# selected}}",
       "bulkDismiss": "Dismiss ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# match dismissed} other {# matches dismissed}}",
       "bulkError": "Some operations failed. Please try again.",
       "tableHint": "Click a row to preview matched steps. Select rows with checkboxes for bulk actions.",
+      "matchedStepsCount": "{count, plural, one {# matched step} other {# matched steps}}",
       "columns": {
         "matchedSteps": "Matched Steps",
         "casesCount": "Cases",
@@ -7526,6 +8291,7 @@
         "viewSharedStep": "View Shared Step Group",
         "skippedWarning": "{count, plural, one {# case was skipped} other {# cases were skipped}} (stale or already converted).",
         "noCasesSelected": "Select at least one case to convert.",
+        "stepsUnavailable": "The matched steps are no longer on this test case. Dismiss this match and run a new scan.",
         "selectAll": "Select all"
       }
     },
@@ -7640,7 +8406,6 @@
       "apply": "Apply Filters",
       "common": "Common Filters",
       "entitySpecific": "Type-Specific Filters",
-      "searchPlaceholder": "Search filter options...",
       "states": "Workflow States",
       "createdAt": "Created Date",
       "updatedAt": "Updated Date",
@@ -7658,9 +8423,7 @@
       "elapsedRange": "Elapsed Time Range",
       "minValue": "Min",
       "maxValue": "Max",
-      "hasExternalId": "Has External ID",
       "dueDateRange": "Due Date Range",
-      "hasParent": "Has Parent Milestone",
       "milestoneType": "Milestone Type",
       "minutes": "minutes",
       "hours": "hours",
@@ -7669,6 +8432,8 @@
       "includeDeleted": "Include deleted items",
       "filterActive": "Filter active:",
       "applyFilter": "Apply Filter",
+      "invalidDate": "Invalid date",
+      "stepsCount": "{count, plural, one {# step} other {# steps}}",
       "validation": {
         "firstValueMustBeLessThanSecond": "First value must be less than second value",
         "firstDateMustBeBeforeSecond": "First date must be before second date"
@@ -7718,6 +8483,7 @@
   },
   "comments": {
     "title": "Comments",
+    "titleWithCount": "{count, plural, =0 {No Comments} =1 {# Comment} other {# Comments}}",
     "placeholder": "Write a comment... (use @ to mention users)",
     "editPlaceholder": "Edit your comment...",
     "postComment": "Post Comment",
@@ -7901,7 +8667,7 @@
     "selectSourceConfirm": "Change source",
     "datasetRowSelectAria": "Select row",
     "datasetSelectAllPageTooltip": "Click to select every row on this page. Shift-click to select every row across all pages.",
-    "datasetSelectAllAcrossPagesTooltip": "Select all {count, plural, =1 {# row} other {# rows}} across all pages",
+    "datasetSelectAllAcrossPagesTooltip": "Select {count, plural, =1 {# row} =2 {both rows} other {all # rows}} across all pages",
     "datasetDeselectAllAcrossPagesTooltip": "Deselect all rows across all pages",
     "datasetLabelColumn": "Label",
     "datasetAddRow": "Add row",
@@ -8145,5 +8911,35 @@
     "mappingSkipColumn": "Skip column",
     "mappingRequiredAlert": "Required parameters are not mapped: {names}.",
     "mappingRequiredUnmapped": "Required parameter \"@{name}\" has no mapped column."
+  },
+  "linkPreview": {
+    "siteName": "TestPlanIt",
+    "genericTitle": "{label} · TestPlanIt",
+    "namedTitle": "{name} · {project}",
+    "signInCta": "Sign in to TestPlanIt",
+    "testCaseLabel": "Test Case",
+    "testRunLabel": "Test Run",
+    "sessionLabel": "Exploratory Session",
+    "projectLabel": "Project",
+    "milestoneLabel": "Milestone",
+    "appLabel": "Test Management",
+    "testCaseGeneric": "A test case in TestPlanIt. Sign in to view its steps, results, and history.",
+    "testRunGeneric": "A test run in TestPlanIt. Sign in to view its progress and results.",
+    "sessionGeneric": "An exploratory testing session in TestPlanIt. Sign in to view its notes and findings.",
+    "projectGeneric": "A project in TestPlanIt. Sign in to view its test cases, runs, and reports.",
+    "milestoneGeneric": "A milestone in TestPlanIt. Sign in to view its scope and progress.",
+    "appGeneric": "Modern test management — plan, run, and track your testing in one place.",
+    "shareReportLabel": "Shared Report",
+    "shareDashboardLabel": "Shared Dashboard",
+    "shareSearchLabel": "Shared Search",
+    "shareViewLabel": "Shared View",
+    "shareGeneric": "Shared with you from TestPlanIt.",
+    "shareUnavailable": "This shared link is no longer available.",
+    "shareInProject": "Shared from {project}",
+    "signInTitle": "Sign in to TestPlanIt",
+    "signInDescription": "Sign in to your TestPlanIt workspace to plan, run, and track your testing.",
+    "inProject": "{label} in {project}",
+    "testRunSummary": "{count, plural, =0 {No test cases} =1 {{count} test case} other {{count} test cases}} in {project}",
+    "projectSummary": "{cases, plural, =1 {{cases} test case} other {{cases} test cases}} · {runs, plural, =1 {{runs} test run} other {{runs} test runs}}"
   }
 }

@@ -1,7 +1,7 @@
-import { Prisma } from "@prisma/client";
+import { Decimal } from "decimal.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
-import { AnthropicAdapter } from "./anthropic.adapter";
+import { AnthropicAdapter, extractTextContent } from "./anthropic.adapter";
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -17,6 +17,7 @@ const createTestConfig = (
     credentials: {},
     settings: null,
     isDeleted: false,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -28,8 +29,8 @@ const createTestConfig = (
     maxTokensPerRequest: 4096,
     maxRequestsPerMinute: 60,
     maxRequestsPerDay: null,
-    costPerInputToken: new Prisma.Decimal("0.003"),
-    costPerOutputToken: new Prisma.Decimal("0.015"),
+    costPerInputToken: new Decimal("0.003"),
+    costPerOutputToken: new Decimal("0.015"),
     monthlyBudget: null,
     billingPeriodStartDay: 1,
     defaultTemperature: 0.7,
@@ -306,6 +307,37 @@ describe("AnthropicAdapter", () => {
 
       const result = await adapter.testConnection();
       expect(result).toBe(false);
+      expect(adapter.getLastTestConnectionError()).toContain(
+        "Network error reaching"
+      );
+      expect(adapter.getLastTestConnectionError()).toContain("Network error");
+    });
+
+    it("should capture the provider message on a non-2xx/400 response", async () => {
+      const config = createTestConfig();
+      const adapter = new AnthropicAdapter(config);
+
+      // Real-world LiteLLM proxy response: the key can list models but isn't
+      // authorized for the selected one.
+      mockFetch.mockResolvedValueOnce({
+        status: 403,
+        statusText: "Forbidden",
+        text: async () =>
+          JSON.stringify({
+            error: {
+              message:
+                "User not allowed to access model. Tried to access claude-haiku-4-5",
+              type: "key_model_access_denied",
+              code: "403",
+            },
+          }),
+      });
+
+      const result = await adapter.testConnection();
+      expect(result).toBe(false);
+      expect(adapter.getLastTestConnectionError()).toBe(
+        "403 Forbidden: User not allowed to access model. Tried to access claude-haiku-4-5"
+      );
     });
   });
 
@@ -646,5 +678,93 @@ describe("AnthropicAdapter", () => {
         adapter.probeModelCapabilities("claude-3-5-sonnet-20241022")
       ).rejects.toMatchObject({ code: "AUTHENTICATION_ERROR" });
     });
+  });
+});
+
+describe("AnthropicAdapter response text extraction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const messageResponse = (
+    content: Array<{ type: string; text?: string; thinking?: string }>,
+    stop_reason = "end_turn"
+  ) => ({
+    ok: true,
+    json: async () => ({
+      id: "msg_123",
+      type: "message",
+      role: "assistant",
+      content,
+      model: "claude-opus-5",
+      stop_reason,
+      stop_sequence: null,
+      usage: { input_tokens: 10, output_tokens: 20 },
+    }),
+  });
+
+  const request: LlmRequest = {
+    messages: [{ role: "user", content: "Hello" }],
+    userId: "user-123",
+    feature: "test",
+  };
+
+  it("skips a leading thinking block and returns the text block", async () => {
+    const adapter = new AnthropicAdapter(createTestConfig());
+    mockFetch.mockResolvedValueOnce(
+      messageResponse([
+        { type: "thinking", thinking: "" },
+        { type: "text", text: '{"outlines":[]}' },
+      ])
+    );
+
+    const response = await adapter.chat(request);
+
+    expect(response.content).toBe('{"outlines":[]}');
+    expect(response.finishReason).toBe("stop");
+  });
+
+  it("concatenates multiple text blocks", async () => {
+    const adapter = new AnthropicAdapter(createTestConfig());
+    mockFetch.mockResolvedValueOnce(
+      messageResponse([
+        { type: "text", text: "part one " },
+        { type: "thinking", thinking: "" },
+        { type: "text", text: "part two" },
+      ])
+    );
+
+    const response = await adapter.chat(request);
+
+    expect(response.content).toBe("part one part two");
+  });
+
+  it("returns empty content with finishReason length when thinking exhausted max_tokens", async () => {
+    const adapter = new AnthropicAdapter(createTestConfig());
+    mockFetch.mockResolvedValueOnce(
+      messageResponse([{ type: "thinking", thinking: "" }], "max_tokens")
+    );
+
+    const response = await adapter.chat(request);
+
+    expect(response.content).toBe("");
+    expect(response.finishReason).toBe("length");
+  });
+
+  it("maps a refusal with no content blocks to content_filter", async () => {
+    const adapter = new AnthropicAdapter(createTestConfig());
+    mockFetch.mockResolvedValueOnce(messageResponse([], "refusal"));
+
+    const response = await adapter.chat(request);
+
+    expect(response.content).toBe("");
+    expect(response.finishReason).toBe("content_filter");
+  });
+
+  it("extractTextContent tolerates missing or malformed content", () => {
+    expect(extractTextContent(undefined)).toBe("");
+    expect(extractTextContent([])).toBe("");
+    expect(extractTextContent([{ type: "text" }])).toBe("");
+    expect(extractTextContent([{ type: "text", text: "ok" }])).toBe("ok");
   });
 });

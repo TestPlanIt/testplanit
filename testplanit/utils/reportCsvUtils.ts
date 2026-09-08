@@ -13,6 +13,7 @@
 
 import { format } from "date-fns";
 import { toHumanReadable } from "~/utils/duration";
+import { metricUnit } from "~/utils/metricUnits";
 
 export type Translate = (
   key: string,
@@ -72,9 +73,9 @@ function fmtDuration(
   return toHumanReadable(value, { isSeconds, locale, largest: 2, round: true });
 }
 
-function fmtPercent(value: number | null | undefined): string {
+function fmtPercent(value: number | null | undefined, decimals = 0): string {
   if (typeof value !== "number" || isNaN(value)) return "";
-  return `${Math.round(value)}%`;
+  return `${value.toFixed(decimals)}%`;
 }
 
 const HEALTH_STATUS_KEY: Record<string, string> = {
@@ -211,8 +212,13 @@ function buildAutomationTrends(p: BuildReportCsvParams): CsvRow[] {
         r[`${prefix}_manual`] ?? 0;
       row[`${tag}${t("reports.metrics.totalCount")}`] =
         r[`${prefix}_total`] ?? 0;
+      // One decimal, matching the on-screen column (useAutomationTrendsColumns
+      // renders `value.toFixed(1)`). Rounding to a whole number here collapsed
+      // every sub-1% automation rate to "0%", which reads as "no automation at
+      // all" on a project that has some.
       row[`${tag}% ${t("common.fields.automated")}`] = fmtPercent(
-        r[`${prefix}_percentAutomated`]
+        r[`${prefix}_percentAutomated`],
+        1
       );
     }
     return row;
@@ -245,11 +251,17 @@ function metricAccessor(metric: {
   }
 }
 
+// Unit metadata wins; the id/label heuristics only classify metrics that
+// aren't in the units map (custom presets).
 function isRateMetric(m: { value: string; label: string }): boolean {
+  const unit = metricUnit(m.value);
+  if (unit !== undefined) return unit === "percent";
   return /rate|percentage|%/i.test(m.value) || /rate|%/i.test(m.label);
 }
 
 function isTimeMetric(m: { value: string; label: string }): boolean {
+  const unit = metricUnit(m.value);
+  if (unit !== undefined) return unit === "seconds";
   return (
     /time|duration|elapsed/i.test(m.value) ||
     /time|duration|elapsed/i.test(m.label)
@@ -288,16 +300,16 @@ function buildCustom(p: BuildReportCsvParams): CsvRow[] {
       } else if (isRateMetric(metric)) {
         value = `${num.toFixed(1)}%`;
       } else if (isTimeMetric(metric)) {
-        // Custom-report elapsed metrics (avg/total) are in milliseconds, matching
-        // the on-screen leaf cell (`isSeconds: false`). Empty value → blank cell
-        // (the screen's "-" placeholder would get a leading apostrophe from
-        // papaparse's formula-injection escaping, and blank is the right CSV
+        // Custom-report elapsed metrics (avg/total) are in seconds, matching
+        // the on-screen leaf cell. Empty value → blank cell (the screen's "-"
+        // placeholder would get a leading apostrophe from papaparse's
+        // formula-injection escaping, and blank is the right CSV
         // representation of "no data" anyway).
         value =
           num === 0
             ? ""
             : toHumanReadable(num, {
-                isSeconds: false,
+                isSeconds: true,
                 locale,
                 largest: 2,
                 round: true,

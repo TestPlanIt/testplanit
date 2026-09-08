@@ -1,25 +1,17 @@
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 import { syncService } from "~/lib/integrations/services/SyncService";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getAdapter } from "~/lib/webhooks/adapters";
+
+import { webhookFreshnessWindow } from "./webhookFreshness";
 
 import type {
   ApplyInboundIssueUpdateInput,
   ApplyInboundIssueUpdateResult,
 } from "./types";
-
-/**
- * Webhook-triggered freshness window — coalesces rapid Jira/GitHub/ADO
- * event bursts (e.g. status change + assignee change firing within a few
- * seconds) into a single upstream API pull. The next event after the
- * window expires triggers another full sync. Tail-end change at most
- * `WEBHOOK_SYNC_FRESHNESS_SECONDS`s lag, in exchange for predictable
- * upstream API rate consumption during burst patterns.
- */
-const WEBHOOK_SYNC_FRESHNESS_SECONDS = 15;
 
 /**
  * Map webhook adapter type → Integration provider value. The webhook
@@ -96,7 +88,7 @@ async function triggerSystemSyncForInboundEvent(args: {
   // Single active integration per project (enforced in app code). Filter
   // by provider so a project with a Jira integration but a GitHub webhook
   // (cross-tenant misconfiguration) doesn't trigger the wrong adapter.
-  const projectIntegration = await prisma.projectIntegration.findFirst({
+  const projectIntegration = await baseDb.projectIntegration.findFirst({
     where: {
       projectId: args.projectId,
       isActive: true,
@@ -116,7 +108,14 @@ async function triggerSystemSyncForInboundEvent(args: {
     projectIntegration.integration.id,
     args.externalKey,
     {
-      minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS,
+      // Coalesce only a sustained burst against THIS issue. A plain time
+      // window suppressed the second event of every ordinary multi-event
+      // edit, and because the whole Issue mutation happens here rather than
+      // inline in the tx, a suppressed sync leaves title/assignee/status
+      // stale rather than merely delayed.
+      minFreshnessSeconds: await webhookFreshnessWindow(
+        `issue:${projectIntegration.integration.id}:${args.projectId}:${args.externalKey}`
+      ),
       // Only the auto-create branch threads `createIfMissing` through —
       // the regular update branch is fine throwing on missing (it would
       // mean an Issue was deleted between the dedup INSERT and this call,
@@ -247,7 +246,7 @@ export async function applyInboundIssueUpdate(
   let txResult: TxOutcome;
 
   try {
-    txResult = await prisma.$transaction(async (tx): Promise<TxOutcome> => {
+    txResult = await baseDb.$transaction(async (tx): Promise<TxOutcome> => {
       // Step 1: ALWAYS insert a delivery log row first.
       const delivery = await tx.webhookDelivery.create({
         data: {
@@ -255,6 +254,10 @@ export async function applyInboundIssueUpdate(
           direction: "INBOUND",
           adapterType: adapterType,
           eventType: eventType,
+          // Identifier only (issue key / repo#number) — synthetic self-loop
+          // events carry the sentinel key, which is noise in the UI.
+          subjectRef:
+            linkedRef && !payload.synthetic ? linkedRef.externalKey : null,
           statusCode: null,
           latencyMs: null,
           payloadDigest,
@@ -399,10 +402,13 @@ export async function applyInboundIssueUpdate(
           //   • Inline-tx field updates were a half-truth — only
           //     externalStatus + lastSyncedAt copied across, leaving
           //     title/assignee/etc. stale until a hover or manual sync.
-          //   • The freshness gate in performIssueRefreshSystem
-          //     (minFreshnessSeconds=15) coalesces rapid event bursts so
-          //     a single Jira edit firing N webhooks doesn't trigger N
-          //     API pulls.
+          //   • The freshness gate in performIssueRefreshSystem coalesces
+          //     a SUSTAINED event burst so one noisy issue doesn't trigger
+          //     an unbounded number of API pulls. See webhookFreshness.ts:
+          //     the first few events of a burst always pull, since the
+          //     ordinary multi-event edit this path sees most often is not
+          //     a storm, and a suppressed pull here leaves the Issue stale
+          //     rather than merely delayed.
           //   • Sync failure is recoverable: the next webhook event (with
           //     a different payloadDigest) bypasses dedup and re-attempts.
           await tx.webhookEventDedup.create({

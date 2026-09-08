@@ -1,4 +1,6 @@
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -6,7 +8,7 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
@@ -24,9 +26,11 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 import {
   isAlreadyPendingError,
+  isNotFoundError,
   isReviewGateError,
   ReviewGateError,
 } from "~/lib/utils/errors";
@@ -60,7 +64,10 @@ const submitResultSchema = z.object({
     .array(
       z.object({
         fieldId: z.number().int().positive(),
-        value: z.unknown(),
+        // `.optional()` is load-bearing on z.unknown(): JSON.stringify drops
+        // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a
+        // bare z.unknown() property.
+        value: z.unknown().optional(),
       })
     )
     .optional(),
@@ -87,7 +94,7 @@ class IterationNotFoundError extends Error {
  * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -112,7 +119,7 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
  *     unchanged when no entries are sensitive)
  */
 function parseParameterSchema(
-  value: Prisma.JsonValue | null | undefined
+  value: JsonValue | null | undefined
 ): ParameterSchemaEntry[] {
   if (!Array.isArray(value)) return [];
   const out: ParameterSchemaEntry[] = [];
@@ -164,7 +171,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
 
     const input = parsed.data;
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: {
         id: authenticatedUserId,
       },
@@ -191,7 +198,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const runCase = await prisma.testRunCases.findFirst({
+    const runCase = await baseDb.testRunCases.findFirst({
       where: {
         id: input.testRunCaseId,
         testRunId: input.testRunId,
@@ -351,7 +358,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // result that must then be rolled back; the prior-attempt query is skipped
     // entirely when the setting is off.
     if (runCase.testRun.project.requireResultFlipJustification) {
-      const priorAttempt = await prisma.testRunResults.findFirst({
+      const priorAttempt = await baseDb.testRunResults.findFirst({
         where: {
           testRunCaseId: input.testRunCaseId,
           iterationId: input.iterationId ?? null,
@@ -361,7 +368,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         select: { statusId: true },
       });
       if (priorAttempt && isTiptapEmpty(input.notes)) {
-        const statuses = await prisma.status.findMany({
+        const statuses = await baseDb.status.findMany({
           where: { id: { in: [priorAttempt.statusId, input.statusId] } },
           select: {
             id: true,
@@ -397,7 +404,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // checks are advisory). Read-only and pre-transaction so a rejection never
     // creates a result row; skipped entirely when no required fields exist.
     const missingRequiredField = await hasMissingRequiredResultField(
-      prisma,
+      baseDb,
       runCase.repositoryCase.templateId,
       input.fieldValues
     );
@@ -417,7 +424,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // least one Issue must be linked. Read-only and pre-transaction; the status
     // flag is resolved by id and the check is skipped entirely when off.
     if (runCase.testRun.project.requireIssueOnFailure) {
-      const submittedStatus = await prisma.status.findUnique({
+      const submittedStatus = await baseDb.status.findUnique({
         where: { id: input.statusId },
         select: { isFailure: true },
       });
@@ -441,20 +448,17 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
     }
 
-    const notesInput:
-      | Prisma.InputJsonValue
-      | Prisma.NullableJsonNullValueInput
-      | undefined =
+    const notesInput: JsonValue | typeof JsonNull | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
-          ? Prisma.JsonNull
-          : (input.notes as Prisma.InputJsonValue);
+          ? JsonNull
+          : (input.notes as JsonValue);
 
-    const evidenceInput: Prisma.InputJsonValue =
+    const evidenceInput: JsonValue =
       input.evidence === undefined || input.evidence === null
         ? {}
-        : (input.evidence as Prisma.InputJsonValue);
+        : (input.evidence as JsonValue);
 
     // Resolve `canReadSensitive` once per request — used at the audit
     // boundary to redact iteration parameter values for viewers who lack the
@@ -521,7 +525,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         await tx.resultFieldValues.createMany({
           data: input.fieldValues.map((fv) => ({
             fieldId: fv.fieldId,
-            value: (fv.value ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            value: (fv.value ?? JsonNull) as JsonValue,
             testRunResultsId: createdResult.id,
           })),
         });
@@ -704,9 +708,21 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
 
       if (needsAutomatedFlip) {
+        // Snapshot the flip, don't just set the flag. Automation Trends
+        // reconstructs each case's automated state from its version timeline,
+        // so a flag-only update leaves the manual→automated transition
+        // invisible to the report — the case reads as manual forever.
+        // Bump currentVersion first; the version service snapshots the row as
+        // it stands inside this transaction and matches that version number.
         await tx.repositoryCases.update({
           where: { id: runCase.repositoryCaseId },
-          data: { automated: true },
+          data: { automated: true, currentVersion: { increment: 1 } },
+        });
+        // copyFieldValues: without it the snapshot carries no
+        // CaseFieldVersionValues and the history UI shows every custom field
+        // as deleted at the flip.
+        await createTestCaseVersionInTransaction(tx, runCase.repositoryCaseId, {
+          copyFieldValues: true,
         });
       }
 
@@ -728,13 +744,15 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           // Review & Approval preflight (Plan 01-04). The auto-flip to
           // in-progress on first result submission is a stateId update
           // path; the schema @@deny rule from Plan 01 covers it via the
-          // ZenStack runtime, but this route uses raw prisma so we call
-          // the app preflight explicitly.
+          // ZenStack runtime, but this route uses raw baseDb so we call
+          // the app preflight explicitly. System admins bypass the gate, so
+          // an admin's first result never stalls the auto-flip.
           const gateApprovals = await assertReviewGatePasses(
             tx,
             "RUN",
             input.testRunId,
-            input.inProgressStateId
+            input.inProgressStateId,
+            user?.access
           );
 
           await tx.testRuns.update({
@@ -843,16 +861,11 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       );
     }
 
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      error instanceof Prisma.PrismaClientKnownRequestError
-    ) {
-      if (error.code === "P2025") {
-        return NextResponse.json(
-          { error: "Test run case not found", code: "TEST_RUN_CASE_NOT_FOUND" },
-          { status: 404 }
-        );
-      }
+    if (isNotFoundError(error)) {
+      return NextResponse.json(
+        { error: "Test run case not found", code: "TEST_RUN_CASE_NOT_FOUND" },
+        { status: 404 }
+      );
     }
 
     console.error("Error submitting test run result:", error);

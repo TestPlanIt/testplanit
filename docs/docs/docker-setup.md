@@ -13,7 +13,7 @@ The Docker Compose setup starts these containerized services:
 1. **TestPlanIt Application** (`dev`/`prod`) - Next.js web application
 2. **Background Workers** (`workers-dev`/`workers`) - Process asynchronous jobs:
    - Email sending and notifications
-   - Scheduled tasks (daily digests at 8 AM, forecast updates at 3 AM)
+   - Scheduled tasks (daily digests at 8 AM, forecast updates at 3 AM, abandoned automated-run sweep every 15 minutes)
    - Search indexing and file processing
 3. **PostgreSQL** (`postgres`) - Main database with automatic schema initialization
 4. **Valkey** (`valkey`) - Job queue and caching (Redis-compatible in-memory data store)
@@ -49,6 +49,14 @@ The Docker Compose setup starts these containerized services:
   | **Total**              | **~8GB** | **~14GB**   |
 
   The Background Workers figure is steady-state for a typical single-tenant install. One always-on worker (SCIM access recompute) idles near 1.4GB on its own regardless of whether SCIM is configured, which is why the fleet no longer fits in the old 512MB floor. Individual workers also restart at higher ceilings under load (forecast and SCIM access recompute at 2GB, the webhook workers at 3GB each — whose steady-state RSS can approach 1.9GB each in busy multi-tenant clusters). Multi-tenant operators should size the worker fleet well above the recommended figure; see the [worker memory tiers](./background-processes.md) for the per-worker breakdown.
+
+  **Tuning the caps.** The compose file caps the worker fleet at `4G` of memory and Postgres at `2` CPUs. Raise either without editing the file by setting environment variables in your shell, the default `.env`, or `--env-file` — **not** `.env.production`, which is a runtime `env_file` and is not read during compose variable substitution:
+
+  ```bash
+  # e.g. a 32GB host running large Testmo imports:
+  WORKERS_MEMORY_LIMIT=20G POSTGRES_CPU_LIMIT=4 \
+    docker compose -f testplanit/docker-compose.prod.yml up -d --build
+  ```
 
 - 25GB+ disk space for data and images
 

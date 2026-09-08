@@ -1,13 +1,10 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -15,10 +12,8 @@ import {
   ColumnSelection,
   CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
-import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,22 +25,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
-import {
-  useCreateManyMilestoneTypesAssignment,
-  useDeleteManyMilestoneTypesAssignment,
-  useFindManyMilestoneTypes,
-  useFindManyProjects,
-  useUpdateManyMilestoneTypes,
-  useUpdateMilestoneTypes,
-} from "~/lib/hooks";
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
 import { AddMilestoneType } from "./AddMilestoneTypes";
 import { ExtendedMilestoneTypes, useColumns } from "./columns";
@@ -53,34 +36,16 @@ import { DeleteMilestoneType } from "./DeleteMilestoneTypes";
 import { EditMilestoneType } from "./EditMilestoneTypes";
 
 export default function MilestoneTypesListPage() {
-  return (
-    <PaginationProvider>
-      <MilestoneTypesList />
-    </PaginationProvider>
-  );
-}
-
-function MilestoneTypesList() {
   return <MilestoneTypes />;
 }
 
 function MilestoneTypes() {
+  const locale = useLocale();
   const t = useTranslations("admin.milestones");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -96,46 +61,9 @@ function MilestoneTypes() {
   const [deletingMilestoneType, setDeletingMilestoneType] =
     useState<ExtendedMilestoneTypes | null>(null);
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  const { data: totalFilteredMilestoneTypes } = useFindManyMilestoneTypes(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-    },
-    {
-      enabled:
-        (!!session?.user && debouncedSearchString.length === 0) ||
-        debouncedSearchString.length > 0,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredMilestoneTypes) {
-      setTotalItems(totalFilteredMilestoneTypes.length);
-    }
-  }, [totalFilteredMilestoneTypes, setTotalItems]);
-
-  const { data, isLoading } = useFindManyMilestoneTypes(
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -163,8 +91,6 @@ function MilestoneTypes() {
         },
         icon: true,
       },
-      take: effectivePageSize,
-      skip: skip,
     },
     {
       enabled:
@@ -174,23 +100,11 @@ function MilestoneTypes() {
     }
   );
 
-  const milestoneTypes = data as ExtendedMilestoneTypes[];
+  const milestoneTypes = (data ?? []) as ExtendedMilestoneTypes[];
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
   });
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
     if (status !== "loading" && !session) {
@@ -203,13 +117,12 @@ function MilestoneTypes() {
     number | undefined
   >(undefined);
 
-  const { mutateAsync: updateMilestoneType } = useUpdateMilestoneTypes();
-  const { mutateAsync: updateManyMilestoneTypes } =
-    useUpdateManyMilestoneTypes();
+  const { mutateAsync: updateMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useUpdate();
   const { mutateAsync: createManyMilestoneTypeProjectAssignment } =
-    useCreateManyMilestoneTypesAssignment();
+    useClientQueries(schema).milestoneTypesAssignment.useCreateMany();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
-    useDeleteManyMilestoneTypesAssignment();
+    useClientQueries(schema).milestoneTypesAssignment.useDeleteMany();
 
   const handleToggleDefault = useCallback((id: number, _isDefault: boolean) => {
     setSelectedMilestoneTypeId(id);
@@ -220,10 +133,8 @@ function MilestoneTypes() {
     setIsAlertDialogOpen(false);
     try {
       if (selectedMilestoneTypeId !== undefined) {
-        await updateManyMilestoneTypes({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
+        // Setting isDefault=true clears the previous default atomically via the
+        // tpl_single_default_milestonetypes DB trigger — no app-side clear needed.
         await updateMilestoneType({
           where: { id: selectedMilestoneTypeId },
           data: { isDefault: true },
@@ -263,6 +174,10 @@ function MilestoneTypes() {
     });
     return initialVisibility;
   });
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   if (status === "loading") return null;
 
@@ -274,37 +189,55 @@ function MilestoneTypes() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="milestones-page-title">
                 {tGlobal("common.fields.milestoneTypes")}
               </CardTitle>
-            </div>
+              <HelpPopover helpKey="milestoneTypes" />
+            </SectionHeader>
             <div className="flex gap-2">
               <AddMilestonesToProjectsWizard />
-              <Button onClick={() => setAddMilestoneTypeOpen(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("add.button")}</span>
+              <Button
+                onClick={() => setAddMilestoneTypeOpen(true)}
+                aria-label={t("add.button")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.button")}
+                </span>
               </Button>
-              {addMilestoneTypeOpen && (
-                <AddMilestoneType
-                  open={addMilestoneTypeOpen}
-                  onClose={() => setAddMilestoneTypeOpen(false)}
-                />
-              )}
             </div>
           </div>
-          <CardDescription>{t("description")}</CardDescription>
+          {addMilestoneTypeOpen && (
+            <AddMilestoneType
+              open={addMilestoneTypeOpen}
+              onClose={() => setAddMilestoneTypeOpen(false)}
+            />
+          )}
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -316,31 +249,14 @@ function MilestoneTypes() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="milestone-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {milestoneTypes.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: milestoneTypes.length.toLocaleString(locale),
+                  total: milestoneTypes.length.toLocaleString(locale),
+                })}
+              </p>
+            )}
           </div>
           <div className="mt-4 flex justify-between">
             <ColumnSelection
@@ -348,18 +264,25 @@ function MilestoneTypes() {
               storageKey="admin-milestones"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
+              hideColumnRef={hideColumnRef}
             />
           </div>
-          <div className="mt-4 flex justify-between">
+          <div className="mt-4 w-full">
             <DataTable
-              columns={columns}
+              virtualized
+              fillViewport
+              columns={columns as any}
               data={milestoneTypes}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
               isLoading={isLoading}
-              pageSize={effectivePageSize}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-milestones-table"
+              rowTestIdPrefix="admin-milestone-row"
             />
           </div>
         </CardContent>

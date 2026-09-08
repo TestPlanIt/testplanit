@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 
 /**
@@ -26,15 +26,19 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // Check if user exists and is active. Pull `userPreferences.locale`
     // so the email is rendered in the recipient's language; falls back
-    // to en_US.
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        isActive: true,
-        userPreferences: { select: { locale: true } },
-      },
-    });
+    // to en_US. Emails match case-insensitively; an exact-cased row wins
+    // when case-variant duplicates exist.
+    const select = {
+      id: true,
+      isActive: true,
+      userPreferences: { select: { locale: true } },
+    } as const;
+    const user =
+      (await baseDb.user.findUnique({ where: { email }, select })) ??
+      (await baseDb.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+        select,
+      }));
 
     if (!user || !user.isActive) {
       // Still return success to prevent enumeration
@@ -60,7 +64,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       .digest("hex");
 
     // Store the hashed token in the database
-    await prisma.verificationToken.create({
+    await baseDb.verificationToken.create({
       data: {
         identifier: email,
         token: hashedToken,

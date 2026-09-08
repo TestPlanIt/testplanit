@@ -11,16 +11,23 @@ vi.mock("next-intl", () => ({
     `${namespace}.${key}`,
 }));
 
-// Mock the update hook
-const mockUpdateMutateAsync = vi.fn();
-vi.mock("~/lib/hooks/app-config", async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import("~/lib/hooks/app-config")>();
-  return {
-    ...original, // Keep other exports if they exist
-    useUpdateAppConfig: () => ({ mutateAsync: mockUpdateMutateAsync }),
-  };
-});
+// EditAppConfig updates via useClientQueries(schema).appConfig.useUpdate; hoist
+// the mutateAsync spy so the factory can reference it.
+const { mockUpdateMutateAsync } = vi.hoisted(() => ({
+  mockUpdateMutateAsync: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    appConfig: {
+      useUpdate: () => ({
+        mutateAsync: mockUpdateMutateAsync,
+        isPending: false,
+      }),
+      useCreate: () => ({ mutateAsync: vi.fn(), isPending: false }),
+      useFindUnique: () => ({ data: undefined, isLoading: false }),
+    },
+  }),
+}));
 
 // Sample config data for testing
 const sampleConfig = {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { invoke, router, view } from '@forge/bridge';
 import * as LucideIcons from 'lucide-react';
@@ -153,12 +153,283 @@ const formatElapsedTime = (totalSeconds) => {
   return parts.join(', ');
 };
 
+// ---- Case-field chips (per-template Jira panel fields) ----
+// Approved design: fields render as a second row of buttons under the case
+// title. Dropdowns are filled with their option colour (like Workflow State)
+// and always show their value; other fields show their label until the case
+// is expanded, which reveals every value in place. The collapsed row stays on
+// one line — chips that don't fit fold into a kebab menu (Action Bar cue).
+// Fields without a value are hidden entirely.
+
+const fieldHasValue = (field) => {
+  if (field.type === 'Steps') return (field.steps || []).length > 0;
+  if (field.options) return field.options.length > 0;
+  if (field.type === 'Checkbox') return true; // a checkbox always has a state
+  return field.value !== null && field.value !== undefined && field.value !== '';
+};
+
+const stepsCountLabel = (field) => {
+  const count = (field.steps || []).length;
+  return count + ' Step' + (count === 1 ? '' : 's');
+};
+
+// Option list (icon in its configured colour + name), separated by dividers.
+const FieldOptionList = ({ options, inverse }) => (
+  <span className="inline-flex items-center gap-1 min-w-0">
+    {options.map((option, index) => (
+      <span key={index} className="inline-flex items-center gap-1 min-w-0">
+        {index > 0 && <span className={inverse ? 'opacity-70' : 'testplanit-text-muted'}>|</span>}
+        {option.icon && (
+          <DynamicIcon
+            name={option.icon}
+            className="h-3 w-3 shrink-0"
+            style={inverse ? { color: 'white' } : (option.iconColor ? { color: option.iconColor } : undefined)}
+          />
+        )}
+        <span className="truncate">{option.name}</span>
+      </span>
+    ))}
+  </span>
+);
+
+// Numbered step list shown in the Steps popover, mirroring the repository
+// table's StepsListDisplay: step text bold, expected result beneath it,
+// shared groups nested under their group name.
+const StepsList = ({ steps }) => (
+  <ol className="tpi-steps-ol">
+    {steps.map((row, index) => (
+      <li key={index} className="tpi-steps-li">
+        {row.group ? (
+          <>
+            <div className="tpi-steps-step">
+              <DynamicIcon name="Layers" className="h-3.5 w-3.5 shrink-0" />
+              <span>{row.group}</span>
+              <span className="tpi-steps-shared">(shared)</span>
+            </div>
+            <ol className="tpi-steps-ol tpi-steps-ol-nested">
+              {(row.items || []).map((item, itemIndex) => (
+                <li key={itemIndex} className="tpi-steps-li">
+                  <div className="tpi-steps-step">{item.step}</div>
+                  {item.expected && (
+                    <div className="tpi-steps-expected">
+                      <DynamicIcon name="SearchCheck" className="h-3.5 w-3.5 shrink-0" />
+                      <span>{item.expected}</span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <>
+            <div className="tpi-steps-step">{row.step}</div>
+            {row.expected && (
+              <div className="tpi-steps-expected">
+                <DynamicIcon name="SearchCheck" className="h-3.5 w-3.5 shrink-0" />
+                <span>{row.expected}</span>
+              </div>
+            )}
+          </>
+        )}
+      </li>
+    ))}
+  </ol>
+);
+
+// A field's value, used inside revealed chips and the kebab overflow menu.
+const FieldValue = ({ field }) => {
+  if (field.type === 'Steps') return <span>{stepsCountLabel(field)}</span>;
+  if (field.options) return <FieldOptionList options={field.options} />;
+
+  if (field.type === 'Checkbox') {
+    return field.value
+      ? <DynamicIcon name="SquareCheck" className="h-3.5 w-3.5 shrink-0" style={{ color: '#16A34A' }} />
+      : <DynamicIcon name="Square" className="h-3.5 w-3.5 shrink-0 testplanit-text-muted" />;
+  }
+
+  if (field.type === 'Date') {
+    const parsed = new Date(field.value);
+    return (
+      <span className="truncate">
+        {isNaN(parsed.getTime()) ? String(field.value) : parsed.toLocaleDateString()}
+      </span>
+    );
+  }
+
+  if (field.type === 'Link') {
+    const url = String(field.value);
+    return (
+      <button
+        className="truncate testplanit-primary hover:underline text-left min-w-0"
+        title={url}
+        onClick={async (e) => {
+          e.stopPropagation();
+          try {
+            await router.open(url);
+          } catch {
+            window.open(url, '_blank', 'noopener');
+          }
+        }}
+      >
+        {url}
+      </button>
+    );
+  }
+
+  const text = String(field.value);
+  return (
+    <span className="tpi-clamp" title={text}>
+      {text}
+    </span>
+  );
+};
+
+const FieldChip = ({ field, revealed, onClick, onSteps }) => {
+  if (field.type === 'Steps') {
+    // Count chip like the repository table's badge; clicking opens the
+    // numbered list in a popover instead of expanding the case.
+    return (
+      <button data-chip="true" className="tpi-chip" title={field.label} onClick={onSteps}>
+        <DynamicIcon name="ListOrdered" className="h-3 w-3 shrink-0" />
+        <span className="tpi-chip-label">{stepsCountLabel(field)}</span>
+      </button>
+    );
+  }
+
+  const isDropdown = field.type === 'Dropdown' && field.options && field.options.length > 0;
+
+  if (isDropdown) {
+    // Single value: shown in the button itself, like the Workflow State badge.
+    const option = field.options[0];
+    const color = option.iconColor || 'var(--ds-background-neutral, #6B7280)';
+    return (
+      <button
+        data-chip="true"
+        className="tpi-chip tpi-chip-filled"
+        style={{ backgroundColor: color, borderColor: color }}
+        title={field.label}
+        onClick={onClick}
+      >
+        {revealed && <span className="tpi-chip-label">{field.label}:</span>}
+        {option.icon && <DynamicIcon name={option.icon} className="h-3 w-3 shrink-0" style={{ color: 'white' }} />}
+        <span className="truncate">{option.name}</span>
+      </button>
+    );
+  }
+
+  return (
+    <button data-chip="true" className="tpi-chip" title={field.label} onClick={onClick}>
+      <span className="tpi-chip-label">{revealed ? `${field.label}:` : field.label}</span>
+      {revealed && <FieldValue field={field} />}
+      {!revealed && field.options && <span className="tpi-chip-count">{'·'}{field.options.length}</span>}
+    </button>
+  );
+};
+
+const FieldChipsRow = ({ fields, expanded, onToggle }) => {
+  const rowRef = useRef(null);
+  const [hiddenCount, setHiddenCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [stepsOpen, setStepsOpen] = useState(false);
+  const stepsField = fields.find((field) => field.type === 'Steps');
+
+  // Action Bar-style fitting: show every chip that fits on one line and fold
+  // the rest behind the kebab. Runs pre-paint, so no visible reflow.
+  const fit = useCallback(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const chips = Array.from(row.querySelectorAll('[data-chip]'));
+    const kebab = row.querySelector('[data-kebab]');
+    chips.forEach((chip) => { chip.style.display = ''; });
+    if (kebab) kebab.style.display = 'none';
+
+    let hidden = 0;
+    if (!expanded && row.scrollWidth > row.clientWidth + 1) {
+      if (kebab) kebab.style.display = '';
+      for (let i = chips.length - 1; i >= 0 && row.scrollWidth > row.clientWidth + 1; i--) {
+        chips[i].style.display = 'none';
+        hidden++;
+      }
+    }
+    setHiddenCount(hidden);
+    if (hidden === 0) setMenuOpen(false);
+  }, [expanded]);
+
+  useLayoutEffect(() => { fit(); }, [fit, fields]);
+
+  useEffect(() => {
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [fit]);
+
+  useEffect(() => {
+    if (!menuOpen && !stepsOpen) return;
+    const close = () => {
+      setMenuOpen(false);
+      setStepsOpen(false);
+    };
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [menuOpen, stepsOpen]);
+
+  const hiddenFields = hiddenCount > 0 ? fields.slice(fields.length - hiddenCount) : [];
+
+  return (
+    <div className="tpi-field-area">
+      <div ref={rowRef} className={`tpi-field-row ${expanded ? 'tpi-field-row-wrap' : ''}`}>
+        {fields.map((field) => (
+          <FieldChip
+            key={field.id}
+            field={field}
+            revealed={expanded}
+            onClick={onToggle}
+            onSteps={(e) => {
+              e.stopPropagation();
+              setStepsOpen((open) => !open);
+              setMenuOpen(false);
+            }}
+          />
+        ))}
+        <button
+          data-kebab="true"
+          className="tpi-kebab"
+          aria-label="More fields"
+          onClick={(e) => {
+            e.stopPropagation();
+            setMenuOpen((open) => !open);
+          }}
+        >
+          <DynamicIcon name="MoreVertical" className="h-3.5 w-3.5" />
+          {hiddenCount > 0 && <span>+{hiddenCount}</span>}
+        </button>
+      </div>
+      {menuOpen && hiddenFields.length > 0 && (
+        <div className="tpi-field-menu" onClick={(e) => e.stopPropagation()}>
+          {hiddenFields.map((field) => (
+            <div key={field.id} className="tpi-field-menu-item">
+              <span className="tpi-field-menu-label" title={field.label}>{field.label}</span>
+              <span className="tpi-field-menu-value"><FieldValue field={field} /></span>
+            </div>
+          ))}
+        </div>
+      )}
+      {stepsOpen && stepsField && (
+        <div className="tpi-steps-menu" onClick={(e) => e.stopPropagation()}>
+          <StepsList steps={stepsField.steps} />
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Test case row component
 const TestCaseRow = ({ testCase, onOpen }) => {
   const [expanded, setExpanded] = useState(false);
+  // Fields opted into the panel; valueless ones are hidden by design.
+  const visibleFields = (testCase.fields || []).filter(fieldHasValue);
 
   const getIcon = (source, isDeleted) => {
-    if (isDeleted) return <DynamicIcon name="Trash2" className="h-4 w-4 shrink-0" />;
+    if (isDeleted) return <DynamicIcon name="Trash" className="h-4 w-4 shrink-0" />;
     if (source === 'JUNIT') return <DynamicIcon name="Bot" className="h-4 w-4 shrink-0" />;
     return <DynamicIcon name="ListChecks" className="h-4 w-4 shrink-0" />;
   };
@@ -264,6 +535,10 @@ const TestCaseRow = ({ testCase, onOpen }) => {
           {expanded ? <DynamicIcon name="ChevronDown" className="h-4 w-4" /> : <DynamicIcon name="ChevronRight" className="h-4 w-4" />}
         </button>
       </div>
+      {/* Case fields the admin opted into the Jira panel (template toggle) */}
+      {visibleFields.length > 0 && (
+        <FieldChipsRow fields={visibleFields} expanded={expanded} onToggle={toggleExpanded} />
+      )}
       {expanded && (
         <div className="border-t border-border bg-muted/30">
           <div className="p-2">
@@ -1289,6 +1564,420 @@ const GenerateTestCasesFlow = ({ onClose, onImported, initialContext }) => {
   );
 };
 
+// Strip markdown code fences a model may wrap the script in despite instructions.
+const stripFences = (code) =>
+  (code || '')
+    .replace(/^```[\w]*\r?\n?/, '')
+    .replace(/\r?\n?```\s*$/, '')
+    .trim();
+
+// Generate QuickScript flow — configure → generating → result.
+const GenerateQuickScriptFlow = ({ onClose, initialContext }) => {
+  const initialTemplates = initialContext?.templates || [];
+  const initialTemplate =
+    initialTemplates.find((t) => t.isProjectDefault) ||
+    initialTemplates.find((t) => t.isDefault) ||
+    initialTemplates[0];
+  const initialCases = initialContext?.linkedCases || [];
+
+  const [view, setView] = useState('configure'); // configure | generating | result
+  const [loadingContext, setLoadingContext] = useState(!initialContext);
+  const [error, setError] = useState(null);
+
+  const [projects, setProjects] = useState(initialContext?.projects || []);
+  const [selectedProjectId, setSelectedProjectId] = useState(
+    initialContext?.selectedProjectId ?? null
+  );
+  const [templates, setTemplates] = useState(initialTemplates);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(
+    initialTemplate ? initialTemplate.id : null
+  );
+  const [readiness, setReadiness] = useState(initialContext?.readiness || null);
+  const [linkedCases, setLinkedCases] = useState(initialCases);
+  const [selectedCaseIds, setSelectedCaseIds] = useState(
+    new Set(initialCases.map((c) => c.id))
+  );
+
+  const [code, setCode] = useState('');
+  const [generatedBy, setGeneratedBy] = useState(null); // 'ai' | 'template'
+  const [fallbackNote, setFallbackNote] = useState(null);
+  const [genInfo, setGenInfo] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!initialContext) loadContext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadContext = async (projectId) => {
+    setLoadingContext(true);
+    setError(null);
+    try {
+      const res = await invoke(
+        'getQuickScriptContext',
+        projectId ? { projectId } : {}
+      );
+      if (res.error) {
+        setError(res.error);
+        return;
+      }
+      setProjects(res.projects || []);
+      setSelectedProjectId(res.selectedProjectId ?? null);
+      setTemplates(res.templates || []);
+      setReadiness(res.readiness || null);
+      const cases = res.linkedCases || [];
+      setLinkedCases(cases);
+      setSelectedCaseIds(new Set(cases.map((c) => c.id)));
+      const def =
+        (res.templates || []).find((t) => t.isProjectDefault) ||
+        (res.templates || []).find((t) => t.isDefault) ||
+        (res.templates || [])[0];
+      setSelectedTemplateId(def ? def.id : null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingContext(false);
+    }
+  };
+
+  const handleProjectChange = (id) => {
+    const projectId = Number(id);
+    setSelectedProjectId(projectId);
+    loadContext(projectId);
+  };
+
+  const toggleCase = (id) => {
+    setSelectedCaseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const readinessIssue = !readiness
+    ? null
+    : !readiness.quickScriptEnabled
+      ? 'QuickScript is not enabled for this project. Enable it in TestPlanIt under Project Settings → QuickScript.'
+      : !readiness.hasActiveLlm
+        ? 'No AI provider is configured for this project. Connect one in TestPlanIt under Admin → Integrations → AI.'
+        : linkedCases.length === 0
+          ? 'No test cases are linked to this issue yet. Link cases in TestPlanIt first.'
+          : null;
+
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+
+  const canGenerate =
+    selectedProjectId &&
+    selectedTemplateId &&
+    readiness &&
+    readiness.quickScriptEnabled &&
+    readiness.hasActiveLlm &&
+    selectedCaseIds.size > 0;
+
+  const handleGenerate = async () => {
+    setView('generating');
+    setError(null);
+    setFallbackNote(null);
+    setCode('');
+    setGeneratedBy(null);
+    try {
+      // Forge resolvers die at 25s, so we stream generation directly from the
+      // browser: mint a short-lived token via the resolver, then fetch the
+      // streaming endpoint (a browser fetch isn't bound by the function limit).
+      const tokenRes = await invoke('getQuickScriptToken', {
+        projectId: selectedProjectId,
+      });
+      if (tokenRes.error) {
+        setError(tokenRes.error);
+        setView('configure');
+        return;
+      }
+      const { token, instanceUrl } = tokenRes;
+
+      const response = await fetch(
+        `${instanceUrl}/api/integrations/jira/quickscript-stream`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Forge-Token': token,
+          },
+          body: JSON.stringify({
+            templateId: selectedTemplateId,
+            caseIds: Array.from(selectedCaseIds),
+          }),
+        }
+      );
+
+      if (!response.ok || !response.body) {
+        let message = `Generation failed (${response.status})`;
+        try {
+          const j = await response.json();
+          if (j.error) message = j.error;
+        } catch {
+          // non-JSON error body — keep the status message
+        }
+        setError(message);
+        setView('configure');
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let accumulated = '';
+      let streamError = null;
+      let fallbackCode = null;
+      let fallbackErr = null;
+      let genBy = null;
+      let finished = false;
+
+      while (!finished) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+        for (const part of parts) {
+          const dataLine = part.split('\n').find((l) => l.startsWith('data:'));
+          if (!dataLine) continue;
+          let evt;
+          try {
+            evt = JSON.parse(dataLine.slice(5).trim());
+          } catch {
+            continue;
+          }
+          if (evt.type === 'chunk' && evt.delta) {
+            accumulated += evt.delta;
+            setCode(stripFences(accumulated));
+          } else if (evt.type === 'fallback') {
+            fallbackCode = evt.code || '';
+            fallbackErr = evt.error || null;
+            genBy = 'template';
+            finished = true;
+          } else if (evt.type === 'done') {
+            genBy = 'ai';
+            finished = true;
+          } else if (evt.type === 'error') {
+            streamError = evt.message || 'Generation failed';
+            finished = true;
+          }
+        }
+      }
+
+      if (streamError) {
+        setError(streamError);
+        setView('configure');
+        return;
+      }
+      if (genBy === 'template') {
+        setCode(fallbackCode);
+        setGeneratedBy('template');
+        setFallbackNote(fallbackErr);
+      } else {
+        setCode(stripFences(accumulated));
+        setGeneratedBy('ai');
+      }
+      setGenInfo({
+        framework: selectedTemplate?.framework,
+        language: selectedTemplate?.language,
+      });
+      setView('result');
+    } catch (err) {
+      setError(err.message);
+      setView('configure');
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard blocked — the user can still select the text manually
+    }
+  };
+
+  return (
+    <div className="p-4 testplanit-bg">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <DynamicIcon name="Code" className="h-5 w-5 text-primary" />
+          <h3 className="text-sm font-semibold">Generate QuickScript</h3>
+        </div>
+        <button
+          className="text-muted-foreground hover:text-foreground transition-colors"
+          onClick={onClose}
+        >
+          <DynamicIcon name="X" className="h-4 w-4" />
+        </button>
+      </div>
+
+      {loadingContext ? (
+        <div className="flex items-center gap-3">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary shrink-0"></div>
+          <span className="text-xs text-muted-foreground">Loading…</span>
+        </div>
+      ) : view === 'result' ? (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-muted-foreground">
+              {generatedBy === 'template'
+                ? 'Template fallback'
+                : 'AI-generated'}
+              {genInfo?.framework ? ` · ${genInfo.framework}` : ''}
+              {genInfo?.language ? ` · ${genInfo.language}` : ''}
+            </p>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1 px-2 py-1 border border-border rounded text-xs font-medium hover:bg-muted transition-colors"
+            >
+              <DynamicIcon name={copied ? 'Check' : 'Copy'} className="h-3 w-3" />
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          {generatedBy === 'template' && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-2 text-xs text-yellow-800">
+              AI generation was unavailable, so this is the deterministic
+              template render{fallbackNote ? ` (${fallbackNote})` : ''}.
+            </div>
+          )}
+          <pre className="bg-muted border border-border rounded p-3 text-xs overflow-auto max-h-96 whitespace-pre-wrap break-words">
+            {code}
+          </pre>
+          <div className="flex items-center justify-end gap-2 mt-3">
+            <button
+              onClick={() => setView('configure')}
+              className="px-3 py-1.5 border border-border rounded text-xs font-medium hover:bg-muted transition-colors"
+            >
+              Generate again
+            </button>
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      ) : view === 'generating' ? (
+        <div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary shrink-0"></div>
+            <span className="text-xs text-muted-foreground">
+              Generating script{code ? '…' : ' — this can take a moment…'}
+            </span>
+          </div>
+          {code && (
+            <pre className="bg-muted border border-border rounded p-3 text-xs overflow-auto max-h-96 whitespace-pre-wrap break-words">
+              {code}
+            </pre>
+          )}
+        </div>
+      ) : (
+        <div>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded p-2 mb-3 text-xs text-red-800">
+              {error}
+            </div>
+          )}
+
+          {projects.length > 1 && (
+            <div className="mb-3">
+              <label className="block text-xs font-medium mb-1">Project</label>
+              <select
+                value={selectedProjectId ?? ''}
+                onChange={(e) => handleProjectChange(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded text-xs bg-background text-foreground"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {typeof p.linkedCaseCount !== 'number'
+                      ? ''
+                      : p.linkedCaseCount > 0
+                        ? ` (${p.linkedCaseCount} linked)`
+                        : ' (no linked cases)'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {readinessIssue ? (
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-xs text-yellow-800 mb-3">
+              {readinessIssue}
+            </div>
+          ) : (
+            <>
+              <div className="mb-3">
+                <label className="block text-xs font-medium mb-1">
+                  Export template
+                </label>
+                <select
+                  value={selectedTemplateId ?? ''}
+                  onChange={(e) => setSelectedTemplateId(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-border rounded text-xs bg-background text-foreground"
+                >
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                      {t.framework ? ` (${t.framework})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mb-3">
+                <label className="block text-xs font-medium mb-1">
+                  Test cases ({selectedCaseIds.size}/{linkedCases.length})
+                </label>
+                <div className="border border-border rounded max-h-48 overflow-auto">
+                  {linkedCases.map((c) => (
+                    <label
+                      key={c.id}
+                      className="flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-muted cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCaseIds.has(c.id)}
+                        onChange={() => toggleCase(c.id)}
+                      />
+                      <span className="truncate">
+                        {c.displayKey ? `${c.displayKey} ` : ''}
+                        {c.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 border border-border rounded text-xs font-medium hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-brand text-white hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-all duration-150"
+            >
+              <DynamicIcon name="Code" className="h-3 w-3" />
+              Generate
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main app component
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -1297,10 +1986,15 @@ const App = () => {
   const [instanceUrl, setInstanceUrl] = useState(null);
   const [, setIsDarkTheme] = useState(false);
   const [showGenerate, setShowGenerate] = useState(false);
+  const [showQuickScript, setShowQuickScript] = useState(false);
   // Eligibility gate for the Generate button (app parity): the button only
   // shows when the mapped user can actually generate into a ready project.
   const [generationContext, setGenerationContext] = useState(null);
   const [canGenerate, setCanGenerate] = useState(false);
+  // Eligibility gate for the QuickScript button: needs the feature enabled, an
+  // AI provider, and at least one test case linked to this issue.
+  const [quickScriptContext, setQuickScriptContext] = useState(null);
+  const [canQuickScript, setCanQuickScript] = useState(false);
 
   const handleImported = () => {
     setShowGenerate(false);
@@ -1327,6 +2021,25 @@ const App = () => {
     }
   };
 
+  const loadQuickScriptEligibility = async () => {
+    try {
+      const ctx = await invoke('getQuickScriptContext');
+      if (ctx.error) {
+        setCanQuickScript(false);
+        return;
+      }
+      setQuickScriptContext(ctx);
+      const ready =
+        ctx.readiness &&
+        ctx.readiness.quickScriptEnabled &&
+        ctx.readiness.hasActiveLlm &&
+        (ctx.linkedCases || []).length > 0;
+      setCanQuickScript(Boolean(ctx.selectedProjectId) && Boolean(ready));
+    } catch {
+      setCanQuickScript(false);
+    }
+  };
+
   // Section collapse state
   const [sectionsExpanded, setSectionsExpanded] = useState({
     testCases: true,
@@ -1345,6 +2058,7 @@ const App = () => {
     loadTestInfo();
     detectTheme();
     loadGenerationEligibility();
+    loadQuickScriptEligibility();
   }, []);
 
 
@@ -1836,6 +2550,15 @@ const App = () => {
     );
   }
 
+  if (showQuickScript) {
+    return (
+      <GenerateQuickScriptFlow
+        onClose={() => setShowQuickScript(false)}
+        initialContext={quickScriptContext}
+      />
+    );
+  }
+
   const hasTestCases = testData?.testCases?.length > 0;
   const hasSessions = testData?.sessions?.length > 0;
   const hasTestRuns = testData?.testRuns?.length > 0;
@@ -1959,15 +2682,26 @@ const App = () => {
         >
           Open TestPlanIt →
         </button>
-        {canGenerate && (
-          <button
-            className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-brand text-white hover:bg-brand-hover active:scale-95 transition-all duration-150"
-            onClick={() => setShowGenerate(true)}
-          >
-            <DynamicIcon name="Sparkles" className="h-3 w-3" />
-            Generate Test Cases
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {canQuickScript && (
+            <button
+              className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium border border-border hover:bg-muted active:scale-95 transition-all duration-150"
+              onClick={() => setShowQuickScript(true)}
+            >
+              <DynamicIcon name="Code" className="h-3 w-3" />
+              Generate QuickScript
+            </button>
+          )}
+          {canGenerate && (
+            <button
+              className="flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium bg-brand text-white hover:bg-brand-hover active:scale-95 transition-all duration-150"
+              onClick={() => setShowGenerate(true)}
+            >
+              <DynamicIcon name="Sparkles" className="h-3 w-3" />
+              Generate Test Cases
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

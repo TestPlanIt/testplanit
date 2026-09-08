@@ -14,14 +14,15 @@ import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import {
   buildSystemPrompt,
   buildUserPrompt,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   parseAndValidateTestCases,
   type GeneratedTestCase,
   type GenerationContext,
+  type IssueCaseLinkRef,
   type IssueData,
   type ParseWarning,
   type TemplateData,
@@ -35,6 +36,8 @@ export interface GenerateTestCasesParams {
   quantity?: string;
   autoGenerateTags?: boolean;
   includeParameters?: boolean;
+  /** Omit for document/URL sources. */
+  issueRef?: IssueCaseLinkRef;
   /** Used for LLM usage attribution (LlmRequest.userId). */
   userId: string;
 }
@@ -73,13 +76,14 @@ export async function generateTestCasesForProject(
     quantity,
     autoGenerateTags,
     includeParameters,
+    issueRef,
     userId,
   } = params;
 
-  const manager = LlmManager.getInstance(prisma);
+  const manager = LlmManager.getInstance(baseDb);
 
   // Resolve prompt template from database (falls back to hard-coded default)
-  const resolver = new PromptResolver(prisma);
+  const resolver = new PromptResolver(baseDb);
   const resolvedPrompt = await resolver.resolve(
     LLM_FEATURES.TEST_CASE_GENERATION,
     projectId
@@ -122,7 +126,7 @@ export async function generateTestCasesForProject(
   let maxTokensPerRequest = 4096;
   let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
 
-  const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
+  const providerConfig = await (baseDb as any).llmProviderConfig.findFirst({
     where: { llmIntegrationId: resolved.integrationId },
   });
   if (providerConfig) {
@@ -152,20 +156,19 @@ export async function generateTestCasesForProject(
   // Allocate remaining token budget to existing test case context
   const contextTokenBudget = Math.max(0, contentBudget - basePromptTokens);
 
-  // Fetch prioritised context from folder hierarchy (server-side)
-  const hierarchyContext =
+  const existingCases =
     contextTokenBudget > 0
-      ? await fetchHierarchyContext(
-          prisma,
+      ? await fetchExistingCasesContext(
+          baseDb,
           projectId,
-          context.folderContext,
+          { folderId: context.folderContext, issueRef },
           contextTokenBudget
         )
       : [];
 
   const enrichedContext: GenerationContext = {
     ...context,
-    existingTestCases: hierarchyContext,
+    existingTestCases: existingCases,
   };
   let userPrompt = buildUserPrompt(issue, enrichedContext, userPromptBase);
   let wasTruncated = false;
@@ -245,7 +248,8 @@ export async function generateTestCasesForProject(
     template,
     issue,
     autoGenerateTags,
-    quantity
+    quantity,
+    response.finishReason
   );
 
   if (parseError) {

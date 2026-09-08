@@ -39,7 +39,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
   return (
     <Breadcrumb className="mb-2">
       <BreadcrumbList className="flex overflow-hidden flex-wrap">
-        <Folders className="w-4 h-4 -mr-1" />
+        <Folders className="w-4 h-4 -me-1" />
         {breadcrumbItems.map((folder, index) => (
           <React.Fragment key={folder.id}>
             {index !== 0 && <BreadcrumbSeparator />}

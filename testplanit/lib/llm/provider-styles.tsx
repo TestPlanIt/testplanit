@@ -69,7 +69,7 @@ export function LlmProviderBadge({
       className={cn(getProviderColor(provider), className)}
     >
       {showIcon && (
-        <span className="mr-1 shrink-0">
+        <span className="me-1 shrink-0">
           {getProviderIcon(provider, iconSize)}
         </span>
       )}

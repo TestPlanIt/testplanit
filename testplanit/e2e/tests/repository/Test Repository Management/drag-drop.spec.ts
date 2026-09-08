@@ -1,5 +1,6 @@
 import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
+import { waitForStableBox } from "../../../utils/wait-for-stable";
 
 /**
  * Drag & Drop Tests
@@ -369,25 +370,33 @@ test.describe("Drag & Drop", () => {
       await expect(testCaseRow).toBeVisible({ timeout: 10000 });
       await expect(targetFolderElement).toBeVisible({ timeout: 10000 });
 
-      // Wait for elements to have stable bounding boxes (not animating)
+      // Resolve both bounding boxes inside one retry loop: the folder tree
+      // and case list re-render as queries land, and a one-shot boundingBox
+      // read can catch an element mid-detach and return null.
+      let caseBox: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null = null;
+      let targetBox: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null = null;
       await expect(async () => {
-        const box = await testCaseRow.boundingBox();
-        expect(box).not.toBeNull();
-      }).toPass({ timeout: 5000 });
-
-      // Scroll elements into view
-      await testCaseRow.evaluate((el) =>
-        el.scrollIntoView({ block: "center" })
-      );
-      await targetFolderElement.evaluate((el) =>
-        el.scrollIntoView({ block: "center" })
-      );
-
-      const caseBox = await testCaseRow.boundingBox();
-      const targetBox = await targetFolderElement.boundingBox();
-
-      expect(caseBox).not.toBeNull();
-      expect(targetBox).not.toBeNull();
+        await testCaseRow.evaluate((el) =>
+          el.scrollIntoView({ block: "center" })
+        );
+        await targetFolderElement.evaluate((el) =>
+          el.scrollIntoView({ block: "center" })
+        );
+        caseBox = await testCaseRow.boundingBox();
+        targetBox = await targetFolderElement.boundingBox();
+        expect(caseBox).not.toBeNull();
+        expect(targetBox).not.toBeNull();
+      }).toPass({ timeout: 10000 });
 
       await page.mouse.move(
         caseBox!.x + caseBox!.width / 2,
@@ -480,8 +489,8 @@ test.describe("Drag & Drop", () => {
         .first();
       const targetFolderElement = repositoryPage.getFolderById(targetFolderId!);
 
-      await expect(selectedRow).toBeVisible({ timeout: 5000 });
-      await expect(targetFolderElement).toBeVisible({ timeout: 5000 });
+      await expect(selectedRow).toBeVisible({ timeout: 10000 });
+      await expect(targetFolderElement).toBeVisible({ timeout: 10000 });
 
       // Scroll elements into view
       await selectedRow.evaluate((el) =>
@@ -490,6 +499,12 @@ test.describe("Drag & Drop", () => {
       await targetFolderElement.evaluate((el) =>
         el.scrollIntoView({ block: "center" })
       );
+
+      // Selecting the two cases re-renders the row and the folder tree, so the
+      // node backing either locator can be replaced between the visibility
+      // check and the measurement — which reads back as a null box.
+      await waitForStableBox(selectedRow);
+      await waitForStableBox(targetFolderElement);
 
       const rowBox = await selectedRow.boundingBox();
       const targetBox = await targetFolderElement.boundingBox();
@@ -713,6 +728,16 @@ test.describe("Drag & Drop", () => {
       const box = await folder3.boundingBox();
       expect(box).not.toBeNull();
 
+      await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+      await page.mouse.down();
+      // Nudge to start the drag: the bottom drop zone only mounts while a
+      // folder drag is active, so it cannot be located before this.
+      await page.mouse.move(
+        box!.x + box!.width / 2 + 10,
+        box!.y + box!.height / 2 + 10,
+        { steps: 3 }
+      );
+
       // Find the bottom of the tree
       const treeBottom = page
         .locator('[data-testid="folder-tree-end"], .tree-end')
@@ -720,10 +745,8 @@ test.describe("Drag & Drop", () => {
       await expect(treeBottom).toBeVisible({ timeout: 2000 });
       const bottomBox = await treeBottom.boundingBox();
       expect(bottomBox).not.toBeNull();
-      const targetY = bottomBox!.y + bottomBox!.height;
+      const targetY = bottomBox!.y + bottomBox!.height / 2;
 
-      await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
-      await page.mouse.down();
       await page.mouse.move(box!.x, targetY, { steps: 10 });
       await page.mouse.up();
 

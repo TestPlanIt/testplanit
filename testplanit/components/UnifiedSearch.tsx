@@ -9,6 +9,7 @@ import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
 import { SavedSearchesMenu } from "@/components/search/SavedSearchesMenu";
 import { SearchHelpContent } from "@/components/search/SearchHelpContent";
+import { useRecordKeyHits } from "~/hooks/useRecordKeyHits";
 import {
   BadgeList,
   DateDisplay,
@@ -48,6 +49,7 @@ import {
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { BulkEditModal } from "@/projects/repository/[projectId]/BulkEditModal";
 import {
+  ExternalLink as ExternalLinkIcon,
   Filter,
   Folder,
   Pencil,
@@ -57,7 +59,7 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getEntityIcon,
@@ -76,6 +78,7 @@ import {
   UnifiedSearchResult,
 } from "~/types/search";
 import { cn } from "~/utils";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface UnifiedSearchProps {
   // Context overrides
@@ -92,6 +95,12 @@ interface UnifiedSearchProps {
   // Callbacks
   onResultsChange?: (results: UnifiedSearchResult) => void;
   onResultClick?: (hit: SearchHit) => void;
+  /**
+   * Destination for a result. When it returns a URL the card renders as a
+   * link, so a plain click navigates and a modified click (command/ctrl,
+   * middle button) opens the result in a new tab or window.
+   */
+  getResultHref?: (hit: SearchHit) => string | null;
   renderResults?: (results: UnifiedSearchResult) => React.ReactNode;
 
   // Initial state
@@ -109,6 +118,7 @@ export function UnifiedSearch({
   placeholder,
   onResultsChange,
   onResultClick,
+  getResultHref,
   renderResults,
   initialQuery = "",
   initialFilters,
@@ -119,6 +129,10 @@ export function UnifiedSearch({
 
   // Initialize state from saved search state or defaults
   const [query, setQuery] = useState(searchState?.query || initialQuery);
+  // Records resolved directly from an id / cosmetic key typed into the box.
+  // Rendered as normal result cards above the text-search results.
+  const recordKeyHits = useRecordKeyHits(query);
+  const hasRecordKeyHits = recordKeyHits.length > 0;
   const [filters, setFilters] = useState<UnifiedSearchFilters>(
     searchState?.filters || initialFilters || searchContext.defaultFilters
   );
@@ -693,11 +707,12 @@ export function UnifiedSearch({
               key={vItem.key}
               data-index={vItem.index}
               ref={measureElement}
-              className="absolute left-0 top-0 w-full pb-2"
+              className="absolute start-0 top-0 w-full pb-2"
               style={{ transform: `translateY(${vItem.start}px)` }}
             >
               <SearchResultCard
                 hit={hit}
+                href={getResultHref?.(hit) ?? undefined}
                 onClick={() => onResultClick?.(hit)}
                 searchQuery={query}
                 isSelected={selectedCaseRows.has(Number(hit.id))}
@@ -748,6 +763,8 @@ export function UnifiedSearch({
   // Default result renderer with tab support over the virtualized list.
   const defaultResultRenderer = (results: UnifiedSearchResult) => {
     if (!results.hits.length && results.total === 0) {
+      // A resolved record-key jump is showing above; don't also say "no results".
+      if (hasRecordKeyHits) return null;
       return (
         <div className="py-12 space-y-12">
           <div className="text-center">
@@ -758,7 +775,7 @@ export function UnifiedSearch({
               {t("search.results.tryAdjusting")}
             </p>
           </div>
-          <div className="ml-2 border-l-8 pl-2">
+          <div className="ms-2 border-s-8 ps-2">
             <SearchHelpContent />
           </div>
         </div>
@@ -793,7 +810,7 @@ export function UnifiedSearch({
               <TabsTrigger value="all" className="gap-2">
                 <Search className="h-4 w-4" />
                 {t("search.allTypes")}
-                <Badge variant="secondary" className="ml-1">
+                <Badge variant="secondary" className="ms-1">
                   {results.entityTypeCounts
                     ? Object.values(results.entityTypeCounts).reduce(
                         (sum, count) => sum + count,
@@ -823,7 +840,7 @@ export function UnifiedSearch({
                       className="h-4 w-4"
                     />
                     {getEntityLabel(entityType)}
-                    <Badge variant="secondary" className="ml-1">
+                    <Badge variant="secondary" className="ms-1">
                       {count}
                     </Badge>
                   </TabsTrigger>
@@ -851,20 +868,20 @@ export function UnifiedSearch({
       <div className="space-y-2">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute start-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               type="text"
               placeholder={searchPlaceholder}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-10 pr-10"
+              className="ps-10 pe-10"
               autoFocus
             />
             {query && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
+                className="absolute end-1 top-1/2 transform -translate-y-1/2 h-7 w-7"
                 onClick={clearSearch}
               >
                 <X className="h-4 w-4" />
@@ -929,7 +946,7 @@ export function UnifiedSearch({
                 {getActiveFilterCount() > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                    className="absolute -top-1 -end-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
                   >
                     {getActiveFilterCount()}
                   </Badge>
@@ -1025,6 +1042,20 @@ export function UnifiedSearch({
           </div>
         )}
 
+        {hasRecordKeyHits && (
+          <div className="mb-2 flex flex-col gap-2">
+            {recordKeyHits.map((hit) => (
+              <SearchResultCard
+                key={`${hit.entityType}-${hit.id}`}
+                hit={hit}
+                href={getResultHref?.(hit) ?? undefined}
+                onClick={() => onResultClick?.(hit)}
+                searchQuery={query}
+              />
+            ))}
+          </div>
+        )}
+
         {!isInitialLoading && !error && results && (
           <>
             {renderResults
@@ -1033,11 +1064,15 @@ export function UnifiedSearch({
           </>
         )}
 
-        {!loading && !error && !results && !isFirstSearch && (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>{t("common.labels.noResults")}</p>
-          </div>
-        )}
+        {!loading &&
+          !error &&
+          !results &&
+          !isFirstSearch &&
+          !hasRecordKeyHits && (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>{t("common.labels.noResults")}</p>
+            </div>
+          )}
 
         {!loading && !error && !results && isFirstSearch && query === "" && (
           <div className="text-center py-12 text-muted-foreground">
@@ -1049,7 +1084,7 @@ export function UnifiedSearch({
 
       {selectedCaseRows.size > 0 && (
         <div
-          className="fixed bottom-0 right-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur sm:max-w-3xl supports-[backdrop-filter]:bg-background/80"
+          className="fixed bottom-0 end-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur sm:max-w-3xl supports-[backdrop-filter]:bg-background/80"
           data-testid="bulk-action-toolbar"
         >
           <div className="flex flex-wrap items-center justify-between gap-3 p-3">
@@ -1141,12 +1176,15 @@ export function UnifiedSearch({
 // Individual search result card component
 function SearchResultCard({
   hit,
+  href,
   onClick,
   searchQuery: _searchQuery,
   isSelected = false,
   onSelectToggle,
 }: {
   hit: SearchHit;
+  /** When set the whole card is an anchor pointing here. */
+  href?: string;
   onClick?: () => void;
   searchQuery?: string;
   isSelected?: boolean;
@@ -1158,7 +1196,14 @@ function SearchResultCard({
   onSelectToggle?: () => void;
 }) {
   const t = useTranslations();
-  const Icon = getEntityIcon(hit.entityType);
+  // Deleted wins over everything (matching TestCaseNameDisplay); automated
+  // repository cases get the bot icon; everything else uses the entity icon.
+  const Icon = hit.source.isDeleted
+    ? "trash-2"
+    : hit.entityType === SearchableEntityType.REPOSITORY_CASE &&
+        (hit.source.automated || isAutomatedCaseSource(hit.source.source))
+      ? "bot"
+      : getEntityIcon(hit.entityType);
 
   const renderEntitySpecificInfo = () => {
     switch (hit.entityType) {
@@ -1226,7 +1271,7 @@ function SearchResultCard({
                   )),
                 hit.source.automated && (
                   <Badge variant="secondary" className="text-xs">
-                    <DynamicIcon name="bot" className="h-3 w-3 text-primary" />
+                    <DynamicIcon name="bot" className="h-3 w-3" />
                   </Badge>
                 ),
                 hit.source.source && hit.source.source !== "MANUAL" && (
@@ -1312,7 +1357,7 @@ function SearchResultCard({
                             className={cn(
                               "flex gap-2 rounded px-2 py-1",
                               hasHighlights &&
-                                "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
+                                "bg-yellow-50 dark:bg-yellow-900/20 border-s-2 border-yellow-400"
                             )}
                           >
                             <span className="font-medium shrink-0">
@@ -1630,7 +1675,7 @@ function SearchResultCard({
     }
   };
 
-  return (
+  const card = (
     <Card
       className={cn(
         "p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/50",
@@ -1638,13 +1683,15 @@ function SearchResultCard({
           "bg-destructive/10 border-destructive/20 hover:border-destructive/50",
         isSelected && "border-primary/50 bg-primary/5"
       )}
-      onClick={onClick}
+      onClick={href ? undefined : onClick}
     >
       <div className="flex items-start gap-3">
         {onSelectToggle && (
           <div
             className="mt-1"
             onClick={(e) => {
+              // Also suppress the surrounding anchor's navigation.
+              e.preventDefault();
               e.stopPropagation();
               onSelectToggle();
             }}
@@ -1712,14 +1759,39 @@ function SearchResultCard({
                 hit.source.name
               )}
             </h4>
-            <Badge variant="outline" className="ml-2 shrink-0">
-              {getEntityLabel(hit.entityType)}
-            </Badge>
-            {hit.source.isDeleted && (
-              <Badge variant="destructive" className="ml-2 shrink-0">
-                {t("common.status.deleted")}
+            <div className="flex shrink-0 items-start">
+              {href && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="ms-2 mt-0.5 text-muted-foreground hover:text-foreground"
+                      aria-label={t("autoTag.entityDetail.openInNewTab")}
+                      data-testid={`search-result-new-tab-${hit.entityType}-${hit.id}`}
+                      onClick={(e) => {
+                        // Keep the card's own in-place navigation from firing.
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(href, "_blank", "noopener,noreferrer");
+                      }}
+                    >
+                      <ExternalLinkIcon className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("autoTag.entityDetail.openInNewTab")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <Badge variant="outline" className="ms-2 shrink-0">
+                {getEntityLabel(hit.entityType)}
               </Badge>
-            )}
+              {hit.source.isDeleted && (
+                <Badge variant="destructive" className="ms-2 shrink-0">
+                  {t("common.status.deleted")}
+                </Badge>
+              )}
+            </div>
           </div>
 
           {renderEntitySpecificInfo()}
@@ -1735,5 +1807,23 @@ function SearchResultCard({
         </div>
       </div>
     </Card>
+  );
+
+  if (!href) return card;
+
+  return (
+    <Link
+      href={href}
+      className="block rounded-xl no-underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+      data-testid={`search-result-link-${hit.entityType}-${hit.id}`}
+      onClick={(e) => {
+        // A modified click opens a new tab or window; leave the search UI
+        // untouched so the user keeps their place in the results.
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        onClick?.();
+      }}
+    >
+      {card}
+    </Link>
   );
 }

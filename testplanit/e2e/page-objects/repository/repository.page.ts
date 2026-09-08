@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from "@playwright/test";
 import { BasePage } from "../base.page";
+import { clickOverflowAction } from "../../utils/action-overflow";
 
 /**
  * Repository page object for test case management
@@ -44,9 +45,7 @@ export class RepositoryPage extends BasePage {
     this.folderCancelButton = page.getByTestId("folder-cancel-button");
 
     // Cases table
-    this.casesTable = page
-      .locator('[data-testid="cases-table"], table')
-      .first();
+    this.casesTable = page.locator('[data-testid="case-table"], table').first();
     this.addCaseButton = page
       .getByTestId("add-case-button")
       .or(page.locator('button:has-text("Add Case")').first());
@@ -444,10 +443,22 @@ export class RepositoryPage extends BasePage {
   }
 
   /**
+   * Click the Add Case toolbar action, opening the ActionOverflow kebab menu
+   * first when the toolbar is collapsed.
+   */
+  async clickAddCase(): Promise<void> {
+    await clickOverflowAction(
+      this.page,
+      "add-case-button",
+      "repository-actions-menu"
+    );
+  }
+
+  /**
    * Open add case modal
    */
   async openAddCaseModal(): Promise<void> {
-    await this.addCaseButton.click();
+    await this.clickAddCase();
     // Wait for modal to be visible
     await expect(this.page.locator('[role="dialog"]')).toBeVisible({
       timeout: 5000,

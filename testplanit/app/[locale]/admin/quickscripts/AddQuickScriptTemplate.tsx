@@ -1,14 +1,10 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
-import { CaseExportTemplate } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { CaseExportTemplate } from "~/zenstack/models";
 import { useMemo, useRef, useState } from "react";
-import {
-  useCreateCaseExportTemplate,
-  useFindManyCaseExportTemplate,
-  useFindManyCaseFields,
-  useUpdateManyCaseExportTemplate,
-} from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -44,6 +40,7 @@ import {
 
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 interface AddQuickScriptTemplateProps {
   open: boolean;
@@ -84,11 +81,12 @@ export function AddQuickScriptTemplate({
     isEnabled: z.boolean().prefault(true),
   });
 
-  const { mutateAsync: createTemplate } = useCreateCaseExportTemplate();
-  const { mutateAsync: updateManyTemplates } =
-    useUpdateManyCaseExportTemplate();
+  const { mutateAsync: createTemplate } =
+    useClientQueries(schema).caseExportTemplate.useCreate();
 
-  const { data: existingTemplates } = useFindManyCaseExportTemplate({
+  const { data: existingTemplates } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany({
     where: { isDeleted: false },
     select: {
       category: true,
@@ -127,7 +125,9 @@ export function AddQuickScriptTemplate({
     ].sort();
   }, [templates]);
 
-  const { data: caseFieldsData } = useFindManyCaseFields({
+  const { data: caseFieldsData } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: { systemName: true, type: { select: { type: true } } },
   });
@@ -190,13 +190,8 @@ export function AddQuickScriptTemplate({
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      if (data.isDefault) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
-      }
-
+      // The single-default DB trigger (tpl_single_default_caseexporttemplate)
+      // clears the previous default atomically.
       await createTemplate({
         data: {
           name: data.name,
@@ -215,7 +210,7 @@ export function AddQuickScriptTemplate({
 
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.nameExists"),

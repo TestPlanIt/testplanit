@@ -1,6 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { buildDateFilter } from "@/utils/reportUtils";
 import { NextRequest } from "next/server";
+import { authorizeReportRequest } from "~/utils/reportApiUtils";
 
 // Note: Session analysis uses custom session-specific logic
 // This handles unique session dimensions like assignedTo, template, state, etc.
@@ -12,7 +13,7 @@ const DIMENSION_REGISTRY: Record<
   {
     id: string;
     label: string;
-    getValues: (prisma: any, projectId: number) => Promise<any[]>;
+    getValues: (baseDb: any, projectId: number) => Promise<any[]>;
     groupBy: string;
     join: any;
     display: (val: any) => any;
@@ -21,8 +22,8 @@ const DIMENSION_REGISTRY: Record<
   session: {
     id: "session",
     label: "Session",
-    getValues: async (prisma: any, projectId: number) =>
-      await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) =>
+      await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -37,8 +38,8 @@ const DIMENSION_REGISTRY: Record<
   assignedTo: {
     id: "assignedTo",
     label: "Assigned To",
-    getValues: async (prisma: any, projectId: number) => {
-      const assignees = await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const assignees = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -64,8 +65,8 @@ const DIMENSION_REGISTRY: Record<
   milestone: {
     id: "milestone",
     label: "Milestone",
-    getValues: async (prisma: any, projectId: number) => {
-      const milestones = await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const milestones = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -109,8 +110,8 @@ const DIMENSION_REGISTRY: Record<
   template: {
     id: "template",
     label: "Template",
-    getValues: async (prisma: any, projectId: number) => {
-      const templates = await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const templates = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -136,8 +137,8 @@ const DIMENSION_REGISTRY: Record<
   state: {
     id: "state",
     label: "State",
-    getValues: async (prisma: any, projectId: number) => {
-      const states = await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const states = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -179,8 +180,8 @@ const DIMENSION_REGISTRY: Record<
   creator: {
     id: "creator",
     label: "Creator",
-    getValues: async (prisma: any, projectId: number) => {
-      const creators = await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const creators = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -205,8 +206,8 @@ const DIMENSION_REGISTRY: Record<
   date: {
     id: "date",
     label: "Creation Date",
-    getValues: async (prisma: any, projectId: number) => {
-      const dates = await prisma.sessions.findMany({
+    getValues: async (baseDb: any, projectId: number) => {
+      const dates = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -244,7 +245,7 @@ const METRIC_REGISTRY: Record<
     id: string;
     label: string;
     aggregate: (
-      prisma: any,
+      baseDb: any,
       projectId: number,
       groupBy: string[],
       filters?: any,
@@ -255,10 +256,10 @@ const METRIC_REGISTRY: Record<
   sessionCount: {
     id: "sessionCount",
     label: "Session Count",
-    aggregate: async (prisma, projectId, groupBy, filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
       // Handle date grouping or assignedToId grouping specially (need to include related data)
       if (groupBy.includes("createdAt") || groupBy.includes("assignedToId")) {
-        const sessions = await prisma.sessions.findMany({
+        const sessions = await baseDb.sessions.findMany({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -343,7 +344,7 @@ const METRIC_REGISTRY: Record<
         return Array.from(grouped.values());
       } else {
         // Use database aggregation for non-date grouping
-        const results = await prisma.sessions.groupBy({
+        const results = await baseDb.sessions.groupBy({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -363,11 +364,11 @@ const METRIC_REGISTRY: Record<
   activeSessions: {
     id: "activeSessions",
     label: "Active Sessions",
-    aggregate: async (prisma, projectId, groupBy, filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
       // Always use manual aggregation since we need to count boolean values
       // which cannot be aggregated with _sum in Prisma
       // Manual aggregation - get all sessions and group manually
-      const sessions = await prisma.sessions.findMany({
+      const sessions = await baseDb.sessions.findMany({
         where: {
           projectId: Number(projectId),
           isDeleted: false,
@@ -444,8 +445,10 @@ const METRIC_REGISTRY: Record<
         }
 
         const group = grouped.get(key);
-        // Count active sessions (isActive = true)
-        if (session.isActive) {
+        // A session is active while it hasn't been completed. (Sessions has
+        // no isActive column — the old `session.isActive` check was always
+        // undefined, so this metric reported 0 everywhere.)
+        if (!session.isCompleted) {
           group.activeSessions++;
         }
       });
@@ -459,7 +462,7 @@ const METRIC_REGISTRY: Record<
   averageDuration: {
     id: "averageDuration",
     label: "Average Duration",
-    aggregate: async (prisma, projectId, groupBy, filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
       // Handle manual aggregation for complex grouping
       const needsManualAggregation =
         groupBy.some(
@@ -470,7 +473,7 @@ const METRIC_REGISTRY: Record<
         ) || groupBy.length === 0;
 
       if (needsManualAggregation) {
-        const sessions = await prisma.sessions.findMany({
+        const sessions = await baseDb.sessions.findMany({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -563,12 +566,12 @@ const METRIC_REGISTRY: Record<
           ...group,
           averageDuration:
             group.sessionCount > 0
-              ? Math.round((group.totalDuration / group.sessionCount) * 1000) // Convert seconds to milliseconds
+              ? Math.round(group.totalDuration / group.sessionCount)
               : 0,
         }));
       } else {
         // Use database aggregation
-        const results = await prisma.sessions.groupBy({
+        const results = await baseDb.sessions.groupBy({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -582,7 +585,7 @@ const METRIC_REGISTRY: Record<
         return results.map((result: any) => ({
           ...result,
           averageDuration: result._avg.elapsed
-            ? Math.round(result._avg.elapsed * 1000) // Convert seconds to milliseconds
+            ? Math.round(result._avg.elapsed)
             : 0,
         }));
       }
@@ -591,7 +594,7 @@ const METRIC_REGISTRY: Record<
   totalDuration: {
     id: "totalDuration",
     label: "Total Duration",
-    aggregate: async (prisma, projectId, groupBy, filters, _dims) => {
+    aggregate: async (baseDb, projectId, groupBy, filters, _dims) => {
       // Handle manual aggregation for complex grouping
       const needsManualAggregation =
         groupBy.some(
@@ -602,7 +605,7 @@ const METRIC_REGISTRY: Record<
         ) || groupBy.length === 0;
 
       if (needsManualAggregation) {
-        const sessions = await prisma.sessions.findMany({
+        const sessions = await baseDb.sessions.findMany({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -691,11 +694,11 @@ const METRIC_REGISTRY: Record<
 
         return Array.from(grouped.values()).map((group: any) => ({
           ...group,
-          totalDuration: group.totalDuration * 1000, // Convert seconds to milliseconds
+          totalDuration: group.totalDuration,
         }));
       } else {
         // Use database aggregation
-        const results = await prisma.sessions.groupBy({
+        const results = await baseDb.sessions.groupBy({
           where: {
             projectId: Number(projectId),
             isDeleted: false,
@@ -708,7 +711,7 @@ const METRIC_REGISTRY: Record<
 
         return results.map((result: any) => ({
           ...result,
-          totalDuration: (result._sum.elapsed || 0) * 1000, // Convert seconds to milliseconds
+          totalDuration: result._sum.elapsed || 0,
         }));
       }
     },
@@ -719,6 +722,12 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const projectId = url.searchParams.get("projectId");
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
 
     if (!projectId) {
       return Response.json(
@@ -732,7 +741,7 @@ export async function GET(req: NextRequest) {
       Object.values(DIMENSION_REGISTRY).map(async (dim) => ({
         id: dim.id,
         label: dim.label,
-        values: await dim.getValues(prisma, Number(projectId)),
+        values: await dim.getValues(baseDb, Number(projectId)),
       }))
     );
 
@@ -751,6 +760,12 @@ export async function POST(req: NextRequest) {
   try {
     const { projectId, dimensions, metrics, startDate, endDate } =
       await req.json();
+
+    const authz = await authorizeReportRequest(req, {
+      requiresAdmin: false,
+      projectId: projectId ? Number(projectId) : undefined,
+    });
+    if (!authz.ok) return authz.response;
 
     if (!projectId) {
       return Response.json(
@@ -809,7 +824,7 @@ export async function POST(req: NextRequest) {
     const metricResults = await Promise.all(
       metricConfigs.map((metricConfig: any) =>
         metricConfig.aggregate(
-          prisma,
+          baseDb,
           Number(projectId),
           groupBy,
           { startDate, endDate },
@@ -821,7 +836,7 @@ export async function POST(req: NextRequest) {
     // Get all dimension values lookup for display formatting
     const dimensionValues = await Promise.all(
       dimensionConfigs.map((config: any) =>
-        config.getValues(prisma, Number(projectId))
+        config.getValues(baseDb, Number(projectId))
       )
     );
 

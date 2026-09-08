@@ -22,6 +22,7 @@ test.describe("Request review on a case", () => {
   let gatedWorkflowId: number | null = null;
   let createdReviewRequestId: string | null = null;
   const createdUserIds: string[] = [];
+  const createdRoleIds: number[] = [];
 
   test.afterEach(async ({ request, baseURL }) => {
     const url = baseURL!;
@@ -43,6 +44,16 @@ test.describe("Request review on a case", () => {
           .catch(() => {});
       }
     }
+    while (createdRoleIds.length) {
+      const id = createdRoleIds.pop();
+      if (id) {
+        await request
+          .patch(`${url}/api/model/roles/update`, {
+            data: { where: { id }, data: { isDeleted: true } },
+          })
+          .catch(() => {});
+      }
+    }
   });
 
   test("requester submits a review request and sees the pending banner", async ({
@@ -59,12 +70,26 @@ test.describe("Request review on a case", () => {
 
     await test.step("Create project and a separate reviewer assigned to it", async () => {
       projectId = await api.createProject(`Reviews-Req ${Date.now()}`);
+      // The reviewer picker filters to users whose effective project role
+      // carries canApprove=true on the entity's ApplicationArea (CASE →
+      // TestCaseRepository). The seeded default "user" role does NOT grant
+      // canApprove, so a plain USER would be excluded from the combobox.
+      // Mint a dedicated approver role with canApprove on the case area and
+      // assign the reviewer to it so they surface as an eligible assignee.
+      const approverRoleId = await api.createRole(`RR-Approver ${Date.now()}`);
+      createdRoleIds.push(approverRoleId);
+      await api.setRolePermission({
+        roleId: approverRoleId,
+        area: "TestCaseRepository",
+        canApprove: true,
+      });
       // Need a separate reviewer — schema validates assignee != requester.
       const reviewer = await api.createUser({
         name: `RR-Reviewer ${Date.now()}`,
         email: `rr-reviewer-${Date.now()}@example.com`,
         password: "S3cure!password",
         access: "USER",
+        roleId: approverRoleId,
         isActive: true,
         emailVerified: true,
       });

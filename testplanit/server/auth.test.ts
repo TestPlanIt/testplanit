@@ -87,22 +87,31 @@ async function invoke(opts?: {
       : opts.cachedUser;
   getCachedSessionUserMock.mockResolvedValueOnce(cached);
 
-  // findUnique is called twice in the session block when authMethod is
-  // INTERNAL/BOTH (passwordChangedAt + isActive) and once otherwise (isActive).
+  // findUnique is called ONCE in the session block, selecting passwordChangedAt
+  // and isActive together for both mid-session guards.
+  //
+  // This mock HONOURS the requested select rather than branching on whichever
+  // single column was asked for. The previous shape returned only the first
+  // matching column, so a select asking for both got `isActive: undefined` and
+  // the deactivation guard silently stopped firing — a mock artifact that looked
+  // exactly like a real security regression. Building the row from the select is
+  // also closer to what Prisma actually does.
   findUniqueMock.mockReset();
   findUniqueMock.mockImplementation(
     async (args: { select?: Record<string, unknown> }) => {
-      if (args?.select && "passwordChangedAt" in args.select) {
-        return opts?.freshUserPasswordChangedAt !== undefined
-          ? { passwordChangedAt: opts.freshUserPasswordChangedAt }
-          : { passwordChangedAt: null };
+      // `freshRow: null` models a deleted user — no row at all.
+      if (opts?.freshRow === null) return null;
+
+      const select = args?.select ?? {};
+      const row: Record<string, unknown> = {};
+      if ("passwordChangedAt" in select) {
+        row.passwordChangedAt = opts?.freshUserPasswordChangedAt ?? null;
       }
-      if (args?.select && "isActive" in args.select) {
-        return opts?.freshRow === undefined
-          ? { isActive: true }
-          : opts.freshRow;
+      if ("isActive" in select) {
+        row.isActive =
+          opts?.freshRow === undefined ? true : opts.freshRow.isActive;
       }
-      return null;
+      return Object.keys(row).length > 0 ? row : null;
     }
   );
 
@@ -259,22 +268,55 @@ describe("session callback - placement invariants", () => {
 
     expect(result).toEqual({});
 
-    // findUnique should have been called for passwordChangedAt only, NOT for isActive.
-    const isActiveCalls = findUniqueMock.mock.calls.filter(
-      (call: unknown[]) =>
-        "isActive" in
-        ((call[0] as { select?: Record<string, unknown> })?.select ?? {})
-    );
-    expect(isActiveCalls.length).toBe(0);
+    // The SECURITY-03 short-circuit still fires BEFORE any audit enrichment, so
+    // a session that is about to be thrown away is never enriched.
     expect(updateAuditContextMock).not.toHaveBeenCalled();
+
+    // Both guards are now served by a SINGLE findUnique selecting both columns.
+    // This previously asserted zero isActive reads, on the basis that the
+    // password short-circuit returned before the second query could fire. That
+    // invariant is obsolete — and its intent (do not spend a second round trip)
+    // is better served now, because there is only ever one.
+    expect(findUniqueMock).toHaveBeenCalledTimes(1);
+    expect(findUniqueMock.mock.calls[0][0]).toMatchObject({
+      select: { passwordChangedAt: true, isActive: true },
+    });
+  });
+
+  it("C2: both mid-session guards cost exactly one query, not two", async () => {
+    // The regression this locks down: 14.0M calls apiece at 8/s, together 16% of
+    // all database queries on the instance, because these were two findUnique
+    // calls against the same row. INTERNAL exercises both guards.
+    await invoke({
+      cachedUser: {
+        name: "U",
+        access: "USER",
+        image: null,
+        emailVerified: null,
+        authMethod: "INTERNAL",
+        preferences: null,
+      },
+    });
+
+    expect(findUniqueMock).toHaveBeenCalledTimes(1);
   });
 });
 
 describe("session callback - source-shape sanity", () => {
   const source = readFileSync(join(__dirname, "auth.ts"), "utf-8");
 
-  it("D1: file contains an isActive select in the session callback", () => {
-    expect(source).toMatch(/select:\s*{\s*isActive:\s*true\s*}/);
+  it("D1: session callbacks select passwordChangedAt and isActive in ONE read", () => {
+    // Was /select:\s*{\s*isActive:\s*true\s*}/ — a standalone isActive select,
+    // which is exactly the second round trip that got merged away. Both session
+    // callbacks in this file (the `authOptions` const used by ~176
+    // getServerSession call sites, and the `getAuthOptions()` builder used by the
+    // NextAuth route handler) must carry the merged shape, or one path silently
+    // keeps double-querying.
+    const merged = source.match(
+      /select:\s*{\s*passwordChangedAt:\s*true,\s*isActive:\s*true\s*}/g
+    );
+    expect(merged).not.toBeNull();
+    expect(merged!.length).toBe(2);
   });
 
   it("D2: file does NOT call invalidateSessionUserCache (Path A — no cache coordination)", () => {

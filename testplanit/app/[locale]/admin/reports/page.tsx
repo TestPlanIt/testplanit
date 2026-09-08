@@ -1,12 +1,7 @@
 "use client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Globe } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
@@ -15,7 +10,6 @@ import { ReportBuilder } from "~/components/reports/ReportBuilder";
 import { useRouter } from "~/lib/navigation";
 
 export default function AdminReportsPage() {
-  const tReports = useTranslations("reports.ui");
   const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -40,20 +34,15 @@ export default function AdminReportsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle
-                data-testid="adminreports-page-title"
-                className="items-center flex gap-1"
-              >
-                <Globe className="h-8 w-8 shrink-0" />
-                {tGlobal("navigation.admin.crossProjectReports")}
-              </CardTitle>
-            </div>
-            <CardDescription>
-              {tReports("crossProjectReports.description")}
-            </CardDescription>
-          </div>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle
+              data-testid="adminreports-page-title"
+              className="items-center flex gap-1"
+            >
+              {tGlobal("navigation.admin.crossProjectReports")}
+            </CardTitle>
+            <HelpPopover helpKey="crossProjectReports" />
+          </SectionHeader>
         </CardHeader>
         <CardContent className="p-0">
           <ReportBuilder mode="cross-project" />

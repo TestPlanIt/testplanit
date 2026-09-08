@@ -3,9 +3,9 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import { Button } from "@/components/ui/button";
-import { Tags } from "@prisma/client";
+import type { Tags } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -55,9 +55,11 @@ export const useColumns = (
               <CasesListDisplay
                 count={count}
                 filter={{
-                  tags: {
+                  caseTags: {
                     some: {
-                      id: row.original.id,
+                      tag: {
+                        id: row.original.id,
+                      },
                     },
                   },
                 }}
@@ -149,7 +151,7 @@ export const useColumns = (
         meta: { isPinned: "right" },
         size: 80,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <Button
               variant="ghost"
               className="px-2 py-1 h-auto"
@@ -164,11 +166,11 @@ export const useColumns = (
               onClick={() => onDeleteTag?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           </div>
         ),
       },
     ],
-    [tCommon, onEditTag, onDeleteTag]
+    [tCommon, onEditTag, onDeleteTag, isLoadingCounts]
   );

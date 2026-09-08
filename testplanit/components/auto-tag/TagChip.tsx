@@ -118,7 +118,7 @@ export function TagChip({
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
         >
-          <Tag className="mr-1 h-3 w-3" />
+          <Tag className="me-1 h-3 w-3" />
           {tagName}
         </Badge>
       </TooltipTrigger>

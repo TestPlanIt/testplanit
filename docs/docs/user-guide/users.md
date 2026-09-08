@@ -15,7 +15,7 @@ The main view displays a table of all registered users (excluding those marked a
 
 - **Filtering**: Use the filter input to search for users by name.
 - **Show Inactive Users**: Toggle the switch to include users marked as inactive in the list.
-- **Pagination**: Navigate through pages of users if the list is long.
+- **Loading More**: The list loads more users automatically as you scroll if it is long; there are no page controls.
 - **Columns**: The table includes columns for:
   - **Name**: User's full name and profile picture (if available).
   - **Email**: User's email address.

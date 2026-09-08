@@ -6,11 +6,16 @@ import type {
   LlmStreamResponse,
   RateLimitInfo,
 } from "../types";
+import { contentImages, flattenToText } from "../content";
 import { BaseLlmAdapter } from "./base.adapter";
+
+type OpenAIContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
 
 interface OpenAIMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  content: string | OpenAIContentPart[];
 }
 
 interface OpenAIChatRequest {
@@ -33,7 +38,9 @@ interface OpenAIChatResponse {
     index: number;
     message: {
       role: string;
-      content: string;
+      /** `null` when the model refused or produced no visible text. */
+      content: string | null;
+      refusal?: string | null;
     };
     finish_reason: string;
   }>;
@@ -77,12 +84,48 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     }
   }
 
+  /**
+   * Translate the multimodal message union into chat.completions shape.
+   * System messages flatten to text (parity with the Anthropic adapter);
+   * user/assistant parts become text + `image_url` data-URI entries. A parts
+   * array with no images collapses back to a plain string so requests to
+   * text-only deployments keep their pre-multimodal wire shape.
+   */
+  protected toOpenAIMessages(
+    messages: LlmRequest["messages"]
+  ): OpenAIMessage[] {
+    return messages.map((message) => {
+      if (typeof message.content === "string") {
+        return { role: message.role, content: message.content };
+      }
+      if (
+        message.role === "system" ||
+        contentImages(message.content).length === 0
+      ) {
+        return { role: message.role, content: flattenToText(message.content) };
+      }
+      return {
+        role: message.role,
+        content: message.content.map((part): OpenAIContentPart =>
+          part.type === "text"
+            ? { type: "text", text: part.text }
+            : {
+                type: "image_url",
+                image_url: {
+                  url: `data:${part.mimeType};base64,${part.base64}`,
+                },
+              }
+        ),
+      };
+    });
+  }
+
   async chat(request: LlmRequest): Promise<LlmResponse> {
     this.validateRequest(request);
 
     const openAIRequest: OpenAIChatRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages,
+      messages: this.toOpenAIMessages(request.messages),
       temperature: request.temperature ?? this.config.config.defaultTemperature,
       max_completion_tokens:
         request.maxTokens ?? this.config.config.defaultMaxTokens,
@@ -107,14 +150,21 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       }
 
       const data = (await response.json()) as OpenAIChatResponse;
+      const choice = data.choices[0];
+      // `content` is null on refusals and some filtered completions.
+      const content = choice.message.content ?? "";
+      const finishReason =
+        !content && choice.message.refusal
+          ? "content_filter"
+          : this.mapFinishReason(choice.finish_reason);
 
       return {
-        content: data.choices[0].message.content,
+        content,
         model: data.model,
         promptTokens: data.usage.prompt_tokens,
         completionTokens: data.usage.completion_tokens,
         totalTokens: data.usage.total_tokens,
-        finishReason: this.mapFinishReason(data.choices[0].finish_reason),
+        finishReason,
       };
     } catch (error) {
       if (
@@ -134,7 +184,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
 
     const openAIRequest: OpenAIChatRequest = {
       model: request.model || this.getDefaultModel(),
-      messages: request.messages,
+      messages: this.toOpenAIMessages(request.messages),
       temperature: request.temperature ?? this.config.config.defaultTemperature,
       max_completion_tokens:
         request.maxTokens ?? this.config.config.defaultMaxTokens,
@@ -256,19 +306,30 @@ export class OpenAIAdapter extends BaseLlmAdapter {
   }
 
   async testConnection(): Promise<boolean> {
+    this.lastTestConnectionError = undefined;
+    const url = `${this.baseUrl}/models`;
     try {
-      const response = await this.safeFetch(`${this.baseUrl}/models`, {
+      const response = await this.safeFetch(url, {
         headers: this.getOpenAIHeaders(),
         signal: AbortSignal.timeout(5000),
       });
 
-      if (!response.ok) {
-        const text = await response.text();
-        console.error("OpenAI test failed:", response.status, text);
+      if (response.ok) {
+        return true;
       }
 
-      return response.ok;
+      // Capture the real reason (status + provider message) so the admin UI
+      // can show it instead of a generic "failed to connect".
+      const text = await response.text().catch(() => "");
+      this.lastTestConnectionError = this.summarizeHttpError(
+        response.status,
+        response.statusText,
+        text
+      );
+      console.error("OpenAI test failed:", response.status, text);
+      return false;
     } catch (error) {
+      this.lastTestConnectionError = this.describeConnectionError(url, error);
       console.error("OpenAI test connection error:", error);
       return false;
     }

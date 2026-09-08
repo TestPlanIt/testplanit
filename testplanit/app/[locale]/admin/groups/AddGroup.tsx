@@ -1,14 +1,11 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
-import {
-  useCreateGroups,
-  useCreateManyGroupAssignment,
-  useFindManyUser,
-} from "~/lib/hooks";
+import { useCallback, useMemo, useState } from "react";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -18,7 +15,7 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Trash2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 import {
   Form,
@@ -30,7 +27,7 @@ import {
 } from "@/components/ui/form";
 
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Combobox } from "@/components/ui/combobox";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 function buildAddGroupFormSchema(t: (key: any) => string) {
   return z.object({
@@ -64,10 +62,13 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const queryClient = useQueryClient();
 
-  const { mutateAsync: createGroup } = useCreateGroups();
+  const { mutateAsync: createGroup } =
+    useClientQueries(schema).groups.useCreate();
   const { mutateAsync: createManyGroupAssignment } =
-    useCreateManyGroupAssignment();
-  const { data: allUsersData, isLoading: usersLoading } = useFindManyUser({
+    useClientQueries(schema).groupAssignment.useCreateMany();
+  const { data: allUsersData, isLoading: usersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -89,17 +90,21 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
     formState: { errors },
   } = form;
 
-  const handleAddUser = (userId: string | null) => {
-    if (!userId || !allUsers) return;
-    const userToAdd = allUsers.find((u) => u.id === userId);
-    if (userToAdd && !assignedUsers.some((u) => u.id === userId)) {
-      setAssignedUsers((prev) => [...prev, userToAdd]);
-    }
-  };
-
-  const handleRemoveUser = (userId: string) => {
-    setAssignedUsers((prev) => prev.filter((u) => u.id !== userId));
-  };
+  const fetchUserOptions = useCallback(
+    (query: string, page: number, pageSize: number) => {
+      const q = query.toLowerCase();
+      const filtered = (allUsers ?? []).filter(
+        (user) =>
+          user.name.toLowerCase().includes(q) ||
+          user.email?.toLowerCase().includes(q)
+      );
+      return Promise.resolve({
+        results: filtered.slice(page * pageSize, page * pageSize + pageSize),
+        total: filtered.length,
+      });
+    },
+    [allUsers]
+  );
 
   async function onSubmit(data: AddGroupFormData) {
     setIsSubmitting(true);
@@ -136,7 +141,7 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
       );
       onClose();
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         setError("name", {
           type: "custom",
           message: t("add.errors.nameExists"),
@@ -153,9 +158,6 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
       setIsSubmitting(false);
     }
   }
-
-  const availableUsersToAdd =
-    allUsers?.filter((u) => !assignedUsers.some((a) => a.id === u.id)) ?? [];
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -190,43 +192,26 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
 
             <div className="space-y-2 pt-4 border-t">
               <FormLabel className="flex items-center">
-                <Users className="w-4 h-4 mr-1" />
+                <Users className="w-4 h-4 me-1" />
                 {tCommon("labels.assignedUsersCount", {
                   count: assignedUsers.length,
                 })}
                 <HelpPopover helpKey="group.users" />
               </FormLabel>
-              <div className="space-y-2 max-h-48 overflow-y-auto rounded-md border p-2">
-                {assignedUsers.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-2">
-                    {t("noUsersSelected")}
-                  </p>
-                ) : (
-                  assignedUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between px-2 bg-muted rounded"
-                    >
-                      <UserNameCell userId={user.id} hideLink={true} />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveUser(user.id)}
-                        aria-label={tCommon("actions.delete")}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))
+              <MultiAsyncCombobox<User>
+                value={assignedUsers}
+                onValueChange={setAssignedUsers}
+                fetchOptions={fetchUserOptions}
+                renderOption={(user) => (
+                  <UserNameCell userId={user.id} hideLink />
                 )}
-              </div>
-              <Combobox
-                users={availableUsersToAdd}
-                showUnassigned={false}
-                onValueChange={handleAddUser}
+                renderSelectedOption={(user) => <span>{user.name}</span>}
+                getOptionValue={(user) => user.id}
+                getOptionLabel={(user) => user.name}
                 placeholder={tCommon("placeholders.select")}
                 className="w-full"
+                pageSize={20}
+                showTotal
               />
             </div>
 

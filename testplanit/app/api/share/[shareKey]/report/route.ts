@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth/next";
+import { internalReportBypassToken } from "~/lib/internalReportBypass";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
 } from "~/lib/config/reportTypes";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,7 @@ export const GET = withAuditContext(
       const token = searchParams.get("token");
 
       // Fetch share link
-      const shareLink = await prisma.shareLink.findUnique({
+      const shareLink = await baseDb.shareLink.findUnique({
         where: { shareKey },
         include: {
           project: {
@@ -171,12 +172,9 @@ export const GET = withAuditContext(
       const metadataResponse = await fetch(metadataUrl.toString(), {
         method: "GET",
         headers: {
-          // Forward cookies for authentication if user is logged in
-          ...(req.headers.get("cookie")
-            ? { Cookie: req.headers.get("cookie")! }
-            : {}),
-          // Add bypass header for shared reports to allow access without admin permissions
-          "x-shared-report-bypass": "true",
+          // Internal server-to-server token: the share link (validated
+          // above) IS the read grant, so no user credentials are forwarded.
+          "x-shared-report-bypass": internalReportBypassToken(),
         },
       });
 
@@ -211,12 +209,9 @@ export const GET = withAuditContext(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // Forward cookies for authentication if user is logged in
-          ...(req.headers.get("cookie")
-            ? { Cookie: req.headers.get("cookie")! }
-            : {}),
-          // Add bypass header for shared reports to allow access without admin permissions
-          "x-shared-report-bypass": "true",
+          // Internal server-to-server token: the share link (validated
+          // above) IS the read grant, so no user credentials are forwarded.
+          "x-shared-report-bypass": internalReportBypassToken(),
         },
         body: JSON.stringify(requestBody),
       });

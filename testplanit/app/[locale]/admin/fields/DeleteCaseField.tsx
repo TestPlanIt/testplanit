@@ -1,11 +1,8 @@
 "use client";
-import { CaseFields } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { CaseFields } from "~/zenstack/models";
 import { useState } from "react";
-import {
-  useFindFirstCaseFields,
-  useUpdateCaseFields,
-  useUpdateManyFieldOptions,
-} from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -40,10 +37,14 @@ export function DeleteCaseField({
   const t = useTranslations("admin.templates.caseFields.delete");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateCaseFields } = useUpdateCaseFields();
-  const { mutateAsync: updateManyFieldOptions } = useUpdateManyFieldOptions();
+  const { mutateAsync: updateCaseFields } =
+    useClientQueries(schema).caseFields.useUpdate();
+  const { mutateAsync: updateManyFieldOptions } =
+    useClientQueries(schema).fieldOptions.useUpdateMany();
 
-  const { data: defaultCaseField } = useFindFirstCaseFields({
+  const { data: defaultCaseField } = useClientQueries(
+    schema
+  ).caseFields.useFindFirst({
     where: {
       AND: [{ isEnabled: true }, { isDeleted: false }],
     },
@@ -95,7 +96,7 @@ export function DeleteCaseField({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription>

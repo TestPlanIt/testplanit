@@ -3,7 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useQuery } from "@tanstack/react-query";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { Drama } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
@@ -23,7 +23,7 @@ export type AssigneeOption =
       kind: "role";
       id: number;
       name: string;
-      userCount: number;
+      notifyCount: number;
     };
 
 interface AssigneeComboboxProps {
@@ -51,9 +51,9 @@ export function AssigneeCombobox({
   // Project-scoped roles: only roles whose holders have effective access to
   // this project. A role with no project-eligible holders is a dead-end
   // assignment — the decide path would resolve it to zero reviewers — so
-  // hiding it from the picker prevents that footgun. Counts are also
-  // project-scoped so the "{n} users hold this role" subtitle matches the
-  // actual eligible-reviewer count for the assignment.
+  // hiding it from the picker prevents that footgun. The subtitle reports
+  // `notifyCount`, the recipient set the request would actually fan out to
+  // (requester and notification-disabled holders already removed).
   //
   // Filtering by `name` substring still happens client-side after the
   // server action returns (TestPlanIt installs typically have a handful
@@ -111,7 +111,7 @@ export function AssigneeCombobox({
                 kind: "role",
                 id: r.id,
                 name: r.name,
-                userCount: r.userCount,
+                notifyCount: r.notifyCount,
               }))
           : [];
 
@@ -135,8 +135,8 @@ export function AssigneeCombobox({
         ) : (
           <RoleOptionRow
             option={option}
-            usersHoldRoleLabel={t("reviews.requester.usersHoldRole", {
-              count: option.userCount,
+            usersNotifiedLabel={t("reviews.requester.usersNotified", {
+              count: option.notifyCount,
             })}
           />
         )
@@ -209,7 +209,7 @@ function UserOptionRow({
         image-having users (no generic UserIcon fallback that breaks the
         line up).
       */}
-      <span data-kind-icon="user" className="mr-2 inline-flex h-5 w-5">
+      <span data-kind-icon="user" className="me-2 inline-flex h-5 w-5">
         <Avatar
           image={option.image}
           alt={option.name}
@@ -232,10 +232,10 @@ function UserOptionRow({
 
 function RoleOptionRow({
   option,
-  usersHoldRoleLabel,
+  usersNotifiedLabel,
 }: {
   option: Extract<AssigneeOption, { kind: "role" }>;
-  usersHoldRoleLabel: string;
+  usersNotifiedLabel: string;
 }) {
   return (
     <div
@@ -247,13 +247,13 @@ function RoleOptionRow({
         and the Admin menu) — using it here keeps roles visually
         identifiable everywhere a role is named.
       */}
-      <span data-kind-icon="role" className="mr-2 inline-flex h-5 w-5">
+      <span data-kind-icon="role" className="me-2 inline-flex h-5 w-5">
         <Drama className="h-5 w-5" />
       </span>
       <div className="flex flex-col">
         <span className="text-sm">{option.name}</span>
         <span className="text-xs text-muted-foreground">
-          {usersHoldRoleLabel}
+          {usersNotifiedLabel}
         </span>
       </div>
     </div>

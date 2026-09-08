@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Select,
@@ -9,7 +11,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useFindManyProjects } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
 interface ProjectDropdownMenuProps {
@@ -26,7 +27,7 @@ export const ProjectDropdownMenu = ({
   const t = useTranslations();
 
   // ZenStack now handles all access control automatically based on the schema rules
-  const { data: projects } = useFindManyProjects(
+  const { data: projects } = useClientQueries(schema).projects.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -53,16 +54,19 @@ export const ProjectDropdownMenu = ({
   );
 
   return (
-    <Select onValueChange={handleProjectSelect}>
+    <Select
+      value={currentProject ? currentProject.id.toString() : ""}
+      onValueChange={handleProjectSelect}
+    >
       <SelectTrigger
         data-testid="project-dropdown-trigger"
         aria-label={t("common.aria.selectProject")}
-        className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"} -ml-5 md:ml-0 ${currentProject?.isCompleted ? "bg-muted-foreground/20" : ""}`}
+        className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"} -ms-5 md:ms-0 ${currentProject?.isCompleted ? "bg-muted-foreground/20" : ""}`}
       >
         <div
           className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"}`}
         >
-          <div className="text-left mr-4">
+          <div className="text-start me-4">
             <div className="flex items-center gap-1 min-w-5 min-h-5">
               <div className="max-w-5 max-h-5">
                 <ProjectIcon

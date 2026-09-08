@@ -15,13 +15,15 @@ This page displays a table listing issues, allowing you to quickly see which iss
 
 ### Filtering and Searching
 
-- **Search Bar:** Located above the table, you can type into the search bar to filter issues by their **Name**. The search is case-insensitive and updates the table dynamically as you type (with a small debounce delay).
+- **Search Bar:** Located above the table, you can type into the search bar to filter issues by their **Name**, **Title**, or **Description**. The search is case-insensitive and updates the table dynamically as you type (with a small debounce delay).
+- **Status, Priority, and Issue Type:** Three multi-select dropdowns sit beside the search bar, each listing the values currently in use. Selecting several values in one dropdown matches issues with any of them; selections in different dropdowns apply together. Leave a dropdown empty to include every value. Matching is case-insensitive, so values that differ only in capitalization are treated as one.
+- **No Issue Type:** The Issue Type dropdown also offers a **No Issue Type** entry when some issues have no type set. Issues only receive a type when they are synced from or created in an external tracker, and not every tracker supplies one, so this entry lets you still find the rest.
+- A dropdown is hidden when no issue in view has a value for that field.
 
-### Pagination
+### Loading More
 
-- **Page Size:** You can control how many issues are displayed per page using the dropdown menu (options typically include 10, 25, 50, 100, 250, or "All").
-- **Navigation:** Use the pagination controls below the table to navigate between pages of issues.
-- **Info Display:** Information about the currently displayed range of issues and the total count is shown above the pagination controls.
+- **Continuous Scroll:** Issues load a page at a time and more are appended automatically as you scroll toward the bottom of the list — there are no page controls.
+- **Info Display:** A count above the table shows how many issues are currently loaded out of the total matching your filters.
 
 ### Sorting
 
@@ -45,6 +47,9 @@ The table displays the following information for each issue:
 - **Sessions:**
     - Shows a count of how many test sessions (directly or via results) are linked to this issue across all accessible projects.
     - Clicking the count opens a modal displaying the list of linked sessions.
+- **Milestones:**
+    - Shows a count of how many milestones the issue belongs to across all accessible projects.
+    - Clicking the count opens a popover that lists those milestones, each shown with its milestone type icon and, for synced milestones, a Jira source badge.
 - **Projects:**
     - Shows icons representing the projects associated with the issue through linked test cases, test runs, or sessions.
     - Clicking the project icons opens a modal displaying the list of associated projects.

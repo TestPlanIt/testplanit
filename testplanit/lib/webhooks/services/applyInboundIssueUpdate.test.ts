@@ -1,16 +1,16 @@
-import type { AdapterType } from "@prisma/client";
-import { Prisma } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
+import { ORMError } from "@zenstackhq/orm";
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ApplyInboundIssueUpdateInput } from "./types";
 
 /**
- * Hoisted mocks for `prisma`, `captureAuditEvent`, `isUniqueConstraintError`,
+ * Hoisted mocks for `baseDb`, `captureAuditEvent`, `isUniqueConstraintError`,
  * and `getAdapter` (service-side extractor delegation).
  *
  * Each test mutates the per-call return values via `mocks.tx.*` setters; the same
- * `tx` object is yielded from every `prisma.$transaction(fn)` invocation so we can
+ * `tx` object is yielded from every `baseDb.$transaction(fn)` invocation so we can
  * spy on the per-model calls (`webhookDelivery.create/update`, `webhookEventDedup.create`,
  * `issue.findFirst`, `issue.update`, `webhookConfig.update`).
  *
@@ -53,18 +53,23 @@ const mocks = vi.hoisted(() => {
   // when an active matching integration exists. Stub returns success;
   // tests that care about the trigger override per-test.
   const performIssueRefreshSystem = vi.fn(async () => ({ success: true }));
+  // Drives the webhook burst allowance (webhookFreshness.ts): `incr` returns
+  // the running event count for this issue inside the window. 1..5 => refetch
+  // (window 0), 6+ => a genuine storm, fall back to the 15s window.
+  const valkey = {
+    incr: vi.fn(async (..._args: any[]): Promise<number> => 1),
+    expire: vi.fn(async (..._args: any[]): Promise<number> => 1),
+  };
   return {
     tx,
-    prisma: {
+    valkey,
+    baseDb: {
       $transaction,
       projectIntegration: { findFirst: projectIntegrationFindFirst },
     },
     captureAuditEvent: vi.fn(async () => undefined),
     isUniqueConstraintError: vi.fn((err: unknown) => {
-      return (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === "P2002"
-      );
+      return err instanceof ORMError && err.dbErrorCode === "23505";
     }),
     adapter,
     getAdapter,
@@ -74,8 +79,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: mocks.prisma,
+vi.mock("~/lib/db", () => ({
+  baseDb: mocks.baseDb,
 }));
 
 vi.mock("~/lib/services/auditLog", () => ({
@@ -88,6 +93,10 @@ vi.mock("~/lib/utils/errors", () => ({
 
 vi.mock("~/lib/webhooks/adapters", () => ({
   getAdapter: mocks.getAdapter,
+}));
+
+vi.mock("~/lib/valkey", () => ({
+  default: mocks.valkey,
 }));
 
 vi.mock("~/lib/integrations/services/SyncService", () => ({
@@ -127,8 +136,8 @@ const resetTxMocks = () => {
       (fn as ReturnType<typeof vi.fn>).mockReset();
     }
   }
-  mocks.prisma.$transaction.mockClear();
-  mocks.prisma.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
+  mocks.baseDb.$transaction.mockClear();
+  mocks.baseDb.$transaction.mockImplementation(async (fn: any) => fn(mocks.tx));
   mocks.captureAuditEvent.mockReset();
   mocks.captureAuditEvent.mockResolvedValue(undefined);
   // Default: webhookDelivery.create returns a stable id.
@@ -148,12 +157,13 @@ const resetTxMocks = () => {
   mocks.projectIntegrationFindFirst.mockReset();
   mocks.projectIntegrationFindFirst.mockResolvedValue(null);
   mocks.performIssueRefreshSystem.mockReset();
+  mocks.valkey.incr.mockReset();
+  mocks.valkey.incr.mockResolvedValue(1);
+  mocks.valkey.expire.mockReset();
+  mocks.valkey.expire.mockResolvedValue(1);
   mocks.performIssueRefreshSystem.mockResolvedValue({ success: true });
   mocks.isUniqueConstraintError.mockImplementation((err: unknown) => {
-    return (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    );
+    return err instanceof ORMError && err.dbErrorCode === "23505";
   });
   // Adapter mock defaults: extract linkedRef from baseInput's Jira-shaped
   // payload (DEMO-42, JIRA) and externalStatus "In Progress". Each test
@@ -189,6 +199,12 @@ describe("applyInboundIssueUpdate", () => {
 
     expect(result.outcome).toBe("synthetic");
     expect(result.deliveryId).toBe("del_1");
+    // Synthetic sentinel key never lands in subjectRef.
+    expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ subjectRef: null }),
+      })
+    );
     // Issue lookup MUST NOT be called when synthetic.
     expect(mocks.tx.issue.findFirst).not.toHaveBeenCalled();
     expect(mocks.tx.issue.update).not.toHaveBeenCalled();
@@ -300,7 +316,7 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ attempt: 1 }),
+        data: expect.objectContaining({ attempt: 1, subjectRef: "DEMO-42" }),
       })
     );
     expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
@@ -365,7 +381,7 @@ describe("applyInboundIssueUpdate", () => {
       42,
       "DEMO-42",
       expect.objectContaining({
-        minFreshnessSeconds: 15,
+        minFreshnessSeconds: 0,
         createIfMissing: { projectId: input.projectId },
       })
     );
@@ -447,7 +463,7 @@ describe("applyInboundIssueUpdate", () => {
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
     const txError = new Error("Connection lost mid-transaction");
     mocks.tx.webhookEventDedup.create.mockRejectedValueOnce(txError);
-    mocks.prisma.$transaction.mockImplementationOnce(async (fn: any) =>
+    mocks.baseDb.$transaction.mockImplementationOnce(async (fn: any) =>
       fn(mocks.tx)
     );
 
@@ -481,7 +497,32 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
       42, // integration.id from the resolved ProjectIntegration
       "DEMO-42", // linkedRef.externalKey
-      { minFreshnessSeconds: 15 } // WEBHOOK_SYNC_FRESHNESS_SECONDS
+      { minFreshnessSeconds: 0 } // inside the burst allowance
+    );
+    // Counted per ISSUE, not per webhook config or project — a storm against
+    // one issue must not suppress a quiet neighbour's first event.
+    expect(mocks.valkey.incr).toHaveBeenCalledWith(
+      "sync-burst:issue:42:7:DEMO-42"
+    );
+  });
+
+  it("Test 6b: a sustained burst against the same issue falls back to the 15s coalescing window", async () => {
+    // The window is storm protection, and it should still engage on real
+    // volume — just not on the second event of an ordinary multi-event edit.
+    const applyInboundIssueUpdate = await importSut();
+    mocks.valkey.incr.mockResolvedValue(6);
+    mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
+    mocks.projectIntegrationFindFirst.mockResolvedValueOnce({
+      integrationId: 42,
+      integration: { id: 42 },
+    } as any);
+
+    await applyInboundIssueUpdate(baseInput());
+
+    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
+      42,
+      "DEMO-42",
+      { minFreshnessSeconds: 15 }
     );
   });
 
@@ -846,8 +887,7 @@ describe("applyInboundIssueUpdate", () => {
 
     const auditCall = (
       mocks.captureAuditEvent.mock.calls[0] as unknown as
-        | [{ metadata?: { adapterType?: AdapterType } }]
-        | undefined
+        [{ metadata?: { adapterType?: AdapterType } }] | undefined
     )?.[0];
     expect(auditCall?.metadata?.adapterType).toBe("GITHUB");
     // Sanity: ensure JIRA is NOT in the metadata for this GitHub call.

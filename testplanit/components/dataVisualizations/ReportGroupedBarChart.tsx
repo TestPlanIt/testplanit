@@ -1,20 +1,26 @@
 "use client";
 import * as d3 from "d3";
+import { useLocale } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { GroupedChartDataPoint } from "./ReportChart";
+import { durationTickFormat, localeTickFormat } from "~/utils/formatNumber";
 
 interface ReportGroupedBarChartProps {
   data: GroupedChartDataPoint[];
+  /** Format Y-axis ticks as durations (values are seconds). */
+  durationTicks?: boolean;
   dimensions: { value: string; label: string }[];
   metrics: { value: string; label: string }[];
 }
 
 export const ReportGroupedBarChart: React.FC<ReportGroupedBarChartProps> = ({
   data,
+  durationTicks = false,
   dimensions,
   metrics,
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -106,7 +112,13 @@ export const ReportGroupedBarChart: React.FC<ReportGroupedBarChartProps> = ({
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").call(d3.axisLeft(yScale));
+    g.append("g").call(
+      d3
+        .axisLeft(yScale)
+        .tickFormat(
+          durationTicks ? durationTickFormat() : localeTickFormat(locale)
+        )
+    );
 
     // Create bars with animations
     const bars = g
@@ -190,7 +202,7 @@ export const ReportGroupedBarChart: React.FC<ReportGroupedBarChartProps> = ({
       .style("font-size", "12px")
       .style("fill", "currentColor")
       .text((d) => d);
-  }, [data, dimensions, metrics, width, height]);
+  }, [data, dimensions, metrics, width, height, locale, durationTicks]);
 
   return (
     <div

@@ -10,7 +10,10 @@ vi.mock("../../../api.js", () => ({
 
 import { zenstack } from "../../../api.js";
 import { registerRunResultsGet } from "./get.js";
-import { RUN_RESULT_DETAIL_INCLUDE } from "../shared.js";
+import {
+  JUNIT_RESULT_DETAIL_INCLUDE,
+  RUN_RESULT_DETAIL_INCLUDE,
+} from "../shared.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -518,5 +521,123 @@ describe("registerRunResultsGet", () => {
     );
     expect(tool).toBeDefined();
     expect(tool?.description).toMatch(/^Fetch a single test run result/);
+  });
+});
+
+// ── JUnit source branch (automated-run results) ──────────────────────────────
+
+describe("registerRunResultsGet — source: JUnit", () => {
+  beforeEach(() => {
+    mockZenstack.mockReset();
+  });
+
+  function makeRawJunitDetail(id = 7, overrides: Record<string, unknown> = {}) {
+    return {
+      id,
+      type: "FAILURE",
+      message: "expected true to be false",
+      content: "AssertionError\n  at auth.spec.ts:42",
+      systemOut: "stdout text",
+      systemErr: "stderr text",
+      time: 1.25,
+      assertions: 3,
+      file: "auth.spec.ts",
+      line: 42,
+      executedAt: "2026-03-01T00:00:00.000Z",
+      createdAt: "2026-03-01T00:00:05.000Z",
+      status: { id: 2, name: "Failed" },
+      createdBy: { id: "u9", name: "CI Bot", email: "ci@b" },
+      repositoryCase: { id: 300, name: "login spec", source: "JUNIT" },
+      testSuite: {
+        id: 40,
+        name: "auth.spec.ts",
+        testRunId: 60,
+        testRun: { id: 60, name: "Nightly" },
+      },
+      attachments: [{ id: 1, name: "trace.zip", url: "https://x" }],
+      ...overrides,
+    };
+  }
+
+  it("source 'JUnit' queries jUnitTestResult with JUNIT_RESULT_DETAIL_INCLUDE", async () => {
+    mockZenstack.mockResolvedValueOnce(makeRawJunitDetail());
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_get",
+      arguments: { resultId: 7, source: "JUnit" },
+    });
+    expect(result.isError).toBeFalsy();
+    expect(mockZenstack).toHaveBeenCalledTimes(1);
+    expect(mockZenstack.mock.calls[0][0]).toBe("jUnitTestResult");
+    expect(mockZenstack.mock.calls[0][1]).toBe("findUnique");
+    const body = getCallBody(0);
+    expect(body?.where).toEqual({ id: 7 });
+    expect(body?.include).toBe(JUNIT_RESULT_DETAIL_INCLUDE);
+  });
+
+  it("junit detail shape: junitType/message/content/systemOut/systemErr + suite + attachments; executedBy from createdBy", async () => {
+    mockZenstack.mockResolvedValueOnce(makeRawJunitDetail());
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_get",
+      arguments: { resultId: 7, source: "JUnit" },
+    });
+    const detail = structured(result);
+    expect(detail.source).toBe("JUnit");
+    expect(detail.junitType).toBe("FAILURE");
+    expect(detail.message).toBe("expected true to be false");
+    expect(detail.content).toBe("AssertionError\n  at auth.spec.ts:42");
+    expect(detail.systemOut).toBe("stdout text");
+    expect(detail.systemErr).toBe("stderr text");
+    expect(detail.time).toBe(1.25);
+    expect(detail.assertions).toBe(3);
+    expect(detail.file).toBe("auth.spec.ts");
+    expect(detail.line).toBe(42);
+    expect(detail.status).toEqual({ id: 2, name: "Failed" });
+    expect(detail.executedBy).toEqual({ id: "u9", name: "CI Bot", email: "ci@b" });
+    expect(detail.repositoryCase).toEqual({
+      id: 300,
+      name: "login spec",
+      source: "JUNIT",
+    });
+    expect(detail.testRun).toEqual({ id: 60, name: "Nightly" });
+    expect(detail.suite).toEqual({ id: 40, name: "auth.spec.ts" });
+    expect(detail.attachments).toEqual([
+      { id: 1, fileName: "trace.zip", url: "https://x" },
+    ]);
+    expect(detail.testRunCase).toBeNull();
+  });
+
+  it("junit not found: zenstack returns null -> isError with 'not found'", async () => {
+    mockZenstack.mockResolvedValueOnce(null);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_get",
+      arguments: { resultId: 999, source: "JUnit" },
+    });
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text.toLowerCase()).toContain("not found");
+  });
+
+  it("default (no source) still queries testRunResults — backward compatible", async () => {
+    mockZenstack.mockResolvedValueOnce(null);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_test_run_results_get",
+      arguments: { resultId: 5 },
+    });
+    expect(mockZenstack.mock.calls[0][0]).toBe("testRunResults");
+  });
+
+  it("TestRun not-found message hints at retrying with source JUnit", async () => {
+    mockZenstack.mockResolvedValueOnce(null);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_run_results_get",
+      arguments: { resultId: 5 },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain('source: "JUnit"');
   });
 });

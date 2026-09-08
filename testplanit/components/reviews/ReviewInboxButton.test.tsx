@@ -13,6 +13,26 @@ vi.mock("next-auth/react", () => ({
   useSession: () => mockUseSession(),
 }));
 
+// SSE wake-up — the badge subscribes to the notification stream so a review
+// requested while the tab is open refreshes the count.
+// Annotated rather than inferred: `onmessage: null` alone infers the literal
+// `null`, which makes the `onmessage?.(…)` dispatch below uncallable.
+const mockEventSource: {
+  onmessage: ((event: MessageEvent) => void) | null;
+  onerror: ((event: Event) => void) | null;
+  close: () => void;
+} = { onmessage: null, onerror: null, close: vi.fn() };
+const mockCreateDeferredEventSource = vi.fn(
+  (..._args: unknown[]) => mockEventSource
+);
+// The component guards on `typeof EventSource === "undefined"` so it degrades
+// gracefully outside the browser; jsdom doesn't provide it.
+vi.stubGlobal("EventSource", class {});
+vi.mock("~/hooks/deferredEventSource", () => ({
+  createDeferredEventSource: (...args: unknown[]) =>
+    mockCreateDeferredEventSource(...args),
+}));
+
 // feature flag (system-level — no projectId)
 const mockUseReviewFeatureEnabled = vi.fn();
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
@@ -20,15 +40,33 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
     mockUseReviewFeatureEnabled(...args),
 }));
 
+// The stream handler refreshes every mounted ReviewRequest query through the
+// shared QueryClient rather than refetching this badge's count in isolation.
+const mockInvalidateQueries = vi.fn();
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+  };
+});
+
 // ZenStack hooks: count + user role lookup + access-visible project count
 const mockUseCountReviewRequest = vi.fn();
 const mockUseFindUniqueUser = vi.fn();
 const mockUseCountProjects = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useCountReviewRequest: (...args: unknown[]) =>
-    mockUseCountReviewRequest(...args),
-  useFindUniqueUser: (...args: unknown[]) => mockUseFindUniqueUser(...args),
-  useCountProjects: (...args: unknown[]) => mockUseCountProjects(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    reviewRequest: {
+      useCount: (...args: unknown[]) => mockUseCountReviewRequest(...args),
+    },
+    user: {
+      useFindUnique: (...args: unknown[]) => mockUseFindUniqueUser(...args),
+    },
+    projects: {
+      useCount: (...args: unknown[]) => mockUseCountProjects(...args),
+    },
+  }),
 }));
 
 // ~/lib/navigation Link — required wrapper, NEVER next/link.
@@ -110,6 +148,8 @@ describe("ReviewInboxButton", () => {
     mockUseCountReviewRequest.mockReset();
     mockUseFindUniqueUser.mockReset();
     mockUseCountProjects.mockReset();
+    mockInvalidateQueries.mockReset();
+    mockCreateDeferredEventSource.mockClear();
   });
 
   it("(a) renders null when feature flag is disabled", () => {
@@ -186,10 +226,10 @@ describe("ReviewInboxButton", () => {
     render(<ReviewInboxButton />);
     const badge = screen.getByTestId("review-inbox-count-badge");
     const cls = badge.className;
-    // Mirror of NotificationBell positioning: absolute -top-1 -right-1 …
+    // Mirror of NotificationBell positioning: absolute -top-1 -end-1 …
     expect(cls).toMatch(/absolute/);
     expect(cls).toMatch(/-top-1/);
-    expect(cls).toMatch(/-right-1/);
+    expect(cls).toMatch(/-end-1/);
   });
 
   it("(h) aria-label is set on the button with the i18n key (count passed through to next-intl)", () => {
@@ -229,5 +269,30 @@ describe("ReviewInboxButton", () => {
     expect(svg).not.toBeNull();
     // Inbox icon — assert it's present via lucide class naming convention.
     expect(svg?.getAttribute("class") ?? "").toMatch(/lucide-inbox|h-5/);
+  });
+
+  it("(k) subscribes to the notification stream and refreshes every ReviewRequest query on each event", () => {
+    setupDefaults({ count: 0 });
+    render(<ReviewInboxButton />);
+
+    expect(mockCreateDeferredEventSource).toHaveBeenCalledWith(
+      "/api/notifications/stream"
+    );
+    // The Header never unmounts, so the SSE event is the only thing that
+    // refreshes a badge that would otherwise stay stale from app load. The
+    // ZenStack model prefix carries the refresh to the other review surfaces
+    // (home dashboard queue, entity status banner) off this one connection.
+    expect(mockInvalidateQueries).not.toHaveBeenCalled();
+    mockEventSource.onmessage?.(new MessageEvent("message"));
+    expect(mockInvalidateQueries).toHaveBeenCalledTimes(1);
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: ["zenstack", "ReviewRequest"],
+    });
+  });
+
+  it("(l) opens no stream while the feature flag is off", () => {
+    setupDefaults({ count: 0, enabled: false });
+    render(<ReviewInboxButton />);
+    expect(mockCreateDeferredEventSource).not.toHaveBeenCalled();
   });
 });

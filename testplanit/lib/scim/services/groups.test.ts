@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/prisma", () => {
+vi.mock("~/lib/db", () => {
   const tx = {
     groups: {
       findUnique: vi.fn(),
@@ -25,7 +25,7 @@ vi.mock("~/lib/prisma", () => {
     },
   };
   return {
-    prisma: {
+    baseDb: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
       __tx: tx,
       groups: tx.groups,
@@ -66,12 +66,12 @@ vi.mock("~/lib/scim/filter", async () => {
     );
   return {
     ...actual,
-    scimFilterToPrismaGroupWhere: vi.fn(actual.scimFilterToPrismaGroupWhere),
+    scimFilterToDbGroupWhere: vi.fn(actual.scimFilterToDbGroupWhere),
   };
 });
 
 import { updateAuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   emitScimGroupCreated,
@@ -86,7 +86,7 @@ import {
   SCIM_SYSTEM_USER_ID,
   SYSTEM_PROJECT_ID,
 } from "../constants";
-import { scimFilterToPrismaGroupWhere } from "../filter";
+import { scimFilterToDbGroupWhere } from "../filter";
 import { ScimPatchApplyError } from "../patch";
 import {
   ScimNotFoundError,
@@ -124,11 +124,11 @@ interface TxLike {
   appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
 
-const tx = (prisma as unknown as { __tx: TxLike }).__tx;
+const tx = (baseDb as unknown as { __tx: TxLike }).__tx;
 
 const CTX = { tokenId: "tok_test", systemUserId: SCIM_SYSTEM_USER_ID } as const;
 
-interface PrismaGroupRow {
+interface DbGroupRow {
   id: number;
   name: string;
   externalId: string | null;
@@ -139,7 +139,7 @@ interface PrismaGroupRow {
   assignedUsers: Array<{ user: { id: string; name: string } }>;
 }
 
-function makeGroup(overrides: Partial<PrismaGroupRow> = {}): PrismaGroupRow {
+function makeGroup(overrides: Partial<DbGroupRow> = {}): DbGroupRow {
   const now = new Date("2026-06-01T00:00:00Z");
   return {
     id: 7,
@@ -466,13 +466,13 @@ describe("listScimGroups", () => {
     expect(tombGate).toBeDefined();
   });
 
-  it("C2: filter passes through scimFilterToPrismaGroupWhere and ANDs with tombstone gate", async () => {
+  it("C2: filter passes through scimFilterToDbGroupWhere and ANDs with tombstone gate", async () => {
     tx.groups.findMany.mockResolvedValue([]);
     tx.groups.count.mockResolvedValue(0);
 
     await listScimGroups({ filter: 'displayName eq "Eng"' }, CTX);
 
-    expect(scimFilterToPrismaGroupWhere).toHaveBeenCalledWith(
+    expect(scimFilterToDbGroupWhere).toHaveBeenCalledWith(
       'displayName eq "Eng"'
     );
     const args = tx.groups.findMany.mock.calls[0][0] as {
@@ -950,13 +950,11 @@ describe("putScimGroup", () => {
     );
 
     const cmArgs = tx.groupAssignment.createMany.mock.calls[0]?.[0] as
-      | { data: Array<{ userId: string }> }
-      | undefined;
+      { data: Array<{ userId: string }> } | undefined;
     expect(cmArgs?.data.map((d) => d.userId)).toEqual(["u3"]);
 
     const dmArgs = tx.groupAssignment.deleteMany.mock.calls[0]?.[0] as
-      | { where: { userId: { in: string[] } } }
-      | undefined;
+      { where: { userId: { in: string[] } } } | undefined;
     expect(dmArgs?.where.userId.in).toEqual(["u1"]);
 
     expect(emitScimGroupMemberAdded).toHaveBeenCalledTimes(1);
@@ -1079,16 +1077,15 @@ describe("deleteScimGroup", () => {
   });
 });
 
-describe("H — anti-pattern guards (raw-prisma + emit-inside-tx + entityType + ScimValidationError type)", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+describe("H — anti-pattern guards (raw-baseDb + emit-inside-tx + entityType + ScimValidationError type)", () => {
   const fs = require("fs") as typeof import("fs");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
+
   const path = require("path") as typeof import("path");
   const source = fs.readFileSync(path.join(__dirname, "groups.ts"), "utf-8");
 
-  it("H1: source imports raw ~/lib/prisma (NOT getEnhancedDb)", () => {
+  it("H1: source imports raw ~/lib/baseDb (NOT getEnhancedDb)", () => {
     expect(source.includes("getEnhancedDb")).toBe(false);
-    expect(source.includes('from "~/lib/prisma"')).toBe(true);
+    expect(source.includes('from "~/lib/db"')).toBe(true);
   });
 
   it("H2: every captureAuditEvent call uses entityType:'Groups'", async () => {
@@ -1138,7 +1135,7 @@ describe("J — inline recompute wiring assertions", () => {
     const current = makeGroup({
       id: 200,
       assignedUsers: [],
-      // mappedAccess is on the group, not on PrismaGroupRow — recompute reads it via groupAssignment
+      // mappedAccess is on the group, not on DbGroupRow — recompute reads it via groupAssignment
     });
     tx.groups.findUnique.mockResolvedValue(current);
     tx.user.findMany.mockResolvedValue([{ id: "u1" }]);

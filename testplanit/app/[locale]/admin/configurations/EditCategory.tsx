@@ -1,11 +1,12 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ConfigCategories } from "@prisma/client";
+import type { ConfigCategories } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useUpdateConfigCategories } from "~/lib/hooks";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 const FormSchema = (t: any) =>
   z.object({
@@ -45,7 +47,8 @@ interface EditCategoryProps {
 
 export function EditCategory({ category, open, onClose }: EditCategoryProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigCategories } = useUpdateConfigCategories();
+  const { mutateAsync: updateConfigCategories } =
+    useClientQueries(schema).configCategories.useUpdate();
   const tCommon = useTranslations("common");
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
@@ -72,7 +75,7 @@ export function EditCategory({ category, open, onClose }: EditCategoryProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tCommon("errors.categoryNameExists"),

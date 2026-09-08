@@ -15,7 +15,7 @@ vi.mock("./lib/queues", () => ({
   getWebhookDispatchQueue: () => null,
 }));
 
-vi.mock("./lib/multiTenantPrisma", () => ({
+vi.mock("./lib/multiTenantDb", () => ({
   getAllTenantIds: () => [],
   isMultiTenantMode: () => true,
 }));

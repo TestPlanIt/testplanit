@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ----- Mock prismaBase module -----
+// ----- Mock rawDb module -----
 // Use vi.hoisted() so that mock objects are available before vi.mock() factories run
 // (vi.mock is hoisted to the top of the file by Vitest).
 
 const {
   mockTx,
-  mockPrisma,
+  mockDb,
   mockCreateTestCaseVersionInTransaction,
   mockSyncRepositoryCaseToElasticsearch,
   mockSyncSharedStepToElasticsearch,
@@ -42,7 +42,7 @@ const {
     },
   };
 
-  const mockPrisma = {
+  const mockDb = {
     $transaction: vi.fn((fn: any, _opts?: any) => {
       if (typeof fn === "function") return fn(mockTx);
       return Promise.all(fn);
@@ -51,15 +51,15 @@ const {
 
   return {
     mockTx,
-    mockPrisma,
+    mockDb,
     mockCreateTestCaseVersionInTransaction,
     mockSyncRepositoryCaseToElasticsearch,
     mockSyncSharedStepToElasticsearch,
   };
 });
 
-vi.mock("~/lib/prismaBase", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/rawDb", () => ({
+  rawDb: mockDb,
 }));
 
 vi.mock("~/lib/services/testCaseVersionService", () => ({

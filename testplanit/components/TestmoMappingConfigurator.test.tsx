@@ -27,9 +27,11 @@ vi.mock("~/app/[locale]/admin/fields/AddResultField", () => ({
   AddResultFieldModal: () => null,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyColor: () => ({ data: [] }),
-  useFindManyStatusScope: () => ({ data: [] }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    color: { useFindMany: () => ({ data: [] }) },
+    statusScope: { useFindMany: () => ({ data: [] }) },
+  }),
 }));
 
 type SelectContextValue = {
@@ -99,26 +101,6 @@ vi.mock("@/components/ui/select", () => {
     SelectLabel,
   };
 });
-
-vi.mock("@prisma/client", () => ({
-  Access: {
-    ADMIN: "ADMIN",
-    PROJECTADMIN: "PROJECTADMIN",
-    USER: "USER",
-    NONE: "NONE",
-  },
-  ApplicationArea: {
-    ClosedTestRuns: "ClosedTestRuns",
-    ClosedSessions: "ClosedSessions",
-    Documentation: "Documentation",
-    TestCaseRestrictedFields: "TestCaseRestrictedFields",
-    TestRunResultRestrictedFields: "TestRunResultRestrictedFields",
-    SessionsRestrictedFields: "SessionsRestrictedFields",
-    Tags: "Tags",
-    TestRuns: "TestRuns",
-    Sessions: "Sessions",
-  },
-}));
 
 import { createEmptyMappingConfiguration } from "~/services/imports/testmo/configuration";
 import type { TestmoMappingAnalysis } from "~/services/imports/testmo/types";

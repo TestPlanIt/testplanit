@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/mcp-server",
-  "version": "0.3.1",
+  "version": "1.0.0-beta.3",
   "description": "Model Context Protocol server for TestPlanIt — exposes test-case data to AI agents over stdio.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -54,15 +54,15 @@
     "tag": "latest"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.3.6"
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@prisma/client": "~6.19.3",
-    "@types/node": "^26.0.1",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@types/node": "^26.4.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "@zenstackhq/orm": "^3.9.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   }
 }

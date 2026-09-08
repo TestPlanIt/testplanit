@@ -29,7 +29,7 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await test.step("Open the milestones page and wait for milestones to load", async () => {
       // Navigate to milestones page
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Wait for milestone content to be visible (uses card layout, not table)
       // Look for the "Active" tab which indicates milestones are loaded
@@ -94,7 +94,7 @@ test.describe("Complete Milestone - Feature Validation", () => {
       // This test verifies the checkbox functionality exists
       // It will only run if there's a milestone with dependencies in the seeded data
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Wait for the Active tab to be visible
       const activeTab = page.getByRole("tab", { name: /Active/i });
@@ -191,7 +191,7 @@ test.describe("Complete Milestone - Feature Validation", () => {
       );
 
       await page.goto(`/en-US/projects/milestones/${projectId}`);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
 
       // Wait for the Active tab to be visible
       const activeTab = page.getByRole("tab", { name: /Active/i });

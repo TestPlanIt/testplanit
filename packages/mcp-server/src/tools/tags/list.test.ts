@@ -39,7 +39,9 @@ beforeEach(() => {
 describe("testplanit_tags_list", () => {
   it("happy path: returns tag rows with usage counts", async () => {
     zenstackMock.mockResolvedValueOnce([
-      { id: 1, name: "Regression", _count: { repositoryCases: 5, testRuns: 2, sessions: 0 } },
+      // RepositoryCases links are counted via the caseTags join model now;
+      // the mapper still surfaces it under usageCounts.repositoryCases.
+      { id: 1, name: "Regression", _count: { caseTags: 5, testRuns: 2, sessions: 0 } },
     ]);
 
     const result = await callTool();
@@ -64,7 +66,7 @@ describe("testplanit_tags_list", () => {
     const include = body["include"] as Record<string, unknown>;
     const countInclude = include["_count"] as Record<string, unknown>;
     const select = countInclude["select"] as Record<string, unknown>;
-    expect(select).toHaveProperty("repositoryCases");
+    expect(select).toHaveProperty("caseTags");
     expect(select).toHaveProperty("testRuns");
     expect(select).toHaveProperty("sessions");
   });
@@ -78,7 +80,7 @@ describe("testplanit_tags_list", () => {
     const include = body["include"] as Record<string, unknown>;
     const countInclude = include["_count"] as Record<string, unknown>;
     const select = countInclude["select"] as Record<string, unknown>;
-    expect(select["repositoryCases"]).toBe(true);
+    expect(select["caseTags"]).toBe(true);
     expect(select["testRuns"]).toBe(true);
     expect(select["sessions"]).toBe(true);
   });
@@ -92,7 +94,9 @@ describe("testplanit_tags_list", () => {
     const include = body["include"] as Record<string, unknown>;
     const countInclude = include["_count"] as Record<string, unknown>;
     const select = countInclude["select"] as Record<string, unknown>;
-    expect(select["repositoryCases"]).toMatchObject({ where: { isDeleted: false, projectId: 7 } });
+    // caseTags is the RepositoryCaseTag join — its count where filters
+    // through the linked case (project + soft-delete).
+    expect(select["caseTags"]).toMatchObject({ where: { case: { isDeleted: false, projectId: 7 } } });
     expect(select["testRuns"]).toMatchObject({ where: { isDeleted: false, projectId: 7 } });
     expect(select["sessions"]).toMatchObject({ where: { isDeleted: false, projectId: 7 } });
   });

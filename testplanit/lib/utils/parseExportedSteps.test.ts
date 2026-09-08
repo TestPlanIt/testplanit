@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasLabeledStepFormat,
   parseLabeledSteps,
+  parseStepsCell,
   tryParseJsonSteps,
 } from "./parseExportedSteps";
 
@@ -167,5 +168,60 @@ describe("tryParseJsonSteps", () => {
 
   it("returns null for JSON that isn't an array", () => {
     expect(tryParseJsonSteps('{"step":"x"}')).toBeNull();
+  });
+});
+
+describe("parseStepsCell", () => {
+  it("reads every step of a JSON cell", () => {
+    const json = JSON.stringify([
+      { stepNumber: 1, step: "Open page", expectedResult: "Page loads" },
+      { stepNumber: 2, step: "Click save", expectedResult: "Saved" },
+      { stepNumber: 3, step: "Reload", expectedResult: "Persists" },
+    ]);
+
+    expect(parseStepsCell(json).map((s) => s.step)).toEqual([
+      "Open page",
+      "Click save",
+      "Reload",
+    ]);
+  });
+
+  it("reads every step of the labeled export format", () => {
+    const cell = [
+      "Step 1:",
+      "Open the page",
+      "Expected Result 1:",
+      "It loads",
+      "---",
+      "Step 2:",
+      "Click save",
+      "Expected Result 2:",
+      "It saves",
+    ].join("\n");
+
+    expect(parseStepsCell(cell)).toEqual([
+      { step: "Open the page", expectedResult: "It loads", order: 0 },
+      { step: "Click save", expectedResult: "It saves", order: 1 },
+    ]);
+  });
+
+  it("reads one step per line in the legacy pipe format", () => {
+    const cell = "1. Open the page | It loads\n2. Click save | It saves";
+
+    expect(parseStepsCell(cell)).toEqual([
+      { step: "Open the page", expectedResult: "It loads", order: 0 },
+      { step: "Click save", expectedResult: "It saves", order: 1 },
+    ]);
+  });
+
+  it("keeps a lone step as one step", () => {
+    expect(parseStepsCell("Just do the thing")).toEqual([
+      { step: "Just do the thing", expectedResult: "", order: 0 },
+    ]);
+  });
+
+  it("returns nothing for an empty cell", () => {
+    expect(parseStepsCell("")).toEqual([]);
+    expect(parseStepsCell("   ")).toEqual([]);
   });
 });

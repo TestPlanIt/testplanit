@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Select,
   SelectContent,
@@ -9,13 +11,11 @@ import {
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useFindManyDataSetVersion } from "~/lib/hooks";
 
 export type SharedDatasetVersionPickerMode = "editor" | "picker";
 
 export type SharedDatasetVersionPickerValue =
-  | { id: number; version: number }
-  | "current";
+  { id: number; version: number } | "current";
 
 export interface SharedDatasetVersionPickerProps {
   dataSetId: number;
@@ -61,7 +61,9 @@ export function SharedDatasetVersionPicker({
 }: SharedDatasetVersionPickerProps) {
   const t = useTranslations("projects.settings.datasets.versionPicker");
 
-  const { data: versions, isLoading } = useFindManyDataSetVersion({
+  const { data: versions, isLoading } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindMany({
     where: { dataSetId },
     orderBy: { version: "desc" },
     take: 50,
@@ -149,8 +151,8 @@ export function SharedDatasetVersionPicker({
               // a light-bg / dark-text pair in dark theme; mixing dark
               // text with the light bg via opacity produces a mid-gray
               // that drops below readable contrast). Visual hierarchy
-              // for the subtext comes from font size + `ml-2` spacing.
-              <span className="text-sm ml-2">
+              // for the subtext comes from font size + `ms-2` spacing.
+              <span className="text-sm ms-2">
                 {t("historicalItemBy", { name: v.createdBy.name })}
               </span>
             ) : null}

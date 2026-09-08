@@ -1,9 +1,7 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useState } from "react";
-import {
-  useUpdateConfigVariants,
-  useUpdateManyConfigurations,
-} from "~/lib/hooks";
 import { Variant } from "./Categories";
 
 import { useTranslations } from "next-intl";
@@ -38,9 +36,10 @@ export function DeleteVariantModal({
   onDelete,
 }: DeleteVariantModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateConfigVariants } = useUpdateConfigVariants();
+  const { mutateAsync: updateConfigVariants } =
+    useClientQueries(schema).configVariants.useUpdate();
   const { mutateAsync: updateManyConfigurations } =
-    useUpdateManyConfigurations();
+    useClientQueries(schema).configurations.useUpdateMany();
   const t = useTranslations("admin.configurations.variants.delete");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -92,7 +91,7 @@ export function DeleteVariantModal({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
             </AlertDialogHeader>

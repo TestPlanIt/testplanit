@@ -29,6 +29,7 @@ const env: EnvConfig = { apiUrl: "https://host.example.com", apiToken: "tpi_test
 function makeRawFolder(overrides: Record<string, unknown> = {}) {
   return {
     id: 42,
+    projectId: 7,
     name: "Auth",
     parentId: 5,
     children: [{ id: 50, name: "SubAuth", _count: { cases: 3 } }],
@@ -112,6 +113,50 @@ describe("testplanit_folders_get", () => {
     const include = body["include"] as Record<string, unknown>;
     const casesInclude = include["cases"] as Record<string, unknown>;
     expect(casesInclude["take"]).toBe(100);
+  });
+
+  it("recursive counts (§4.4): folder and children carry subtree + automated totals from the flat fetch + one groupBy", async () => {
+    zenstackMock
+      // 1: findUnique detail
+      .mockResolvedValueOnce(makeRawFolder({ parentId: null }))
+      // 2: fetchProjectFolders — Auth(42) > SubAuth(50) > Deep(60)
+      .mockResolvedValueOnce([
+        { id: 42, name: "Auth", parentId: null, order: 0, _count: { cases: 2 } },
+        { id: 50, name: "SubAuth", parentId: 42, order: 0, _count: { cases: 3 } },
+        { id: 60, name: "Deep", parentId: 50, order: 0, _count: { cases: 4 } },
+      ])
+      // 3: fetchAutomatedCaseCounts groupBy
+      .mockResolvedValueOnce([
+        { folderId: 60, _count: { id: 4 } },
+        { folderId: 42, _count: { id: 1 } },
+      ]);
+    buildFolderBreadcrumbMock.mockResolvedValueOnce([{ id: 42, name: "Auth" }]);
+
+    const result = await callTool({ folderId: 42 });
+
+    expect(result.isError).toBeFalsy();
+    expect(zenstackMock).toHaveBeenCalledTimes(3);
+    // The flat fetch is scoped to the folder's own project.
+    const flatBody = zenstackMock.mock.calls[1]![2] as { where: Record<string, unknown> };
+    expect(flatBody.where).toEqual({ projectId: 7, isDeleted: false });
+
+    const detail = (result as { structuredContent?: Record<string, unknown> }).structuredContent!;
+    expect(detail).toMatchObject({
+      caseCount: 2,
+      caseCountRecursive: 9, // 2 + 3 + 4
+      automatedCaseCount: 1,
+      automatedCaseCountRecursive: 5, // 1 + 4
+    });
+    const child = (detail as { children: Array<Record<string, unknown>> }).children[0]!;
+    expect(child).toEqual({
+      id: 50,
+      name: "SubAuth",
+      caseCount: 3,
+      caseCountRecursive: 7, // 3 + 4
+      automatedCaseCount: 0,
+      automatedCaseCountRecursive: 4,
+      hasChildren: true,
+    });
   });
 
   it("folder not found: returns tool error", async () => {

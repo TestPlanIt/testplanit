@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─── Hoisted mock refs ───────────────────────────────────────────────────
 const {
   mockFindManyWebhookDelivery,
+  mockInfiniteWebhookDelivery,
   mockFindManyWebhookConfig,
   mockCountWebhookDelivery,
   mockFindUniqueWebhookDelivery,
@@ -16,6 +17,7 @@ const {
   mockRouterReplace,
 } = vi.hoisted(() => ({
   mockFindManyWebhookDelivery: vi.fn(),
+  mockInfiniteWebhookDelivery: vi.fn(),
   mockFindManyWebhookConfig: vi.fn(),
   mockCountWebhookDelivery: vi.fn(),
   mockFindUniqueWebhookDelivery: vi.fn(),
@@ -27,15 +29,19 @@ const {
   mockRouterReplace: vi.fn(),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyWebhookDelivery: (...args: any[]) =>
-    mockFindManyWebhookDelivery(...args),
-  useFindManyWebhookConfig: (...args: any[]) =>
-    mockFindManyWebhookConfig(...args),
-  useCountWebhookDelivery: (...args: any[]) =>
-    mockCountWebhookDelivery(...args),
-  useFindUniqueWebhookDelivery: (...args: any[]) =>
-    mockFindUniqueWebhookDelivery(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    webhookDelivery: {
+      useFindMany: (...args: any[]) => mockFindManyWebhookDelivery(...args),
+      useInfiniteFindMany: (...args: any[]) =>
+        mockInfiniteWebhookDelivery(...args),
+      useCount: (...args: any[]) => mockCountWebhookDelivery(...args),
+      useFindUnique: (...args: any[]) => mockFindUniqueWebhookDelivery(...args),
+    },
+    webhookConfig: {
+      useFindMany: (...args: any[]) => mockFindManyWebhookConfig(...args),
+    },
+  }),
 }));
 
 // PaginationProvider depends on next-auth/react; stub session.
@@ -97,6 +103,7 @@ const KEY_TEMPLATES: Record<string, string> = {
 };
 
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations:
     (_namespace?: string) =>
     (key: string, params?: Record<string, unknown>) => {
@@ -177,20 +184,14 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogFooter: ({ children }: any) => <div>{children}</div>,
 }));
 
-// DataTable stub: emits row testids + invokes each column's cell renderer
-// so the new "actions" Eye-icon column is exercisable in tests.
+// DataTable stub: emits row testids + invokes each column's cell
+// renderer so the "actions" Eye-icon column is exercisable in tests.
 vi.mock("@/components/tables/DataTable", () => ({
-  DataTable: ({ data, columns, onTestCaseClick }: any) => (
+  DataTable: ({ data, columns }: any) => (
     <table data-testid="webhook-deliveries-datatable">
       <tbody>
         {data.map((row: any) => (
-          <tr
-            key={row.id}
-            data-testid={`webhook-delivery-row-${row.id}`}
-            onClick={
-              onTestCaseClick ? () => onTestCaseClick(row.id) : undefined
-            }
-          >
+          <tr key={row.id} data-testid={`webhook-delivery-row-${row.id}`}>
             {columns.map((col: any, idx: number) => {
               const content = col.cell
                 ? col.cell({ row: { original: row } })
@@ -405,6 +406,7 @@ const outboundFailedDelivery = {
   adapterType: "SLACK",
   eventType: "test_run.completed",
   eventId: "evt_x",
+  subjectRef: null,
   payloadDigest: null,
   statusCode: 500,
   latencyMs: 1234,
@@ -422,6 +424,7 @@ const inboundDelivery = {
   adapterType: "JIRA",
   eventType: "jira:issue_updated",
   eventId: null,
+  subjectRef: "DEMO-42",
   payloadDigest: "abc123",
   statusCode: 200,
   latencyMs: 42,
@@ -434,6 +437,15 @@ const inboundDelivery = {
 function setDeliveries(rows: any[]) {
   mockFindManyWebhookDelivery.mockReturnValue({
     data: rows,
+    isLoading: false,
+    refetch: vi.fn().mockResolvedValue({ data: rows }),
+  });
+  // Infinite-scroll shape: one page holding all seeded rows, nothing more to load.
+  mockInfiniteWebhookDelivery.mockReturnValue({
+    data: { pages: [rows], pageParams: [undefined] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
     isLoading: false,
     refetch: vi.fn().mockResolvedValue({ data: rows }),
   });
@@ -585,11 +597,14 @@ describe("WebhookDeliveriesTab", () => {
     });
   });
 
-  it("Test 9: filter bar surfaces config + status + date-range controls", () => {
+  it("Test 9: filter bar surfaces config + event + status + date-range controls", () => {
     setDeliveries([]);
     render(<WebhookDeliveriesTab projectId={42} />);
     expect(
       screen.getByTestId("webhook-deliveries-filter-config")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-deliveries-filter-event")
     ).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-deliveries-filter-status")
@@ -697,17 +712,20 @@ describe("WebhookDeliveriesTab", () => {
     });
   });
 
-  it("Test 15: paginator visible when there are rows (replaces old load-more)", () => {
+  it("Test 15: renders rows via the virtualized table with no paginator (infinite scroll)", () => {
     const fifty = Array.from({ length: 50 }, (_, i) => ({
       ...outboundFailedDelivery,
       id: `d_${i}`,
     }));
     setDeliveries(fifty);
     render(<WebhookDeliveriesTab projectId={42} />);
-    // Cursor "load more" was replaced by server-side paginator (D-35 follow-up).
+    // The server-side paginator was replaced by a virtualized infinite-scroll
+    // table: rows render, and there is no paginator control.
+    expect(screen.getByTestId("webhook-deliveries-table")).toBeInTheDocument();
+    expect(screen.getByTestId("webhook-delivery-row-d_0")).toBeInTheDocument();
     expect(
-      screen.getByTestId("webhook-deliveries-paginator")
-    ).toBeInTheDocument();
+      screen.queryByTestId("webhook-deliveries-paginator")
+    ).not.toBeInTheDocument();
   });
 
   it("Test 16: filter URL state survives initial render (status=failed pre-selected)", () => {
@@ -718,6 +736,56 @@ describe("WebhookDeliveriesTab", () => {
       "webhook-deliveries-filter-status"
     ) as HTMLSelectElement;
     expect(statusSelect.value).toBe("failed");
+  });
+
+  it("Test 18: event filter lists distinct event types from deliveries", () => {
+    setDeliveries([outboundFailedDelivery, inboundDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    const eventSelect = screen.getByTestId(
+      "webhook-deliveries-filter-event"
+    ) as HTMLSelectElement;
+    const values = Array.from(eventSelect.options).map((o) => o.value);
+    expect(values).toContain("__all__");
+    expect(values).toContain("test_run.completed");
+    expect(values).toContain("jira:issue_updated");
+  });
+
+  it("Test 19: selecting an event writes eventType to the URL, preserving the tab", () => {
+    setDeliveries([outboundFailedDelivery, inboundDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    fireEvent.change(screen.getByTestId("webhook-deliveries-filter-event"), {
+      target: { value: "test_run.completed" },
+    });
+    expect(mockRouterReplace).toHaveBeenCalled();
+    const url = mockRouterReplace.mock.calls.at(-1)?.[0] as string;
+    const params = new URLSearchParams(url.split("?")[1]);
+    expect(params.get("eventType")).toBe("test_run.completed");
+    expect(params.get("tab")).toBe("deliveries");
+  });
+
+  it("Test 20: eventType URL state pre-selects the event filter and scopes the query", () => {
+    mockSearchParams.current = "eventType=jira%3Aissue_updated";
+    setDeliveries([inboundDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    const eventSelect = screen.getByTestId(
+      "webhook-deliveries-filter-event"
+    ) as HTMLSelectElement;
+    expect(eventSelect.value).toBe("jira:issue_updated");
+    // The deliveries query itself is filtered by the selected event.
+    const infiniteArgs = mockInfiniteWebhookDelivery.mock.calls.at(-1)?.[0];
+    expect(infiniteArgs.where.eventType).toBe("jira:issue_updated");
+  });
+
+  it("Test 21: choosing 'All events' clears eventType from the URL", () => {
+    mockSearchParams.current = "eventType=test_run.completed";
+    setDeliveries([outboundFailedDelivery]);
+    render(<WebhookDeliveriesTab projectId={42} />);
+    fireEvent.change(screen.getByTestId("webhook-deliveries-filter-event"), {
+      target: { value: "__all__" },
+    });
+    const url = mockRouterReplace.mock.calls.at(-1)?.[0] as string;
+    const params = new URLSearchParams(url.split("?")[1]);
+    expect(params.get("eventType")).toBeNull();
   });
 
   it("Test 17: defensive — inbound replay rejection toast surfaces when action returns reason", async () => {

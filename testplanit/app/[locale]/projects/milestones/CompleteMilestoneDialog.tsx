@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import { Button } from "@/components/ui/button";
@@ -25,8 +27,8 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { completeMilestoneCascade } from "~/app/actions/milestoneActions";
-import { useFindManyWorkflows } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
+import { toCalendarDate } from "~/utils/calendarDate";
 import type { MilestonesWithTypes } from "~/utils/milestoneUtils";
 
 interface CompleteMilestoneDialogProps {
@@ -68,31 +70,38 @@ export function CompleteMilestoneDialog({
 
   const form = useForm<CompleteMilestoneFormValues>({
     defaultValues: {
+      // Writes straight through to `completedAt`, so it has to be a calendar
+      // date: defaulting to the raw instant would store a time, and would read
+      // back as tomorrow for an evening edit west of Greenwich.
       completionDate: milestoneToComplete?.completedAt
         ? new Date(milestoneToComplete.completedAt)
-        : new Date(),
+        : toCalendarDate(new Date()),
     },
   });
 
   // Fetch RUNS workflows
-  const { data: runWorkflows } = useFindManyWorkflows({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-      scope: "RUNS",
-      workflowType: "DONE",
-      projects: {
-        some: {
-          projectId: milestoneToComplete?.projectId,
+  const { data: runWorkflows } = useClientQueries(schema).workflows.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+        isEnabled: true,
+        scope: "RUNS",
+        workflowType: "DONE",
+        projects: {
+          some: {
+            projectId: milestoneToComplete?.projectId,
+          },
         },
       },
-    },
-    orderBy: { order: "asc" },
-    include: { icon: true, color: true },
-  });
+      orderBy: { order: "asc" },
+      include: { icon: true, color: true },
+    }
+  );
 
   // Fetch SESSIONS workflows
-  const { data: sessionWorkflows } = useFindManyWorkflows({
+  const { data: sessionWorkflows } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -234,6 +243,20 @@ export function CompleteMilestoneDialog({
             name: milestoneToComplete.name,
           })
         );
+        // Completing the milestone's runs and sessions needs canClose on those
+        // areas, not just on Milestones. When the caller has one and not the
+        // other the cascade drops that half rather than failing the whole
+        // action — say which half, or the runs silently stay open.
+        const skipped = result.skippedForPermission;
+        if (skipped?.skippedTestRuns || skipped?.skippedSessions) {
+          toast.warning(
+            skipped.skippedTestRuns && skipped.skippedSessions
+              ? t("milestones.complete.skippedForPermission")
+              : skipped.skippedTestRuns
+                ? t("milestones.complete.skippedTestRunsForPermission")
+                : t("milestones.complete.skippedSessionsForPermission")
+          );
+        }
         onCompleteSuccess();
         onOpenChange(false);
       } else {
@@ -272,9 +295,9 @@ export function CompleteMilestoneDialog({
               <DialogHeader>
                 <DialogTitle className="flex items-center">
                   {!showConfirmation ? (
-                    <CalendarDays className="w-6 h-6 mr-2" />
+                    <CalendarDays className="w-6 h-6 me-2" />
                   ) : (
-                    <AlertTriangle className="w-6 h-6 mr-2 text-destructive" />
+                    <AlertTriangle className="w-6 h-6 me-2 text-destructive" />
                   )}
                   {showConfirmation
                     ? t("milestones.completeDialog.confirmTitle")
@@ -290,7 +313,7 @@ export function CompleteMilestoneDialog({
                         <p>
                           {t("milestones.completeDialog.confirmDescription")}
                         </p>
-                        <ul className="list-disc pl-5 mt-2 text-sm">
+                        <ul className="list-disc ps-5 mt-2 text-sm">
                           {completeTestRuns &&
                             impactData.activeTestRuns > 0 && (
                               <li>
@@ -335,7 +358,7 @@ export function CompleteMilestoneDialog({
                         <p className="mt-4">
                           {t("milestones.completeDialog.itemsRemaining")}
                         </p>
-                        <ul className="list-disc pl-5 mt-2 text-sm">
+                        <ul className="list-disc ps-5 mt-2 text-sm">
                           {!completeTestRuns &&
                             impactData.activeTestRuns > 0 && (
                               <li>
@@ -370,6 +393,7 @@ export function CompleteMilestoneDialog({
                   <DatePickerField
                     control={form.control}
                     name="completionDate"
+                    dateOnly
                     placeholder={t("milestones.dates.selectDate")}
                     disabled={isSubmitting}
                   />
@@ -404,7 +428,7 @@ export function CompleteMilestoneDialog({
                           {completeTestRuns &&
                             runWorkflows &&
                             runWorkflows.length > 0 && (
-                              <div className="ml-6 space-y-2">
+                              <div className="ms-6 space-y-2">
                                 <label className="text-sm font-medium">
                                   {t(
                                     "milestones.completeDialog.testRunStateLabel"
@@ -485,7 +509,7 @@ export function CompleteMilestoneDialog({
                           {completeSessions &&
                             sessionWorkflows &&
                             sessionWorkflows.length > 0 && (
-                              <div className="ml-6 space-y-2">
+                              <div className="ms-6 space-y-2">
                                 <label className="text-sm font-medium">
                                   {t(
                                     "milestones.completeDialog.sessionStateLabel"

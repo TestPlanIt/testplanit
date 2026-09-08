@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { SessionResultsSummary } from "@/components/SessionResultsSummary";
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import {
@@ -7,33 +9,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type {
-  Prisma,
   Projects,
   Sessions,
   TestRunCases,
   TestRunResults,
   TestRuns,
-} from "@prisma/client";
+} from "~/zenstack/models";
+import type { UserGetPayload } from "~/zenstack/input";
 import { useQuery } from "@tanstack/react-query";
-import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
+import { CirclePlay, Compass, LinkIcon, Lock, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
 import { DateFormatter } from "~/components/DateFormatter";
+import { PendingReviewBadge } from "~/components/reviews/PendingReviewBadge";
 import {
-  useFindManySessions,
-  useFindManyTestRunCases,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
+  PENDING_REVIEWS_SUMMARY_LIMIT,
+  PendingReviewsSummary,
+} from "~/components/reviews/PendingReviewsSummary";
+import { usePendingReviewRequests } from "~/hooks/usePendingReviewRequests";
+import { usePendingReviewsByEntity } from "~/hooks/usePendingReviewsByEntity";
 import { Link, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import UserWorkGanttChart, {
   type PlotTask,
 } from "./dataVisualizations/UserWorkGanttChart";
 import LoadingSpinner from "./LoadingSpinner";
-// import UserWorkChart from "./dataVisualizations/UserWorkChart"; // Will be replaced
 
 // Updated Helper type for TestRunCases
 type TestCaseWithResults = TestRunCases & {
@@ -81,7 +90,7 @@ export type ChartableItem =
 // Type for PopulatedTestRunCases from the user query
 // (Ensures we have the fields selected in useFindFirstUser)
 type PopulatedTestRunCaseFromUser = NonNullable<
-  Prisma.UserGetPayload<{
+  UserGetPayload<{
     include: {
       testRunCasesAssigned: {
         where: {
@@ -521,7 +530,9 @@ export function UserDashboard() {
   }, [scheduledWorkItems]);
 
   // --- 2. Fetch Open Test Runs (include project) ---
-  const { data: allOpenRuns, isLoading: isLoadingRuns } = useFindManyTestRuns(
+  const { data: allOpenRuns, isLoading: isLoadingRuns } = useClientQueries(
+    schema
+  ).testRuns.useFindMany(
     {
       where: {
         isDeleted: false,
@@ -545,7 +556,7 @@ export function UserDashboard() {
 
   // --- 3. Fetch Test Cases assigned to the user for those Runs ---
   const { data: userTestCasesForRuns, isLoading: isLoadingTestCases } =
-    useFindManyTestRunCases(
+    useClientQueries(schema).testRunCases.useFindMany(
       {
         where: {
           testRunId: { in: allOpenRunIds },
@@ -609,7 +620,7 @@ export function UserDashboard() {
 
   // --- 5. Fetch Active Sessions assigned to the user (include project) ---
   const { data: userActiveSessions, isLoading: isLoadingSessions } =
-    useFindManySessions(
+    useClientQueries(schema).sessions.useFindMany(
       {
         where: {
           assignedToId: userId, // Correct field from schema
@@ -626,6 +637,36 @@ export function UserDashboard() {
       },
       { enabled: !!userId }
     );
+
+  // --- 6. Fetch PENDING review requests waiting on this user ---
+  // Same scope as the header's review-inbox badge, so the count the user sees
+  // in the global header and the queue rendered here can't disagree. Bounded to
+  // the rows the summary renders — the heading's total comes from the count
+  // query the badge already runs, so a long queue costs no extra rows here.
+  const {
+    requests: pendingReviews,
+    totalCount: pendingReviewsTotal,
+    isLoading: isLoadingPendingReviews,
+  } = usePendingReviewRequests(userId, { take: PENDING_REVIEWS_SUMMARY_LIMIT });
+
+  // Pending-review badges on the run/session cards below — entity-scoped
+  // (ANY pending review on the run/session), matching the list pages.
+  const attentionRunIds = useMemo(
+    () => runsRequiringAttention.map((run) => run.id),
+    [runsRequiringAttention]
+  );
+  const activeSessionIds = useMemo(
+    () => userActiveSessions?.map((s) => s.id) ?? [],
+    [userActiveSessions]
+  );
+  const pendingReviewsByRunId = usePendingReviewsByEntity(
+    "RUN",
+    attentionRunIds
+  );
+  const pendingReviewsBySessionId = usePendingReviewsByEntity(
+    "SESSION",
+    activeSessionIds
+  );
 
   // --- New: Transform scheduledWorkItems to PlotTasks for Gantt Chart ---
   const plotTasks: PlotTask[] = useMemo(() => {
@@ -757,13 +798,20 @@ export function UserDashboard() {
   const hasRuns = runsRequiringAttention.length > 0;
   // userActiveSessions is already filtered, check its length directly
   const hasSessions = userActiveSessions && userActiveSessions.length > 0;
+  const hasPendingReviews = pendingReviewsTotal > 0;
 
   // Condition for showing the chart (now calendar)
   const showCalendar = scheduledWorkItems && scheduledWorkItems.length > 0;
 
   const showGanttChart = plotTasks && plotTasks.length > 0; // This is the correct one using plotTasks
 
-  if (!hasRuns && !hasSessions && !showGanttChart) {
+  if (!hasRuns && !hasSessions && !showGanttChart && !hasPendingReviews) {
+    // Reviews resolve on their own timeline (feature flag → role ids → rows),
+    // so they're deliberately outside the main loading gate — the card doesn't
+    // wait on them when it already has runs or sessions to show. Here they're
+    // the last thing that could produce content, so keep the spinner up rather
+    // than flashing "nothing needs attention" and then filling in.
+    if (isLoadingPendingReviews) return <LoadingSpinner className="h-20" />;
     return (
       <div
         data-testid="no-items-message"
@@ -779,9 +827,9 @@ export function UserDashboard() {
     <Card className="w-full" data-testid="dashboard-card">
       <CardHeader id="dashboard-header">
         <CardTitle>
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+          <SectionHeader className="flex items-center justify-between">
             {t("home.dashboard.yourAssignments")}
-          </div>
+          </SectionHeader>
         </CardTitle>
         {showCalendar && scheduleSummary && (
           <CardDescription className="text-xs text-muted-foreground mt-1 flex flex-col gap-0.5">
@@ -826,6 +874,14 @@ export function UserDashboard() {
         )}
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* --- Reviews waiting on this user --- */}
+        {/* Top of the card by design: a review request blocks someone else's
+            work until it's decided, so it outranks the user's own queue. */}
+        <PendingReviewsSummary
+          requests={pendingReviews}
+          totalCount={pendingReviewsTotal}
+        />
+
         {/* --- User Work Chart/Calendar --- */}
         {showGanttChart && (
           <div className="mb-6 max-h-[500px] overflow-y-auto">
@@ -845,7 +901,7 @@ export function UserDashboard() {
                 count: runsRequiringAttention.length,
               })}
             </h3>
-            <div className="space-y-4 pl-6">
+            <div className="space-y-4 ps-6">
               {runsRequiringAttention.map((run) => (
                 <div key={run.id} className="border p-3 rounded-md">
                   <div className="mb-2 flex items-center justify-between gap-2">
@@ -855,9 +911,24 @@ export function UserDashboard() {
                       className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
                     >
                       <span className="truncate">{run.name}</span>
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      {run.compositionLockedAt && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="ms-1 shrink-0">
+                              <Lock className="w-3 h-3 text-muted-foreground" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {t("common.labels.compositionLocked")}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
-                    <span className="text-xs text-muted-foreground ml-2 max-w-[25%] truncate">
+                    <PendingReviewBadge
+                      pendingRequest={pendingReviewsByRunId.get(run.id)}
+                    />
+                    <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
                       {run.project.name}
                     </span>
                   </div>
@@ -880,7 +951,7 @@ export function UserDashboard() {
                 count: userActiveSessions.length,
               })}
             </h3>
-            <div className="space-y-4 pl-6">
+            <div className="space-y-4 ps-6">
               {(userActiveSessions as SessionWithProject[])?.map((session) => (
                 <div key={session.id} className="border p-3 rounded-md">
                   <div className="mb-2 flex items-center justify-between gap-2">
@@ -890,9 +961,12 @@ export function UserDashboard() {
                       className="font-medium hover:underline flex items-center gap-1 group max-w-[75%]"
                     >
                       <span className="truncate">{session.name}</span>
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
-                    <span className="text-xs text-muted-foreground ml-2 max-w-[25%] truncate">
+                    <PendingReviewBadge
+                      pendingRequest={pendingReviewsBySessionId.get(session.id)}
+                    />
+                    <span className="text-xs text-muted-foreground ms-2 max-w-[25%] truncate">
                       {session.project.name}
                     </span>
                   </div>

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AssigneeCombobox } from "./AssigneeCombobox";

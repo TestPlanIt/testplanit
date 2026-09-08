@@ -330,8 +330,10 @@ test.describe("Test Case Execution", () => {
 
     await test.step("Navigate to the next case and verify it is displayed", async () => {
       // There should be a Next button (chevron right) in the panel header
+      // Match the exact nav control: the "Pass & Next" action also carries
+      // "Next" in its accessible name and sits earlier in the DOM.
       const nextCaseButton = sheet
-        .locator('button[aria-label*="next" i], button[aria-label*="Next" i]')
+        .getByRole("button", { name: "Next Case" })
         .first();
 
       if (
@@ -342,9 +344,11 @@ test.describe("Test Case Execution", () => {
         // Wait for transition
         await page.waitForTimeout(2000);
 
-        // The second case should now be displayed
+        // The second case should now be displayed. The swap refetches the
+        // case before rendering, which can crawl under full-suite load — give
+        // it more room than an interactive click normally needs.
         await expect(sheet.locator(`text="${case2Name}"`).first()).toBeVisible({
-          timeout: 10000,
+          timeout: 30000,
         });
       } else {
         // Navigation arrows might have different labels - check panel structure
@@ -406,13 +410,34 @@ test.describe("Test Case Execution", () => {
     });
 
     await test.step("Open the run detail page with the case selected", async () => {
+      // The "Pass & Next" handler escalates to the Add Result modal only once
+      // TestRunCaseDetails knows the template has a required result field. That
+      // knowledge comes from a `templateResultAssignment` findMany query that is
+      // gated on the case (and its template id) loading first, so it resolves
+      // strictly after page load. If Pass & Next is clicked before it resolves,
+      // `hasRequiredResultField` is still false: the click submits a plain quick
+      // pass, the server rejects it with REQUIRED_FIELDS_MISSING, and the modal
+      // never opens. Register the wait BEFORE navigating so the listener is armed
+      // when the query fires, then block on it before clicking Pass — making the
+      // escalation deterministic instead of racing a fixed 2s timeout.
+      const requiredFieldQuery = page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/model/templateResultAssignment") &&
+          response.url().includes("findMany") &&
+          response.status() === 200,
+        { timeout: 15000 }
+      );
+
       await page.goto(
         `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseId}`
       );
       await page.waitForLoadState("load");
-      await page.waitForTimeout(2000);
 
       await expect(sheet).toBeVisible({ timeout: 15000 });
+
+      // Ensure the required-result-field query has resolved into the React Query
+      // cache before any interaction, so the next render reads it synchronously.
+      await requiredFieldQuery;
     });
 
     await test.step("Click Pass and Next on the case", async () => {
@@ -430,6 +455,72 @@ test.describe("Test Case Execution", () => {
       await expect(
         dialog.locator(`text="Escalate Reason ${ts}"`).first()
       ).toBeVisible({ timeout: 10000 });
+    });
+  });
+
+  test("should edit the test case in place from the execution panel", async ({
+    api,
+    page,
+  }) => {
+    const ts = Date.now();
+    const caseName = `Inline Edit Case ${ts}`;
+    const updatedName = `Inline Edit Case Updated ${ts}`;
+    let projectId: number | undefined;
+    let runId: number | undefined;
+    let caseId: number | undefined;
+
+    await test.step("Seed a project, folder, case, and run with the case added", async () => {
+      projectId = await api.createProject(`E2E Inline Edit ${ts}`);
+      const folderId = await api.createFolder(projectId, `Edit Folder ${ts}`);
+      caseId = await api.createTestCase(projectId, folderId, caseName);
+      runId = await api.createTestRun(projectId, `Edit Run ${ts}`);
+      await api.addTestCaseToTestRun(runId, caseId);
+    });
+
+    await test.step("Open the run detail page with the case selected", async () => {
+      await page.goto(
+        `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseId}`
+      );
+      await page.waitForLoadState("load");
+
+      const sheet = page.locator(".test-run-details-sheet");
+      await expect(sheet).toBeVisible({ timeout: 15000 });
+    });
+
+    await test.step("Enter edit mode from the panel", async () => {
+      await page.getByTestId("run-case-edit-case").click();
+
+      // The sheet content swaps to the repository details view in edit mode.
+      await expect(page.getByTestId("run-case-edit-panel")).toBeVisible({
+        timeout: 15000,
+      });
+    });
+
+    await test.step("Change the case name and save", async () => {
+      // The name field is the edit form's only textarea (steps use Tiptap).
+      const nameField = page
+        .getByTestId("run-case-edit-panel")
+        .locator("textarea")
+        .first();
+      await expect(nameField).toHaveValue(caseName, { timeout: 15000 });
+      await nameField.fill(updatedName);
+
+      await page
+        .getByTestId("run-case-edit-panel")
+        .getByRole("button", { name: "Save", exact: true })
+        .click();
+    });
+
+    await test.step("Verify return to the execution view with the updated name", async () => {
+      await expect(page.getByTestId("run-case-edit-panel")).toBeHidden({
+        timeout: 20000,
+      });
+
+      const sheet = page.locator(".test-run-details-sheet");
+      await expect(sheet).toBeVisible({ timeout: 15000 });
+      await expect(sheet.locator(`text="${updatedName}"`).first()).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 });

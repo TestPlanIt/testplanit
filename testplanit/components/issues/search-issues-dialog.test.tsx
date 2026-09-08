@@ -15,16 +15,12 @@ const {
 
 // --- Mocks ---
 
-vi.mock("@/lib/hooks/issue", () => ({
-  useFindManyIssue: mockUseFindManyIssue,
-}));
-
-vi.mock("@/lib/hooks/project-integration", () => ({
-  useFindManyProjectIntegration: mockUseFindManyProjectIntegration,
-}));
-
-vi.mock("~/lib/hooks", () => ({
-  useFindManyIntegrationProject: mockUseFindManyIntegrationProject,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    issue: { useFindMany: mockUseFindManyIssue },
+    projectIntegration: { useFindMany: mockUseFindManyProjectIntegration },
+    integrationProject: { useFindMany: mockUseFindManyIntegrationProject },
+  }),
 }));
 
 vi.mock("next-intl", () => ({
@@ -384,6 +380,45 @@ describe("SearchIssuesDialog", () => {
       const alerts = screen.queryAllByRole("alert");
       expect(alerts.length).toBeGreaterThanOrEqual(0); // Auth error may appear
     });
+  });
+
+  it("shows the Authenticate button for a relative (internal kickoff) authUrl", async () => {
+    mockUseFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          id: 10,
+          integrationId: 5,
+          isActive: true,
+          config: {},
+          integration: { id: 5, name: "My Jira", provider: "JIRA" },
+        },
+      ],
+    });
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({
+        requiresAuth: true,
+        authUrl:
+          "/api/integrations/oauth/jira/auth?integrationId=5&returnUrl=%2Fintegrations%2Fauth-complete",
+      }),
+    });
+
+    render(<SearchIssuesDialog {...defaultProps} />);
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "bug" },
+    });
+
+    // The server hands out a RELATIVE kickoff URL; the button must render for
+    // it, not only for absolute http(s) provider URLs.
+    await waitFor(
+      () => {
+        expect(screen.getByText("authenticate")).toBeTruthy();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it("shows 'Create new' button when integration is available and no auth error", () => {

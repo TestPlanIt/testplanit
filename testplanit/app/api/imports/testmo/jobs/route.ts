@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { enqueueWithAuditContext } from "~/lib/auditContextEnqueue";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import { getTestmoImportQueue, TESTMO_IMPORT_QUEUE_NAME } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
@@ -28,7 +28,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
   //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)
   //   - testmoImportWorker.ts:7079 (IMPORT_COMPLETED / BULK_CREATE)
   // Preparation state changes are not audit-relevant; matches the
-  // lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701.
+  // lastActiveAt session-keep-alive precedent at lib/db.ts:693-701.
   try {
     const session = await getServerSession(authOptions);
 

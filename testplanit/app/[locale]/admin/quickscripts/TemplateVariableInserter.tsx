@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Select,
   SelectContent,
@@ -9,11 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CaseFields } from "@prisma/client";
+import type { CaseFields } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "~/components/ui/badge";
-import { useFindManyCaseFields } from "~/lib/hooks";
 
 const CASE_VARIABLES = [
   { label: "name", value: "{{name}}", type: "Text" },
@@ -74,7 +75,9 @@ export function TemplateVariableInserter({
     };
   }, [textareaRef]);
 
-  const { data: caseFieldsData } = useFindManyCaseFields({
+  const { data: caseFieldsData } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     where: { isEnabled: true, isDeleted: false },
     select: {
       displayName: true,
@@ -122,11 +125,11 @@ export function TemplateVariableInserter({
         <SelectGroup>
           <SelectLabel>{tCommon("fields.caseFields")}</SelectLabel>
           {CASE_VARIABLES.map((v) => (
-            <SelectItem key={v.value} value={v.value} className="pl-6">
+            <SelectItem key={v.value} value={v.value} className="ps-6">
               {v.label}
               <Badge
                 variant="outline"
-                className="ml-4 text-xs text-current opacity-60"
+                className="ms-4 text-xs text-current opacity-60"
               >
                 {v.type}
               </Badge>
@@ -136,11 +139,11 @@ export function TemplateVariableInserter({
         <SelectGroup>
           <SelectLabel>{tCommon("fields.steps")}</SelectLabel>
           {STEP_VARIABLES.map((v) => (
-            <SelectItem key={v.value} value={v.value} className="pl-6">
+            <SelectItem key={v.value} value={v.value} className="ps-6">
               {v.isBlock ? t("stepsBlock") : v.label}
               <Badge
                 variant="outline"
-                className="ml-4 text-xs text-current opacity-60"
+                className="ms-4 text-xs text-current opacity-60"
               >
                 {v.type}
               </Badge>
@@ -154,12 +157,12 @@ export function TemplateVariableInserter({
               <SelectItem
                 key={field.systemName}
                 value={`{{fields.${field.systemName}}}`}
-                className="pl-6"
+                className="ps-6"
               >
                 {field.displayName}
                 <Badge
                   variant="outline"
-                  className="ml-4 text-xs text-current opacity-60"
+                  className="ms-4 text-xs text-current opacity-60"
                 >
                   {field.type.type}
                 </Badge>

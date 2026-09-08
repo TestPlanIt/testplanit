@@ -1,6 +1,6 @@
-import type { Prisma, PrismaClient } from "@prisma/client";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
-import { prisma as defaultPrisma } from "~/lib/prisma";
+import { baseDb as defaultDb } from "~/lib/db";
 
 /**
  * Daily auto-retire helper.
@@ -14,14 +14,14 @@ import { prisma as defaultPrisma } from "~/lib/prisma";
  * `retire-expired-secrets` cron job (single sweep per tenant per day).
  *
  * The helper accepts an optional client so the worker can pass its
- * tenant-scoped PrismaClient (multi-tenant deployments) and tests can
+ * tenant-scoped DbClient (multi-tenant deployments) and tests can
  * inject a fully isolated mock.
  */
 export async function retireExpiredSecrets(
-  prisma: PrismaClient | Prisma.TransactionClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultDb
 ): Promise<{ retiredCount: number }> {
   const now = new Date();
-  const result = await prisma.webhookConfigSecret.updateMany({
+  const result = await baseDb.webhookConfigSecret.updateMany({
     where: {
       retiredAt: null,
       autoRetireAt: { lt: now, not: null },

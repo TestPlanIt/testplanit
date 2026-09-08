@@ -38,6 +38,8 @@ export const POST = withAuditContext(
     try {
       const user = await db.user.findUnique({
         where: { id: userId },
+        // password is @omit; opt back in to compare the current bcrypt hash.
+        omit: { password: false },
       });
 
       if (!user) {

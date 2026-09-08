@@ -32,16 +32,16 @@ const describeIntegration =
 
 describeIntegration("iteration bulk-skip (live DB)", () => {
   const importDeps = async () => {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { materializeIterations } =
       await import("~/lib/services/iterationFanOut");
-    return { prisma, materializeIterations };
+    return { baseDb, materializeIterations };
   };
 
   const ROLLBACK_SENTINEL = "__BULK_SKIP_TEST_ROLLBACK__";
 
   async function withRollback<T>(
-    prisma: any,
+    baseDb: any,
 
     body: (tx: any) => Promise<T>,
     timeoutMs = 60_000
@@ -49,7 +49,7 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
-      await prisma.$transaction(
+      await baseDb.$transaction(
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -269,8 +269,8 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
   }
 
   it("POST writes one TestRunResults row per iteration and updates rollup", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fixture = await seedFixture(tx);
       await materializeIterations(fixture.testRunId, tx);
 
@@ -327,8 +327,8 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
   });
 
   it("rolls back atomically on per-iteration error", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fixture = await seedFixture(tx);
       await materializeIterations(fixture.testRunId, tx);
       const skipped = await tx.status.findUnique({
@@ -369,8 +369,8 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
 
   afterAll(async () => {
     if (RUN_INTEGRATION && HAS_DB_URL) {
-      const { prisma } = await importDeps();
-      await prisma.$disconnect();
+      const { baseDb } = await importDeps();
+      await baseDb.$disconnect();
     }
   });
 });

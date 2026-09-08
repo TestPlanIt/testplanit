@@ -86,7 +86,7 @@ export function ParameterChooserDialog({
                 <button
                   key={p.id}
                   type="button"
-                  className="w-full text-left px-2 py-1.5 text-sm rounded-sm flex items-center gap-2 hover:bg-accent"
+                  className="w-full text-start px-2 py-1.5 text-sm rounded-sm flex items-center gap-2 hover:bg-accent"
                   onClick={() => onPick(p)}
                   data-testid={`parameter-chooser-item-${p.name}`}
                 >

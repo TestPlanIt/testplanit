@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Accordion,
   AccordionContent,
@@ -19,7 +21,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -28,16 +33,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { CaseExportTemplate } from "@prisma/client";
-import { CirclePlus, ScrollText, Search, Trash2, Edit } from "lucide-react";
+import type { CaseExportTemplate } from "~/zenstack/models";
+import { CirclePlus, Search, Trash, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  useFindManyCaseExportTemplate,
-  useUpdateCaseExportTemplate,
-  useUpdateManyCaseExportTemplate,
-} from "~/lib/hooks";
 import { AddQuickScriptTemplate } from "./AddQuickScriptTemplate";
 import { DeleteQuickScriptTemplate } from "./DeleteQuickScriptTemplate";
 import { EditQuickScriptTemplate } from "./EditQuickScriptTemplate";
@@ -51,7 +51,7 @@ export default function QuickScriptTemplates() {
   const [filterFramework, setFilterFramework] = useState("__all__");
   const [filterExtension, setFilterExtension] = useState("__all__");
   const [filterLanguage, setFilterLanguage] = useState("__all__");
-  const [filterEnabled, setFilterEnabled] = useState("__all__");
+  const [filterEnabledOnly, setFilterEnabledOnly] = useState(false);
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
   const [addTemplateOpen, setAddTemplateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] =
@@ -62,16 +62,17 @@ export default function QuickScriptTemplates() {
     number | undefined
   >(undefined);
 
-  const { mutateAsync: updateTemplate } = useUpdateCaseExportTemplate();
-  const { mutateAsync: updateManyTemplates } =
-    useUpdateManyCaseExportTemplate();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).caseExportTemplate.useUpdate();
 
   const updateTemplateRef = useRef(updateTemplate);
   useEffect(() => {
     updateTemplateRef.current = updateTemplate;
   });
 
-  const { data, isLoading } = useFindManyCaseExportTemplate(
+  const { data, isLoading } = useClientQueries(
+    schema
+  ).caseExportTemplate.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: { name: "asc" },
@@ -106,10 +107,9 @@ export default function QuickScriptTemplates() {
     setIsAlertDialogOpen(false);
     try {
       if (selectedTemplateId !== undefined) {
-        await updateManyTemplates({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
+        // The single-default DB trigger
+        // (tpl_single_default_caseexporttemplate) clears the previous default
+        // atomically.
         await updateTemplate({
           where: { id: selectedTemplateId },
           data: { isDefault: true, isEnabled: true },
@@ -159,7 +159,7 @@ export default function QuickScriptTemplates() {
         return false;
       if (filterLanguage !== "__all__" && tmpl.language !== filterLanguage)
         return false;
-      if (filterEnabled !== "__all__" && !tmpl.isEnabled) return false;
+      if (filterEnabledOnly && !tmpl.isEnabled) return false;
       return true;
     });
   }, [
@@ -168,7 +168,7 @@ export default function QuickScriptTemplates() {
     filterFramework,
     filterExtension,
     filterLanguage,
-    filterEnabled,
+    filterEnabledOnly,
   ]);
 
   const groupedByCategory = useMemo(() => {
@@ -188,41 +188,39 @@ export default function QuickScriptTemplates() {
       <>
         <Card data-testid="quickscript-templates-section">
           <CardHeader>
-            <div className="flex items-center justify-between text-primary">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                <CardTitle>
-                  <div className="flex items-center">
-                    <ScrollText className="mr-1" />
-                    {t("title")}
-                  </div>
-                </CardTitle>
-              </div>
-              <div>
-                <Button
-                  data-testid="add-export-template-button"
-                  onClick={() => setAddTemplateOpen(true)}
-                >
-                  <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">{t("add.button")}</span>
-                </Button>
-                {addTemplateOpen && (
-                  <AddQuickScriptTemplate
-                    open={addTemplateOpen}
-                    onClose={() => setAddTemplateOpen(false)}
-                  />
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{t("title")}</CardTitle>
+                <HelpPopover helpKey="quickscripts" />
+              </SectionHeader>
+              <Button
+                data-testid="add-export-template-button"
+                onClick={() => setAddTemplateOpen(true)}
+                aria-label={t("add.button")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.button")}
+                </span>
+              </Button>
             </div>
+            {addTemplateOpen && (
+              <AddQuickScriptTemplate
+                open={addTemplateOpen}
+                onClose={() => setAddTemplateOpen(false)}
+              />
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <div className="relative flex-1 min-w-50">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder={t("filterPlaceholder")}
                   value={filterText}
                   onChange={(e) => setFilterText(e.target.value)}
-                  className="pl-9"
+                  className="ps-9"
                   data-testid="quickscript-templates-filter"
                 />
               </div>
@@ -282,18 +280,18 @@ export default function QuickScriptTemplates() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterEnabled} onValueChange={setFilterEnabled}>
-                <SelectTrigger
-                  className="w-35"
+              <Label
+                htmlFor="quickscript-templates-filter-enabled"
+                className="flex items-center gap-2 font-normal"
+              >
+                <Switch
+                  id="quickscript-templates-filter-enabled"
                   data-testid="quickscript-templates-filter-enabled"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">{t("showAll")}</SelectItem>
-                  <SelectItem value="enabled">{t("showEnabled")}</SelectItem>
-                </SelectContent>
-              </Select>
+                  checked={filterEnabledOnly}
+                  onCheckedChange={setFilterEnabledOnly}
+                />
+                {t("showEnabled")}
+              </Label>
             </div>
 
             {isLoading ? (
@@ -332,16 +330,16 @@ export default function QuickScriptTemplates() {
                         <table className="w-full text-sm">
                           <thead>
                             <tr className="border-b bg-muted/50">
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {tCommon("name")}
                               </th>
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {t("fields.framework")}
                               </th>
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {t("fields.fileExtension")}
                               </th>
-                              <th className="px-4 py-2 text-left font-medium">
+                              <th className="px-4 py-2 text-start font-medium">
                                 {tCommon("fields.locale")}
                               </th>
                               <th className="px-4 py-2 text-center font-medium">
@@ -388,7 +386,7 @@ export default function QuickScriptTemplates() {
                                   />
                                 </td>
                                 <td className="px-4 py-2">
-                                  <div className="flex justify-center gap-1">
+                                  <div className="flex justify-end gap-1">
                                     <Button
                                       variant="outline"
                                       className="px-2 py-1 h-auto"
@@ -403,7 +401,7 @@ export default function QuickScriptTemplates() {
                                         className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
                                         disabled
                                       >
-                                        <Trash2 className="h-5 w-5" />
+                                        <Trash className="h-5 w-5" />
                                       </Button>
                                     ) : (
                                       <Button
@@ -414,7 +412,7 @@ export default function QuickScriptTemplates() {
                                           setDeletingTemplate(tmpl)
                                         }
                                       >
-                                        <Trash2 className="h-5 w-5" />
+                                        <Trash className="h-5 w-5" />
                                       </Button>
                                     )}
                                   </div>
@@ -450,7 +448,7 @@ export default function QuickScriptTemplates() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleConfirmToggleDefault()}
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {tCommon("actions.confirm")}
               </AlertDialogAction>

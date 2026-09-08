@@ -32,7 +32,7 @@ This resolution chain ensures AI features always work, even before any prompt co
 
 ### Accessing the Page
 
-Navigate to **Administration** → **Prompt Configurations** in the admin menu (under the **Tools & Integrations** section).
+Navigate to **Administration** → **Prompt Configurations** in the admin menu (under the **AI Tools** section).
 
 ### Creating a Configuration
 
@@ -48,7 +48,7 @@ Navigate to **Administration** → **Prompt Configurations** in the admin menu (
    - **System Prompt** — Instructions that set the AI's behavior and context (required)
    - **User Prompt** — The template sent with each request, supporting `{{variable}}` placeholders
    - **Temperature** — Controls randomness (0 = deterministic, 2 = most creative, default: 0.7)
-   - **Max Output Tokens** — Maximum length of AI responses (default: 2048)
+   - **Max Output Tokens** — Maximum length of AI responses (default: 2048). Used by Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report. Test Case Generation, Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection use the AI model's **Default Max Tokens** instead (see [Token Limits](./llm-integrations.md#token-limits))
 4. Click **Save** to create the configuration
 
 Default prompts are pre-filled for each feature when creating a new configuration.
@@ -109,13 +109,29 @@ This allows different projects to use different AI behaviors — for example, a 
 
 User prompts can include `{{variable}}` placeholders that are replaced at runtime with actual values. The available variables depend on the feature:
 
-| Feature | Common Variables |
-| --------- | ----------------- |
-| Test Case Generation | `{{sourceContent}}`, `{{fields}}`, `{{numberOfCases}}` |
-| Markdown Parsing | `{{markdownContent}}`, `{{fields}}` |
-| Smart Test Case Selection | `{{testCases}}`, `{{context}}` |
-| Editor Writing Assistant | `{{content}}`, `{{instruction}}` |
-| Automation Candidates | `{{PROJECT_NAME}}`, `{{CASE_COUNT}}`, `{{CASES_JSON}}` |
+| Feature                                                                                                                                      | Common Variables                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Test Case Generation                                                                                                                         | `{{EXAMPLE_STRUCTURE}}`, `{{REQUIRED_FIELDS_LIST}}`, `{{OPTIONAL_FIELDS_LIST}}`, `{{EXCLUDED_FIELDS_LIST}}`, `{{QUANTITY_GUIDANCE}}`, `{{STEPS_INSTRUCTION}}`, `{{PRIORITY_INSTRUCTION}}`, `{{TAG_INSTRUCTIONS}}`, `{{ISSUE_KEY}}`, `{{ISSUE_TITLE}}`, `{{ISSUE_DESCRIPTION}}`, `{{ISSUE_STATUS}}`, `{{ISSUE_PRIORITY}}`, `{{COMMENTS_SECTION}}`, `{{USER_NOTES_SECTION}}`, `{{EXISTING_CASES_SECTION}}` |
+| Automation Candidates                                                                                                                        | `{{PROJECT_NAME}}`, `{{CASE_COUNT}}`, `{{CASES_JSON}}`                                                                                                                                                                                                                                                                                                                                                   |
+| Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, Auto Tag, Duplicate Detection, Generate from URL, LLM Connection Test | None — the content being worked on is sent as the user message                                                                                                                                                                                                                                                                                                                                           |
+
+The editor's **Insert variable** picker lists every variable available for the
+feature you are editing — use it rather than typing placeholders by hand.
+
+### Excluded fields
+
+`{{EXCLUDED_FIELDS_LIST}}` renders the template fields the user deselected in
+the generation wizard, as a bulleted list (or `- (none)`). Use it when you want
+to control where and how the exclusion appears in your prompt:
+
+```text
+Never populate these fields:
+{{EXCLUDED_FIELDS_LIST}}
+```
+
+If your prompt does not include the variable, an exclusion section is appended
+automatically, so deselected fields are honored either way. Values for
+deselected fields are discarded regardless of what the model returns.
 
 ## Best Practices
 

@@ -4,21 +4,10 @@ import { JSONContent } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { formatDistanceToNow } from "date-fns";
-import {
-  Ban,
-  CheckCircle2,
-  Edit,
-  MessageCircleWarning,
-  MessageSquareWarning,
-  MoreVertical,
-  Trash2,
-  XCircle,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Clock, Edit, MoreVertical, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { UserNameCell } from "~/components/tables/UserNameCell";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -34,9 +23,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";
 import { CommentEditor } from "./CommentEditor";
+import { CommentTypeBadge, getCommentAccentClasses } from "./CommentTypeBadge";
 
 interface CommentItemProps {
   comment: {
@@ -48,11 +43,7 @@ interface CommentItemProps {
     type?: "GENERAL" | "REVIEW_REQUEST" | "REVIEW_DECISION";
     reviewRequest?: {
       status:
-        | "PENDING"
-        | "APPROVED"
-        | "CHANGES_REQUESTED"
-        | "REJECTED"
-        | "CANCELLED";
+        "PENDING" | "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
     } | null;
     creator: {
       id: string;
@@ -69,6 +60,9 @@ interface CommentItemProps {
   onUpdate: (commentId: string, content: JSONContent) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
   className?: string;
+  /** When true (narrow container), collapse the timestamp to a clock icon with
+   * the time in a tooltip. */
+  narrow?: boolean;
 }
 
 export function CommentItem({
@@ -79,6 +73,7 @@ export function CommentItem({
   onUpdate,
   onDelete,
   className,
+  narrow = false,
 }: CommentItemProps) {
   const t = useTranslations();
   const [isEditing, setIsEditing] = useState(false);
@@ -95,91 +90,10 @@ export function CommentItem({
   const canEdit = isCreator && !isReviewType;
   const canDelete = (isCreator || isAdmin) && !isReviewType;
 
-  const badgeKey = (() => {
-    if (commentType === "REVIEW_REQUEST") {
-      return "comments.type.reviewRequest";
-    }
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return "comments.type.reviewDecision.approved";
-        case "CHANGES_REQUESTED":
-          return "comments.type.reviewDecision.changesRequested";
-        case "REJECTED":
-          return "comments.type.reviewDecision.rejected";
-        case "CANCELLED":
-          return "comments.type.reviewDecision.cancelled";
-        default:
-          return "comments.type.reviewDecision.generic";
-      }
-    }
-    return null;
-  })();
-
-  const accentClasses = (() => {
-    if (commentType === "REVIEW_REQUEST") {
-      return "border-l-4 border-l-primary";
-    }
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return "border-l-4 border-l-emerald-500";
-        case "CHANGES_REQUESTED":
-          return "border-l-4 border-l-amber-500";
-        case "REJECTED":
-          return "border-l-4 border-l-destructive";
-        case "CANCELLED":
-          return "border-l-4 border-l-muted-foreground";
-        default:
-          return "border-l-4 border-l-muted-foreground";
-      }
-    }
-    return "";
-  })();
-
-  const badgeProps: { variant?: "destructive"; className: string } = (() => {
-    const base = "gap-1";
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return {
-            className: `${base} bg-success text-success-foreground border-success hover:bg-success/90`,
-          };
-        case "CHANGES_REQUESTED":
-          return {
-            className: `${base} bg-warning text-white border-warning hover:bg-warning/90`,
-          };
-        case "REJECTED":
-          return { variant: "destructive", className: base };
-        case "CANCELLED":
-          return {
-            className: `${base} bg-muted-foreground text-background border-muted-foreground hover:bg-muted-foreground/90`,
-          };
-        default:
-          return { className: base };
-      }
-    }
-    return { className: `${base} bg-secondary text-secondary-foreground` };
-  })();
-
-  const BadgeIcon: LucideIcon | null = (() => {
-    if (commentType === "REVIEW_REQUEST") return MessageSquareWarning;
-    if (commentType === "REVIEW_DECISION") {
-      switch (comment.reviewRequest?.status) {
-        case "APPROVED":
-          return CheckCircle2;
-        case "CHANGES_REQUESTED":
-          return MessageCircleWarning;
-        case "REJECTED":
-          return XCircle;
-        case "CANCELLED":
-          return Ban;
-        default:
-          return null;
-      }
-    }
-    return null;
-  })();
+  const accentClasses = getCommentAccentClasses(
+    commentType,
+    comment.reviewRequest?.status
+  );
 
   // Editor for displaying comment content (read-only)
   const displayEditor = useEditor({
@@ -243,11 +157,26 @@ export function CommentItem({
             <UserNameCell userId={comment.creator.id} hideLink />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-muted-foreground line-clamp-1">
-              {formatDistanceToNow(new Date(comment.createdAt), {
+            {(() => {
+              const timeAgo = formatDistanceToNow(new Date(comment.createdAt), {
                 addSuffix: true,
-              })}
-            </span>
+              });
+              return narrow ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Clock
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      aria-label={timeAgo}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>{timeAgo}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className="text-xs text-muted-foreground line-clamp-1">
+                  {timeAgo}
+                </span>
+              );
+            })()}
             {comment.isEdited && (
               <span className="text-xs text-muted-foreground italic">
                 {t("comments.edited")}
@@ -269,7 +198,7 @@ export function CommentItem({
                 <DropdownMenuContent align="end">
                   {canEdit && (
                     <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                      <Edit className="mr-2 h-4 w-4" />
+                      <Edit className="me-2 h-4 w-4" />
                       {t("common.actions.edit")}
                     </DropdownMenuItem>
                   )}
@@ -278,7 +207,7 @@ export function CommentItem({
                       onClick={handleDeleteClick}
                       className="text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash className="me-2 h-4 w-4" />
                       {t("common.actions.delete")}
                     </DropdownMenuItem>
                   )}
@@ -288,16 +217,12 @@ export function CommentItem({
           </div>
         </div>
 
-        {badgeKey && (
+        {isReviewType && (
           <div>
-            <Badge
-              variant={badgeProps.variant}
-              data-testid={`comment-type-badge-${commentType.toLowerCase()}`}
-              className={badgeProps.className}
-            >
-              {BadgeIcon && <BadgeIcon className="h-3 w-3 shrink-0" />}
-              {t(badgeKey)}
-            </Badge>
+            <CommentTypeBadge
+              type={commentType}
+              reviewStatus={comment.reviewRequest?.status}
+            />
           </div>
         )}
 

@@ -90,12 +90,14 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_cases_list` | List and filter test cases in a project (by folder, tag, name, state, custom field, linked issue, automation, and more). |
+| `testplanit_cases_list` | List and filter test cases in a project (by folder — optionally with all its descendants — tag, name, state, custom field, linked issue, automation flag, automated-result evidence, and more). Rows can inline the full folder path for leaf-to-area mapping. |
+| `testplanit_cases_count` | Count test cases server-side under the same filters as `cases_list`, optionally grouped by folder, top-level folder, tag, state, source, or creator — coverage rollups in one call instead of paginating. |
 | `testplanit_cases_get` | Get a single test case with its fields and steps. |
 | `testplanit_cases_create` | Create a test case. Optionally pass `templateId` to choose a template (defaults to the project's first enabled template); custom fields are validated against the chosen template. |
 | `testplanit_cases_create_many` | Create many test cases in one call — far faster than per-case creates. Each case takes the same fields as a single create plus optional per-case `folderId`/`stateName`; returns a per-case success/failure result so partial failures are visible. |
 | `testplanit_cases_update` | Update a test case. Custom fields are validated against the case's template. |
 | `testplanit_cases_delete` | Delete a test case. |
+| `testplanit_cases_generate_script` | Generate a QuickScript (AI automation test script) from one or more test cases. Resolves the project's export template and, when a code repository is connected, follows the repo's existing framework/fixtures/page objects. Requires QuickScript to be enabled for the project. Returns the generated file(s) plus the resolved framework/language/fileExtension. |
 
 ### Templates
 
@@ -107,8 +109,8 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 
 | Tool | Description |
 | --- | --- |
-| `testplanit_folders_list` | List folders in a project. |
-| `testplanit_folders_get` | Get a single folder. |
+| `testplanit_folders_list` | List a project's folder tree to any depth, with accurate per-folder case counts and optional recursive + automated subtree totals. Nodes cut off by the depth limit are explicitly marked `truncated`. |
+| `testplanit_folders_get` | Get a single folder with breadcrumb, children, and direct + recursive case counts (total and automated). |
 | `testplanit_folders_create` | Create a folder. |
 | `testplanit_folders_update` | Rename or move a folder. |
 | `testplanit_folders_delete` | Delete a folder. |
@@ -128,9 +130,11 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_test_runs_cases_list` | List the cases included in a test run. |
 | `testplanit_runs_create` | Create a test run. |
 | `testplanit_runs_update` | Update a test run. |
-| `testplanit_runs_cases_add` | Add test cases to a run. |
-| `testplanit_test_run_results_list` | List execution results (status, who ran it, when). |
-| `testplanit_test_run_results_get` | Get a single result with step-level detail. |
+| `testplanit_runs_cases_add` | Add test cases to a run (restores previously removed cases). |
+| `testplanit_runs_cases_update` | Edit a case's row within a run — assign/unassign a tester or change its position. |
+| `testplanit_runs_cases_remove` | Remove test cases from a run (soft-delete, including their recorded results). |
+| `testplanit_test_run_results_list` | List execution results — manual and automated (JUnit-family) rows, discriminated by `source`. |
+| `testplanit_test_run_results_get` | Get a single result with detail (step-level for manual results; stack trace / stdout / stderr for automated). |
 | `testplanit_test_run_results_create` | Record a result for a case in a run. |
 
 ### Sessions
@@ -165,6 +169,13 @@ Your MCP client discovers each tool's full parameters automatically, so the list
 | `testplanit_milestones_create` | Create a milestone. |
 | `testplanit_milestones_update` | Update a milestone. |
 | `testplanit_milestone_types_list` | List the available milestone types. |
+
+### Reviews
+
+| Tool | Description |
+| --- | --- |
+| `testplanit_reviews_list` | List the review requests assigned to *you* — the same queue as the Review inbox in the app, covering both direct assignment and assignment to a role you hold. `view: "pending"` (default) is the work awaiting your decision; `view: "decided"` is your own decision history. Rows resolve the polymorphic subject to a name, carry the workflow transition being requested, and include the requester's submit-time note. |
+| `testplanit_reviews_decide` | Approve, request changes on, or reject a review request assigned to you. Decisions are append-only and notify the requester, and **approving applies the requested workflow transition** — agents should confirm with you before calling. A comment is required for `CHANGES_REQUESTED` and `REJECTED`. Blocked for read-only (`mode:read`) tokens, and refused unless you are the assignee with approve permission for the entity's area. **Requires a TestPlanIt instance that accepts API-token review decisions** (shipped alongside `@testplanit/mcp-server` 1.0.0-beta.2); against an older instance the tool says so and `testplanit_reviews_list` still works. |
 
 ### Code repositories
 

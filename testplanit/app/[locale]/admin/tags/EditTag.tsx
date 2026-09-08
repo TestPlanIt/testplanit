@@ -1,7 +1,8 @@
 "use client";
-import { Tags } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { Tags } from "~/zenstack/models";
 import { useState } from "react";
-import { useFindManyTags, useUpdateTags } from "~/lib/hooks";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
@@ -30,6 +31,7 @@ import {
 
 import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 
 // Create a simpler schema that works with form inference
 const EditTagSchema = z.object({
@@ -49,9 +51,9 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
   const tTags = useTranslations("tags.edit");
   const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateTag } = useUpdateTags();
+  const { mutateAsync: updateTag } = useClientQueries(schema).tags.useUpdate();
   // Query all tags (including soft-deleted) for case-insensitive duplicate checking
-  const { data: allTags } = useFindManyTags({
+  const { data: allTags } = useClientQueries(schema).tags.useFindMany({
     select: { id: true, name: true, isDeleted: true },
   });
 
@@ -112,7 +114,7 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
       onClose();
       setIsSubmitting(false);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
+      if (isUniqueConstraintError(err)) {
         form.setError("name", {
           type: "custom",
           message: tTags("errors.nameExists"),
@@ -167,7 +169,7 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
               <Button variant="outline" type="button" onClick={onClose}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !allTags}>
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

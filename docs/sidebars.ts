@@ -32,6 +32,9 @@ const sidebars: SidebarsConfig = {
         'docker-setup', // Corresponds to docker-setup.md
         'deployment', // Add deployment.md after Installation
         'external-database-deployment', // Add external-database-deployment.md
+        'kubernetes-deployment', // Kubernetes / Helm chart deployment
+        'horizontal-read-scaling', // Read-replica horizontal read scaling
+        'building-from-source', // Build from source / try a beta pre-release
         'background-processes', // Add background-processes.md
         'multi-tenant-workers', // Add multi-tenant-workers.md
         'sse-notifications', // SSE notifications deployment & ingress configuration
@@ -94,6 +97,7 @@ const sidebars: SidebarsConfig = {
                   },
                   items: [
                     'user-guide/cross-project-reports', // Cross-project report types + project scoping
+                    'user-guide/llm-usage-report', // AI token usage and cost report
                   ],
                 },
               ],
@@ -142,6 +146,13 @@ const sidebars: SidebarsConfig = {
                     'upgrade-notifications', // Version upgrade notifications
                   ],
                 },
+              ],
+            },
+            // AI Tools
+            {
+              type: 'category',
+              label: 'AI Tools',
+              items: [
                 {
                   type: 'category',
                   label: 'AI Models',
@@ -170,6 +181,7 @@ const sidebars: SidebarsConfig = {
               label: 'System',
               items: [
                 'user-guide/app-config', // Corresponds to app-config.md
+                'user-guide/record-keys', // Project-prefixed record keys (cosmetic IDs)
                 'user-guide/data-imports', // Data Imports (Testmo JSON wizard)
                 'user-guide/search-engine', // Elasticsearch status, replicas, reindex
                 'user-guide/queues', // Background job queue management
@@ -355,6 +367,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'api-reference', // Add api-reference.md
         'data-lake-export', // NDJSON bulk-export endpoints + webhook event catalog
+        'test-data-reservation', // Dataset row lease API for parallel CI fan-out
         'sdk/api-client', // @testplanit/api package
         'sdk/jira-forge-app', // Jira Forge app (Marketplace plugin)
         {

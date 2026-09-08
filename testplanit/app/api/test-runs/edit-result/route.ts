@@ -1,4 +1,5 @@
-import { Prisma } from "@prisma/client";
+import { JsonNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -7,7 +8,7 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
@@ -18,7 +19,9 @@ import {
   hasResultMutationPermission,
   isOutcomeFlip,
 } from "~/lib/services/resultGuards";
+import { syncRunCaseStatusAfterResultEdit } from "~/lib/services/runCaseStatusSync";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
+import { isNotFoundError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 /**
@@ -32,6 +35,10 @@ import { authOptions } from "~/server/auth";
  * the flip. Step results and attachments are handled by the caller via their
  * own writes; this endpoint owns the result row, its field values, and the
  * gates so API/MCP/UI edits can't bypass them.
+ *
+ * It also owns the resulting run-case status: `TestRunCases.statusId` is
+ * denormalized (see `lib/services/runCaseStatusSync.ts`) and every run-level
+ * view reads it, so the edit re-derives it in the same transaction.
  */
 const editResultSchema = z.object({
   resultId: z.number().int().positive(),
@@ -50,7 +57,10 @@ const editResultSchema = z.object({
     .array(
       z.object({
         fieldId: z.number().int().positive(),
-        value: z.unknown(),
+        // `.optional()` is load-bearing on z.unknown(): JSON.stringify drops
+        // undefined-valued keys, and zod 4.4+ rejects a MISSING key on a
+        // bare z.unknown() property.
+        value: z.unknown().optional(),
       })
     )
     .optional(),
@@ -86,7 +96,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
     const input = parsed.data;
 
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: authenticatedUserId },
       select: {
         id: true,
@@ -108,12 +118,15 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // Load the result with its run-case + project (permission fields filtered
     // to this user, mirroring submit-result), plus the prior status, template,
     // and existing field-value rows for the upsert.
-    const existing = await prisma.testRunResults.findFirst({
+    const existing = await baseDb.testRunResults.findFirst({
       where: { id: input.resultId, isDeleted: false },
       select: {
         id: true,
         statusId: true,
         testRunCaseId: true,
+        // Drives the run-case status sync below: an iteration-scoped result
+        // rolls up through its iteration, a null one is the legacy path.
+        iterationId: true,
         resultFieldValues: { select: { id: true, fieldId: true } },
         issues: { select: { id: true } },
         stepResults: { select: { _count: { select: { issues: true } } } },
@@ -241,7 +254,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // Edit window — same guard as the model route, system admins bypass.
     try {
-      await assertResultEditWindowOpen(prisma, input.resultId, user.access);
+      await assertResultEditWindowOpen(baseDb, input.resultId, user.access);
     } catch (error) {
       if (isEditWindowExpiredError(error)) {
         return NextResponse.json(
@@ -254,7 +267,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     // Required result fields.
     const missingRequiredField = await hasMissingRequiredResultField(
-      prisma,
+      baseDb,
       existing.testRunCase.repositoryCase.templateId,
       input.fieldValues
     );
@@ -273,7 +286,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     // is omitted the edit leaves those links untouched, so fall back to the
     // result's current counts.
     if (project.requireIssueOnFailure) {
-      const submittedStatus = await prisma.status.findUnique({
+      const submittedStatus = await baseDb.status.findUnique({
         where: { id: input.statusId },
         select: { isFailure: true },
       });
@@ -313,7 +326,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       input.statusId !== existing.statusId &&
       isTiptapEmpty(input.notes)
     ) {
-      const statuses = await prisma.status.findMany({
+      const statuses = await baseDb.status.findMany({
         where: { id: { in: [existing.statusId, input.statusId] } },
         select: {
           id: true,
@@ -336,22 +349,19 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       }
     }
 
-    const notesInput:
-      | Prisma.InputJsonValue
-      | Prisma.NullableJsonNullValueInput
-      | undefined =
+    const notesInput: JsonValue | typeof JsonNull | undefined =
       input.notes === undefined
         ? undefined
         : input.notes === null
-          ? Prisma.JsonNull
-          : (input.notes as Prisma.InputJsonValue);
+          ? JsonNull
+          : (input.notes as JsonValue);
 
-    const evidenceInput: Prisma.InputJsonValue | undefined =
+    const evidenceInput: JsonValue | undefined =
       input.evidence === undefined
         ? undefined
         : input.evidence === null
           ? {}
-          : (input.evidence as Prisma.InputJsonValue);
+          : (input.evidence as JsonValue);
 
     const existingFieldValueByFieldId = new Map(
       existing.resultFieldValues.map((fv) => [fv.fieldId, fv.id])
@@ -387,7 +397,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       // Upsert custom field values: update rows that already exist on this
       // result, create the rest. Values arrive already client-encoded.
       for (const fv of input.fieldValues ?? []) {
-        const value = (fv.value ?? Prisma.JsonNull) as Prisma.InputJsonValue;
+        const value = (fv.value ?? JsonNull) as JsonValue;
         const existingId = existingFieldValueByFieldId.get(fv.fieldId);
         if (existingId !== undefined) {
           await tx.resultFieldValues.update({
@@ -405,21 +415,30 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         }
       }
 
+      // Re-derive the owning run-case's denormalized status from the edited
+      // result. Everything run-level (donut counts, the per-case status chip,
+      // exports) reads `TestRunCases.statusId`, which `submit-result` writes on
+      // every submission; without this an edit updated only the result row, so
+      // the Test Result History showed the new outcome while the run kept
+      // reporting the old one. In-tx so status and result commit together.
+      await syncRunCaseStatusAfterResultEdit(tx, {
+        testRunCaseId: existing.testRunCaseId,
+        resultId: input.resultId,
+        iterationId: existing.iterationId,
+        statusId: input.statusId,
+      });
+
       return updated;
     });
 
     // The result UPDATE is audited by the shared TestRunResults $extends hook
-    // (lib/prisma.ts), which scopes and names the row from its parents. The
+    // (lib/baseDb.ts), which scopes and names the row from its parents. The
     // hook fires on the tx.testRunResults.update above, so no explicit capture
     // is made here — that previously double-logged every edit.
 
     return NextResponse.json({ result });
   } catch (error) {
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (isNotFoundError(error)) {
       return NextResponse.json(
         { error: "Test run result not found", code: "RESULT_NOT_FOUND" },
         { status: 404 }

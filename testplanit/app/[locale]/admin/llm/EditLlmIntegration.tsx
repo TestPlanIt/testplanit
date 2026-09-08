@@ -1,6 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   Accordion,
   AccordionContent,
@@ -27,6 +29,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  getModelContextWindow,
+  getQuickScriptContextBudget,
+  formatTokenCount,
+} from "~/lib/llm/model-capabilities";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,22 +44,14 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import { Decimal } from "decimal.js";
 import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
-import {
-  useFindManyLlmIntegration,
-  useUpdateLlmIntegration,
-} from "~/lib/hooks/llm-integration";
-import {
-  useFindManyLlmProviderConfig,
-  useUpdateLlmProviderConfig,
-} from "~/lib/hooks/llm-provider-config";
-import { useDeleteManyLlmUsage } from "~/lib/hooks/llm-usage";
 import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 
 const createFormSchema = (
@@ -101,12 +100,16 @@ const createFormSchema = (
 
 type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
-// Providers that support dynamic model fetching
+// Providers that support dynamic model fetching. Custom LLM endpoints are
+// tried too (LiteLLM, OpenRouter, Together and other OpenAI-compatible
+// gateways serve /models); when the endpoint isn't compatible the dialog
+// silently falls back to manual model entry.
 const PROVIDERS_WITH_DYNAMIC_MODELS = [
   "OPENAI",
   "ANTHROPIC",
   "GEMINI",
   "OLLAMA",
+  "CUSTOM_LLM",
 ];
 
 // Maps form field names to accordion section ids — used to auto-expand
@@ -126,7 +129,7 @@ const FIELD_TO_SECTION: Record<string, string> = {
   monthlyBudget: "cost-and-budget",
   billingPeriodStartDay: "cost-and-budget",
   defaultTemperature: "advanced",
-  defaultMaxTokens: "advanced",
+  defaultMaxTokens: "provider",
   timeout: "advanced",
   streamingEnabled: "advanced",
 };
@@ -150,10 +153,19 @@ export function EditLlmIntegration({
   const tLlm = useTranslations("admin.llm");
   const tIntegrations = useTranslations("admin.integrations");
   const tBudgetAlert = useTranslations("admin.llm.budgetAlert");
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [fetchingModels, setFetchingModels] = useState(false);
   const [modelsError, setModelsError] = useState<string | null>(null);
+  // Per-model cost in USD per 1M tokens, returned alongside the model list
+  // when the provider exposes pricing (LiteLLM /model/info, OpenRouter,
+  // Together AI). Kept in a ref so reading it never re-triggers the
+  // debounced model-fetch effect. Applied only when the admin picks a
+  // model, so saved costs are never clobbered on open.
+  const modelPricingRef = useRef<
+    Record<string, { input: number; output: number }>
+  >({});
   const [accordionValue, setAccordionValue] = useState<string[]>([]);
   // Captured from /api/admin/llm/test-credentials. When the admin runs Test
   // Connection, the server probes the chosen model for parameter support
@@ -165,15 +177,17 @@ export function EditLlmIntegration({
     { unsupportedParams: string[]; probedAt: string }
   > | null>(null);
 
-  const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
-  const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
-  const { mutateAsync: deleteManyLlmUsage } = useDeleteManyLlmUsage();
+  const { mutateAsync: updateLlmIntegration } =
+    useClientQueries(schema).llmIntegration.useUpdate();
+  const { mutateAsync: updateLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useUpdate();
+  const { mutateAsync: deleteManyLlmUsage } =
+    useClientQueries(schema).llmUsage.useDeleteMany();
   const [testingConnection, setTestingConnection] = useState(false);
   const [resettingSpend, setResettingSpend] = useState(false);
-  const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
-    where: { isDefault: true },
-  });
-  const { data: existingIntegrations } = useFindManyLlmIntegration({
+  const { data: existingIntegrations } = useClientQueries(
+    schema
+  ).llmIntegration.useFindMany({
     select: { name: true },
   });
 
@@ -197,7 +211,7 @@ export function EditLlmIntegration({
       monthlyBudget: 0,
       billingPeriodStartDay: 1,
       defaultTemperature: 0.7,
-      defaultMaxTokens: 1000,
+      defaultMaxTokens: 8192,
       timeout: 30000,
       streamingEnabled: true,
       isDefault: false,
@@ -228,6 +242,28 @@ export function EditLlmIntegration({
       } as Record<string, string>
     )[provider] ?? "";
 
+  // When the fetched pricing map knows the newly selected model, fill the
+  // cost fields with it (USD per 1M tokens — the unit the fields use). The
+  // admin can still override the values afterwards.
+  const applyModelPricing = (model: string) => {
+    const pricing = modelPricingRef.current[model];
+    if (!pricing) {
+      return;
+    }
+    form.setValue("costPerInputToken", pricing.input);
+    form.setValue("costPerOutputToken", pricing.output);
+    const formatCost = new Intl.NumberFormat(locale, {
+      maximumFractionDigits: 6,
+    });
+    toast.info(tAdd("pricingAutoFilled"), {
+      description: tAdd("pricingAutoFilledDescription", {
+        model,
+        input: formatCost.format(pricing.input),
+        output: formatCost.format(pricing.output),
+      }),
+    });
+  };
+
   const fetchAvailableModels = async (
     providerType: string,
     apiKey?: string,
@@ -237,9 +273,14 @@ export function EditLlmIntegration({
       return;
     }
 
+    // A custom endpoint has no obligation to be OpenAI-compatible, so a
+    // failed models fetch there just means manual model entry — no error UI.
+    const silent = providerType === "CUSTOM_LLM";
+
     setFetchingModels(true);
     setModelsError(null);
     setAvailableModels([]);
+    modelPricingRef.current = {};
 
     try {
       const response = await fetch("/api/admin/llm/available-models", {
@@ -256,29 +297,32 @@ export function EditLlmIntegration({
 
       if (data.success) {
         setAvailableModels(data.models || []);
+        modelPricingRef.current = data.pricing || {};
         // Don't auto-set the first model when editing - keep the current selection
         if (data.models && data.models.length > 0) {
-          toast.success(`Found ${data.models.length} available models`, {
-            description: "Model list updated successfully",
+          toast.success(tAdd("modelsFound", { count: data.models.length }), {
+            description: t("modelListUpdated"),
           });
-        } else {
+        } else if (!silent) {
           toast.warning(tCommon("errors.noModelsFound"), {
-            description: "The provider returned no available models",
+            description: tAdd("noModelsFoundDescription"),
           });
         }
-      } else {
+      } else if (!silent) {
         setModelsError(data.error || "Failed to fetch models");
         toast.error(tCommon("errors.failedToFetchModels"), {
           description: data.error || "Unknown error",
         });
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      setModelsError(errorMessage);
-      toast.error(tCommon("errors.failedToFetchModels"), {
-        description: errorMessage,
-      });
+      if (!silent) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        setModelsError(errorMessage);
+        toast.error(tCommon("errors.failedToFetchModels"), {
+          description: errorMessage,
+        });
+      }
     } finally {
       setFetchingModels(false);
     }
@@ -304,6 +348,11 @@ export function EditLlmIntegration({
 
     // For providers that require an API key, wait until one is provided
     if (["OPENAI", "ANTHROPIC", "GEMINI"].includes(provider) && !apiKey) {
+      return;
+    }
+
+    // Ollama and custom providers require an endpoint
+    if (["OLLAMA", "CUSTOM_LLM"].includes(provider) && !endpoint) {
       return;
     }
 
@@ -339,7 +388,7 @@ export function EditLlmIntegration({
         defaultTemperature:
           integration.llmProviderConfig?.defaultTemperature || 0.7,
         defaultMaxTokens:
-          integration.llmProviderConfig?.defaultMaxTokens || 1000,
+          integration.llmProviderConfig?.defaultMaxTokens || 8192,
         timeout: integration.llmProviderConfig?.timeout || 30000,
         streamingEnabled:
           integration.llmProviderConfig?.streamingEnabled ?? true,
@@ -377,6 +426,12 @@ export function EditLlmIntegration({
         toast.success(tIntegrations("testSuccess"), {
           description: tAdd("connectionSuccessfulDescription"),
         });
+        // Test Connection is an explicit action, so it also refreshes the
+        // cost fields with the provider's current pricing for the selected
+        // model. This is the only way to re-apply pricing without changing
+        // the model — re-selecting the same value in the model dropdown
+        // doesn't fire onValueChange. No-op when pricing is unknown.
+        applyModelPricing(values.defaultModel);
       } else {
         const errorMsg = data.error || tAdd("failedToConnect");
         const endpointVal = values.endpoint?.replace(/\/+$/, "");
@@ -449,23 +504,8 @@ export function EditLlmIntegration({
     }
 
     try {
-      // If setting as default, unset other defaults first
-      if (
-        values.isDefault &&
-        existingDefaultConfigs &&
-        existingDefaultConfigs.length > 0
-      ) {
-        await Promise.all(
-          existingDefaultConfigs
-            .filter((config) => config.id !== integration.llmProviderConfig?.id)
-            .map((config) =>
-              updateLlmProviderConfig({
-                where: { id: config.id },
-                data: { isDefault: false },
-              })
-            )
-        );
-      }
+      // The single-default DB trigger (tpl_single_default_llmproviderconfig)
+      // clears the previous default atomically.
 
       // Update the integration
       await updateLlmIntegration({
@@ -505,8 +545,7 @@ export function EditLlmIntegration({
               ...existingSettings,
               modelCapabilities: {
                 ...((existingSettings.modelCapabilities as
-                  | Record<string, unknown>
-                  | undefined) ?? {}),
+                  Record<string, unknown> | undefined) ?? {}),
                 ...capabilitiesForSave,
               },
             }
@@ -518,16 +557,16 @@ export function EditLlmIntegration({
             defaultModel: values.defaultModel,
             maxTokensPerRequest: values.maxTokensPerRequest,
             maxRequestsPerMinute: values.maxRequestsPerMinute,
-            costPerInputToken: values.costPerInputToken,
-            costPerOutputToken: values.costPerOutputToken,
-            monthlyBudget: values.monthlyBudget || 0,
+            costPerInputToken: new Decimal(values.costPerInputToken),
+            costPerOutputToken: new Decimal(values.costPerOutputToken),
+            monthlyBudget: new Decimal(values.monthlyBudget || 0),
             billingPeriodStartDay: values.billingPeriodStartDay,
             defaultTemperature: values.defaultTemperature,
             defaultMaxTokens: values.defaultMaxTokens,
             timeout: values.timeout,
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
-            settings: mergedSettings as Prisma.InputJsonValue,
+            settings: mergedSettings as JsonValue,
             // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
             alertThresholdsFired: {},
           },
@@ -693,7 +732,7 @@ export function EditLlmIntegration({
                 >
                   <AccordionItem value="provider">
                     <AccordionTrigger>
-                      <div className="flex items-center gap-4 flex-1 min-w-0 mr-2">
+                      <div className="flex items-center gap-4 flex-1 min-w-0 me-2">
                         <span className="shrink-0 flex items-center gap-2">
                           {sectionsWithErrors.has("provider") && (
                             <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
@@ -701,7 +740,7 @@ export function EditLlmIntegration({
                           {tLlm("sections.provider")}
                         </span>
                         {providerLabel && (
-                          <span className="text-xs text-muted-foreground font-normal truncate ml-auto">
+                          <span className="text-xs text-muted-foreground font-normal truncate ms-auto">
                             {watchedModel
                               ? `${providerLabel} / ${watchedModel}`
                               : providerLabel}
@@ -822,7 +861,7 @@ export function EditLlmIntegration({
                                 ) &&
                                   fetchingModels && (
                                     <div className="flex items-center text-sm text-muted-foreground">
-                                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                      <Loader2 className="h-4 w-4 animate-spin me-1" />
                                       {tAdd("fetchingModels")}
                                     </div>
                                   )}
@@ -832,7 +871,10 @@ export function EditLlmIntegration({
                                   provider
                                 ) && availableModels.length > 0 ? (
                                   <Select
-                                    onValueChange={field.onChange}
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      applyModelPricing(value);
+                                    }}
                                     value={field.value}
                                   >
                                     <SelectTrigger>
@@ -874,7 +916,9 @@ export function EditLlmIntegration({
                                       : provider === "OPENAI" ||
                                           provider === "ANTHROPIC"
                                         ? "Enter your API key. We'll fetch the available models automatically."
-                                        : "Models will be fetched automatically from your Ollama instance."}
+                                        : provider === "CUSTOM_LLM"
+                                          ? tAdd("customLlmModelsHint")
+                                          : "Models will be fetched automatically from your Ollama instance."}
                                   </FormDescription>
                                 )}
                               <FormMessage />
@@ -928,6 +972,29 @@ export function EditLlmIntegration({
 
                         <FormField
                           control={form.control}
+                          name="defaultMaxTokens"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                {tAdd("defaultMaxTokens")}
+                                <HelpPopover helpKey="llm.defaultMaxTokens" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value))
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name="maxRequestsPerMinute"
                           render={({ field }) => (
                             <FormItem>
@@ -949,12 +1016,32 @@ export function EditLlmIntegration({
                           )}
                         />
                       </div>
+
+                      <div className="rounded-md border bg-muted/40 px-3 py-2">
+                        <div className="flex items-center text-sm font-medium">
+                          {tAdd("repoContextBudgetLabel")}
+                          <HelpPopover helpKey="llm.repoContextBudget" />
+                        </div>
+                        <p className="mt-0.5 text-sm text-muted-foreground">
+                          {tAdd("repoContextBudgetAuto", {
+                            window: formatTokenCount(
+                              getModelContextWindow(provider, watchedModel)
+                            ),
+                            budget: formatTokenCount(
+                              getQuickScriptContextBudget(
+                                provider,
+                                watchedModel
+                              )
+                            ),
+                          })}
+                        </p>
+                      </div>
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="cost-and-budget">
                     <AccordionTrigger>
-                      <div className="flex items-center gap-4 flex-1 min-w-0 mr-2">
+                      <div className="flex items-center gap-4 flex-1 min-w-0 me-2">
                         <span className="shrink-0 flex items-center gap-2">
                           {sectionsWithErrors.has("cost-and-budget") && (
                             <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
@@ -1182,6 +1269,35 @@ export function EditLlmIntegration({
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
+                          name="timeout"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="flex items-center">
+                                {tAdd("timeout")}
+                                <HelpPopover helpKey="llm.timeout" />
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min="5000"
+                                  max="600000"
+                                  step="1000"
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(parseInt(e.target.value))
+                                  }
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                {tAdd("timeoutDescription")}
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
                           name="defaultTemperature"
                           render={({ field }) => (
                             <FormItem>
@@ -1205,59 +1321,7 @@ export function EditLlmIntegration({
                             </FormItem>
                           )}
                         />
-
-                        <FormField
-                          control={form.control}
-                          name="defaultMaxTokens"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="flex items-center">
-                                {tAdd("defaultMaxTokens")}
-                                <HelpPopover helpKey="llm.defaultMaxTokens" />
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(parseInt(e.target.value))
-                                  }
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
                       </div>
-
-                      <FormField
-                        control={form.control}
-                        name="timeout"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center">
-                              {tAdd("timeout")}
-                              <HelpPopover helpKey="llm.timeout" />
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="5000"
-                                max="600000"
-                                step="1000"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {tAdd("timeoutDescription")}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       <FormField
                         control={form.control}

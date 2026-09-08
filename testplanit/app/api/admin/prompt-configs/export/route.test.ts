@@ -10,8 +10,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     promptConfig: {
       findUnique: vi.fn(),
     },
@@ -19,7 +19,7 @@ vi.mock("~/lib/prisma", () => ({
 }));
 
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { GET } from "./route";
 
@@ -129,7 +129,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(null);
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(null);
 
       const request = createMockRequest({ id: "nonexistent" });
       const response = await GET(request);
@@ -143,7 +143,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
@@ -162,7 +162,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
@@ -178,7 +178,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
@@ -196,7 +196,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
@@ -212,7 +212,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
@@ -228,7 +228,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
@@ -244,18 +244,18 @@ describe("GET /api/admin/prompt-configs/export", () => {
       expect(prompt.maxOutputTokens).toBe(2048);
     });
 
-    it("queries prisma with correct include for llmIntegration name", async () => {
+    it("queries baseDb with correct include for llmIntegration name", async () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockResolvedValue(
+      (baseDb.promptConfig.findUnique as any).mockResolvedValue(
         mockPromptConfig
       );
 
       const request = createMockRequest({ id: "config-1" });
       await GET(request);
 
-      expect(prisma.promptConfig.findUnique).toHaveBeenCalledWith(
+      expect(baseDb.promptConfig.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "config-1" },
           include: expect.objectContaining({
@@ -275,7 +275,7 @@ describe("GET /api/admin/prompt-configs/export", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.promptConfig.findUnique as any).mockRejectedValue(
+      (baseDb.promptConfig.findUnique as any).mockRejectedValue(
         new Error("DB error")
       );
 

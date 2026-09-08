@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import type { NextPage } from "next";
 import { getCsrfToken, signIn } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -8,11 +10,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { SsoProviderType } from "@prisma/client";
+import { SsoProviderType } from "~/zenstack/models";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useFindFirstRegistrationSettings } from "~/lib/hooks";
-import { useFindManySsoProvider } from "~/lib/hooks/sso-provider";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,14 +155,13 @@ const Signin: NextPage = () => {
 
   // Fetch ALL SSO providers (we need all to check forceSso)
   // Sort by name at the database level to help with SAML providers
-  const { data: registrationSettings } = useFindFirstRegistrationSettings(
-    undefined,
-    { enabled: sessionCleared }
-  );
+  const { data: registrationSettings } = useClientQueries(
+    schema
+  ).registrationSettings.useFindFirst(undefined, { enabled: sessionCleared });
 
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
   const { data: ssoProviders, isLoading: isLoadingSsoProviders } =
-    useFindManySsoProvider(
+    useClientQueries(schema).ssoProvider.useFindMany(
       {
         include: { samlConfig: true },
         orderBy: { name: "asc" },
@@ -598,7 +597,7 @@ const Signin: NextPage = () => {
               }}
               priority={true}
             />
-            <div className="ml-3 flex flex-col">
+            <div className="ms-3 flex flex-col">
               <span className="scroll-m-20 text-4xl font-semibold tracking-tight lg:text-5xl text-[rgb(133,89,233)]">
                 {tCommon("branding.name")}
               </span>
@@ -750,7 +749,7 @@ const Signin: NextPage = () => {
                     {t("common.or")}{" "}
                     <Link href="/signup" className="group underline">
                       {t("auth.signin.createAccount")}
-                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
                   </div>
                 )}
@@ -967,7 +966,7 @@ const Signin: NextPage = () => {
                   })}
                 </p>
                 {passwordlessPendingId && (
-                  <div className="mt-6 space-y-3 text-left">
+                  <div className="mt-6 space-y-3 text-start">
                     <p className="text-sm text-muted-foreground text-center">
                       {t("auth.signin.passwordless.waitingInstructions")}
                     </p>

@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import React from "react";
 
 import { Avatar } from "@/components/Avatar";
@@ -7,7 +9,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useFindManyUser } from "~/lib/hooks";
 import { cn, type ClassValue } from "~/utils";
 
 interface MemberListProps {
@@ -21,7 +22,7 @@ export const MemberList: React.FC<MemberListProps> = ({
   className,
   maxUsers,
 }) => {
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     orderBy: { name: "asc" },
     where: {
       AND: [
@@ -77,7 +78,10 @@ export const MemberList: React.FC<MemberListProps> = ({
       {overflowCount > 0 && (
         <Popover>
           <PopoverTrigger asChild>
-            <button className="flex items-center justify-center ml-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer">
+            <button
+              type="button"
+              className="flex items-center justify-center ms-2 text-sm text-gray-600 hover:text-gray-800 cursor-pointer"
+            >
               {`+${overflowCount} more...`}
             </button>
           </PopoverTrigger>

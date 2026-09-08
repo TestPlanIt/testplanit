@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import type { DbClient } from "~/lib/zenstack";
+import type { Decimal } from "decimal.js";
 import {
   AnthropicAdapter,
   AzureOpenAIAdapter,
@@ -8,7 +9,21 @@ import {
   OllamaAdapter,
   OpenAIAdapter,
 } from "../adapters";
-import { getAllowedPrivateHosts } from "~/lib/utils/ssrf";
+import {
+  getAllowedPrivateHosts,
+  isCloudMetadataHostname,
+} from "~/lib/utils/ssrf";
+import { modelSupportsVision } from "../model-capabilities";
+import { estimatePromptTokens } from "../content";
+
+/**
+ * ZenStack v3 accepts a plain number for `Decimal` columns at runtime (its
+ * input validator coerces number/string), but the generated create-input type
+ * is the strict decimal.js `Decimal` class — and a real decimal.js instance is
+ * rejected at runtime as a foreign class. So pass numbers and assert the input
+ * type here.
+ */
+const asDecimal = (value: number): Decimal => value as unknown as Decimal;
 
 interface LlmCredentials {
   apiKey?: string;
@@ -57,11 +72,7 @@ function isPrivateOrInternalHost(hostname: string): boolean {
   }
 
   // Block cloud metadata endpoints
-  if (
-    lowerHost === "169.254.169.254" ||
-    lowerHost === "metadata.google.internal" ||
-    lowerHost.endsWith(".internal")
-  ) {
+  if (isCloudMetadataHostname(lowerHost) || lowerHost.endsWith(".internal")) {
     return true;
   }
 
@@ -177,17 +188,17 @@ import type {
 export class LlmManager {
   private static instance: LlmManager;
   private adapters: Map<number, BaseLlmAdapter> = new Map();
-  private prisma: PrismaClient;
+  private db: DbClient;
   private tenantId?: string;
 
-  private constructor(prisma: PrismaClient, tenantId?: string) {
-    this.prisma = prisma;
+  private constructor(db: DbClient, tenantId?: string) {
+    this.db = db;
     this.tenantId = tenantId;
   }
 
-  static getInstance(prisma: PrismaClient): LlmManager {
+  static getInstance(db: DbClient): LlmManager {
     if (!LlmManager.instance) {
-      LlmManager.instance = new LlmManager(prisma);
+      LlmManager.instance = new LlmManager(db);
     }
     return LlmManager.instance;
   }
@@ -197,8 +208,8 @@ export class LlmManager {
    * Bypasses the singleton cache so each tenant gets its own instance.
    * Accepts tenantId so budget checks can be enqueued with the correct tenant.
    */
-  static createForWorker(prisma: PrismaClient, tenantId?: string): LlmManager {
-    return new LlmManager(prisma, tenantId);
+  static createForWorker(db: DbClient, tenantId?: string): LlmManager {
+    return new LlmManager(db, tenantId);
   }
 
   async getAdapter(llmIntegrationId: number): Promise<BaseLlmAdapter> {
@@ -214,7 +225,7 @@ export class LlmManager {
   private async createAdapter(
     llmIntegrationId: number
   ): Promise<BaseLlmAdapter> {
-    const llmIntegration = await this.prisma.llmIntegration.findUnique({
+    const llmIntegration = await this.db.llmIntegration.findUnique({
       where: { id: llmIntegrationId },
       include: {
         llmProviderConfig: true,
@@ -330,7 +341,6 @@ export class LlmManager {
   ): AsyncGenerator<LlmStreamResponse, void, unknown> {
     const adapter = await this.getAdapter(llmIntegrationId);
 
-    const _totalTokens = 0;
     const chunks: string[] = [];
 
     try {
@@ -340,9 +350,19 @@ export class LlmManager {
       }
 
       const fullContent = chunks.join("");
-      const estimatedTokens = Math.ceil(fullContent.length / 4);
+      const estimatedCompletionTokens = Math.ceil(fullContent.length / 4);
+      // Streaming responses aren't parsed for provider usage blocks, so the
+      // prompt side is estimated too (chars/4 + flat per-image charge) —
+      // previously recorded as 0, which hid the entire input cost of every
+      // streaming feature from the usage report.
+      const estimatedPromptTokens = estimatePromptTokens(request.messages);
 
-      await this.trackStreamUsage(llmIntegrationId, request, estimatedTokens);
+      await this.trackStreamUsage(
+        llmIntegrationId,
+        request,
+        estimatedCompletionTokens,
+        estimatedPromptTokens
+      );
     } catch (error) {
       await this.trackError(llmIntegrationId, request, error);
       throw error;
@@ -350,7 +370,7 @@ export class LlmManager {
   }
 
   async getDefaultIntegration(): Promise<number | null> {
-    const config = await this.prisma.llmProviderConfig.findFirst({
+    const config = await this.db.llmProviderConfig.findFirst({
       where: {
         llmIntegration: {
           isDeleted: false,
@@ -372,7 +392,7 @@ export class LlmManager {
    */
   async getProjectIntegration(projectId: number): Promise<number | null> {
     const projectIntegration = await (
-      this.prisma as any
+      this.db as any
     ).projectLlmIntegration.findFirst({
       where: {
         projectId,
@@ -410,7 +430,7 @@ export class LlmManager {
     resolvedPrompt?: { llmIntegrationId?: number; modelOverride?: string }
   ): Promise<{ integrationId: number; model?: string } | null> {
     // Level 1: Project LlmFeatureConfig override
-    const featureConfig = await this.prisma.llmFeatureConfig.findUnique({
+    const featureConfig = await this.db.llmFeatureConfig.findUnique({
       where: {
         projectId_feature: { projectId, feature },
       },
@@ -448,7 +468,7 @@ export class LlmManager {
     // Level 2: Per-prompt PromptConfigPrompt assignment
     if (resolvedPrompt?.llmIntegrationId) {
       // Verify the integration is still active
-      const integration = await this.prisma.llmIntegration.findUnique({
+      const integration = await this.db.llmIntegration.findUnique({
         where: { id: resolvedPrompt.llmIntegrationId },
         select: { isDeleted: true, status: true },
       });
@@ -473,10 +493,42 @@ export class LlmManager {
     return null;
   }
 
+  /**
+   * Whether the given integration + model accepts image input. One query
+   * (provider + config settings + defaultModel), then the pure heuristic in
+   * `model-capabilities.ts`; the feature layer calls this once after
+   * `resolveIntegration` to decide between attaching image parts and
+   * skipping them with a notice.
+   */
+  async supportsVision(
+    integrationId: number,
+    model?: string | null
+  ): Promise<boolean> {
+    const integration = await this.db.llmIntegration.findUnique({
+      where: { id: integrationId },
+      select: {
+        provider: true,
+        llmProviderConfig: {
+          select: { defaultModel: true, settings: true },
+        },
+      },
+    });
+    if (!integration) return false;
+
+    const resolvedModel = model ?? integration.llmProviderConfig?.defaultModel;
+    return modelSupportsVision(
+      integration.provider,
+      resolvedModel,
+      integration.llmProviderConfig?.settings as {
+        modelCapabilities?: Record<string, { supportsVision?: boolean }>;
+      } | null
+    );
+  }
+
   async listAvailableIntegrations(): Promise<
     Array<{ id: number; name: string; provider: string }>
   > {
-    const llmIntegrations = await this.prisma.llmIntegration.findMany({
+    const llmIntegrations = await this.db.llmIntegration.findMany({
       where: {
         isDeleted: false,
         status: "ACTIVE",
@@ -513,7 +565,7 @@ export class LlmManager {
     llmIntegrationId: number,
     userId: string
   ): Promise<boolean> {
-    const rateLimit = await this.prisma.llmRateLimit.findFirst({
+    const rateLimit = await this.db.llmRateLimit.findFirst({
       where: {
         llmIntegrationId,
         scope: "user",
@@ -534,7 +586,7 @@ export class LlmManager {
 
     if (now > windowEnd) {
       // Window expired, reset counters
-      await this.prisma.llmRateLimit.update({
+      await this.db.llmRateLimit.update({
         where: { id: rateLimit.id },
         data: {
           currentRequests: 0,
@@ -559,7 +611,7 @@ export class LlmManager {
     request: LlmRequest,
     response: LlmResponse
   ): Promise<void> {
-    const config = await this.prisma.llmProviderConfig.findUnique({
+    const config = await this.db.llmProviderConfig.findUnique({
       where: { llmIntegrationId },
     });
 
@@ -571,19 +623,21 @@ export class LlmManager {
       (response.completionTokens / 1_000_000) *
       Number(config.costPerOutputToken);
 
-    await this.prisma.llmUsage.create({
+    await this.db.llmUsage.create({
       data: {
-        llmIntegrationId,
-        userId: request.userId,
-        projectId: request.projectId,
+        llmIntegration: { connect: { id: llmIntegrationId } },
+        user: { connect: { id: request.userId } },
+        ...(request.projectId
+          ? { project: { connect: { id: request.projectId } } }
+          : {}),
         feature: request.feature,
         model: response.model,
         promptTokens: response.promptTokens,
         completionTokens: response.completionTokens,
         totalTokens: response.totalTokens,
-        inputCost,
-        outputCost,
-        totalCost: inputCost + outputCost,
+        inputCost: asDecimal(inputCost),
+        outputCost: asDecimal(outputCost),
+        totalCost: asDecimal(inputCost + outputCost),
         latency: 0, // TODO: Track actual latency
         success: true,
       },
@@ -597,7 +651,7 @@ export class LlmManager {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
         const { BUDGET_ALERT_JOB_CHECK } =
           await import("~/workers/budgetAlertWorker");
-        const { getCurrentTenantId } = await import("~/lib/multiTenantPrisma");
+        const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
         getBudgetAlertQueue()
           ?.add(BUDGET_ALERT_JOB_CHECK, {
             llmIntegrationId,
@@ -615,30 +669,36 @@ export class LlmManager {
   private async trackStreamUsage(
     llmIntegrationId: number,
     request: LlmRequest,
-    estimatedTokens: number
+    estimatedCompletionTokens: number,
+    estimatedPromptTokens: number
   ): Promise<void> {
-    const config = await this.prisma.llmProviderConfig.findUnique({
+    const config = await this.db.llmProviderConfig.findUnique({
       where: { llmIntegrationId },
     });
 
     if (!config) return;
 
-    const estimatedCost =
-      (estimatedTokens / 1_000_000) * Number(config.costPerOutputToken);
+    const outputCost =
+      (estimatedCompletionTokens / 1_000_000) *
+      Number(config.costPerOutputToken);
+    const inputCost =
+      (estimatedPromptTokens / 1_000_000) * Number(config.costPerInputToken);
 
-    await this.prisma.llmUsage.create({
+    await this.db.llmUsage.create({
       data: {
-        llmIntegrationId,
-        userId: request.userId,
-        projectId: request.projectId,
+        llmIntegration: { connect: { id: llmIntegrationId } },
+        user: { connect: { id: request.userId } },
+        ...(request.projectId
+          ? { project: { connect: { id: request.projectId } } }
+          : {}),
         feature: request.feature,
         model: request.model || config.defaultModel,
-        promptTokens: 0,
-        completionTokens: estimatedTokens,
-        totalTokens: estimatedTokens,
-        inputCost: 0,
-        outputCost: estimatedCost,
-        totalCost: estimatedCost,
+        promptTokens: estimatedPromptTokens,
+        completionTokens: estimatedCompletionTokens,
+        totalTokens: estimatedPromptTokens + estimatedCompletionTokens,
+        inputCost: asDecimal(inputCost),
+        outputCost: asDecimal(outputCost),
+        totalCost: asDecimal(inputCost + outputCost),
         latency: 0, // TODO: Track actual latency for streaming
         success: true,
       },
@@ -652,7 +712,7 @@ export class LlmManager {
         const { getBudgetAlertQueue } = await import("~/lib/queues");
         const { BUDGET_ALERT_JOB_CHECK } =
           await import("~/workers/budgetAlertWorker");
-        const { getCurrentTenantId } = await import("~/lib/multiTenantPrisma");
+        const { getCurrentTenantId } = await import("~/lib/multiTenantDb");
         getBudgetAlertQueue()
           ?.add(BUDGET_ALERT_JOB_CHECK, {
             llmIntegrationId,
@@ -672,19 +732,21 @@ export class LlmManager {
     request: LlmRequest,
     error: any
   ): Promise<void> {
-    await this.prisma.llmUsage.create({
+    await this.db.llmUsage.create({
       data: {
-        llmIntegrationId,
-        userId: request.userId,
-        projectId: request.projectId,
+        llmIntegration: { connect: { id: llmIntegrationId } },
+        user: { connect: { id: request.userId } },
+        ...(request.projectId
+          ? { project: { connect: { id: request.projectId } } }
+          : {}),
         feature: request.feature,
         model: request.model || "unknown",
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,
-        inputCost: 0,
-        outputCost: 0,
-        totalCost: 0,
+        inputCost: asDecimal(0),
+        outputCost: asDecimal(0),
+        totalCost: asDecimal(0),
         latency: 0,
         success: false,
         error: error.message || "Unknown error",
@@ -698,7 +760,7 @@ export class LlmManager {
   ): Promise<void> {
     const now = new Date();
 
-    await this.prisma.llmRateLimit.upsert({
+    await this.db.llmRateLimit.upsert({
       where: {
         scope_scopeId_feature: {
           scope: "user",

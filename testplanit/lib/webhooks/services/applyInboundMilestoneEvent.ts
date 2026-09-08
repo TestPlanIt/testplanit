@@ -1,0 +1,847 @@
+import type { AdapterType } from "~/zenstack/models";
+
+import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
+import { baseDb } from "~/lib/db";
+import { integrationManager } from "~/lib/integrations/IntegrationManager";
+import { milestoneSyncService } from "~/lib/integrations/services/MilestoneSyncService";
+import { captureAuditEvent } from "~/lib/services/auditLog";
+import { getAdapter } from "~/lib/webhooks/adapters";
+
+import {
+  markTransitionApplied,
+  transitionAlreadyApplied,
+  webhookFreshnessWindow,
+} from "./webhookFreshness";
+import type { MilestoneEventRef } from "~/lib/webhooks/adapters/types";
+
+import type {
+  ApplyInboundMilestoneEventInput,
+  ApplyInboundMilestoneEventResult,
+} from "./types";
+
+/**
+ * Events that carry a LIFECYCLE TRANSITION rather than a field edit.
+ *
+ * These bypass coalescing unconditionally — including the burst allowance in
+ * `webhookFreshnessWindow`. A state change is the one thing that must never
+ * be swallowed, because the whole point of the event is that the artifact
+ * moved, and the underlying gate never checks whether the cached row already
+ * reflects it; it decides on age alone.
+ *
+ * This is deliberately a second, independent layer on top of the burst
+ * allowance, so neither mechanism has to be perfect on its own.
+ */
+const STATE_TRANSITION_EVENTS = new Set([
+  "jira:version_released",
+  "jira:version_unreleased",
+  "sprint_started",
+  "sprint_closed",
+]);
+
+/**
+ * Wall-clock budget for waiting out a contended sync lock, shared across a
+ * single event's whole fan-out (NOT per row — a five-project artifact must
+ * not be able to hold the webhook request open for five times this).
+ *
+ * Sized against the work the lock holder is actually doing: one project's
+ * refresh costs a full version-list page-through (measured at ~2.7s for a
+ * 1210-version Jira project), and the holder may be midway through its own
+ * fan-out. A few seconds covers the common case; past that, giving up and
+ * logging loudly beats holding the delivery open until the sender times out
+ * and redelivers.
+ */
+const LOCK_CONTENTION_BUDGET_MS = 8_000;
+
+/**
+ * Backoff between attempts to acquire a contended lock. The first retry is
+ * deliberately short — most contention is the tail of another row's fetch,
+ * not a full pass — then widens so a genuinely busy subject isn't polled
+ * hard for the whole budget.
+ */
+const LOCK_RETRY_DELAYS_MS = [250, 500, 1_000, 2_000];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Stable per-row subject key, shared by the freshness counter and the
+ * transition marker.
+ */
+function subjectKeyFor(
+  integrationId: number,
+  projectId: number,
+  externalId: string
+): string {
+  return `milestone:${integrationId}:${projectId}:${externalId}`;
+}
+
+/**
+ * Freshness window to refresh this event with. Zero means "always refetch".
+ */
+async function freshnessWindowFor(
+  eventType: string,
+  integrationId: number,
+  externalId: string,
+  projectId: number
+): Promise<number> {
+  if (STATE_TRANSITION_EVENTS.has(eventType)) return 0;
+  return webhookFreshnessWindow(
+    subjectKeyFor(integrationId, projectId, externalId)
+  );
+}
+
+/**
+ * Outcome of refreshing ONE tracking row, for the caller's per-event tally.
+ *   applied   — a refresh ran (or the row was a legitimate no-op)
+ *   redundant — this transition was already applied to this row by a
+ *               sibling delivery of the same upstream event
+ *   dropped   — a lifecycle transition that never got the lock inside the
+ *               budget, i.e. the state change did NOT land
+ */
+type RowRefreshOutcome = "applied" | "redundant" | "dropped";
+
+/**
+ * Refresh a single tracking row for an inbound event.
+ *
+ * The subtlety this exists for: `performMilestoneRefresh` reports a missed
+ * sync lock as `{ success: true, locked: true }`, which reads as a clean
+ * refresh to every caller that only checks `success`. For a field edit that
+ * is fine — the holder is fetching the same state we would have. For a
+ * LIFECYCLE TRANSITION it is not: the holder acquired the lock BEFORE the
+ * transition happened, so it is fetching pre-transition state and will write
+ * it back, and the event carrying the state change is discarded.
+ *
+ * Observed in production (2026-08-12): a Jira version release fired seven
+ * `jira:version_released` deliveries nine seconds after a burst of
+ * `jira:version_updated` edits. The edits' fan-out still held every
+ * project's lock, so all seven releases resolved as `locked` in ~100ms —
+ * logged 200/`refreshed`, nothing written — and the version read `active`
+ * across five projects for about seven hours, until an unrelated scheduled
+ * pass happened to touch the rows.
+ *
+ * `STATE_TRANSITION_EVENTS` already exempts these events from the freshness
+ * gate for precisely this reason ("a state change is the one thing that must
+ * never be swallowed"). The lock sits AFTER that gate and needs the same
+ * exemption, so here a contended transition waits for the lock instead of
+ * treating the miss as success.
+ */
+async function refreshTrackedRow(
+  eventType: string,
+  externalId: string,
+  row: { milestoneId: number; projectId: number; integrationId: number },
+  deadlineMs: number
+): Promise<RowRefreshOutcome> {
+  const isTransition = STATE_TRANSITION_EVENTS.has(eventType);
+  const subjectKey = subjectKeyFor(
+    row.integrationId,
+    row.projectId,
+    externalId
+  );
+
+  // A sibling delivery of the same upstream transition already applied it to
+  // this row — re-fetching would cost an upstream page-through to learn
+  // nothing. Only transitions carry a marker; edits keep their existing
+  // burst-counter behaviour untouched.
+  if (isTransition && (await transitionAlreadyApplied(subjectKey, eventType))) {
+    return "redundant";
+  }
+
+  const runRefresh = async () =>
+    milestoneSyncService.performMilestoneRefresh(
+      SYSTEM_ACTOR_ID,
+      row.integrationId,
+      externalId,
+      {
+        minFreshnessSeconds: await freshnessWindowFor(
+          eventType,
+          row.integrationId,
+          externalId,
+          row.projectId
+        ),
+        projectId: row.projectId,
+      }
+    );
+
+  let refreshResult = await runRefresh();
+
+  if (isTransition) {
+    for (
+      let attempt = 0;
+      refreshResult.locked && Date.now() < deadlineMs;
+      attempt++
+    ) {
+      await sleep(
+        LOCK_RETRY_DELAYS_MS[Math.min(attempt, LOCK_RETRY_DELAYS_MS.length - 1)]
+      );
+      // The holder we were waiting on may have been a sibling delivery of
+      // THIS transition, in which case it has now applied it and there is
+      // nothing left to do.
+      if (await transitionAlreadyApplied(subjectKey, eventType)) {
+        return "redundant";
+      }
+      refreshResult = await runRefresh();
+    }
+
+    if (refreshResult.locked) {
+      console.error(
+        `[applyInboundMilestoneEvent] ${eventType} for milestone ${row.milestoneId} (project ${row.projectId}, externalId=${externalId}) never acquired the sync lock within ${LOCK_CONTENTION_BUDGET_MS}ms — the state change was NOT applied; the next event or scheduled pass must reconcile it`
+      );
+      return "dropped";
+    }
+    if (refreshResult.success) {
+      await markTransitionApplied(subjectKey, eventType);
+    }
+  }
+
+  if (!refreshResult.success && !refreshResult.notFound) {
+    console.error(
+      `[applyInboundMilestoneEvent] performMilestoneRefresh failed for externalId=${externalId} project=${row.projectId} integration=${row.integrationId}: ${refreshResult.error ?? "unknown"}`
+    );
+  }
+  return "applied";
+}
+
+/**
+ * Refresh-vs-convert event classification, per the verified Jira event
+ * catalog (RESEARCH.md):
+ *   refresh: created(auto-track only)/updated/moved/released/unreleased/started/closed
+ *   convert: version_deleted (mergedTo present => merge, absent => delete), sprint_deleted
+ */
+function classifyMilestoneEvent(
+  eventType: string,
+  ref: MilestoneEventRef
+): "refresh" | "convert" {
+  if (ref.kind === "RELEASE") {
+    if (eventType === "jira:version_deleted" || ref.merge) return "convert";
+    return "refresh";
+  }
+  // ITERATION (sprint)
+  if (eventType === "sprint_deleted") return "convert";
+  return "refresh";
+}
+
+function isCreatedEvent(eventType: string): boolean {
+  return eventType === "jira:version_created" || eventType === "sprint_created";
+}
+
+const REASON_MAX_LEN = 500;
+
+function truncate(s: string): string {
+  return s.length > REASON_MAX_LEN ? s.slice(0, REASON_MAX_LEN) : s;
+}
+
+/**
+ * Every dispatch target an inbound milestone event fans out to. External
+ * identity is per-project ([externalId, integrationId, projectId]): the
+ * same tracker artifact may be tracked independently by several TestPlanIt
+ * projects, so one upstream event can affect many rows.
+ */
+interface ResolvedMilestoneTargets {
+  /** Every Milestones row tracking this artifact, across all projects —
+   *  refresh/convert events apply to each of these rows. */
+  tracked: Array<{
+    milestoneId: number;
+    projectId: number;
+    integrationId: number;
+  }>;
+  /** Every active mapping matching the artifact's external project/board —
+   *  the candidate projects a created event may auto-track into. */
+  mappedProjects: Array<{ projectId: number; integrationId: number }>;
+  /** The tracker-side project the artifact belongs to (version events carry
+   *  it directly; sprint events resolve it via the origin board). Created
+   *  events check it against each target's
+   *  `autoTrackExcludedExternalProjectIds` opt-out. */
+  externalProjectId: string;
+}
+
+/**
+ * Resolve the event's OWN project(s) — NEVER the receiving WebhookConfig's
+ * project (Pitfall 6 / T-19-04-01). Version events carry `project.id`
+ * directly; sprint events carry only `originBoardId`, resolved via
+ * `JiraAdapter.resolveBoardProject` (cached).
+ *
+ * Returns `null` when unmatched — the D-03 ack-and-drop path. Never throws;
+ * a resolution failure (missing mapping, adapter error) is indistinguishable
+ * from "this project isn't tracked by TestPlanIt" from the caller's
+ * perspective, and both are legitimate non-error states for a site-wide
+ * admin webhook.
+ */
+async function resolveMilestoneEventTargets(
+  ref: MilestoneEventRef
+): Promise<ResolvedMilestoneTargets | null> {
+  // Already-tracked artifacts resolve to their OWN Milestones rows — one per
+  // tracking project — so refresh/convert dispatch reaches every project
+  // independently (WR-07: picking a mapping's project for a milestone that
+  // lives in another project makes its refresh/convert silently miss).
+  // Mapping-based resolution feeds the created-event auto-track path.
+  const findTrackedRows = async (
+    integrationIds: number[]
+  ): Promise<ResolvedMilestoneTargets["tracked"]> => {
+    if (integrationIds.length === 0) return [];
+    const rows = await baseDb.milestones.findMany({
+      where: {
+        externalId: ref.externalId,
+        integrationId: { in: integrationIds },
+      },
+      select: { id: true, projectId: true, integrationId: true },
+      orderBy: { id: "asc" },
+    });
+    return rows
+      .filter(
+        (row: { integrationId: number | null }) => row.integrationId != null
+      )
+      .map(
+        (row: {
+          id: number;
+          projectId: number;
+          integrationId: number | null;
+        }) => ({
+          milestoneId: row.id,
+          projectId: row.projectId,
+          integrationId: row.integrationId as number,
+        })
+      );
+  };
+
+  const dedupProjects = (
+    entries: Array<{ projectId: number; integrationId: number }>
+  ): Array<{ projectId: number; integrationId: number }> => {
+    const seen = new Set<string>();
+    const result: Array<{ projectId: number; integrationId: number }> = [];
+    for (const entry of entries) {
+      const key = `${entry.projectId}:${entry.integrationId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(entry);
+    }
+    return result;
+  };
+
+  if (ref.kind === "RELEASE") {
+    // ALL active mappings for this external project — NEVER findFirst/
+    // distinct: every mapping row must be matchable (CR-02 class).
+    const mappings = await baseDb.integrationProject.findMany({
+      where: {
+        externalProjectId: ref.externalProjectId,
+        isActive: true,
+        projectIntegration: {
+          isActive: true,
+          integration: { provider: "JIRA", isDeleted: false },
+        },
+      },
+      select: {
+        projectIntegration: {
+          select: { projectId: true, integrationId: true },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    if (mappings.length === 0) return null;
+
+    const integrationIds = [
+      ...new Set(
+        mappings.map(
+          (m: {
+            projectIntegration: { projectId: number; integrationId: number };
+          }) => m.projectIntegration.integrationId
+        )
+      ),
+    ] as number[];
+    const tracked = await findTrackedRows(integrationIds);
+    const mappedProjects = dedupProjects(
+      mappings.map(
+        (m: {
+          projectIntegration: { projectId: number; integrationId: number };
+        }) => m.projectIntegration
+      )
+    );
+    return {
+      tracked,
+      mappedProjects,
+      externalProjectId: ref.externalProjectId,
+    };
+  }
+
+  // ITERATION (sprint): resolve originBoardId -> project via the Jira
+  // adapter's cached single-board lookup. A sprint's board could in theory
+  // belong to any integration configured in this deployment — the receiver
+  // only knows the RECEIVING webhookConfig's provider (JIRA), not which
+  // specific integration owns the board — so probe active JIRA integrations
+  // that have at least one IntegrationProject mapping, resolving the board
+  // against each until one yields a match. In the common
+  // single-Jira-integration deployment this is exactly one call.
+  //
+  // The FULL mapping list is kept for the match — no `distinct`, which
+  // ZenStack v3 executes as Postgres DISTINCT ON and therefore collapses a
+  // ProjectIntegration mapped to multiple Jira projects down to ONE
+  // arbitrary externalProjectId row, making boards owned by any
+  // non-retained mapping permanently unmatchable (CR-02). Integrations are
+  // deduped only for the board-lookup loop.
+  const mappings = await baseDb.integrationProject.findMany({
+    where: {
+      isActive: true,
+      projectIntegration: {
+        isActive: true,
+        integration: { provider: "JIRA", isDeleted: false },
+      },
+    },
+    select: {
+      externalProjectId: true,
+      projectIntegration: {
+        select: { projectId: true, integrationId: true },
+      },
+    },
+  });
+
+  const integrationIds = [
+    ...new Set(
+      mappings.map(
+        (m: {
+          projectIntegration: { projectId: number; integrationId: number };
+        }) => m.projectIntegration.integrationId
+      )
+    ),
+  ] as number[];
+
+  for (const integrationId of integrationIds) {
+    const adapter = await integrationManager.getAdapter(
+      String(integrationId),
+      baseDb
+    );
+    if (!adapter?.resolveBoardProject) continue;
+
+    const boardProject = await adapter.resolveBoardProject(ref.originBoardId);
+    if (!boardProject) continue;
+
+    // Board confirmed to exist on this integration's Jira — collect every
+    // tracking row (WR-07 parity for sprints, per-project fan-out) plus
+    // every mapping for the board's own project (created-event candidates).
+    const tracked = await findTrackedRows([integrationId]);
+    const mappedProjects = dedupProjects(
+      mappings
+        .filter(
+          (m: {
+            externalProjectId: string;
+            projectIntegration: { projectId: number; integrationId: number };
+          }) =>
+            m.projectIntegration.integrationId === integrationId &&
+            m.externalProjectId === boardProject.projectId
+        )
+        .map(
+          (m: {
+            projectIntegration: { projectId: number; integrationId: number };
+          }) => m.projectIntegration
+        )
+    );
+    if (tracked.length > 0 || mappedProjects.length > 0) {
+      return {
+        tracked,
+        mappedProjects,
+        externalProjectId: boardProject.projectId,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Domain entry point for jira:version_* / sprint_* inbound webhook events —
+ * sibling to `applyInboundIssueUpdate.ts`, sharing the exact same delivery
+ * LOG + dedup + shared-tail + audit transaction shape, but dispatching to
+ * `MilestoneSyncService.performMilestoneRefresh` / `.performMilestoneImport`
+ * (created events, D-02) / `.convertMilestoneToLocal` instead of Issue field
+ * updates.
+ *
+ * Critical divergence from the issue-update sibling: this service resolves
+ * the event's OWN project from the payload (Pitfall 6), NEVER the receiving
+ * WebhookConfig's projectId — a site-wide admin webhook delivers version/
+ * sprint events for Jira projects that have nothing to do with the
+ * receiving webhookConfig.projectId, since these event types support no
+ * JQL/project filtering at the Jira admin level.
+ *
+ * Flow:
+ *   1. Resolve adapter once via getAdapter(input.adapterType) BEFORE the tx.
+ *   2. Extract the milestone ref via adapter.extractMilestoneEventRef.
+ *   3. ALWAYS INSERT a WebhookDelivery row.
+ *   4. ref === null -> no-ref skip: finalize delivery error='no-ref', bump
+ *      lastReceivedAt, return 'no-ref'. Dedup never touched.
+ *   5. SELECT WebhookEventDedup (pre-INSERT, same idiom as
+ *      applyInboundIssueUpdate — never wrap create in try/catch inside tx).
+ *   6. Duplicate -> finalize delivery error='duplicate', return 'duplicate'.
+ *   7. Otherwise INSERT dedup + finalize delivery + return the outcome; the
+ *      actual sync/convert dispatch runs AFTER commit (mirrors the issue
+ *      sibling's post-commit `triggerSystemSyncForInboundEvent`).
+ *
+ * Project resolution + dispatch happen POST-commit (not inside the tx) —
+ * `performMilestoneRefresh`/`convertMilestoneToLocal` do their own DB work
+ * (including their own transactions) and must not be nested inside this
+ * service's delivery-log transaction. A resolution/dispatch failure here
+ * does NOT roll back the dedup row, mirroring the issue sibling's posture:
+ * the upstream is the source of truth, and the next webhook event (or a
+ * manual sync) reconciles.
+ */
+export async function applyInboundMilestoneEvent(
+  input: ApplyInboundMilestoneEventInput
+): Promise<ApplyInboundMilestoneEventResult> {
+  const {
+    webhookConfigId,
+    adapterType,
+    eventType,
+    payload,
+    payloadDigest,
+    receivedAt,
+    latencyMs,
+    statusCode,
+  } = input;
+
+  const adapter = getAdapter(adapterType);
+  const ref = adapter.extractMilestoneEventRef
+    ? adapter.extractMilestoneEventRef(payload, eventType)
+    : null;
+
+  type TxOutcome =
+    | { outcome: "applied"; deliveryId: string }
+    | { outcome: "no-ref"; deliveryId: string }
+    | { outcome: "duplicate"; deliveryId: string };
+
+  let txResult: TxOutcome;
+
+  try {
+    txResult = await baseDb.$transaction(async (tx): Promise<TxOutcome> => {
+      // Step 1: ALWAYS insert a delivery log row first.
+      const delivery = await tx.webhookDelivery.create({
+        data: {
+          webhookConfigId,
+          direction: "INBOUND",
+          adapterType,
+          eventType,
+          // Identifier only (kind + upstream id) — version/sprint names are
+          // payload content and stay out of the delivery log.
+          subjectRef: ref ? `${ref.kind}:${ref.externalId}` : null,
+          statusCode: null,
+          latencyMs: null,
+          payloadDigest,
+          error: null,
+          attempt: 1,
+          receivedAt,
+        },
+      });
+
+      // Step 2: no-ref skip — adapter could not extract a milestone ref
+      // (e.g. a version/sprint eventType with a malformed/incomplete
+      // payload). Delivery row written, no dedup, no dispatch.
+      if (ref === null) {
+        await tx.webhookDelivery.update({
+          where: { id: delivery.id },
+          data: { statusCode, latencyMs, error: "no-ref" },
+        });
+        await tx.webhookConfig.update({
+          where: { id: webhookConfigId },
+          data: { lastReceivedAt: receivedAt },
+        });
+        return { outcome: "no-ref", deliveryId: delivery.id };
+      }
+
+      // Step 3: Pre-INSERT SELECT for prior application of this payload —
+      // same TOCTOU-safe idiom as applyInboundIssueUpdate (never wrap
+      // tx.webhookEventDedup.create in try/catch inside the tx; Postgres
+      // aborts the whole tx on P2002).
+      const priorDedup = await tx.webhookEventDedup.findFirst({
+        where: { webhookConfigId, payloadDigest },
+        select: { id: true },
+      });
+
+      let outcome: TxOutcome;
+      let deliveryError: string | null = null;
+
+      if (priorDedup) {
+        deliveryError = "duplicate";
+        outcome = { outcome: "duplicate", deliveryId: delivery.id };
+      } else {
+        await tx.webhookEventDedup.create({
+          data: {
+            webhookConfigId,
+            payloadDigest,
+            processedAt: receivedAt,
+          },
+        });
+        deliveryError = null;
+        outcome = { outcome: "applied", deliveryId: delivery.id };
+      }
+
+      // Shared tail: finalize delivery row + bump lastReceivedAt for ALL
+      // outcomes, including duplicates.
+      await tx.webhookDelivery.update({
+        where: { id: delivery.id },
+        data: { statusCode, latencyMs, error: deliveryError },
+      });
+      await tx.webhookConfig.update({
+        where: { id: webhookConfigId },
+        data: { lastReceivedAt: receivedAt },
+      });
+      return outcome;
+    });
+  } catch (err) {
+    return {
+      outcome: "error",
+      reason: truncate(err instanceof Error ? err.message : String(err)),
+    };
+  }
+
+  if (txResult.outcome !== "applied" || ref === null) {
+    await captureAuditEvent({
+      action: "WEBHOOK_RECEIVED",
+      entityType: "WebhookDelivery",
+      entityId: txResult.deliveryId,
+      userId: SYSTEM_ACTOR_ID,
+      metadata: {
+        adapterType,
+        eventType,
+        payloadDigest,
+        webhookConfigId,
+        outcome: txResult.outcome,
+      },
+    });
+    return {
+      outcome: txResult.outcome === "no-ref" ? "no-ref" : "duplicate",
+      deliveryId: txResult.deliveryId,
+      reason: txResult.outcome,
+    };
+  }
+
+  // Post-commit: resolve the event's OWN project (Pitfall 6) and dispatch
+  // refresh vs convert. Wrapped so a throw here never surfaces as a 500 —
+  // the dedup row is already committed, and the next webhook event (or a
+  // manual sync) reconciles.
+  let finalOutcome:
+    "refreshed" | "imported" | "converted" | "unmatched" | "error" =
+    "unmatched";
+  let milestoneId: number | undefined;
+  /** Rows whose lifecycle transition never got the lock — see the audit
+   *  metadata note below. */
+  let droppedRows = 0;
+  try {
+    const resolved = await resolveMilestoneEventTargets(ref);
+    if (
+      !resolved ||
+      (resolved.tracked.length === 0 && resolved.mappedProjects.length === 0)
+    ) {
+      // D-03: unmatched project/board — silent ack, debug log, no write.
+      console.debug(
+        `[applyInboundMilestoneEvent] unmatched project/board for ${ref.kind} externalId=${ref.externalId} — no active integration mapping`
+      );
+      finalOutcome = "unmatched";
+    } else {
+      const classification = classifyMilestoneEvent(eventType, ref);
+
+      if (classification === "convert") {
+        if (resolved.tracked.length === 0) {
+          console.debug(
+            `[applyInboundMilestoneEvent] convert event for untracked milestone externalId=${ref.externalId} — no local row, dropping`
+          );
+          finalOutcome = "unmatched";
+        } else {
+          const reason =
+            ref.kind === "RELEASE" && ref.merge ? "merged" : "deleted";
+          const mergedToExternalId =
+            ref.kind === "RELEASE" ? ref.mergedToExternalId : undefined;
+          // One upstream artifact may be tracked by several projects
+          // (per-project identity) — the upstream deletion/merge converts
+          // EVERY tracking row, each in its own transaction.
+          for (const row of resolved.tracked) {
+            await milestoneSyncService.convertMilestoneToLocal(
+              baseDb,
+              row.milestoneId,
+              reason,
+              mergedToExternalId
+            );
+          }
+          milestoneId = resolved.tracked[0].milestoneId;
+          finalOutcome = "converted";
+        }
+      } else if (isCreatedEvent(eventType)) {
+        // Created path (D-02): version_created/sprint_created only act on
+        // mapped projects with auto-track ON — for every other mapped
+        // project the new artifact is a clean no-op ack. With per-project
+        // identity, EVERY mapped project with auto-track ON imports its
+        // own independent row.
+        let importedProjects = 0;
+        let skipReason:
+          | "auto-track-off"
+          | "auto-track-admin-missing"
+          | "auto-track-project-excluded"
+          | null = null;
+        for (const target of resolved.mappedProjects) {
+          const projectIntegration = await baseDb.projectIntegration.findUnique(
+            {
+              where: {
+                projectId_integrationId: {
+                  projectId: target.projectId,
+                  integrationId: target.integrationId,
+                },
+              },
+              select: { config: true },
+            }
+          );
+          const milestoneSyncConfig =
+            (projectIntegration?.config as any)?.milestoneSync ?? {};
+          if (milestoneSyncConfig.autoTrack !== true) {
+            console.debug(
+              `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — auto-track is OFF, no-op (D-02)`
+            );
+            skipReason = skipReason ?? "auto-track-off";
+            continue;
+          }
+
+          // Per-mapping opt-out: the admin can exclude specific tracker
+          // projects from new-milestone scanning — mirror the sync pass's
+          // discovery filter so a webhook can't sneak in what the scheduled
+          // pass would skip.
+          const excludedExternalProjectIds: unknown =
+            milestoneSyncConfig.autoTrackExcludedExternalProjectIds;
+          if (
+            Array.isArray(excludedExternalProjectIds) &&
+            excludedExternalProjectIds
+              .map(String)
+              .includes(String(resolved.externalProjectId))
+          ) {
+            console.debug(
+              `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — tracker project ${resolved.externalProjectId} is excluded from auto-track, no-op`
+            );
+            skipReason = skipReason ?? "auto-track-project-excluded";
+            continue;
+          }
+
+          // A created event means no linked row exists for this project
+          // yet, so `performMilestoneRefresh` would return `notFound`
+          // without writing anything — the new artifact must be IMPORTED
+          // instead. Attribution matches `performProjectMilestoneSync`'s
+          // auto-track pass: the imported row is credited to
+          // `autoTrackAdminId` (the admin who enabled sync), never a
+          // system placeholder, and a missing admin id is a configuration
+          // error, not an import-as-somebody-else.
+          const autoTrackAdminId: string | undefined =
+            milestoneSyncConfig.autoTrackAdminId;
+          if (!autoTrackAdminId) {
+            console.error(
+              `[applyInboundMilestoneEvent] ${eventType} for project ${target.projectId} — auto-track is ON but milestoneSync.autoTrackAdminId is not configured; cannot import`
+            );
+            skipReason = skipReason ?? "auto-track-admin-missing";
+            continue;
+          }
+
+          const importResult =
+            await milestoneSyncService.performMilestoneImport(
+              SYSTEM_ACTOR_ID,
+              target.integrationId,
+              target.projectId,
+              { externalIds: [ref.externalId], kinds: [ref.kind] },
+              autoTrackAdminId
+            );
+          if (!importResult.success) {
+            console.error(
+              `[applyInboundMilestoneEvent] performMilestoneImport failed for externalId=${ref.externalId} project=${target.projectId} integration=${target.integrationId}: ${importResult.errors.join("; ") || "unknown"}`
+            );
+          }
+          importedProjects++;
+        }
+
+        if (importedProjects > 0) {
+          finalOutcome = "imported";
+        } else {
+          // Every mapped project skipped — preserve the pre-fan-out
+          // observability: ack as unmatched with the (first) skip reason.
+          finalOutcome = "unmatched";
+          await captureAuditEvent({
+            action: "WEBHOOK_RECEIVED",
+            entityType: "WebhookDelivery",
+            entityId: txResult.deliveryId,
+            projectId: resolved.mappedProjects[0]?.projectId,
+            userId: SYSTEM_ACTOR_ID,
+            metadata: {
+              adapterType,
+              eventType,
+              payloadDigest,
+              webhookConfigId,
+              outcome: "unmatched",
+              reason: skipReason ?? "auto-track-off",
+            },
+          });
+          return {
+            outcome: "unmatched",
+            deliveryId: txResult.deliveryId,
+            reason: skipReason ?? "auto-track-off",
+          };
+        }
+      } else {
+        if (resolved.tracked.length === 0) {
+          // Update-class event for an artifact no project tracks — nothing
+          // to refresh (only created events import, D-02). Clean ack.
+          console.debug(
+            `[applyInboundMilestoneEvent] ${eventType} for untracked milestone externalId=${ref.externalId} — no local row, dropping`
+          );
+          finalOutcome = "unmatched";
+        } else {
+          // Refresh EVERY tracking row — each project's row gates on its
+          // own per-project freshness window and sync lock. The lock budget
+          // is per EVENT, so a many-project artifact can't multiply the
+          // worst-case wait by its project count.
+          const deadlineMs = Date.now() + LOCK_CONTENTION_BUDGET_MS;
+          for (const row of resolved.tracked) {
+            const rowOutcome = await refreshTrackedRow(
+              eventType,
+              ref.externalId,
+              row,
+              deadlineMs
+            );
+            if (rowOutcome === "dropped") droppedRows++;
+          }
+          milestoneId = resolved.tracked[0].milestoneId;
+          finalOutcome = "refreshed";
+        }
+      }
+    }
+  } catch (err) {
+    console.error(
+      `[applyInboundMilestoneEvent] post-commit dispatch threw for ${ref.kind} externalId=${ref.externalId}:`,
+      err
+    );
+    finalOutcome = "error";
+  }
+
+  await captureAuditEvent({
+    action: "WEBHOOK_RECEIVED",
+    entityType: "WebhookDelivery",
+    entityId: txResult.deliveryId,
+    userId: SYSTEM_ACTOR_ID,
+    metadata: {
+      adapterType,
+      eventType,
+      payloadDigest,
+      webhookConfigId,
+      outcome: finalOutcome,
+      ...(milestoneId !== undefined ? { milestoneId } : {}),
+      // A transition that lost its lock race for the whole budget is still
+      // acked (the sender must not redeliver — the dedup row is committed),
+      // so this counter is the ONLY durable signal that the state change did
+      // not land. Without it the delivery reads as a clean `refreshed`,
+      // which is exactly how the 2026-08-12 release went unnoticed.
+      ...(droppedRows > 0 ? { lockContendedRows: droppedRows } : {}),
+    },
+  });
+
+  // A post-commit dispatch failure still returns a 200-mappable outcome —
+  // the dedup row is already committed and the delivery log reflects the
+  // attempt; only a pre-commit tx failure maps to "error"/500 (handled
+  // above via the catch around baseDb.$transaction).
+  return {
+    outcome: finalOutcome === "error" ? "unmatched" : finalOutcome,
+    deliveryId: txResult.deliveryId,
+    ...(milestoneId !== undefined ? { milestoneId } : {}),
+  };
+}
+
+// Re-exported for callers that only need the AdapterType import shape.
+export type { AdapterType };

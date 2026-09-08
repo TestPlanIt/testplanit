@@ -128,7 +128,16 @@ Max Tokens: 4096
 Temperature: 0.7
 ```
 
-**Note**: Custom LLM endpoints must be compatible with the OpenAI API format.
+**Note**: Custom LLM endpoints must be compatible with the OpenAI API format. When the endpoint is OpenAI-compatible, the model dropdown is populated automatically from its `/models` listing and [model pricing](#model-pricing) is applied when available; endpoints that don't serve `/models` fall back to manual model entry.
+
+### Token Limits
+
+The Add/Edit AI model dialog exposes two separate **output-token** fields rather than a single generic limit:
+
+- **Max Tokens Per Request** — the hard ceiling on the number of *output* tokens the model may generate in one response. Set it to the model's real maximum output (for example, `128000` for Claude Opus/Sonnet, `64000` for Claude Haiku, `65536` for Gemini, `16384` for GPT-4o). It does not limit how much context you send.
+- **Default Max Tokens** — the output length requests on this model ask for (bounded by Max Tokens Per Request). Test Case Generation (every source, including the Jira issue panel), Markdown Test Case Parsing, the Editor Writing Assistant, and Smart Test Case Selection always use this value. Export Code Generation, AI Tag Suggestions, AI Step Derivation, and the Automation Candidates Report use the **Max Output Tokens** from their [Prompt Configuration](../prompt-configurations) instead. Models that think before answering (for example, Claude Opus 5) spend part of this budget on reasoning, so leave room for the reply.
+
+Neither field controls how much source material is *sent* to the model. For QuickScript, the amount of connected-repository code included with each generation is shown read-only as the **Repository Context Budget (QuickScript)** — auto-sized from the selected model's input context window, so larger-context models get more and small local models get a safe amount that won't overflow. There is nothing to configure here.
 
 ### Endpoint URL Requirements
 
@@ -142,7 +151,7 @@ For security, all custom URLs are validated to prevent Server-Side Request Forge
 
 - `localhost`, `127.0.0.1`, `0.0.0.0`, IPv6 loopback (`::1`)
 - Private IP ranges: `10.x.x.x`, `172.16–31.x.x`, `192.168.x.x`
-- Cloud metadata endpoints: `169.254.169.254`, `metadata.google.internal`, `*.internal`
+- Cloud metadata endpoints: `169.254.169.254`, `metadata.google.internal`, `metadata.google`, `100.100.100.200`, `*.internal`
 
 **Recommended:** Expose self-hosted services (Ollama, LiteLLM, etc.) through a reverse proxy with proper authentication and a publicly accessible URL. This preserves SSRF protection while allowing TestPlanIt to reach your internal services securely.
 
@@ -156,6 +165,19 @@ ALLOWED_PRIVATE_HOSTS="localhost,192.168.1.100,ollama.internal"
 :::warning
 Only add hosts that you trust. `ALLOWED_PRIVATE_HOSTS` disables SSRF protection for every listed address across all features. A reverse proxy is the safer option for production environments.
 :::
+
+### Model Pricing
+
+Each integration stores two cost fields — **Cost Per 1M Input Tokens ($)** and **Cost Per 1M Output Tokens ($)** — used to compute the estimated cost of every AI call (see the [LLM Usage report](./llm-usage-report.md)) and to track spend against the [Monthly Budget](#billing-period).
+
+When the provider reports per-model pricing, both fields are filled in automatically:
+
+- **LiteLLM proxies** — pricing is read from the proxy's `/model/info` endpoint. This works whichever provider type the proxy is configured under (OpenAI, Anthropic, or Custom LLM).
+- **OpenRouter** and **Together AI** — pricing is included in their model listings.
+
+Auto-fill happens when you select a model from the fetched model list, and again after a successful **Test Connection** — the latter is also how you refresh the values for the already-selected model after a provider price change. A toast confirms the applied rates, and you can still edit both fields before saving; nothing is stored until you click **Create**/**Update**. Models whose pricing the provider doesn't report leave the fields untouched.
+
+Direct OpenAI, Anthropic, Gemini, and Azure OpenAI APIs do not report pricing, so enter the values from your provider's pricing page. Locally hosted models (Ollama) cost nothing — leave both fields at `0`.
 
 ### Billing Period
 
@@ -172,6 +194,8 @@ The setting affects three behaviors:
 - **Spend aggregation** — the cost shown on the admin LLM page totals usage from the period start through today
 - **Budget alerts** — 80% / 90% / 100% threshold notifications reset on each new period
 - **Reset Spend** — the manual reset action on the Edit dialog clears usage from the current period start onward (older periods remain in the audit trail)
+
+For a historical breakdown of spend by feature, model, user, or project — beyond the current billing period — use the [LLM Usage report](./llm-usage-report.md) under **Administration → Reports**.
 
 Saving an integration with a changed `billingPeriodStartDay` clears any thresholds already fired so notifications can fire again under the new window.
 
@@ -195,6 +219,20 @@ Both the **Test Connection** button and the **Update / Create** action probe the
 ```
 
 `unsupportedParams: []` means the model accepted everything — the probe still records this so the admin can see when the integration was last verified.
+
+**Vision support override.** Whether a model can receive images (used by [test-case generation's image context](./llm-test-generation.md#images-as-generation-context)) is detected from the model name. When the detection is wrong — a custom deployment name, a fine-tune, or a proxy that strips images — set `supportsVision` for that model in the same `modelCapabilities` map:
+
+```json
+{
+  "modelCapabilities": {
+    "my-custom-model": {
+      "supportsVision": true
+    }
+  }
+}
+```
+
+An explicit `supportsVision` always wins over the name-based detection, in both directions. Custom-provider integrations can also declare vision support for the whole integration via the `visionSupport` setting; without it, image content is flattened to text placeholders before the request is sent.
 
 **When the probe runs.**
 

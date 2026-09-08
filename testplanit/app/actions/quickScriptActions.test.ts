@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetServerAuthSession, mockPrisma, mockExtractTextFromNode } =
+const { mockGetServerAuthSession, mockDb, mockExtractTextFromNode } =
   vi.hoisted(() => ({
     mockGetServerAuthSession: vi.fn(),
-    mockPrisma: {
+    mockDb: {
       repositoryCases: {
         findMany: vi.fn(),
       },
@@ -17,8 +17,20 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: mockGetServerAuthSession,
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: mockPrisma,
+vi.mock("~/lib/services/recordKeyConfig", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/recordKeyConfig")>();
+  return {
+    ...actual,
+    readRecordKeyConfig: async () => ({
+      enabled: false,
+      tokens: actual.DEFAULT_TYPE_TOKENS,
+    }),
+  };
+});
+
+vi.mock("~/lib/db", () => ({
+  baseDb: mockDb,
 }));
 
 vi.mock("~/utils/extractTextFromJson", () => ({
@@ -37,7 +49,7 @@ function makeMockCase(overrides: Record<string, any> = {}) {
     automated: false,
     creator: { name: "Jane Doe", email: "jane@example.com" },
     createdAt: new Date("2025-06-15T12:00:00Z"),
-    tags: [{ name: "smoke" }, { name: "auth" }],
+    caseTags: [{ tag: { name: "smoke" } }, { tag: { name: "auth" } }],
     steps: [
       { order: 0, step: "Go to login", expectedResult: "Login page shown" },
       {
@@ -57,7 +69,7 @@ describe("fetchCasesForQuickScript", () => {
     mockGetServerAuthSession.mockResolvedValue({
       user: { id: "user-1" },
     });
-    mockPrisma.repositoryCases.findMany.mockResolvedValue([]);
+    mockDb.repositoryCases.findMany.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -98,7 +110,7 @@ describe("fetchCasesForQuickScript", () => {
 
   describe("data transformation", () => {
     it("should map basic case fields correctly", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],
@@ -118,7 +130,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should return empty string when folder is null", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({ folder: null }),
       ]);
 
@@ -131,7 +143,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should return empty string when state is null", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({ state: null }),
       ]);
 
@@ -144,7 +156,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should format createdAt as yyyy-MM-dd", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],
@@ -155,7 +167,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should use creator name when available", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],
@@ -166,7 +178,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should fall back to creator email when name is missing", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({ creator: { name: null, email: "jane@example.com" } }),
       ]);
 
@@ -179,7 +191,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should return empty string when creator is null", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({ creator: null }),
       ]);
 
@@ -192,7 +204,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should join tag names with comma separator", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],
@@ -203,8 +215,8 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should return empty string when tags is empty", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
-        makeMockCase({ tags: [] }),
+      mockDb.repositoryCases.findMany.mockResolvedValue([
+        makeMockCase({ caseTags: [] }),
       ]);
 
       const result = await fetchCasesForQuickScript({
@@ -216,7 +228,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should increment step order by 1 (0-indexed to 1-indexed)", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],
@@ -228,7 +240,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should call extractTextFromNode on step fields", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
+      mockDb.repositoryCases.findMany.mockResolvedValue([makeMockCase()]);
 
       await fetchCasesForQuickScript({ caseIds: [1], projectId: 1 });
 
@@ -256,7 +268,7 @@ describe("fetchCasesForQuickScript", () => {
     }
 
     it("should map Dropdown value to option name", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Dropdown", 10, {
@@ -279,7 +291,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should map Multi Select array to comma-separated names", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Multi Select", [10, 20], {
@@ -302,7 +314,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should convert Checkbox true to 'Yes'", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Checkbox", true, { systemName: "isActive" }),
@@ -319,7 +331,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should convert Checkbox false to 'No'", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Checkbox", false, { systemName: "isActive" }),
@@ -336,7 +348,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should format Date field as yyyy-MM-dd", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Date", "2025-03-15T12:00:00Z", {
@@ -355,7 +367,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should call extractTextFromNode for Text Long fields", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Text Long", "some rich text", {
@@ -371,7 +383,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should convert other types to string", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Integer", 42, { systemName: "retryCount" }),
@@ -388,7 +400,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should return empty string for null value", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             makeFieldValue("Text Long", null, { systemName: "notes" }),
@@ -405,7 +417,7 @@ describe("fetchCasesForQuickScript", () => {
     });
 
     it("should skip fields with no systemName", async () => {
-      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      mockDb.repositoryCases.findMany.mockResolvedValue([
         makeMockCase({
           caseFieldValues: [
             {
@@ -426,10 +438,8 @@ describe("fetchCasesForQuickScript", () => {
   });
 
   describe("error handling", () => {
-    it("should return error when prisma throws", async () => {
-      mockPrisma.repositoryCases.findMany.mockRejectedValue(
-        new Error("DB error")
-      );
+    it("should return error when baseDb throws", async () => {
+      mockDb.repositoryCases.findMany.mockRejectedValue(new Error("DB error"));
 
       const result = await fetchCasesForQuickScript({
         caseIds: [1],

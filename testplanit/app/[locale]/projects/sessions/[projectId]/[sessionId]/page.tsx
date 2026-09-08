@@ -1,14 +1,21 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
+import {
+  ConfigurationGroupLinkField,
+  type ConfigurationGroupLinkChange,
+} from "@/components/ConfigurationGroupLinkField";
 import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { SessionAuditLogSheet } from "@/components/sessions/SessionAuditLogSheet";
+import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,20 +28,7 @@ import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateSessionVersions,
-  useFindFirstProjects,
-  useFindFirstSessions,
-  useFindManyMilestones,
-  useFindManySessionResults,
-  useFindManySessions,
-  useFindManySessionVersions,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-  useUpdateAttachments,
-  useUpdateSessions,
-} from "~/lib/hooks";
+import { useSessionResultWindow } from "~/hooks/useResultWindow";
 
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
@@ -42,6 +36,7 @@ import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { CreationInfo } from "@/components/CreationInfo";
+import { ResultDatesInfo } from "@/components/ResultDatesInfo";
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -58,6 +53,13 @@ import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,8 +94,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { VersionSelect } from "@/components/VersionSelect";
-import type { Attachments, Sessions } from "@prisma/client";
-import { ApplicationArea } from "@prisma/client";
+import type { Attachments, Sessions } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
 import type { JSONContent } from "@tiptap/react";
 import {
   ArrowLeft,
@@ -102,16 +104,28 @@ import {
   CircleCheckBig,
   CircleSlash2,
   Combine,
+  Compass,
   FileDown,
+  History,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
 import type { Control, FieldErrors, Resolver } from "react-hook-form";
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import {
+  applyConfigurationGroupPeerStamp,
+  canEditConfigurationGroup,
+  configurationGroupUpdateData,
+} from "~/lib/configurationGroupLink";
+import {
+  buildConfigurationGroupMemberLabels,
+  buildConfigurationGroupWhere,
+  isConfigurationGroupQueryEnabled,
+} from "~/lib/configurationGroupSwitcher";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useExportSessionPdf } from "~/hooks/pdf/useExportSessionPdf";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
@@ -141,6 +155,8 @@ interface FormValues {
   issueIds: number[];
   forecastManual: number | null | undefined;
   forecastAutomated: number | null | undefined;
+  /** Configuration-group membership; null when this session is not linked. */
+  configurationGroupId: string | null;
 }
 
 // Then define the base schema
@@ -159,6 +175,7 @@ const BaseFormSchema = z.object({
   issueIds: z.array(z.number()).optional(),
   forecastManual: z.number().nullable().optional(),
   forecastAutomated: z.number().nullable().optional(),
+  configurationGroupId: z.string().nullable(),
 });
 
 interface Template {
@@ -271,6 +288,10 @@ interface SessionFormControlsProps {
       }[]
     | undefined;
   canAddEditTags: boolean;
+  /** Rendered between Configuration and Milestone — the configuration-group
+   *  link belongs with the configuration it qualifies. Passed as a slot so
+   *  this component stays free of the group's state and mutations. */
+  configurationGroupSlot?: React.ReactNode;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
   transitionCheck?: {
     allowed: boolean;
@@ -296,20 +317,36 @@ function SessionFormControls({
   handleSelect,
   issues,
   canAddEditTags,
+  configurationGroupSlot,
   onAttachmentPendingChanges,
   transitionCheck,
 }: SessionFormControlsProps) {
   const t = useTranslations("sessions");
+
+  // AsyncCombobox refetches whenever `fetchOptions` changes identity, so an
+  // inline arrow would refetch on every render of this component.
+  const fetchMemberOptions = useCallback(
+    (query: string, page: number, pageSize: number) =>
+      searchProjectMembers(numericProjectId, query, page, pageSize),
+    [numericProjectId]
+  );
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const locale = useLocale();
   const { setValue } = useFormContext<FormValues>();
 
+  // Execution window, read from the summary the results panel already holds.
+  // Called above the early return so the hook order stays stable.
+  const { startDate, endDate } = useSessionResultWindow({
+    sessionId: testSession?.id ?? 0,
+    isCompleted: !!testSession?.isCompleted,
+  });
+
   if (!testSession) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_label]:text-base [&_label]:font-bold">
       {/* Template */}
       <FormField
         control={control}
@@ -486,6 +523,8 @@ function SessionFormControls({
         )}
       />
 
+      {configurationGroupSlot}
+
       {/* Milestone */}
       <FormField
         control={control}
@@ -549,14 +588,7 @@ function SessionFormControls({
                   onValueChange={(user) => {
                     field.onChange(user ? user.id : "none");
                   }}
-                  fetchOptions={(query, page, pageSize) =>
-                    searchProjectMembers(
-                      numericProjectId,
-                      query,
-                      page,
-                      pageSize
-                    )
-                  }
+                  fetchOptions={fetchMemberOptions}
                   renderOption={(user) => (
                     <UserNameCell userId={user.id} hideLink />
                   )}
@@ -647,6 +679,7 @@ function SessionFormControls({
                 id={tag.id}
                 name={tag.name}
                 link={`/projects/tags/${projectId}/${tag.id}`}
+                size="small"
               />
             ))}
             {/* Display 'None' if no tags in view mode */}
@@ -690,6 +723,7 @@ function SessionFormControls({
                       title={issue.title}
                       status={issue.externalStatus}
                       projectIds={[Number(projectId)]}
+                      size="small"
                       data={issue.data}
                       integrationProvider={issue.integration?.provider}
                       integrationId={
@@ -770,6 +804,13 @@ function SessionFormControls({
                     deferredMode={isEditMode}
                     onPendingChanges={onAttachmentPendingChanges}
                   />
+                  {!isEditMode &&
+                    (!testSession.attachments ||
+                      testSession.attachments.length === 0) && (
+                      <span className="text-sm text-muted-foreground">
+                        {tCommon("access.none")}
+                      </span>
+                    )}
                 </div>
               </FormControl>
               <FormMessage />
@@ -778,13 +819,20 @@ function SessionFormControls({
         }}
       />
 
-      {/* Created By - only shown in view mode */}
+      {/* Execution dates + Created By - only shown in view mode */}
       {!isEditMode && (
-        <CreationInfo
-          userId={testSession?.createdBy.id}
-          createdAt={testSession?.createdAt}
-          className="w-fit"
-        />
+        <>
+          <ResultDatesInfo
+            startDate={startDate}
+            endDate={endDate}
+            className="w-fit"
+          />
+          <CreationInfo
+            userId={testSession?.createdBy.id}
+            createdAt={testSession?.createdAt}
+            className="w-fit"
+          />
+        </>
       )}
     </div>
   );
@@ -834,18 +882,31 @@ export default function SessionPage() {
   >(null);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
   const _version = searchParams.get("version");
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
+  // Action bar collapses into a kebab when the header is narrow (mirrors the
+  // repository case details bar).
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+  const [auditOpen, setAuditOpen] = useState(false);
+  // Peer awaiting a `configurationGroupId` stamp — set when the user links
+  // this session to a peer that had no group of its own, cleared once saved.
+  const [configGroupStampTargetId, setConfigGroupStampTargetId] = useState<
+    number | null
+  >(null);
   const t = useTranslations("sessions");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [refreshResults, setRefreshResults] = useState(0);
-  const { isLoading: isLoadingProjectData } = useFindFirstProjects({
+  const { isLoading: isLoadingProjectData } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
     where: { id: numericProjectId ?? undefined },
     select: {
       projectIntegrations: {
@@ -949,7 +1010,7 @@ export default function SessionPage() {
     data: sessionData,
     refetch: refetchSession,
     isLoading: isLoadingSession,
-  } = useFindFirstSessions({
+  } = useClientQueries(schema).sessions.useFindFirst({
     where: {
       id: Number(sessionId),
     },
@@ -1036,20 +1097,29 @@ export default function SessionPage() {
     configuration: { id: number; name: string } | null;
   };
 
-  const { data: siblingSessions } = useFindManySessions(
+  // Group membership is editable, so the sibling query is scoped to this
+  // session's project: a stale or hand-written group id must not surface
+  // sessions from another project.
+  const siblingQueryScope = {
+    configurationGroupId: sessionData?.configurationGroupId,
+    projectId: sessionData?.projectId ?? numericProjectId,
+  };
+
+  const { data: siblingSessions } = useClientQueries(
+    schema
+  ).sessions.useFindMany(
     {
-      where: {
-        configurationGroupId: sessionData?.configurationGroupId ?? undefined,
-        isDeleted: false,
-      },
+      where: buildConfigurationGroupWhere(siblingQueryScope),
       select: {
         id: true,
         name: true,
         configuration: { select: { id: true, name: true } },
       },
-      orderBy: { createdAt: "asc" },
+      // Members may share a configuration, so break ties on id for a stable
+      // switcher order.
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     },
-    { enabled: !!sessionData?.configurationGroupId }
+    { enabled: isConfigurationGroupQueryEnabled(siblingQueryScope) }
   );
 
   const siblingList: SiblingSession[] = useMemo(
@@ -1064,6 +1134,23 @@ export default function SessionPage() {
     [siblingList, sessionId]
   );
 
+  // Two sessions in a group may share a configuration, so entries the
+  // configuration cannot identify carry the session name as well.
+  const siblingLabels = useMemo(
+    () =>
+      buildConfigurationGroupMemberLabels(siblingList, {
+        noConfiguration: tCommon("labels.noConfiguration"),
+        withMemberName: (values) =>
+          tCommon("labels.configurationWithName", values),
+      }),
+    [siblingList, tCommon]
+  );
+
+  const siblingLabel = useCallback(
+    (sibling: SiblingSession) => siblingLabels.get(sibling.id) ?? sibling.name,
+    [siblingLabels]
+  );
+
   const fetchSiblingConfigurations = useCallback(
     async (query: string, page: number, pageSize: number) => {
       let filtered = siblingList;
@@ -1072,7 +1159,8 @@ export default function SessionPage() {
         filtered = siblingList.filter(
           (s) =>
             s.name.toLowerCase().includes(lower) ||
-            s.configuration?.name?.toLowerCase().includes(lower)
+            s.configuration?.name?.toLowerCase().includes(lower) ||
+            siblingLabel(s).toLowerCase().includes(lower)
         );
       }
       const start = page * pageSize;
@@ -1081,17 +1169,21 @@ export default function SessionPage() {
         total: filtered.length,
       };
     },
-    [siblingList]
+    [siblingList, siblingLabel]
   );
 
   // Fetch versions
-  const { data: versions } = useFindManySessionVersions({
+  const { data: versions } = useClientQueries(
+    schema
+  ).sessionVersions.useFindMany({
     where: { sessionId: Number(sessionId) },
     orderBy: { version: "desc" },
   });
 
   // Fetch session results for PDF export
-  const { data: sessionResultsForExport } = useFindManySessionResults({
+  const { data: sessionResultsForExport } = useClientQueries(
+    schema
+  ).sessionResults.useFindMany({
     where: { sessionId: Number(sessionId), isDeleted: false },
     include: {
       status: { include: { color: true } },
@@ -1145,47 +1237,50 @@ export default function SessionPage() {
       issueIds: [],
       forecastManual: null,
       forecastAutomated: null,
+      configurationGroupId: null,
     },
     mode: "onSubmit",
   });
 
   // Add data fetching queries
-  const { data: templates, isLoading: isLoadingTemplates } =
-    useFindManyTemplates({
-      where: {
-        projects: {
-          some: {
-            projectId: numericProjectId ?? undefined,
-          },
+  const { data: templates, isLoading: isLoadingTemplates } = useClientQueries(
+    schema
+  ).templates.useFindMany({
+    where: {
+      projects: {
+        some: {
+          projectId: numericProjectId ?? undefined,
         },
-        isDeleted: false,
-        isEnabled: true,
       },
-      orderBy: {
-        templateName: "asc",
-      },
-    });
+      isDeleted: false,
+      isEnabled: true,
+    },
+    orderBy: {
+      templateName: "asc",
+    },
+  });
 
-  const { data: workflows, isLoading: isLoadingWorkflows } =
-    useFindManyWorkflows({
-      where: {
-        isDeleted: false,
-        isEnabled: true,
-        scope: "SESSIONS",
-        projects: {
-          some: {
-            projectId: numericProjectId ?? undefined,
-          },
+  const { data: workflows, isLoading: isLoadingWorkflows } = useClientQueries(
+    schema
+  ).workflows.useFindMany({
+    where: {
+      isDeleted: false,
+      isEnabled: true,
+      scope: "SESSIONS",
+      projects: {
+        some: {
+          projectId: numericProjectId ?? undefined,
         },
       },
-      include: {
-        icon: true,
-        color: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
-    });
+    },
+    include: {
+      icon: true,
+      color: true,
+    },
+    orderBy: {
+      order: "asc",
+    },
+  });
 
   const reachableGatedStates = useMemo(() => {
     if (!workflows || !sessionData) return [];
@@ -1209,22 +1304,23 @@ export default function SessionPage() {
       }));
   }, [workflows, sessionData]);
 
-  const { data: milestones, isLoading: isLoadingMilestones } =
-    useFindManyMilestones({
-      where: {
-        projectId: numericProjectId ?? undefined,
-        isDeleted: false,
-        isCompleted: false,
-      },
-      include: {
-        milestoneType: {
-          include: {
-            icon: true,
-          },
+  const { data: milestones, isLoading: isLoadingMilestones } = useClientQueries(
+    schema
+  ).milestones.useFindMany({
+    where: {
+      projectId: numericProjectId ?? undefined,
+      isDeleted: false,
+      isCompleted: false,
+    },
+    include: {
+      milestoneType: {
+        include: {
+          icon: true,
         },
       },
-      orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
-    }) as { data: Milestone[]; isLoading: boolean };
+    },
+    orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
+  }) as { data: Milestone[]; isLoading: boolean };
 
   // Update form initialization
   useEffect(() => {
@@ -1249,6 +1345,7 @@ export default function SessionPage() {
         issueIds: sessionData.issues?.map((issue) => issue.id) || [],
         forecastManual: sessionData.forecastManual,
         forecastAutomated: sessionData.forecastAutomated,
+        configurationGroupId: sessionData.configurationGroupId ?? null,
       };
 
       // Reset form and ensure values are set
@@ -1301,14 +1398,17 @@ export default function SessionPage() {
   ]);
 
   // Scroll to hash anchor after page loads
+  const scrolledHashRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLoading && typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash) {
+      // Scroll once per hash so loading-state flips don't yank the viewport back
+      if (hash && scrolledHashRef.current !== hash) {
         // Wait a bit for the DOM to be fully rendered
         setTimeout(() => {
           const element = document.querySelector(hash);
           if (element) {
+            scrolledHashRef.current = hash;
             element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }, 100);
@@ -1317,8 +1417,10 @@ export default function SessionPage() {
   }, [isLoading]);
 
   // Add mutation hooks
-  const { mutateAsync: updateSessions } = useUpdateSessions();
-  const { mutateAsync: createSessionVersions } = useCreateSessionVersions();
+  const { mutateAsync: updateSessions } =
+    useClientQueries(schema).sessions.useUpdate();
+  const { mutateAsync: createSessionVersions } =
+    useClientQueries(schema).sessionVersions.useCreate();
 
   // Add form controls
   const {
@@ -1415,6 +1517,15 @@ export default function SessionPage() {
     }
   }, [sessionData]);
 
+  // Configuration-group link/unlink. The control is offered in edit mode only,
+  // so the change is staged here and written by the form's submit path.
+  const handleConfigurationGroupChange = (
+    change: ConfigurationGroupLinkChange
+  ) => {
+    setValue("configurationGroupId", change.groupId, { shouldDirty: true });
+    setConfigGroupStampTargetId(change.stampTargetId);
+  };
+
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
     // Strict-transitive review-gate preflight. The live inline error
@@ -1447,6 +1558,10 @@ export default function SessionPage() {
             : JSON.stringify(data.mission),
       };
 
+      const groupChanged =
+        (data.configurationGroupId ?? null) !==
+        (sessionData?.configurationGroupId ?? null);
+
       // Update session
       const updatedSession = await updateSessions({
         where: {
@@ -1463,6 +1578,13 @@ export default function SessionPage() {
           estimate: transformedData.estimate,
           note: transformedData.note,
           mission: transformedData.mission,
+          // Assigning `configurationGroupId` makes the RPC guard re-validate
+          // the group and sweep it for auto-dissolve, so only send it when the
+          // user actually changed it — an unchanged value can neither break an
+          // invariant nor orphan a group.
+          ...(groupChanged
+            ? configurationGroupUpdateData(data.configurationGroupId)
+            : {}),
           attachments: {
             set: [], // Clear existing attachments
             connect:
@@ -1485,6 +1607,19 @@ export default function SessionPage() {
       });
 
       if (!updatedSession) throw new Error("Failed to update session");
+
+      // A join against a peer that had no group of its own mints one uuid for
+      // both records; this session was just stamped above, the peer is stamped
+      // here. Rolls this session back if the peer write fails, and no-ops when
+      // this save didn't move the session — see the helper.
+      await applyConfigurationGroupPeerStamp({
+        update: (args) => updateSessions(args),
+        recordId: Number(sessionId),
+        groupId: data.configurationGroupId,
+        stampTargetId: configGroupStampTargetId,
+        previousGroupId: sessionData?.configurationGroupId ?? null,
+      });
+      setConfigGroupStampTargetId(null);
 
       // Create new version
       const _issuesDataForVersion = (data.issueIds || [])
@@ -1638,6 +1773,9 @@ export default function SessionPage() {
     // Reset pending attachment changes
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
+    // `form.reset` above restores the group id, but the peer waiting to be
+    // stamped lives outside the form and would otherwise outlive the pick.
+    setConfigGroupStampTargetId(null);
     const params = new URLSearchParams(searchParams);
     params.delete("edit");
     router.replace(`?${params.toString()}`);
@@ -1784,9 +1922,12 @@ export default function SessionPage() {
             />
           </div>
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-center gap-2"
+            >
               {!isEditMode && (
-                <div className="mr-2">
+                <div className="me-2">
                   <Link href={`/projects/sessions/${projectId}`}>
                     <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
@@ -1794,7 +1935,7 @@ export default function SessionPage() {
                   </Link>
                 </div>
               )}
-              <CardTitle className="w-full pr-4 text-xl md:text-2xl mr-4">
+              <CardTitle className="w-full pe-4 text-xl md:text-2xl me-4">
                 {isEditMode ? (
                   <FormField
                     control={control}
@@ -1819,206 +1960,248 @@ export default function SessionPage() {
                     )}
                   />
                 ) : (
-                  sessionData?.name || ""
+                  <span className="flex items-center gap-2">
+                    <Compass className="h-6 w-6 shrink-0" />
+                    {sessionData?.name || ""}
+                  </span>
                 )}
               </CardTitle>
-              <div className="flex items-start gap-2">
-                {sessionData && (
-                  <SessionAuditLogSheet sessionId={sessionData.id} />
+              <div className="flex flex-col items-end gap-1">
+                {!isEditMode && sessionData && (
+                  <RecordId
+                    type="SESSION"
+                    id={sessionData.id}
+                    projectId={numericProjectId ?? undefined}
+                    className="shrink-0 whitespace-nowrap"
+                  />
                 )}
-                {sessionData?.isCompleted ? (
-                  <div className="flex items-center gap-1">
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
-                    >
-                      <CircleCheckBig className="h-6 w-6 shrink-0" />
-                      <div className="hidden md:block">
-                        <span className="mr-1">
-                          {tCommon("fields.completedOn")}
-                        </span>
-                        <DateFormatter
-                          date={sessionData?.completedAt}
-                          formatString={session?.user.preferences?.dateFormat}
-                          timezone={session?.user.preferences?.timezone}
-                        />
-                      </div>
-                    </Badge>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleExportPdf}
-                      disabled={isExportingPdf}
-                      className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                    >
-                      <FileDown className="h-4 w-4 shrink-0" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                        {isExportingPdf
-                          ? tCommon("actions.exportingPdf")
-                          : tCommon("actions.exportPdf")}
-                      </span>
-                    </Button>
-                    {(canDeleteClosedSession || isSuperAdmin) && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => setIsDeleteDialogOpen(true)}
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                <ActionBar
+                  compact={headerCompact}
+                  className="items-start gap-2"
+                >
+                  {sessionData && (
+                    <SessionAuditLogSheet
+                      sessionId={sessionData.id}
+                      hideTrigger
+                      open={auditOpen}
+                      onOpenChange={setAuditOpen}
+                    />
+                  )}
+                  {sessionData?.isCompleted ? (
+                    <div className="flex items-center gap-1">
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
                       >
-                        <Trash2 className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {t("actions.delete")}
-                        </span>
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    {versions && versions.length > 1 && (
-                      <VersionSelect
-                        versions={versions}
-                        currentVersion={
-                          sessionData?.versions.length.toString() || "latest"
-                        }
-                        onVersionChange={handleVersionChange}
-                        userDateFormat={session?.user.preferences?.dateFormat}
-                        userTimeFormat={session?.user.preferences?.timeFormat}
-                      />
-                    )}
-                    {!isEditMode ? (
-                      <div className="flex items-center gap-1">
-                        <RequestReviewButton
-                          entityType="SESSION"
-                          entityId={sessionData.id}
-                          projectId={Number(projectId)}
-                          currentStateId={sessionData.stateId}
-                          reachableGatedStates={reachableGatedStates}
-                        />
-                        {showEditButtonPerm && !sessionData?.isCompleted && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={handleEditClick}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                          >
-                            <SquarePen className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {tCommon("actions.edit")}
-                            </span>
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={handleExportPdf}
-                          disabled={isExportingPdf}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <FileDown className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {isExportingPdf
-                              ? tCommon("actions.exportingPdf")
-                              : tCommon("actions.exportPdf")}
+                        <CircleCheckBig className="h-6 w-6 shrink-0" />
+                        <div className="hidden md:block">
+                          <span className="me-1">
+                            {tCommon("fields.completedOn")}
                           </span>
-                        </Button>
-                        {showCompleteButtonPerm &&
-                          !sessionData?.isCompleted && (
+                          <DateFormatter
+                            date={sessionData?.completedAt}
+                            formatString={session?.user.preferences?.dateFormat}
+                            timezone={session?.user.preferences?.timezone}
+                          />
+                        </div>
+                      </Badge>
+                      <ActionOverflow
+                        compact={headerCompact}
+                        menuLabel={tCommon("actions.actionsLabel")}
+                        actions={[
+                          {
+                            key: "activity",
+                            icon: History,
+                            label: tCommon("fields.activityLog"),
+                            onClick: () => setAuditOpen(true),
+                          },
+                          {
+                            key: "export",
+                            icon: FileDown,
+                            label: isExportingPdf
+                              ? tCommon("actions.exportingPdf")
+                              : tCommon("actions.exportPdf"),
+                            onClick: handleExportPdf,
+                            disabled: isExportingPdf,
+                          },
+                          {
+                            key: "delete",
+                            icon: Trash,
+                            label: t("actions.delete"),
+                            onClick: () => setIsDeleteDialogOpen(true),
+                            destructive: true,
+                            hidden: !(canDeleteClosedSession || isSuperAdmin),
+                          },
+                        ]}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      {versions && versions.length > 1 && (
+                        <VersionSelect
+                          versions={versions}
+                          currentVersion={
+                            sessionData?.versions.length.toString() || "latest"
+                          }
+                          onVersionChange={handleVersionChange}
+                          userDateFormat={session?.user.preferences?.dateFormat}
+                          userTimeFormat={session?.user.preferences?.timeFormat}
+                        />
+                      )}
+                      {!isEditMode ? (
+                        <div className="flex items-center gap-1">
+                          <RequestReviewButton
+                            entityType="SESSION"
+                            entityId={sessionData.id}
+                            projectId={Number(projectId)}
+                            currentStateId={sessionData.stateId}
+                            reachableGatedStates={reachableGatedStates}
+                          />
+                          <ActionOverflow
+                            compact={headerCompact}
+                            menuLabel={tCommon("actions.actionsLabel")}
+                            actions={[
+                              {
+                                key: "activity",
+                                icon: History,
+                                label: tCommon("fields.activityLog"),
+                                onClick: () => setAuditOpen(true),
+                              },
+                              {
+                                key: "edit",
+                                icon: SquarePen,
+                                label: tCommon("actions.edit"),
+                                onClick: handleEditClick,
+                                hidden: !(
+                                  showEditButtonPerm &&
+                                  !sessionData?.isCompleted
+                                ),
+                              },
+                              {
+                                key: "export",
+                                icon: FileDown,
+                                label: isExportingPdf
+                                  ? tCommon("actions.exportingPdf")
+                                  : tCommon("actions.exportPdf"),
+                                onClick: handleExportPdf,
+                                disabled: isExportingPdf,
+                              },
+                              {
+                                key: "complete",
+                                icon: CircleCheckBig,
+                                label: tCommon("actions.complete"),
+                                onClick: () => setIsCompleteDialogOpen(true),
+                                hidden: !(
+                                  showCompleteButtonPerm &&
+                                  !sessionData?.isCompleted
+                                ),
+                              },
+                            ]}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            {(() => {
+                              const gateBlocked =
+                                !transitionCheck.allowed &&
+                                transitionCheck.blockingGate;
+                              const formHasErrors =
+                                Object.keys(errors).length > 0;
+                              const saveBlocked = gateBlocked || formHasErrors;
+                              const tooltipMessage = gateBlocked
+                                ? tGlobal(
+                                    "reviews.transitionGate.blockedByGate",
+                                    {
+                                      gateName:
+                                        transitionCheck.blockingGate!.name,
+                                    }
+                                  )
+                                : tGlobal(
+                                    "reviews.transitionGate.saveBlockedByFormErrors"
+                                  );
+
+                              if (!saveBlocked) {
+                                return (
+                                  <Button
+                                    type="submit"
+                                    variant="outline"
+                                    disabled={isSubmitting}
+                                    className={collapsibleActionClass(
+                                      headerCompact
+                                    )}
+                                  >
+                                    <ActionButtonContent
+                                      icon={Save}
+                                      label={tCommon("actions.save")}
+                                    />
+                                  </Button>
+                                );
+                              }
+
+                              return (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span tabIndex={0}>
+                                      <Button
+                                        type="submit"
+                                        variant="outline"
+                                        disabled
+                                        className={collapsibleActionClass(
+                                          headerCompact,
+                                          "ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                        )}
+                                      >
+                                        <ActionButtonContent
+                                          icon={Save}
+                                          label={tCommon("actions.save")}
+                                        />
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {tooltipMessage}
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })()}
                             <Button
                               type="button"
-                              variant="secondary"
-                              onClick={() => setIsCompleteDialogOpen(true)}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                              variant="outline"
+                              onClick={handleCancel}
+                              disabled={isSubmitting}
+                              className={collapsibleActionClass(headerCompact)}
                             >
-                              <CircleCheckBig className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {tCommon("actions.complete")}
-                              </span>
+                              <ActionButtonContent
+                                icon={CircleSlash2}
+                                label={tCommon("cancel")}
+                              />
+                            </Button>
+                          </div>
+                          {(sessionData?.isCompleted
+                            ? canDeleteClosedSession || isSuperAdmin
+                            : canDeleteSession || isSuperAdmin) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setIsDeleteDialogOpen(true)}
+                              disabled={isSubmitting}
+                              className={collapsibleActionClass(
+                                headerCompact,
+                                "text-destructive"
+                              )}
+                            >
+                              <ActionButtonContent
+                                icon={Trash}
+                                label={tCommon("actions.delete")}
+                              />
                             </Button>
                           )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          {(() => {
-                            const gateBlocked =
-                              !transitionCheck.allowed &&
-                              transitionCheck.blockingGate;
-                            const formHasErrors =
-                              Object.keys(errors).length > 0;
-                            const saveBlocked = gateBlocked || formHasErrors;
-                            const tooltipMessage = gateBlocked
-                              ? tGlobal(
-                                  "reviews.transitionGate.blockedByGate",
-                                  {
-                                    gateName:
-                                      transitionCheck.blockingGate!.name,
-                                  }
-                                )
-                              : tGlobal(
-                                  "reviews.transitionGate.saveBlockedByFormErrors"
-                                );
-
-                            if (!saveBlocked) {
-                              return (
-                                <Button
-                                  type="submit"
-                                  variant="default"
-                                  disabled={isSubmitting}
-                                >
-                                  <Save className="h-4 w-4" />
-                                  {tCommon("actions.save")}
-                                </Button>
-                              );
-                            }
-
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span tabIndex={0}>
-                                    <Button
-                                      type="submit"
-                                      variant="default"
-                                      disabled
-                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
-                                    >
-                                      <Save className="h-4 w-4" />
-                                      {tCommon("actions.save")}
-                                    </Button>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {tooltipMessage}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })()}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleCancel}
-                            disabled={isSubmitting}
-                          >
-                            <CircleSlash2 className="h-4 w-4" />
-                            {tCommon("cancel")}
-                          </Button>
                         </div>
-                        {(sessionData?.isCompleted
-                          ? canDeleteClosedSession || isSuperAdmin
-                          : canDeleteSession || isSuperAdmin) && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            disabled={isSubmitting}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {tCommon("actions.delete")}
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                      )}
+                    </>
+                  )}
+                </ActionBar>
               </div>
             </div>
           </CardHeader>
@@ -2061,7 +2244,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px] max-h-[125px] overflow-y-auto">
+                                <div className="min-h-[50px]">
                                   <TipTapEditor
                                     key={`editing-note-${isEditMode}`}
                                     content={noteContent}
@@ -2110,7 +2293,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px] max-h-[250px] overflow-y-auto">
+                                <div className="min-h-[50px]">
                                   <TipTapEditor
                                     key={`editing-mission-${isEditMode}`}
                                     content={missionContent}
@@ -2176,12 +2359,10 @@ export default function SessionPage() {
                             }}
                             fetchOptions={fetchSiblingConfigurations}
                             renderOption={(option) => (
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <ConfigurationNameDisplay
                                   configuration={option.configuration}
-                                  name={
-                                    option.configuration?.name || option.name
-                                  }
+                                  name={siblingLabel(option)}
                                   truncate
                                 />
                               </div>
@@ -2256,7 +2437,7 @@ export default function SessionPage() {
                   type="button"
                   onClick={toggleCollapseLeft}
                   variant="secondary"
-                  className="p-0 rounded-r-none"
+                  className="p-0 rounded-e-none"
                 >
                   {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
                 </Button>
@@ -2269,7 +2450,7 @@ export default function SessionPage() {
                   type="button"
                   onClick={toggleCollapseRight}
                   variant="secondary"
-                  className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                  className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
                 >
                   <ChevronLeft />
                 </Button>
@@ -2312,6 +2493,24 @@ export default function SessionPage() {
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     transitionCheck={transitionCheck}
+                    configurationGroupSlot={
+                      <ConfigurationGroupLinkField
+                        model="sessions"
+                        recordId={sessionData.id}
+                        projectId={numericProjectId!}
+                        value={form.watch("configurationGroupId") ?? null}
+                        savedValue={sessionData.configurationGroupId ?? null}
+                        onChange={handleConfigurationGroupChange}
+                        editable={
+                          isEditMode &&
+                          canEditConfigurationGroup({
+                            canAddEdit: canAddEditSession || isSuperAdmin,
+                            isCompleted: !!sessionData.isCompleted,
+                          })
+                        }
+                        disabled={isSubmitting}
+                      />
+                    }
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

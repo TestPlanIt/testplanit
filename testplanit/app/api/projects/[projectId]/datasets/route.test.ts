@@ -30,12 +30,12 @@ vi.mock("~/lib/auth/utils", () => ({
   })),
 }));
 
-// The POST handler bypasses the enhanced client and uses raw `prisma`
+// The POST handler bypasses the enhanced client and uses raw `baseDb`
 // for the actual create (Phase 1 @@deny null-safety workaround). Mock
-// `~/lib/prisma` so the raw $transaction routes through the same
+// `~/lib/db` so the raw $transaction routes through the same
 // captured `dataSetCreateMock` as the enhanced path.
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     $transaction: (cb: any) =>
       cb({
         dataSet: { create: dataSetCreateMock },

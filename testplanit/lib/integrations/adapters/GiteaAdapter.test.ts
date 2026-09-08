@@ -43,6 +43,7 @@ describe("GiteaAdapter", () => {
         attachments: false,
         linkedIssues: false,
         comments: true,
+        milestones: false,
       });
     });
   });

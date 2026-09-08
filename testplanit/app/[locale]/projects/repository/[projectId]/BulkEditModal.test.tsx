@@ -93,7 +93,21 @@ vi.mock("~/lib/navigation", () => ({
 }));
 
 // Mock dependencies
-vi.mock("~/lib/hooks", () => ({
+const {
+  useFindManyRepositoryCases,
+  useUpdateRepositoryCases,
+  useFindManyWorkflows,
+  useFindManyTags,
+  useFindManyIssue,
+  useUpdateCaseFieldValues,
+  useCreateCaseFieldValues,
+  useCreateSteps,
+  useDeleteManySteps,
+  useUpdateManyRepositoryCases,
+  useUpdateSteps,
+  useCreateRepositoryCaseVersions,
+  useCreateCaseFieldVersionValues,
+} = vi.hoisted(() => ({
   useFindManyRepositoryCases: vi.fn(),
   useUpdateRepositoryCases: vi.fn(),
   useFindManyWorkflows: vi.fn(),
@@ -105,22 +119,53 @@ vi.mock("~/lib/hooks", () => ({
   useDeleteManySteps: vi.fn(),
   useUpdateManyRepositoryCases: vi.fn(),
   useUpdateSteps: vi.fn(),
-  useCreateTags: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
-  useUpdateTags: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
-  useCreateRepositoryCaseVersions: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
-  useCreateCaseFieldVersionValues: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
+  useCreateRepositoryCaseVersions: vi.fn(),
+  useCreateCaseFieldVersionValues: vi.fn(),
+}));
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: {
+      useFindMany: useFindManyRepositoryCases,
+      useUpdate: useUpdateRepositoryCases,
+      useUpdateMany: useUpdateManyRepositoryCases,
+    },
+    workflows: { useFindMany: useFindManyWorkflows },
+    tags: {
+      useFindMany: useFindManyTags,
+      useCreate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+      useUpdate: vi.fn(() => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+      })),
+    },
+    issue: { useFindMany: useFindManyIssue },
+    // Backs the modal's "which blocked cases are already awaiting review?"
+    // lookup, which excludes them from the bulk request breakdown.
+    reviewRequest: {
+      useFindMany: () => ({ data: [], isLoading: false, error: null }),
+    },
+    caseFieldValues: {
+      useUpdate: useUpdateCaseFieldValues,
+      useCreate: useCreateCaseFieldValues,
+    },
+    steps: {
+      useCreate: useCreateSteps,
+      useDeleteMany: useDeleteManySteps,
+      useUpdate: useUpdateSteps,
+    },
+    repositoryCaseVersions: { useCreate: useCreateRepositoryCaseVersions },
+    caseFieldVersionValues: { useCreate: useCreateCaseFieldVersionValues },
+    projectLlmIntegration: {
+      useFindMany: () => ({
+        data: [], // No LLM integrations by default
+        isLoading: false,
+        error: null,
+      }),
+    },
+  }),
 }));
 
 // The strict-transitive bulk gate hook fans out to `useReviewFeatureEnabled`
@@ -165,13 +210,6 @@ vi.mock("next-intl", () => ({
 }));
 
 // Mock ZenStack hooks for TipTapEditor
-vi.mock("~/lib/hooks/project-llm-integration", () => ({
-  useFindManyProjectLlmIntegration: () => ({
-    data: [], // No LLM integrations by default
-    isLoading: false,
-    error: null,
-  }),
-}));
 
 // Stub the issue picker so tests can deterministically drive issue selection
 // without rendering the real UnifiedIssueManager (network + provider heavy).
@@ -201,7 +239,7 @@ import {
   Theme,
   TimeFormat,
   WorkflowScope,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import {
   act,
   fireEvent,
@@ -216,21 +254,7 @@ import * as NextAuth from "next-auth/react";
 import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import {
-  useCreateCaseFieldValues,
-  useCreateCaseFieldVersionValues,
-  useCreateRepositoryCaseVersions,
-  useCreateSteps,
-  useDeleteManySteps,
-  useFindManyIssue,
-  useFindManyRepositoryCases,
-  useFindManyTags,
-  useFindManyWorkflows,
-  useUpdateCaseFieldValues,
-  useUpdateManyRepositoryCases,
-  useUpdateRepositoryCases,
-  useUpdateSteps,
-} from "~/lib/hooks";
+
 import { BulkEditModal } from "./BulkEditModal";
 
 // Setup to fix hasPointerCapture issue with Radix UI

@@ -9,8 +9,8 @@ vi.mock("../../api.js", () => ({
 }));
 
 import { zenstack } from "../../api.js";
-import { registerRunsGet, RUN_DETAIL_INCLUDE } from "./get.js";
-import { RUN_DETAIL_TESTCASE_INCLUDE } from "./shared.js";
+import { registerRunsGet, runDetailInclude } from "./get.js";
+import { runDetailTestCaseInclude } from "./shared.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -192,6 +192,103 @@ describe("registerRunsGet", () => {
     expect(data.testCasesNextCursor).toBeNull();
   });
 
+  it("automated run: rollup from jUnitTestResult attempts, not testRunCases", async () => {
+    // One inline case shaped like real automated-run data: junction status
+    // null, result reachable only through repositoryCase.junitResults.
+    const automatedCase = {
+      id: 1,
+      order: 1,
+      isCompleted: false,
+      repositoryCase: {
+        id: 999111,
+        name: "login.spec",
+        source: "JUNIT",
+        junitResults: [
+          {
+            id: 70001,
+            executedAt: "2026-07-28T10:00:00.000Z",
+            status: { id: 2, name: "Failed" },
+            createdBy: { id: "ci", name: "CI Bot", email: "ci@b" },
+          },
+        ],
+      },
+      assignedTo: null,
+      status: null,
+      results: [],
+    };
+    mockZenstack.mockResolvedValueOnce(
+      makeRawRun({ testRunType: "MOCHA", testCases: [automatedCase] }),
+    );
+    mockZenstack.mockResolvedValueOnce([
+      { statusId: 1, _count: { id: 87 } },
+      { statusId: 2, _count: { id: 44 } },
+      { statusId: 3, _count: { id: 6 } },
+    ]);
+    mockZenstack.mockResolvedValueOnce([
+      { id: 1, name: "Passed" },
+      { id: 2, name: "Failed" },
+      { id: 3, name: "Skipped" },
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_get",
+      arguments: { runId: 50 },
+    });
+
+    expect(result.isError).toBeFalsy();
+    // The rollup call goes to JUnitTestResult, scoped via testSuite.testRunId.
+    const rollupCall = mockZenstack.mock.calls[1];
+    expect(rollupCall[0]).toBe("jUnitTestResult");
+    expect(rollupCall[1]).toBe("groupBy");
+    expect((rollupCall[2] as Record<string, unknown>).where).toEqual({
+      testSuite: { testRunId: 50 },
+    });
+    expect(
+      mockZenstack.mock.calls.filter((c) => c[0] === "testRunCases").length,
+    ).toBe(0);
+
+    const data = structured(result);
+    expect(data.statusCounts).toEqual(
+      expect.arrayContaining([
+        { id: 1, name: "Passed", count: 87 },
+        { id: 2, name: "Failed", count: 44 },
+        { id: 3, name: "Skipped", count: 6 },
+      ]),
+    );
+    expect(data.untested).toBe(0);
+    // Attempt count (result rows incl. retries), matching the web UI.
+    expect(data.total).toBe(137);
+
+    // Per-case status falls back to the JUnit latestResult's status — the
+    // junction row is null on automated runs.
+    const tc = (data.testCases as Array<Record<string, unknown>>)[0];
+    expect(tc.status).toEqual({ id: 2, name: "Failed" });
+    const latest = tc.latestResult as Record<string, unknown>;
+    expect(latest.source).toBe("JUnit");
+    expect((latest.status as { name: string }).name).toBe("Failed");
+  });
+
+  it("automated run: full inline page sets cursor even when attempt total < 50", async () => {
+    // 50 junction cases inline but only 3 imported results so far — the
+    // attempt total can't gate case pagination for automated runs.
+    const cases = Array.from({ length: 50 }, (_, i) => makeTestCase(i + 1));
+    mockZenstack.mockResolvedValueOnce(
+      makeRawRun({ testRunType: "JUNIT", testCases: cases }),
+    );
+    mockZenstack.mockResolvedValueOnce([{ statusId: 1, _count: { id: 3 } }]);
+    mockZenstack.mockResolvedValueOnce([{ id: 1, name: "Passed" }]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_test_runs_get",
+      arguments: { runId: 50 },
+    });
+    const data = structured(result);
+    expect(data.total).toBe(3);
+    expect(data.testCasesNextCursor).toBe(50);
+  });
+
   it("testCases ordering inline: [{order:'asc'},{id:'asc'}]", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [] }));
     mockZenstack.mockResolvedValueOnce([]);
@@ -208,7 +305,7 @@ describe("registerRunsGet", () => {
     expect(tc.take).toBe(50);
   });
 
-  it("testCases inline include uses RUN_DETAIL_TESTCASE_INCLUDE constant", async () => {
+  it("testCases inline include uses runDetailTestCaseInclude(runId)", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [] }));
     mockZenstack.mockResolvedValueOnce([]);
 
@@ -220,21 +317,29 @@ describe("registerRunsGet", () => {
     const body = getCallBody(0);
     const include = body?.include as Record<string, unknown>;
     const tc = include?.testCases as Record<string, unknown>;
-    expect(tc.include).toBe(RUN_DETAIL_TESTCASE_INCLUDE);
+    expect(tc.include).toEqual(runDetailTestCaseInclude(50));
     // Defense-in-depth: verify the include shape carries the agent-facing keys.
     const tcInclude = tc.include as Record<string, unknown>;
     expect(tcInclude).toHaveProperty("repositoryCase");
     expect(tcInclude).toHaveProperty("assignedTo");
     expect(tcInclude).toHaveProperty("status");
     expect(tcInclude).toHaveProperty("results");
+    // JUnit half of latestResult is scoped to the requested run.
+    const rc = tcInclude.repositoryCase as {
+      select: { junitResults: { where: unknown } };
+    };
+    expect(rc.select.junitResults.where).toEqual({
+      testSuite: { testRunId: 50 },
+    });
   });
 
-  it("RUN_DETAIL_INCLUDE exposes the full inline-cases shape (defense-in-depth)", () => {
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("project");
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("state");
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("createdBy");
-    expect(RUN_DETAIL_INCLUDE).toHaveProperty("testCases");
-    const tc = (RUN_DETAIL_INCLUDE as { testCases: Record<string, unknown> }).testCases;
+  it("runDetailInclude exposes the full inline-cases shape (defense-in-depth)", () => {
+    const detailInclude = runDetailInclude(50);
+    expect(detailInclude).toHaveProperty("project");
+    expect(detailInclude).toHaveProperty("state");
+    expect(detailInclude).toHaveProperty("createdBy");
+    expect(detailInclude).toHaveProperty("testCases");
+    const tc = (detailInclude as { testCases: Record<string, unknown> }).testCases;
     expect(tc.take).toBe(50);
     expect(tc.orderBy).toEqual([{ order: "asc" }, { id: "asc" }]);
   });
@@ -274,7 +379,7 @@ describe("registerRunsGet", () => {
     expect(Array.isArray(data.issues)).toBe(true);
   });
 
-  it("R1: NO isDeleted filter on testCases inline include", async () => {
+  it("R1 (revised): testCases inline include filters soft-removed rows", async () => {
     mockZenstack.mockResolvedValueOnce(makeRawRun({ testCases: [] }));
     mockZenstack.mockResolvedValueOnce([]);
 
@@ -286,7 +391,7 @@ describe("registerRunsGet", () => {
     const body = getCallBody(0);
     const include = body?.include as Record<string, unknown>;
     const tc = include?.testCases as Record<string, unknown>;
-    expect(tc).not.toHaveProperty("where");
+    expect(tc.where).toEqual({ isDeleted: false });
   });
 
   it("error path: extractStatusNames groupBy throws -> mapHttpErrorToToolResult", async () => {

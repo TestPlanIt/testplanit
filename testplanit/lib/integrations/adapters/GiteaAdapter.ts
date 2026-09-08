@@ -48,6 +48,7 @@ export class GiteaAdapter extends BaseAdapter {
       attachments: false,
       linkedIssues: false,
       comments: true,
+      milestones: false,
     };
   }
 

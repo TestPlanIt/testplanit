@@ -1,15 +1,15 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from "@prisma/client";
 import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 async function reindexIssues() {
   console.log("Reindexing all issues...");
 
   try {
-    const projects = await prisma.projects.findMany({
+    const projects = await db.projects.findMany({
       where: { isDeleted: false },
     });
 
@@ -19,7 +19,7 @@ async function reindexIssues() {
       console.log(
         `\nIndexing issues for project ${project.id} (${project.name})...`
       );
-      await syncProjectIssuesToElasticsearch(project.id, prisma);
+      await syncProjectIssuesToElasticsearch(project.id, db);
     }
 
     console.log("\n✅ Issues reindexing complete!");
@@ -27,7 +27,7 @@ async function reindexIssues() {
     console.error("Error reindexing issues:", error);
     process.exit(1);
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
   }
 }
 

@@ -60,7 +60,7 @@ export function RoleAssigneeChip({
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className="inline-flex items-center gap-1 rounded-md border border-current/20 bg-background/50 px-1.5 py-0.5 align-middle cursor-default"
+          className="inline-flex items-center gap-1 rounded-md border border-current/20 bg-background/50 px-1 py-0 text-xs align-middle cursor-default"
           data-testid="role-assignee-chip"
         >
           <Drama className="h-3.5 w-3.5" />

@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -21,7 +21,7 @@ export async function notifyTestCaseAssignment(
 
   try {
     // Get test run case details with related information
-    const testRunCase = await prisma.testRunCases.findUnique({
+    const testRunCase = await baseDb.testRunCases.findUnique({
       where: { id: testRunCaseId, isDeleted: false },
       include: {
         repositoryCase: true,
@@ -38,7 +38,7 @@ export async function notifyTestCaseAssignment(
     }
 
     // Get the assignee details
-    const _assignee = await prisma.user.findUnique({
+    const _assignee = await baseDb.user.findUnique({
       where: { id: newAssigneeId },
       select: { name: true },
     });
@@ -80,7 +80,7 @@ export async function notifyBulkTestCaseAssignment(
 
   try {
     // Get project details and test run cases with their test runs
-    const testRunCases = await prisma.testRunCases.findMany({
+    const testRunCases = await baseDb.testRunCases.findMany({
       where: {
         id: { in: testRunCaseIds },
         isDeleted: false,

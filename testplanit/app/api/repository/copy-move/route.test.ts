@@ -6,13 +6,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockGetServerSession,
   mockEnhance,
-  mockPrismaUserFindUnique,
+  mockDbUserFindUnique,
   mockGetCopyMoveQueue,
   mockGetCurrentTenantId,
 } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
   mockEnhance: vi.fn(),
-  mockPrismaUserFindUnique: vi.fn(),
+  mockDbUserFindUnique: vi.fn(),
   mockGetCopyMoveQueue: vi.fn(),
   mockGetCurrentTenantId: vi.fn(),
 }));
@@ -42,12 +42,12 @@ vi.mock("~/lib/audit/enhanceWithAudit", () => ({
   enhanceWithAudit: (...args: any[]) => mockEnhance(...args),
 }));
 
-// ─── Mock prisma ──────────────────────────────────────────────────────────────
+// ─── Mock baseDb ──────────────────────────────────────────────────────────────
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
-      findUnique: (...args: any[]) => mockPrismaUserFindUnique(...args),
+      findUnique: (...args: any[]) => mockDbUserFindUnique(...args),
     },
   },
 }));
@@ -63,9 +63,9 @@ vi.mock("~/lib/queues", () => ({
   getCopyMoveQueue: (...args: any[]) => mockGetCopyMoveQueue(...args),
 }));
 
-// ─── Mock multiTenantPrisma ───────────────────────────────────────────────────
+// ─── Mock multiTenantDb ───────────────────────────────────────────────────
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: (...args: any[]) => mockGetCurrentTenantId(...args),
 }));
 
@@ -128,7 +128,7 @@ function makeRequest(body: Record<string, unknown>): NextRequest {
 
 function setupDefaultMocks(opts?: { userAccess?: string }) {
   mockGetServerSession.mockResolvedValue(baseSession);
-  mockPrismaUserFindUnique.mockResolvedValue({
+  mockDbUserFindUnique.mockResolvedValue({
     ...baseUser,
     access: opts?.userAccess ?? "ADMIN",
   });
@@ -218,7 +218,7 @@ describe("POST /api/repository/copy-move", () => {
   // Test 5
   it("returns 403 when user cannot read source project", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue(baseUser);
+    mockDbUserFindUnique.mockResolvedValue(baseUser);
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockGetCopyMoveQueue.mockReturnValue(mockQueue);
     mockEnhancedDb.projects.findFirst.mockResolvedValue(null); // source not found
@@ -232,7 +232,7 @@ describe("POST /api/repository/copy-move", () => {
   // Test 6
   it("returns 403 when user cannot access target project", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
-    mockPrismaUserFindUnique.mockResolvedValue(baseUser);
+    mockDbUserFindUnique.mockResolvedValue(baseUser);
     mockEnhance.mockReturnValue(mockEnhancedDb);
     mockGetCopyMoveQueue.mockReturnValue(mockQueue);
     mockEnhancedDb.projects.findFirst
@@ -249,7 +249,7 @@ describe("POST /api/repository/copy-move", () => {
   it("returns 403 when move operation and user lacks source update access", async () => {
     mockGetServerSession.mockResolvedValue(baseSession);
     // User without canAddEdit on TestCaseRepository
-    mockPrismaUserFindUnique.mockResolvedValue({
+    mockDbUserFindUnique.mockResolvedValue({
       ...baseUser,
       access: "USER",
       role: {

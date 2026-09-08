@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { PrismaClient } from "@prisma/client";
-import { performance } from "perf_hooks";
 
-const prisma = new PrismaClient();
+import { performance } from "perf_hooks";
+import { createRawDbClient } from "~/lib/rawDbClient";
+
+const db = createRawDbClient();
 
 interface TreeViewBenchmarkResult {
   projectId: number;
@@ -20,10 +21,10 @@ class TreeViewPerformanceTester {
     projectId: number
   ): Promise<{ folders: number; cases: number }> {
     const [folderCount, caseCount] = await Promise.all([
-      prisma.repositoryFolders.count({
+      db.repositoryFolders.count({
         where: { projectId, isDeleted: false },
       }),
-      prisma.repositoryCases.count({
+      db.repositoryCases.count({
         where: { projectId, isDeleted: false },
       }),
     ]);
@@ -42,7 +43,7 @@ class TreeViewPerformanceTester {
     // Step 1: Fetch folders (what TreeView does first)
     console.log("📁 Fetching folders...");
     const fetchStart = performance.now();
-    const folders = await prisma.repositoryFolders.findMany({
+    const folders = await db.repositoryFolders.findMany({
       where: {
         projectId,
         isDeleted: false,
@@ -53,7 +54,7 @@ class TreeViewPerformanceTester {
 
     // Step 2: Fetch cases for count calculation
     console.log("📋 Fetching test cases...");
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await db.repositoryCases.findMany({
       where: {
         projectId,
         isDeleted: false,
@@ -144,7 +145,7 @@ class TreeViewPerformanceTester {
   > {
     console.log("🔍 Finding projects with most folders...");
 
-    const projects = await prisma.projects.findMany({
+    const projects = await db.projects.findMany({
       select: {
         id: true,
         name: true,
@@ -248,7 +249,7 @@ class TreeViewPerformanceTester {
     } catch (error) {
       console.error("❌ Test suite failed:", error);
     } finally {
-      await prisma.$disconnect();
+      await db.$disconnect();
     }
   }
 
@@ -307,7 +308,7 @@ if (projectArg) {
     .benchmarkTreeView(projectId)
     .then((result) => tester.displayResults(result))
     .catch(console.error)
-    .finally(() => prisma.$disconnect());
+    .finally(() => db.$disconnect());
 } else {
   // Run full suite
   tester.runFullSuite().catch(console.error);

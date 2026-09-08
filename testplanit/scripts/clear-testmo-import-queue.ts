@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { Queue } from "bullmq";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import { TESTMO_IMPORT_QUEUE_NAME } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -21,14 +21,14 @@ async function main() {
   await queue.close();
   console.log("Queue cleared.");
 
-  const prisma = new PrismaClient();
+  const db = createRawDbClient();
   try {
     console.log("Deleting Testmo import jobs...");
-    await prisma.testmoImportDataset.deleteMany();
-    await prisma.testmoImportJob.deleteMany();
+    await db.testmoImportDataset.deleteMany();
+    await db.testmoImportJob.deleteMany();
     console.log("Testmo import job records deleted.");
   } finally {
-    await prisma.$disconnect();
+    await db.$disconnect();
     if (valkeyConnection) {
       await valkeyConnection.quit(); // or .disconnect()
     }

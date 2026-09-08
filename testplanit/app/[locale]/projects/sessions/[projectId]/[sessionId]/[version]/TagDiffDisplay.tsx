@@ -54,7 +54,7 @@ export function TagDiffDisplay({
           className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`}
         />
       )}
-      {prefix && <span className="relative mr-1">{prefix}</span>}
+      {prefix && <span className="relative me-1">{prefix}</span>}
       <div className="relative">
         <TagsDisplay id={tag} name={tag} size="small" />
       </div>

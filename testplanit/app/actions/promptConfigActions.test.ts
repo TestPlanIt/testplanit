@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 import { createPromptConfig, updatePromptConfig } from "./promptConfigActions";
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     $transaction: vi.fn(),
     promptConfig: {
       create: vi.fn(),
@@ -87,7 +87,7 @@ describe("promptConfigActions", () => {
       } as any);
 
       const mockConfig = { id: "config-1", name: "Test Config" };
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -108,7 +108,7 @@ describe("promptConfigActions", () => {
       });
 
       expect(result).toEqual({ status: "success", id: "config-1" });
-      expect(prisma.$transaction).toHaveBeenCalledOnce();
+      expect(baseDb.$transaction).toHaveBeenCalledOnce();
     });
 
     it("should unset existing defaults when creating a new default config", async () => {
@@ -122,7 +122,7 @@ describe("promptConfigActions", () => {
         .fn()
         .mockResolvedValue({ id: "config-2", name: "New Default" });
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -159,7 +159,7 @@ describe("promptConfigActions", () => {
         .fn()
         .mockResolvedValue({ id: "config-3", name: "Non-Default" });
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -187,7 +187,7 @@ describe("promptConfigActions", () => {
         expires: new Date().toISOString(),
       } as any);
 
-      vi.mocked(prisma.$transaction).mockRejectedValue(
+      vi.mocked(baseDb.$transaction).mockRejectedValue(
         new Error("Unique constraint violation")
       );
 
@@ -252,7 +252,7 @@ describe("promptConfigActions", () => {
       const mockUpdate = vi.fn();
       const mockUpsert = vi.fn();
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -297,7 +297,7 @@ describe("promptConfigActions", () => {
 
       const mockUpdateMany = vi.fn();
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -334,7 +334,7 @@ describe("promptConfigActions", () => {
 
       const mockUpsert = vi.fn();
 
-      vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => {
+      vi.mocked(baseDb.$transaction).mockImplementation(async (fn: any) => {
         const tx = {
           $executeRaw: vi.fn().mockResolvedValue([]),
           $queryRaw: vi.fn().mockResolvedValue([]),
@@ -400,7 +400,7 @@ describe("promptConfigActions", () => {
         expires: new Date().toISOString(),
       } as any);
 
-      vi.mocked(prisma.$transaction).mockRejectedValue(
+      vi.mocked(baseDb.$transaction).mockRejectedValue(
         new Error("Record not found")
       );
 

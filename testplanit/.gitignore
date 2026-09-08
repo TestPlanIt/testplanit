@@ -36,9 +36,9 @@ yarn-error.log*
 
 # customer-specific docker configurations
 docker-compose.*.yml
-!docker-compose.prod.yml
 !docker-compose.dev.yml
 !docker-compose.yml
+!docker-compose.prod.yml
 nginx.*.conf
 !nginx.conf
 
@@ -67,6 +67,10 @@ e2e/a11y/.a11y-fixtures.json
 e2e/a11y/playwright-report/
 e2e/a11y/test-results/
 
+# ZenStack v3 generated ORM client (produced by `zenstack generate` / postinstall)
+/zenstack/
+/~schema.prisma
+
 # DB backups
 backups/
 
@@ -74,3 +78,9 @@ app/api/.audit-route-inventory.txt
 app/api/.bearer-token-audit-inventory.txt
 app/actions/.audit-action-inventory.txt
 lib/.queue-add-inventory.md
+
+# Local nginx overrides (custom error pages, etc.): keep the README + *.example
+# tracked; the operator's real *.conf and pages stay local and untracked.
+/nginx-local/*
+!/nginx-local/README.md
+!/nginx-local/*.example

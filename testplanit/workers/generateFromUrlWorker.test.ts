@@ -16,7 +16,7 @@ const {
   mockNormalizeUrl,
   mockHashContent,
   mockFetchRobots,
-  mockGetPrismaClientForJob,
+  mockGetDbClientForJob,
 } = vi.hoisted(() => ({
   mockRedisGet: vi.fn(),
   mockRedisDel: vi.fn(),
@@ -30,7 +30,7 @@ const {
   mockNormalizeUrl: vi.fn(),
   mockHashContent: vi.fn(),
   mockFetchRobots: vi.fn(),
-  mockGetPrismaClientForJob: vi.fn(),
+  mockGetDbClientForJob: vi.fn(),
 }));
 
 const mockRedisClient = {
@@ -58,15 +58,15 @@ vi.mock("../lib/valkey", () => ({
   default: { status: "ready" },
 }));
 
-// ─── Mock multiTenantPrisma ───────────────────────────────────────────────────
+// ─── Mock multiTenantDb ───────────────────────────────────────────────────
 
-const mockPrisma = {
+const mockDb = {
   projects: { findUnique: vi.fn() },
   $disconnect: vi.fn(),
 };
 
-vi.mock("../lib/multiTenantPrisma", () => ({
-  getPrismaClientForJob: (...args: any[]) => mockGetPrismaClientForJob(...args),
+vi.mock("../lib/multiTenantDb", () => ({
+  getDbClientForJob: (...args: any[]) => mockGetDbClientForJob(...args),
   isMultiTenantMode: vi.fn(() => false),
   validateMultiTenantJobData: vi.fn(),
   disconnectAllTenantClients: vi.fn(),
@@ -180,11 +180,11 @@ function setupDefaultMocks() {
   // extractLinks returns empty (no follow)
   mockExtractLinks.mockReturnValue([]);
 
-  // getPrismaClientForJob returns mock prisma
-  mockGetPrismaClientForJob.mockReturnValue(mockPrisma);
+  // getDbClientForJob returns mock db
+  mockGetDbClientForJob.mockReturnValue(mockDb);
 
   // projects.findUnique returns project name for notifications
-  mockPrisma.projects.findUnique.mockResolvedValue({ name: "Test Project" });
+  mockDb.projects.findUnique.mockResolvedValue({ name: "Test Project" });
 
   // No notification errors
   mockCreateNotification.mockResolvedValue("notif-job-1");

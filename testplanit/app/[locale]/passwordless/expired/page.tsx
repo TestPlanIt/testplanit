@@ -16,7 +16,7 @@ export default async function PasswordlessExpiredPage({
   params: Promise<{ locale: Locale }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "auth.passwordless" });
+  const t = await getTranslations({ locale });
 
   return (
     <div className="flex items-center justify-center py-16">
@@ -25,10 +25,14 @@ export default async function PasswordlessExpiredPage({
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <Clock className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold">{t("expiredTitle")}</h2>
-          <p className="text-sm text-muted-foreground">{t("expiredBody")}</p>
+          <h2 className="text-lg font-semibold">
+            {t("auth.passwordless.expiredTitle")}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {t("auth.passwordless.expiredBody")}
+          </p>
           <Button asChild className="mt-2">
-            <Link href="/signin">{t("requestNewLink")}</Link>
+            <Link href="/signin">{t("auth.passwordless.requestNewLink")}</Link>
           </Button>
         </CardContent>
       </Card>

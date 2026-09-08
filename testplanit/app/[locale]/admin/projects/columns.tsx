@@ -12,15 +12,15 @@ import { UserListDisplay } from "@/components/tables/UserListDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
+import type {
   Integration,
   MilestoneTypesAssignment,
   ProjectIntegration,
   Projects,
   User,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { Bug, GitBranchIcon, SquarePen, Trash2 } from "lucide-react";
+import { Bug, GitBranchIcon, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { LlmProviderBadge } from "~/lib/llm/provider-styles";
@@ -69,14 +69,19 @@ export const useColumns = (
         meta: { isPinned: "left" },
         size: 500,
         cell: ({ row }) => (
-          <div className="flex items-start gap-1">
-            <span className="mt-1 shrink-0">
-              <ProjectIcon iconUrl={row.original.iconUrl} />
+          <div className="flex items-start gap-1.5">
+            <span className="mt-0.5 shrink-0">
+              <ProjectIcon
+                iconUrl={row.original.iconUrl}
+                width={16}
+                height={16}
+              />
             </span>
             <ProjectNameCell
               value={row.original.name}
               projectId={row.original.id}
               note={row.original.note}
+              size="sm"
             />
           </div>
         ),
@@ -92,9 +97,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <UserListDisplay
-              users={row.original.effectiveUserIds.map((id) => ({
-                userId: id,
-              }))}
+              filter={{ id: { in: row.original.effectiveUserIds } }}
             />
           </div>
         ),
@@ -307,7 +310,7 @@ export const useColumns = (
         meta: { isPinned: "right" },
         size: 80,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <Button
               variant="ghost"
               size="icon"
@@ -324,7 +327,7 @@ export const useColumns = (
               onClick={() => onDeleteProject?.(row.original)}
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash className="h-4 w-4" />
             </Button>
           </div>
         ),

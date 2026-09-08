@@ -20,6 +20,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 ### Repository Organization
 
 - **Hierarchical folders** - Organize test cases into nested folders for logical grouping
+- **Stacked filters** - Narrow the case list with filter chips across templates, states, creators, automation, tags, issues, and custom fields; counts update as you go and the whole filter set travels in a shareable URL
+- **Saved views** - Name a set of filters and its grouping, then return to it in one click from the repository or the case-selection dialog
 - **Custom fields** - Filter test cases by custom fields
 - **Tags** - Apply tags to categorize and filter test cases across projects
 - **Issues** - Attach issues to quickly navigate between test cases and related issues
@@ -56,9 +58,13 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Flexible run creation** - Create test runs from entire folders, filtered sets, or individual test cases
 - **Magic Select** - Create test runs from similar test cases using AI
 - **Multi-configuration runs** - Execute tests against different configurations (browsers, environments, OS, etc.) in parallel; configurations are scoped to projects
+- **Assignment distribution** - Spread a run's cases across team members in one step, balanced by estimated time or case count, keeping related cases (and whole configurations) together to reduce context switching
 - **Bulk status updates** - Quickly update multiple test results at once
 - **Execution history** - View the complete history of test executions for any run or individual test case
+- **Composition lock** - Freeze which cases are in a run (no adding, removing, or reordering) while execution and assignment continue; lock manually or automatically when a run enters execution, with unlocking reserved for the run's creator or a project admin. Enforced in the UI, API, and database
 - **Immutable completed runs** - Once a run is marked complete its case set, results, and configuration are structurally frozen; admins can edit a single result via the audit-log-tracked override path
+- **Ready-to-complete alerts** - When every case (and iteration) in a manual run has been executed, the people who can close it are notified with a link to review and complete; the run itself is never closed for them
+- **Personal list filters** - Narrow the Test Runs, Sessions, and milestone-detail lists to manual/automated, active/completed, or just the work you take part in; chip selections are remembered per project in your browser
 - **Live updates** - SSE-driven push so multiple testers watching the same run see each other's status changes without refreshing
 - **PDF export** - Per-run PDF with expanded step details and per-iteration values; also available at the milestone level
 - **Forecasting** - Live estimates of remaining duration based on historical pass/fail per case
@@ -97,6 +103,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Due dates** - Set target dates and monitor timeline adherence
 - **Alerts** - Receive notifications when milestone due dates are approaching
 - **Milestone types** - Define custom milestone categories (releases, sprints, etc.)
+- **Jira milestone sync** - Import Jira Fix Versions and Sprints as Milestones, kept fresh via webhooks and periodic refresh, with synced issue membership and per-issue test coverage
 
 ### Issue Tracking Integration
 
@@ -141,11 +148,13 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### LLM Integration
 
-- **Test case generation** - Generate test cases from requirements using AI; optional `includeParameters` toggle (admin-gated) for parameterized output
+- **Test case generation** - Generate test cases from requirements using AI; pick which template fields the AI populates, with the rest excluded from the request and discarded if returned; optional `includeParameters` toggle (admin-gated) for parameterized output
+- **Issue-aware generation context** - Generation reads the test cases already linked to the source issue, wherever they live in the repository, so regenerating extends an issue's coverage instead of repeating it. Applies to every connected issue source — Jira, GitHub, Azure DevOps, and manual issues — and works with no folder involved at all
 - **Generate from URL** - Crawl a webpage or sitemap and generate test cases targeting it
 - **Generate from the Jira panel** - Create test cases from a Jira issue inside the TestPlanIt for Jira app, streamed live and linked back to the issue
 - **Markdown Parsing** - Pasted Markdown is parsed by an LLM into structured cases (name, steps, expected results, custom field values) on the Import Markdown surface
 - **QuickScript AI generation** - Convert manual test cases into automation scripts with AI, optionally informed by your code repository (GitHub, GitLab, Bitbucket, Azure DevOps, Gitea/Forgejo/Gogs); ships with templates spanning web, mobile, API, and Mobilewright targets
+- **QuickScript outside the web app** - Generate automation scripts from the TestPlanIt for Jira panel, the MCP server (`testplanit_cases_generate_script`), and API-token clients (`@testplanit/api`), all backed by the same repository-aware generation
 - **Enhance Writing** - Get AI recommendations to improve writing for any rich text field
 - **Magic Select** - AI-assisted test case selection for quickly building test runs
 - **Auto Tag** - Automatically suggest and apply tags to test cases, test runs, and sessions using AI analysis; incorporates linked-issue context (Jira labels + components, etc.) for sharper suggestions
@@ -203,7 +212,9 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Real-time notification delivery** - Server-sent events push the bell badge instantly, no polling
 - **@mentions** - Tag team members in discussions
 - **Activity feeds** - See recent activity across your projects
-- **Localized UI** - Ship-with-product localization for 13 locales including English, German, Spanish, French, Italian, Japanese, Korean, Dutch, Polish, Portuguese (Brazil), Russian, Turkish, Vietnamese, and Simplified + Traditional Chinese
+- **Link previews** - Pasting a TestPlanIt link into Slack, Teams, or iMessage unfurls a card naming what the link points to. By default the card names only the *kind* of record, so nothing private reaches a channel; instances that prefer richer cards can opt into showing record and project names
+- **Localized UI** - Ship-with-product localization for 17 locales including English, Arabic, Czech, German, Spanish, French, Italian, Japanese, Korean, Dutch, Polish, Portuguese (Brazil), Russian, Turkish, Vietnamese, and Simplified + Traditional Chinese
+- **Right-to-left (RTL) support** - The entire interface mirrors automatically for right-to-left languages such as Arabic
 
 ### Import & Export
 

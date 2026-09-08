@@ -1,4 +1,4 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 
 /**
  * Builds a Prisma where clause for project access control.

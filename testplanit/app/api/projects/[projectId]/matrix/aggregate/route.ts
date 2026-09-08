@@ -1,4 +1,4 @@
-import { ApplicationArea } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -7,7 +7,7 @@ import {
   MatrixCellCapExceededError,
   runMatrixAggregation,
 } from "~/lib/matrix/matrixAggregation";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { matrixFiltersBodySchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
 
@@ -112,7 +112,7 @@ export async function POST(
 
     try {
       const axes = await runMatrixAggregation(
-        prisma,
+        baseDb,
         projectId,
         parsed.data.filters,
         viewerCanReadSensitive

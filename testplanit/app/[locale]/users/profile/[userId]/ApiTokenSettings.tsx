@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import {
   AlertDialog,
@@ -40,12 +42,11 @@ import {
   KeyRound,
   Loader2,
   Plus,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { useDeleteApiToken, useFindManyApiToken } from "~/lib/hooks";
 
 interface ApiTokenSettingsProps {
   userId: string;
@@ -84,12 +85,14 @@ export function ApiTokenSettings({
   const [newToken, setNewToken] = useState<NewTokenData | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const { data: tokens, refetch: refetchTokens } = useFindManyApiToken({
+  const { data: tokens, refetch: refetchTokens } = useClientQueries(
+    schema
+  ).apiToken.useFindMany({
     where: { userId, isActive: true },
     orderBy: { createdAt: "desc" },
   });
 
-  const deleteToken = useDeleteApiToken();
+  const deleteToken = useClientQueries(schema).apiToken.useDelete();
 
   async function handleCreateToken() {
     if (!newTokenName.trim()) {
@@ -285,7 +288,7 @@ export function ApiTokenSettings({
                       onClick={() => openDeleteDialog(token.id)}
                       className="h-8 w-8 text-destructive hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>

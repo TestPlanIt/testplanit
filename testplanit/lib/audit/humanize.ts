@@ -11,7 +11,7 @@
  * dep. A repeat lookup of the same (catalog, id) inside the TTL window is served from cache (no
  * second DB call); after expiry the next lookup re-queries.
  *
- * The prisma client is INJECTED (not a top-level import) so the worker passes prismaBase and the
+ * The db client is INJECTED (not a top-level import) so the worker passes rawDb and the
  * unit suite passes a spy. A missing catalog row falls back to the raw id and NEVER throws — a
  * humanization miss must not block an audit write.
  */
@@ -289,14 +289,59 @@ async function resolveName(
  * column — the linked tag/issue — verified against ROLLUP_MAP.fkCol. humanize()
  * keeps ONLY that column, relabels it to its entity, and resolves its name.
  */
+/**
+ * Human-authored TipTap rich-text columns on root tables (mirrors the SAF-02 note in
+ * scripts/trigger-registry.ts). These are captured raw in the DataChangeLog diff, so here we flatten
+ * each side to a truncated plain-text string — "note: <old text…> → <new text…>" — exactly as case
+ * Text-Long field values render via renderFieldValue. A column absent from this map is untouched.
+ */
+const RICH_TEXT_COLUMNS: Record<string, ReadonlySet<string>> = {
+  Milestones: new Set(["note", "docs"]),
+  Sessions: new Set(["note", "mission"]),
+  Issue: new Set(["note"]),
+  Comment: new Set(["content"]),
+};
+
+/** Flatten a raw TipTap column value in a diff: null stays null; a present doc → plain text or "(empty)". */
+function renderRichTextValue(value: number | string | null): string | null {
+  if (value === null || value === undefined) return null;
+  return tiptapToPlainText(value) || "(empty)";
+}
+
+/**
+ * Coerce an un-mapped diff value for display. `changed_cols` can carry raw Json columns — a TipTap
+ * doc (e.g. TestRunResults/TestRunCases `notes`) or arbitrary JSON (e.g. `evidence`) — that the
+ * generic path would otherwise pass through as an object and `String()` would render as the literal
+ * "[object Object]" (visible in the audit detail view). Flatten a TipTap doc to plain text; render
+ * any other object/array as compact JSON (empty {}/[] → "(empty)"); pass scalars through untouched.
+ */
+function coerceDiffValue(
+  value: number | string | null
+): number | string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "object") return value;
+  // A TipTap document on any table (even one not in RICH_TEXT_COLUMNS) → readable plain text.
+  if ((value as { type?: unknown }).type === "doc") {
+    return renderRichTextValue(value);
+  }
+  try {
+    const json = JSON.stringify(value);
+    if (json === "{}" || json === "[]") return "(empty)";
+    return json.length > 140 ? `${json.slice(0, 140)}…` : json;
+  } catch {
+    return "(unserializable)";
+  }
+}
+
 const M2M_JOIN_TABLES: Record<
   string,
-  { col: "A" | "B"; label: string; model: string }
+  { col: string; label: string; model: string }
 > = {
-  _RepositoryCasesToTags: { col: "B", label: "Tags", model: "Tags" },
+  // Explicit join tables use named columns; implicit ones still use "A"/"B".
+  RepositoryCaseTag: { col: "tagId", label: "Tags", model: "Tags" },
+  RepositoryCaseIssue: { col: "issueId", label: "Issues", model: "Issue" },
   _SessionsToTags: { col: "B", label: "Tags", model: "Tags" },
   _TagsToTestRuns: { col: "A", label: "Tags", model: "Tags" },
-  _IssueToRepositoryCases: { col: "A", label: "Issues", model: "Issue" },
   _IssueToTestRuns: { col: "A", label: "Issues", model: "Issue" },
   _IssueToTestRunResults: { col: "A", label: "Issues", model: "Issue" },
   _IssueToTestRunStepResults: { col: "A", label: "Issues", model: "Issue" },
@@ -340,11 +385,28 @@ export async function humanize(
     };
   }
 
+  const richTextColumns = RICH_TEXT_COLUMNS[tableName];
+
   const out: HumanizedCols = {};
   for (const [column, entry] of Object.entries(changedCols)) {
+    // Root-table TipTap columns: flatten each side to readable plain text instead of dumping the
+    // raw doc JSON into the audit diff.
+    if (richTextColumns?.has(column)) {
+      out[column] = {
+        old: renderRichTextValue(entry.old),
+        new: renderRichTextValue(entry.new),
+      };
+      continue;
+    }
     const catalog = catalogFor(tableName, column);
     if (!catalog) {
-      out[column] = entry;
+      // No FK catalog / not rich-text: coerce so a raw Json column (notes doc,
+      // evidence, …) never reaches the diff as an object → "[object Object]".
+      out[column] = {
+        ...entry,
+        old: coerceDiffValue(entry.old),
+        new: coerceDiffValue(entry.new),
+      };
       continue;
     }
     out[column] = {
@@ -367,11 +429,11 @@ export async function humanize(
 }
 
 /**
- * The catalog lookup the worker injects, backed by the raw (extension-free) prismaBase client.
+ * The catalog lookup the worker injects, backed by the raw (extension-free) rawDb client.
  * Maps a catalog table name to its Prisma delegate + display column, selecting only that column.
  * Returns null on an unknown table or a missing row (humanize() then falls back to the raw id).
  */
-export function createPrismaLookup(prisma: any): LookupFn {
+export function createDbLookup(db: any): LookupFn {
   const delegates: Record<
     string,
     { delegate: string; field: string; stringId?: boolean }
@@ -409,7 +471,7 @@ export function createPrismaLookup(prisma: any): LookupFn {
     if (table === "CaseFieldType" || table === "ResultFieldType") {
       const delegate =
         table === "ResultFieldType" ? "resultFields" : "caseFields";
-      const row = await prisma[delegate].findUnique({
+      const row = await db[delegate].findUnique({
         where: { id: Number(id) },
         select: { type: { select: { type: true } } },
       });
@@ -419,7 +481,7 @@ export function createPrismaLookup(prisma: any): LookupFn {
     if (!meta) {
       return null;
     }
-    const row = await prisma[meta.delegate].findUnique({
+    const row = await db[meta.delegate].findUnique({
       where: { id: meta.stringId ? String(id) : Number(id) },
       select: { [meta.field]: true },
     });

@@ -11,7 +11,7 @@ The Dashboard is the main landing page you see after logging in to TestPlanIt. I
 
 The Dashboard uses a two-panel resizable layout that you can customize to fit your workflow:
 
-- **Left Panel**: Your Assignments - shows test runs and sessions assigned to you
+- **Left Panel**: Your Assignments - shows reviews waiting on you, plus test runs and sessions assigned to you
 - **Right Panel**: Your Projects - displays all projects you have access to
 - **Resize Handle**: Drag the handle between panels to adjust their widths
 - **Collapse Button**: Click the chevron button to collapse/expand the left panel
@@ -20,7 +20,23 @@ The panel sizes are automatically saved and will be restored when you return to 
 
 ## Your Assignments (Left Panel)
 
-The left panel displays all work items currently assigned to you, including test runs and exploratory sessions.
+The left panel displays all work items currently assigned to you, including review requests, test runs, and exploratory sessions.
+
+### Pending Reviews
+
+At the top of the panel, above your own work, are the review requests waiting on your decision — the same queue as the [Reviews inbox](reviews-inbox.md) Pending tab, and the same count as the inbox badge in the top navigation:
+
+- **Request Information**:
+  - The test case, test run, or session under review (clickable link to it)
+  - Project name
+  - The workflow transition being reviewed (**From → To**)
+  - Who requested it and how long ago
+
+- **Behavior**:
+  - Sorted oldest first, so the most overdue request is on top
+  - The five oldest are listed; when there are more, a link opens the full inbox
+  - Approve, request changes, or reject from the entity's own page
+  - Only shown when the review feature is enabled and requests are assigned to you (directly or through a role you hold)
 
 ### Work Schedule Visualization
 
@@ -70,7 +86,7 @@ This section displays exploratory testing sessions currently assigned to you:
 
 ### No Work Assigned
 
-If you have no pending test runs or active sessions, the dashboard displays a friendly message indicating you have no current assignments.
+If you have no pending reviews, test runs, or active sessions, the dashboard displays a friendly message indicating you have no current assignments.
 
 ## Your Projects (Right Panel)
 

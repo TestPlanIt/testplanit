@@ -14,6 +14,10 @@ const virtualListMock = vi.hoisted(() => ({
   lastOptions: null as Record<string, unknown> | null,
 }));
 
+vi.mock("~/hooks/useRecordKeyHits", () => ({
+  useRecordKeyHits: () => [],
+}));
+
 vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
   useVirtualizedInfiniteList: (opts: {
     count: number;
@@ -61,7 +65,19 @@ const mockRouterPush = vi.fn();
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({ push: mockRouterPush, replace: vi.fn(), back: vi.fn() }),
   usePathname: () => "/",
-  Link: ({ children }: { children: React.ReactNode }) => children,
+  Link: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: React.ReactNode;
+    href: string;
+    [key: string]: unknown;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
   redirect: vi.fn(),
 }));
 
@@ -447,6 +463,86 @@ describe("UnifiedSearch Component", () => {
     });
   });
 
+  it("should show the automated icon for automated test case results", async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 3,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: {
+              id: 1,
+              name: "Imported Automated Case",
+              source: "JUNIT",
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+          {
+            id: 2,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 0.9,
+            source: {
+              id: 2,
+              name: "Flagged Automated Case",
+              source: "MANUAL",
+              automated: true,
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+          {
+            id: 3,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 0.8,
+            source: {
+              id: 3,
+              name: "Manual Case",
+              source: "MANUAL",
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+          {
+            id: 4,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 0.7,
+            source: {
+              id: 4,
+              name: "Deleted Automated Case",
+              source: "JUNIT",
+              isDeleted: true,
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+        ],
+        took: 100,
+      }),
+    });
+
+    render(<UnifiedSearch />);
+
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(searchInput, { target: { value: "case" } });
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("test-case-result")).toHaveLength(4);
+    });
+
+    // Row icons: bot for the JUNIT-sourced case and the automated-flagged
+    // case, the plain entity icon (mocked as file-text) for the manual case,
+    // and trash for the deleted case — deleted wins over automated.
+    // (The metadata bot badge renders inside BadgeList, which is mocked to a
+    // count, so only row icons are counted here.)
+    expect(screen.getAllByTestId("icon-bot")).toHaveLength(2);
+    expect(screen.getAllByTestId("icon-file-text")).toHaveLength(1);
+    expect(screen.getAllByTestId("icon-trash-2")).toHaveLength(1);
+  });
+
   it("should show no results message when search returns empty", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
@@ -550,6 +646,111 @@ describe("UnifiedSearch Component", () => {
         entityType: SearchableEntityType.REPOSITORY_CASE,
       })
     );
+  });
+
+  it("should render the result card as a link and close on a plain click", async () => {
+    const mockOnResultClick = vi.fn();
+
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 1,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: {
+              id: 1,
+              name: "Test Case 1",
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+        ],
+        took: 100,
+      }),
+    });
+
+    render(
+      <UnifiedSearch
+        onResultClick={mockOnResultClick}
+        getResultHref={(hit) => `/projects/repository/1/${hit.id}`}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(searchInput, { target: { value: "test" } });
+
+    const link = await screen.findByTestId(
+      `search-result-link-${SearchableEntityType.REPOSITORY_CASE}-1`
+    );
+    expect(link).toHaveAttribute("href", "/projects/repository/1/1");
+
+    // Command-click opens a new tab; the search UI stays as it is.
+    fireEvent.click(link, { metaKey: true });
+    expect(mockOnResultClick).not.toHaveBeenCalled();
+
+    fireEvent.click(link);
+    expect(mockOnResultClick).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1,
+        entityType: SearchableEntityType.REPOSITORY_CASE,
+      })
+    );
+  });
+
+  it("should open the result in a new tab from the title icon", async () => {
+    const mockOnResultClick = vi.fn();
+    const openSpy = vi
+      .spyOn(window, "open")
+      .mockReturnValue(null as unknown as Window);
+
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 1,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: {
+              id: 1,
+              name: "Test Case 1",
+              projectName: "Test Project",
+              projectId: 1,
+            },
+          },
+        ],
+        took: 100,
+      }),
+    });
+
+    render(
+      <UnifiedSearch
+        onResultClick={mockOnResultClick}
+        getResultHref={(hit) => `/projects/repository/1/${hit.id}`}
+      />
+    );
+
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(searchInput, { target: { value: "test" } });
+
+    const newTabButton = await screen.findByTestId(
+      `search-result-new-tab-${SearchableEntityType.REPOSITORY_CASE}-1`
+    );
+    fireEvent.click(newTabButton);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      "/projects/repository/1/1",
+      "_blank",
+      "noopener,noreferrer"
+    );
+    // The card behind it must not navigate in place as well.
+    expect(mockOnResultClick).not.toHaveBeenCalled();
+
+    openSpy.mockRestore();
   });
 
   it("should show filters sheet when filter button is clicked", () => {

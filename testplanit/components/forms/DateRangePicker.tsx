@@ -20,7 +20,6 @@ import {
   endOfQuarter,
   endOfWeek,
   endOfYear,
-  format,
   startOfDay,
   startOfMonth,
   startOfQuarter,
@@ -36,7 +35,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { cn, type ClassValue } from "~/utils";
-import { getDateFnsLocale } from "~/utils/locales";
+import { formatDateRange } from "~/utils/dateFormat";
 
 interface DateRangePickerProps {
   value: DateRange | undefined;
@@ -241,28 +240,13 @@ export function DateRangePicker({
     return found?.range.label || tReports("dateRange.custom");
   };
 
-  const formatDateRange = (dateRange: DateRange | undefined) => {
-    if (!dateRange?.from) return null;
-    const formatStr = "MMM d, yyyy";
-    const localeObj = getDateFnsLocale(locale);
-
-    if (dateRange.to) {
-      return `${format(dateRange.from, formatStr, { locale: localeObj })} - ${format(
-        dateRange.to,
-        formatStr,
-        { locale: localeObj }
-      )}`;
-    }
-    return format(dateRange.from, formatStr, { locale: localeObj });
-  };
-
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           className={cn(
-            "justify-start text-left font-normal",
+            "justify-start text-start font-normal",
             !value && "text-muted-foreground",
             className
           )}
@@ -270,11 +254,11 @@ export function DateRangePicker({
           data-testid={buttonTestId}
         >
           {value ? (
-            formatDateRange(value)
+            formatDateRange(value.from, value.to, { locale })
           ) : (
             <span>{placeholder || tReports("dateRange.selectDateRange")}</span>
           )}
-          <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+          <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="center" sideOffset={5}>
@@ -292,7 +276,7 @@ export function DateRangePicker({
                 data-testid="date-range-preset-select"
               >
                 {getSelectedLabel()}
-                <CalendarDays className="ml-2 h-4 w-4 opacity-50" />
+                <CalendarDays className="ms-2 h-4 w-4 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">

@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---------------------------------------------------------------------------
-// Mock the raw Prisma client — SyncService imports `prisma` from
-// "@/lib/prismaBase" (aliased to `defaultPrisma`).
+// Mock rawDb — SyncService imports `rawDb` from "@/lib/rawDb"
 // ---------------------------------------------------------------------------
 const mockIpFindUnique = vi.fn();
 const mockIpUpdate = vi.fn();
@@ -10,8 +9,8 @@ const mockIntegrationFindUnique = vi.fn();
 const mockProjectsFindUnique = vi.fn();
 const mockIssueUpsert = vi.fn();
 
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     integrationProject: {
       findUnique: (...args: any[]) => mockIpFindUnique(...args),
       update: (...args: any[]) => mockIpUpdate(...args),
@@ -45,7 +44,7 @@ vi.mock("../IntegrationManager", () => ({
 vi.mock("~/services/issueSearch", () => ({
   syncIssueToElasticsearch: vi.fn().mockResolvedValue(undefined),
 }));
-vi.mock("../../multiTenantPrisma", () => ({
+vi.mock("../../multiTenantDb", () => ({
   getCurrentTenantId: vi.fn().mockReturnValue(undefined),
 }));
 vi.mock("../../queues", () => ({

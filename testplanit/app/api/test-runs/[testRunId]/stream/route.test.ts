@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
 vi.mock("~/server/auth", () => ({ authOptions: {} }));
-vi.mock("@zenstackhq/runtime", () => ({ enhance: vi.fn() }));
+vi.mock("~/lib/zenstack", () => ({ getAuthDb: vi.fn() }));
 
-vi.mock("~/lib/multiTenantPrisma", () => ({
+vi.mock("~/lib/multiTenantDb", () => ({
   getCurrentTenantId: vi.fn().mockReturnValue("acme"),
 }));
 
@@ -13,16 +13,16 @@ vi.mock("~/lib/valkey", () => ({
   createSubscriberClient: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: vi.fn() },
     testRuns: { findFirst: vi.fn() },
   },
 }));
 
-import { enhance } from "@zenstackhq/runtime";
+import { getAuthDb } from "~/lib/zenstack";
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { createSubscriberClient } from "~/lib/valkey";
 import { GET } from "./route";
 
@@ -76,7 +76,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "user-1" },
     } as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue(null);
     const res = await GET(req("/api/test-runs/42/stream"), {
       params: Promise.resolve({ testRunId: "42" }),
     });
@@ -87,11 +87,11 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "user-1" },
     } as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue({
       id: "user-1",
       access: null,
     } as never);
-    vi.mocked(enhance).mockReturnValue({
+    vi.mocked(getAuthDb).mockReturnValue({
       testRuns: { findFirst: vi.fn().mockResolvedValue(null) },
     } as never);
     const res = await GET(req("/api/test-runs/42/stream"), {
@@ -104,11 +104,11 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "admin-1" },
     } as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue({
       id: "admin-1",
       access: "ADMIN",
     } as never);
-    vi.mocked(prisma.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
+    vi.mocked(baseDb.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
     vi.mocked(createSubscriberClient).mockReturnValue(null);
     const res = await GET(req("/api/test-runs/42/stream"), {
       params: Promise.resolve({ testRunId: "42" }),
@@ -121,11 +121,11 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "admin-1" },
     } as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue({
       id: "admin-1",
       access: "ADMIN",
     } as never);
-    vi.mocked(prisma.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
+    vi.mocked(baseDb.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
     const subscriber = makeSubscriberMock();
     vi.mocked(createSubscriberClient).mockReturnValue(subscriber as never);
 
@@ -152,11 +152,11 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(getServerSession).mockResolvedValue({
       user: { id: "admin-1" },
     } as never);
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(baseDb.user.findUnique).mockResolvedValue({
       id: "admin-1",
       access: "ADMIN",
     } as never);
-    vi.mocked(prisma.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
+    vi.mocked(baseDb.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
     const subscriber = makeSubscriberMock();
     vi.mocked(createSubscriberClient).mockReturnValue(subscriber as never);
 

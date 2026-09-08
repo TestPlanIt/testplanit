@@ -1,4 +1,6 @@
-import type { Prisma } from "@prisma/client";
+import type {
+  MilestonesInclude,
+} from "@db/input";
 import { extractProseMirrorText } from "../cases/shared.js";
 import {
   computeStatusRollup,
@@ -25,7 +27,7 @@ const SESSIONS_CAP_PLUS_ONE = MILESTONE_LINKED_SESSIONS_CAP + 1;
 const CHILDREN_CAP_PLUS_ONE = MILESTONE_CHILDREN_CAP + 1;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Typed includes — `as const satisfies Prisma.MilestonesInclude` so reintroducing
+// Typed includes — `as const satisfies MilestonesInclude` so reintroducing
 // an unknown column produces TS2353 at compile time.
 //
 // No `icon` selection: the schema only carries a 1-character `FieldIcon.name`
@@ -43,7 +45,7 @@ export const MILESTONE_ROW_INCLUDE = {
   _count: { select: { children: true, comments: true } },
   testRuns: { where: { isDeleted: false }, select: { id: true } },
   sessions: { where: { isDeleted: false }, select: { id: true } },
-} as const satisfies Prisma.MilestonesInclude;
+} as const satisfies MilestonesInclude;
 
 // Detail include — extends the row include with the three capped linked arrays.
 // Each nested array uses `take: cap + 1` so the get handler can detect overflow
@@ -85,7 +87,7 @@ export const MILESTONE_DETAIL_INCLUDE = {
       _count: { select: { children: true } },
     },
   },
-} as const satisfies Prisma.MilestonesInclude;
+} as const satisfies MilestonesInclude;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Raw row types

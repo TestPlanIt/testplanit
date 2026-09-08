@@ -14,7 +14,8 @@ import {
  * Asserts:
  *  - The pending tab shows assigned requests and exposes approve, request-
  *    changes, and reject action buttons in the row.
- *  - Approving via the dialog persists APPROVED.
+ *  - Approving via the dialog persists APPROVED, moves the case into the
+ *    requested gated state, and consumes the approval.
  *  - Decided tab includes APPROVED / CHANGES_REQUESTED / REJECTED but NOT
  *    CANCELLED — codifies the filter the blog had wrong.
  */
@@ -56,6 +57,7 @@ test.describe("Reviewer inbox decisions", () => {
     const url = baseURL!;
     let currentStateId: number | undefined;
     let reviewRequestId: string | undefined;
+    let caseId: number | undefined;
 
     await test.step("Create project and enable gated review workflow", async () => {
       const projectId = await api.createProject(
@@ -72,11 +74,20 @@ test.describe("Reviewer inbox decisions", () => {
 
       await setProjectReviewWorkflowEnabled(request, url, projectId, true);
       {
+        // Gate ordering matters now that approval applies the transition:
+        // `assertReviewGatePasses` collects gated CASES states across the
+        // whole install, so a gate another spec creates concurrently would
+        // sit in this case's path and silently block the move. The default
+        // offset (1000) is what every other review spec uses, which makes
+        // those gates tie with this one; offset 1 puts this gate strictly
+        // below them so nothing else can land between the case's current
+        // state and its target.
         const gated = await createGatedTestWorkflow(
           request,
           url,
           projectId,
-          "CASES"
+          "CASES",
+          { orderOffset: 1 }
         );
         gatedWorkflowId = gated.id;
       }
@@ -97,7 +108,7 @@ test.describe("Reviewer inbox decisions", () => {
         projectId,
         `Inbox-Approve ${Date.now()}`
       );
-      const caseId = await api.createTestCaseWithState(
+      caseId = await api.createTestCaseWithState(
         projectId,
         folderId,
         `Inbox-Approve case ${Date.now()}`,
@@ -156,6 +167,39 @@ test.describe("Reviewer inbox decisions", () => {
       const result = await res.json();
       expect(result?.data?.status).toBe("APPROVED");
       expect(result?.data?.decidedAt).toBeTruthy();
+    });
+
+    await test.step("Verify approval applied the transition and consumed the request", async () => {
+      // Approving IS the transition — the reviewer's decision moves the case
+      // into the requested gated state, so the requester never has to repeat
+      // the state change by hand. The approval is consumed in the same act.
+      const caseRes = await request.get(
+        `${url}/api/model/repositoryCases/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: caseId },
+              select: { stateId: true },
+            }),
+          },
+        }
+      );
+      const caseResult = await caseRes.json();
+      expect(caseResult?.data?.stateId).toBe(gatedWorkflowId);
+
+      const consumedRes = await request.get(
+        `${url}/api/model/reviewRequest/findFirst`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { id: reviewRequestId },
+              select: { consumedAt: true },
+            }),
+          },
+        }
+      );
+      const consumedResult = await consumedRes.json();
+      expect(consumedResult?.data?.consumedAt).toBeTruthy();
     });
   });
 

@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -33,7 +35,8 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Prisma, SharedStepGroup, Steps as PrismaSteps } from "@prisma/client";
+import type { SharedStepGroup, Steps as DbSteps } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import type { Editor } from "@tiptap/core";
 import {
   CircleSlash2,
@@ -42,7 +45,7 @@ import {
   MoveVertical,
   PlusCircle,
   SearchCheck,
-  Trash2,
+  Trash,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -56,12 +59,6 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  useCreateManySharedStepItem,
-  useCreateSharedStepGroup,
-  useFindManySharedStepGroup,
-  useFindManySharedStepItem,
-} from "~/lib/hooks";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import SortableStep from "./SortableStep";
 
@@ -73,7 +70,7 @@ interface SharedStepGroupWithCount extends SharedStepGroup {
 }
 
 // Define an enriched step type that includes the sharedStepGroup relation
-interface EnrichedStep extends PrismaSteps {
+interface EnrichedStep extends DbSteps {
   sharedStepGroup?: (SharedStepGroup & { name: string | null }) | null;
 }
 
@@ -184,7 +181,7 @@ const StepItem: React.FC<StepItemProps> = ({
     data: sharedItemsData,
     isLoading: sharedItemsIsLoading,
     // error: sharedItemsError, // TODO: Handle error display
-  } = useFindManySharedStepItem(
+  } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId: field.sharedStepGroupId,
@@ -232,13 +229,13 @@ const StepItem: React.FC<StepItemProps> = ({
                   <div
                     {...attributes}
                     {...listeners}
-                    className="cursor-ns-resize mr-2"
+                    className="cursor-ns-resize me-2"
                   >
                     <MoveVertical className="h-4 w-4" />
                   </div>
                 )}
                 <FormLabel className="font-bold flex items-center">
-                  <Layers className="h-5 w-5 ml-2 mr-1" />
+                  <Layers className="h-5 w-5 ms-2 me-1" />
                   {t("sharedStepGroupTitle", {
                     name: field.sharedStepGroupName || "",
                   })}
@@ -259,10 +256,10 @@ const StepItem: React.FC<StepItemProps> = ({
                     <Button
                       type="button"
                       variant="destructive"
-                      className="ml-auto"
+                      className="ms-auto"
                       data-testid={`delete-step-${index}`}
                     >
-                      <Trash2 className="h-5 w-5" />
+                      <Trash className="h-5 w-5" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-fit max-w-md" side="bottom">
@@ -286,7 +283,7 @@ const StepItem: React.FC<StepItemProps> = ({
                           handlePopoverOpenChange(index, false);
                         }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash className="h-4 w-4" />
                         {t("removeBlockButton")}
                       </Button>
                     </div>
@@ -296,7 +293,7 @@ const StepItem: React.FC<StepItemProps> = ({
             </div>
             {/* Display individual shared steps (read-only) */}
             {sharedItemsIsLoading && (
-              <p className="ml-6 text-sm text-muted-foreground">
+              <p className="ms-6 text-sm text-muted-foreground">
                 {t("loadingSharedStepsItems")}
               </p>
             )}
@@ -346,10 +343,10 @@ const StepItem: React.FC<StepItemProps> = ({
                   return (
                     <div
                       key={item.id || itemIndex}
-                      className="ml-6 mt-1 p-2 border-l-2 border-dashed border-primary/20"
+                      className="ms-6 mt-1 p-2 border-s-2 border-dashed border-primary/20"
                     >
                       <Label className="mb-1 flex items-center font-semibold">
-                        <ListOrdered className="mr-1 h-5 w-5 shrink-0" />
+                        <ListOrdered className="me-1 h-5 w-5 shrink-0" />
                         {tCommon("fields.step")} {item.order + 1}
                       </Label>
 
@@ -360,7 +357,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         className="min-h-10 bg-background/50 p-1 rounded text-sm"
                       />
                       <Label className="mt-4 mb-1 flex items-center font-semibold">
-                        <SearchCheck className="mr-1 h-5 w-5 shrink-0" />
+                        <SearchCheck className="me-1 h-5 w-5 shrink-0" />
                         {tCommon("fields.expectedResult")}
                       </Label>
                       <TipTapEditor
@@ -376,7 +373,7 @@ const StepItem: React.FC<StepItemProps> = ({
               </div>
             )}
             {sharedItemsData && sharedItemsData.length === 0 && (
-              <p className="ml-6 text-sm text-muted-foreground">
+              <p className="ms-6 text-sm text-muted-foreground">
                 {t("noStepsInSharedGroup")}
               </p>
             )}
@@ -402,7 +399,7 @@ const StepItem: React.FC<StepItemProps> = ({
                   id={`select-step-${index}`}
                   checked={isSelected}
                   onCheckedChange={() => onToggleSelection(index)}
-                  className="mr-2 ml-1"
+                  className="me-2 ms-1"
                   aria-label={`Select step ${index + 1}`}
                 />
               )}
@@ -417,7 +414,7 @@ const StepItem: React.FC<StepItemProps> = ({
               )}
               <FormLabel className="font-bold flex items-center">
                 <ListOrdered
-                  className={`h-5 w-5 ml-${readOnly ? "2" : "6"} mr-1`}
+                  className={`h-5 w-5 ml-${readOnly ? "2" : "6"} me-1`}
                 />
                 {tCommon("fields.step")} {index + 1}
               </FormLabel>
@@ -437,10 +434,10 @@ const StepItem: React.FC<StepItemProps> = ({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="ml-auto"
+                    className="ms-auto"
                     data-testid={`delete-step-${index}`}
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash className="h-5 w-5" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-fit" side="bottom">
@@ -450,7 +447,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       <Button
                         type="button"
                         variant="secondary"
-                        className="ml-auto"
+                        className="ms-auto"
                         onClick={() => handlePopoverOpenChange(index, false)}
                       >
                         <CircleSlash2 className="h-4 w-4" />
@@ -465,9 +462,9 @@ const StepItem: React.FC<StepItemProps> = ({
                           handleRemove(index);
                           handlePopoverOpenChange(index, false);
                         }}
-                        className="ml-auto"
+                        className="ms-auto"
                       >
-                        <Trash2 className="h-4 w-4" /> {t("delete")}
+                        <Trash className="h-4 w-4" /> {t("delete")}
                       </Button>
                     </div>
                   </div>
@@ -489,7 +486,7 @@ const StepItem: React.FC<StepItemProps> = ({
           </div>
           <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground mb-2 rounded-t-none">
             <FormLabel className="font-bold flex items-center">
-              <SearchCheck className="h-5 w-5 mr-1" />
+              <SearchCheck className="h-5 w-5 me-1" />
               {tCommon("fields.expectedResult")}
             </FormLabel>
             <FormControl>
@@ -536,15 +533,17 @@ function StepsForm<T extends FieldValues = FieldValues>({
     name: name as string,
   });
 
-  const createSharedStepGroupMutation = useCreateSharedStepGroup();
-  const createManySharedStepItemMutation = useCreateManySharedStepItem();
+  const createSharedStepGroupMutation =
+    useClientQueries(schema).sharedStepGroup.useCreate();
+  const createManySharedStepItemMutation =
+    useClientQueries(schema).sharedStepItem.useCreateMany();
 
   // Moved hook to top level
   const {
     data: allSharedStepGroupsData, // Renamed for clarity
     isLoading: isLoadingAllSharedStepGroups,
     // error: allSharedStepGroupsError, // TODO: Handle error display if needed
-  } = useFindManySharedStepGroup({
+  } = useClientQueries(schema).sharedStepGroup.useFindMany({
     where: { projectId: projectId, isDeleted: false },
     orderBy: { name: "asc" },
     include: { _count: { select: { items: true } } },
@@ -566,7 +565,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
     data: itemsOfSelectedSharedGroup,
     isLoading: isLoadingItemsOfSelectedSharedGroup,
     // error: errorItemsOfSelectedSharedGroup, // TODO: Handle error
-  } = useFindManySharedStepItem(
+  } = useClientQueries(schema).sharedStepItem.useFindMany(
     {
       where: {
         sharedStepGroupId: selectedSharedGroupInDialog?.id,
@@ -581,9 +580,9 @@ function StepsForm<T extends FieldValues = FieldValues>({
   // Using a ref to store the "processed" version of the steps prop.
   const processedStepsRef = useRef<string | null>(null);
 
-  // Helper function to map Prisma.JsonValue to TipTap content, similar to parseJsonToTipTap
-  const mapPrismaJsonToTipTapContent = (
-    data: Prisma.JsonValue | undefined | null
+  // Helper function to map JsonValue to TipTap content, similar to parseJsonToTipTap
+  const mapDbJsonToTipTapContent = (
+    data: JsonValue | undefined | null
   ): object => {
     if (data === null || data === undefined) return emptyEditorContent;
     if (typeof data === "string") {
@@ -644,10 +643,10 @@ function StepsForm<T extends FieldValues = FieldValues>({
             originalId: typeof stepP.id === "number" ? stepP.id : undefined,
             step: isSharedPlaceholder
               ? emptyEditorContent
-              : mapPrismaJsonToTipTapContent(stepP.step),
+              : mapDbJsonToTipTapContent(stepP.step),
             expectedResult: isSharedPlaceholder
               ? emptyEditorContent
-              : mapPrismaJsonToTipTapContent(stepP.expectedResult),
+              : mapDbJsonToTipTapContent(stepP.expectedResult),
             isShared: isSharedPlaceholder,
             sharedStepGroupId:
               typeof stepP.sharedStepGroupId === "number"
@@ -777,9 +776,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
       });
 
       if (!newSharedGroup || !newSharedGroup.id) {
-        toast.error(
-          tRepoSteps("notifications.failedToCreateSharedGroupError" as any)
-        );
+        toast.error(tRepoSteps("notifications.failedToCreateSharedGroupError"));
         return;
       }
 
@@ -970,7 +967,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <Layers className="h-5 w-5 mr-1" />
+              <Layers className="h-5 w-5 me-1" />
               {tRepoSteps("createSharedSteps", {
                 number: selectedStepIndices.length || 0,
               })}
@@ -1014,7 +1011,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <Layers className="h-5 w-5 mr-1" />
+              <Layers className="h-5 w-5 me-1" />
               {tRepoSteps("selectSharedStepsTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -1031,7 +1028,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
               renderOption={(group: SharedStepGroupWithCount) => (
                 <div className="flex items-center justify-between w-full">
                   {group.name}
-                  <span className="text-xs text-muted-foreground ml-1">
+                  <span className="text-xs text-muted-foreground ms-1">
                     {tRepoSteps("stepsCountLabel", {
                       count: group._count?.items || 0,
                     })}
@@ -1101,7 +1098,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
                       return (
                         <div
                           key={item.id || itemIndex}
-                          className="p-2 border-l-2 border-dashed border-primary/20 bg-background/70 rounded-r-md"
+                          className="p-2 border-s-2 border-dashed border-primary/20 bg-background/70 rounded-e-md"
                         >
                           <div className="font-semibold text-xs mb-1 text-foreground/80">
                             {tCommon("fields.step")} {item.order + 1}
@@ -1129,7 +1126,7 @@ function StepsForm<T extends FieldValues = FieldValues>({
               {itemsOfSelectedSharedGroup &&
                 itemsOfSelectedSharedGroup.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    {tRepoSteps("noStepsInSelectedSharedGroup" as any)}
+                    {tRepoSteps("noStepsInSelectedSharedGroup")}
                   </p>
                 )}
             </div>

@@ -1,6 +1,6 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 // Type + pure aggregation helper live in a client-safe sibling so the
@@ -19,11 +19,11 @@ import type {
 } from "./testRunSummary-shared";
 
 /**
- * Accept either the singleton client or a `Prisma.TransactionClient` so the
+ * Accept either the singleton client or a `TxClient` so the
  * webhook emitter can pass `tx` (Plan 02-05 Task 5.2) and read post-write
  * state inside the same transaction that produced the emission.
  */
-type PrismaLike = typeof prisma | Prisma.TransactionClient;
+type DbLike = typeof baseDb | TxClient;
 
 /**
  * Compute the test run summary data shape used by the in-app summary UI
@@ -35,13 +35,13 @@ type PrismaLike = typeof prisma | Prisma.TransactionClient;
  *   array (requires extra LATERAL joins — only used by the in-app detail
  *   view; the webhook emitter omits it).
  * @param options.client Optional client override; defaults to the singleton.
- *   Pass a `Prisma.TransactionClient` to read inside an active tx.
+ *   Pass a `TxClient` to read inside an active tx.
  */
 export async function getTestRunSummary(
   testRunId: number,
-  options: { includeCaseDetails?: boolean; client?: PrismaLike } = {}
+  options: { includeCaseDetails?: boolean; client?: DbLike } = {}
 ): Promise<TestRunSummaryData> {
-  const client: PrismaLike = options.client ?? prisma;
+  const client: DbLike = options.client ?? baseDb;
   const includeCaseDetails = options.includeCaseDetails ?? false;
 
   // Get test run type and workflow + linked issues
@@ -132,7 +132,7 @@ export async function getRegularRunSummary(
   testRunId: number,
   forecastManual: number | null,
   includeCaseDetails: boolean,
-  client: PrismaLike = prisma
+  client: DbLike = baseDb
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
@@ -159,6 +159,7 @@ export async function getRegularRunSummary(
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
     WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
     GROUP BY trc."statusId", s.name, c.value, s."isCompleted", s."isSuccess", s."isFailure"
     ORDER BY trc."statusId" ASC NULLS LAST
   `;
@@ -178,6 +179,7 @@ export async function getRegularRunSummary(
     FROM "TestRunResults" trr
     JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
     WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
       AND trr."isDeleted" = false
   `;
 
@@ -190,7 +192,24 @@ export async function getRegularRunSummary(
     JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     LEFT JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
     WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
       AND trr.id IS NULL
+  `;
+
+  // Execution window: the run starts at its earliest result and ends at its
+  // latest. Results on a soft-deleted case are excluded, same as the elapsed
+  // total above, so removing a case can't strand the window on it.
+  const resultWindow = await client.$queryRaw<
+    Array<{ firstResultAt: Date | null; lastResultAt: Date | null }>
+  >`
+    SELECT
+      MIN(trr."executedAt") as "firstResultAt",
+      MAX(trr."executedAt") as "lastResultAt"
+    FROM "TestRunResults" trr
+    JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
+    WHERE trc."testRunId" = ${testRunId}
+      AND trc."isDeleted" = false
+      AND trr."isDeleted" = false
   `;
 
   let caseDetails: Array<{
@@ -255,6 +274,7 @@ export async function getRegularRunSummary(
           AND trr."isDeleted" = false
       ) result_count ON true
       WHERE trc."testRunId" = ${testRunId}
+        AND trc."isDeleted" = false
       ORDER BY trc."order" ASC
       LIMIT 1000
     `;
@@ -281,6 +301,8 @@ export async function getRegularRunSummary(
     TestRunSummaryData,
     "testRunType" | "issues" | "commentsCount"
   > = {
+    firstResultAt: resultWindow[0]?.firstResultAt?.toISOString() ?? null,
+    lastResultAt: resultWindow[0]?.lastResultAt?.toISOString() ?? null,
     totalCases,
     statusCounts: statusCounts.map((item) => ({
       statusId: item.statusId,
@@ -308,7 +330,7 @@ export async function getRegularRunSummary(
 
 export async function getJUnitRunSummary(
   testRunId: number,
-  client: PrismaLike = prisma
+  client: DbLike = baseDb
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
@@ -345,6 +367,20 @@ export async function getJUnitRunSummary(
     Array<{ totalTime: number | null }>
   >`
     SELECT COALESCE(SUM(jtr.time), 0) as "totalTime"
+    FROM "JUnitTestResult" jtr
+    JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
+    WHERE jts."testRunId" = ${testRunId}
+  `;
+
+  // Execution window. A reporter only sometimes sends `executedAt`, so fall
+  // back to the import time — an automated run with no timestamps at all would
+  // otherwise show no start date.
+  const resultWindow = await client.$queryRaw<
+    Array<{ firstResultAt: Date | null; lastResultAt: Date | null }>
+  >`
+    SELECT
+      MIN(COALESCE(jtr."executedAt", jtr."createdAt")) as "firstResultAt",
+      MAX(COALESCE(jtr."executedAt", jtr."createdAt")) as "lastResultAt"
     FROM "JUnitTestResult" jtr
     JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
     WHERE jts."testRunId" = ${testRunId}
@@ -447,6 +483,8 @@ export async function getJUnitRunSummary(
     totalTests > 0 ? Math.min((completedTests / totalTests) * 100, 100) : 0;
 
   return {
+    firstResultAt: resultWindow[0]?.firstResultAt?.toISOString() ?? null,
+    lastResultAt: resultWindow[0]?.lastResultAt?.toISOString() ?? null,
     totalCases: totalTests,
     statusCounts,
     completionRate,
@@ -481,7 +519,7 @@ export async function getJUnitRunSummary(
  */
 export async function getPerCaseIterationCounts(
   testRunId: number,
-  client: PrismaLike = prisma
+  client: DbLike = baseDb
 ): Promise<PerCaseIterationCounts[]> {
   const rows = await client.testRunCases.findMany({
     where: { testRunId, isDeleted: false },

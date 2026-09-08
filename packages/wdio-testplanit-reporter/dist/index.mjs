@@ -281,6 +281,7 @@ var TestPlanItReporter = class _TestPlanItReporter extends WDIOReporter {
       customFieldCaseMap: /* @__PURE__ */ new Map(),
       folderPathMap: /* @__PURE__ */ new Map(),
       caseStepsMap: /* @__PURE__ */ new Map(),
+      caseAutomatedMap: /* @__PURE__ */ new Map(),
       statusIds: {},
       initialized: false,
       stats: {
@@ -902,6 +903,29 @@ ${error.stack}` : "";
     }
   }
   /**
+   * Explicit-ID variant of the automated flip: only the case id from the
+   * title is known, so fetch the case once per run (memoized) and flip it to
+   * `automated: true` when it isn't already. Skips the write when the case is
+   * already automated and never throws — a failure logs and is swallowed so
+   * it can't abort reporting the result.
+   */
+  ensureLinkedCaseAutomated(caseId) {
+    let promise = this.state.caseAutomatedMap.get(caseId);
+    if (promise) return promise;
+    promise = (async () => {
+      try {
+        const testCase = await this.client.getTestCase(caseId);
+        if (testCase?.automated === true) return;
+        await this.client.updateTestCase(caseId, { automated: true });
+        this.log("Flipped case to automated:", caseId);
+      } catch (error) {
+        this.logError(`Failed to set automated on case ${caseId}; continuing`, error);
+      }
+    })();
+    this.state.caseAutomatedMap.set(caseId, promise);
+    return promise;
+  }
+  /**
    * Get the full suite path as a string
    */
   getFullSuiteName() {
@@ -977,6 +1001,7 @@ ${error.stack}` : "";
         platform: this.state.capabilities?.platformName || process.platform,
         screenshots: [],
         retryAttempt: 0,
+        worker: plan.cid || void 0,
         uid: `${plan.cid}_${fullTitle}`,
         specFile: this.currentSpec,
         cucumberStepTitles: stepTitles
@@ -1077,6 +1102,16 @@ ${error.stack}` : "";
   onTestFail(test) {
     this.handleTestEnd(test, "failed");
   }
+  /**
+   * A failing attempt that WebdriverIO is about to retry (Mocha/Jasmine
+   * per-test retries) arrives here INSTEAD of onTestFail. Report it like any
+   * failed attempt so a fail-then-pass sequence is visible as flaky in
+   * TestPlanIt; the retry itself still flows through onTestPass/onTestFail.
+   */
+  onTestRetry(test) {
+    if (this.detectedFramework === "cucumber") return;
+    this.handleTestEnd(test, "failed");
+  }
   onTestSkip(test) {
     this.handleTestEnd(test, "skipped");
   }
@@ -1135,6 +1170,7 @@ ${error.stack}` : "";
       platform: this.state.capabilities?.platformName || process.platform,
       screenshots: [],
       retryAttempt: test.retries || 0,
+      worker: test.cid || this.currentCid || void 0,
       uid,
       specFile: this.currentSpec,
       commandOutput,
@@ -1180,6 +1216,7 @@ ${error.stack}` : "";
       if (caseIds.length > 0) {
         repositoryCaseId = caseIds[0];
         this.log("DEBUG: Using case ID from title:", repositoryCaseId);
+        await this.ensureLinkedCaseAutomated(repositoryCaseId);
         if (this.reporterOptions.overwriteSteps) {
           await this.writeScenarioSteps(caseIds[0], "found", result);
         }
@@ -1297,6 +1334,7 @@ ${error.stack}` : "";
         time: durationInSeconds,
         executedAt: result.finishedAt,
         file: result.specFile,
+        worker: result.worker,
         systemOut: result.commandOutput
       });
       this.log("Created JUnit test result:", junitResult.id, "(type:", junitType + ")");

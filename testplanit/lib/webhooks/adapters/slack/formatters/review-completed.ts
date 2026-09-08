@@ -12,10 +12,7 @@ import {
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
 type ReviewDecisionOutcome =
-  | "APPROVED"
-  | "CHANGES_REQUESTED"
-  | "REJECTED"
-  | "CANCELLED";
+  "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
 
 interface ReviewCompletedData {
   reviewRequestId: string;

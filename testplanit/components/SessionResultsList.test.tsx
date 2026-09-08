@@ -51,27 +51,41 @@ const mockField = vi.hoisted(() => ({
   ref: vi.fn(),
 }));
 
-// --- ZenStack hook mocks ---
-vi.mock("~/lib/hooks", () => ({
-  useFindManySessionResults: vi.fn(() => ({
-    data: stableEmptyArray,
-    isLoading: false,
-    refetch: vi.fn(),
-  })),
-  useFindManyStatus: vi.fn(() => ({
-    data: stableEmptyArray,
-    isLoading: false,
-  })),
-  useFindFirstProjects: vi.fn(() => ({ data: null, isLoading: false })),
-  useFindManyTemplateResultAssignment: vi.fn(() => ({
-    data: stableEmptyArray,
-    isLoading: false,
-  })),
-  useUpdateSessionResults: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useCreateAttachments: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useUpdateAttachments: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useCreateResultFieldValues: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useUpdateResultFieldValues: vi.fn(() => ({ mutateAsync: vi.fn() })),
+// --- ZenStack hook mocks (v3 grouped client) ---
+// The two read hooks the tests drive are hoisted so per-test mockReturnValue
+// works; the rest return inert stubs the component just needs present.
+const { useFindManySessionResults, useFindManyStatus } = vi.hoisted(() => {
+  const empty: unknown[] = [];
+  return {
+    useFindManySessionResults: vi.fn(() => ({
+      data: empty,
+      isLoading: false,
+      refetch: vi.fn(),
+    })),
+    useFindManyStatus: vi.fn(() => ({ data: empty, isLoading: false })),
+  };
+});
+
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    sessionResults: {
+      useFindMany: useFindManySessionResults,
+      useUpdate: vi.fn(() => ({ mutateAsync: vi.fn() })),
+    },
+    status: { useFindMany: useFindManyStatus },
+    projects: { useFindFirst: vi.fn(() => ({ data: null, isLoading: false })) },
+    templateResultAssignment: {
+      useFindMany: vi.fn(() => ({ data: stableEmptyArray, isLoading: false })),
+    },
+    attachments: {
+      useCreate: vi.fn(() => ({ mutateAsync: vi.fn() })),
+      useUpdate: vi.fn(() => ({ mutateAsync: vi.fn() })),
+    },
+    resultFieldValues: {
+      useCreate: vi.fn(() => ({ mutateAsync: vi.fn() })),
+      useUpdate: vi.fn(() => ({ mutateAsync: vi.fn() })),
+    },
+  }),
 }));
 
 // --- next-auth ---
@@ -276,8 +290,6 @@ const buildMockResult = (overrides: Partial<any> = {}) => ({
   ...overrides,
 });
 
-// Import after vi.mock
-import { useFindManySessionResults, useFindManyStatus } from "~/lib/hooks";
 import { SessionResultsList } from "./SessionResultsList";
 
 beforeEach(() => {

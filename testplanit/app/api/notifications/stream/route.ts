@@ -2,7 +2,7 @@ import IORedis from "ioredis";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import os from "os";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
 import {
   tenantBroadcastChannel,
   userChannel,

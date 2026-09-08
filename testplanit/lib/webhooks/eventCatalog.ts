@@ -31,6 +31,7 @@ export interface WebhookEventDefinition {
     | "session"
     | "issue"
     | "review"
+    | "dataset"
     | "system";
   /** One-sentence human-readable description. */
   description: string;
@@ -48,6 +49,7 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
       "id",
       "projectId",
       "name",
+      "displayKey",
       "source",
       "automated",
       "createdAt",
@@ -57,13 +59,13 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     name: "case.updated",
     category: "test-case",
     description: "A test case's metadata, steps, or field values changed.",
-    payloadKeys: ["id", "projectId", "name", "diff", "version"],
+    payloadKeys: ["id", "projectId", "name", "displayKey", "diff", "version"],
   },
   {
     name: "case.deleted",
     category: "test-case",
     description: "A test case was soft-deleted.",
-    payloadKeys: ["id", "projectId"],
+    payloadKeys: ["id", "projectId", "displayKey"],
   },
   {
     name: "case.review_requested",
@@ -89,7 +91,14 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     name: "test_run.created",
     category: "test-run",
     description: "A test run was created.",
-    payloadKeys: ["id", "projectId", "name", "configId", "milestoneId"],
+    payloadKeys: [
+      "id",
+      "projectId",
+      "name",
+      "displayKey",
+      "configId",
+      "milestoneId",
+    ],
   },
   {
     name: "test_run.duplicated",
@@ -102,13 +111,13 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     category: "test-run",
     description:
       "A test run was marked complete (state moved into a terminal state).",
-    payloadKeys: ["id", "projectId", "completedAt", "summary"],
+    payloadKeys: ["id", "projectId", "displayKey", "completedAt", "summary"],
   },
   {
     name: "test_run.state_changed",
     category: "test-run",
     description: "A test run's workflow state transitioned.",
-    payloadKeys: ["id", "projectId", "fromStateId", "toStateId"],
+    payloadKeys: ["id", "projectId", "displayKey", "fromStateId", "toStateId"],
   },
   {
     name: "test_run.result_added",
@@ -119,6 +128,7 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
       "id",
       "testRunId",
       "testRunCaseId",
+      "displayKey",
       "statusId",
       "isPass",
       "isFail",
@@ -154,6 +164,7 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
       "iterationId",
       "testRunId",
       "testRunCaseId",
+      "displayKey",
       "statusId",
       "rowLabel",
     ],
@@ -164,7 +175,7 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     name: "session.created",
     category: "session",
     description: "An exploratory session was created.",
-    payloadKeys: ["id", "projectId", "name"],
+    payloadKeys: ["id", "projectId", "name", "displayKey"],
   },
   {
     name: "session.duplicated",
@@ -176,13 +187,13 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     name: "session.completed",
     category: "session",
     description: "A session was marked complete.",
-    payloadKeys: ["id", "projectId", "completedAt"],
+    payloadKeys: ["id", "projectId", "displayKey", "completedAt"],
   },
   {
     name: "session.state_changed",
     category: "session",
     description: "A session's workflow state transitioned.",
-    payloadKeys: ["id", "projectId", "fromStateId", "toStateId"],
+    payloadKeys: ["id", "projectId", "displayKey", "fromStateId", "toStateId"],
   },
   {
     name: "session.result_added",
@@ -228,6 +239,39 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     category: "issue",
     description: "An issue was soft-deleted (unlinked).",
     payloadKeys: ["id", "projectId"],
+  },
+
+  // --- Dataset row leases (999.12 — test-data reservation) ---
+  {
+    name: "dataset.row.acquired",
+    category: "dataset",
+    description:
+      "A parallel-run orchestrator leased (checked out) a dataset row. Payload carries identifiers only — never the row's values.",
+    payloadKeys: [
+      "dataSetId",
+      "rowId",
+      "rowIndex",
+      "label",
+      "projectId",
+      "leasedById",
+      "leaseExpiresAt",
+    ],
+  },
+  {
+    name: "dataset.row.released",
+    category: "dataset",
+    description:
+      "A leased dataset row was released — explicitly by the holder (reason=released) or reaped after its TTL by the sweep (reason=expired).",
+    payloadKeys: [
+      "dataSetId",
+      "rowId",
+      "rowIndex",
+      "label",
+      "projectId",
+      "leasedById",
+      "leaseExpiresAt",
+      "reason",
+    ],
   },
 
   // --- System ---

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnDef } from "@tanstack/react-table";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface CodeRepositoryRow {
@@ -162,7 +162,7 @@ export function getColumns({
       size: 100,
       meta: { isPinned: "right" },
       cell: ({ row }) => (
-        <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+        <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
           <Button
             variant="outline"
             size="icon"
@@ -179,7 +179,7 @@ export function getColumns({
             onClick={() => onDelete(row.original)}
             aria-label={tCommon("actions.delete")}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
           </Button>
         </div>
       ),

@@ -7,9 +7,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Groups } from "@prisma/client";
+import type { Groups } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
@@ -49,7 +49,7 @@ export const useColumns = (
               {isScimManaged && (
                 <Badge
                   variant="secondary"
-                  className="ml-1"
+                  className="ms-1"
                   title={tGroups("scimManagedTooltip")}
                   data-testid="scim-managed-group-badge"
                 >
@@ -70,7 +70,9 @@ export const useColumns = (
         size: 75,
         cell: ({ row }) => (
           <div className="text-center">
-            <UserListDisplay users={row.original.assignedUsers} />
+            <UserListDisplay
+              filter={{ groups: { some: { groupId: row.original.id } } }}
+            />
           </div>
         ),
       },
@@ -130,11 +132,11 @@ export const useColumns = (
               disabled={isScimManaged}
               aria-label={t("actions.delete")}
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash className="h-5 w-5" />
             </Button>
           );
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
               <Button
                 variant="ghost"
                 className="px-2 py-1 h-auto"

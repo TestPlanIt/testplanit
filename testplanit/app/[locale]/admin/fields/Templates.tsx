@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DataTable } from "@/components/tables/DataTable";
 import {
   AlertDialog,
@@ -13,19 +15,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Templates } from "@prisma/client";
-import { CirclePlus, LayoutTemplate } from "lucide-react";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
+import type { Templates } from "~/zenstack/models";
+import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  useCreateManyTemplateProjectAssignment,
-  useDeleteManyTemplateProjectAssignment,
-  useFindManyProjects,
-  useFindManyTemplates,
-  useUpdateManyTemplates,
-  useUpdateTemplates,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddTemplate } from "./AddTemplate";
 import { DeleteTemplate } from "./DeleteTemplate";
@@ -59,12 +55,12 @@ export default function TemplateComponent() {
   const [deletingTemplate, setDeletingTemplate] =
     useState<ExtendedTemplates | null>(null);
 
-  const { mutateAsync: updateTemplate } = useUpdateTemplates();
-  const { mutateAsync: updateManyTemplate } = useUpdateManyTemplates();
+  const { mutateAsync: updateTemplate } =
+    useClientQueries(schema).templates.useUpdate();
   const { mutateAsync: createManyTemplateProjectAssignment } =
-    useCreateManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useCreateMany();
   const { mutateAsync: deleteManyTemplateProjectAssignment } =
-    useDeleteManyTemplateProjectAssignment();
+    useClientQueries(schema).templateProjectAssignment.useDeleteMany();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render,
   // which would cause useCallback/useMemo to recompute and remount table cells.
@@ -73,11 +69,11 @@ export default function TemplateComponent() {
     updateTemplateRef.current = updateTemplate;
   });
 
-  const { data: projects } = useFindManyProjects({
+  const { data: projects } = useClientQueries(schema).projects.useFindMany({
     where: { isDeleted: false },
   });
 
-  const { data, isLoading } = useFindManyTemplates(
+  const { data, isLoading } = useClientQueries(schema).templates.useFindMany(
     {
       where: { isDeleted: false },
       orderBy: sortConfig
@@ -119,10 +115,8 @@ export default function TemplateComponent() {
     setIsAlertDialogOpen(false);
     try {
       if (selectedTemplateId !== undefined) {
-        await updateManyTemplate({
-          where: { isDefault: true },
-          data: { isDefault: false },
-        });
+        // The single-default DB trigger (tpl_single_default_templates) clears
+        // the previous default atomically.
         await updateTemplate({
           where: { id: selectedTemplateId },
           data: { isDefault: true, isEnabled: true },
@@ -180,6 +174,19 @@ export default function TemplateComponent() {
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   if (status === "loading") return null;
 
   if (session && session.user.access === "ADMIN") {
@@ -187,31 +194,29 @@ export default function TemplateComponent() {
       <>
         <Card data-testid="templates-section">
           <CardHeader>
-            <div className="flex items-center justify-between text-primary">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                <CardTitle>
-                  <div className="flex items-center">
-                    <LayoutTemplate className="mr-1" />
-                    {tGlobal("common.labels.templates")}
-                  </div>
-                </CardTitle>
-              </div>
-              <div>
-                <Button
-                  data-testid="add-template-button"
-                  onClick={() => setAddTemplateOpen(true)}
-                >
-                  <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">{t("add.title")}</span>
-                </Button>
-                {addTemplateOpen && (
-                  <AddTemplate
-                    open={addTemplateOpen}
-                    onClose={() => setAddTemplateOpen(false)}
-                  />
-                )}
-              </div>
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle>{tGlobal("common.labels.templates")}</CardTitle>
+                <HelpPopover helpKey="templates" />
+              </SectionHeader>
+              <Button
+                data-testid="add-template-button"
+                onClick={() => setAddTemplateOpen(true)}
+                aria-label={t("add.title")}
+                className="group gap-0 transition-all duration-200 hover:gap-2"
+              >
+                <CirclePlus className="h-4 w-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                  {t("add.title")}
+                </span>
+              </Button>
             </div>
+            {addTemplateOpen && (
+              <AddTemplate
+                open={addTemplateOpen}
+                onClose={() => setAddTemplateOpen(false)}
+              />
+            )}
           </CardHeader>
           <CardContent>
             <div className="flex justify-between">
@@ -223,6 +228,8 @@ export default function TemplateComponent() {
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
                 isLoading={isLoading}
+                storageKey="admin-templates"
+                onSortColumn={handleSortColumn}
               />
             </div>
           </CardContent>
@@ -249,7 +256,7 @@ export default function TemplateComponent() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleConfirmToggleDefault()}
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {tCommon("actions.confirm")}
               </AlertDialogAction>

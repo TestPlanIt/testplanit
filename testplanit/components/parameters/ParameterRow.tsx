@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { TestCaseParameter } from "@prisma/client";
-import { GripVertical, Lock, Pencil, Trash2 } from "lucide-react";
+import type { TestCaseParameter } from "~/zenstack/models";
+import { GripVertical, Lock, Pencil, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -173,7 +173,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
           onClick={() => setDeleteOpen(true)}
           data-testid="parameter-row-delete-button"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash className="w-4 h-4" />
         </Button>
       </div>
 

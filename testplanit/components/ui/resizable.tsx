@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -52,19 +53,47 @@ const ResizablePanelGroup = ({
   className,
   direction = "horizontal",
   autoSaveId,
+  id,
   ...props
 }: ResizablePanelGroupProps) => {
   const storageKey = autoSaveId ? `${STORAGE_PREFIX}${autoSaveId}` : undefined;
+  // react-resizable-panels v4 renders the group element's `data-testid` from its
+  // `id` prop and ignores a passed `data-testid`. Map an explicit data-testid onto
+  // `id` so callers' test ids (e.g. "repository-layout") stay queryable. The
+  // data-testid wins over a separate `id` because the rendered testid is the hook
+  // callers (and tests) query; the v4 id is only used internally for layout state.
+  const dataTestId = (props as Record<string, unknown>)["data-testid"] as
+    string | undefined;
+  const resolvedId = dataTestId ?? id;
 
-  const [defaultLayout] = useState<Layout | undefined>(() => {
-    if (!storageKey || typeof window === "undefined") return undefined;
+  // Render nothing but a same-sized placeholder until mounted, so the panel
+  // group NEVER server-renders.
+  //
+  // The stored layout is only readable on the client. Reading it during the
+  // initial render made the server (no `window` -> no layout) and the
+  // hydration render (layout restored from localStorage) emit different
+  // panel styles. React reports the mismatch, says "this won't be patched
+  // up", and keeps the SERVER markup — leaving every panel pinned to its
+  // server-rendered `flex-basis` with `flex-grow: 0`. The separator still
+  // hydrates and still drags; it just moves nothing.
+  //
+  // That failure is invisible until someone resizes once: with no saved
+  // layout both sides agree, so it works. The first successful resize writes
+  // localStorage, and every load after it is broken.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const defaultLayout = useMemo<Layout | undefined>(() => {
+    if (!mounted || !storageKey || typeof window === "undefined") {
+      return undefined;
+    }
     try {
       const stored = window.localStorage.getItem(storageKey);
       return stored ? (JSON.parse(stored) as Layout) : undefined;
     } catch {
       return undefined;
     }
-  });
+  }, [mounted, storageKey]);
 
   const onLayoutChanged = useCallback(
     (layout: Layout) => {
@@ -78,17 +107,25 @@ const ResizablePanelGroup = ({
     [storageKey]
   );
 
+  const groupClassName = cn(
+    "flex h-full w-full",
+    direction === "vertical" && "flex-col",
+    className
+  );
+
+  // Same box, same size — so the pre-mount frame does not shift layout.
+  if (!mounted) {
+    return <div className={groupClassName} data-testid={dataTestId} />;
+  }
+
   return (
     <OrientationContext.Provider value={direction}>
       <ResizablePrimitive.Group
+        id={resolvedId}
         orientation={direction}
         defaultLayout={defaultLayout}
         onLayoutChanged={storageKey ? onLayoutChanged : undefined}
-        className={cn(
-          "flex h-full w-full",
-          direction === "vertical" && "flex-col",
-          className
-        )}
+        className={groupClassName}
         {...props}
       />
     </OrientationContext.Provider>
@@ -129,7 +166,6 @@ const asPercentSize = (
 const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
   (
     {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       order: _order,
       onCollapse,
       onExpand,
@@ -138,10 +174,17 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
       defaultSize,
       minSize,
       maxSize,
+      id,
       ...props
     },
     ref
   ) => {
+    // v4 renders the panel element's `data-testid` from its `id` and ignores a
+    // passed `data-testid`. Map an explicit data-testid onto `id` (preferred over
+    // a separate id) so panel test ids like "repository-left-panel" stay queryable.
+    const dataTestId = (props as Record<string, unknown>)["data-testid"] as
+      string | undefined;
+    const resolvedId = dataTestId ?? id;
     // Track collapse transitions to re-create v3 onCollapse/onExpand. null = not
     // yet initialised, so the first (mount) onResize doesn't fire a spurious event.
     const collapsedRef = useRef<boolean | null>(null);
@@ -155,6 +198,10 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
         const isCollapsed = pct <= collapsedThreshold;
         if (collapsedRef.current === null) {
           collapsedRef.current = isCollapsed;
+          // Callers assume panels start expanded, so an expanded mount fires
+          // nothing — but a panel restored collapsed (autoSaveId) must fire
+          // onCollapse or the caller's state starts out of sync.
+          if (isCollapsed) onCollapse?.();
           return;
         }
         if (isCollapsed !== collapsedRef.current) {
@@ -171,6 +218,7 @@ const ResizablePanel = forwardRef<PanelImperativeHandle, ResizablePanelProps>(
     return (
       <ResizablePrimitive.Panel
         panelRef={ref}
+        id={resolvedId}
         collapsedSize={asPercentSize(collapsedSize)}
         defaultSize={asPercentSize(defaultSize)}
         minSize={asPercentSize(minSize)}

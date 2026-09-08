@@ -1,5 +1,6 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useQuery } from "@tanstack/react-query";
-import { useFindUniqueProjects } from "~/lib/hooks";
 
 /**
  * Result shape exposed by useReviewFeatureEnabled.
@@ -29,7 +30,7 @@ export interface UseReviewFeatureEnabledResult {
  *     GET /api/config/review-feature (so the AppConfig value itself does not
  *     ship to the client bundle and the read is auth-scoped centrally).
  *   - projectEnabled — `Projects.reviewWorkflowEnabled` read via the
- *     ZenStack-generated `useFindUniqueProjects` hook. Only fetched when a
+ *     ZenStack-generated `useClientQueries(schema).projects.useFindUnique` hook. Only fetched when a
  *     numeric `projectId` is supplied; otherwise reports `undefined` and
  *     `enabled` collapses to `systemEnabled`.
  *
@@ -81,14 +82,15 @@ export function useReviewFeatureEnabled(
   // surfaces as a 404-shaped null rather than a "happens to match row id
   // 0" surprise.
   const PROJECT_ID_SENTINEL = -1;
-  const { data: projectData, isLoading: projectLoading } =
-    useFindUniqueProjects(
-      {
-        where: { id: hasProjectId ? projectId : PROJECT_ID_SENTINEL },
-        select: { reviewWorkflowEnabled: true },
-      },
-      { enabled: hasProjectId }
-    );
+  const { data: projectData, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
+    {
+      where: { id: hasProjectId ? projectId : PROJECT_ID_SENTINEL },
+      select: { reviewWorkflowEnabled: true },
+    },
+    { enabled: hasProjectId }
+  );
 
   const systemEnabled = systemData?.enabled;
   const projectEnabled = hasProjectId

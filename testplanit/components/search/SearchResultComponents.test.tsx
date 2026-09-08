@@ -146,7 +146,7 @@ describe("SearchResultComponents", () => {
 
       const badge = screen.getByText("Completed");
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass("text-success");
+      expect(badge).toHaveClass("bg-success", "text-success-foreground");
     });
 
     it("should render active status with warning color", () => {
@@ -160,7 +160,7 @@ describe("SearchResultComponents", () => {
 
       const badge = screen.getByText("Active");
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass("text-warning");
+      expect(badge).toHaveClass("bg-warning", "text-warning-foreground");
     });
 
     it("should apply custom className", () => {

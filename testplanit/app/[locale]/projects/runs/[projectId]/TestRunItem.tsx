@@ -1,6 +1,8 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { RecordKeyMenuItem } from "@/components/RecordKeyMenuItem";
 import { MemberList } from "@/components/MemberList";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import {
@@ -23,14 +25,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { ApplicationArea, Configurations } from "@prisma/client";
+import { ItemRow, ItemRowChip } from "@/components/ItemRow";
+import { ApplicationArea } from "~/zenstack/models";
 import {
   Bot,
   CheckCircle,
   Combine,
-  Copy,
+  CopyPlus,
   Flame,
   LinkIcon,
+  Lock,
   MoreVertical,
   Pencil,
 } from "lucide-react";
@@ -39,66 +43,63 @@ import { useParams } from "next/navigation";
 import React, { useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyTestRunCases } from "~/lib/hooks";
-import { Link, useRouter } from "~/lib/navigation";
+import { useTestRunResultWindow } from "~/hooks/useResultWindow";
+import { useRouter } from "~/lib/navigation";
 import type { IconName } from "~/types/globals";
-import { cn } from "~/utils";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
 
-export interface TestRunItemProps {
-  testRun: {
+/**
+ * The narrowest run shape this row renders. Declared structurally, and loose
+ * enough to take a query payload as-is (nullable dates, a JSON `note`), so any
+ * page that can select these fields — the runs list, the project overview
+ * panel — gets the same row instead of hand-rolling its own markup.
+ */
+export interface TestRunItemData {
+  id: number;
+  name: string;
+  isCompleted: boolean;
+  compositionLockedAt?: Date | string | null;
+  testRunType: string;
+  configuration?: { name: string } | null;
+  configurationGroupId?: string | null;
+  createdAt?: Date | string | null;
+  state: {
     id: number;
     name: string;
-    isCompleted: boolean;
-    testRunType: string;
-    configuration: Configurations | null;
-    configurationGroupId: string | null;
-    createdAt?: Date | string;
-    state: {
-      id: number;
-      name: string;
-      icon?: {
-        name: string;
-      };
-      color?: {
-        value: string;
-      };
-    };
-    note?: string;
-    completedAt?: Date;
-    milestone?: {
-      id: number;
-      name: string;
-      startedAt?: Date | null;
-      completedAt?: Date | null;
-      isCompleted?: boolean;
-      milestoneType: {
-        id: number;
-        name: string;
-        icon: { name: string } | null;
-      };
-    };
-    projectId: number;
-    testCases?: {
-      id: number;
-      repositoryCaseId: number;
-    }[];
-    createdBy: {
-      id: string;
-      name: string;
-    };
-    forecastManual: number | null;
-    forecastAutomated: number | null;
+    icon?: { name: string } | null;
+    color?: { value: string } | null;
   };
-  milestonePath?: string;
+  note?: unknown;
+  completedAt?: Date | string | null;
+  milestone?:
+    React.ComponentProps<typeof MilestoneIconAndName>["milestone"] | null;
+  projectId: number;
+  createdBy: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface TestRunItemProps {
+  testRun: TestRunItemData;
   isNew?: boolean;
   showMilestone?: boolean;
   onDuplicate?: (run: { id: number; name: string }) => void;
-  onComplete?: (testRun: any) => void;
-  isAdmin?: boolean;
+  /** Falls back to the route param; pass it where the route isn't the runs
+   *  page (e.g. the project overview panel). */
+  projectId?: number;
+  /** Set false for read-only surfaces that shouldn't offer row actions. */
+  showActions?: boolean;
   summaryData?: TestRunSummaryData;
+  /** True while the page's batch summary fetch is in flight — keeps each row
+   * from firing its own per-run summary fallback in the meantime. */
+  summaryLoading?: boolean;
   pendingRequest?: PendingReviewSummary;
+  /** Multi-select support: shows a leading checkbox when provided. */
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
 }
 
 const TestRunItem: React.FC<TestRunItemProps> = ({
@@ -106,16 +107,24 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   isNew,
   showMilestone = true,
   onDuplicate,
+  projectId: projectIdProp,
+  showActions = true,
   summaryData,
+  summaryLoading = false,
   pendingRequest,
+  selectable = false,
+  selected = false,
+  onSelectedChange,
 }) => {
   const tCommon = useTranslations("common");
-  const { projectId } = useParams();
+  const t = useTranslations();
+  const params = useParams();
   const router = useRouter();
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
   // Fetch permissions
-  const numericProjectId = parseInt(projectId as string, 10);
+  const numericProjectId =
+    projectIdProp ?? parseInt(params.projectId as string, 10);
   const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId, ApplicationArea.TestRuns);
   const canCloseRun = testRunPermissions?.canClose ?? false;
@@ -127,44 +136,68 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const showCompleteItem =
     testRun.isCompleted === false && canCloseRun && !isLoadingPermissions;
   const showDuplicateItem =
-    !isAutomatedRun &&
-    testRun.isCompleted === false &&
-    canAddEditRun &&
-    !isLoadingPermissions &&
-    onDuplicate;
+    !isAutomatedRun && canAddEditRun && !isLoadingPermissions && onDuplicate;
 
-  const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+  const showMoreMenu =
+    showActions && (showEditItem || showCompleteItem || showDuplicateItem);
+
+  // `note` arrives as a JSON column; render the string form.
+  const noteText =
+    typeof testRun.note === "string"
+      ? testRun.note
+      : testRun.note
+        ? JSON.stringify(testRun.note)
+        : undefined;
 
   const isRecentlyCreated =
     !!testRun.createdAt &&
     Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
 
-  // Fetch test run cases with their results and assigned users
-  const { data: testRunCases } = useFindManyTestRunCases({
-    where: {
-      testRunId: testRun.id,
-      isDeleted: false,
-    },
-    include: {
-      assignedTo: {
-        select: {
-          id: true,
-          name: true,
-        },
+  // Execution window, read from the same summary the progress bar renders —
+  // whether the page batch-fetched it or the bar fetches it per row.
+  const { startDate, endDate } = useTestRunResultWindow({
+    testRunId: testRun.id,
+    isCompleted: testRun.isCompleted,
+    summary: summaryData,
+    enabled: !summaryLoading,
+  });
+
+  // Contributor lookup for the MemberList: only assignee/executor ids+names.
+  // A narrow select, NOT include — full case + result rows per run made this
+  // per-row query megabytes on large runs and flooded the page with data it
+  // never renders.
+  const { data: testRunCases } = useClientQueries(
+    schema
+  ).testRunCases.useFindMany(
+    {
+      where: {
+        testRunId: testRun.id,
+        isDeleted: false,
       },
-      results: {
-        include: {
-          executedBy: {
-            select: {
-              id: true,
-              name: true,
+      select: {
+        id: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        results: {
+          select: {
+            executedBy: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
           },
         },
       },
     },
-    orderBy: { order: "asc" },
-  });
+    // Virtualized lists remount rows on scroll — without a stale window each
+    // remount refires this query (same 30s the batch summaries use).
+    { staleTime: 30000 }
+  );
 
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
@@ -227,243 +260,236 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     }));
   }, [testRun.createdBy, testRunCases, tCommon]);
 
-  // Using consistent grid layout for all items. Every track is minmax(0,fr)
-  // so columns shrink to fit the row instead of overflowing into each other,
-  // and resolve to the same width on every row for clean column alignment.
-  // Content inside each cell truncates rather than widening its track.
-  const gridLayout =
-    "grid-cols-[minmax(0,1.5fr)_minmax(0,0.75fr)_minmax(0,0.7fr)_minmax(0,1.1fr)_minmax(0,1.5fr)_minmax(0,0.75fr)]";
-
   return (
     <>
-      <div
+      <ItemRow
         id={`testrun-${testRun.id}`}
-        className={cn(
-          `overflow-hidden relative grid ${gridLayout} gap-4 items-center w-full my-2 p-2 border-4 rounded-lg shadow-xs`,
-          isNew && "border-primary animate-pulse"
-        )}
-        style={{
-          backgroundColor: testRun.state.color?.value
-            ? `${testRun.state.color.value}10`
-            : undefined,
-          borderColor: testRun.state.color?.value
-            ? isNew
-              ? testRun.state.color.value
-              : `${testRun.state.color.value}44`
-            : undefined,
-        }}
-      >
-        {/* Left Column - Name & Note */}
-        <div className="flex items-center min-w-0">
-          <div className="flex-1 min-w-0">
-            <div className="min-w-0 w-full">
-              <Link
-                href={`/projects/runs/${projectId}/${testRun.id}`}
-                className="group inline-flex items-center gap-1 max-w-full"
-              >
-                <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
-                  {isRecentlyCreated && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
-                      </TooltipTrigger>
-                      <TooltipContent>{tCommon("labels.new")}</TooltipContent>
-                    </Tooltip>
-                  )}
-                  {isAutomatedRun ? (
-                    <Bot className="w-6 h-6 inline mr-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
-                  ) : (
-                    <DynamicIcon
-                      name="play-circle"
-                      className="min-w-6 min-h-6 text-primary"
-                    />
-                  )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="truncate inline-block">
-                        {testRun.name}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-sm">{testRun.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                  {testRun.configurationGroupId && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="shrink-0">
-                          <Combine className="w-4 h-4 text-muted-foreground" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="text-background/50">
-                          {tCommon("labels.multiConfiguration")}
-                        </p>
-                        {testRun.configuration && (
-                          <p className="flex text-xs text-background">
-                            <Combine className="w-4 h-4 shrink-0 mr-1" />
-                            {testRun.configuration.name}
-                          </p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                  <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </h3>
-              </Link>
-              <div className="inline-flex items-center ml-1 align-middle">
-                <PendingReviewBadge pendingRequest={pendingRequest} />
-              </div>
-            </div>
-            <div className="text-sm text-muted-foreground line-clamp-1">
-              {testRun.note && (
-                <TextFromJson
-                  jsonString={testRun.note}
-                  format="text"
-                  room={`testrun-note-${testRun.id}`}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Configuration Column */}
-        <div className="flex items-center min-w-0">
-          {testRun.configuration ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground truncate cursor-default">
-                  <Combine className="w-4 h-4 shrink-0" />
-                  <span className="truncate">{testRun.configuration.name}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="flex">
-                  <Combine className="w-4 h-4 shrink-0 mr-1" />
-                  {testRun.configuration.name}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+        href={`/projects/runs/${numericProjectId}/${testRun.id}`}
+        prefetch={false}
+        name={testRun.name}
+        accentColor={testRun.state.color?.value}
+        isNew={isNew}
+        selectable={selectable}
+        selected={selected}
+        onSelectedChange={onSelectedChange}
+        selectTestId={`testrun-select-${testRun.id}`}
+        icon={
+          isAutomatedRun ? (
+            <Bot className="w-5 h-5 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
           ) : (
-            <span className="text-sm text-muted-foreground">{"—"}</span>
-          )}
-        </div>
+            <DynamicIcon
+              name="play-circle"
+              className="h-5 w-5 shrink-0 text-primary"
+            />
+          )
+        }
+        adornments={[
+          {
+            key: "review",
+            content: <PendingReviewBadge pendingRequest={pendingRequest} />,
+          },
+          isRecentlyCreated && {
+            key: "new",
+            tier: "md",
+            content: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                </TooltipTrigger>
+                <TooltipContent>{tCommon("labels.new")}</TooltipContent>
+              </Tooltip>
+            ),
+          },
+          testRun.configurationGroupId && {
+            key: "multi-config",
+            tier: "sm",
+            content: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="shrink-0">
+                    <Combine className="w-4 h-4 text-muted-foreground" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-background/50">
+                    {tCommon("labels.multiConfiguration")}
+                  </p>
+                  {testRun.configuration && (
+                    <p className="flex text-xs text-background">
+                      <Combine className="w-4 h-4 shrink-0 me-1" />
+                      {testRun.configuration.name}
+                    </p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            ),
+          },
+          testRun.compositionLockedAt && {
+            key: "locked",
+            tier: "sm",
+            content: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="shrink-0">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{t("runs.composition.locked")}</TooltipContent>
+              </Tooltip>
+            ),
+          },
+          {
+            key: "open",
+            tier: "lg",
+            content: (
+              <LinkIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            ),
+          },
+        ]}
+        identityChips={[
+          startDate && {
+            // Pinned, so it renders after the shrinking chips and immediately
+            // before the state badge. A clipped date range is unreadable, so
+            // it collapses whole once the row is too narrow to seat it; the
+            // year drops first, below @2xl.
+            key: "dates",
+            tier: "md",
+            pinned: true,
+            content: (
+              <span className="whitespace-nowrap text-sm">
+                <DateTextDisplay
+                  responsive
+                  startDate={startDate}
+                  endDate={endDate}
+                  // A lone start date reads as a bare timestamp; a range
+                  // doesn't need telling.
+                  startLabel={endDate ? undefined : tCommon("fields.started")}
+                />
+              </span>
+            ),
+          },
+          testRun.configuration && {
+            key: "configuration",
+            tier: "md",
+            content: (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="min-w-0 cursor-default">
+                    <ItemRowChip icon={<Combine className="w-4 h-4" />}>
+                      {testRun.configuration.name}
+                    </ItemRowChip>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="flex">
+                    <Combine className="w-4 h-4 shrink-0 me-1" />
+                    {testRun.configuration.name}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            ),
+          },
+        ]}
+        state={<WorkflowStateDisplay {...workflowState} size="sm" />}
+        actions={
+          showMoreMenu && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  aria-label={tCommon("actions.actionsLabel")}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuGroup>
+                  {showEditItem && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        router.push(
+                          `/projects/runs/${numericProjectId}/${testRun.id}?edit=true`
+                        )
+                      }
+                      data-testid={`testrun-edit-${testRun.id}`}
+                    >
+                      <Pencil className="me-2 h-4 w-4" />
+                      {tCommon("actions.edit")}
+                    </DropdownMenuItem>
+                  )}
 
-        {/* Middle Column 1 - Status */}
-        {/* `[&>span]:!shrink [&>span]:!min-w-0` overrides WorkflowStateDisplay's
-            outer `shrink-0` span so it shrinks within the cell and its inner
-            `truncate` on the name engages (ellipsis instead of a hard clip). */}
-        <div className="flex min-w-0 justify-start overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
-          <WorkflowStateDisplay {...workflowState} />
-        </div>
+                  {showDuplicateItem && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        onDuplicate &&
+                        onDuplicate({ id: testRun.id, name: testRun.name })
+                      }
+                      data-testid={`testrun-duplicate-${testRun.id}`}
+                    >
+                      <CopyPlus className="me-2 h-4 w-4" />
+                      {tCommon("actions.duplicate")}
+                    </DropdownMenuItem>
+                  )}
 
-        {/* Middle Column 2 - Forecast */}
-        <div className="flex flex-col min-w-0 overflow-hidden">
-          <ForecastDisplay seconds={testRun.forecastManual} type="manual" />
-          <ForecastDisplay
-            seconds={testRun.forecastAutomated}
-            type="automated"
-          />
-        </div>
-
-        {/* Middle Column 3 - Test Run Cases Summary */}
-        <div className="flex items-center justify-start min-w-0 overflow-hidden">
+                  {showCompleteItem && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault(); // Prevents menu from closing
+                        setIsCompleteDialogOpen(true);
+                      }}
+                      data-testid={`testrun-complete-trigger-${testRun.id}`}
+                    >
+                      <CheckCircle className="me-2 h-4 w-4" />
+                      {tCommon("actions.complete")}
+                    </DropdownMenuItem>
+                  )}
+                  <RecordKeyMenuItem
+                    type="TEST_RUN"
+                    id={testRun.id}
+                    projectId={numericProjectId}
+                  />
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        }
+        chips={[
+          showMilestone &&
+            testRun.milestone && {
+              key: "milestone",
+              tier: "lg",
+              content: <MilestoneIconAndName milestone={testRun.milestone} />,
+            },
+        ]}
+        metaTrailing={[
+          !testRun.isCompleted && {
+            key: "members",
+            tier: "xl",
+            content: <MemberList users={users} />,
+          },
+        ]}
+        progress={
           <TestRunCasesSummary
             testRunId={testRun.id}
             projectId={testRun.projectId}
             testRunType={testRun.testRunType}
             className="w-full"
             summaryData={summaryData}
+            summaryLoading={summaryLoading}
           />
-        </div>
-
-        {/* Right Column - MemberList & Actions */}
-        <div className="flex items-center justify-end space-x-2 min-w-0">
-          <div className="flex flex-col items-start gap-1.5 w-full min-w-0 max-w-xs overflow-hidden">
-            {showMilestone && testRun.milestone && (
-              <div className="truncate w-full min-w-0">
-                <MilestoneIconAndName milestone={testRun.milestone} />
-              </div>
-            )}
-            {testRun.isCompleted && testRun.completedAt && (
-              <div className="w-full min-w-0">
-                <DateTextDisplay
-                  endDate={new Date(testRun.completedAt)}
-                  isCompleted={true}
-                />
-              </div>
-            )}
-
-            {/* MemberList */}
-            {!testRun.isCompleted && (
-              <div className="w-full flex justify-end pr-1">
-                <div className="ml-2">
-                  <MemberList users={users} />
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-end space-x-2 pr-1">
-            {showMoreMenu && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    aria-label={tCommon("actions.actionsLabel")}
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuGroup>
-                    {showEditItem && (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          router.push(
-                            `/projects/runs/${projectId}/${testRun.id}?edit=true`
-                          )
-                        }
-                        data-testid={`testrun-edit-${testRun.id}`}
-                      >
-                        <Pencil className="mr-2 h-4 w-4" />{" "}
-                        {tCommon("actions.edit")}
-                      </DropdownMenuItem>
-                    )}
-
-                    {showDuplicateItem && (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          onDuplicate &&
-                          onDuplicate({ id: testRun.id, name: testRun.name })
-                        }
-                        data-testid={`testrun-duplicate-${testRun.id}`}
-                      >
-                        <Copy className="mr-2 h-4 w-4" />
-                        {tCommon("actions.duplicate")}
-                      </DropdownMenuItem>
-                    )}
-
-                    {showCompleteItem && (
-                      <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault(); // Prevents menu from closing
-                          setIsCompleteDialogOpen(true);
-                        }}
-                        data-testid={`testrun-complete-trigger-${testRun.id}`}
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        {tCommon("actions.complete")}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-      </div>
+        }
+        note={
+          noteText && (
+            <TextFromJson
+              jsonString={noteText}
+              format="text"
+              room={`testrun-note-${testRun.id}`}
+            />
+          )
+        }
+      />
       {isCompleteDialogOpen && (
         <CompleteTestRunDialog
           open={isCompleteDialogOpen}

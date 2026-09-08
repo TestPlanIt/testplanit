@@ -1,17 +1,60 @@
-import { NotificationMode } from "@prisma/client";
+import { NotificationMode } from "~/zenstack/models";
 import { render, screen, waitFor } from "@testing-library/react";
 import { useSession } from "next-auth/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  useCreateAppConfig,
-  useFindUniqueAppConfig,
-  useUpdateAppConfig,
-} from "~/lib/hooks";
+
 import NotificationSettingsPage from "./page";
+
+// page reads appConfig.useFindUnique/useCreate/useUpdate via useClientQueries.
+// Hoist the find hook the tests drive (vi.mocked(useFindUniqueAppConfig)) and
+// stub every other model/op through a Proxy so the tree mounts.
+const { useFindUniqueAppConfig, useUpdateAppConfig, useCreateAppConfig } =
+  vi.hoisted(() => ({
+    useFindUniqueAppConfig: vi.fn(() => ({
+      data: undefined,
+      isLoading: false,
+    })),
+    useUpdateAppConfig: vi.fn(() => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    })),
+    useCreateAppConfig: vi.fn(() => ({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    })),
+  }));
+
+vi.mock("@zenstackhq/tanstack-query/react", () => {
+  const stub = (op: string) =>
+    /^use(Create|Update|Upsert|Delete)/.test(op)
+      ? () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false })
+      : () => ({ data: undefined, isLoading: false, refetch: vi.fn() });
+  const specific: Record<string, Record<string, unknown>> = {
+    appConfig: {
+      useFindUnique: useFindUniqueAppConfig,
+      useUpdate: useUpdateAppConfig,
+      useCreate: useCreateAppConfig,
+    },
+  };
+  return {
+    useClientQueries: () =>
+      new Proxy({} as Record<string, unknown>, {
+        get: (_t, model) =>
+          typeof model !== "string"
+            ? undefined
+            : new Proxy({} as Record<string, unknown>, {
+                get: (_t2, op) =>
+                  typeof op !== "string"
+                    ? undefined
+                    : (specific[model]?.[op] ?? stub(op)),
+              }),
+      }),
+  };
+});
 
 // Mock dependencies
 vi.mock("next-auth/react");
-vi.mock("~/lib/hooks");
+
 vi.mock("~/lib/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -32,6 +75,7 @@ vi.mock("sonner", () => ({
   },
 }));
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: () => (key: string, _values?: any) => {
     const translations: Record<string, string> = {
       title: "Notification Settings",

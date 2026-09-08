@@ -4,10 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import type { DowngradedUser } from "~/app/actions/scimMappingActions";
-import type { AppConfig } from "@prisma/client";
+import type { AppConfig } from "~/zenstack/models";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations: (namespace?: string) => (key: string, params?: any) => {
     if (!namespace) return key;
     if (params && typeof params === "object") {
@@ -32,7 +33,6 @@ const { SelectTriggerSentinel, SelectItemSentinel } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/components/ui/select", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const React = require("react");
   function Select({ children, value, onValueChange }: any) {
     const items: Array<{ value: string; label: React.ReactNode }> = [];
@@ -116,19 +116,38 @@ const {
   };
 });
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyScimToken: () => ({
-    data: [],
-    isLoading: false,
-    refetch: vi.fn(),
-  }),
-  useFindUniqueAppConfig: () => ({ data: stableConfig }),
-  useUpdateScimToken: () => ({ mutateAsync: vi.fn() }),
-  useUpsertAppConfig: () => ({
-    mutateAsync: mockUpsertMutateAsync,
-    isPending: false,
-  }),
-}));
+// The spec renders the admin page tree, which reads more models than this card
+// (e.g. scimToken.useUpdate). Return the controlled appConfig hooks and fall
+// back to inert stubs for every other model/op so the tree mounts.
+vi.mock("@zenstackhq/tanstack-query/react", () => {
+  const stub = (op: string) =>
+    /^use(Create|Update|Upsert|Delete)/.test(op)
+      ? () => ({ mutateAsync: vi.fn(), mutate: vi.fn(), isPending: false })
+      : () => ({ data: undefined, isLoading: false, refetch: vi.fn() });
+  const specific: Record<string, Record<string, unknown>> = {
+    appConfig: {
+      useFindUnique: () => ({ data: stableConfig }),
+      useUpsert: () => ({
+        mutateAsync: mockUpsertMutateAsync,
+        isPending: false,
+      }),
+    },
+  };
+  return {
+    useClientQueries: () =>
+      new Proxy({} as Record<string, unknown>, {
+        get: (_t, model) =>
+          typeof model !== "string"
+            ? undefined
+            : new Proxy({} as Record<string, unknown>, {
+                get: (_t2, op) =>
+                  typeof op !== "string"
+                    ? undefined
+                    : (specific[model]?.[op] ?? stub(op)),
+              }),
+      }),
+  };
+});
 
 vi.mock("~/app/actions/scimMappingActions", () => ({
   previewFallbackDefaultChange: mockPreviewFallbackDefaultChange,
@@ -227,6 +246,25 @@ vi.mock("./ConflictLogTable", () => ({
 vi.mock("./MintDialog", () => ({
   MintDialog: () => null,
 }));
+
+// Additional hooks used by SCIM token list
+vi.mock("~/lib/hooks", async (importOriginal) => {
+  const original = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...original,
+    useFindManyScimToken: () => ({
+      data: [],
+      isLoading: false,
+      refetch: vi.fn(),
+    }),
+    useUpdateScimToken: () => ({ mutateAsync: vi.fn() }),
+    useFindUniqueAppConfig: () => ({ data: stableConfig }),
+    useUpsertAppConfig: () => ({
+      mutateAsync: mockUpsertMutateAsync,
+      isPending: false,
+    }),
+  };
+});
 
 import ScimTokensPage from "./page";
 

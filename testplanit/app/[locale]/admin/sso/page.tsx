@@ -1,14 +1,15 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/tables/DataTable";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   Dialog,
   DialogContent,
@@ -29,55 +30,54 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Access, SsoProviderType } from "@prisma/client";
-import {
-  Edit,
-  KeyRound,
-  Mail,
-  Plus,
-  Settings,
-  ShieldUser,
-  X,
-} from "lucide-react";
+import { Access, SsoProviderType } from "~/zenstack/models";
+import { Plus, Settings, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCreateAllowedEmailDomain,
-  useCreateSsoProvider,
-  useDeleteAllowedEmailDomain,
-  useFindFirstRegistrationSettings,
-  useFindManyAllowedEmailDomain,
-  useFindManySsoProvider,
-  useUpdateAllowedEmailDomain,
-  useUpdateSsoProvider,
-  useUpsertRegistrationSettings,
-} from "~/lib/hooks";
+
+type SignInProviderRow = {
+  id: string;
+  name: string;
+  configured: boolean;
+  enabled: boolean;
+  onToggle: (enabled: boolean) => void;
+  onConfigure: (() => void) | null;
+};
 
 export default function SSOAdminPage() {
   const { data: session } = useSession();
   const t = useTranslations();
 
-  const { data: ssoProviders, refetch } = useFindManySsoProvider({
+  const { data: ssoProviders, refetch } = useClientQueries(
+    schema
+  ).ssoProvider.useFindMany({
     include: { samlConfig: true },
   });
-  const { mutateAsync: createProvider } = useCreateSsoProvider();
-  const { mutateAsync: updateProvider } = useUpdateSsoProvider();
+  const { mutateAsync: createProvider } =
+    useClientQueries(schema).ssoProvider.useCreate();
+  const { mutateAsync: updateProvider } =
+    useClientQueries(schema).ssoProvider.useUpdate();
 
   // Domain restriction hooks
-  const { data: allowedDomains, refetch: refetchDomains } =
-    useFindManyAllowedEmailDomain({
-      orderBy: { domain: "asc" },
-    });
-  const { mutateAsync: createDomain } = useCreateAllowedEmailDomain();
-  const { mutateAsync: updateDomain } = useUpdateAllowedEmailDomain();
-  const { mutateAsync: deleteDomain } = useDeleteAllowedEmailDomain();
+  const { data: allowedDomains, refetch: refetchDomains } = useClientQueries(
+    schema
+  ).allowedEmailDomain.useFindMany({
+    orderBy: { domain: "asc" },
+  });
+  const { mutateAsync: createDomain } =
+    useClientQueries(schema).allowedEmailDomain.useCreate();
+  const { mutateAsync: updateDomain } =
+    useClientQueries(schema).allowedEmailDomain.useUpdate();
+  const { mutateAsync: deleteDomain } =
+    useClientQueries(schema).allowedEmailDomain.useDelete();
 
   // Registration settings hooks
   const { data: registrationSettings, refetch: refetchSettings } =
-    useFindFirstRegistrationSettings();
-  const { mutateAsync: upsertSettings } = useUpsertRegistrationSettings();
+    useClientQueries(schema).registrationSettings.useFindFirst();
+  const { mutateAsync: upsertSettings } =
+    useClientQueries(schema).registrationSettings.useUpsert();
 
   // Google OAuth configuration state
   const [isGoogleConfigOpen, setIsGoogleConfigOpen] = useState(false);
@@ -129,6 +129,11 @@ export default function SSOAdminPage() {
 
   // Optimistic toggle state — updates immediately on click, syncs with server data
   const [toggleState, setToggleState] = useState<Record<string, boolean>>({});
+
+  // Column visibility for the Sign-in Providers table (all columns shown).
+  const [providerColumnVisibility, setProviderColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
 
   // Email server configuration status
   const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
@@ -339,7 +344,13 @@ export default function SSOAdminPage() {
           where: { id: existingProvider.id },
           data: {
             enabled: true,
-            samlConfig: { upsert: { create: samlConfig, update: samlConfig } },
+            samlConfig: {
+              upsert: {
+                where: { providerId: existingProvider.id },
+                create: samlConfig,
+                update: samlConfig,
+              },
+            },
           },
         });
       } else {
@@ -762,7 +773,7 @@ export default function SSOAdminPage() {
       setNewDomain("");
       void refetchDomains();
     } catch (error: any) {
-      if (error.info?.code === "P2002") {
+      if (isUniqueConstraintError(error)) {
         toast.error(t("admin.sso.messages.domainExists"));
       } else {
         toast.error(t("admin.sso.messages.domainAddFailed"));
@@ -908,289 +919,179 @@ export default function SSOAdminPage() {
   );
   // globalForceSso is now tracked in toggleState
 
+  const signInProviders: SignInProviderRow[] = [
+    {
+      id: SsoProviderType.GOOGLE,
+      name: t("admin.sso.globalSettings.googleOAuth.title"),
+      configured: googleConfigured,
+      enabled: toggleState[SsoProviderType.GOOGLE] || false,
+      onToggle: handleToggleGoogle,
+      onConfigure: () => setIsGoogleConfigOpen(true),
+    },
+    {
+      id: SsoProviderType.APPLE,
+      name: t("admin.sso.globalSettings.apple.title"),
+      configured: appleConfigured,
+      enabled: toggleState[SsoProviderType.APPLE] || false,
+      onToggle: handleToggleApple,
+      onConfigure: () => setIsAppleConfigOpen(true),
+    },
+    {
+      id: SsoProviderType.MICROSOFT,
+      name: t("admin.sso.globalSettings.microsoft.title"),
+      configured: microsoftConfigured,
+      enabled: toggleState[SsoProviderType.MICROSOFT] || false,
+      onToggle: handleToggleMicrosoft,
+      onConfigure: () => setIsMicrosoftConfigOpen(true),
+    },
+    {
+      id: SsoProviderType.SAML,
+      name: t("admin.sso.globalSettings.samlProvider.title"),
+      configured: samlConfigured,
+      enabled: toggleState[SsoProviderType.SAML] || false,
+      onToggle: handleToggleSAML,
+      onConfigure: () => setIsSamlConfigOpen(true),
+    },
+    {
+      id: SsoProviderType.MAGIC_LINK,
+      name: t("admin.sso.globalSettings.magicLink.title"),
+      configured: magicLinkConfigured,
+      enabled: toggleState[SsoProviderType.MAGIC_LINK] || false,
+      onToggle: handleToggleMagicLink,
+      onConfigure: null,
+    },
+  ];
+
+  const providerColumns: ColumnDef<SignInProviderRow>[] = [
+    {
+      id: "provider",
+      accessorKey: "name",
+      header: t("common.fields.provider"),
+      enableSorting: false,
+      enableHiding: false,
+      meta: { isPinned: "left" },
+      size: 260,
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.name}</span>
+      ),
+    },
+    {
+      id: "configured",
+      accessorKey: "configured",
+      header: t("admin.sso.status.configured"),
+      enableSorting: false,
+      size: 160,
+      cell: ({ row }) => (
+        <Badge variant={row.original.configured ? "default" : "secondary"}>
+          {row.original.configured
+            ? t("admin.sso.status.configured")
+            : t("admin.llm.notConfigured")}
+        </Badge>
+      ),
+    },
+    {
+      id: "enabled",
+      accessorKey: "enabled",
+      header: t("common.fields.enabled"),
+      enableSorting: false,
+      size: 120,
+      cell: ({ row }) => (
+        <Switch
+          aria-label={row.original.name}
+          checked={row.original.enabled}
+          onCheckedChange={row.original.onToggle}
+        />
+      ),
+    },
+    {
+      id: "actions",
+      header: t("common.actions.actionsLabel"),
+      enableSorting: false,
+      enableHiding: false,
+      meta: { isPinned: "right" },
+      size: 140,
+      cell: ({ row }) =>
+        row.original.onConfigure ? (
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={row.original.onConfigure}
+              className="h-6 px-2 text-xs"
+            >
+              <Settings className="h-3 w-3" />
+              {t("admin.integrations.table.configure")}
+            </Button>
+          </div>
+        ) : null,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="pt-4">
-        <h1
+        <PageTitle
+          as="h1"
           data-testid="sso-page-title"
-          className="flex items-center text-primary text-2xl md:text-4xl font-bold"
+          className="flex items-center gap-2 text-primary"
         >
-          <ShieldUser className="inline mr-2 h-8 w-8" />
           <span>{t("admin.menu.sso")}</span>
-        </h1>
-        <p
-          data-testid="sso-page-description"
-          className="text-muted-foreground mt-1"
-        >
-          {t("admin.sso.description")}
-        </p>
+          <HelpPopover helpKey="sso" />
+        </PageTitle>
       </div>
 
       {/* Sign-in Providers Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <KeyRound className="inline mr-2 h-6 w-6" />
-            <span>{t("admin.sso.sections.providers.title")}</span>
-          </CardTitle>
-          <CardDescription>
-            {t("admin.sso.sections.providers.description")}
-          </CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("admin.sso.sections.providers.title")}</CardTitle>
+            <HelpPopover helpKey="ssoProviders" />
+          </SectionHeader>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.googleOAuth.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.googleOAuth.description")}
-              </p>
-              {googleConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default">
-                    {t("admin.sso.status.configured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsGoogleConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Edit className="h-3 w-3" />
-                    {t("admin.integrations.editIntegration")}
-                  </Button>
-                </div>
-              )}
-              {!googleConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary">
-                    {t("admin.llm.notConfigured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsGoogleConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Settings className="h-3 w-3" />
-                    {t("admin.sso.status.setup")}
-                  </Button>
-                </div>
-              )}
-            </div>
-            <Switch
-              checked={toggleState[SsoProviderType.GOOGLE] || false}
-              onCheckedChange={handleToggleGoogle}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.apple.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.apple.description")}
-              </p>
-              {appleConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default">
-                    {t("admin.sso.status.configured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsAppleConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Edit className="h-3 w-3" />
-                    {t("admin.integrations.table.configure")}
-                  </Button>
-                </div>
-              )}
-              {!appleConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary">
-                    {t("admin.llm.notConfigured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsAppleConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Settings className="h-3 w-3" />
-                    {t("admin.sso.status.setup")}
-                  </Button>
-                </div>
-              )}
-            </div>
-            <Switch
-              checked={toggleState[SsoProviderType.APPLE] || false}
-              onCheckedChange={handleToggleApple}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.microsoft.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.microsoft.description")}
-              </p>
-              {microsoftConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default">
-                    {t("admin.sso.status.configured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsMicrosoftConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Edit className="h-3 w-3" />
-                    {t("admin.integrations.table.configure")}
-                  </Button>
-                </div>
-              )}
-              {!microsoftConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary">
-                    {t("admin.llm.notConfigured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsMicrosoftConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Settings className="h-3 w-3" />
-                    {t("admin.sso.status.setup")}
-                  </Button>
-                </div>
-              )}
-            </div>
-            <Switch
-              checked={toggleState[SsoProviderType.MICROSOFT] || false}
-              onCheckedChange={handleToggleMicrosoft}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.samlProvider.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.samlProvider.description")}
-              </p>
-              {samlConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default">
-                    {t("admin.sso.status.configured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSamlConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Edit className="h-3 w-3" />
-                    {t("admin.integrations.table.configure")}
-                  </Button>
-                </div>
-              )}
-              {!samlConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary">
-                    {t("admin.llm.notConfigured")}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSamlConfigOpen(true)}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <Settings className="h-3 w-3" />
-                    {t("admin.sso.status.setup")}
-                  </Button>
-                </div>
-              )}
-            </div>
-            <Switch
-              checked={toggleState[SsoProviderType.SAML] || false}
-              onCheckedChange={handleToggleSAML}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.magicLink.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.magicLink.description")}
-              </p>
-              {magicLinkConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default">
-                    {t("admin.sso.status.configured")}
-                  </Badge>
-                </div>
-              )}
-              {!magicLinkConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary">
-                    {t("admin.llm.notConfigured")}
-                  </Badge>
-                </div>
-              )}
-            </div>
-            <Switch
-              checked={toggleState[SsoProviderType.MAGIC_LINK] || false}
-              onCheckedChange={handleToggleMagicLink}
-            />
-          </div>
+        <CardContent>
+          <DataTable
+            columns={providerColumns}
+            data={signInProviders}
+            columnVisibility={providerColumnVisibility}
+            onColumnVisibilityChange={setProviderColumnVisibility}
+          />
         </CardContent>
       </Card>
 
       {/* Registration Settings Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Mail className="inline mr-2 h-6 w-6" />
-            <span>{t("admin.sso.registration.title")}</span>
-          </CardTitle>
-          <CardDescription>
-            {t("admin.sso.registration.description")}
-          </CardDescription>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{t("admin.sso.registration.title")}</CardTitle>
+            <HelpPopover helpKey="ssoRegistration" />
+          </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Allow Open Registration */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.registration.allowOpenRegistration.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.registration.allowOpenRegistration.description")}
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
             <Switch
+              id="sso-allow-registration"
               checked={toggleState.allowOpenRegistration ?? true}
               onCheckedChange={handleToggleAllowOpenRegistration}
+              className="mt-0.5"
             />
+            <div className="flex flex-1 items-center gap-2">
+              <Label
+                htmlFor="sso-allow-registration"
+                className="cursor-pointer"
+              >
+                {t("admin.sso.registration.allowOpenRegistration.title")}
+              </Label>
+              <HelpPopover helpKey="ssoAllowRegistration" />
+            </div>
           </div>
 
           {/* Default Access Level Setting */}
-          <div className="flex items-center justify-between">
-            <div className="flex-1 mr-4">
-              <Label className="text-base font-medium">
-                {t("admin.sso.registration.defaultAccess.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.registration.defaultAccess.description")}
-              </p>
+          <div className="ps-11 space-y-2">
+            <div className="flex items-center gap-2">
+              <Label>{t("admin.sso.registration.defaultAccess.title")}</Label>
+              <HelpPopover helpKey="ssoDefaultAccess" />
             </div>
             <Select
               value={registrationSettings?.defaultAccess || "NONE"}
@@ -1221,16 +1122,27 @@ export default function SSOAdminPage() {
           </div>
 
           {/* Email Verification Requirement */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="sso-require-email-verification"
+              checked={
+                isEmailServerConfigured &&
+                (registrationSettings?.requireEmailVerification ?? true)
+              }
+              onCheckedChange={handleToggleRequireEmailVerification}
+              disabled={!isEmailServerConfigured}
+              className="mt-0.5"
+            />
             <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.registration.requireEmailVerification.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "admin.sso.registration.requireEmailVerification.description"
-                )}
-              </p>
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor="sso-require-email-verification"
+                  className="cursor-pointer"
+                >
+                  {t("admin.sso.registration.requireEmailVerification.title")}
+                </Label>
+                <HelpPopover helpKey="ssoRequireEmailVerification" />
+              </div>
               {!isEmailServerConfigured && (
                 <p className="text-sm text-destructive mt-2">
                   {t(
@@ -1239,35 +1151,27 @@ export default function SSOAdminPage() {
                 </p>
               )}
             </div>
-            <Switch
-              checked={
-                isEmailServerConfigured &&
-                (registrationSettings?.requireEmailVerification ?? true)
-              }
-              onCheckedChange={handleToggleRequireEmailVerification}
-              disabled={!isEmailServerConfigured}
-            />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">
-                {t("admin.sso.registration.restrictDomains.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.registration.restrictDomains.description")}
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
             <Switch
+              id="sso-restrict-domains"
               checked={registrationSettings?.restrictEmailDomains || false}
               onCheckedChange={handleToggleDomainRestriction}
+              className="mt-0.5"
             />
+            <div className="flex flex-1 items-center gap-2">
+              <Label htmlFor="sso-restrict-domains" className="cursor-pointer">
+                {t("admin.sso.registration.restrictDomains.title")}
+              </Label>
+              <HelpPopover helpKey="ssoRestrictDomains" />
+            </div>
           </div>
 
           {registrationSettings?.restrictEmailDomains && (
             <div className="space-y-4">
               <div className="border rounded-lg p-4">
-                <Label className="text-base font-medium mb-4 block">
+                <Label className="mb-4 block">
                   {t("admin.sso.registration.allowedDomains.title")}
                 </Label>
 
@@ -1390,7 +1294,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.googleOAuth.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.googleOAuth.instructions.step3")}</li>
@@ -1547,7 +1451,7 @@ export default function SSOAdminPage() {
 
             <div className="md:col-span-2 text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("admin.sso.dialogs.saml.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.saml.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.saml.instructions.step3")}</li>
@@ -1659,7 +1563,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("common.dialogs.complete.apple.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("common.dialogs.complete.apple.instructions.step1")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step2")}</li>
                 <li>{t("common.dialogs.complete.apple.instructions.step3")}</li>
@@ -1763,7 +1667,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.microsoft.instructions.title")}</p>
-              <ol className="list-decimal ml-4 space-y-1">
+              <ol className="list-decimal ms-4 space-y-1">
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step1")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step2")}</li>
                 <li>{t("admin.sso.dialogs.microsoft.instructions.step3")}</li>

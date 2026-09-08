@@ -1,4 +1,5 @@
 import { expect, test, type APIRequestContext } from "../../fixtures/index";
+import type { APIResponse } from "@playwright/test";
 
 test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
@@ -127,7 +128,7 @@ test.describe("CASE-12 — validation error surfaces at the REST API layer", () 
       request,
       baseURL,
     }) => {
-      let r: Awaited<ReturnType<typeof request.post>> | undefined;
+      let r: APIResponse | undefined;
       await test.step("Attempt to create a case with the required template relation omitted", async () => {
         // Omit `template: { connect: { id } }` — a required non-nullable FK.
         // The host should reject this with an error response (422 or 400).
@@ -223,7 +224,7 @@ test.describe("CASE-12 — validation error surfaces at the REST API layer", () 
       request,
       baseURL,
     }) => {
-      let r: Awaited<ReturnType<typeof request.patch>> | undefined;
+      let r: APIResponse | undefined;
       await test.step("Soft-delete the non-empty folder via a PATCH update", async () => {
         // The MCP tool testplanit_folders_delete checks case/child counts BEFORE
         // issuing this PATCH and surfaces a CASE-12 structured error if non-empty.

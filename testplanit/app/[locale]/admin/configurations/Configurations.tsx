@@ -1,25 +1,21 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import type { RowSelectionState } from "@tanstack/react-table";
 import { Boxes, PenSquare } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { searchProjects } from "~/app/actions/searchProjects";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { usePagination } from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useFindManyConfigurations,
-  useUpdateConfigurations,
-} from "~/lib/hooks";
 import AddConfigurationWizard from "./AddConfigurationWizard";
 import { BulkEditConfigurations } from "./BulkEditConfigurations";
 import { ConfigWithVariants, useColumns } from "./configColumns";
@@ -36,20 +32,10 @@ function Configurations(): React.ReactElement | null {
     isLoading: isAuthLoading,
     isAuthenticated,
   } = useRequireAuth();
+  const locale = useLocale();
   const t = useTranslations("admin.configurations");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<
     | {
         column: string;
@@ -68,13 +54,10 @@ function Configurations(): React.ReactElement | null {
     iconUrl: string | null;
   } | null>(null);
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
   // Fetch ALL configurations (no pagination, no search filter in query)
-  const { data: allConfigurations, isLoading } = useFindManyConfigurations(
+  const { data: allConfigurations, isLoading } = useClientQueries(
+    schema
+  ).configurations.useFindMany(
     {
       orderBy: sortConfig
         ? sortConfig.column === "variants" || sortConfig.column === "projects"
@@ -122,17 +105,12 @@ function Configurations(): React.ReactElement | null {
     return result;
   }, [allConfigurations, debouncedSearchString, projectFilter]);
 
-  // Update total items based on filtered configurations count
-  useEffect(() => {
-    setTotalItems(filteredConfigurations.length);
-  }, [filteredConfigurations, setTotalItems]);
+  // The virtualized table renders the entire filtered set (windowing the DOM),
+  // so there's no page slice; row-selection indices below key into this array.
+  const configurations = filteredConfigurations;
 
-  // Apply client-side pagination
-  const configurations = useMemo(() => {
-    return filteredConfigurations.slice(skip, skip + effectivePageSize);
-  }, [filteredConfigurations, skip, effectivePageSize]);
-
-  const { mutate: updateConfiguration } = useUpdateConfigurations();
+  const { mutate: updateConfiguration } =
+    useClientQueries(schema).configurations.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutate changes identity every render
   const updateConfigurationRef = useRef(updateConfiguration);
@@ -247,24 +225,16 @@ function Configurations(): React.ReactElement | null {
     return initialVisibility;
   });
 
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search or project filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, projectFilter, setCurrentPage]);
-
   // Clear selection when the filtered set changes meaningfully (search or
-  // project filter). Pagination and sort leave the set intact, so we keep
-  // selection across those.
+  // project filter). Sort leaves the set intact, so we keep selection across it.
   useEffect(() => {
     setSelectedConfigurationIds([]);
     setLastSelectedIndex(null);
   }, [searchString, projectFilter]);
 
-  // Derive the DataTable's per-row selection from the ID set for the visible
-  // page slice. tanstack-table keys selection by row index, which we map back
-  // to the configuration ID via `configurations[index]`.
+  // Derive the table's per-row selection from the ID set. tanstack-table keys
+  // selection by row index, which we map back to the configuration ID via
+  // `configurations[index]` (the full filtered set the table renders).
   const rowSelection: RowSelectionState = useMemo(() => {
     const sel: RowSelectionState = {};
     const selSet = new Set(selectedConfigurationIds);
@@ -273,11 +243,6 @@ function Configurations(): React.ReactElement | null {
     });
     return sel;
   }, [configurations, selectedConfigurationIds]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
 
   if (isAuthLoading) {
     return null;
@@ -291,7 +256,19 @@ function Configurations(): React.ReactElement | null {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig(undefined);
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   if (isAuthenticated && session?.user.access === "ADMIN") {
@@ -299,26 +276,24 @@ function Configurations(): React.ReactElement | null {
       <main>
         <Card>
           <CardHeader className="w-full">
-            <div className="flex items-center justify-between text-primary">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+            <div className="flex items-center justify-between gap-2">
+              <SectionHeader className="flex items-center gap-2">
                 <CardTitle>{tGlobal("common.fields.configurations")}</CardTitle>
-              </div>
-              <div>
-                <AddConfigurationWizard />
-              </div>
+                <HelpPopover helpKey="configurations" />
+              </SectionHeader>
+              <AddConfigurationWizard />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-row items-start">
-              <div className="flex flex-row items-center grow w-full min-w-[250px] gap-2">
-                <div className="text-muted-foreground grow text-nowrap max-w-sm">
-                  <Filter
-                    key="configuration-filter"
-                    placeholder={t("filterPlaceholder")}
-                    initialSearchString={searchString}
-                    onSearchChange={setSearchString}
-                  />
-                </div>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Filter
+                  key="configuration-filter"
+                  className="w-full min-w-[250px] sm:w-80"
+                  placeholder={t("filterPlaceholder")}
+                  initialSearchString={searchString}
+                  onSearchChange={setSearchString}
+                />
                 <AsyncCombobox<{
                   id: number;
                   name: string;
@@ -344,7 +319,7 @@ function Configurations(): React.ReactElement | null {
                   showTotal={true}
                   showUnassigned={true}
                   unassignedLabel={t("allProjects")}
-                  unassignedIcon={<Boxes className="mr-2 h-4 w-4" />}
+                  unassignedIcon={<Boxes className="me-2 h-4 w-4" />}
                 />
                 {selectedConfigurationIds.length > 0 && (
                   <Button
@@ -361,45 +336,33 @@ function Configurations(): React.ReactElement | null {
                 )}
               </div>
 
-              <div className="flex flex-col items-end shrink-0">
-                {totalItems > 0 && (
-                  <>
-                    <div className="justify-end">
-                      <PaginationInfo
-                        key="configuration-pagination-info"
-                        startIndex={startIndex}
-                        endIndex={endIndex}
-                        totalRows={totalItems}
-                        searchString={searchString}
-                        pageSize={
-                          typeof pageSize === "number" ? pageSize : "All"
-                        }
-                        pageSizeOptions={pageSizeOptions}
-                        handlePageSizeChange={(size) => setPageSize(size)}
-                      />
-                    </div>
-                    <div className="justify-end -mx-4">
-                      <PaginationComponent
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
+              {filteredConfigurations.length > 0 && (
+                <p className="text-end text-sm text-muted-foreground">
+                  {tGlobal("admin.auditLogs.showing", {
+                    loaded:
+                      filteredConfigurations.length.toLocaleString(locale),
+                    total: filteredConfigurations.length.toLocaleString(locale),
+                  })}
+                </p>
+              )}
             </div>
-            <div className="mt-4 flex justify-between">
-              <DataTable<ConfigWithVariants, unknown>
-                columns={columns}
+            <div className="mt-4 w-full">
+              <DataTable
+                virtualized
+                columns={columns as any}
                 data={configurations || []}
+                flexColumnId="name"
                 onSortChange={handleSortChange}
+                onSortColumn={handleSortColumn}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}
                 onColumnVisibilityChange={setColumnVisibility}
-                pageSize={typeof pageSize === "number" ? pageSize : totalItems}
                 isLoading={isLoading}
                 rowSelection={rowSelection}
+                fillViewport
+                resetKey={`${debouncedSearchString}|${projectFilter?.id ?? ""}|${sortConfig?.column}|${sortConfig?.direction}`}
+                testIdPrefix="admin-configurations-table"
+                rowTestIdPrefix="admin-configuration-row"
               />
             </div>
           </CardContent>

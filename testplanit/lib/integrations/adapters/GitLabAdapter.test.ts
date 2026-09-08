@@ -52,6 +52,7 @@ describe("GitLabAdapter", () => {
         attachments: false,
         linkedIssues: false,
         comments: true,
+        milestones: false,
       });
     });
   });

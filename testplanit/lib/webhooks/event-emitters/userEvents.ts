@@ -1,4 +1,5 @@
-import type { Prisma, User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
+import type { TxClient } from "~/lib/zenstack";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { computeObjectDiff } from "~/lib/webhooks/diff";
@@ -53,15 +54,12 @@ export interface EmitOptions {
 }
 
 interface ResolvedEmitOpts {
-  tx: Prisma.TransactionClient;
+  tx: TxClient;
   projectId: number;
   actorUserId: string | null;
 }
 
-function defaultEmitOpts(
-  tx: Prisma.TransactionClient,
-  opts: EmitOptions
-): ResolvedEmitOpts {
+function defaultEmitOpts(tx: TxClient, opts: EmitOptions): ResolvedEmitOpts {
   return {
     tx,
     projectId: opts.projectId ?? SYSTEM_PROJECT_ID,
@@ -84,7 +82,7 @@ export function determineScimUserUpdateEventName(
 
 export async function emitScimUserCreated(
   row: ScimUserSnapshot,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);
@@ -111,7 +109,7 @@ export async function emitScimUserCreated(
 export async function emitScimUserUpdated(
   oldRow: ScimUserSnapshot | null | undefined,
   newRow: ScimUserSnapshot,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   if (!oldRow) return;
@@ -141,7 +139,7 @@ export async function emitScimUserUpdated(
 
 export async function emitScimUserDeleted(
   row: ScimUserSnapshot,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);

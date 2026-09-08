@@ -99,6 +99,16 @@ describe("GET /api/integrations/[id]/search", () => {
       expect(response.status).toBe(400);
       expect(data.error).toContain("required");
     });
+
+    it("rejects an oversized query with a clean 400 instead of forwarding it upstream", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      const response = await GET(createRequest("x".repeat(600)), params);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain("too long");
+    });
   });
 
   describe("Integration lookup", () => {
@@ -129,10 +139,11 @@ describe("GET /api/integrations/[id]/search", () => {
       expect(data.requiresAuth).toBe(true);
     });
 
-    it("returns 401 with authUrl when OAuth integration has no user auth", async () => {
+    it("returns 401 with the internal OAuth kickoff authUrl when OAuth integration has no user auth", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
+        provider: "JIRA",
         authType: "OAUTH2",
         credentials: null,
         userIntegrationAuths: [],
@@ -143,7 +154,12 @@ describe("GET /api/integrations/[id]/search", () => {
 
       expect(response.status).toBe(401);
       expect(data.requiresAuth).toBe(true);
-      expect(data.authUrl).toBe("https://auth.example.com/oauth");
+      // Must be the internal kickoff route (it generates AND stores the OAuth
+      // state), never the provider's raw authorize URL — that state is never
+      // stored, so the callback rejects it with invalid_state.
+      expect(data.authUrl).toBe(
+        "/api/integrations/oauth/jira/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
+      );
     });
   });
 
@@ -280,6 +296,9 @@ describe("GET /api/integrations/[id]/search", () => {
 
       expect(response.status).toBe(401);
       expect(data.requiresAuth).toBe(true);
+      expect(data.authUrl).toBe(
+        "/api/integrations/oauth/jira/auth?integrationId=1&returnUrl=%2Fintegrations%2Fauth-complete"
+      );
     });
 
     it("does not offer re-authorization when an API-key credential is rejected", async () => {

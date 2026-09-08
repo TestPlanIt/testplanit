@@ -44,9 +44,13 @@ describe("reportGrouping", () => {
 
     it("fans a multi-tag case out into one group per tag", () => {
       const results = [
-        { testRunCase: { repositoryCase: { tags: [{ id: 10 }, { id: 20 }] } } },
-        { testRunCase: { repositoryCase: { tags: [{ id: 10 }] } } },
-        { testRunCase: { repositoryCase: { tags: [] } } },
+        {
+          testRunCase: {
+            repositoryCase: { caseTags: [{ tagId: 10 }, { tagId: 20 }] },
+          },
+        },
+        { testRunCase: { repositoryCase: { caseTags: [{ tagId: 10 }] } } },
+        { testRunCase: { repositoryCase: { caseTags: [] } } },
       ];
       const rows = groupResults(results, ["tagId"], countAcc);
       // Tag 10 appears on the first two results, tag 20 only on the first,
@@ -84,7 +88,9 @@ describe("reportGrouping", () => {
       const results = [
         {
           statusId: 1,
-          testRunCase: { repositoryCase: { tags: [{ id: 10 }, { id: 20 }] } },
+          testRunCase: {
+            repositoryCase: { caseTags: [{ tagId: 10 }, { tagId: 20 }] },
+          },
         },
       ];
       const rows = groupResults(results, ["statusId", "tagId"], countAcc);
@@ -116,9 +122,7 @@ describe("reportGrouping", () => {
   });
 
   describe("buildFolderAncestorMap", () => {
-    function fakePrisma(
-      folders: Array<{ id: number; parentId: number | null }>
-    ) {
+    function fakeDb(folders: Array<{ id: number; parentId: number | null }>) {
       return {
         repositoryFolders: {
           findMany: async () => folders,
@@ -127,23 +131,23 @@ describe("reportGrouping", () => {
     }
 
     it("returns self plus the ancestor chain for each folder", async () => {
-      const prisma = fakePrisma([
+      const db = fakeDb([
         { id: 1, parentId: null },
         { id: 2, parentId: 1 },
         { id: 3, parentId: 2 },
       ]);
-      const map = await buildFolderAncestorMap(prisma, 1, true);
+      const map = await buildFolderAncestorMap(db, 1, true);
       expect(map.get(1)).toEqual([1]);
       expect(map.get(2)).toEqual([2, 1]);
       expect(map.get(3)).toEqual([3, 2, 1]);
     });
 
     it("guards against cycles", async () => {
-      const prisma = fakePrisma([
+      const db = fakeDb([
         { id: 1, parentId: 2 },
         { id: 2, parentId: 1 },
       ]);
-      const map = await buildFolderAncestorMap(prisma, 1, true);
+      const map = await buildFolderAncestorMap(db, 1, true);
       expect(map.get(1)).toEqual([1, 2]);
       expect(map.get(2)).toEqual([2, 1]);
     });

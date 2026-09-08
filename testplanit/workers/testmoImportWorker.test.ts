@@ -3,17 +3,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Store original env values
 const originalEnv = { ...process.env };
 
-// Mock multiTenantPrisma module
+// Mock multiTenantDb module
 const mockValidateMultiTenantJobData = vi.fn();
-const mockGetPrismaClientForJob = vi.fn();
+const mockGetDbClientForJob = vi.fn();
 const mockIsMultiTenantMode = vi.fn();
 const mockDisconnectAllTenantClients = vi.fn();
 
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   isMultiTenantMode: () => mockIsMultiTenantMode(),
   disconnectAllTenantClients: () => mockDisconnectAllTenantClients(),
-  getPrismaClientForJob: (jobData: { tenantId?: string }) =>
-    mockGetPrismaClientForJob(jobData),
+  getDbClientForJob: (jobData: { tenantId?: string }) =>
+    mockGetDbClientForJob(jobData),
   validateMultiTenantJobData: (jobData: { tenantId?: string }) =>
     mockValidateMultiTenantJobData(jobData),
 }));
@@ -29,8 +29,8 @@ vi.mock("../lib/queueNames", () => ({
   ELASTICSEARCH_REINDEX_QUEUE_NAME: "test-elasticsearch-reindex-queue",
 }));
 
-// Mock prisma
-const mockPrisma = {
+// Mock rawDb
+const mockDb = {
   testmoImportJob: {
     findUnique: vi.fn(),
     update: vi.fn(),
@@ -38,8 +38,8 @@ const mockPrisma = {
   $disconnect: vi.fn(),
 };
 
-vi.mock("../lib/prismaBase", () => ({
-  prisma: mockPrisma,
+vi.mock("../lib/rawDb", () => ({
+  rawDb: mockDb,
 }));
 
 // Mock clearAutomationImportCaches
@@ -113,28 +113,28 @@ describe("testmoImportWorker multi-tenant support", () => {
     });
   });
 
-  describe("getPrismaClientForJob integration", () => {
-    it("should return base prisma client in single-tenant mode", () => {
+  describe("getDbClientForJob integration", () => {
+    it("should return base rawDb client in single-tenant mode", () => {
       mockIsMultiTenantMode.mockReturnValue(false);
-      mockGetPrismaClientForJob.mockReturnValue(mockPrisma);
+      mockGetDbClientForJob.mockReturnValue(mockDb);
 
       const jobData = { jobId: "test-job-123" };
-      const client = mockGetPrismaClientForJob(jobData);
+      const client = mockGetDbClientForJob(jobData);
 
-      expect(client).toBe(mockPrisma);
-      expect(mockGetPrismaClientForJob).toHaveBeenCalledWith(jobData);
+      expect(client).toBe(mockDb);
+      expect(mockGetDbClientForJob).toHaveBeenCalledWith(jobData);
     });
 
     it("should return tenant-specific client in multi-tenant mode", () => {
       mockIsMultiTenantMode.mockReturnValue(true);
-      const tenantPrisma = { ...mockPrisma, tenantId: "tenant-a" };
-      mockGetPrismaClientForJob.mockReturnValue(tenantPrisma);
+      const tenantDb = { ...mockDb, tenantId: "tenant-a" };
+      mockGetDbClientForJob.mockReturnValue(tenantDb);
 
       const jobData = { jobId: "test-job-123", tenantId: "tenant-a" };
-      const client = mockGetPrismaClientForJob(jobData);
+      const client = mockGetDbClientForJob(jobData);
 
       expect(client.tenantId).toBe("tenant-a");
-      expect(mockGetPrismaClientForJob).toHaveBeenCalledWith(jobData);
+      expect(mockGetDbClientForJob).toHaveBeenCalledWith(jobData);
     });
   });
 
@@ -245,10 +245,10 @@ describe("testmoImportWorker module", () => {
   it("should have required multi-tenant imports", async () => {
     // Verify the module imports and uses multi-tenant functions
     // The actual worker functionality is tested via integration tests
-    const multiTenantModule = await import("../lib/multiTenantPrisma");
+    const multiTenantModule = await import("../lib/multiTenantDb");
 
     expect(multiTenantModule.isMultiTenantMode).toBeDefined();
-    expect(multiTenantModule.getPrismaClientForJob).toBeDefined();
+    expect(multiTenantModule.getDbClientForJob).toBeDefined();
     expect(multiTenantModule.validateMultiTenantJobData).toBeDefined();
     expect(multiTenantModule.disconnectAllTenantClients).toBeDefined();
   });

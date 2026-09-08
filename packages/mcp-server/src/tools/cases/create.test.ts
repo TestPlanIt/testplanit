@@ -144,7 +144,7 @@ describe("testplanit_cases_create", () => {
     );
   });
 
-  it("resolves mixed tags (numbers and strings) and connects them via set", async () => {
+  it("resolves mixed tags (numbers and strings) and connects them via the caseTags join", async () => {
     lookupMock.mockResolvedValueOnce({ id: 5, name: "Regression" });
 
     await callTool({
@@ -159,11 +159,19 @@ describe("testplanit_cases_create", () => {
       env,
     );
 
-    // After create, a follow-up update with tags.set
+    // After create, a follow-up update writes the RepositoryCaseTag join
+    // rows via caseTags.create (the case was just created with no tags).
     const updateCall = zenstackMock.mock.calls.find((c) => c[1] === "update");
     expect(updateCall).toBeDefined();
     expect(updateCall![2]).toMatchObject({
-      data: { tags: { set: expect.arrayContaining([{ id: 4 }, { id: 5 }]) } },
+      data: {
+        caseTags: {
+          create: expect.arrayContaining([
+            { tag: { connect: { id: 4 } } },
+            { tag: { connect: { id: 5 } } },
+          ]),
+        },
+      },
     });
   });
 

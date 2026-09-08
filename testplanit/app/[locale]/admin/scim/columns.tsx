@@ -1,7 +1,7 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
-import { ScimToken, User } from "@prisma/client";
+import type { ScimToken, User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
 import { Ban, CheckCircle2, Clock, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -35,6 +35,7 @@ export const useColumns = (
         enableSorting: true,
         enableResizing: true,
         enableHiding: false,
+        meta: { isPinned: "left" },
         size: 200,
         cell: ({ row }) => (
           <div className="font-medium">{row.original.name}</div>
@@ -63,7 +64,7 @@ export const useColumns = (
           if (revokedAt) {
             return (
               <Badge variant="destructive">
-                <Ban className="size-3 mr-1" aria-hidden="true" />
+                <Ban className="size-3 me-1" aria-hidden="true" />
                 {tApiTokens("status.revoked")}
               </Badge>
             );
@@ -71,7 +72,7 @@ export const useColumns = (
           if (expiresAt && new Date(expiresAt) < new Date()) {
             return (
               <Badge variant="outline">
-                <Clock className="size-3 mr-1" aria-hidden="true" />
+                <Clock className="size-3 me-1" aria-hidden="true" />
                 {t("status.expired")}
               </Badge>
             );
@@ -79,14 +80,14 @@ export const useColumns = (
           if (!isActive) {
             return (
               <Badge variant="secondary">
-                <UserMinus className="size-3 mr-1" aria-hidden="true" />
+                <UserMinus className="size-3 me-1" aria-hidden="true" />
                 {t("status.deactivated")}
               </Badge>
             );
           }
           return (
             <Badge variant="default">
-              <CheckCircle2 className="size-3 mr-1" aria-hidden="true" />
+              <CheckCircle2 className="size-3 me-1" aria-hidden="true" />
               {t("status.active")}
             </Badge>
           );
@@ -202,7 +203,7 @@ export const useColumns = (
             return null;
           }
           return (
-            <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
               <TestScimButton tokenId={token.id} />
               <RevokeScimTokenButton
                 tokenId={token.id}

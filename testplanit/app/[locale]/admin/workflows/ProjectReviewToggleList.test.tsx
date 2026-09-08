@@ -9,13 +9,20 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
     mockUseReviewFeatureEnabled(...args),
 }));
 
+// The list moved from paged useFindMany to infinite scroll; `useInfiniteFindMany`
+// records the (where/orderBy) args the assertions below check.
 const mockUseFindManyProjects = vi.fn();
 const mockUseCountProjects = vi.fn();
 const mockUseUpdateProjects = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: (...args: unknown[]) => mockUseFindManyProjects(...args),
-  useCountProjects: (...args: unknown[]) => mockUseCountProjects(...args),
-  useUpdateProjects: (...args: unknown[]) => mockUseUpdateProjects(...args),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: {
+      useInfiniteFindMany: (...args: unknown[]) =>
+        mockUseFindManyProjects(...args),
+      useCount: (...args: unknown[]) => mockUseCountProjects(...args),
+      useUpdate: (...args: unknown[]) => mockUseUpdateProjects(...args),
+    },
+  }),
 }));
 
 const mockToastSuccess = vi.fn();
@@ -139,7 +146,10 @@ beforeEach(() => {
   mutateAsync.mockResolvedValue({});
 
   mockUseFindManyProjects.mockReturnValue({
-    data: sampleProjects,
+    data: { pages: [sampleProjects], pageParams: [undefined] },
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
     isLoading: false,
   });
   mockUseCountProjects.mockReturnValue({ data: sampleProjects.length });

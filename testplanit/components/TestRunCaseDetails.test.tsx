@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- vi.hoisted for variables used in vi.mock factories ---
 const {
-  mockUseFindFirstRepositoryCasesFiltered,
+  mockUseTestRunCaseDetail,
   mockUseProjectPermissions,
   mockUseCreateTestRunResults,
   mockUseFindFirstWorkflows,
@@ -15,9 +15,10 @@ const {
   mockUseUpdateTestRunCases,
   mockUseUpdateTestRuns,
   mockUseFindManyTemplates,
+  mockUseFindManyJUnitTestResult,
   mockUseSession,
 } = vi.hoisted(() => ({
-  mockUseFindFirstRepositoryCasesFiltered: vi.fn(),
+  mockUseTestRunCaseDetail: vi.fn(),
   mockUseProjectPermissions: vi.fn(),
   mockUseCreateTestRunResults: vi.fn(),
   mockUseFindFirstWorkflows: vi.fn(),
@@ -26,31 +27,37 @@ const {
   mockUseUpdateTestRunCases: vi.fn(),
   mockUseUpdateTestRuns: vi.fn(),
   mockUseFindManyTemplates: vi.fn(),
+  mockUseFindManyJUnitTestResult: vi.fn(),
   mockUseSession: vi.fn(),
 }));
 
 // --- Mocks ---
 
-vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({
-  useFindFirstRepositoryCasesFiltered: mockUseFindFirstRepositoryCasesFiltered,
+vi.mock("~/hooks/useTestRunCaseDetail", () => ({
+  useTestRunCaseDetail: mockUseTestRunCaseDetail,
 }));
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: mockUseProjectPermissions,
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useCreateTestRunResults: mockUseCreateTestRunResults,
-  useFindFirstWorkflows: mockUseFindFirstWorkflows,
-  useFindManyStatus: mockUseFindManyStatus,
-  useFindManyTestRunResults: mockUseFindManyTestRunResults,
-  useFindManyTemplateResultAssignment: () => ({ data: [] }),
-  useUpdateTestRunCases: mockUseUpdateTestRunCases,
-  useUpdateTestRuns: mockUseUpdateTestRuns,
-}));
-
-vi.mock("~/lib/hooks/templates", () => ({
-  useFindManyTemplates: mockUseFindManyTemplates,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    testRunResults: {
+      useCreate: mockUseCreateTestRunResults,
+      useFindMany: mockUseFindManyTestRunResults,
+    },
+    workflows: { useFindFirst: mockUseFindFirstWorkflows },
+    status: { useFindMany: mockUseFindManyStatus },
+    templateResultAssignment: { useFindMany: () => ({ data: [] }) },
+    testRunCases: { useUpdate: mockUseUpdateTestRunCases },
+    testRuns: { useUpdate: mockUseUpdateTestRuns },
+    templates: { useFindMany: mockUseFindManyTemplates },
+    // Automated (JUnit/Mocha/etc.) runs keep their outcome here rather than on
+    // TestRunCases.statusId, so the sheet falls back to it when the run-case
+    // carries no status of its own.
+    jUnitTestResult: { useFindMany: mockUseFindManyJUnitTestResult },
+  }),
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -208,15 +215,12 @@ const mockTestCase = {
   forecastAutomated: null,
   currentVersion: 1,
   state: null,
-  project: { id: 1, name: "Test Project" },
-  folder: null,
-  creator: null,
   template: { id: 1, templateName: "Default", caseFields: [] },
   caseFieldValues: [],
   attachments: [],
   steps: [],
-  tags: [],
-  issues: [],
+  caseTags: [],
+  caseIssues: [],
   testRuns: [],
   source: "manual",
   automated: false,
@@ -247,7 +251,7 @@ import { TestRunCaseDetails } from "./TestRunCaseDetails";
 // --- Test Setup ---
 
 function setupDefaultMocks() {
-  mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+  mockUseTestRunCaseDetail.mockReturnValue({
     data: mockTestCase,
     isLoading: false,
   });
@@ -264,6 +268,9 @@ function setupDefaultMocks() {
     data: [mockStatus, mockSuccessStatus],
   });
   mockUseFindManyTemplates.mockReturnValue({ data: [] });
+  // Default: no automated result for this case, so the sheet uses the
+  // run-case's own status.
+  mockUseFindManyJUnitTestResult.mockReturnValue({ data: [] });
   mockUseSession.mockReturnValue({
     data: { user: { id: "user-1", name: "Test User" } },
     status: "authenticated",
@@ -283,7 +290,7 @@ beforeEach(() => {
 
 describe("TestRunCaseDetails", () => {
   it("renders loading spinner when case data is loading", () => {
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: undefined,
       isLoading: true,
     });
@@ -404,6 +411,31 @@ describe("TestRunCaseDetails", () => {
     expect(onNextCase).toHaveBeenCalledWith(42);
   });
 
+  it("renders the Edit Test Case button when onEditCase is provided", () => {
+    renderWithQueryClient(
+      <TestRunCaseDetails {...defaultProps} onEditCase={vi.fn()} />
+    );
+    expect(screen.getByTestId("run-case-edit-case")).toBeInTheDocument();
+  });
+
+  it("hides the Edit Test Case button when onEditCase is not provided", () => {
+    renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+    expect(screen.queryByTestId("run-case-edit-case")).not.toBeInTheDocument();
+  });
+
+  it("calls onEditCase when the Edit Test Case button is clicked", async () => {
+    const user = userEvent.setup();
+    const onEditCase = vi.fn();
+
+    renderWithQueryClient(
+      <TestRunCaseDetails {...defaultProps} onEditCase={onEditCase} />
+    );
+
+    await user.click(screen.getByTestId("run-case-edit-case"));
+
+    expect(onEditCase).toHaveBeenCalledTimes(1);
+  });
+
   it("shows case position indicator (1 of N)", () => {
     renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
     // caseId=42 is index 0, so "1 of 3"
@@ -421,12 +453,12 @@ describe("TestRunCaseDetails", () => {
   it("renders tags when test case has tags", () => {
     const testCaseWithTags = {
       ...mockTestCase,
-      tags: [
-        { id: 1, name: "smoke" },
-        { id: 2, name: "regression" },
+      caseTags: [
+        { tag: { id: 1, name: "smoke" } },
+        { tag: { id: 2, name: "regression" } },
       ],
     };
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: testCaseWithTags,
       isLoading: false,
     });
@@ -439,9 +471,9 @@ describe("TestRunCaseDetails", () => {
   it("renders issues when test case has issues", () => {
     const testCaseWithIssues = {
       ...mockTestCase,
-      issues: [{ id: 1, name: "BUG-001", externalId: "ext-1" }],
+      caseIssues: [{ issue: { id: 1, name: "BUG-001", externalId: "ext-1" } }],
     };
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: testCaseWithIssues,
       isLoading: false,
     });
@@ -483,7 +515,7 @@ describe("TestRunCaseDetails", () => {
         },
       ],
     };
-    mockUseFindFirstRepositoryCasesFiltered.mockReturnValue({
+    mockUseTestRunCaseDetail.mockReturnValue({
       data: testCaseWithFields,
       isLoading: false,
     });
@@ -513,5 +545,46 @@ describe("TestRunCaseDetails", () => {
   it("renders linked cases panel", () => {
     renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
     expect(screen.getByTestId("linked-cases-panel")).toBeInTheDocument();
+  });
+
+  // Automated runs (JUnit, TestNG, Mocha, etc.) record their outcome in
+  // JUnitTestResult and never denormalise it onto TestRunCases.statusId, so
+  // `currentStatus` arrives null for a case that has in fact executed. Users
+  // reach this sheet straight from the Latest Results chips, which include
+  // JUnit executions — so without the fallback, clicking a passing result
+  // opened a sheet reading "Untested".
+  describe("automated run status fallback", () => {
+    it("shows the latest automated result when the run-case has no status", () => {
+      mockUseFindManyJUnitTestResult.mockReturnValue({
+        data: [{ status: mockSuccessStatus }],
+      });
+
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} currentStatus={null} />
+      );
+
+      expect(screen.getByText(mockSuccessStatus.name)).toBeInTheDocument();
+      expect(screen.queryByText("Untested")).not.toBeInTheDocument();
+    });
+
+    it("falls back to Untested when the case has no result in either source", () => {
+      mockUseFindManyJUnitTestResult.mockReturnValue({ data: [] });
+
+      renderWithQueryClient(
+        <TestRunCaseDetails {...defaultProps} currentStatus={null} />
+      );
+
+      expect(screen.getByText("Untested")).toBeInTheDocument();
+    });
+
+    it("prefers the run-case's own status over an automated result", () => {
+      mockUseFindManyJUnitTestResult.mockReturnValue({
+        data: [{ status: mockSuccessStatus }],
+      });
+
+      renderWithQueryClient(<TestRunCaseDetails {...defaultProps} />);
+
+      expect(screen.getByText("Untested")).toBeInTheDocument();
+    });
   });
 });

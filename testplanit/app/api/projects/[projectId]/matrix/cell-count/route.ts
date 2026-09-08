@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { runCellCountPreflight } from "~/lib/matrix/matrixCellCount";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { matrixFiltersBodySchema } from "~/lib/schemas/matrixFiltersSchema";
 import { authOptions } from "~/server/auth";
 
@@ -24,7 +24,7 @@ import { authOptions } from "~/server/auth";
  *     uses `getEnhancedDb(session).projects.findFirst` BEFORE invoking
  *     `runCellCountPreflight`, because the preflight runs raw SQL which
  *     bypasses ZenStack policies.
- *   - The preflight itself uses the raw `prisma` client by design — running
+ *   - The preflight itself uses the raw `baseDb` client by design — running
  *     it through the enhanced wrapper would add latency for no security
  *     benefit (raw SQL bypasses policies regardless).
  */
@@ -71,7 +71,7 @@ export async function POST(
     }
 
     const result = await runCellCountPreflight(
-      prisma,
+      baseDb,
       projectId,
       parsed.data.filters
     );

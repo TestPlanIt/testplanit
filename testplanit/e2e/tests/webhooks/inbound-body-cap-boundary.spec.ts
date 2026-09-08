@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 import {
@@ -115,16 +115,16 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Cap Boundary ${uniqueId}`);
-    prisma = new PrismaClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   for (const adapter of ["JIRA", "GITHUB", "AZURE_DEVOPS"] as const) {
@@ -134,7 +134,7 @@ test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
     }) => {
       let seeded: Awaited<ReturnType<typeof seedInboundConfig>> | undefined;
       await test.step(`Seed inbound ${adapter} webhook config`, async () => {
-        seeded = await seedInboundConfig(prisma, {
+        seeded = await seedInboundConfig(db, {
           projectId,
           adapterType: adapter,
           credentialInput:
@@ -226,7 +226,7 @@ test.describe("Inbound body-cap boundary at 5 MiB exactly (I-05)", () => {
       // request will have written one row (200 outcome), the at-cap-INVALID
       // and over-cap requests must not.
       await test.step("Verify no failed delivery rows were written", async () => {
-        const failedRows = await prisma.webhookDelivery.findMany({
+        const failedRows = await db.webhookDelivery.findMany({
           where: {
             webhookConfigId: seeded!.configId,
             OR: [

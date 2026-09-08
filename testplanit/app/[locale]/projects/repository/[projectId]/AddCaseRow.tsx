@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -22,12 +24,6 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
-import {
-  useFindFirstRepositoryCases,
-  useFindFirstRepositoryFolders,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
 function buildFormSchema(t: (key: any) => string) {
@@ -63,7 +59,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const { data: folder } = useFindFirstRepositoryFolders(
+  const { data: folder } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindFirst(
     {
       where: {
         id: folderId,
@@ -79,7 +77,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     }
   );
 
-  const { data: maxOrder } = useFindFirstRepositoryCases(
+  const { data: maxOrder } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
     {
       where: {
         folderId: folderId,
@@ -104,10 +104,11 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   // would briefly return nothing for projects whose only assigned template
   // is the seeded "Default Template", which leaves `template.id` as 0 and
   // silently breaks case creation. Matches the AddCase modal's lookup.
-  const { data: templates } = useFindManyTemplates(
+  const { data: templates } = useClientQueries(schema).templates.useFindMany(
     {
       where: {
         isDeleted: false,
+        isEnabled: true,
         projects: {
           some: {
             projectId: Number(projectId),
@@ -121,9 +122,10 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   );
   const template = templates?.find((t) => t.isDefault) ?? templates?.[0];
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       scope: "CASES",
       projects: {
         some: {
@@ -144,11 +146,17 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     (workflow) => workflow.isDefault
   )?.id;
 
-  const firstGatedOrder = (workflows ?? [])
-    .filter((w) => w.requiresReview === true)
-    .reduce<
-      number | null
-    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
+  // `null` for system admins — they bypass the review gate on create (see
+  // `resolveCreateStateRemap`), so no state option is disabled.
+  const firstGatedOrder =
+    session?.user?.access === "ADMIN"
+      ? null
+      : (workflows ?? [])
+          .filter((w) => w.requiresReview === true)
+          .reduce<number | null>(
+            (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+            null
+          );
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
@@ -280,13 +288,20 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   };
 
   async function onSubmit(data: FormValues) {
+    // The folder (and its repositoryId) load via a separate query that can
+    // still be pending when the user presses Enter. Bail until it resolves so
+    // we never submit repositoryId:0 — that 0 hits no Repositories row and the
+    // create fails with a foreign-key violation.
+    if (!folder?.repositoryId) {
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (session) {
         const result = await importGeneratedTestCases({
           projectId: Number(projectId),
           projectName: folder?.project?.name || "",
-          repositoryId: folder?.repositoryId || 0,
+          repositoryId: folder.repositoryId,
           folderId,
           folderName: folder?.name || "",
           templateId: template?.id || 0,
@@ -433,7 +448,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
             type="submit"
             variant="secondary"
             disabled={isSubmitting}
-            className="-mt-2 group mr-2 px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+            className="-mt-2 group me-2 px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
             data-testid="inline-add-case-button"
           >
             {isSubmitting ? (

@@ -36,7 +36,7 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/lib/multiTenantPrisma", () => ({
+vi.mock("@/lib/multiTenantDb", () => ({
   getCurrentTenantId: () => mockGetCurrentTenantId(),
 }));
 
@@ -50,8 +50,8 @@ vi.mock("~/lib/services/duplicateScanService", () => ({
   },
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     repositoryCases: {
       findMany: (...args: any[]) => mockFindMany(...args),
     },

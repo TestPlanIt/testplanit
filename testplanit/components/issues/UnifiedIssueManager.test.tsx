@@ -9,8 +9,10 @@ const { mockUseFindFirstProjects } = vi.hoisted(() => ({
 
 // --- Mocks ---
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstProjects: mockUseFindFirstProjects,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: { useFindFirst: mockUseFindFirstProjects },
+  }),
 }));
 
 vi.mock("next-intl", () => ({
@@ -38,16 +40,6 @@ vi.mock("./ManageSimpleUrlIssues", () => ({
 
 vi.mock("./DeferredIssueManager", () => ({
   DeferredIssueManager: () => <div data-testid="deferred-issue-manager" />,
-}));
-
-// Mock @prisma/client enums for jsdom
-vi.mock("@prisma/client", () => ({
-  IntegrationProvider: {
-    JIRA: "JIRA",
-    GITHUB: "GITHUB",
-    AZURE_DEVOPS: "AZURE_DEVOPS",
-    SIMPLE_URL: "SIMPLE_URL",
-  },
 }));
 
 vi.mock("@/components/ui/alert", () => ({

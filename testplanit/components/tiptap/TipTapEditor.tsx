@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Button } from "@/components/ui/button";
 import { Color } from "@tiptap/extension-color";
 import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
@@ -91,7 +93,7 @@ import {
   Smile,
   StrikethroughIcon,
   Table2,
-  Trash2,
+  Trash,
   Underline as UnderlineIcon,
   Undo2,
   Upload,
@@ -99,7 +101,6 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
 import {
   createParameterMentionExtension,
   type ParameterChipMeta,
@@ -117,6 +118,7 @@ interface TipTapEditorProps {
   onUpdate?: (content: object) => void;
   readOnly?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   projectId?: string; // Made optional - AI features only work when valid project ID provided
   placeholder?: string;
   parameters?: ParameterChipMeta[];
@@ -128,6 +130,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   onUpdate,
   readOnly = false,
   className = "h-[150px]",
+  style,
   projectId,
   placeholder,
   parameters,
@@ -154,7 +157,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const projectIdNumber = projectId ? parseInt(projectId) : NaN;
   const isValidProjectId = !isNaN(projectIdNumber) && projectIdNumber > 0;
 
-  const { data: llmIntegrations } = useFindManyProjectLlmIntegration(
+  const { data: llmIntegrations } = useClientQueries(
+    schema
+  ).projectLlmIntegration.useFindMany(
     {
       where: {
         projectId: projectIdNumber,
@@ -242,12 +247,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     [handleImageUpload]
   );
 
-  const validateContent = (content: any) => {
+  const validateContent = useCallback((content: any) => {
     if (!content || typeof content !== "object" || !content.type) {
       return emptyEditorContent;
     }
     return content;
-  };
+  }, []);
 
   const editor = useEditor(
     {
@@ -259,12 +264,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           },
           bulletList: {
             HTMLAttributes: {
-              class: "list-disc list-outside pl-5",
+              class: "list-disc list-outside ps-5",
             },
           },
           orderedList: {
             HTMLAttributes: {
-              class: "list-decimal list-outside pl-5",
+              class: "list-decimal list-outside ps-5",
             },
           },
           listItem: {
@@ -278,7 +283,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         Underline,
         Link.configure({ openOnClick: false }),
         ImageWithResize.configure({
-          inline: true,
+          // Images are block-level (the custom Image extension sets group:"block",
+          // and all stored content uses block-placed images). inline:true here
+          // contradicted that — a node flagged inline but placed at block level —
+          // which @tiptap 3.26 tolerated but 3.27's stricter content validation
+          // rejects ("contentMatchAt … invalid content"), crashing the DragHandle
+          // on any doc with an image. Keep it block so v2 image content renders.
+          inline: false,
           allowBase64: true,
           HTMLAttributes: {
             class: "tiptap-image",
@@ -310,7 +321,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         Placeholder.configure({
           placeholder,
           emptyEditorClass:
-            "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:pointer-events-none",
+            "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-start before:pointer-events-none",
         }),
         Markdown,
         Table,
@@ -382,26 +393,68 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     }
   }, [readOnly, editor, handleFile]);
 
+  // A read-only editor treats `content` as the source of truth, and that
+  // content often arrives (or changes) a tick after this component mounts —
+  // e.g. a project's saved docs resolve after the first render. `useEditor`
+  // only applies `content` when it *creates* the editor, and this editor is
+  // only re-created when `parameters` change, so a late-arriving doc would
+  // otherwise never reach it: the user sees a blank editor until a full reload
+  // happens to have the content ready before creation. Push the prop into the
+  // editor whenever it changes. Editable mode is intentionally excluded — there
+  // `onUpdate` drives `content`, and re-setting it on every keystroke would
+  // reset the caret. Mirrors the read-only editor in
+  // components/comments/CommentItem.tsx.
+  useEffect(() => {
+    if (!editor || !readOnly) return;
+    const next = validateContent(content);
+    if (JSON.stringify(editor.getJSON()) === JSON.stringify(next)) return;
+    editor.commands.setContent(next, { emitUpdate: false });
+  }, [editor, content, readOnly, validateContent]);
+
   useEffect(() => {
     const editorContainer = editorContainerRef.current;
     if (!editorContainer) return;
 
+    // A page-level react-dnd HTML5Backend listens on `window`. Its dragstart
+    // handler calls preventDefault() on any drag it did not start, cancelling
+    // block reordering outright, and its dragover handler stamps
+    // dropEffect="none", refusing the drop. Keep editor drags from reaching
+    // it — ProseMirror owns drag behaviour inside the editor.
+    const containEditorDrag = (e: DragEvent) => {
+      e.stopPropagation();
+    };
+
+    const isFileDrag = (e: DragEvent) =>
+      e.dataTransfer?.types?.includes("Files") ?? false;
+
     const handleDragOver = (e: DragEvent) => {
+      e.stopPropagation();
+      if (!isFileDrag(e)) return;
       e.preventDefault();
-      e.dataTransfer!.dropEffect = "copy";
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "copy";
+      }
     };
 
     const handleDrop = (e: DragEvent) => {
+      e.stopPropagation();
+      if (!isFileDrag(e)) return;
       e.preventDefault();
       if (e.dataTransfer?.files) {
         void handleFile(editor, Array.from(e.dataTransfer.files));
       }
     };
 
+    editorContainer.addEventListener("dragstart", containEditorDrag);
+    editorContainer.addEventListener("dragenter", containEditorDrag);
+    editorContainer.addEventListener("dragend", containEditorDrag);
     editorContainer.addEventListener("dragover", handleDragOver);
     editorContainer.addEventListener("drop", handleDrop);
 
     return () => {
+      editorContainer.removeEventListener("dragstart", containEditorDrag);
+      editorContainer.removeEventListener("dragenter", containEditorDrag);
+      editorContainer.removeEventListener("dragend", containEditorDrag);
       editorContainer.removeEventListener("dragover", handleDragOver);
       editorContainer.removeEventListener("drop", handleDrop);
     };
@@ -690,6 +743,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   return (
     <div
       className={cn("overflow-auto flex flex-col w-full", className)}
+      style={style}
       ref={editorContainerRef}
     >
       {loading && <LoadingSpinnerAlert />}
@@ -1011,7 +1065,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                     onClick={() => editor.chain().focus().deleteTable().run()}
                     data-testid="tiptap-delete-table"
                   >
-                    <Trash2 size={16} />
+                    <Trash size={16} />
                     {t("table.deleteTable")}
                   </Button>
                 </>
@@ -1162,7 +1216,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                   onClick={removeLink}
                   className="flex-1"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash className="w-4 h-4" />
                 </Button>
               </div>
             </PopoverContent>
@@ -1197,6 +1251,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               <div className="grid grid-cols-8 gap-2">
                 {gitHubEmojis.map((emoji) => (
                   <button
+                    type="button"
                     key={emoji.name}
                     className="text-xl"
                     onClick={() => handleEmojiClick(emoji)}
@@ -1348,7 +1403,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
           editor={editor}
-          className={`mt-0.5 ${!readOnly ? "pl-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
+          className={`mt-0.5 ${!readOnly ? "ps-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
         />
       </div>
       {parameters && parameters.length > 0 && editor && (
@@ -1407,7 +1462,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 {isAiLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    <span className="ml-2">{tAi("generating")}</span>
+                    <span className="ms-2">{tAi("generating")}</span>
                   </div>
                 ) : (
                   <div

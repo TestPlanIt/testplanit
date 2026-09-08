@@ -1,7 +1,9 @@
-import type { EndpointHealth, Prisma, PrismaClient } from "@prisma/client";
+import type { EndpointHealth } from "~/zenstack/models";
+import type { WebhookConfigUncheckedUpdateInput } from "~/zenstack/input";
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
-import { prisma as defaultPrisma } from "~/lib/prisma";
+import { baseDb as defaultDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
 /**
@@ -45,11 +47,11 @@ export interface HealthTransitionResult {
 export async function transition(
   webhookConfigId: string,
   outcome: HealthTransitionOutcome,
-  prisma: PrismaClient | Prisma.TransactionClient = defaultPrisma
+  baseDb: DbClient | TxClient = defaultDb
 ): Promise<HealthTransitionResult> {
   const now = new Date();
 
-  const config = await prisma.webhookConfig.findUnique({
+  const config = await baseDb.webhookConfig.findUnique({
     where: { id: webhookConfigId },
     select: {
       projectId: true,
@@ -69,7 +71,7 @@ export async function transition(
 
   let nextHealth: EndpointHealth;
   let nextCounter: number;
-  const updateData: Prisma.WebhookConfigUncheckedUpdateInput = {};
+  const updateData: WebhookConfigUncheckedUpdateInput = {};
 
   if (outcome === "success") {
     nextHealth = "HEALTHY";
@@ -95,7 +97,7 @@ export async function transition(
     updateData.lastFailureAt = now;
   }
 
-  await prisma.webhookConfig.update({
+  await baseDb.webhookConfig.update({
     where: { id: webhookConfigId },
     data: updateData,
   });

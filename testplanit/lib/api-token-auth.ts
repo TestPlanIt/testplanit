@@ -12,7 +12,7 @@ import {
   setCachedTokenInfo,
 } from "./api-token-cache";
 import { hashToken, isValidTokenFormat } from "./api-tokens";
-import { prisma } from "./prisma";
+import { baseDb } from "./db";
 
 // Re-export so callers that previously imported from api-token-auth keep working.
 export { invalidateApiTokenCache };
@@ -22,6 +22,9 @@ export interface ApiTokenAuthResult {
   authenticated: boolean;
   /** The authenticated user ID (if successful) */
   userId?: string;
+  /** The user's display name/email, for audit-frame attribution */
+  userName?: string;
+  userEmail?: string;
   /** The user's access level */
   access?: string;
   /** Token scopes (empty array means full access based on user permissions) */
@@ -122,7 +125,7 @@ export async function authenticateApiToken(
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
-    prisma.apiToken
+    baseDb.apiToken
       .update({
         where: { id: cached.tokenId },
         data: { lastUsedAt: new Date(), lastUsedIp: clientIp },
@@ -134,18 +137,22 @@ export async function authenticateApiToken(
     return {
       authenticated: true,
       userId: cached.userId,
+      userName: cached.userName ?? undefined,
+      userEmail: cached.userEmail ?? undefined,
       access: cached.userAccess ?? undefined,
       scopes: cached.scopes,
     };
   }
 
   // Slow path: DB lookup, validate everything, populate cache on success.
-  const apiToken = await prisma.apiToken.findUnique({
+  const apiToken = await baseDb.apiToken.findUnique({
     where: { token: tokenHash },
     include: {
       user: {
         select: {
           id: true,
+          name: true,
+          email: true,
           access: true,
           isActive: true,
           isDeleted: true,
@@ -204,6 +211,8 @@ export async function authenticateApiToken(
     tokenId: apiToken.id,
     userId: apiToken.userId,
     userAccess: apiToken.user.access ?? null,
+    userName: apiToken.user.name ?? null,
+    userEmail: apiToken.user.email ?? null,
     scopes: apiToken.scopes,
     expiresAt: apiToken.expiresAt ? apiToken.expiresAt.toISOString() : null,
   });
@@ -214,7 +223,7 @@ export async function authenticateApiToken(
     request.headers.get("x-real-ip") ||
     "unknown";
 
-  prisma.apiToken
+  baseDb.apiToken
     .update({
       where: { id: apiToken.id },
       data: {
@@ -229,6 +238,8 @@ export async function authenticateApiToken(
   return {
     authenticated: true,
     userId: apiToken.userId,
+    userName: apiToken.user.name ?? undefined,
+    userEmail: apiToken.user.email ?? undefined,
     access: apiToken.user.access,
     scopes: apiToken.scopes,
   };

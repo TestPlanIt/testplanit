@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { logDataExport } from "~/lib/services/auditClient";
+import { useRecordKeyConfig } from "~/hooks/useRecordKeyConfig";
+import { RECORD_TYPES } from "~/lib/recordKey";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { toHumanReadable } from "~/utils/duration";
 import { PdfRenderer, preloadImages, formatFieldValue } from "./pdfHelpers";
@@ -81,7 +83,7 @@ interface SessionExportData {
       };
     }[];
   }[];
-  project?: { id?: number; name?: string } | null;
+  project?: { id?: number; name?: string; key?: string | null } | null;
 }
 
 interface UseExportSessionPdfProps {
@@ -96,6 +98,7 @@ export function useExportSessionPdf({
   locale = "en-US",
 }: UseExportSessionPdfProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const { formatKey } = useRecordKeyConfig();
 
   const handleExport = useCallback(async () => {
     if (!sessionData) return;
@@ -122,6 +125,14 @@ export function useExportSessionPdf({
 
       // --- Session Header ---
       pdf.renderSectionHeader(sessionData.name);
+      pdf.renderField(
+        "Key",
+        formatKey(
+          RECORD_TYPES.SESSION,
+          sessionData.project?.key,
+          sessionData.id
+        )
+      );
 
       // --- Metadata ---
       pdf.renderField("Template", sessionData.template?.templateName);
@@ -363,7 +374,7 @@ export function useExportSessionPdf({
     } finally {
       setIsExporting(false);
     }
-  }, [sessionData, embedImages, locale]);
+  }, [sessionData, embedImages, locale, formatKey]);
 
   return { isExporting, handleExport };
 }

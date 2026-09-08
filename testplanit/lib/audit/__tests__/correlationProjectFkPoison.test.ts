@@ -23,7 +23,7 @@ import {
   pollDataChangeLogsOnce,
   writeAuditLogRows,
   type MaterializedRow,
-  type RawPrismaClient,
+  type RawDbClient,
   type RawTxClient,
 } from "../correlation";
 
@@ -218,7 +218,7 @@ function makeFakeDb(opts: FakeDbOptions = {}) {
 
   return {
     tx: tx as unknown as RawTxClient,
-    client: client as unknown as RawPrismaClient,
+    client: client as unknown as RawDbClient,
     inserted,
     insertSqls,
     processedIds,

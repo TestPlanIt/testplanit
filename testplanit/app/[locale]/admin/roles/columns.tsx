@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Roles } from "@prisma/client";
+import type { Roles } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { RoleNameCell } from "~/components/tables/RoleNameCell";
@@ -61,13 +61,9 @@ export const useColumns = (
         enableSorting: false,
         enableResizing: true,
         size: 75,
-        cell: ({ row }) => {
-          const users = row.original.users;
-          const mappedUsers = users
-            ? users.map((user) => ({ userId: user.id }))
-            : [];
-          return <UserListDisplay users={mappedUsers} />;
-        },
+        cell: ({ row }) => (
+          <UserListDisplay filter={{ roleId: row.original.id }} />
+        ),
       },
       {
         id: "actions",
@@ -78,7 +74,7 @@ export const useColumns = (
         meta: { isPinned: "right" },
         size: 80,
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <Button
               variant="ghost"
               className="px-2 py-1 h-auto"
@@ -94,7 +90,7 @@ export const useColumns = (
                 disabled
                 aria-label={tCommon("actions.delete")}
               >
-                <Trash2 className="h-5 w-5" />
+                <Trash className="h-5 w-5" />
               </Button>
             ) : (
               <Button
@@ -103,7 +99,7 @@ export const useColumns = (
                 onClick={() => onDeleteRole?.(row.original)}
                 aria-label={tCommon("actions.delete")}
               >
-                <Trash2 className="h-5 w-5" />
+                <Trash className="h-5 w-5" />
               </Button>
             )}
           </div>

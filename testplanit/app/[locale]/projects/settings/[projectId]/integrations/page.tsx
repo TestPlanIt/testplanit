@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { IntegrationsList } from "@/components/admin/integrations/integrations-list";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
@@ -10,15 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useFindFirstProjects,
-  useFindManyIntegration,
-  useFindManyProjectIntegration,
-} from "~/lib/hooks";
+import { MilestoneSyncSettings } from "./milestone-sync-settings";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
 
 export default function ProjectIntegrationsPage() {
@@ -34,7 +36,9 @@ export default function ProjectIntegrationsPage() {
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: {
         id: projectId,
@@ -66,7 +70,7 @@ export default function ProjectIntegrationsPage() {
 
   // Fetch project integrations
   const { data: projectIntegrations, isLoading: projectIntegrationsLoading } =
-    useFindManyProjectIntegration({
+    useClientQueries(schema).projectIntegration.useFindMany({
       where: {
         projectId,
         isActive: true,
@@ -78,7 +82,7 @@ export default function ProjectIntegrationsPage() {
 
   // Get issue tracking integrations configured by admins
   const { data: integrations, isLoading: integrationsLoading } =
-    useFindManyIntegration({
+    useClientQueries(schema).integration.useFindMany({
       where: {
         isDeleted: false,
         status: "ACTIVE",
@@ -116,23 +120,23 @@ export default function ProjectIntegrationsPage() {
       ].includes(pi.integration.provider)
   );
 
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      // Check access to settings:
-      // 1. System ADMIN users always have access
-      // 2. System PROJECTADMIN users have access to any project they can see
-      // 3. TODO: Users with Project Admin role on this specific project
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+  // Check access to settings. `isProjectAdmin` resolves the full ladder that
+  // `authorizeProjectAdminForProject` enforces server-side:
+  // 1. System ADMIN users always have access
+  // 2. System PROJECTADMIN users, on projects they are assigned to
+  // 3. Users with the Project Admin role on this specific project
+  // 4. The project's creator
+  // Tiers 3 and 4 were the standing TODO here, and 404'd until now.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-      if (!hasAccess) {
-        notFound();
-      }
-    } else if (!projectLoading && !project && session?.user) {
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) {
       notFound();
     }
-  }, [project, projectLoading, session]);
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
 
   // Wait for session to load
   if (isAuthLoading) {
@@ -140,7 +144,12 @@ export default function ProjectIntegrationsPage() {
   }
 
   // Wait for all data to load - this prevents the flash
-  if (projectLoading || integrationsLoading || projectIntegrationsLoading) {
+  if (
+    projectLoading ||
+    permissionsLoading ||
+    integrationsLoading ||
+    projectIntegrationsLoading
+  ) {
     return <Loading />;
   }
 
@@ -149,9 +158,9 @@ export default function ProjectIntegrationsPage() {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -164,12 +173,11 @@ export default function ProjectIntegrationsPage() {
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{tGlobal("admin.menu.integrations")}</span>
-            </CardTitle>
-          </div>
-          <CardDescription className="uppercase">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{tGlobal("admin.menu.integrations")}</CardTitle>
+            <HelpPopover helpKey="projectIntegrations" />
+          </SectionHeader>
+          <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
@@ -198,10 +206,16 @@ export default function ProjectIntegrationsPage() {
           </Card>
 
           {currentIntegration && (
-            <ProjectIntegrationSettings
-              projectIntegration={currentIntegration}
-              integration={currentIntegration.integration}
-            />
+            <>
+              <ProjectIntegrationSettings
+                projectIntegration={currentIntegration}
+                integration={currentIntegration.integration}
+              />
+              <MilestoneSyncSettings
+                projectIntegration={currentIntegration}
+                integration={currentIntegration.integration}
+              />
+            </>
           )}
         </CardContent>
       </Card>

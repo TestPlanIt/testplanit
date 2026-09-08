@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +20,7 @@ import {
   ListChecks,
   Loader2,
   MessageSquare,
+  Timer,
   User,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -25,10 +28,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
-import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
+import { wallClockSecondsBetween } from "~/utils/automatedRunMetrics";
+import { statusSurfaceVars } from "~/utils/contrastingTextColor";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { sortSummaryItems } from "~/utils/summarySort";
@@ -41,6 +45,13 @@ interface TestRunCasesSummaryProps {
   testRunType?: string;
   // Support for pre-fetched data (batch mode)
   summaryData?: TestRunSummaryData;
+  /**
+   * True while the parent's BATCH summary fetch is still in flight. Suppresses
+   * this component's own per-run fallback fetch — without it, a list of N rows
+   * fans out N `/summary` requests during the window before the batch lands
+   * (a network storm on big milestones), all of which the batch then obsoletes.
+   */
+  summaryLoading?: boolean;
 }
 
 export function TestRunCasesSummary({
@@ -50,6 +61,7 @@ export function TestRunCasesSummary({
   className,
   testRunType: _testRunType,
   summaryData: preFetchedSummaryData,
+  summaryLoading = false,
 }: TestRunCasesSummaryProps) {
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -103,6 +115,7 @@ export function TestRunCasesSummary({
     },
     enabled:
       !preFetchedSummaryData &&
+      !summaryLoading &&
       effectiveTestRunIds.length > 0 &&
       effectiveTestRunIds[0] > 0,
     // No refetchInterval — live updates come from the parent's SSE stream
@@ -154,6 +167,9 @@ export function TestRunCasesSummary({
     let totalElapsed = 0;
     let totalEstimate = 0;
     let commentsCount = 0;
+    // ISO strings compare correctly as strings (all UTC via toISOString).
+    let firstResultAt: string | null = null;
+    let lastResultAt: string | null = null;
     const allIssues: TestRunSummaryData["issues"] = [];
     const allCaseDetails: NonNullable<TestRunSummaryData["caseDetails"]> = [];
 
@@ -162,6 +178,18 @@ export function TestRunCasesSummary({
       totalElapsed += summary.totalElapsed;
       totalEstimate += summary.totalEstimate;
       commentsCount += summary.commentsCount;
+      if (
+        summary.firstResultAt &&
+        (!firstResultAt || summary.firstResultAt < firstResultAt)
+      ) {
+        firstResultAt = summary.firstResultAt;
+      }
+      if (
+        summary.lastResultAt &&
+        (!lastResultAt || summary.lastResultAt > lastResultAt)
+      ) {
+        lastResultAt = summary.lastResultAt;
+      }
 
       // Aggregate status counts
       summary.statusCounts.forEach((sc) => {
@@ -202,13 +230,15 @@ export function TestRunCasesSummary({
       totalElapsed,
       totalEstimate,
       commentsCount,
+      firstResultAt,
+      lastResultAt,
       issues: allIssues,
       caseDetails: allCaseDetails,
       junitSummary: summaries[0].junitSummary, // JUnit summary doesn't aggregate well
     };
   }
 
-  const { data: firstStatus } = useFindFirstStatus({
+  const { data: firstStatus } = useClientQueries(schema).status.useFindFirst({
     where: { isDeleted: false },
     orderBy: { order: "asc" },
     include: { color: true },
@@ -233,7 +263,7 @@ export function TestRunCasesSummary({
     : undefined;
 
   // Only show loading skeleton if we're actually loading (not using pre-fetched data)
-  if (isLoading && !preFetchedSummaryData) {
+  if ((isLoading || summaryLoading) && !preFetchedSummaryData) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         <Skeleton className="h-2.5 w-full rounded-full" />
@@ -259,7 +289,10 @@ export function TestRunCasesSummary({
   if (summaryData.totalCases === 0) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
-        <div className="flex h-2.5 w-full rounded-full overflow-hidden">
+        <div
+          className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden"
+          data-status-bar
+        >
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
@@ -275,7 +308,9 @@ export function TestRunCasesSummary({
             <TooltipContent
               side="top"
               className="border-0 px-3 py-2"
+              data-status-surface
               style={{
+                ...statusSurfaceVars(firstStatus?.color?.value || "#B1B2B3"),
                 backgroundColor: firstStatus?.color?.value || "#B1B2B3",
               }}
             >
@@ -319,19 +354,39 @@ export function TestRunCasesSummary({
           })
         : null;
 
-    const summaryTitle = summaryText
-      ? totalElapsedDisplay
-        ? `${summaryText} • ${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`
-        : summaryText
-      : totalElapsedDisplay
-        ? `${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`
-        : undefined;
+    // Wall-clock window of the run (first result → last result) — with
+    // parallel execution this is far shorter than the summed test time above.
+    const wallClockSeconds = wallClockSecondsBetween(
+      summaryData.firstResultAt,
+      summaryData.lastResultAt
+    );
+    const runDurationDisplay =
+      wallClockSeconds !== null && wallClockSeconds >= 1
+        ? toHumanReadable(wallClockSeconds, {
+            isSeconds: true,
+            locale,
+          })
+        : null;
+
+    const summaryTitle =
+      [
+        summaryText,
+        runDurationDisplay
+          ? `${tCommon("fields.runDuration")}: ${runDurationDisplay}`
+          : null,
+        totalElapsedDisplay
+          ? `${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" • ") || undefined;
 
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         {/* Color bar for JUnit test results */}
         <div
-          className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+          className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+          data-status-bar
           data-testid="test-run-cases-status-bar"
         >
           {resultSegments.map((result, index) => {
@@ -364,7 +419,11 @@ export function TestRunCasesSummary({
                 </TooltipTrigger>
                 <TooltipContent
                   className="border-0 text-muted px-3 py-2"
-                  style={{ backgroundColor: result.statusColor }}
+                  data-status-surface
+                  style={{
+                    ...statusSurfaceVars(result.statusColor),
+                    backgroundColor: result.statusColor,
+                  }}
                 >
                   <div className="flex items-center gap-1 font-semibold text-sm">
                     <div className="rounded-full bg-muted w-2 h-2" />
@@ -388,22 +447,54 @@ export function TestRunCasesSummary({
         {/* Summary text below the bar */}
         <div className="flex justify-between items-center">
           <div
-            className="text-muted-foreground text-xs truncate grow mr-2"
+            className="text-muted-foreground text-xs truncate grow me-2"
             title={summaryTitle}
           >
-            {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
-            {summaryText ? ` (${summaryText})` : ""}
+            <span className="truncate shrink">
+              {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
+              {summaryText ? ` (${summaryText})` : ""}
+            </span>
+            {runDurationDisplay ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
+                    data-testid="run-duration-display"
+                  >
+                    {" • "}
+                    <Timer className="h-3 w-3 ms-1" />
+                    {runDurationDisplay}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div>
+                    {`${tCommon("fields.runDuration")}: ${runDurationDisplay}`}
+                  </div>
+                  <div className="text-xs opacity-80">
+                    {tCommon("labels.runDurationHint")}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
             {totalElapsedDisplay ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex items-center ml-1 cursor-default">
+                  <span
+                    className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
+                    data-testid="total-test-time-display"
+                  >
                     {" • "}
-                    <Clock className="h-3 w-3 ml-1" />
+                    <Clock className="h-3 w-3 ms-1" />
                     {totalElapsedDisplay}
                   </span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  {`${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`}
+                  <div>
+                    {`${tCommon("fields.totalElapsed")}: ${totalElapsedDisplay}`}
+                  </div>
+                  <div className="text-xs opacity-80">
+                    {tCommon("labels.totalElapsedHint")}
+                  </div>
                 </TooltipContent>
               </Tooltip>
             ) : null}
@@ -500,7 +591,8 @@ export function TestRunCasesSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for individual test results */}
       <div
-        className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
+        className="flex h-2.5 w-full rounded-full overflow-x-auto overflow-y-hidden bg-muted"
+        data-status-bar
         data-testid="test-run-cases-status-bar"
       >
         {sortedCaseDetails.map((item, index) => {
@@ -541,7 +633,11 @@ export function TestRunCasesSummary({
               </TooltipTrigger>
               <TooltipContent
                 className="border-0 text-muted px-3 py-2"
-                style={{ backgroundColor: color }}
+                data-status-surface
+                style={{
+                  ...statusSurfaceVars(color),
+                  backgroundColor: color,
+                }}
               >
                 <div className="flex items-center gap-1 font-semibold text-sm">
                   <div className="rounded-full bg-muted w-2 h-2" />
@@ -585,7 +681,7 @@ export function TestRunCasesSummary({
                           locale,
                         })}
                         {item.resultCount && item.resultCount > 1 && (
-                          <span className="ml-1">
+                          <span className="ms-1">
                             {`(${item.resultCount} ${tGlobal("common.results")})`}
                           </span>
                         )}
@@ -626,20 +722,22 @@ export function TestRunCasesSummary({
       <div className="flex justify-between items-center">
         {/* Summary text below the bar */}
         <div
-          className="text-muted-foreground text-xs truncate grow mr-2"
+          className="text-muted-foreground text-xs truncate grow me-2"
           title={`${summaryText}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
-          {summaryText ? ` (${summaryText})` : ""}
+          <span className="truncate shrink">
+            {`${tCommon("labels.total")}: ${totalItems} ${tCommon("plural.case", { count: totalItems })}`}
+            {summaryText ? ` (${summaryText})` : ""}
+          </span>
           {totalElapsedText ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-elapsed-display"
                 >
                   {" • "}
-                  <Clock className="h-3 w-3 ml-1" />
+                  <Clock className="h-3 w-3 ms-1" />
                   {`${totalElapsedText}`}
                 </span>
               </TooltipTrigger>
@@ -654,11 +752,11 @@ export function TestRunCasesSummary({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className="inline-flex items-center ml-1 cursor-default"
+                  className="inline-flex items-center ms-1 cursor-default shrink-[9999] min-w-0 overflow-hidden whitespace-nowrap"
                   data-testid="total-estimate-display"
                 >
                   {" • "}
-                  <CalendarClock className="h-3 w-3 ml-1" />
+                  <CalendarClock className="h-3 w-3 ms-1" />
                   {`${totalEstimateText}`}
                 </span>
               </TooltipTrigger>

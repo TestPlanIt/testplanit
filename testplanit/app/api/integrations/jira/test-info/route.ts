@@ -1,7 +1,96 @@
-import { prisma as db } from "@/lib/prisma";
-import { IntegrationProvider } from "@prisma/client";
+import { baseDb as db } from "@/lib/db";
+import { IntegrationProvider } from "~/zenstack/models";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+
+// Resolve a case's Jira-panel-enabled template fields into display-ready
+// values, mirroring how the repository case table renders each field type:
+// Dropdown/Multi-Select resolve to their option names + icons, Checkbox to a
+// boolean, Text Long (TipTap JSON) to plain text, everything else passes
+// through as a string.
+function resolveJiraPanelFields(testCase: any) {
+  const assignments = testCase.template?.caseFields || [];
+
+  return assignments.map((assignment: any) => {
+    const caseField = assignment.caseField;
+    const fieldType = caseField.type?.type ?? null;
+    const rawValue = testCase.caseFieldValues?.find(
+      (v: any) => v.fieldId === caseField.id
+    )?.value;
+
+    let value: unknown = null;
+    let options:
+      | { name: string; icon: string | null; iconColor: string | null }[]
+      | undefined;
+    let steps: unknown[] | undefined;
+
+    if (fieldType === "Steps") {
+      // Steps come from the case's steps relation. Shared groups are resolved
+      // inline (group name + its items); placeholders whose group was deleted
+      // are dropped, matching the repository table.
+      steps = (testCase.steps || [])
+        .map((s: any) => {
+          if (s.sharedStepGroupId) {
+            if (!s.sharedStepGroup || s.sharedStepGroup.isDeleted) return null;
+            return {
+              group: s.sharedStepGroup.name,
+              items: (s.sharedStepGroup.items || []).map((item: any) => ({
+                step: extractTextFromNode(item.step),
+                expected: extractTextFromNode(item.expectedResult),
+              })),
+            };
+          }
+          return {
+            step: extractTextFromNode(s.step),
+            expected: extractTextFromNode(s.expectedResult),
+          };
+        })
+        .filter(Boolean);
+    } else if (fieldType === "Dropdown" || fieldType === "Multi-Select") {
+      const selectedIds =
+        rawValue === null || rawValue === undefined
+          ? []
+          : (Array.isArray(rawValue) ? rawValue : [rawValue]).map((v: any) =>
+              Number(v)
+            );
+      options = selectedIds
+        .map(
+          (optionId) =>
+            caseField.fieldOptions.find(
+              (fo: any) => fo.fieldOption.id === optionId
+            )?.fieldOption
+        )
+        .filter(Boolean)
+        .map((fieldOption: any) => ({
+          name: fieldOption.name,
+          icon: fieldOption.icon?.name || null,
+          iconColor: fieldOption.iconColor?.value || null,
+        }));
+    } else if (fieldType === "Checkbox") {
+      value = Boolean(rawValue);
+    } else if (fieldType === "Text Long") {
+      value =
+        rawValue === null || rawValue === undefined
+          ? null
+          : extractTextFromNode(rawValue);
+    } else if (rawValue !== null && rawValue !== undefined) {
+      value =
+        typeof rawValue === "object"
+          ? JSON.stringify(rawValue)
+          : rawValue.toString();
+    }
+
+    return {
+      id: caseField.id,
+      label: caseField.displayName,
+      type: fieldType,
+      value,
+      ...(options ? { options } : {}),
+      ...(steps ? { steps } : {}),
+    };
+  });
+}
 
 function constantTimeCompare(a: string, b: string): boolean {
   try {
@@ -70,6 +159,7 @@ export async function GET(request: NextRequest) {
     const firstStatus = await db.status.findFirst({
       where: {
         isDeleted: false,
+        isEnabled: true,
       },
       orderBy: {
         order: "asc",
@@ -101,73 +191,143 @@ export async function GET(request: NextRequest) {
           },
         },
         include: {
-          repositoryCases: {
+          caseIssues: {
             include: {
-              state: {
-                select: {
-                  name: true,
-                  icon: {
-                    select: {
-                      name: true,
-                    },
-                  },
-                  color: {
-                    select: {
-                      value: true,
-                    },
-                  },
-                },
-              },
-              project: {
-                select: {
-                  id: true,
-                },
-              },
-              testRuns: {
+              case: {
                 include: {
-                  testRun: {
+                  state: {
                     select: {
-                      id: true,
                       name: true,
-                      isCompleted: true,
-                    },
-                  },
-                  results: {
-                    include: {
-                      status: {
+                      icon: {
                         select: {
                           name: true,
-                          color: {
+                        },
+                      },
+                      color: {
+                        select: {
+                          value: true,
+                        },
+                      },
+                    },
+                  },
+                  project: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                  // Case fields the admin opted into the Jira panel
+                  // (per-template toggle in Templates & Fields).
+                  template: {
+                    select: {
+                      caseFields: {
+                        where: {
+                          jiraPanelEnabled: true,
+                          caseField: { isEnabled: true, isDeleted: false },
+                        },
+                        orderBy: { order: "asc" },
+                        select: {
+                          caseField: {
                             select: {
-                              value: true,
+                              id: true,
+                              displayName: true,
+                              type: { select: { type: true } },
+                              fieldOptions: {
+                                select: {
+                                  fieldOption: {
+                                    select: {
+                                      id: true,
+                                      name: true,
+                                      icon: { select: { name: true } },
+                                      iconColor: { select: { value: true } },
+                                    },
+                                  },
+                                },
+                              },
                             },
                           },
                         },
                       },
-                      executedBy: {
+                    },
+                  },
+                  caseFieldValues: {
+                    select: {
+                      fieldId: true,
+                      value: true,
+                    },
+                  },
+                  // Steps live in their own relation, not CaseFieldValues;
+                  // needed when the template's Steps field is panel-enabled.
+                  steps: {
+                    where: { isDeleted: false },
+                    orderBy: { order: "asc" },
+                    select: {
+                      id: true,
+                      step: true,
+                      expectedResult: true,
+                      order: true,
+                      sharedStepGroupId: true,
+                      sharedStepGroup: {
                         select: {
-                          id: true,
                           name: true,
+                          isDeleted: true,
+                          items: {
+                            orderBy: { order: "asc" },
+                            select: {
+                              step: true,
+                              expectedResult: true,
+                            },
+                          },
                         },
                       },
-                      editedBy: {
+                    },
+                  },
+                  testRuns: {
+                    include: {
+                      testRun: {
                         select: {
                           id: true,
                           name: true,
+                          isCompleted: true,
+                        },
+                      },
+                      results: {
+                        include: {
+                          status: {
+                            select: {
+                              name: true,
+                              color: {
+                                select: {
+                                  value: true,
+                                },
+                              },
+                            },
+                          },
+                          executedBy: {
+                            select: {
+                              id: true,
+                              name: true,
+                            },
+                          },
+                          editedBy: {
+                            select: {
+                              id: true,
+                              name: true,
+                            },
+                          },
+                        },
+                        orderBy: {
+                          executedAt: "desc",
+                        },
+                        take: 5,
+                        where: {
+                          isDeleted: false,
                         },
                       },
                     },
                     orderBy: {
-                      executedAt: "desc",
-                    },
-                    take: 5,
-                    where: {
-                      isDeleted: false,
+                      createdAt: "desc",
                     },
                   },
-                },
-                orderBy: {
-                  createdAt: "desc",
                 },
               },
             },
@@ -269,6 +429,8 @@ export async function GET(request: NextRequest) {
                     orderBy: {
                       executedAt: "desc",
                     },
+                    // Only results[0] (the latest) is ever read below.
+                    take: 1,
                     where: {
                       isDeleted: false,
                     },
@@ -337,6 +499,8 @@ export async function GET(request: NextRequest) {
                         orderBy: {
                           executedAt: "desc",
                         },
+                        // Only results[0] (the latest) is ever read below.
+                        take: 1,
                         where: {
                           isDeleted: false,
                         },
@@ -409,6 +573,8 @@ export async function GET(request: NextRequest) {
                             orderBy: {
                               executedAt: "desc",
                             },
+                            // Only results[0] (the latest) is ever read below.
+                            take: 1,
                             where: {
                               isDeleted: false,
                             },
@@ -490,8 +656,8 @@ export async function GET(request: NextRequest) {
             externalKey: allMatchingIssues[0].externalKey,
             externalId: allMatchingIssues[0].externalId,
             // Combine all relationships from all matching issues
-            repositoryCases: allMatchingIssues.flatMap(
-              (i) => i.repositoryCases
+            repositoryCases: allMatchingIssues.flatMap((i) =>
+              i.caseIssues.map((ci) => ci.case)
             ),
             sessions: allMatchingIssues.flatMap((i) => i.sessions),
             testRuns: allMatchingIssues.flatMap((i) => i.testRuns),
@@ -553,6 +719,9 @@ export async function GET(request: NextRequest) {
         lastResultColor: latestResult
           ? latestResult.status.color?.value
           : firstStatus?.color?.value || null,
+        // Case fields opted into the Jira panel via the template's per-field
+        // toggle, resolved server-side so the panel just renders them.
+        fields: resolveJiraPanelFields(testCase),
         resultHistory: allResults.slice(0, 5).map((result: any) => {
           // Find the test run case that this result belongs to
           const testRunCase = testCase.testRuns?.find((trc: any) =>

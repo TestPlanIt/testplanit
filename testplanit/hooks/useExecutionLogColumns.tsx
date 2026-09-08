@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
 import { Layers } from "lucide-react";
@@ -62,6 +62,7 @@ export function useExecutionLogColumns(
                   projectId={project.id}
                   iconUrl={project.iconUrl}
                   showLink
+                  fitContainer
                 />
               );
             },
@@ -83,7 +84,7 @@ export function useExecutionLogColumns(
             const row = info.row.original;
             if (isStepRow(row)) {
               return (
-                <div className="pl-6 text-sm space-y-1 py-1">
+                <div className="ps-6 text-sm space-y-1 py-1">
                   <div className="flex gap-2 items-start">
                     <span className="text-muted-foreground shrink-0 inline-flex items-center gap-1">
                       {row.sharedGroupName && (
@@ -105,6 +106,11 @@ export function useExecutionLogColumns(
                       )}
                       {t("common.fields.step")} {row.stepNumber}
                     </span>
+                    {row.isRemovedStep && (
+                      <span className="shrink-0 text-xs text-muted-foreground italic">
+                        {t("repository.steps.removedFromCase")}
+                      </span>
+                    )}
                     {row.stepText ? (
                       <TooltipProvider>
                         <Tooltip>

@@ -1,7 +1,7 @@
 /**
  * SCIM Users service layer.
  *
- * Owns every SCIM user mutation's `prisma.$transaction` boundary and composes
+ * Owns every SCIM user mutation's `baseDb.$transaction` boundary and composes
  * the SCIM mapper, filter translator, PATCH applier, and webhook emitters
  * into six entry points the SCIM route layer calls:
  *
@@ -13,9 +13,9 @@
  *   - deleteScimUser  (DELETE /scim/v2/Users/{id})
  *
  * Discipline:
- *   - Uses the raw `~/lib/prisma` client. The SCIM bearer is the auth
+ *   - Uses the raw `~/lib/db` client. The SCIM bearer is the auth
  *     boundary; ZenStack access policies do NOT apply to SCIM mutations.
- *   - Every mutation opens its own `prisma.$transaction(async tx => ...)`.
+ *   - Every mutation opens its own `baseDb.$transaction(async tx => ...)`.
  *     Webhook emission and audit-row writes happen INSIDE the tx so the
  *     outbox row commits or rolls back together with the entity write.
  *   - Prisma errors (P2002, P2025, foreign-key) are NEVER swallowed; the
@@ -34,8 +34,11 @@
 import { hash } from "bcrypt";
 import crypto from "crypto";
 
-import { Prisma } from "@prisma/client";
-import { prisma } from "~/lib/prisma";
+import type { UserUpdateArgs, UserWhereInput } from "~/zenstack/input";
+import { DbNull, JsonNull } from "@zenstackhq/orm";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   emitScimUserCreated,
@@ -45,7 +48,7 @@ import {
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
-import { scimFilterToPrismaWhere } from "../filter";
+import { scimFilterToDbWhere } from "../filter";
 import { readScimFallbackDefault } from "./recompute";
 import {
   computeUserUpdatesFromScim,
@@ -63,7 +66,7 @@ import type { ScimPatch } from "scim-patch";
 
 import type { ScimAuthContext } from "~/lib/scim/auth";
 import type {
-  PrismaUserForScim,
+  DbUserForScim,
   ScimUserBody,
   ScimUserResource,
   ScimUserUpdatePayload,
@@ -189,7 +192,7 @@ const DEFAULT_EMIT_OPTS = {
   actorUserId: SCIM_SYSTEM_USER_ID,
 } as const;
 
-function findUserByEmail(tx: Prisma.TransactionClient, email: string) {
+function findUserByEmail(tx: TxClient, email: string) {
   return tx.user.findFirst({
     where: { email: { equals: email, mode: "insensitive" } },
     include: SCIM_USER_INCLUDE,
@@ -223,18 +226,18 @@ function assertWritableOnly(updates: ScimUserUpdatePayload): void {
 /**
  * Coerce a `Record<string, unknown> | null | undefined` blob into the Prisma
  * input type for a nullable Json column. Plain JS `null` is ambiguous to
- * Prisma; the explicit `Prisma.DbNull` sentinel signals "set the column to
- * SQL NULL" without colliding with `Prisma.JsonNull` (the JSON `null` value).
+ * Prisma; the explicit `DbNull` sentinel signals "set the column to
+ * SQL NULL" without colliding with `JsonNull` (the JSON `null` value).
  */
 function toJsonInput(
   value: Record<string, unknown> | null | undefined
-): Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue | undefined {
+): typeof JsonNull | typeof DbNull | JsonValue | undefined {
   if (value === undefined) return undefined;
-  if (value === null) return Prisma.DbNull;
-  return value as Prisma.InputJsonValue;
+  if (value === null) return DbNull;
+  return value as JsonValue;
 }
 
-function asScimSnapshot(row: PrismaUserForScim & { isActive: boolean }) {
+function asScimSnapshot(row: DbUserForScim & { isActive: boolean }) {
   return {
     id: row.id,
     email: row.email,
@@ -255,7 +258,7 @@ export async function createScimUser(
   body: ScimUserBody,
   ctx: ScimAuthContext
 ): Promise<CreateScimUserResult> {
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await baseDb.$transaction(async (tx) => {
     const matchEmail = resolveMatchEmail(body);
     const existing = await findUserByEmail(tx, matchEmail);
 
@@ -296,7 +299,7 @@ export async function createScimUser(
 }
 
 async function resurrectTombstonedUser(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   existing: ExistingUser,
   body: ScimUserBody,
   ctx: ScimAuthContext
@@ -347,7 +350,7 @@ async function resurrectTombstonedUser(
 }
 
 async function jitBindExistingUser(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   existing: ExistingUser,
   body: ScimUserBody,
   ctx: ScimAuthContext
@@ -396,7 +399,7 @@ async function jitBindExistingUser(
 }
 
 async function insertNewScimUser(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   body: ScimUserBody,
   ctx: ScimAuthContext
 ): Promise<CreateScimUserResult> {
@@ -428,7 +431,7 @@ async function insertNewScimUser(
       scimFamilyName: body.name?.familyName ?? null,
       scimExtensions:
         Object.keys(extensions).length > 0
-          ? (extensions as Prisma.InputJsonValue)
+          ? (extensions as JsonValue)
           : undefined,
       authMethod: "SCIM",
       access: fallbackDefault,
@@ -469,7 +472,7 @@ export async function getScimUserById(
   id: string,
   _ctx: ScimAuthContext
 ): Promise<ScimUserResource> {
-  const row = await prisma.user.findUnique({
+  const row = await baseDb.user.findUnique({
     where: { id },
     include: SCIM_USER_INCLUDE,
   });
@@ -493,23 +496,21 @@ export async function listScimUsers(
       : Math.min(Math.max(1, count), MAX_LIST_COUNT);
   const resolvedSkip = Math.max(0, (startIndex ?? 1) - 1);
 
-  const filterWhere: Prisma.UserWhereInput = filter
-    ? scimFilterToPrismaWhere(filter)
-    : {};
+  const filterWhere: UserWhereInput = filter ? scimFilterToDbWhere(filter) : {};
 
-  const finalWhere: Prisma.UserWhereInput = {
+  const finalWhere: UserWhereInput = {
     AND: [filterWhere, { isDeleted: false }],
   };
 
   const [rows, totalResults] = await Promise.all([
-    prisma.user.findMany({
+    baseDb.user.findMany({
       where: finalWhere,
       include: SCIM_USER_INCLUDE,
       skip: resolvedSkip,
       take: resolvedCount,
       orderBy: { id: "asc" },
     }),
-    prisma.user.count({ where: finalWhere }),
+    baseDb.user.count({ where: finalWhere }),
   ]);
 
   return {
@@ -527,7 +528,7 @@ export async function putScimUser(
   body: ScimUserBody,
   ctx: ScimAuthContext
 ): Promise<PutScimUserResult> {
-  const result: PutScimUserResult = await prisma.$transaction(async (tx) => {
+  const result: PutScimUserResult = await baseDb.$transaction(async (tx) => {
     const current = await tx.user.findUnique({
       where: { id },
       include: SCIM_USER_INCLUDE,
@@ -536,7 +537,7 @@ export async function putScimUser(
       throw new ScimNotFoundError(`User ${id} not found`);
     }
 
-    const updates: Prisma.UserUpdateInput = {};
+    const updates: UserUpdateArgs["data"] = {};
 
     // userName (always present in a PUT per RFC 7643)
     if (typeof body.userName === "string") {
@@ -638,11 +639,11 @@ export async function putScimUser(
     }
 
     const before = asScimSnapshot(current);
-    const updated = await tx.user.update({
+    const updated = (await tx.user.update({
       where: { id: current.id },
       data: updates,
       include: SCIM_USER_INCLUDE,
-    });
+    } as UserUpdateArgs)) as Parameters<typeof asScimSnapshot>[0];
 
     await emitScimUserUpdated(
       before,
@@ -672,7 +673,7 @@ export async function patchScimUser(
   body: ScimPatch,
   ctx: ScimAuthContext
 ): Promise<PatchScimUserResult> {
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await baseDb.$transaction(async (tx) => {
     const current = await tx.user.findUnique({
       where: { id },
       include: SCIM_USER_INCLUDE,
@@ -711,7 +712,7 @@ export async function patchScimUser(
     const before = asScimSnapshot(current);
     const updated = await tx.user.update({
       where: { id: current.id },
-      data: updates as Prisma.UserUpdateInput,
+      data: updates as UserUpdateArgs["data"],
       include: SCIM_USER_INCLUDE,
     });
 
@@ -748,7 +749,7 @@ export async function deleteScimUser(
   id: string,
   ctx: ScimAuthContext
 ): Promise<DeleteScimUserResult> {
-  const result: DeleteScimUserResult = await prisma.$transaction(async (tx) => {
+  const result: DeleteScimUserResult = await baseDb.$transaction(async (tx) => {
     const current = await tx.user.findUnique({
       where: { id },
       include: SCIM_USER_INCLUDE,

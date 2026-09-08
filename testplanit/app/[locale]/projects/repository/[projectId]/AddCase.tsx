@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
@@ -57,7 +59,7 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { Asterisk, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -72,31 +74,9 @@ import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
-import {
-  useFindFirstRepositoryCases,
-  useFindFirstRepositoryFolders,
-  useFindManySharedStepGroup,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import RenderField from "./RenderField";
-
-interface SharedStepItemDetail {
-  step: Prisma.JsonValue;
-  expectedResult?: Prisma.JsonValue;
-  order: number;
-}
-
-interface SharedStepGroupWithItems {
-  id: number;
-  name: string;
-  projectId: number;
-  isDeleted: boolean;
-  items: SharedStepItemDetail[];
-}
 
 const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   const isRequired = field.caseField.isRequired;
@@ -341,11 +321,8 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
 
-  const {
-    data: sharedStepGroupsData,
-    isLoading: isLoadingSharedStepGroups,
-  }: { data?: SharedStepGroupWithItems[]; isLoading?: boolean } =
-    useFindManySharedStepGroup(
+  const { data: sharedStepGroupsData, isLoading: isLoadingSharedStepGroups } =
+    useClientQueries(schema).sharedStepGroup.useFindMany(
       {
         where: {
           project: { id: Number(projectId) },
@@ -361,7 +338,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       { enabled: !!projectId && open }
     );
 
-  const { data: folder } = useFindFirstRepositoryFolders(
+  const { data: folder } = useClientQueries(
+    schema
+  ).repositoryFolders.useFindFirst(
     {
       where: {
         id: folderId,
@@ -377,7 +356,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: maxOrder } = useFindFirstRepositoryCases(
+  const { data: maxOrder } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst(
     {
       where: {
         folderId: folderId,
@@ -394,10 +375,11 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: templates } = useFindManyTemplates(
+  const { data: templates } = useClientQueries(schema).templates.useFindMany(
     {
       where: {
         isDeleted: false,
+        isEnabled: true,
         projects: {
           some: {
             projectId: Number(projectId),
@@ -406,10 +388,12 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       },
       include: {
         caseFields: {
+          where: { caseField: { isEnabled: true, isDeleted: false } },
           include: {
             caseField: {
               include: {
                 fieldOptions: {
+                  where: { fieldOption: { isEnabled: true, isDeleted: false } },
                   include: {
                     fieldOption: { include: { icon: true, iconColor: true } },
                   },
@@ -432,9 +416,10 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     }
   );
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
+      isEnabled: true,
       scope: "CASES",
       projects: {
         some: {
@@ -463,11 +448,19 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       label: template.templateName,
     })) || [];
 
-  const firstGatedOrder = (workflows ?? [])
-    .filter((w) => w.requiresReview === true)
-    .reduce<
-      number | null
-    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
+  // `null` for system admins: they bypass the review gate and may create a
+  // case directly at any state, so nothing is disabled and the
+  // gated-states hint stays hidden. Mirrors the server-side
+  // `resolveCreateStateRemap` admin short-circuit.
+  const firstGatedOrder =
+    session?.user?.access === "ADMIN"
+      ? null
+      : (workflows ?? [])
+          .filter((w) => w.requiresReview === true)
+          .reduce<number | null>(
+            (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+            null
+          );
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
@@ -506,7 +499,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     setValue,
   } = form;
 
-  const { data: tags } = useFindManyTags({
+  const { data: tags } = useClientQueries(schema).tags.useFindMany({
     where: {
       isDeleted: false,
     },
@@ -1124,7 +1117,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
         if (result.status === "error" || result.importedIds.length === 0) {
           throw new Error(
-            result.message || result.errors[0] || "Import failed"
+            result.errors[0] || result.message || "Import failed"
           );
         }
 
@@ -1276,7 +1269,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   collapsedSize={0}
                   minSize={0}
                   collapsible
-                  className={`p-0 m-0 mr-4 ${
+                  className={`p-0 m-0 me-4 ${
                     isTransitioning
                       ? "transition-all duration-300 ease-in-out"
                       : ""
@@ -1412,7 +1405,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   <Button
                     onClick={toggleCollapse}
                     variant="secondary"
-                    className="p-0 -ml-1 rounded-l-none"
+                    className="p-0 -ms-1 rounded-s-none"
                     type="button"
                   >
                     {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -1424,7 +1417,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                   collapsedSize={0}
                   minSize={0}
                   collapsible
-                  className="p-0 m-0 min-w-0 ml-4"
+                  className="p-0 m-0 min-w-0 ms-4"
                 >
                   <FormField
                     control={control}

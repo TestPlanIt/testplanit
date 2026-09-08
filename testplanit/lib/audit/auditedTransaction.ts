@@ -4,7 +4,7 @@
  * the transaction touches — parent entities AND child/value tables — is
  * attributed to the originating request.
  *
- * Use this in place of `prisma.$transaction(...)` in any request-scoped path
+ * Use this in place of `baseDb.$transaction(...)` in any request-scoped path
  * that mutates audited tables. The actor is sourced from the request's ALS audit
  * frame (so the caller must run inside `withAuditContext` / `runWithAuditContext`
  * — the route wrappers already do). Workers and other raw-client entry points
@@ -17,10 +17,10 @@
  * `auditTxStore`, those hooks run on THIS transaction rather than opening their
  * own (see lib/audit/auditTxStore.ts).
  */
-import type { Prisma } from "@prisma/client";
+import { getAuthDb, type TxClient } from "~/lib/zenstack";
+import { TransactionIsolationLevel } from "@zenstackhq/orm";
 import type { Session } from "next-auth";
-import { enhance } from "@zenstackhq/runtime";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getUserWithRole } from "~/lib/auth/utils";
 import { buildGucPayload } from "~/lib/audit/gucContext";
 import { auditTxStore } from "~/lib/audit/auditTxStore";
@@ -28,32 +28,36 @@ import { auditTxStore } from "~/lib/audit/auditTxStore";
 type TransactionOptions = {
   maxWait?: number;
   timeout?: number;
-  isolationLevel?: Prisma.TransactionIsolationLevel;
+  isolationLevel?: TransactionIsolationLevel;
 };
 
 export async function auditedTransaction<T>(
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: TxClient) => Promise<T>,
   options?: TransactionOptions
 ): Promise<T> {
   const payload = JSON.stringify(buildGucPayload());
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
-    return auditTxStore.run(tx, () => fn(tx));
-  }, options);
+  // v3 $transaction options only accept isolationLevel (no maxWait/timeout).
+  return baseDb.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
+      return auditTxStore.run(tx, () => fn(tx));
+    },
+    { isolationLevel: options?.isolationLevel }
+  );
 }
 
 /**
- * Policy-preserving variant for routes that mutate through the ZenStack
- * `enhance()`d client (`getEnhancedDb`). It opens the transaction on the hooked
- * client (so the per-entity `$extends` hooks fire and — because the tx is
- * published on auditTxStore — run on THIS transaction rather than opening their
- * own), sets the GUC from the explicit session user (no separate audit frame
- * required), and hands the callback an access-controlled client bound to that
- * same transaction. Drop-in for `getEnhancedDb(session)` + `db.$transaction(fn)`.
+ * Policy-preserving variant for routes that mutate through the access-controlled
+ * client (`getEnhancedDb`). v3 cannot `enhance()` a transaction client ($use is
+ * unsupported on a tx), so it inverts the v2 order: open the transaction on the
+ * already-`$setAuth`'d client (so the callback's writes are policy-enforced and
+ * tx-bound) and publish it on auditTxStore. Actor-context GUC injection is
+ * handled per-write by the ORM side-effects plugin. Drop-in for
+ * `getEnhancedDb(session)` + `db.$transaction(fn)`.
  */
 export async function auditedEnhancedTransaction<T>(
   session: Session | null,
-  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  fn: (tx: TxClient) => Promise<T>,
   options?: TransactionOptions
 ): Promise<T> {
   if (!session?.user?.id) {
@@ -63,18 +67,8 @@ export async function auditedEnhancedTransaction<T>(
   if (!user) {
     throw new Error("User not found");
   }
-  const payload = JSON.stringify(
-    buildGucPayload({
-      id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-    })
+  return (await getAuthDb(user)).$transaction(
+    (tx) => auditTxStore.run(tx as TxClient, () => fn(tx as TxClient)),
+    { isolationLevel: options?.isolationLevel }
   );
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT set_config('app.audit_context', ${payload}, true)`;
-    const etx = enhance(tx as never, {
-      user,
-    }) as unknown as Prisma.TransactionClient;
-    return auditTxStore.run(tx, () => fn(etx));
-  }, options);
 }

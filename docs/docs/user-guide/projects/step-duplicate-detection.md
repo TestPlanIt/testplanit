@@ -42,8 +42,20 @@ You can:
 
 - **Sort** by step count or case count
 - **Filter** by case name
+- **Narrow by size** with the **Min. Steps** and **Min. Cases** dropdowns
 - **Select** multiple rows for bulk dismissal
 - **Click** a row to open the conversion dialog
+
+### Narrowing a Large Scan
+
+A scan over a big project can return more matches than are worth reviewing one by one. The **Min. Steps** and **Min. Cases** dropdowns hide the smaller matches so the longest sequences, and the ones shared by the most test cases, stay in view.
+
+- Both default to **All**. Each dropdown offers only the counts actually present in the current scan, so every choice narrows the results — `3+` appears only if some match has at least 3 steps.
+- The two filters combine: the options offered in one reflect the matches still showing under the other.
+- Selections are remembered per project, so returning to the page keeps the view you left it in.
+- Changing either filter — or the case-name search — clears any row selection, so a bulk dismissal only ever applies to rows you picked in the list in front of you.
+
+When nothing meets the current filters, the table says so and prompts you to lower the minimums.
 
 ## Converting to Shared Steps
 
@@ -52,6 +64,8 @@ Click any result row to open the conversion dialog. The dialog shows:
 1. **Matched Step Sequence** — a preview of the detected steps. You can edit the steps before conversion if needed.
 2. **Affected Test Cases** — all test cases containing this sequence, each with a checkbox. Uncheck any cases you want to exclude from conversion.
 3. **Shared Step Group Name** — auto-populated from the first step's text. Change it to something descriptive.
+
+If the matched steps have since been deleted from the test case, the dialog reports that the match is stale instead of opening an empty editor — dismiss it and run a new scan.
 
 Click **Convert to Shared Steps** to create the shared step group. The conversion:
 

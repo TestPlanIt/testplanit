@@ -3,12 +3,12 @@
  *
  * Client/method-agnostic capture matrix. Proves a single database-level trigger captures EVERY
  * write path regardless of which client issues it:
- *   (a) hooked Prisma client (lib/prisma.ts)         → CTX-01 (non-null actor from injected GUC)
+ *   (a) hooked Prisma client (lib/baseDb.ts)         → CTX-01 (non-null actor from injected GUC)
  *   (b) raw `$executeRaw` UPDATE bypassing all hooks → SUCCESS CRITERION #1 / COV-01 / COV-03
  *   (c) createMany bulk insert                       → COV-01 / COV-03 (client/method-agnostic capture)
  *   (d) worker/raw path via withAuditGuc()           → CTX-02 (payload.userId stamped as actor)
- *   (e) tag implicit m2m join table INSERT+DELETE    → COV-02 (tag-link pattern, pk = column "A")
- *   (e2) issue implicit m2m join table INSERT+DELETE → COV-02 (issue-link pattern, pk = column "A")
+ *   (e) tag explicit join table INSERT+DELETE        → COV-02 (tag-link pattern, pk = caseId)
+ *   (e2) issue explicit join table INSERT+DELETE     → COV-02 (issue-link pattern, pk = caseId)
  *   (f) SAF-01 skip_audit hatch                       → ZERO rows captured (bulk-import escape hatch)
  *   (g) SAF-04 excluded credential table (negative)   → ZERO rows (VerificationToken is NOT audited)
  *
@@ -35,7 +35,7 @@ describeDb(
   "captureMatrix — client/method-agnostic capture (Phase 13 success criterion #1 + COV/CTX/SAF)",
   () => {
     // Lazy state — modules and connections are only touched when the suite actually runs, so the
-    // not-yet-existing gucContext / prisma imports never load in the skipped unit lane.
+    // not-yet-existing gucContext / baseDb imports never load in the skipped unit lane.
     // NOTE: gucContext (~/lib/audit/gucContext) does not exist yet — it ships in 13-02. The dynamic
     // import below uses a runtime-built specifier + /* @vite-ignore */ so Vite's static
     // import-analysis can't try to resolve the missing module at transform time (which would FAIL the
@@ -43,8 +43,8 @@ describeDb(
     // The 13-02 GUC helpers and the Prisma client are intentionally untyped here (substrate absent);
     // `any` keeps the RED scaffold compiling without importing not-yet-existing types.
     let direct: import("pg").Client;
-    let prisma: any;
-    let prismaBase: any;
+    let baseDb: any;
+    let rawDb: any;
     // Shipped 13-04 GUC helpers (lib/audit/gucContext):
     //   injectAuditGuc(tx)                  — sets app.audit_context from the ALS frame (hooked path, CTX-01).
     //                                          Must be the FIRST await inside a $transaction; returns void.
@@ -128,22 +128,22 @@ describeDb(
              AND conrelid IN (
                '"RepositoryCases"'::regclass,
                '"Steps"'::regclass,
-               '"_RepositoryCasesToTags"'::regclass,
-               '"_IssueToRepositoryCases"'::regclass
+               '"RepositoryCaseTag"'::regclass,
+               '"RepositoryCaseIssue"'::regclass
              )
         LOOP EXECUTE format('ALTER TABLE %s DROP CONSTRAINT IF EXISTS %I', r.tbl, r.conname); END LOOP;
       END $$;`);
 
-      // App clients (hooked = prisma; base/raw = prismaBase — both are lib/prisma's hooked client,
+      // App clients (hooked = baseDb; base/raw = rawDb — both are lib/db's hooked client,
       // but the raw $executeRaw / $transaction paths don't fire the entity-audit hooks; capture
       // happens at the DB trigger level). Importing here (not at module top) keeps the file pure for
       // skip. Runtime-built specifiers + /* @vite-ignore */ so Vite's import-analysis can't statically
       // resolve the gucContext module and break clean-skip in the unit lane.
-      const prismaMod = "~/lib/prisma";
+      const dbMod = "~/lib/db";
       const gucMod = "~/lib/audit/gucContext";
       const auditCtxMod = "~/lib/auditContext";
-      ({ prisma } = await import(/* @vite-ignore */ prismaMod));
-      prismaBase = prisma;
+      ({ baseDb } = await import(/* @vite-ignore */ dbMod));
+      rawDb = baseDb;
       ({ withAuditGuc, injectAuditGuc } = await import(
         /* @vite-ignore */ gucMod
       ));
@@ -162,11 +162,11 @@ describeDb(
           }
           if (seededCaseId != null) {
             await direct.query(
-              `DELETE FROM "_IssueToRepositoryCases" WHERE "B" = $1`,
+              `DELETE FROM "RepositoryCaseIssue" WHERE "caseId" = $1`,
               [seededCaseId]
             );
             await direct.query(
-              `DELETE FROM "_RepositoryCasesToTags" WHERE "A" = $1`,
+              `DELETE FROM "RepositoryCaseTag" WHERE "caseId" = $1`,
               [seededCaseId]
             );
             await direct.query(`DELETE FROM "Steps" WHERE "testCaseId" = $1`, [
@@ -198,7 +198,7 @@ describeDb(
       const created = await runWithAuditContext(
         { userId: "actor-a", requestId: "req-a", suppressWebhooks: true },
         () =>
-          prisma.$transaction(async (tx: any) => {
+          baseDb.$transaction(async (tx: any) => {
             await injectAuditGuc(tx);
             return tx.repositoryCases.create({
               data: {
@@ -219,7 +219,7 @@ describeDb(
       await runWithAuditContext(
         { userId: "actor-a", requestId: "req-a", suppressWebhooks: true },
         () =>
-          prisma.$transaction(async (tx: any) => {
+          baseDb.$transaction(async (tx: any) => {
             await injectAuditGuc(tx);
             return tx.repositoryCases.update({
               where: { id: seededCaseId },
@@ -246,7 +246,7 @@ describeDb(
 
     it("(b) raw $executeRaw UPDATE bypassing all hooks → one U row with correct diff (SUCCESS CRITERION #1 / COV-01 / COV-03)", async () => {
       // The headline guarantee: a raw SQL UPDATE that NEVER touches a Prisma hook still produces a diff.
-      await prismaBase.$transaction(async (tx: any) => {
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-b" })}, true)`;
         await tx.$executeRawUnsafe(
           `UPDATE "RepositoryCases" SET name = $1 WHERE id = $2`,
@@ -267,7 +267,7 @@ describeDb(
 
     it("(c) createMany on a child table (Steps) → one I row per inserted row (COV-01 / COV-03)", async () => {
       await runWithAuditContext({ userId: "actor-c", requestId: "req-c" }, () =>
-        prisma.$transaction(async (tx: any) => {
+        baseDb.$transaction(async (tx: any) => {
           await injectAuditGuc(tx);
           return tx.steps.createMany({
             data: [
@@ -289,7 +289,7 @@ describeDb(
 
     it("(d) worker/raw path via withAuditGuc → row stamped with payload.userId as actor (CTX-02)", async () => {
       await withAuditGuc(
-        prismaBase,
+        rawDb,
         {
           userId: "worker-actor-d",
           requestId: "req-d",
@@ -316,31 +316,31 @@ describeDb(
       expect(rows[0].actor).toBe("worker-actor-d");
     });
 
-    it("(e) TAG join-table _RepositoryCasesToTags INSERT then DELETE → I then D keyed by column A (COV-02)", async () => {
-      // _RepositoryCasesToTags: A = RepositoryCases.id, B = Tags.id (alphabetical RepositoryCases < Tags).
-      // Use a seeded tag (id 1) and our case; pk in DataChangeLog is the "A" side (RepositoryCases.id).
-      await prismaBase.$transaction(async (tx: any) => {
+    it("(e) TAG join-table RepositoryCaseTag INSERT then DELETE → I then D keyed by caseId (COV-02)", async () => {
+      // RepositoryCaseTag (explicit join model): caseId = RepositoryCases.id, tagId = Tags.id.
+      // Use a seeded tag (id 1) and our case; pk in DataChangeLog is the configured caseId column.
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e" })}, true)`;
         await tx.$executeRawUnsafe(
-          `INSERT INTO "_RepositoryCasesToTags" ("A", "B") VALUES ($1, 1)`,
+          `INSERT INTO "RepositoryCaseTag" ("caseId", "tagId") VALUES ($1, 1)`,
           seededCaseId
         );
       });
-      await prismaBase.$transaction(async (tx: any) => {
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e" })}, true)`;
         await tx.$executeRawUnsafe(
-          `DELETE FROM "_RepositoryCasesToTags" WHERE "A" = $1 AND "B" = 1`,
+          `DELETE FROM "RepositoryCaseTag" WHERE "caseId" = $1 AND "tagId" = 1`,
           seededCaseId
         );
       });
 
       const inserts = await dclRowsByPk(
-        "_RepositoryCasesToTags",
+        "RepositoryCaseTag",
         "I",
         String(seededCaseId)
       );
       const deletes = await dclRowsByPk(
-        "_RepositoryCasesToTags",
+        "RepositoryCaseTag",
         "D",
         String(seededCaseId)
       );
@@ -348,31 +348,39 @@ describeDb(
       expect(deletes.length).toBeGreaterThanOrEqual(1);
     });
 
-    it("(e2) ISSUE-link join-table _IssueToRepositoryCases INSERT then DELETE → I then D keyed by column A (COV-02)", async () => {
-      // _IssueToRepositoryCases (CONFIRMED production name): A = Issue.id, B = RepositoryCases.id.
-      // The pk in DataChangeLog is the "A" side (Issue.id) → proves coverage extends past tag links
-      // to the issue link tables. ALL 9 implicit m2m join tables are in the 13-03 registry (full
-      // production coverage); this test exercises only the representative tag + issue patterns. The
-      // 2 ASSUMED-name join tables (_SessionsToTags / _TagsToTestRuns) are verified by the 13-03
-      // Wave 0 checkpoint, NOT by this test.
-      await prismaBase.$transaction(async (tx: any) => {
+    it("(e2) ISSUE-link join-table RepositoryCaseIssue INSERT then DELETE → I then D keyed by caseId (COV-02)", async () => {
+      // RepositoryCaseIssue (explicit join model): issueId = Issue.id, caseId = RepositoryCases.id.
+      // The pk in DataChangeLog is the configured caseId column → proves coverage extends past tag
+      // links to the issue link tables. The remaining implicit m2m join tables are in the 13-03
+      // registry (full production coverage); this test exercises only the representative tag + issue
+      // patterns. The 2 ASSUMED-name join tables (_SessionsToTags / _TagsToTestRuns) are verified by
+      // the 13-03 Wave 0 checkpoint, NOT by this test.
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e2" })}, true)`;
         await tx.$executeRawUnsafe(
-          `INSERT INTO "_IssueToRepositoryCases" ("A", "B") VALUES (1, $1)`,
+          `INSERT INTO "RepositoryCaseIssue" ("issueId", "caseId") VALUES (1, $1)`,
           seededCaseId
         );
       });
-      await prismaBase.$transaction(async (tx: any) => {
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-e2" })}, true)`;
         await tx.$executeRawUnsafe(
-          `DELETE FROM "_IssueToRepositoryCases" WHERE "A" = 1 AND "B" = $1`,
+          `DELETE FROM "RepositoryCaseIssue" WHERE "issueId" = 1 AND "caseId" = $1`,
           seededCaseId
         );
       });
 
-      // pk = "A" = Issue.id = "1".
-      const inserts = await dclRowsByPk("_IssueToRepositoryCases", "I", "1");
-      const deletes = await dclRowsByPk("_IssueToRepositoryCases", "D", "1");
+      // pk = caseId = RepositoryCases.id = seededCaseId.
+      const inserts = await dclRowsByPk(
+        "RepositoryCaseIssue",
+        "I",
+        String(seededCaseId)
+      );
+      const deletes = await dclRowsByPk(
+        "RepositoryCaseIssue",
+        "D",
+        String(seededCaseId)
+      );
       expect(inserts.length).toBeGreaterThanOrEqual(1);
       expect(deletes.length).toBeGreaterThanOrEqual(1);
     });
@@ -380,7 +388,7 @@ describeDb(
     it("(f) SAF-01 HATCH: set_config('app.skip_audit','true',true) first in a tx → ZERO DataChangeLog rows", async () => {
       // The bulk-import escape hatch: the trigger early-returns when skip_audit is set as the FIRST
       // statement of the transaction, so a mutation on an allowlisted table captures NOTHING.
-      await prismaBase.$transaction(async (tx: any) => {
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.skip_audit', 'true', true)`;
         await tx.$executeRawUnsafe(
           `UPDATE "RepositoryCases" SET name = $1 WHERE id = $2`,
@@ -404,7 +412,7 @@ describeDb(
       // NOT used here: its FK-parent requirements would make the fixture INSERT throw instead.
       const token = `${MARKER}-g-token`;
       verificationTokens.push(token);
-      await prismaBase.$transaction(async (tx: any) => {
+      await rawDb.$transaction(async (tx: any) => {
         await tx.$executeRaw`SELECT set_config('app.audit_context', ${ctx({ userId: "actor-g" })}, true)`;
         await tx.$executeRawUnsafe(
           `INSERT INTO "VerificationToken" (identifier, token, expires) VALUES ($1, $2, now() + interval '1 day')`,

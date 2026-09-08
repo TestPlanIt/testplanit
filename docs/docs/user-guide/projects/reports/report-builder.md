@@ -15,6 +15,7 @@ The Report Builder lets you compose a custom report by picking a data source, th
 | **Repository Stats** | Cases in the project's test repository (counts, automation status, custom fields) |
 | **User Engagement** | Per-user activity across the project (executions, sessions, results) |
 | **Project Health** | Project-level health metrics (pass rates, churn, recent activity) |
+| **Milestone Readiness** | Release readiness per milestone — % of in-scope issues fully passing, plus per-state counts (passed, failed, in progress, not run, uncovered, total). Supports a date-range filter on each milestone's effective date, and a Date dimension that plots readiness chronologically as a line chart |
 | **Session Analysis** | Exploratory testing sessions (durations, findings, executions) |
 | **Issue Tracking** | Linked external issues and their associated test cases |
 
@@ -30,6 +31,8 @@ The Report Builder lets you compose a custom report by picking a data source, th
 8. Click **Run Report**.
 
 Results render as a single, continuously-scrolling list (no page controls) and the columns are sortable. Use **Export CSV** above the table to download the full result set — see [Exporting Results](./index.md#exporting-results).
+
+The builder keeps its configuration in the page URL, so other parts of the app can link into a pre-configured report. For example, the **Elapsed time report** action on a case's [Test Result History](../repository-case-details.mdx#test-result-history) opens a Test Execution report with **Date** and **Test Case** dimensions, the **Avg. Elapsed Time** metric, and the Test Case filter set to that case.
 
 ## Drill-Down
 

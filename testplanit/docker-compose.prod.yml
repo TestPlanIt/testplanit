@@ -5,12 +5,55 @@ services:
       context: ..
       dockerfile: testplanit/Dockerfile
       target: production
+      args:
+        # Baked into next.config's image remotePatterns at build time so the
+        # Next.js image optimizer accepts <subdomain>.${BASE_DOMAIN} MinIO URLs.
+        # Only consulted when SELF_HOSTED is false (optimizer on).
+        BASE_DOMAIN: ${BASE_DOMAIN:-example.com}
+        # Self-hosted default: turn OFF Next's image optimizer at BUILD time, so
+        # <Image> renders a plain <img> pointing straight at your storage — no
+        # remotePatterns allowlist to satisfy, so one build works on any domain.
+        # This MUST be a build arg: next.config bakes images.unoptimized into the
+        # standalone build (.next/required-server-files.json), and the running
+        # server reads that frozen config — a runtime/env_file var is too late and
+        # silently has no effect (broken images with 400s from /_next/image).
+        # Set SELF_HOSTED=false to run the optimizer instead; then BASE_DOMAIN
+        # above must be your real domain. Substitution reads the build environment
+        # (shell / default .env / --env-file), NOT the .env.production env_file.
+        SELF_HOSTED: ${SELF_HOSTED:-true}
+        # Per-file upload ceiling in MB (attachments and inline document
+        # images). Baked into next.config's serverActions.bodySizeLimit at build
+        # time, so changing it needs a rebuild, not just a restart. Raise the
+        # bundled nginx to match via nginx-local/ -- see nginx-local/README.md.
+        # Substitution reads the build environment (shell / default .env /
+        # --env-file), NOT the .env.production env_file.
+        UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
     env_file:
       - .env.production
+    environment:
+      # Per-service pool size (overrides any DATABASE_POOL_MAX in the shared
+      # .env.production env_file). See lib/db/poolConfig.ts.
+      #
+      # Budget against postgres max_connections=300 (297 usable after the 3
+      # superuser-reserved): prod 100 + workers 60 = 160 peak, leaving ~137 for
+      # psql sessions, `migrate deploy`, and one-off containers. Raising either
+      # value past that budget trades an app-side queue for postgres refusing
+      # connections outright (FATAL 53300), which is strictly worse.
+      #
+      # Note the host has 4 vCPUs, so concurrency beyond ~4x that mostly queues
+      # inside postgres rather than adding throughput. The pool is sized for
+      # burst absorption, not parallelism: it exists so a handful of slow
+      # queries can't occupy every slot and stall unrelated routes.
+      DATABASE_POOL_MAX: ${PROD_DATABASE_POOL_MAX:-100}
+      # Same value as the build arg above -- uploadFile.ts reads it at runtime
+      # while next.config bakes it at build time. Both resolve from one
+      # UPLOAD_MAX_MB in .env, so they cannot drift.
+      UPLOAD_MAX_MB: ${UPLOAD_MAX_MB:-10}
     ports:
       - "${DOCKER_PROD_APP_PORT:-30000}:3000"
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.10
     restart: unless-stopped
 
   workers:
@@ -21,13 +64,27 @@ services:
       target: workers
     env_file:
       - .env.production
+    environment:
+      # Worker-side pool. Smaller than prod's because the fleet's summed BullMQ
+      # concurrency (~30 across sync/audit/email/copy-move/... queues) is the
+      # real upper bound on simultaneous queries here; 60 leaves room for the
+      # bursty ones without eating into prod's share of the 297-connection
+      # budget. See the note on the prod service above.
+      DATABASE_POOL_MAX: ${WORKERS_DATABASE_POOL_MAX:-60}
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.11
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 4G
+          # Recommended ceiling for the worker fleet (see the resource-allocation
+          # table in docs: Installation > Docker Setup). Raise via
+          # WORKERS_MEMORY_LIMIT for very large Testmo imports or busy multi-tenant
+          # clusters, host RAM permitting (see docs: Background Processes > Worker
+          # memory tiers). Set in the build/deploy environment (shell / default
+          # .env / --env-file), not the .env.production env_file.
+          memory: ${WORKERS_MEMORY_LIMIT:-4G}
     depends_on:
       prod:
         condition: service_started
@@ -41,14 +98,15 @@ services:
     env_file:
       - .env.production
     working_dir: /app/testplanit
-    # Push schema and seed database (no migrations).
+    # Apply migrations and seed database.
     # If Postgres is fronted by a transaction-mode pooler (pgbouncer), point this
-    # service at the direct DB — `prisma db push` needs a real (non-pooled) session.
+    # service at the direct DB — `zenstack migrate deploy` needs a real (non-pooled) session.
+    # Existing pre-migration databases must be baselined once (testplanit/migrations/README.md).
     command:
       [
         "sh",
         "-c",
-        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'",
+        "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, applying migrations...' && npx zenstack migrate deploy --schema schema.zmodel --no-version-check && echo 'Applying audit triggers...' && pnpm tsx scripts/apply-triggers.ts && echo 'Migrations applied, seeding...' && pnpm tsx db/seed.ts && echo 'DB initialized and seeded.'",
       ]
     networks:
       - testplanit-net
@@ -85,6 +143,12 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: testplanit_prod
+      # ICU as the default collation provider: the alpine image's musl libc
+      # cannot collate locales, so without this every ORDER BY on text sorts in
+      # byte order (all capitals before all lowercase). Only applies when the
+      # data volume is first initialized; existing databases are covered by the
+      # app's migrations, which re-collate the sorted display-name columns.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=und"
       # Postgres 18 defaults PGDATA to a version-specific subdirectory
       # (/var/lib/postgresql/18/docker) and expects the volume mounted at
       # /var/lib/postgresql instead of .../data. Pin the old flat layout so the
@@ -92,6 +156,16 @@ services:
       # to avoid a still-open docker-library/postgres detection bug around the
       # new layout (github.com/docker-library/postgres/issues/1400).
       PGDATA: /var/lib/postgresql/data
+    # Cap Postgres CPU usage so the app, workers, nginx, and valkey keep their
+    # share of the host; tune POSTGRES_CPU_LIMIT to your host's core count. Set in
+    # the deploy environment (shell / default .env / --env-file), not the
+    # .env.production env_file.
+    cpus: "${POSTGRES_CPU_LIMIT:-2}"
+    command: >
+      postgres
+      -c max_parallel_workers=2
+      -c max_parallel_workers_per_gather=1
+      -c max_worker_processes=4
     # Named volume, not a bind mount: Postgres's data directory must never live
     # inside the build context (context: .. at the repo root). Once Postgres has
     # run, it chmods the directory 0700, which makes BuildKit's context walker
@@ -101,7 +175,8 @@ services:
     ports:
       - "${DOCKER_POSTGRES_PORT:-5432}:5432"
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.30
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d testplanit_prod"]
@@ -117,7 +192,8 @@ services:
     ports:
       - "${DOCKER_VALKEY_PORT:-6379}:6379"
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.40
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "valkey-cli", "ping"]
@@ -155,7 +231,8 @@ services:
       - "${DOCKER_ELASTICSEARCH_HTTP_PORT:-9200}:9200"
       - "${DOCKER_ELASTICSEARCH_TRANSPORT_PORT:-9300}:9300"
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.50
     restart: unless-stopped
     volumes:
       - ./docker-data/elasticsearch:/usr/share/elasticsearch/data
@@ -176,15 +253,19 @@ services:
     container_name: testplanit-minio
     image: minio/minio:latest
     command: server /data --console-address ":9001" --address ":9000"
+    # Load MINIO_SERVER_URL (and other vars) from the same env file as the app so
+    # MinIO's public URL matches the presigned URLs the app generates.
+    env_file:
+      - .env.production
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
-      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://localhost:9000}
     ports:
       - "${DOCKER_MINIO_API_PORT:-9000}:9000" # MinIO API (for external access)
       - "${DOCKER_MINIO_CONSOLE_PORT:-9001}:9001" # MinIO Console (direct access for admin)
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.20
     restart: unless-stopped
     volumes:
       - ./docker-data/minio:/data
@@ -200,18 +281,34 @@ services:
   nginx:
     container_name: testplanit-nginx
     image: nginx:alpine
+    # Cap the container log. nginx is by far the loudest container here
+    # (the access log carries rt/urt/ua per request), and json-file defaults to
+    # unbounded -- it reached 3.0GB in 9 days. 100m x 10 keeps ~3 days of
+    # request timing for perf debugging while capping the container at 1GB.
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
     ports:
       - "${DOCKER_NGINX_HTTP_PORT:-80}:80" # HTTP port (your external reverse proxy should point here)
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./maintenance.html:/etc/nginx/maintenance.html:ro
+      # Per-deployment overrides (custom error pages, etc.). Tracked dir holds
+      # only a README + *.example; real *.conf and pages are gitignored/local.
+      - ./nginx-local:/etc/nginx/local:ro
     networks:
-      - testplanit-net
+      testplanit-net:
+        ipv4_address: 172.19.0.60
     restart: unless-stopped
     depends_on:
       prod:
         condition: service_started
     healthcheck:
+      # Use 127.0.0.1, not localhost: nginx.conf binds IPv4 only (`listen 80;`),
+      # but `localhost` resolves to IPv6 ::1 first, so wget gets connection
+      # refused and the container falsely reports unhealthy.
       test:
         [
           "CMD",
@@ -219,7 +316,7 @@ services:
           "--quiet",
           "--tries=1",
           "--spider",
-          "http://localhost/health",
+          "http://127.0.0.1/health",
         ]
       interval: 30s
       timeout: 5s
@@ -230,6 +327,10 @@ services:
 networks:
   testplanit-net:
     driver: bridge
+    ipam:
+      config:
+        # Fixed subnet so service IPs below stay stable across restarts.
+        - subnet: 172.19.0.0/16
 
 volumes:
   postgres-data:

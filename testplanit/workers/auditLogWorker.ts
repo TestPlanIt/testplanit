@@ -1,13 +1,13 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { Job, Worker } from "bullmq";
 import {
   disconnectAllTenantClients,
   getAllTenantIds,
-  getPrismaClientForJob,
-  getTenantPrismaClient,
+  getDbClientForJob,
+  getTenantDbClient,
   isMultiTenantMode,
   validateMultiTenantJobData,
-} from "../lib/multiTenantPrisma";
+} from "../lib/multiTenantDb";
 import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import { SYSTEM_ACTOR_ID } from "../lib/auditContextConstants";
 import type { AuditLogJobData } from "../lib/services/auditLog";
@@ -41,7 +41,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
   validateMultiTenantJobData(job.data);
 
   // Get the appropriate Prisma client (tenant-specific or default)
-  const prisma = getPrismaClientForJob(job.data);
+  const db = getDbClientForJob(job.data);
 
   try {
     // Merge user info from event (explicit) and context (request-level)
@@ -60,7 +60,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
     // removed after the event so historical rows stay attributable.
     if (userId && userId !== SYSTEM_ACTOR_ID && (!userEmail || !userName)) {
       try {
-        const actor = await prisma.user.findUnique({
+        const actor = await db.user.findUnique({
           where: { id: userId },
           select: { email: true, name: true },
         });
@@ -111,7 +111,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
     if (needName || needProjectId) {
       try {
         const scope = await resolveAuditEntityScope(
-          prisma as never,
+          db as never,
           event.entityType,
           event.entityId,
           { needName, needProjectId }
@@ -132,7 +132,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
     // The project might have been deleted between when the event was queued and now
     let validatedProjectId: number | null = null;
     if (resolvedProjectId != null) {
-      const projectExists = await prisma.projects.findUnique({
+      const projectExists = await db.projects.findUnique({
         where: { id: resolvedProjectId },
         select: { id: true },
       });
@@ -150,7 +150,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
     // Create the audit log entry
     // Note: We use the raw Prisma client here to bypass ZenStack access control
     // since audit logs should be created by the system, not by users directly
-    await prisma.auditLog.create({
+    await db.auditLog.create({
       data: {
         userId,
         userEmail,
@@ -159,10 +159,10 @@ const processor = async (job: Job<AuditLogJobData>) => {
         entityType: event.entityType,
         entityId: event.entityId,
         entityName: resolvedEntityName,
-        changes: event.changes as Prisma.InputJsonValue | undefined,
+        changes: event.changes as JsonValue | undefined,
         metadata:
           Object.keys(metadata).length > 0
-            ? (metadata as Prisma.InputJsonValue)
+            ? (metadata as JsonValue)
             : undefined,
         projectId: validatedProjectId,
         // Stamp the per-operation correlation id from the request's audit
@@ -198,10 +198,10 @@ let loopBPromise: Promise<void> | null = null;
 /**
  * Loop B correlation targets. DataChangeLog lives in every tenant database (capture triggers are
  * applied per-DB), so the consumer must drain each one into its own AuditLog. Single-tenant: the raw
- * prismaBase client (the sole authorized DataChangeLog reader — it bypasses the @@deny('all', true)
+ * rawDb client (the sole authorized DataChangeLog reader — it bypasses the @@deny('all', true)
  * policy by design). Multi-tenant: one raw client per configured tenant, re-resolved each cycle so a
- * tenant added at runtime is picked up without a worker restart. getTenantPrismaClient returns a
- * cached vanilla PrismaClient per tenant, which satisfies the raw-client surface correlation needs
+ * tenant added at runtime is picked up without a worker restart. getTenantDbClient returns a
+ * cached vanilla DbClient per tenant, which satisfies the raw-client surface correlation needs
  * (raw SQL on DataChangeLog + policy-free model lookups for humanization).
  */
 function listCorrelationClients(): TenantPollClient[] {
@@ -209,13 +209,13 @@ function listCorrelationClients(): TenantPollClient[] {
     return [
       {
         tenantId: undefined,
-        client: getPrismaClientForJob({ tenantId: undefined }),
+        client: getDbClientForJob({ tenantId: undefined }),
       },
     ];
   }
   return getAllTenantIds().map((tenantId) => ({
     tenantId,
-    client: getTenantPrismaClient(tenantId),
+    client: getTenantDbClient(tenantId),
   }));
 }
 
@@ -261,7 +261,7 @@ const startWorker = async () => {
   // the BullMQ consumer above (Loop A). It only needs the DB (no Valkey), so it starts regardless of
   // the Valkey branch. In multi-tenant mode it polls EVERY configured tenant's database per cycle
   // (re-resolved each pass so runtime tenant additions are picked up); in single-tenant mode it
-  // polls the one prismaBase client. Each client is the sole authorized DataChangeLog reader for its
+  // polls the one rawDb client. Each client is the sole authorized DataChangeLog reader for its
   // database — it bypasses the @@deny('all', true) policy by design, the same raw-client pattern the
   // BullMQ processor uses above. Fire-and-forget against the running flag; the process stays alive on
   // the BullMQ worker (Loop A) and/or this loop's own event loop.

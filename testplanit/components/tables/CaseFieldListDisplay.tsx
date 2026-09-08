@@ -1,13 +1,14 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CaseFields } from "@prisma/client";
+import type { CaseFields } from "~/zenstack/models";
 import { LayoutList } from "lucide-react";
 import React from "react";
-import { useFindManyCaseFields } from "~/lib/hooks";
 interface CaseFieldListProps {
   caseFields: { caseFieldId: number }[];
   usePopover?: boolean;
@@ -17,7 +18,9 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
   caseFields,
   usePopover = true,
 }) => {
-  const { data: allCaseFields } = useFindManyCaseFields({
+  const { data: allCaseFields } = useClientQueries(
+    schema
+  ).caseFields.useFindMany({
     orderBy: { displayName: "asc" },
     where: {
       AND: [
@@ -57,7 +60,7 @@ export const CaseFieldListDisplay: React.FC<CaseFieldListProps> = ({
       <Popover>
         <PopoverTrigger>
           <Badge>
-            <LayoutList className="w-4 h-4 mr-1" />
+            <LayoutList className="w-4 h-4 me-1" />
             {allCaseFields.length}
           </Badge>
         </PopoverTrigger>

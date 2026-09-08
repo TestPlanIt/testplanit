@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     milestones: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
@@ -18,7 +18,22 @@ vi.mock("~/lib/prisma", () => ({
     reviewRequest: {
       findMany: vi.fn(),
     },
+    milestoneIssue: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
+    // Traceability matrix raw query (READY, D4) — defaults to no rows.
+    $queryRaw: vi.fn().mockResolvedValue([]),
   },
+}));
+
+vi.mock("~/lib/services/milestoneMemberCoverage", () => ({
+  getMemberCoverage: vi.fn().mockResolvedValue({}),
+}));
+
+// The viewer's cross-project scope for the member-coverage blend — null =
+// unrestricted, matching the ADMIN sessions most tests use.
+vi.mock("~/lib/authContext", () => ({
+  resolveViewerProjectScope: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("~/lib/services/milestoneDescendants", () => ({
@@ -32,14 +47,20 @@ vi.mock("~/lib/services/milestoneSummary", () => ({
   getMilestoneLinkedIssues: vi.fn(),
 }));
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { getMemberCoverage } from "~/lib/services/milestoneMemberCoverage";
 import {
   calculateMilestoneCompletion,
   getMilestoneLinkedIssues,
   getSessionSegments,
   getTestRunSegments,
 } from "~/lib/services/milestoneSummary";
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 import { getServerSession } from "next-auth";
 import { GET } from "./route";
 
@@ -112,9 +133,10 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
     (getSessionSegments as any).mockResolvedValue([]);
     (calculateMilestoneCompletion as any).mockResolvedValue(0);
     (getMilestoneLinkedIssues as any).mockResolvedValue([]);
-    (prisma.milestones.findUnique as any).mockResolvedValue(baseMilestone);
-    (prisma.milestones.findMany as any).mockResolvedValue([]);
-    (prisma.reviewRequest.findMany as any).mockResolvedValue([]);
+    mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 10 });
+    (baseDb.milestones.findUnique as any).mockResolvedValue(baseMilestone);
+    (baseDb.milestones.findMany as any).mockResolvedValue([]);
+    (baseDb.reviewRequest.findMany as any).mockResolvedValue([]);
   });
 
   describe("Input validation & auth", () => {
@@ -135,7 +157,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
 
     it("returns 404 when the milestone does not exist", async () => {
       (getServerSession as any).mockResolvedValue(adminSession);
-      (prisma.milestones.findUnique as any).mockResolvedValue(null);
+      (baseDb.milestones.findUnique as any).mockResolvedValue(null);
       const [req, ctx] = createRequest("999");
       const res = await GET(req, ctx);
       expect(res.status).toBe(404);
@@ -173,7 +195,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
           projectIds: [10],
         },
       ]);
-      (prisma.reviewRequest.findMany as any).mockResolvedValue([
+      (baseDb.reviewRequest.findMany as any).mockResolvedValue([
         {
           entityType: "RUN",
           entityId: 100,
@@ -215,7 +237,7 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
       const [req, ctx] = createRequest("1");
       const data = await (await GET(req, ctx)).json();
 
-      const whereArg = (prisma.reviewRequest.findMany as any).mock.calls[0][0]
+      const whereArg = (baseDb.reviewRequest.findMany as any).mock.calls[0][0]
         .where;
       expect(whereArg.projectId).toBe(10);
       expect(whereArg.isDeleted).toBe(false);
@@ -236,6 +258,214 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
   });
 
   describe("Empty milestone", () => {
+    it("includes member issues with per-status coverage and aggregated totals", async () => {
+      (baseDb.milestoneIssue.findMany as any).mockResolvedValue([
+        {
+          issueId: 501,
+          source: "SYNCED",
+          issue: {
+            id: 501,
+            name: "ABT-1",
+            title: "Story one",
+            externalKey: "ABT-1",
+            externalStatus: "Closed",
+            status: "closed",
+          },
+        },
+        {
+          issueId: 502,
+          source: "MANUAL",
+          issue: {
+            id: 502,
+            name: "ABT-2",
+            title: "Story two",
+            externalKey: "ABT-2",
+            externalStatus: "Open",
+            status: "open",
+          },
+        },
+      ]);
+      (getMemberCoverage as any).mockResolvedValue({
+        501: {
+          linkedCaseCount: 3,
+          passed: 2,
+          failed: 0,
+          inProgress: 0,
+          notRun: 1,
+          uncovered: false,
+          statuses: [{ statusId: 1, name: "Passed", color: "#0f0", count: 2 }],
+          untested: 1,
+        },
+        502: {
+          linkedCaseCount: 0,
+          passed: 0,
+          failed: 0,
+          inProgress: 0,
+          notRun: 0,
+          uncovered: true,
+          statuses: [],
+          untested: 0,
+        },
+      });
+
+      const [req, ctx] = createRequest("1");
+      const body = await (await GET(req, ctx)).json();
+
+      expect(body.memberIssues).toHaveLength(2);
+      const synced = body.memberIssues.find((m: any) => m.key === "ABT-1");
+      expect(synced).toMatchObject({
+        source: "SYNCED",
+        uncovered: false,
+        untested: 1,
+        coverageStatuses: [
+          { statusName: "Passed", count: 2, colorValue: "#0f0" },
+        ],
+      });
+      const manual = body.memberIssues.find((m: any) => m.key === "ABT-2");
+      expect(manual).toMatchObject({ source: "MANUAL", uncovered: true });
+      expect(body.memberCoverageTotals).toMatchObject({
+        untested: 1,
+        uncoveredIssues: 1,
+        statuses: [{ statusName: "Passed", count: 2, colorValue: "#0f0" }],
+      });
+    });
+
+    it("shapes the per-case traceability matrix (executed / not-run / uncovered)", async () => {
+      (getServerSession as any).mockResolvedValue(adminSession);
+      (baseDb.milestoneIssue.findMany as any).mockResolvedValue([
+        {
+          issueId: 501,
+          source: "SYNCED",
+          issue: {
+            id: 501,
+            name: "ABT-1",
+            title: "Story one",
+            externalKey: "ABT-1",
+            externalStatus: "Open",
+            status: "open",
+          },
+        },
+      ]);
+      (baseDb.$queryRaw as any).mockResolvedValue([
+        {
+          externalKey: "ABT-1",
+          title: "Story one",
+          issueName: "ABT-1",
+          caseName: "Login works",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Sprint 1 Run",
+          completedAt: new Date("2026-07-01T10:00:00.000Z"),
+          hasResult: true,
+        },
+        {
+          externalKey: "ABT-1",
+          title: "Story one",
+          issueName: "ABT-1",
+          caseName: "Logout works",
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          completedAt: null,
+          hasResult: false,
+        },
+        {
+          externalKey: "ABT-2",
+          title: "Story two",
+          issueName: "ABT-2",
+          caseName: null,
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          completedAt: null,
+          hasResult: false,
+        },
+      ]);
+
+      const [req, ctx] = createRequest("1");
+      const body = await (await GET(req, ctx)).json();
+
+      expect(body.traceability).toEqual([
+        {
+          issueKey: "ABT-1",
+          issueTitle: "Story one",
+          caseName: "Login works",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Sprint 1 Run",
+          executedAt: "2026-07-01T10:00:00.000Z",
+        },
+        {
+          issueKey: "ABT-1",
+          issueTitle: "Story one",
+          caseName: "Logout works",
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          executedAt: null,
+        },
+        {
+          issueKey: "ABT-2",
+          issueTitle: "Story two",
+          caseName: null,
+          statusName: null,
+          statusColor: null,
+          runName: null,
+          executedAt: null,
+        },
+      ]);
+    });
+
+    // Regression: automated (JUnit/TestNG/Mocha/etc.) runs never denormalise a
+    // status onto TestRunCases.statusId, so the query falls back to the case's
+    // latest JUnitTestResult. Such a row arrives with hasResult=true and a real
+    // status but no run-case id — it must export as executed, not blank.
+    it("reports an automated-only case from its JUnit result, not as 'Not run'", async () => {
+      (getServerSession as any).mockResolvedValue(adminSession);
+      (baseDb.milestoneIssue.findMany as any).mockResolvedValue([
+        {
+          issueId: 501,
+          source: "SYNCED",
+          issue: {
+            id: 501,
+            name: "ABT-1",
+            title: "Story one",
+            externalKey: "ABT-1",
+            externalStatus: "Open",
+            status: "open",
+          },
+        },
+      ]);
+      (baseDb.$queryRaw as any).mockResolvedValue([
+        {
+          externalKey: "ABT-1",
+          title: "Story one",
+          issueName: "ABT-1",
+          caseName: "CI smoke test",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Web Smoke Tests - DEV #1503",
+          completedAt: new Date("2026-08-14T15:02:30.000Z"),
+          hasResult: true,
+        },
+      ]);
+
+      const [req, ctx] = createRequest("1");
+      const body = await (await GET(req, ctx)).json();
+
+      expect(body.traceability).toEqual([
+        {
+          issueKey: "ABT-1",
+          issueTitle: "Story one",
+          caseName: "CI smoke test",
+          statusName: "Passed",
+          statusColor: "#0f0",
+          runName: "Web Smoke Tests - DEV #1503",
+          executedAt: "2026-08-14T15:02:30.000Z",
+        },
+      ]);
+    });
+
     it("returns empty sections and skips the review query when there is no data", async () => {
       (getServerSession as any).mockResolvedValue(adminSession);
 
@@ -247,14 +477,14 @@ describe("GET /api/milestones/[milestoneId]/export", () => {
       expect(data.descendants).toEqual([]);
       expect(data.issues).toEqual([]);
       expect(data.reviewDecisions).toEqual([]);
-      expect(prisma.reviewRequest.findMany).not.toHaveBeenCalled();
+      expect(baseDb.reviewRequest.findMany).not.toHaveBeenCalled();
     });
   });
 
   describe("Parent path", () => {
     it("walks the parent chain into a root-first path", async () => {
       (getServerSession as any).mockResolvedValue(userSession);
-      (prisma.milestones.findUnique as any)
+      (baseDb.milestones.findUnique as any)
         .mockResolvedValueOnce({ ...baseMilestone, parentId: 2 }) // the milestone
         .mockResolvedValueOnce({ name: "Q2", parentId: 3 }) // parent
         .mockResolvedValueOnce({ name: "FY26", parentId: null }); // grandparent

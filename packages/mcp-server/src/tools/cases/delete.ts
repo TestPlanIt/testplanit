@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  RepositoryCasesSelect,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -12,7 +14,7 @@ export interface CasesDeleteDeps {
 const CASE_DELETE_SELECT = {
   id: true,
   isDeleted: true,
-} as const satisfies Prisma.RepositoryCasesSelect;
+} as const satisfies RepositoryCasesSelect;
 
 /**
  * Soft-delete a test case.

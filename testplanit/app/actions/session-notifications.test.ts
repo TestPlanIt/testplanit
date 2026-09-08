@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 import { notifySessionAssignment } from "./session-notifications";
 
 // Mock dependencies
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     sessions: {
       findUnique: vi.fn(),
     },
@@ -51,10 +51,10 @@ describe("session-notifications", () => {
 
     it("should create notification when session is assigned to a new user", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(
+      vi.mocked(baseDb.sessions.findUnique).mockResolvedValue(
         mockSessionData as any
       );
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      vi.mocked(baseDb.user.findUnique).mockResolvedValue({
         name: "Mike Wilson",
       } as any);
 
@@ -85,7 +85,7 @@ describe("session-notifications", () => {
 
       await notifySessionAssignment(1, "assignee-789", "assignee-789");
 
-      expect(prisma.sessions.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.sessions.findUnique).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
@@ -94,7 +94,7 @@ describe("session-notifications", () => {
 
       await notifySessionAssignment(1, null, "assignee-789");
 
-      expect(prisma.sessions.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.sessions.findUnique).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
@@ -103,13 +103,13 @@ describe("session-notifications", () => {
 
       await notifySessionAssignment(1, "assignee-789", null);
 
-      expect(prisma.sessions.findUnique).not.toHaveBeenCalled();
+      expect(baseDb.sessions.findUnique).not.toHaveBeenCalled();
       expect(NotificationService.createNotification).not.toHaveBeenCalled();
     });
 
     it("should handle missing session data gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(null);
+      vi.mocked(baseDb.sessions.findUnique).mockResolvedValue(null);
 
       await notifySessionAssignment(1, "assignee-789", null);
 
@@ -118,7 +118,7 @@ describe("session-notifications", () => {
 
     it("should handle errors gracefully", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockRejectedValue(
+      vi.mocked(baseDb.sessions.findUnique).mockRejectedValue(
         new Error("Database error")
       );
 
@@ -146,10 +146,10 @@ describe("session-notifications", () => {
       } as any;
 
       vi.mocked(getServerAuthSession).mockResolvedValue(sessionWithoutName);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(
+      vi.mocked(baseDb.sessions.findUnique).mockResolvedValue(
         mockSessionData as any
       );
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      vi.mocked(baseDb.user.findUnique).mockResolvedValue({
         name: "Mike Wilson",
       } as any);
 
@@ -168,10 +168,10 @@ describe("session-notifications", () => {
 
     it("should create notification when reassigning from one user to another", async () => {
       vi.mocked(getServerAuthSession).mockResolvedValue(mockSession);
-      vi.mocked(prisma.sessions.findUnique).mockResolvedValue(
+      vi.mocked(baseDb.sessions.findUnique).mockResolvedValue(
         mockSessionData as any
       );
-      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      vi.mocked(baseDb.user.findUnique).mockResolvedValue({
         name: "New Assignee",
       } as any);
 

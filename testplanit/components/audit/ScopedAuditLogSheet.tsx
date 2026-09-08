@@ -1,6 +1,13 @@
 "use client";
 
-import { VirtualizedDataTable } from "@/components/tables/VirtualizedDataTable";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import { DataTable } from "@/components/tables/DataTable";
+import {
+  ActionButtonContent,
+  collapsibleActionClass,
+  useActionBarCompact,
+} from "@/components/ui/action-bar";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
@@ -19,12 +26,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 import type { VisibilityState } from "@tanstack/react-table";
 import { endOfDay, startOfDay } from "date-fns";
 import { History } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useForm, useWatch } from "react-hook-form";
@@ -36,13 +43,11 @@ import {
 } from "~/app/[locale]/admin/audit-logs/columns";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { groupAuditRows } from "~/lib/audit/groupAuditRows";
-import {
-  useCountAuditLog,
-  useFindManyAuditLog,
-  useInfiniteFindManyAuditLog,
-} from "~/lib/hooks";
 
-const PAGE_SIZE = 50;
+// Rows fetched per scroll page — matches the admin audit-log surface: audit
+// rows are cheap (heavy Json columns excluded) and operationId grouping can
+// collapse a whole page into one visible row, so batch large.
+const PAGE_SIZE = 1000;
 
 interface ScopedAuditLogSheetProps {
   /** The AuditLog.entityType to scope to (e.g. RepositoryCases / TestRuns / Sessions). */
@@ -57,6 +62,11 @@ interface ScopedAuditLogSheetProps {
   triggerTestId: string;
   tableTestIdPrefix: string;
   rowTestIdPrefix: string;
+  /** Controlled open state (optional). When omitted the sheet self-manages. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the built-in trigger button (e.g. when opened from a menu item). */
+  hideTrigger?: boolean;
 }
 
 /**
@@ -79,24 +89,36 @@ export function ScopedAuditLogSheet({
   triggerTestId,
   tableTestIdPrefix,
   rowTestIdPrefix,
+  open: openProp,
+  onOpenChange,
+  hideTrigger = false,
 }: ScopedAuditLogSheetProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  // Inside an ActionBar, follow its responsive collapse; outside one, keep the
+  // legacy always-collapsed look.
+  const collapsed = useActionBarCompact() ?? true;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
-          data-testid={triggerTestId}
-        >
-          <History className="text-foreground h-4 w-4 shrink-0" />
-          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-            {triggerLabel}
-          </span>
-        </Button>
-      </SheetTrigger>
+      {!hideTrigger && (
+        <SheetTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className={collapsibleActionClass(collapsed)}
+            data-testid={triggerTestId}
+          >
+            <ActionButtonContent
+              icon={History}
+              label={triggerLabel}
+              compact={collapsed}
+              iconClassName="text-foreground h-4 w-4 shrink-0"
+            />
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent className="w-full sm:max-w-3xl">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
@@ -128,9 +150,9 @@ function ScopedAuditLogContent({
   rowTestIdPrefix: string;
 }) {
   const { data: session } = useSession();
+  const locale = useLocale();
   const t = useTranslations("admin.auditLogs");
   const tCommon = useTranslations("common");
-  const tUserMenu = useTranslations("userMenu");
   const tProfile = useTranslations("users.profile.auditLog");
 
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -194,7 +216,7 @@ function ScopedAuditLogContent({
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-  } = useInfiniteFindManyAuditLog(baseArgs, {
+  } = useClientQueries(schema).auditLog.useInfiniteFindMany(baseArgs, {
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
       return {
@@ -224,11 +246,13 @@ function ScopedAuditLogContent({
     [rows]
   );
 
-  const { data: totalCount } = useCountAuditLog({ where: whereClause });
+  const { data: totalCount } = useClientQueries(schema).auditLog.useCount({
+    where: whereClause,
+  });
 
   // Action options come from the distinct actions recorded for this entity, so
   // the dropdown lists only relevant actions.
-  const { data: actionRows } = useFindManyAuditLog({
+  const { data: actionRows } = useClientQueries(schema).auditLog.useFindMany({
     where: { entityType, entityId },
     select: { action: true },
     distinct: ["action"],
@@ -247,6 +271,19 @@ function ScopedAuditLogContent({
     setSortConfig({ column, direction });
   };
 
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "timestamp", direction: "desc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
+
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
   const userPreferences = useMemo(
@@ -256,13 +293,7 @@ function ScopedAuditLogContent({
 
   // Reuse the admin audit-log columns, but drop the columns that are constant
   // for a single entity: project, entity type, and entity name.
-  const allColumns = useColumns(
-    userPreferences,
-    handleViewDetails,
-    t,
-    tCommon,
-    tUserMenu
-  );
+  const allColumns = useColumns(userPreferences, handleViewDetails, t, tCommon);
   const columns = useMemo(
     () =>
       allColumns.filter(
@@ -309,16 +340,19 @@ function ScopedAuditLogContent({
 
       {/* Data Table — virtualized, infinite scroll. */}
       <div className="h-[calc(100vh-16rem)] min-h-[320px] w-full">
-        <VirtualizedDataTable
+        <DataTable
+          virtualized
           columns={columns as any}
           data={groupedData as any}
           getSubRows={(row) => row.auditChildren}
           subRowsLabel={t("relatedChanges")}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
+          onSortColumn={handleSortColumn}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           flexColumnId="userEmail"
+          columnSizingStorageKey="scoped-audit-log"
           hasMore={!!hasNextPage}
           isLoading={isLoading || isFetchingNextPage}
           onLoadMore={fetchNextPage}
@@ -332,10 +366,10 @@ function ScopedAuditLogContent({
       </div>
 
       {rows.length > 0 && (
-        <p className="text-right text-xs text-muted-foreground">
+        <p className="text-end text-xs text-muted-foreground">
           {tProfile("showing", {
-            loaded: rows.length.toLocaleString(),
-            total: (totalCount ?? rows.length).toLocaleString(),
+            loaded: rows.length.toLocaleString(locale),
+            total: (totalCount ?? rows.length).toLocaleString(locale),
           })}
         </p>
       )}

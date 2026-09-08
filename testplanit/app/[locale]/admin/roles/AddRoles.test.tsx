@@ -18,30 +18,6 @@ vi.mock("@/components/ui/help-popover", () => ({
   HelpPopover: () => null,
 }));
 
-vi.mock("@prisma/client", () => ({
-  ApplicationArea: {
-    Documentation: "Documentation",
-    Milestones: "Milestones",
-    TestCaseRepository: "TestCaseRepository",
-    TestCaseRestrictedFields: "TestCaseRestrictedFields",
-    TestRuns: "TestRuns",
-    ClosedTestRuns: "ClosedTestRuns",
-    TestRunResults: "TestRunResults",
-    TestRunResultRestrictedFields: "TestRunResultRestrictedFields",
-    Sessions: "Sessions",
-    SessionsRestrictedFields: "SessionsRestrictedFields",
-    ClosedSessions: "ClosedSessions",
-    SessionResults: "SessionResults",
-    Tags: "Tags",
-    SharedSteps: "SharedSteps",
-    Issues: "Issues",
-    IssueIntegration: "IssueIntegration",
-    Forecasting: "Forecasting",
-    Reporting: "Reporting",
-    Settings: "Settings",
-  },
-}));
-
 const { mockCreateRole, mockUpdateManyRoles, mockUpsertRolePermission } =
   vi.hoisted(() => ({
     mockCreateRole: vi.fn().mockResolvedValue({ id: 7 }),
@@ -49,10 +25,16 @@ const { mockCreateRole, mockUpdateManyRoles, mockUpsertRolePermission } =
     mockUpsertRolePermission: vi.fn().mockResolvedValue({}),
   }));
 
-vi.mock("~/lib/hooks", () => ({
-  useCreateRoles: () => ({ mutateAsync: mockCreateRole }),
-  useUpdateManyRoles: () => ({ mutateAsync: mockUpdateManyRoles }),
-  useUpsertRolePermission: () => ({ mutateAsync: mockUpsertRolePermission }),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    roles: {
+      useCreate: () => ({ mutateAsync: mockCreateRole }),
+      useUpdateMany: () => ({ mutateAsync: mockUpdateManyRoles }),
+    },
+    rolePermission: {
+      useUpsert: () => ({ mutateAsync: mockUpsertRolePermission }),
+    },
+  }),
 }));
 
 function makeQueryClient() {

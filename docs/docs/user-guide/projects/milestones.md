@@ -13,12 +13,18 @@ Navigate to **Projects -> [Your Project] -> Milestones** from the sidebar.
 
 ## Viewing Milestones
 
-The page shows a table with the following columns:
+The page shows milestones as cards, grouped under two tabs:
 
-* **Name:** The name of the milestone (clickable link to the Milestone Details page).
-* **Status:** The current status of the milestone (e.g., Open, In Progress, Completed).
-* **Due Date:** The target completion date for the milestone.
-* **Actions:** (Usually contains an edit button or link).
+* **Active:** Milestones that haven't been marked complete.
+* **Completed:** Milestones that have been marked complete.
+
+A **kind filter** dropdown above the tabs narrows both tabs to a single milestone kind. It lists **All milestones**, then an entry for each kind actually present: **Synced releases** and **Synced sprints** for milestones synced from Jira (its Fix Versions and Sprints), plus one entry per local milestone type in use — each labeled with the type's name and shown with its own type icon, rather than grouped into a single "Local" bucket. The dropdown appears only when the project has more than one kind to choose between.
+
+Within each tab, child milestones are nested and indented beneath their parent. Each card shows the milestone's name, type icon, status badge and date range, its note where one is set, and a [summary bar](./milestone-details.md#summary) of its test run and session results. The summary bar carries the totals, including the total estimate and elapsed time.
+
+A milestone synced from an external tracker (currently Jira) shows a [source badge](./milestone-details.md#source-badge) next to its name — for example **Jira · Sprint · active · Website**.
+
+When a milestone has related issues, its summary bar carries the same paired count chips documented on the [Milestone Details](./milestone-details.md#summary) page — a **Target** icon for issues in scope and a **Bug** icon for issues found in testing. On this page, clicking a chip opens a popover listing its issues instead of navigating to the details page.
 
 ## Adding a New Milestone
 
@@ -28,14 +34,30 @@ Click the **Add Milestone** button located in the top-right corner of the page.
 Adding milestones requires the `Add/Edit` permission for the `Milestones` application area for the specific project. Users without this permission will not see the "Add Milestone" button.
 :::
 
-## Searching and Filtering
+## Import from Jira
 
-* **Search:** Use the search bar to find milestones by name.
-* **Filtering:** Apply filters (e.g., by status) if available.
+When a milestone-capable integration (currently Jira) has milestone sync enabled for at least one of the project's linked external projects, an **Import from Jira** button appears next to **Add Milestone**.
 
-## Sorting
+The dialog previews the tracker's Fix Versions and Sprints across **all** of the project's Jira mappings, with:
 
-Click on column headers to sort the list by that column.
+* **Show closed:** A toggle (off by default) that includes closed or released artifacts in the preview.
+* **Search and per-Jira-project filter chips:** Narrow the preview when the project has more than one Jira mapping.
+* **Multi-select:** Pick any number of artifacts to import in one pass.
+* **Already Linked badge:** Marks artifacts already tracked as a milestone in this project. A milestone that was previously unlinked or converted to local shows as importable again; importing it re-attaches the existing milestone — its test runs and links stay intact — instead of creating a duplicate.
+
+Milestones are tracked **per project**: several TestPlanIt projects can import the same Jira version or sprint, and each project gets its own independent milestone — synced, unlinked, or deleted without affecting any other project's copy of the same artifact.
+
+Import runs in the background: the dialog closes as soon as the import is queued, an **Importing…** indicator shows progress on the list page, and a toast confirms once the import completes.
+
+:::info Permissions Required
+Importing from Jira requires **project admin** status — the project creator, a user with the **Project Admin** role on the project, or a user with `PROJECTADMIN`/`ADMIN` system access. See the [Permissions Guide](../permissions-guide.md).
+:::
+
+:::caution Sprints need extra OAuth scopes
+
+On a Jira integration using **OAuth 2.0**, Sprints come from Atlassian's separate Jira Software API, which requires its own scopes on the OAuth app. Without them the preview fails with `HTTP 401: {"code":401,"message":"Unauthorized; scope does not match"}` — and because the two artifact types are fetched together, Fix Versions disappear from the preview too even though they would otherwise load. See [Jira with OAuth 2.0](../integrations.md#jira-with-oauth-20) for the scope list; after adding them, every user of the integration must re-authorize. Jira integrations using an API key are unaffected.
+
+:::
 
 ## Navigation
 
@@ -222,7 +244,7 @@ Product Launch (Root)
 
 **Deleting a Parent Milestone:**
 - **Cascade delete**: All child milestones are also deleted
-- Confirmation required before deletion
+- Confirmation required before deletion — the dialog states how many child and descendant milestones will be deleted along with the parent
 - Consider orphaning children by moving them first
 
 **Best Practice:**

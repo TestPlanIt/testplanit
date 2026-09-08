@@ -14,7 +14,7 @@ import {
 } from "./entityAuditHooks";
 
 // Intercept at the queue boundary so the real auditEntity diff + masking logic
-// runs (mirrors lib/prisma.config-audit.test.ts). Paths are relative to
+// runs (mirrors lib/db.config-audit.test.ts). Paths are relative to
 // lib/services/ and resolve to the same modules auditLog.ts imports via `~`.
 const mocks = vi.hoisted(() => ({
   mockQueue: { add: vi.fn() },
@@ -34,7 +34,7 @@ vi.mock("../auditContext", () => ({
   getAuditContext: vi.fn(() => mocks.currentContext),
   SYSTEM_ACTOR_ID: "__system__",
 }));
-vi.mock("../multiTenantPrisma", () => ({
+vi.mock("../multiTenantDb", () => ({
   isMultiTenantMode: vi.fn(() => false),
   getCurrentTenantId: vi.fn(() => undefined),
 }));

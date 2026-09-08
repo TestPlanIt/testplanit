@@ -38,7 +38,7 @@ function ProgressToastBody({ job, onDismiss }: ProgressToastBodyProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 -mr-1 -mt-1"
+          className="h-6 w-6 -me-1 -mt-1"
           aria-label={t("runProgressDismissAria")}
           data-testid="run-generation-progress-dismiss"
           onClick={onDismiss}

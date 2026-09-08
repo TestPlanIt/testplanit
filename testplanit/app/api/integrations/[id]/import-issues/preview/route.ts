@@ -63,7 +63,7 @@ export async function POST(
       integrationId,
       integrationProjectId,
       { updatedWithinDays },
-      { prismaClient: db }
+      { dbClient: db }
     );
 
     return NextResponse.json(preview);

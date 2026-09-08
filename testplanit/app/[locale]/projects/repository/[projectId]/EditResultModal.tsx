@@ -1,3 +1,5 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
@@ -7,11 +9,12 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import type { Issue } from "@prisma/client";
-import { ApplicationArea, Attachments } from "@prisma/client";
-import { JsonValue } from "@prisma/client/runtime/library";
+import type { Issue } from "~/zenstack/models";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Attachments } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bug, ListChecks, LockIcon, SearchCheck, Trash2 } from "lucide-react";
+import { Bug, ListChecks, LockIcon, SearchCheck, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -22,18 +25,7 @@ import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments,
-  useCreateTestRunStepResults,
-  useFindFirstProjects,
-  useFindFirstRepositoryCases,
-  useFindFirstTestRunResults,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useFindManyTestRunResults,
-  useUpdateTestRunResults,
-  useUpdateTestRunStepResults,
-} from "~/lib/hooks";
-import {
+  deleteTestRunResult,
   editTestRunResult,
   isEditWindowExpiredResultError,
   isIssueRequiredOnFailureSubmitResultError,
@@ -45,7 +37,12 @@ import { useOperationId } from "~/hooks/useOperationId";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { toHumanReadable } from "~/utils/duration";
+import {
+  failureFlipStatusId,
+  hasNewlyLinkedIssue,
+} from "~/utils/failureStatusFlip";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 
 import {
   AlertDialog,
@@ -343,7 +340,9 @@ export function EditResultModal({
   const canEditRestrictedPerm = canEditRestricted || isSuperAdmin;
 
   // Fetch the existing result data
-  const { data: existingResult } = useFindManyTestRunResults<{
+  const { data: existingResult } = useClientQueries(
+    schema
+  ).testRunResults.useFindMany<{
     where: {
       testRunId: number;
       testRunCaseId: number;
@@ -388,7 +387,9 @@ export function EditResultModal({
   // values. Non-parameterized results have `iteration` = null and the
   // memoized `parameters` below stays `undefined` — chips fall back to
   // `@name` (unsubstituted) which matches the pre-iterations behavior.
-  const { data: resultRow } = useFindFirstTestRunResults(
+  const { data: resultRow } = useClientQueries(
+    schema
+  ).testRunResults.useFindFirst(
     {
       where: { id: resultId, isDeleted: false },
       select: {
@@ -486,26 +487,27 @@ export function EditResultModal({
   }, [resultRow, isSuperAdmin]);
 
   // Find the repository case to get its template ID
-  const { data: repositoryCase, isLoading: isLoadingCase } =
-    useFindFirstRepositoryCases({
-      where: {
-        testRuns: {
-          some: {
-            id: testRunCaseId,
-          },
+  const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
+    where: {
+      testRuns: {
+        some: {
+          id: testRunCaseId,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        templateId: true,
-        currentVersion: true,
-      },
-    });
+    },
+    select: {
+      id: true,
+      name: true,
+      templateId: true,
+      currentVersion: true,
+    },
+  });
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: repositoryCase?.templateId || 0,
       },
@@ -545,16 +547,17 @@ export function EditResultModal({
   }, [templateResultFields]);
 
   // Fetch project data to get issueConfigId
-  const { data: projectData, isLoading: isLoadingProject } =
-    useFindFirstProjects({
-      where: { id: projectId },
-      select: {
-        projectIntegrations: {
-          where: { isActive: true },
-          include: { integration: true },
-        },
+  const { data: projectData, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
+    where: { id: projectId },
+    select: {
+      projectIntegrations: {
+        where: { isActive: true },
+        include: { integration: true },
       },
-    });
+    },
+  });
 
   const form = useForm<FormValues>({
     resolver: standardSchemaResolver(
@@ -692,7 +695,7 @@ export function EditResultModal({
   ]);
 
   // Fetch available statuses
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -733,18 +736,62 @@ export function EditResultModal({
     }
   }, [statuses, form]);
 
-  const { mutateAsync: updateTestRunResults } = useUpdateTestRunResults();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
+  // The result row itself is mutated only through the guarded endpoints
+  // (`editTestRunResult` / `deleteTestRunResult`), which own the run-case
+  // status sync — hence no `testRunResults.useUpdate()` here.
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
   const { mutateAsync: updateTestRunStepResults } =
-    useUpdateTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useUpdate();
   const { mutateAsync: createTestRunStepResults } =
-    useCreateTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useCreate();
 
   const _handleStatusChange = (statusId: number) => {
     form.setValue("statusId", statusId);
     const status = statuses?.find((s) => s.id === statusId);
     if (status?.color?.value) {
       setSelectedStatusColor(status.color.value);
+    }
+  };
+
+  // Linking an issue means the tester found a defect, so whatever the issue was
+  // attached to flips to the project's first failure status. A step-level link
+  // also flips the overall result, the same escalation a failing step status
+  // already performs.
+  const flipToFailureOnIssueLink = (
+    previousIssueIds: number[],
+    nextIssueIds: number[],
+    stepStatusField?: string
+  ) => {
+    if (!hasNewlyLinkedIssue(previousIssueIds, nextIssueIds)) return;
+
+    if (stepStatusField) {
+      const stepFlipId = failureFlipStatusId(
+        Number(form.getValues(stepStatusField)) || null,
+        statuses
+      );
+      if (stepFlipId !== null) {
+        form.setValue(stepStatusField, stepFlipId, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    }
+
+    const overallFlipId = failureFlipStatusId(
+      Number(form.getValues("statusId")) || null,
+      statuses
+    );
+    if (overallFlipId !== null) {
+      form.setValue("statusId", overallFlipId, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      const flippedStatus = statuses?.find((s) => s.id === overallFlipId);
+      if (flippedStatus?.color?.value) {
+        setSelectedStatusColor(flippedStatus.color.value);
+      }
+      setAnimateBackground(true);
     }
   };
 
@@ -954,7 +1001,7 @@ export function EditResultModal({
 
           // Find existing step result from the existingResult
           const existingStepResult = existingResult
-            ?.find((r: TestRunResult) => r.id === Number(resultId))
+            ?.find((r) => r.id === Number(resultId))
             ?.stepResults?.find((sr) => sr.stepId === step.id);
 
           if (existingStepResult) {
@@ -1051,28 +1098,31 @@ export function EditResultModal({
 
     setIsDeleting(true);
     try {
-      // Soft delete the test run result by setting isDeleted to true
-      await updateTestRunResults({
-        where: {
-          id: Number(resultId),
-        },
-        data: {
-          isDeleted: true,
-        },
-      });
+      // Soft-delete through the guarded endpoint: it re-derives the run-case
+      // status from the results that survive, so the run stops reporting the
+      // outcome of a result that is no longer in the history. A direct
+      // `isDeleted: true` model write skips that.
+      await deleteTestRunResult(Number(resultId));
 
-      // Invalidate queries to refresh the data
-      void queryClient.invalidateQueries({
-        queryKey: ["testRunResults", testRunId, testRunCaseId],
-      });
+      // Refresh caches in the background. Like the edit path, this is a raw
+      // fetch rather than a ZenStack mutation hook, so nothing auto-
+      // invalidates the ZenStack query keys the run view and result history
+      // read from — a keyless invalidate covers them.
+      void queryClient.invalidateQueries();
 
       toast.success(tCommon("actions.resultDeleted"));
       onClose();
     } catch (error) {
       console.error("Error deleting result:", error);
-      toast.error(tCommon("errors.error"), {
-        description: tCommon("errors.somethingWentWrong"),
-      });
+      if (isPermissionDeniedSubmitResultError(error)) {
+        toast.error(tCommon("errors.accessDenied"), {
+          description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.somethingWentWrong"),
+        });
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -1142,7 +1192,7 @@ export function EditResultModal({
                       <SelectItem key={status.id} value={status.id.toString()}>
                         <div className="flex items-center">
                           <div
-                            className="w-3 h-3 rounded-full mr-2"
+                            className="w-3 h-3 rounded-full me-2"
                             style={{
                               backgroundColor: status.color?.value || "#B1B2B3",
                             }}
@@ -1214,9 +1264,14 @@ export function EditResultModal({
               <UnifiedIssueManager
                 projectId={Number(projectId)}
                 linkedIssueIds={selectedStepIssues[stepId] || []}
-                setLinkedIssueIds={(ids) =>
-                  setSelectedStepIssues((prev) => ({ ...prev, [stepId]: ids }))
-                }
+                setLinkedIssueIds={(ids) => {
+                  flipToFailureOnIssueLink(
+                    selectedStepIssues[stepId] || [],
+                    ids,
+                    `step_${stepId}_statusId`
+                  );
+                  setSelectedStepIssues((prev) => ({ ...prev, [stepId]: ids }));
+                }}
                 entityType="testRunResult"
               />
             </FormControl>
@@ -1262,7 +1317,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1300,7 +1355,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1345,7 +1400,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1384,9 +1439,7 @@ export function EditResultModal({
         {
           // Get initialHeight
           const initialHeight = field.resultField.initialHeight;
-          const editorClassName = `min-h-[100px] border rounded-md w-full ${
-            initialHeight ? `min-h-[${initialHeight}px]` : ""
-          }`;
+          const editorClassName = "border rounded-md w-full";
 
           fieldComponent = (
             <FormField
@@ -1410,7 +1463,7 @@ export function EditResultModal({
                       {isRestricted && (
                         <span
                           title={tCommon("aria.restrictedField")}
-                          className="ml-1"
+                          className="ms-1"
                         >
                           <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                         </span>
@@ -1425,6 +1478,7 @@ export function EditResultModal({
                         onUpdate={(content) => formField.onChange(content)}
                         projectId={projectId.toString()}
                         className={editorClassName}
+                        style={editorMinHeightStyle(initialHeight)}
                         placeholder={`Enter ${displayName.toLowerCase()} here...`}
                         readOnly={isDisabled}
                       />
@@ -1455,7 +1509,7 @@ export function EditResultModal({
                   {isRestricted && (
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1546,7 +1600,7 @@ export function EditResultModal({
           <DialogDescription>
             <div className="text-sm text-muted-foreground flex items-center">
               <div className="flex items-center">
-                <ListChecks className="mr-1 h-4 w-4 shrink-0" />
+                <ListChecks className="me-1 h-4 w-4 shrink-0" />
                 {caseName}
               </div>
             </div>
@@ -1593,7 +1647,7 @@ export function EditResultModal({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",
@@ -1784,7 +1838,7 @@ export function EditResultModal({
                       disabled={isDeleting || isLoadingPermissions}
                       className="flex items-center gap-2"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash className="h-4 w-4" />
                       {tCommon("actions.delete")}
                     </Button>
                   </AlertDialogTrigger>
@@ -1841,6 +1895,7 @@ export function EditResultModal({
                     projectId={Number(projectId)}
                     linkedIssueIds={selectedMainIssues}
                     setLinkedIssueIds={(ids) => {
+                      flipToFailureOnIssueLink(selectedMainIssues, ids);
                       setSelectedMainIssues(ids);
                       if (ids.length > 0) setShowIssueRequiredError(false);
                     }}

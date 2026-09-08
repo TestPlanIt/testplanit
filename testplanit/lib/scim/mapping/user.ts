@@ -6,7 +6,7 @@
  * compose these primitives; routes never inline mapping logic.
  *
  * Purity discipline (mirrors `lib/scim/responses.ts` and `lib/scim/errors.ts`):
- *   - No imports from `~/lib/prisma` or any runtime DB client.
+ *   - No imports from `~/lib/db` or any runtime DB client.
  *   - No stdout/stderr writes, no logger imports.
  *   - No module-level mutable state.
  *   - No side effects on inputs (returns fresh objects).
@@ -76,7 +76,7 @@ export interface ScimUserResource {
   [urn: string]: unknown;
 }
 
-export interface PrismaUserForScim {
+export interface DbUserForScim {
   id: string;
   email: string;
   name: string;
@@ -342,7 +342,7 @@ export function scimToUserCreate(body: ScimUserBody): ScimUserCreatePayload {
  * with `primary: true`, and every persisted URN bucket spreads back onto the
  * top-level resource object.
  */
-export function userToScim(user: PrismaUserForScim): ScimUserResource {
+export function userToScim(user: DbUserForScim): ScimUserResource {
   const extensions = isPlainObject(user.scimExtensions)
     ? user.scimExtensions
     : undefined;

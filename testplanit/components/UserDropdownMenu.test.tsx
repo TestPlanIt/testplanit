@@ -5,7 +5,7 @@ import {
   NotificationMode,
   Theme,
   TimeFormat,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import userEvent from "@testing-library/user-event";
 import { Session } from "next-auth";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -84,9 +84,13 @@ vi.mock("~/lib/navigation", () => ({
 const mockUpdateUser = vi.fn().mockResolvedValue({});
 const mockRefetchUser = vi.fn();
 // Mock the required hooks from ~/lib/hooks
-vi.mock("~/lib/hooks", () => ({
-  useUpdateUser: vi.fn(() => ({ mutateAsync: mockUpdateUser })),
-  useFindUniqueUser: vi.fn(() => ({ refetch: mockRefetchUser })),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    user: {
+      useUpdate: vi.fn(() => ({ mutateAsync: mockUpdateUser })),
+      useFindUnique: vi.fn(() => ({ refetch: mockRefetchUser })),
+    },
+  }),
 }));
 
 // Mock window.location.reload

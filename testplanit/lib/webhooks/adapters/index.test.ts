@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AdapterType } from "@prisma/client";
+import type { AdapterType } from "~/zenstack/models";
 
 // Mock the inbound adapters so this test doesn't depend on their real
 // implementations (verified separately in their own `*.test.ts` files).

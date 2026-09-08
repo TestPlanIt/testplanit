@@ -1,5 +1,5 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -18,7 +18,7 @@ export async function GET(
     const integrationId = id;
 
     // Get the integration
-    const integration = await prisma.integration.findUnique({
+    const integration = await baseDb.integration.findUnique({
       where: {
         id: parseInt(integrationId),
         status: "ACTIVE",
@@ -34,7 +34,7 @@ export async function GET(
 
     // For OAuth2 integrations, check user auth
     if (integration.authType === "OAUTH2") {
-      const userAuth = await prisma.userIntegrationAuth.findFirst({
+      const userAuth = await baseDb.userIntegrationAuth.findFirst({
         where: {
           userId: session.user.id,
           integrationId: parseInt(integrationId),
@@ -56,7 +56,7 @@ export async function GET(
 
     // If projectKey not provided in query, try to get it from saved config
     if (!projectKey) {
-      const projectIntegration = await prisma.projectIntegration.findFirst({
+      const projectIntegration = await baseDb.projectIntegration.findFirst({
         where: {
           integrationId: parseInt(integrationId),
           isActive: true,

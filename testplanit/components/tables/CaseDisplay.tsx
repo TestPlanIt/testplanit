@@ -4,9 +4,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource } from "~/zenstack/models";
 import { ExternalLink, LinkIcon } from "lucide-react";
-import React from "react";
+import React, { type ReactNode } from "react";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
@@ -25,6 +25,8 @@ interface Case {
   size?: CaseDisplaySize;
   className?: ClassValue;
   maxLines?: number;
+  /** Optional custom rendering for the name (e.g. a word-level diff). */
+  nameNode?: ReactNode;
 }
 
 export const CaseDisplay: React.FC<Case> = ({
@@ -39,6 +41,7 @@ export const CaseDisplay: React.FC<Case> = ({
   linkTarget,
   className,
   maxLines,
+  nameNode,
 }) => {
   if (!id) return null;
 
@@ -74,6 +77,7 @@ export const CaseDisplay: React.FC<Case> = ({
       showIcon={true}
       className={cn(className, clampClass)}
       size={size}
+      nameNode={nameNode}
     />
   );
 
@@ -89,11 +93,11 @@ export const CaseDisplay: React.FC<Case> = ({
       {nameDisplay}
       {linkTarget === "_blank" ? (
         <ExternalLink
-          className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+          className={`${iconSizeClass} inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
         />
       ) : isLargeOrXl ? (
         <LinkIcon
-          className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
+          className={`${iconSizeClass} inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`}
         />
       ) : null}
     </Link>
@@ -117,7 +121,9 @@ export const CaseDisplay: React.FC<Case> = ({
   return shouldShowTooltip ? (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="text-left">{content}</div>
+        {/* min-w-0 so the trigger can shrink inside a flex parent — without it
+            the name overflows its column and runs into whatever sits beside it. */}
+        <div className="text-start min-w-0">{content}</div>
       </TooltipTrigger>
       <TooltipContent>
         <div>{name}</div>

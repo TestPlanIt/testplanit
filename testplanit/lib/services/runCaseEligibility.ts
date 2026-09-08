@@ -15,9 +15,11 @@
  * `schema.zmodel:1049-1052`.
  */
 
-import { WorkflowType, type Prisma } from "@prisma/client";
+import { WorkflowType } from "~/zenstack/models";
+import type { RepositoryCasesWhereInput } from "~/zenstack/input";
+import type { TxClient } from "~/lib/zenstack";
 
-type AnyTx = Prisma.TransactionClient | { repositoryCases: any; projects: any };
+type AnyTx = TxClient | { repositoryCases: any; projects: any };
 
 interface ProjectFlagProbe {
   excludeNotStartedFromRuns: boolean;
@@ -106,7 +108,7 @@ export async function filterEligibleCaseIds(
  */
 export function buildEligibleCasesWhere(args: {
   project: ProjectFlagProbe | null | undefined;
-}): Prisma.RepositoryCasesWhereInput {
+}): RepositoryCasesWhereInput {
   if (!args.project?.excludeNotStartedFromRuns) return {};
   return {
     state: { workflowType: { not: WorkflowType.NOT_STARTED } },
@@ -121,7 +123,7 @@ export function buildEligibleCasesWhere(args: {
  * the existing edit-window machinery locks them. Only open runs (`testRun.isCompleted = false`)
  * are touched.
  *
- * Centralized here so the auto-API route (which bypasses `lib/prisma.ts`'s
+ * Centralized here so the auto-API route (which bypasses `lib/db.ts`'s
  * `$extends` hooks) and any future direct-Prisma callers share the exact same
  * soft-delete WHERE shape.
  *

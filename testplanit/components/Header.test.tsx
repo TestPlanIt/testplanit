@@ -49,9 +49,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock ~/lib/hooks
-vi.mock("~/lib/hooks", () => ({
-  useFindManyProjects: vi.fn(() => ({ data: [] })),
-  useFindUniqueProjects: vi.fn(() => ({ data: null })),
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    projects: {
+      useFindMany: vi.fn(() => ({ data: [] })),
+      useFindUnique: vi.fn(() => ({ data: null })),
+    },
+  }),
 }));
 
 // Mock ~/lib/version
@@ -66,6 +70,14 @@ vi.mock("@/components/NotificationBell", () => ({
 
 vi.mock("@/components/reviews/ReviewInboxButton", () => ({
   ReviewInboxButton: () => <div data-testid="review-inbox-button-mock" />,
+}));
+
+vi.mock("~/hooks/useHeaderAlertCounts", () => ({
+  useHeaderAlertCounts: () => ({
+    notificationCount: 0,
+    reviewCount: 0,
+    total: 0,
+  }),
 }));
 
 vi.mock("@/components/UserDropdownMenu", () => ({

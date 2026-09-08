@@ -1,23 +1,26 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAutomationRunCounts } from "~/hooks/useAutomationRunCounts";
 import { redirect } from "~/lib/navigation";
 import {
   ProcessedProject,
   processProjectsWithEffectiveMembers,
 } from "~/utils/projectUtils";
 
-import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
-
+import { CreateFirstProjectCard } from "@/components/CreateFirstProjectCard";
 import { Loading } from "@/components/Loading";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
 import { InitialPreferencesDialog } from "@/components/onboarding/InitialPreferencesDialog";
 import { ProjectCard } from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -33,11 +36,18 @@ type AuthUser = {
   access?: string | null;
 };
 
+// The seeded sample project (db/seedDemoProject.ts) is identified only by its
+// unique name. A workspace whose sole project is the Demo Project is treated as
+// a fresh install and nudged to create a real project.
+const DEMO_PROJECT_NAME = "Demo Project";
+
 const Welcome = ({ user: _user }: { user: AuthUser }) => {
   const t = useTranslations();
 
   const { data: session } = useSession();
-  const { data: allUsers, isLoading: isUsersLoading } = useFindManyUser({
+  const { data: allUsers, isLoading: isUsersLoading } = useClientQueries(
+    schema
+  ).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
@@ -52,56 +62,61 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
 
   // ZenStack will automatically filter projects based on access rules
   // This includes explicit assignments AND projects with defaultAccessType: GLOBAL_ROLE
-  const { data: projectsRaw, isLoading: isLoadingProjects } =
-    useFindManyProjects(
-      {
-        where: {
-          isDeleted: false,
+  const { data: projectsRaw, isLoading: isLoadingProjects } = useClientQueries(
+    schema
+  ).projects.useFindMany(
+    {
+      where: {
+        isDeleted: false,
+      },
+      orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
+      include: {
+        _count: {
+          select: {
+            milestones: { where: { isCompleted: false, isDeleted: false } },
+            testRuns: { where: { isCompleted: false, isDeleted: false } },
+            sessions: { where: { isCompleted: false, isDeleted: false } },
+            repositoryCases: { where: { isDeleted: false } },
+          },
         },
-        orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
-        include: {
-          _count: {
-            select: {
-              milestones: { where: { isCompleted: false, isDeleted: false } },
-              testRuns: { where: { isCompleted: false, isDeleted: false } },
-              sessions: { where: { isCompleted: false, isDeleted: false } },
-              repositoryCases: { where: { isDeleted: false } },
-            },
-          },
-          assignedUsers: {
-            where: { user: { isActive: true, isDeleted: false } },
-            select: { userId: true },
-          },
-          groupPermissions: {
-            select: {
-              accessType: true,
-              group: {
-                select: {
-                  assignedUsers: {
-                    where: { user: { isActive: true, isDeleted: false } },
-                    select: { userId: true },
-                  },
+        assignedUsers: {
+          where: { user: { isActive: true, isDeleted: false } },
+          select: { userId: true },
+        },
+        groupPermissions: {
+          select: {
+            accessType: true,
+            group: {
+              select: {
+                assignedUsers: {
+                  where: { user: { isActive: true, isDeleted: false } },
+                  select: { userId: true },
                 },
               },
             },
           },
-          defaultRole: {
-            select: {
-              id: true,
-              name: true,
-            },
+        },
+        defaultRole: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
-      {
-        enabled: !!session?.user,
-        refetchOnWindowFocus: true,
-      }
-    );
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
 
   const processedProjectsData: ProcessedProject[] = useMemo(
     () => processProjectsWithEffectiveMembers(projectsRaw as any, allUsers),
     [projectsRaw, allUsers]
+  );
+
+  const { counts: automationRunCounts } = useAutomationRunCounts(
+    !!session?.user
   );
 
   // Fetch accurate issue counts for all projects
@@ -158,6 +173,15 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
     ? projectsForCards.length
     : 0;
 
+  const isAdmin = session.user.access === "ADMIN";
+
+  // A fresh install still has the seeded Demo Project. Prompt admins to create
+  // their own project while keeping the Demo Project visible to explore.
+  const showGetStartedPrompt =
+    isAdmin &&
+    projectCount === 1 &&
+    projectsForCards[0]?.name === DEMO_PROJECT_NAME;
+
   const toggleCollapse = () => {
     setIsTransitioning(true);
     if (panelRef.current) {
@@ -202,7 +226,12 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
             type="button"
             onClick={toggleCollapse}
             variant="secondary"
-            className="p-0 -ml-1 rounded-l-none"
+            className="p-0 -ms-1 rounded-s-none"
+            aria-label={
+              isCollapsed
+                ? t("common.actions.expand")
+                : t("common.actions.collapse")
+            }
           >
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>
@@ -212,12 +241,12 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
             <Card data-testid="dashboard-card" className="w-full h-full">
               <CardHeader id="your-projects-header">
                 <CardTitle>
-                  <div className="items-center justify-between text-primary text-xl md:text-2xl">
+                  <SectionHeader className="items-center justify-between">
                     {t("home.dashboard.yourProjects")}
-                  </div>
+                  </SectionHeader>
                 </CardTitle>
                 <div className="mb-2 flex items-center">
-                  <Boxes className="w-5 h-5 mr-1" />
+                  <Boxes className="w-5 h-5 me-1" />
                   {t("home.dashboard.projects", { count: projectCount })}
                 </div>
               </CardHeader>
@@ -227,16 +256,22 @@ const Welcome = ({ user: _user }: { user: AuthUser }) => {
                   className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-4"
                 >
                   {projectCount === 0 ? (
-                    <NoProjectsCard isAdmin={session.user.access === "ADMIN"} />
+                    <NoProjectsCard isAdmin={isAdmin} />
                   ) : (
-                    projectsForCards?.map((project) => (
-                      <ProjectCard
-                        key={project.id}
-                        project={project}
-                        users={project.users}
-                        isLoadingIssueCounts={isLoadingIssueCounts}
-                      />
-                    ))
+                    <>
+                      {showGetStartedPrompt && <CreateFirstProjectCard />}
+                      {projectsForCards?.map((project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          users={project.users}
+                          isLoadingIssueCounts={isLoadingIssueCounts}
+                          automationRunCount={
+                            automationRunCounts[project.id] ?? 0
+                          }
+                        />
+                      ))}
+                    </>
                   )}
                 </div>
               </CardContent>

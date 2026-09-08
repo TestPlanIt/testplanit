@@ -1,4 +1,35 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/db", () => ({
+  baseDb: {
+    repositoryCases: { findMany: vi.fn() },
+    repositoryCaseVersions: { findMany: vi.fn() },
+  },
+}));
+vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
+vi.mock("~/lib/api-token-auth", () => ({ authenticateRequest: vi.fn() }));
+vi.mock("~/server/auth", () => ({ authOptions: {} }));
+// These tests exercise the trends aggregation, not the auth gate — the gate
+// has its own unit tests in reportApiUtils.test.ts.
+vi.mock("~/utils/reportApiUtils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("~/utils/reportApiUtils")>()),
+  authorizeReportRequest: vi
+    .fn()
+    .mockResolvedValue({ ok: true, bypass: false }),
+}));
+
+import type { NextRequest } from "next/server";
+
+import { baseDb } from "@/lib/db";
+import { authenticateRequest } from "~/lib/api-token-auth";
+
+import {
+  arrayMax,
+  arrayMin,
+  automatedStateAt,
+  generatePeriods,
+  handleAutomationTrendsPOST,
+} from "./automationTrendsUtils";
 
 // We need to test the getPeriodDates function which is not exported
 // So we'll test it through the module internals or re-implement the logic for testing
@@ -400,5 +431,350 @@ describe("automationTrendsUtils", () => {
       const gap = period2.start.getTime() - period1.end.getTime();
       expect(gap).toBe(1);
     });
+  });
+});
+
+describe("automatedStateAt", () => {
+  const history = [
+    { at: 100, automated: false },
+    { at: 300, automated: true },
+  ];
+
+  it("reports not-existed before the first version", () => {
+    expect(automatedStateAt(history, 50)).toEqual({
+      existed: false,
+      automated: false,
+    });
+  });
+
+  it("returns the manual state in effect before a flip", () => {
+    expect(automatedStateAt(history, 100)).toEqual({
+      existed: true,
+      automated: false,
+    });
+    expect(automatedStateAt(history, 200)).toEqual({
+      existed: true,
+      automated: false,
+    });
+  });
+
+  it("returns automated from the flip onward", () => {
+    expect(automatedStateAt(history, 300)).toEqual({
+      existed: true,
+      automated: true,
+    });
+    expect(automatedStateAt(history, 999)).toEqual({
+      existed: true,
+      automated: true,
+    });
+  });
+
+  it("handles a case that flips back to manual", () => {
+    const reflip = [
+      { at: 100, automated: false },
+      { at: 300, automated: true },
+      { at: 500, automated: false },
+    ];
+    expect(automatedStateAt(reflip, 400)).toEqual({
+      existed: true,
+      automated: true,
+    });
+    expect(automatedStateAt(reflip, 600)).toEqual({
+      existed: true,
+      automated: false,
+    });
+  });
+
+  it("treats empty or undefined history as not existed", () => {
+    expect(automatedStateAt(undefined, 100)).toEqual({
+      existed: false,
+      automated: false,
+    });
+    expect(automatedStateAt([], 100)).toEqual({
+      existed: false,
+      automated: false,
+    });
+  });
+});
+
+describe("generatePeriods", () => {
+  it("generates contiguous monthly periods spanning lo..hi", () => {
+    const periods = generatePeriods(
+      new Date("2024-01-15T00:00:00Z"),
+      new Date("2024-03-10T00:00:00Z"),
+      "monthly"
+    );
+    expect(periods.map((p) => p.start.toISOString())).toEqual([
+      "2024-01-01T00:00:00.000Z",
+      "2024-02-01T00:00:00.000Z",
+      "2024-03-01T00:00:00.000Z",
+    ]);
+  });
+
+  it("fills gaps rather than skipping periods with no activity", () => {
+    const periods = generatePeriods(
+      new Date("2024-01-10T00:00:00Z"),
+      new Date("2024-04-10T00:00:00Z"),
+      "monthly"
+    );
+    expect(periods).toHaveLength(4); // Jan, Feb, Mar, Apr
+  });
+
+  it("returns a single period when lo and hi fall in the same one", () => {
+    const periods = generatePeriods(
+      new Date("2024-03-15T08:00:00Z"),
+      new Date("2024-03-15T20:00:00Z"),
+      "daily"
+    );
+    expect(periods).toHaveLength(1);
+  });
+
+  it("returns empty when lo is after hi", () => {
+    const periods = generatePeriods(
+      new Date("2024-05-01T00:00:00Z"),
+      new Date("2024-01-01T00:00:00Z"),
+      "monthly"
+    );
+    expect(periods).toEqual([]);
+  });
+});
+
+describe("handleAutomationTrendsPOST (project-specific)", () => {
+  const makeReq = (body: unknown): NextRequest =>
+    ({ json: async () => body }) as unknown as NextRequest;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("counts a manual-then-automated case as manual until its flip period", async () => {
+    // Current flag says automated, but it only became automated in March.
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue([
+      {
+        id: 100,
+        createdAt: new Date("2024-01-15T00:00:00Z"),
+        isDeleted: false,
+        automated: true,
+        projectId: 1,
+        project: { id: 1, name: "Alpha" },
+      },
+    ]);
+    (baseDb.repositoryCaseVersions.findMany as any).mockResolvedValue([
+      {
+        repositoryCaseId: 100,
+        createdAt: new Date("2024-01-15T00:00:00Z"),
+        automated: false,
+        version: 1,
+      },
+      {
+        repositoryCaseId: 100,
+        createdAt: new Date("2024-03-10T00:00:00Z"),
+        automated: true,
+        version: 2,
+      },
+    ]);
+
+    const res = await handleAutomationTrendsPOST(
+      makeReq({ projectId: 1, dateGrouping: "monthly" }),
+      false
+    );
+    const json = await res.json();
+
+    expect(json.data).toHaveLength(3); // Jan, Feb, Mar
+    const [jan, feb, mar] = json.data;
+
+    // Before the flip: counted as manual (NOT back-dated to creation as automated)
+    expect(jan.Alpha_manual).toBe(1);
+    expect(jan.Alpha_automated).toBe(0);
+    expect(feb.Alpha_manual).toBe(1);
+    expect(feb.Alpha_automated).toBe(0);
+
+    // From the flip onward: counted as automated
+    expect(mar.Alpha_manual).toBe(0);
+    expect(mar.Alpha_automated).toBe(1);
+    expect(mar.Alpha_percentAutomated).toBe(100);
+
+    // The flip shows up in the period-over-period delta
+    expect(mar.Alpha_automatedChange).toBe(1);
+    expect(mar.Alpha_manualChange).toBe(-1);
+  });
+
+  it("does not exclude cases created before the date-range window", async () => {
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue([
+      {
+        id: 200,
+        createdAt: new Date("2023-11-01T00:00:00Z"),
+        isDeleted: false,
+        automated: false,
+        projectId: 1,
+        project: { id: 1, name: "Alpha" },
+      },
+    ]);
+    (baseDb.repositoryCaseVersions.findMany as any).mockResolvedValue([
+      {
+        repositoryCaseId: 200,
+        createdAt: new Date("2023-11-01T00:00:00Z"),
+        automated: false,
+        version: 1,
+      },
+    ]);
+
+    const res = await handleAutomationTrendsPOST(
+      makeReq({
+        projectId: 1,
+        dateGrouping: "monthly",
+        startDate: "2024-01-01T00:00:00Z",
+        endDate: "2024-02-28T00:00:00Z",
+      }),
+      false
+    );
+    const json = await res.json();
+
+    // The date range governs the period axis (Jan + Feb 2024)...
+    expect(json.data).toHaveLength(2);
+    // ...and the case created in 2023 still contributes to those periods.
+    expect(json.data[0].Alpha_manual).toBe(1);
+    expect(json.data[1].Alpha_manual).toBe(1);
+  });
+
+  it("returns empty data without querying version history when no cases match", async () => {
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue([]);
+
+    const res = await handleAutomationTrendsPOST(
+      makeReq({ projectId: 1, dateGrouping: "monthly" }),
+      false
+    );
+    const json = await res.json();
+
+    expect(json.data).toEqual([]);
+    expect(json.total).toBe(0);
+    expect(baseDb.repositoryCaseVersions.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("arrayMin / arrayMax", () => {
+  it("computes min and max over a small array", () => {
+    expect(arrayMin([5, 2, 9, 2, 7])).toBe(2);
+    expect(arrayMax([5, 2, 9, 2, 7])).toBe(9);
+  });
+
+  it("returns Infinity / -Infinity for an empty array", () => {
+    expect(arrayMin([])).toBe(Infinity);
+    expect(arrayMax([])).toBe(-Infinity);
+  });
+
+  it("does not overflow the call stack on a very large array", () => {
+    // `Math.min(...arr)` / `Math.max(...arr)` throw RangeError at this size; the
+    // loop-based helpers must not. This is the crash the cross-project report hit.
+    const big = Array.from({ length: 300_000 }, (_, i) => i);
+    expect(() => arrayMin(big)).not.toThrow();
+    expect(() => arrayMax(big)).not.toThrow();
+    expect(arrayMin(big)).toBe(0);
+    expect(arrayMax(big)).toBe(299_999);
+  });
+});
+
+describe("handleAutomationTrendsPOST (cross-project scale)", () => {
+  const makeReq = (body: unknown): NextRequest =>
+    ({ json: async () => body }) as unknown as NextRequest;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (authenticateRequest as any).mockResolvedValue({
+      authenticated: true,
+      user: { access: "ADMIN" },
+    });
+  });
+
+  it("handles a very large cross-project case set without blowing the call stack", async () => {
+    // Regression: the period axis derived its span via `Math.min(...creationTimes)`
+    // / `Math.max(...creationTimes, ...versionTimes)`. Spreading arrays that large
+    // (every case + version across ALL projects) throws
+    // `RangeError: Maximum call stack size exceeded`, so the admin cross-project
+    // report broke while the always-small single-project report kept working.
+    const N = 200_000;
+    const created = new Date("2024-01-15T00:00:00Z");
+    const project = { id: 1, name: "Alpha" };
+    const bigCases = Array.from({ length: N }, (_, i) => ({
+      id: i + 1,
+      createdAt: created,
+      isDeleted: false,
+      automated: i % 2 === 0,
+      projectId: 1,
+      project,
+    }));
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue(bigCases);
+    (baseDb.repositoryCaseVersions.findMany as any).mockResolvedValue([]);
+
+    // No projectId and no date range -> the spread path that overflowed.
+    const res = await handleAutomationTrendsPOST(
+      makeReq({ dateGrouping: "monthly" }),
+      true // cross-project
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json.data)).toBe(true);
+    // All cases share a creation day, so a single (January) period holds them all.
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].Alpha_total).toBe(N);
+    expect(json.data[0].Alpha_automated).toBe(N / 2);
+    expect(json.data[0].Alpha_manual).toBe(N / 2);
+
+    // The version fetch must be id-chunked, not one giant `IN (...100k ids)`
+    // that overflows Postgres's 65,535 bind-parameter limit.
+    const versionCalls = (baseDb.repositoryCaseVersions.findMany as any).mock
+      .calls;
+    expect(versionCalls.length).toBeGreaterThan(1);
+    for (const [args] of versionCalls) {
+      expect(args.where.repositoryCaseId.in.length).toBeLessThanOrEqual(10_000);
+    }
+  });
+
+  it("drops orphaned cases whose project was hard-deleted (null project) instead of 500ing", async () => {
+    // Regression: a case whose project row was hard-deleted comes back with
+    // projectId still set but `project: null`. Reading `project.name` while
+    // building the project map threw "Cannot read properties of null (reading
+    // 'name')", so the whole cross-project report 500'd.
+    const created = new Date("2024-01-15T00:00:00Z");
+    (baseDb.repositoryCases.findMany as any).mockResolvedValue([
+      {
+        id: 1,
+        createdAt: created,
+        isDeleted: false,
+        automated: true,
+        projectId: 1,
+        project: { id: 1, name: "Alpha" },
+      },
+      {
+        // Orphaned — its project no longer exists.
+        id: 2,
+        createdAt: created,
+        isDeleted: false,
+        automated: false,
+        projectId: 999,
+        project: null,
+      },
+    ]);
+    (baseDb.repositoryCaseVersions.findMany as any).mockResolvedValue([
+      { repositoryCaseId: 1, createdAt: created, automated: true, version: 1 },
+    ]);
+
+    const res = await handleAutomationTrendsPOST(
+      makeReq({ dateGrouping: "monthly" }),
+      true // cross-project
+    );
+
+    // No crash: the orphaned case is dropped, the valid project still reports.
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.data).toHaveLength(1);
+    expect(json.data[0].Alpha_total).toBe(1);
+    expect(json.data[0].Alpha_automated).toBe(1);
+    // The orphaned case contributes no column and doesn't leak a bad key.
+    const columns = Object.keys(json.data[0]);
+    expect(
+      columns.some((c) => c.includes("null") || c.includes("undefined"))
+    ).toBe(false);
   });
 });

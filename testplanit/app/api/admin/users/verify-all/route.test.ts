@@ -9,8 +9,8 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       updateMany: vi.fn(),
     },
@@ -19,7 +19,7 @@ vi.mock("~/lib/prisma", () => ({
 
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 import { POST } from "./route";
 
@@ -82,7 +82,7 @@ describe("Admin Users Verify-All Route", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.user.updateMany as any).mockResolvedValue({ count: 5 });
+      (baseDb.user.updateMany as any).mockResolvedValue({ count: 5 });
 
       const response = await POST(createMockRequest());
       const data = await response.json();
@@ -97,11 +97,11 @@ describe("Admin Users Verify-All Route", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.user.updateMany as any).mockResolvedValue({ count: 3 });
+      (baseDb.user.updateMany as any).mockResolvedValue({ count: 3 });
 
       await POST(createMockRequest());
 
-      expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      expect(baseDb.user.updateMany).toHaveBeenCalledWith({
         where: {
           emailVerified: null,
           authMethod: { in: ["INTERNAL", "BOTH"] },
@@ -117,7 +117,7 @@ describe("Admin Users Verify-All Route", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.user.updateMany as any).mockResolvedValue({ count: 0 });
+      (baseDb.user.updateMany as any).mockResolvedValue({ count: 0 });
 
       const response = await POST(createMockRequest());
       const data = await response.json();
@@ -131,7 +131,7 @@ describe("Admin Users Verify-All Route", () => {
       (getServerSession as any).mockResolvedValue({
         user: { id: "admin-1", access: "ADMIN" },
       });
-      (prisma.user.updateMany as any).mockRejectedValue(new Error("DB error"));
+      (baseDb.user.updateMany as any).mockRejectedValue(new Error("DB error"));
 
       const response = await POST(createMockRequest());
       const data = await response.json();

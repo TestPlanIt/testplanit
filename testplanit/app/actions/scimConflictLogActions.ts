@@ -29,10 +29,10 @@
  * exception messages (info disclosure defense).
  */
 
-import { Prisma } from "@prisma/client";
+import { sql } from "kysely";
 
 import { runWithAuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import {
   emitScimGroupMemberAdded,
@@ -97,13 +97,13 @@ export async function listScimConflictsAction(
 
   const cursorFragment =
     input.cursor && input.cursor.timestamp && input.cursor.id
-      ? Prisma.sql`AND ("timestamp", "id") < (${new Date(
+      ? sql`AND ("timestamp", "id") < (${new Date(
           input.cursor.timestamp
         )}, ${input.cursor.id})`
-      : Prisma.empty;
+      : sql``;
 
   try {
-    const rows = await prisma.$queryRaw<ConflictLogRow[]>(Prisma.sql`
+    const result = await sql<ConflictLogRow>`
       SELECT
         "id",
         "userId",
@@ -132,7 +132,8 @@ export async function listScimConflictsAction(
       ORDER BY "timestamp" DESC, "id" DESC
       LIMIT ${limit}
       OFFSET ${startIndex}
-    `);
+    `.execute(baseDb.$qb);
+    const rows = result.rows;
 
     const hasMore = rows.length > count;
     const items = hasMore ? rows.slice(0, count) : rows;
@@ -153,7 +154,7 @@ export async function reEmitScimMemberEventAction(
 
   return runWithAuditContext({ userId: session.user.id }, async () => {
     try {
-      const original = await prisma.auditLog.findUnique({
+      const original = await baseDb.auditLog.findUnique({
         where: { id: auditLogId },
       });
       if (!original) {
@@ -185,14 +186,14 @@ export async function reEmitScimMemberEventAction(
         return { success: false, error: "Group not found" };
       }
 
-      const group = await prisma.groups.findUnique({
+      const group = await baseDb.groups.findUnique({
         where: { id: groupId },
       });
       if (!group || group.isDeleted) {
         return { success: false, error: "Group not found" };
       }
 
-      const validUsers = await prisma.user.findMany({
+      const validUsers = await baseDb.user.findMany({
         where: { id: { in: skippedIds }, isDeleted: false },
         select: { id: true },
       });
@@ -208,7 +209,7 @@ export async function reEmitScimMemberEventAction(
         scimDisplayName: group.scimDisplayName,
       };
 
-      const newAuditLogId = await prisma.$transaction(async (tx) => {
+      const newAuditLogId = await baseDb.$transaction(async (tx) => {
         await emitScimGroupMemberAdded(groupSnapshot, emittedMembers, tx, {
           projectId: SYSTEM_PROJECT_ID,
           actorUserId: session.user.id,

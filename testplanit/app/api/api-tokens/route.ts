@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { generateApiToken } from "~/lib/api-tokens";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -65,7 +65,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const { plaintext, hash, prefix } = generateApiToken();
 
     // Create the token record
-    const apiToken = await prisma.apiToken.create({
+    const apiToken = await baseDb.apiToken.create({
       data: {
         name: validated.name,
         token: hash,

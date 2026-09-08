@@ -11,8 +11,10 @@
 // `app/api/test-runs/submit-result/route.ts` for the call site that
 // computes `webhookRedactedValues` separately from the audit redaction.
 
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
+import { formatRecordKey, RECORD_TYPES } from "~/lib/recordKey";
+import { readRecordKeyConfig } from "~/lib/services/recordKeyConfig";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
@@ -91,7 +93,7 @@ export interface EmitOptions {
 
 /**
  * Emit the `iteration.result.recorded` outbound webhook event. Must be
- * called inside the same `prisma.$transaction` that writes the iteration
+ * called inside the same `db.$transaction` that writes the iteration
  * result so the outbox row commits atomically with the result write
  * (mirrors `emitTestRunCreated` contract).
  *
@@ -111,15 +113,13 @@ export interface EmitOptions {
  */
 export async function emitIterationResultRecorded(
   payload: IterationResultRecordedPayload,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   opts: EmitOptions = {}
 ): Promise<void> {
   // The runtime guard in webhookEvents.emit also enforces this, but a
   // local check produces a more actionable error message for misuse.
   if (!tx) {
-    throw new Error(
-      "emitIterationResultRecorded requires a Prisma.TransactionClient"
-    );
+    throw new Error("emitIterationResultRecorded requires a TxClient");
   }
   const safePayload: IterationResultRecordedPayload = {
     ...payload,
@@ -136,15 +136,27 @@ export async function emitIterationResultRecorded(
       : Promise.resolve(null),
     tx.testRuns.findUnique({
       where: { id: payload.testRunId },
-      select: { name: true },
+      select: { name: true, project: { select: { key: true } } },
     }),
   ]);
+  // The run's cosmetic key (WEB-TR-1234) is the most useful decoration here —
+  // an iteration result is always scoped to a single run.
+  const { enabled, tokens } = await readRecordKeyConfig(tx);
+  const displayKey = enabled
+    ? formatRecordKey({
+        projectKey: run?.project?.key ?? null,
+        type: RECORD_TYPES.TEST_RUN,
+        id: payload.testRunId,
+        tokens,
+      })
+    : null;
   await webhookEvents.emit(
     "iteration.result.recorded",
     {
       ...safePayload,
       statusName: status?.name ?? null,
       runTitle: run?.name ?? null,
+      displayKey,
     },
     {
       projectId: opts.projectId ?? payload.projectId,

@@ -3,6 +3,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React from "react";
 import { useIssueColors } from "~/hooks/useIssueColors";
 import { toHumanReadable } from "~/utils/duration";
+import { metricUnit } from "~/utils/metricUnits";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
@@ -54,6 +55,9 @@ export interface SimpleChartDataPoint {
   value: number;
   formattedValue: string;
   color?: string;
+  /** Human label distinct from the plotted X value — e.g. a milestone's name
+   *  when its date is used on the X axis. Shown in tooltips when present. */
+  label?: string;
 }
 
 export interface GroupedChartDataPoint {
@@ -95,7 +99,7 @@ export interface MultiLineSeries {
 interface ReportChartProps {
   results: any[];
   dimensions: { value: string; label: string }[];
-  metrics: { value: string; label: string; originalLabel?: string }[];
+  metrics: { value: string; label: string; apiLabel?: string }[];
   reportType?: string; // Optional report type to handle special cases like automation-trends
   projects?: Array<{ id: number; name: string }>; // For automation trends report
   consecutiveRuns?: number; // For flaky tests report
@@ -106,11 +110,40 @@ interface ReportChartProps {
 // Helper to determine chart type
 const getChartType = (
   dimensions: { value: string; label: string }[],
-  metrics: { value: string; label: string; originalLabel?: string }[]
+  metrics: { value: string; label: string; apiLabel?: string }[],
+  results: any[] = []
 ): ChartType => {
   const dimCount = dimensions.length;
   const metricCount = metrics.length;
   const firstDimType = dimensions[0]?.value;
+
+  // Milestones are inherently time-based, so — like the "date" dimension — they
+  // plot on a chronological (line) axis rather than as categories. Gate it on
+  // the data actually carrying each milestone's date, so reports that don't
+  // supply one keep their categorical charts instead of a broken time axis.
+  const milestoneHasDates = results.some((r) => r?.milestone?.date != null);
+  const isTimeDimension = (v?: string) =>
+    v === "date" || (v === "milestone" && milestoneHasDates);
+
+  // Categorical dimensions that render as donut / grouped bars. Milestone is
+  // time-based (see isTimeDimension) when the data carries dates.
+  const categoricalDims = [
+    "status",
+    "user",
+    "folder",
+    "creator",
+    "template",
+    "source",
+    "state",
+    "role",
+    "session",
+    "assignedTo",
+    "issueType",
+    "issueStatus",
+    "issueTracker",
+    "priority",
+    "configuration",
+  ];
 
   if (dimCount === 0 || metricCount === 0) {
     return ChartType.None;
@@ -132,36 +165,16 @@ const getChartType = (
 
   if (dimCount === 1) {
     if (metricCount === 1) {
-      // Dimensions that work well as donut charts (categorical with limited values)
-      if (
-        [
-          "status",
-          "user",
-          "milestone",
-          "folder",
-          "creator",
-          "template",
-          "source",
-          "state",
-          "role",
-          "session",
-          "assignedTo",
-          "issueType",
-          "issueStatus",
-          "issueTracker",
-          "priority",
-          "configuration",
-        ].includes(firstDimType)
-      ) {
-        return ChartType.Donut;
-      }
-      if (firstDimType === "date") {
+      if (isTimeDimension(firstDimType)) {
         return ChartType.Line;
+      }
+      if (categoricalDims.includes(firstDimType)) {
+        return ChartType.Donut;
       }
       return ChartType.Bar;
     } else {
       // 1 dimension, N metrics
-      if (firstDimType === "date") {
+      if (isTimeDimension(firstDimType)) {
         return ChartType.MultiLine;
       }
       return ChartType.MultiMetricBar;
@@ -170,28 +183,10 @@ const getChartType = (
 
   if (dimCount === 2) {
     if (metricCount === 1) {
-      if (dimensions.some((d) => d.value === "date")) {
+      if (dimensions.some((d) => isTimeDimension(d.value))) {
         return ChartType.MultiLine;
       }
       // Use GroupedBar for two categorical dimensions, Sunburst for more complex hierarchies
-      const categoricalDims = [
-        "status",
-        "user",
-        "milestone",
-        "folder",
-        "creator",
-        "template",
-        "source",
-        "state",
-        "role",
-        "session",
-        "assignedTo",
-        "issueType",
-        "issueStatus",
-        "issueTracker",
-        "priority",
-        "configuration",
-      ];
       if (dimensions.every((d) => categoricalDims.includes(d.value))) {
         return ChartType.GroupedBar;
       }
@@ -204,7 +199,7 @@ const getChartType = (
 
   if (dimCount >= 3) {
     if (metricCount === 1) {
-      if (dimensions.some((d) => d.value === "date")) {
+      if (dimensions.some((d) => isTimeDimension(d.value))) {
         return ChartType.MultiLine;
       }
       return ChartType.Sunburst;
@@ -220,8 +215,9 @@ const getChartType = (
 // Helper to get the value for a dimension from a row
 const getDimensionValue = (
   row: any,
-  dimension: { value: string; label: string }
+  dimension: { value: string; label: string } | undefined
 ): string => {
+  if (!dimension) return "Unknown";
   const dimValueKey = dimension.value;
 
   // First, try to get the dimension value object
@@ -234,6 +230,13 @@ const getDimensionValue = (
     }
     // Fallback: try to get date from label or other fields
     return row[dimension.label] ?? row[dimValueKey] ?? "Unknown";
+  }
+
+  // Milestones are time-based: their X value is the milestone's own date, so
+  // charts lay them out chronologically. The name is preserved separately for
+  // tooltips/labels (see getDimensionLabel).
+  if (dimValueKey === "milestone" && dimValue?.date) {
+    return String(dimValue.date);
   }
 
   // For non-date dimensions, extract the name from the dimension object
@@ -257,14 +260,34 @@ const getDimensionValue = (
   );
 };
 
+/**
+ * Human label for a dimension value, distinct from its plotted X value. For a
+ * milestone the X value is its date, so the label carries the milestone NAME
+ * for tooltips; returns undefined when there's nothing extra to show.
+ */
+const getDimensionLabel = (
+  row: any,
+  dimension: { value: string; label: string }
+): string | undefined => {
+  const dimValue = row[dimension.value];
+  if (dimValue && typeof dimValue === "object" && dimValue.name) {
+    return String(dimValue.name);
+  }
+  return undefined;
+};
+
 const getMetricValue = (
   row: any,
-  metric: { value: string; label: string; originalLabel?: string }
+  metric: { value: string; label: string; apiLabel?: string }
 ): number => {
-  // Try original English label first (for data access), then metric value, then translated label
-  return Number(
-    row[metric.originalLabel || metric.label] || row[metric.value] || 0
-  );
+  // Report API rows are keyed by the registry's English label; `label` may be
+  // localized for display (ReportBuilder), so data access goes through
+  // `apiLabel` when the caller provides one.
+  const raw =
+    (metric.apiLabel !== undefined ? row[metric.apiLabel] : undefined) ??
+    row[metric.label] ??
+    row[metric.value];
+  return Number(raw ?? 0);
 };
 
 // Helper type for issue color functions
@@ -456,7 +479,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return (
       <RecentResultsDonut
         data={donutData}
-        formattedTotal={total.toLocaleString()}
+        formattedTotal={total.toLocaleString(locale)}
       />
     );
   }
@@ -486,7 +509,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return <IssueTestCoverageChart data={results} projectId={projectId} />;
   }
 
-  const chartType = getChartType(dimensions, chartMetrics);
+  const chartType = getChartType(dimensions, chartMetrics, results);
 
   if (
     results.length === 0 ||
@@ -496,26 +519,21 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return null;
   }
 
+  // Unit metadata wins; the id/label heuristics only classify metrics that
+  // aren't in the units map (custom presets).
   const isElapsedTimeMetric = (metric: {
     value: string;
     label: string;
-    originalLabel?: string;
+    apiLabel?: string;
   }): boolean => {
+    const unit = metricUnit(metric.value);
+    if (unit !== undefined) return unit === "seconds";
     const label = metric.label.toLowerCase();
     return (
       label.includes("elapsed") ||
       label.includes("time") ||
       label.includes("duration") ||
-      metric.value === "avgElapsed" ||
-      metric.value === "sumElapsed" ||
-      metric.value === "averageElapsed" ||
-      metric.value === "totalElapsed" ||
-      metric.value === "averageDuration" ||
-      metric.value === "totalDuration" ||
       metric.value === "averageResolutionTime" ||
-      metric.label === "Average Time per Execution (seconds)" ||
-      metric.label === "Average Duration" ||
-      metric.label === "Total Duration" ||
       metric.label === "Average Resolution Time"
     );
   };
@@ -523,39 +541,52 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   const isPercentageMetric = (metric: {
     value: string;
     label: string;
-    originalLabel?: string;
+    apiLabel?: string;
   }): boolean => {
+    const unit = metricUnit(metric.value);
+    if (unit !== undefined) return unit === "percent";
     const label = metric.label.toLowerCase();
     return (
       label.includes("rate") ||
       label.includes("percentage") ||
       label.includes("(%)") ||
       label.includes("%") ||
-      metric.value === "passRate" ||
-      metric.value === "automationRate" ||
       metric.value === "completionRate" ||
-      metric.label === "Pass Rate (%)" ||
-      metric.label === "Automation Rate (%)" ||
       metric.label === "Completion Rate (%)"
     );
   };
 
+  // Currency has no label heuristic — only the units map classifies it.
+  const isCurrencyMetric = (metric: { value: string }): boolean =>
+    metricUnit(metric.value) === "currency";
+
   const formatMetricValue = (
     value: number,
-    metric: { value: string; label: string; originalLabel?: string }
+    metric: { value: string; label: string; apiLabel?: string }
   ): string => {
     if (isElapsedTimeMetric(metric)) {
       // Display "-" for zero duration values
       if (value === 0) {
         return "-";
       }
-      // avgElapsedTime metric returns values in milliseconds
-      return toHumanReadable(value, { isSeconds: false, locale });
+      // Elapsed metrics return values in seconds
+      return toHumanReadable(value, { isSeconds: true, locale });
     }
     if (isPercentageMetric(metric)) {
+      if (value === null || value === undefined) return "—";
       return `${value.toFixed(2)}%`;
     }
-    return value.toLocaleString();
+    if (isCurrencyMetric(metric)) {
+      return value.toLocaleString(locale, {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        // Per-group LLM costs are often fractions of a cent; two extra
+        // digits keep them from collapsing to $0.00.
+        maximumFractionDigits: 4,
+      });
+    }
+    return value.toLocaleString(locale);
   };
 
   switch (chartType) {
@@ -564,17 +595,26 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     case ChartType.Line: {
       const dimension = dimensions[0];
       const metric = chartMetrics[0];
-      const isElapsed = isElapsedTimeMetric(metric);
       const transformedData: SimpleChartDataPoint[] = results.map((row) => {
         const name = getDimensionValue(row, dimension);
-        const rawValue = getMetricValue(row, metric);
-        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-        const value = isElapsed ? rawValue / 1000 : rawValue;
+        // Elapsed metrics are already in seconds — plot as-is.
+        const value = getMetricValue(row, metric);
+        const rawValue = value;
         const color = getColor(row, dimension, issueColorFns);
         const formattedValue = formatMetricValue(rawValue, metric);
+        // Keep the milestone name for the tooltip when its date is on the X axis.
+        const label = getDimensionLabel(row, dimension);
 
-        return { id: name, name, value, color, formattedValue };
+        return { id: name, name, value, color, formattedValue, label };
       });
+      // A time-series line connects points in array order, so sort chronologically.
+      // Line only happens for time dimensions (date, or milestone with dates), so
+      // the chart-type check alone tells us the X axis is a date.
+      if (chartType === ChartType.Line) {
+        transformedData.sort(
+          (a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()
+        );
+      }
 
       if (chartType === ChartType.Donut) {
         let formattedTotal: string;
@@ -613,16 +653,25 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         );
       }
       if (chartType === ChartType.Bar) {
-        return <ReportBarChart data={transformedData} />;
+        return (
+          <ReportBarChart
+            data={transformedData}
+            durationTicks={isElapsedTimeMetric(metric)}
+          />
+        );
       }
       if (chartType === ChartType.Line) {
-        return <ReportLineChart data={transformedData} />;
+        return (
+          <ReportLineChart
+            data={transformedData}
+            durationTicks={isElapsedTimeMetric(metric)}
+          />
+        );
       }
       break;
     }
     case ChartType.Sunburst: {
       const metric = chartMetrics[0];
-      const isElapsed = isElapsedTimeMetric(metric);
 
       const root: SunburstHierarchyNode = {
         name: "root",
@@ -657,14 +706,10 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           if (index < dimensions.length - 1) {
             currentLevelChildren = node.children!;
           } else {
-            // Leaf node
-            const rawValue = getMetricValue(row, metric);
-            // Convert elapsed time from milliseconds to seconds for proper scaling
-            const value = isElapsed ? rawValue / 1000 : rawValue;
+            // Leaf node — elapsed metrics are already in seconds
+            const value = getMetricValue(row, metric);
             node.value = (node.value || 0) + value;
-            // Use raw value for formatting to maintain milliseconds for humanize-duration
-            const totalRaw = isElapsed ? node.value * 1000 : node.value;
-            node.formattedValue = formatMetricValue(totalRaw, metric);
+            node.formattedValue = formatMetricValue(node.value, metric);
           }
         });
       });
@@ -688,7 +733,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       return (
         <ReportSunburstChart
           data={root}
-          isTimeBased={isElapsed}
+          isTimeBased={isElapsedTimeMetric(metric)}
           totalValue={centerTotal}
           totalLabel={centerLabel}
         />
@@ -698,21 +743,19 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const mainDimension = dimensions[0];
       const subDimension = dimensions[1];
       const metric = chartMetrics[0];
-      const isElapsed = isElapsedTimeMetric(metric);
 
       const groupedData: GroupedChartDataPoint[] = results.map((row) => {
         const mainGroup = getDimensionValue(row, mainDimension);
         const subGroup = getDimensionValue(row, subDimension);
-        const rawValue = getMetricValue(row, metric);
-        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-        const value = isElapsed ? rawValue / 1000 : rawValue;
+        // Elapsed metrics are already in seconds — plot as-is.
+        const value = getMetricValue(row, metric);
         const color = getColor(row, subDimension, issueColorFns);
         return {
           mainGroup,
           subGroup,
           value,
           color,
-          formattedValue: formatMetricValue(rawValue, metric),
+          formattedValue: formatMetricValue(value, metric),
         };
       });
       return (
@@ -720,6 +763,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           data={groupedData}
           dimensions={dimensions}
           metrics={chartMetrics}
+          durationTicks={isElapsedTimeMetric(metric)}
         />
       );
     }
@@ -777,11 +821,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const group = getDimensionValue(row, dimension);
         const color = getColor(row, dimension, issueColorFns);
         chartMetrics.forEach((metric) => {
-          const rawValue = getMetricValue(row, metric);
-          const isElapsed = isElapsedTimeMetric(metric);
-          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-          const value = isElapsed ? rawValue / 1000 : rawValue;
-          const formattedValue = formatMetricValue(rawValue, metric);
+          // Elapsed metrics are already in seconds — plot as-is.
+          const value = getMetricValue(row, metric);
+          const formattedValue = formatMetricValue(value, metric);
 
           transformedData.push({
             group,
@@ -795,14 +837,21 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       return <ReportMultiMetricBarChart data={transformedData} />;
     }
     case ChartType.MultiLine: {
-      const dateDimension = dimensions.find((d) => d.value === "date");
-      const otherDimensions = dimensions.filter((d) => d.value !== "date");
+      // The chronological axis is the date dimension, or a milestone plotted by
+      // its own date; the remaining dimensions split into separate series.
+      const dateDimension =
+        dimensions.find((d) => d.value === "date") ??
+        dimensions.find((d) => d.value === "milestone");
+      if (!dateDimension) return null;
+      const otherDimensions = dimensions.filter(
+        (d) => d.value !== dateDimension.value
+      );
       const isSingleMetric = chartMetrics.length === 1;
 
       const seriesMap = new Map<string, MultiLineSeries>();
 
       results.forEach((row) => {
-        const date = new Date(getDimensionValue(row, dateDimension!));
+        const date = new Date(getDimensionValue(row, dateDimension));
 
         if (isSingleMetric) {
           const metric = chartMetrics[0];
@@ -810,10 +859,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           const seriesName = otherDimensions
             .map((dim) => getDimensionValue(row, dim))
             .join(" - ");
-          const rawValue = getMetricValue(row, metric);
-          const isElapsed = isElapsedTimeMetric(metric);
-          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-          const value = isElapsed ? rawValue / 1000 : rawValue;
+          // Elapsed metrics are already in seconds — plot as-is.
+          const value = getMetricValue(row, metric);
 
           if (!seriesMap.has(seriesName)) {
             seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -821,16 +868,14 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.get(seriesName)!.values.push({
             date,
             value,
-            formattedValue: formatMetricValue(rawValue, metric),
+            formattedValue: formatMetricValue(value, metric),
           });
         } else {
           // Group by metric name
           chartMetrics.forEach((metric) => {
             const seriesName = metric.label;
-            const rawValue = getMetricValue(row, metric);
-            const isElapsed = isElapsedTimeMetric(metric);
-            // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
-            const value = isElapsed ? rawValue / 1000 : rawValue;
+            // Elapsed metrics are already in seconds — plot as-is.
+            const value = getMetricValue(row, metric);
 
             if (!seriesMap.has(seriesName)) {
               seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -838,14 +883,26 @@ export const ReportChart: React.FC<ReportChartProps> = ({
             seriesMap.get(seriesName)!.values.push({
               date,
               value,
-              formattedValue: formatMetricValue(rawValue, metric),
+              formattedValue: formatMetricValue(value, metric),
             });
           });
         }
       });
 
       const transformedData = Array.from(seriesMap.values());
-      return <ReportMultiLineChart data={transformedData} />;
+      // Rows arrive in dimension order, not date order, so sort each series
+      // chronologically to keep the connecting line from zig-zagging.
+      transformedData.forEach((series) =>
+        series.values.sort((a, b) => a.date.getTime() - b.date.getTime())
+      );
+      // The Y axis is shared across every plotted series, so duration ticks
+      // only apply when all plotted metrics are elapsed-time.
+      return (
+        <ReportMultiLineChart
+          data={transformedData}
+          durationTicks={chartMetrics.every(isElapsedTimeMetric)}
+        />
+      );
     }
     default:
       return null;

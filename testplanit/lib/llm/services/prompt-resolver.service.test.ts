@@ -4,9 +4,9 @@ import { FALLBACK_PROMPTS } from "./fallback-prompts";
 import { PromptResolver } from "./prompt-resolver.service";
 
 /**
- * Creates a mock PrismaClient with the methods used by PromptResolver.
+ * Creates a mock DbClient with the methods used by PromptResolver.
  */
-function createMockPrisma() {
+function createMockDb() {
   return {
     projects: {
       findUnique: vi.fn(),
@@ -21,7 +21,7 @@ function createMockPrisma() {
 }
 
 describe("PromptResolver", () => {
-  let mockPrisma: ReturnType<typeof createMockPrisma>;
+  let mockDb: ReturnType<typeof createMockDb>;
   let resolver: PromptResolver;
 
   const projectPrompt = {
@@ -71,16 +71,16 @@ describe("PromptResolver", () => {
   };
 
   beforeEach(() => {
-    mockPrisma = createMockPrisma();
-    resolver = new PromptResolver(mockPrisma);
+    mockDb = createMockDb();
+    resolver = new PromptResolver(mockDb);
   });
 
   describe("Resolution chain", () => {
     it("returns project-specific prompt when project has a config assigned", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "project-config-id",
       });
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
 
       const result = await resolver.resolve(
         LLM_FEATURES.TEST_CASE_GENERATION,
@@ -97,11 +97,11 @@ describe("PromptResolver", () => {
     });
 
     it("falls back to system default when project has no config", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: null,
       });
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(defaultConfig);
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(
+      mockDb.promptConfig.findFirst.mockResolvedValue(defaultConfig);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(
         defaultPromptNoLlm
       );
 
@@ -117,19 +117,19 @@ describe("PromptResolver", () => {
     });
 
     it("falls back to system default when no projectId is provided", async () => {
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(defaultConfig);
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(
+      mockDb.promptConfig.findFirst.mockResolvedValue(defaultConfig);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(
         defaultPromptNoLlm
       );
 
       const result = await resolver.resolve(LLM_FEATURES.TEST_CASE_GENERATION);
 
       expect(result.source).toBe("default");
-      expect(mockPrisma.projects.findUnique).not.toHaveBeenCalled();
+      expect(mockDb.projects.findUnique).not.toHaveBeenCalled();
     });
 
     it("falls back to hard-coded fallback when no database configs exist", async () => {
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(null);
 
       const result = await resolver.resolve(LLM_FEATURES.TEST_CASE_GENERATION);
 
@@ -146,10 +146,10 @@ describe("PromptResolver", () => {
 
   describe("Per-prompt LLM integration fields", () => {
     it("returns llmIntegrationId when project prompt has one set", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "project-config-id",
       });
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
 
       const result = await resolver.resolve(
         LLM_FEATURES.TEST_CASE_GENERATION,
@@ -160,10 +160,10 @@ describe("PromptResolver", () => {
     });
 
     it("returns modelOverride when project prompt has one set", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "project-config-id",
       });
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
 
       const result = await resolver.resolve(
         LLM_FEATURES.TEST_CASE_GENERATION,
@@ -174,10 +174,10 @@ describe("PromptResolver", () => {
     });
 
     it("returns llmIntegrationId undefined when project prompt has none (backward compat)", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "project-config-id",
       });
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(
         projectPromptNoLlm
       );
 
@@ -190,10 +190,10 @@ describe("PromptResolver", () => {
     });
 
     it("returns modelOverride undefined when project prompt has none (backward compat)", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "project-config-id",
       });
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(
         projectPromptNoLlm
       );
 
@@ -206,8 +206,8 @@ describe("PromptResolver", () => {
     });
 
     it("returns llmIntegrationId from default prompt when set", async () => {
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(defaultConfig);
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(defaultPrompt);
+      mockDb.promptConfig.findFirst.mockResolvedValue(defaultConfig);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(defaultPrompt);
 
       const result = await resolver.resolve(LLM_FEATURES.TEST_CASE_GENERATION);
 
@@ -216,7 +216,7 @@ describe("PromptResolver", () => {
     });
 
     it("returns llmIntegrationId and modelOverride undefined from fallback source", async () => {
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(null);
 
       const result = await resolver.resolve(LLM_FEATURES.TEST_CASE_GENERATION);
 
@@ -228,14 +228,14 @@ describe("PromptResolver", () => {
 
   describe("Edge cases", () => {
     it("falls through project config to default when project config has no prompt for feature", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "project-config-id",
       });
       // Project config exists but has no prompt for this feature
-      mockPrisma.promptConfigPrompt.findUnique
+      mockDb.promptConfigPrompt.findUnique
         .mockResolvedValueOnce(null) // project config lookup
         .mockResolvedValueOnce(defaultPromptNoLlm); // default config lookup
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(defaultConfig);
+      mockDb.promptConfig.findFirst.mockResolvedValue(defaultConfig);
 
       const result = await resolver.resolve(LLM_FEATURES.EDITOR_ASSISTANT, 1);
 
@@ -243,8 +243,8 @@ describe("PromptResolver", () => {
     });
 
     it("falls through to fallback when default config has no prompt for feature", async () => {
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(defaultConfig);
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(defaultConfig);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(null);
 
       const result = await resolver.resolve(LLM_FEATURES.LLM_TEST);
 
@@ -252,10 +252,10 @@ describe("PromptResolver", () => {
     });
 
     it("falls through project to fallback when project has no config and no default exists", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: null,
       });
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(null);
 
       const result = await resolver.resolve(LLM_FEATURES.MAGIC_SELECT_CASES, 1);
 
@@ -263,9 +263,9 @@ describe("PromptResolver", () => {
     });
 
     it("skips project lookup when project does not exist", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue(null);
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(defaultConfig);
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(
+      mockDb.projects.findUnique.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(defaultConfig);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(
         defaultPromptNoLlm
       );
 
@@ -277,38 +277,38 @@ describe("PromptResolver", () => {
 
   describe("Prisma queries", () => {
     it("queries project with correct where clause", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: null,
       });
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(null);
 
       await resolver.resolve(LLM_FEATURES.TEST_CASE_GENERATION, 42);
 
-      expect(mockPrisma.projects.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.projects.findUnique).toHaveBeenCalledWith({
         where: { id: 42 },
         select: { promptConfigId: true },
       });
     });
 
     it("queries default config with correct filters", async () => {
-      mockPrisma.promptConfig.findFirst.mockResolvedValue(null);
+      mockDb.promptConfig.findFirst.mockResolvedValue(null);
 
       await resolver.resolve(LLM_FEATURES.TEST_CASE_GENERATION);
 
-      expect(mockPrisma.promptConfig.findFirst).toHaveBeenCalledWith({
+      expect(mockDb.promptConfig.findFirst).toHaveBeenCalledWith({
         where: { isDefault: true, isActive: true, isDeleted: false },
       });
     });
 
     it("queries prompt with compound unique key", async () => {
-      mockPrisma.projects.findUnique.mockResolvedValue({
+      mockDb.projects.findUnique.mockResolvedValue({
         promptConfigId: "cfg-123",
       });
-      mockPrisma.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
+      mockDb.promptConfigPrompt.findUnique.mockResolvedValue(projectPrompt);
 
       await resolver.resolve(LLM_FEATURES.EDITOR_ASSISTANT, 1);
 
-      expect(mockPrisma.promptConfigPrompt.findUnique).toHaveBeenCalledWith({
+      expect(mockDb.promptConfigPrompt.findUnique).toHaveBeenCalledWith({
         where: {
           promptConfigId_feature: {
             promptConfigId: "cfg-123",
@@ -327,7 +327,7 @@ describe("PromptResolver", () => {
   describe("All features have fallback prompts", () => {
     for (const feature of Object.values(LLM_FEATURES)) {
       it(`has a fallback prompt for "${feature}"`, async () => {
-        mockPrisma.promptConfig.findFirst.mockResolvedValue(null);
+        mockDb.promptConfig.findFirst.mockResolvedValue(null);
 
         const result = await resolver.resolve(feature);
 

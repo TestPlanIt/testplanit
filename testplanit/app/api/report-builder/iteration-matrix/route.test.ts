@@ -35,8 +35,8 @@ vi.mock("~/lib/matrix/matrixAggregation", async () => {
   };
 });
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: { findUnique: (...args: unknown[]) => userFindUniqueMock(...args) },
   },
 }));
@@ -174,7 +174,7 @@ describe("POST /api/report-builder/iteration-matrix", () => {
     // Smoking-gun assertion: if Lock C ever regresses (the proxy starts
     // HTTP-fetching the dedicated route), this test would break because
     // global fetch is not mocked and would 404 against localhost. By
-    // asserting the mock helper IS invoked with raw prisma we guarantee
+    // asserting the mock helper IS invoked with raw baseDb we guarantee
     // the proxy bypasses HTTP entirely.
     (getServerSession as any).mockResolvedValue(mockSession);
     projectsFindFirstMock.mockResolvedValue({ id: 42 });
@@ -189,7 +189,7 @@ describe("POST /api/report-builder/iteration-matrix", () => {
     await POST(buildPost({ projectId: 42, filters: {} }));
     expect(runMatrixAggregationMock).toHaveBeenCalledTimes(1);
     const args = runMatrixAggregationMock.mock.calls[0];
-    // First arg is prisma (mocked to the export-shaped object), second is
+    // First arg is baseDb (mocked to the export-shaped object), second is
     // projectId, third is filters, fourth is viewerCanReadSensitive.
     expect(args[1]).toBe(42);
     expect(args[2]).toEqual({});

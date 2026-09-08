@@ -2,7 +2,7 @@ import { LLM_FEATURES } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -34,10 +34,10 @@ export async function POST(
       );
     }
 
-    const manager = LlmManager.getInstance(prisma);
+    const manager = LlmManager.getInstance(baseDb);
 
     // Resolve prompt from database (falls back to hard-coded default)
-    const resolver = new PromptResolver(prisma);
+    const resolver = new PromptResolver(baseDb);
     const resolvedPrompt = await resolver.resolve(LLM_FEATURES.LLM_TEST);
 
     const llmRequest: LlmRequest = {
@@ -65,7 +65,7 @@ export async function POST(
     const response = await manager.chat(llmIntegrationId, llmRequest);
 
     // Get the usage for this request
-    const usage = await prisma.llmUsage.findFirst({
+    const usage = await baseDb.llmUsage.findFirst({
       where: {
         llmIntegrationId,
         userId: session.user.id,

@@ -1,7 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import type { BrowserContext } from "@playwright/test";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
+import { signInSecondaryContext } from "../../utils/secondary-context-login";
 
 /**
  * v0.23.0 Section K-03 — send-test fires only against the requesting
@@ -54,7 +55,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Webhook cross-tenant — send-test fires only on the requesting project", () => {
   let projectAId: number;
   let projectBId: number;
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
   let projectAJiraConfigId: string;
   let projectBJiraConfigId: string;
   let bOnlyEmail: string;
@@ -63,7 +64,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
   let bOnlyCtx: BrowserContext;
 
   test.beforeAll(async ({ api, browser, baseURL }) => {
-    prisma = new PrismaClient();
+    db = createRawDbClient();
     projectAId = await api.createProject(`E2E K-03 Project A ${uniqueId}`);
     projectBId = await api.createProject(`E2E K-03 Project B ${uniqueId}`);
 
@@ -99,7 +100,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // Capture the per-project Jira config IDs by direct DB query — the page
     // doesn't render the config id at-a-glance, but we need it for the
     // delivery-row assertions below.
-    const aConfig = await prisma.webhookConfig.findFirst({
+    const aConfig = await db.webhookConfig.findFirst({
       where: {
         projectId: projectAId,
         adapterType: "JIRA",
@@ -107,7 +108,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
       },
       select: { id: true, token: true },
     });
-    const bConfig = await prisma.webhookConfig.findFirst({
+    const bConfig = await db.webhookConfig.findFirst({
       where: {
         projectId: projectBId,
         adapterType: "JIRA",
@@ -139,23 +140,23 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     await api.setUserAccess(bOnlyUserId, "PROJECTADMIN");
     await api.assignUserToProject(bOnlyUserId, projectBId);
 
-    bOnlyCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: { "Sec-Fetch-Site": "same-origin" },
-    });
-    const signinPage = await bOnlyCtx.newPage();
-    await signinPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await signinPage.getByTestId("email-input").fill(bOnlyEmail);
-    await signinPage.getByTestId("password-input").fill(bOnlyPassword);
-    await signinPage.locator('button[type="submit"]').first().click();
-    await signinPage.waitForURL(/\/en-US\/?$/, { timeout: 30_000 });
-    await signinPage.close();
+    // Sign in the B-only admin in a fresh sessionless context. The context is
+    // kept clean (no extraHTTPHeaders) so the signin page and the webhook page
+    // navigated to below hydrate and load their assets. This context only
+    // navigates pages here (no ctx.request.* API calls), so no per-request
+    // same-origin header is needed.
+    bOnlyCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      bOnlyEmail,
+      bOnlyPassword
+    );
   });
 
   test.afterAll(async ({ api }) => {
     await api.deleteUser(bOnlyUserId);
     await bOnlyCtx.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin clicks Send test on Project A's Jira card → delivery lands on A's config only, NOT on B's", async ({
@@ -170,10 +171,10 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // test run that fired before this test's beforeAll completed) doesn't
     // contaminate the assertion.
     await test.step("Snapshot pre-click delivery counts for both configs", async () => {
-      aBefore = await prisma.webhookDelivery.count({
+      aBefore = await db.webhookDelivery.count({
         where: { webhookConfigId: projectAJiraConfigId },
       });
-      bBefore = await prisma.webhookDelivery.count({
+      bBefore = await db.webhookDelivery.count({
         where: { webhookConfigId: projectBJiraConfigId },
       });
     });
@@ -196,7 +197,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // can lag a few ms after the UI's response — poll until visible rather
     // than a fixed sleep (per feedback_no_flaky_tests).
     await test.step("Wait for delivery row to land on Project A's config", async () => {
-      const aAfterRows = await waitForCount(prisma, {
+      const aAfterRows = await waitForCount(db, {
         where: { webhookConfigId: projectAJiraConfigId },
         atLeast: aBefore! + 1,
         timeoutMs: 15_000,
@@ -209,7 +210,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // which the receiver routes via `WebhookConfig.findFirst({where:
     // {token}})` — there is no path by which B's config could be selected.
     await test.step("Assert Project B's config has zero new delivery rows", async () => {
-      const bAfter = await prisma.webhookDelivery.count({
+      const bAfter = await db.webhookDelivery.count({
         where: { webhookConfigId: projectBJiraConfigId },
       });
       expect(bAfter).toBe(bBefore);
@@ -233,7 +234,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     // a future refactor that mistakenly uses projectId rather than token
     // for routing).
     await test.step("Fetch latest delivery row for Project A's config", async () => {
-      const rows = await prisma.webhookDelivery.findMany({
+      const rows = await db.webhookDelivery.findMany({
         where: { webhookConfigId: projectAJiraConfigId },
         select: {
           id: true,
@@ -303,7 +304,7 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
  * `replay-bulk-deliveries.spec.ts` but for `count()` rather than `findMany`.
  */
 async function waitForCount(
-  prisma: PrismaClient,
+  db: ReturnType<typeof createRawDbClient>,
   args: {
     where: Record<string, unknown>;
     atLeast: number;
@@ -313,7 +314,7 @@ async function waitForCount(
   const startedAt = Date.now();
   let last = 0;
   while (Date.now() - startedAt < args.timeoutMs) {
-    last = await prisma.webhookDelivery.count({ where: args.where });
+    last = await db.webhookDelivery.count({ where: args.where });
     if (last >= args.atLeast) return last;
     await new Promise((r) => setTimeout(r, 200));
   }

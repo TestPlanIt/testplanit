@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  TestRunsSelect,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -7,11 +9,13 @@ import { mapHttpErrorToToolResult } from "../../errors.js";
 import { resolveTagIds } from "../cases/shared.js";
 import { resolveRunState } from "./create.js";
 import {
-  RUN_DETAIL_INCLUDE,
+  runDetailInclude,
 } from "./get.js";
 import {
   computeStatusRollup,
+  extractJunitStatusNames,
   extractStatusNames,
+  isAutomatedRunType,
   mapRunRow,
   mapRunDetailTestCase,
   type RawRunRow,
@@ -85,7 +89,7 @@ export function registerRunsUpdate(
             "findUnique",
             {
               where: { id: input.runId },
-              select: { projectId: true } satisfies Prisma.TestRunsSelect,
+              select: { projectId: true } satisfies TestRunsSelect,
             },
             deps.env,
           );
@@ -166,7 +170,7 @@ export function registerRunsUpdate(
           "findUnique",
           {
             where: { id: input.runId },
-            include: RUN_DETAIL_INCLUDE,
+            include: runDetailInclude(input.runId),
           },
           deps.env,
         );
@@ -183,16 +187,19 @@ export function registerRunsUpdate(
           };
         }
 
-        const { groups, nameById } = await extractStatusNames(
-          input.runId,
-          deps.env,
-        );
+        // Same source split as testplanit_test_runs_get: automated runs
+        // (testRunType != REGULAR) roll up JUnitTestResult attempts; REGULAR
+        // runs roll up TestRunCases.statusId.
+        const isAutomated = isAutomatedRunType(raw.testRunType);
+        const { groups, nameById } = isAutomated
+          ? await extractJunitStatusNames(input.runId, deps.env)
+          : await extractStatusNames(input.runId, deps.env);
         const rollup = computeStatusRollup(groups, nameById);
 
         const testCases = (raw.testCases ?? []).map(mapRunDetailTestCase);
+        const inlinePageFull = testCases.length === TESTCASES_INLINE_LIMIT;
         const testCasesNextCursor =
-          rollup.total > TESTCASES_INLINE_LIMIT &&
-          testCases.length === TESTCASES_INLINE_LIMIT
+          inlinePageFull && (isAutomated || rollup.total > TESTCASES_INLINE_LIMIT)
             ? testCases[testCases.length - 1].id
             : null;
 

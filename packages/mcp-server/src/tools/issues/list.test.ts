@@ -33,7 +33,8 @@ interface RawIssueRow {
   lastSyncedAt: string | null;
   integration: { id: number; name: string; provider: string } | null;
   createdBy: { id: string; name: string | null; email: string } | null;
-  _count?: { repositoryCases: number };
+  // RepositoryCases links are counted via the caseIssues join model now.
+  _count?: { caseIssues: number };
 }
 
 function makeRawIssue(
@@ -53,7 +54,7 @@ function makeRawIssue(
     lastSyncedAt: null,
     integration: { id: 11, name: "Primary Jira", provider: "JIRA" },
     createdBy: { id: "u1", name: "Alice", email: "a@b" },
-    _count: { repositoryCases: 6 },
+    _count: { caseIssues: 6 },
     ...overrides,
   };
 }
@@ -161,9 +162,9 @@ describe("registerIssuesList", () => {
 
   // ── linkedCaseCount surfaced in row shape ───────────────────────────────
 
-  it("row shape includes linkedCaseCount via _count.repositoryCases mapping", async () => {
+  it("row shape includes linkedCaseCount via _count.caseIssues mapping", async () => {
     mockZenstack.mockResolvedValueOnce([
-      makeRawIssue(1, { _count: { repositoryCases: 17 } }),
+      makeRawIssue(1, { _count: { caseIssues: 17 } }),
     ]);
     const { client } = await setupClient();
     const result = await client.callTool({

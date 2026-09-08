@@ -1,5 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { createHmac } from "node:crypto";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { expect, test } from "../../fixtures/index";
 
@@ -31,7 +31,7 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries — inbound row shows replay-not-supported banner", () => {
   let projectId: number;
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
   let configToken: string;
   let plainSecret: string;
   let failedDeliveryId: string;
@@ -39,11 +39,11 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Inbound Banner ${uniqueId}`);
     await api.setupProjectIssueIntegration(projectId, "GITHUB");
-    prisma = new PrismaClient();
+    db = createRawDbClient();
   });
 
   test.afterAll(async () => {
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("admin clicks failed inbound row, drawer opens with payloadDigest + banner + no Replay button", async ({
@@ -94,13 +94,13 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
       );
       expect(response.status()).toBe(200);
 
-      const config = await prisma.webhookConfig.findFirst({
+      const config = await db.webhookConfig.findFirst({
         where: { token: configToken, direction: "INBOUND" },
         select: { id: true },
       });
       expect(config).not.toBeNull();
 
-      const failedRows = await prisma.webhookDelivery.findMany({
+      const failedRows = await db.webhookDelivery.findMany({
         where: {
           webhookConfigId: config!.id,
           direction: "INBOUND",

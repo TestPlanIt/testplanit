@@ -1,6 +1,7 @@
-/* eslint-disable react-hooks/refs */
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -30,10 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateIssue } from "@/lib/hooks/issue";
-import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
-import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
+import { isIntegrationAuthCompleteMessage } from "~/lib/integrations/oauthPopup";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -159,10 +158,12 @@ export function CreateIssueDialog({
   });
 
   // ZenStack hook for creating issues
-  const createIssue = useCreateIssue();
+  const createIssue = useClientQueries(schema).issue.useCreate();
 
   // Fetch project integrations
-  const { data: projectIntegrations } = useFindManyProjectIntegration({
+  const { data: projectIntegrations } = useClientQueries(
+    schema
+  ).projectIntegration.useFindMany({
     where: {
       projectId,
       isActive: true,
@@ -176,7 +177,9 @@ export function CreateIssueDialog({
   const integrationId = activeIntegration?.integrationId;
 
   // Fetch active IntegrationProject records for multi-project support (D-09, D-10)
-  const { data: integrationProjects } = useFindManyIntegrationProject(
+  const { data: integrationProjects } = useClientQueries(
+    schema
+  ).integrationProject.useFindMany(
     {
       where: {
         projectIntegrationId: activeIntegration?.id || "",
@@ -350,6 +353,19 @@ export function CreateIssueDialog({
     void checkAuthStatus();
   }, [useIntegration, activeIntegration, checkAuth]);
 
+  // The Authenticate button opens the OAuth flow in a popup that lands on
+  // /integrations/auth-complete, which posts back here — clear the
+  // auth-required state so the user can continue without reopening the dialog.
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (isIntegrationAuthCompleteMessage(event) && event.data.success) {
+        setAuthError(null);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
   // Fetch issue type fields when issue type changes
   const fetchIssueTypeFields = useCallback(async () => {
     if (!selectedIssueType || !activeIntegration) return;
@@ -440,8 +456,11 @@ export function CreateIssueDialog({
         if (entityType && entityId) {
           switch (entityType) {
             case "testCase":
-              createData.repositoryCases = {
-                connect: [{ id: entityId }],
+              // `Issue.repositoryCases` does not exist in the v3 schema; the
+              // case link is the explicit `caseIssues` join
+              // (RepositoryCaseIssue -> case).
+              createData.caseIssues = {
+                create: [{ caseId: entityId }],
               };
               break;
             case "session":
@@ -514,8 +533,11 @@ export function CreateIssueDialog({
         if (entityType && entityId) {
           switch (entityType) {
             case "testCase":
-              createData.repositoryCases = {
-                connect: [{ id: entityId }],
+              // `Issue.repositoryCases` does not exist in the v3 schema; the
+              // case link is the explicit `caseIssues` join
+              // (RepositoryCaseIssue -> case).
+              createData.caseIssues = {
+                create: [{ caseId: entityId }],
               };
               break;
             case "session":
@@ -799,7 +821,7 @@ export function CreateIssueDialog({
                       onClick={() => handleAuthenticate(authError)}
                     >
                       {t("issues.authenticate")}
-                      <ExternalLink className="ml-2 h-4 w-4" />
+                      <ExternalLink className="ms-2 h-4 w-4" />
                     </Button>
                   )}
                 </AlertDescription>
@@ -973,7 +995,7 @@ export function CreateIssueDialog({
             {/* Dynamic fields based on issue type */}
             {loadingFields && (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="h-4 w-4 animate-spin me-2" />
                 <span className="text-sm text-muted-foreground">
                   {t("common.loading")}
                 </span>

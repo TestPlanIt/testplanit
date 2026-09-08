@@ -2,6 +2,49 @@ import "@testing-library/jest-dom";
 import React from "react";
 import { afterAll, beforeAll, vi } from "vitest";
 
+// v3 grouped data hooks come from `useClientQueries(schema).<model>.useX()`,
+// which calls React context internally and throws "Cannot read 'useContext' of
+// null" when rendered without the app providers. Stub useClientQueries so every
+// model/operation returns an inert query/mutation result, letting component
+// renders mount. Tests that assert on hook-driven data still vi.mock the module
+// locally (per-file mocks override this global stub).
+vi.mock("@zenstackhq/tanstack-query/react", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  const queryResult = () => ({
+    data: undefined,
+    isLoading: false,
+    isPending: false,
+    isError: false,
+    isSuccess: true,
+    error: null,
+    refetch: vi.fn(),
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+  });
+  const mutationResult = () => ({
+    mutate: vi.fn(),
+    mutateAsync: vi.fn().mockResolvedValue(undefined),
+    isPending: false,
+    isError: false,
+    isSuccess: false,
+    error: null,
+    reset: vi.fn(),
+  });
+  const ops = new Proxy(
+    {},
+    {
+      get: (_t, op: string | symbol) => {
+        if (typeof op !== "string") return undefined;
+        const isMutation = /^use(Create|Update|Upsert|Delete)/.test(op);
+        return () => (isMutation ? mutationResult() : queryResult());
+      },
+    }
+  );
+  const models = new Proxy({}, { get: () => ops });
+  return { ...actual, useClientQueries: () => models };
+});
+
 // The app's root <TooltipProvider> lives in app/providers.tsx, which test
 // renders don't include. Without a provider in scope Radix's <Tooltip>
 // throws "Tooltip must be used within TooltipProvider". Stub the module so
@@ -84,6 +127,7 @@ try {
 }
 
 // Mock next/navigation hooks often used alongside next-intl
+const stableSearchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -94,7 +138,10 @@ vi.mock("next/navigation", () => ({
     forward: vi.fn(),
   }),
   usePathname: () => "/", // Default pathname
-  useSearchParams: () => new URLSearchParams(), // Default search params
+  // Referentially stable like the real hook — a fresh object per call makes
+  // any consumer that uses it as a dependency (e.g. DataTable's initial
+  // column-visibility callback) churn on every render.
+  useSearchParams: () => stableSearchParams,
   useParams: () => ({}), // Default route params
   // next-intl's `createNavigation` internally calls `getRedirectFn(redirect)`
   // and `getRedirectFn(permanentRedirect)` at import time — they must be
@@ -155,6 +202,21 @@ class MockResizeObserver {
   disconnect = vi.fn();
 }
 global.ResizeObserver = MockResizeObserver as any;
+
+// jsdom doesn't implement requestIdleCallback. The SSE stream helpers defer
+// their EventSource connection to the first idle callback (see
+// hooks/deferredEventSource.ts). Collapsing it to a synchronous call here lets
+// the stream unit tests exercise connection logic without threading timers
+// through every assertion; deferredEventSource.test.ts overrides these locally
+// to verify the deferral timing itself.
+if (typeof global.requestIdleCallback === "undefined") {
+  global.requestIdleCallback = ((cb: () => void) => {
+    cb();
+    return 0;
+  }) as unknown as typeof global.requestIdleCallback;
+  global.cancelIdleCallback =
+    (() => {}) as unknown as typeof global.cancelIdleCallback;
+}
 
 // jsdom doesn't implement elementFromPoint, which TipTap's placeholder
 // viewport tracking calls via prosemirror's posAtCoords on editor mount.

@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
 import { expect, test } from "../../fixtures/index";
+import { createRawDbClient } from "~/lib/rawDbClient";
 import {
   seedOutboundConfig,
   softDeleteProject,
@@ -41,7 +40,7 @@ test.describe.configure({ mode: "serial" });
 test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
   let projectId: number;
   let stub: StubServerHandle;
-  let prisma: PrismaClient;
+  let db: ReturnType<typeof createRawDbClient>;
   let configId: string;
   let outboxEventId: string;
   const eventId = `evt_l05_${Date.now()}`;
@@ -50,9 +49,9 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Soft Delete ${uniqueId}`);
     stub = await startStubServer(); // 200 by default — must NEVER receive a hit
-    prisma = new PrismaClient();
+    db = createRawDbClient();
 
-    const seededConfig = await seedOutboundConfig(prisma, {
+    const seededConfig = await seedOutboundConfig(db, {
       projectId,
       url: stub.url,
       events: ["test_run.completed"],
@@ -65,7 +64,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
     // race with this test's direct dispatchWebhook() calls. The test owns the
     // row's lifecycle — no poller-driven duplicate dispatch can leak HTTP to
     // the stub in the window before softDeleteProject() commits.
-    const outbox = await prisma.webhookOutboxEvent.create({
+    const outbox = await db.webhookOutboxEvent.create({
       data: {
         projectId,
         eventName: "test_run.completed",
@@ -80,12 +79,12 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
     // Soft-delete the project. The dispatch.ts gate reads project.isDeleted
     // fresh on every call, so subsequent dispatchWebhook() invocations will
     // see the soft-delete state regardless of when the outbox row committed.
-    await softDeleteProject(prisma, { projectId });
+    await softDeleteProject(db, { projectId });
   });
 
   test.afterAll(async () => {
     if (stub) await stub.close();
-    if (prisma) await prisma.$disconnect();
+    if (db) await db.$disconnect();
   });
 
   test("dispatchWebhook returns skipped_inactive, no HTTP fired, no new delivery row", async () => {
@@ -95,7 +94,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
 
     await test.step("Record baseline stub hits and delivery row count", async () => {
       stubHitsBefore = stub.captures.length;
-      deliveriesBefore = await prisma.webhookDelivery.count({
+      deliveriesBefore = await db.webhookDelivery.count({
         where: { webhookConfigId: configId },
       });
     });
@@ -108,7 +107,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
           attempt: 1,
           tenantId: undefined,
         },
-        prisma
+        db
       );
     });
 
@@ -122,7 +121,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
       // No new WebhookDelivery row written. The skipped_inactive path does
       // NOT write a row (this is the documented dispatcher behavior — only
       // the DISABLED gate writes a stub row).
-      const deliveriesAfter = await prisma.webhookDelivery.count({
+      const deliveriesAfter = await db.webhookDelivery.count({
         where: { webhookConfigId: configId },
       });
       expect(deliveriesAfter).toBe(deliveriesBefore);
@@ -146,7 +145,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
           attempt: 2,
           tenantId: undefined,
         },
-        prisma
+        db
       );
     });
 
@@ -163,7 +162,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
       // Reverse the soft-delete. Dispatch should now reach the stub. This
       // proves the gate is a function of CURRENT `Projects.isDeleted` rather
       // than a one-shot decision baked at config creation time.
-      await prisma.projects.update({
+      await db.projects.update({
         where: { id: projectId },
         data: { isDeleted: false },
       });
@@ -175,7 +174,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
           attempt: 1,
           tenantId: undefined,
         },
-        prisma
+        db
       );
     });
 
@@ -189,7 +188,7 @@ test.describe("Outbound dispatcher skips soft-deleted projects (L-05)", () => {
     await test.step("Re-soft-delete the project to restore prior state", async () => {
       // Re-soft-delete so the auto-cleanup path runs from the same state the
       // test left earlier (Playwright's afterAll fires after this).
-      await prisma.projects.update({
+      await db.projects.update({
         where: { id: projectId },
         data: { isDeleted: true },
       });

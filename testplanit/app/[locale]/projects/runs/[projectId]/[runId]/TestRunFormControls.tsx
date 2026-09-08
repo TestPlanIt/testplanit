@@ -4,6 +4,7 @@ import {
 } from "@/components/AttachmentsDisplay";
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { CreationInfo } from "@/components/CreationInfo";
+import { ResultDatesInfo } from "@/components/ResultDatesInfo";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
@@ -30,8 +31,9 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { Attachments, RepositoryCases, Tags } from "@prisma/client";
+import type { Attachments, Tags } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
+import { useTestRunResultWindow } from "~/hooks/useResultWindow";
 import { IconName } from "~/types/globals";
 import { SelectedConfigurationInfo } from "./TestCasesSection";
 
@@ -124,6 +126,8 @@ type TestRunWithRelations = {
   testCases: Array<{
     id: number;
     order: number;
+    repositoryCaseId: number;
+    totalIterations: number;
     status: {
       id: number;
       name: string;
@@ -131,9 +135,6 @@ type TestRunWithRelations = {
         value: string;
       };
     } | null;
-    repositoryCase: RepositoryCases & {
-      state: WorkflowStateWithRelations;
-    };
   }>;
   tags: Tags[];
   issues: IssueType[];
@@ -167,6 +168,10 @@ interface TestRunFormControlsProps {
   canAddEdit: boolean;
   canCreateTags?: boolean;
   selectedConfigurationsForDisplay?: SelectedConfigurationInfo[];
+  /** Rendered between Configuration and Milestone — the configuration-group
+   *  link belongs with the configuration it qualifies. Passed as a slot so
+   *  this component stays free of the group's state and mutations. */
+  configurationGroupSlot?: React.ReactNode;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
   transitionCheck?: TransitionCheck;
 }
@@ -190,15 +195,23 @@ function TestRunFormControls({
   canAddEdit,
   canCreateTags = false,
   selectedConfigurationsForDisplay = [],
+  configurationGroupSlot,
   onAttachmentPendingChanges,
   transitionCheck,
 }: TestRunFormControlsProps) {
   const t = useTranslations();
 
+  // Execution window, read from the summary the page's progress bar already
+  // holds. Called above the early return so the hook order stays stable.
+  const { startDate, endDate } = useTestRunResultWindow({
+    testRunId: testRun?.id ?? 0,
+    isCompleted: !!testRun?.isCompleted,
+  });
+
   if (!testRun) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 [&_label]:text-base [&_label]:font-bold">
       {/* State */}
       <FormField
         control={control}
@@ -315,6 +328,7 @@ function TestRunFormControls({
           </FormItem>
         )}
       />
+      {configurationGroupSlot}
       {/* Milestone */}
       <FormField
         control={control}
@@ -404,14 +418,21 @@ function TestRunFormControls({
           />
         ) : (
           <div className="flex flex-wrap gap-2">
-            {testRun?.tags.map((tag) => (
-              <TagsDisplay
-                key={tag.id}
-                id={tag.id}
-                name={tag.name}
-                link={`/projects/tags/${projectId}/${tag.id}`}
-              />
-            ))}
+            {testRun?.tags && testRun.tags.length > 0 ? (
+              testRun.tags.map((tag) => (
+                <TagsDisplay
+                  key={tag.id}
+                  size="small"
+                  id={tag.id}
+                  name={tag.name}
+                  link={`/projects/tags/${projectId}/${tag.id}`}
+                />
+              ))
+            ) : (
+              <span className="text-muted-foreground text-sm">
+                {t("common.access.none")}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -446,6 +467,13 @@ function TestRunFormControls({
                     deferredMode={isEditMode}
                     onPendingChanges={onAttachmentPendingChanges}
                   />
+                  {!isEditMode &&
+                    (!testRun.attachments ||
+                      testRun.attachments.length === 0) && (
+                      <span className="text-muted-foreground text-sm">
+                        {t("common.access.none")}
+                      </span>
+                    )}
                 </div>
               </FormControl>
               <FormMessage />
@@ -453,13 +481,20 @@ function TestRunFormControls({
           );
         }}
       />
-      {/* Created By - only shown in view mode */}
+      {/* Execution dates + Created By - only shown in view mode */}
       {!isEditMode && (
-        <CreationInfo
-          userId={testRun?.createdBy.id}
-          createdAt={testRun?.createdAt}
-          className="w-fit"
-        />
+        <>
+          <ResultDatesInfo
+            startDate={startDate}
+            endDate={endDate}
+            className="w-fit"
+          />
+          <CreationInfo
+            userId={testRun?.createdBy.id}
+            createdAt={testRun?.createdAt}
+            className="w-fit"
+          />
+        </>
       )}
     </div>
   );

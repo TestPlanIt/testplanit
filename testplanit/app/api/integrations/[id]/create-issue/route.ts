@@ -1,6 +1,7 @@
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
+import { baseDb } from "@/lib/db";
 import { resolveEditorMediaAttachments } from "@/lib/integrations/editorMediaAttachments";
-import { prisma } from "@/lib/prisma";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -55,7 +56,7 @@ export async function POST(
     const validatedData = createIssueSchema.parse(body);
 
     // First try to get user's integration auth
-    const userIntegrationAuth = await prisma.userIntegrationAuth.findFirst({
+    const userIntegrationAuth = await baseDb.userIntegrationAuth.findFirst({
       where: {
         userId: session.user.id,
         integrationId: parseInt(integrationId),
@@ -70,12 +71,12 @@ export async function POST(
     });
 
     if (userIntegrationAuth) {
-      authUrl = `/api/integrations/oauth/${userIntegrationAuth.integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`;
+      authUrl = `/api/integrations/oauth/${userIntegrationAuth.integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`;
     }
 
     // If no user auth, check if the integration supports API key auth
     if (!userIntegrationAuth) {
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: {
           id: parseInt(integrationId),
           status: "ACTIVE",
@@ -97,7 +98,7 @@ export async function POST(
             message:
               "This integration requires individual user authentication. Please authorize it in the integration settings.",
             authType: integration.authType,
-            authUrl: `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`,
+            authUrl: `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}&returnUrl=${encodeURIComponent("/integrations/auth-complete")}`,
           },
           { status: 401 }
         );
@@ -119,19 +120,19 @@ export async function POST(
       let entityProjectId: number | null = null;
 
       if (validatedData.testCaseId) {
-        const testCase = await prisma.repositoryCases.findUnique({
+        const testCase = await baseDb.repositoryCases.findUnique({
           where: { id: parseInt(validatedData.testCaseId) },
           select: { projectId: true },
         });
         entityProjectId = testCase?.projectId || null;
       } else if (validatedData.testRunId) {
-        const testRun = await prisma.testRuns.findUnique({
+        const testRun = await baseDb.testRuns.findUnique({
           where: { id: parseInt(validatedData.testRunId) },
           select: { projectId: true },
         });
         entityProjectId = testRun?.projectId || null;
       } else if (validatedData.sessionId) {
-        const sessionEntity = await prisma.sessions.findUnique({
+        const sessionEntity = await baseDb.sessions.findUnique({
           where: { id: parseInt(validatedData.sessionId) },
           select: { projectId: true },
         });
@@ -145,7 +146,7 @@ export async function POST(
 
       if (entityProjectId) {
         // Check if user has access to the project
-        const projectAssignment = await prisma.projectAssignment.findUnique({
+        const projectAssignment = await baseDb.projectAssignment.findUnique({
           where: {
             userId_projectId: {
               userId: session.user.id,
@@ -381,13 +382,10 @@ export async function POST(
       validatedData.testRunResultId ||
       validatedData.testRunStepResultId
     ) {
-      // Entity links to (re)connect on both create and update.
+      // Entity links to (re)connect on both create and update. The test-case
+      // link is handled separately via the RepositoryCaseIssue join after the
+      // upsert — the Issue model has no `repositoryCases` relation in v3.
       const linkConnects = {
-        ...(validatedData.testCaseId && {
-          repositoryCases: {
-            connect: { id: parseInt(validatedData.testCaseId) },
-          },
-        }),
         ...(validatedData.testRunId && {
           testRuns: {
             connect: { id: parseInt(validatedData.testRunId) },
@@ -438,11 +436,11 @@ export async function POST(
           reporter: createdIssue.reporter,
           labels: createdIssue.labels,
           customFields: createdIssue.customFields,
-        },
+        } as JsonValue,
       };
 
       // Use upsert to handle cases where the issue already exists
-      const issue = await prisma.issue.upsert({
+      const issue = await baseDb.issue.upsert({
         where: {
           externalId_integrationId: {
             externalId: createdIssue.key || createdIssue.id,
@@ -463,6 +461,18 @@ export async function POST(
           ...linkConnects,
         },
       });
+
+      // Link the test case via the explicit RepositoryCaseIssue join — the
+      // Issue model has no `repositoryCases` relation in v3. Idempotent so a
+      // re-created/re-synced issue does not duplicate or error on the link.
+      if (validatedData.testCaseId) {
+        const caseId = parseInt(validatedData.testCaseId);
+        await baseDb.repositoryCaseIssue.upsert({
+          where: { caseId_issueId: { caseId, issueId: issue.id } },
+          create: { caseId, issueId: issue.id },
+          update: {},
+        });
+      }
 
       return NextResponse.json({
         ...createdIssue,

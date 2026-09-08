@@ -1,11 +1,14 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   BookOpen,
   Clock,
   HelpCircle,
   LucideWaypoints,
   MessageSquareHeart,
+  MoreVertical,
   Navigation,
   Search,
   Waypoints,
@@ -16,7 +19,6 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useFindManyProjects, useFindUniqueProjects } from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 
@@ -28,17 +30,24 @@ import { GlobalSearchSheet } from "@/components/GlobalSearchSheet";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProjectQuickSelector } from "@/components/ProjectQuickSelector";
 import { ReviewInboxButton } from "@/components/reviews/ReviewInboxButton";
+import { useContainerCompact } from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { UserDropdownMenu } from "@/components/UserDropdownMenu";
+import { useHeaderAlertCounts } from "~/hooks/useHeaderAlertCounts";
 import { getVersionString } from "~/lib/version";
+import { cn } from "~/utils";
 
 export const Header = () => {
   const router = useRouter();
@@ -61,12 +70,35 @@ export const Header = () => {
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [trialTotalDays, setTrialTotalDays] = useState<number>(0);
   const versionString = getVersionString();
+  // Collapse the header action icons (search, help, notifications, review inbox)
+  // into a single kebab menu once the header row gets too narrow to show them.
+  const { ref: headerRef, compact: isHeaderCompact } =
+    useContainerCompact(1024);
+  // When collapsed, the notification + review-inbox icons hide inside the
+  // kebab; surface their combined unread total on the kebab so it isn't missed.
+  // Gated on `isHeaderCompact` so it only fetches while those icons are hidden.
+  const { total: alertCount } = useHeaderAlertCounts(isHeaderCompact);
   const params = useParams();
   const projectId = params?.projectId as string | undefined;
   const isOnProjectPage = path.includes("/projects/") && !!projectId;
 
+  // Primary top-bar sections read as quiet tabs: muted by default, brightening
+  // on hover, with a --primary underline marking the active section.
+  const isNavActive = (prefix: string) =>
+    path === prefix || path.startsWith(`${prefix}/`);
+  const navLinkClass = (active: boolean) =>
+    cn(
+      "relative inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium no-underline transition-colors",
+      "after:pointer-events-none after:absolute after:inset-x-2 after:bottom-1 after:h-[3px] after:rounded-full after:transition-colors",
+      active
+        ? "text-foreground font-semibold after:bg-primary"
+        : "text-muted-foreground hover:text-foreground after:bg-transparent hover:after:bg-primary/40"
+    );
+
   // Minimal query to check if current project is the Demo Project
-  const { data: currentProject } = useFindUniqueProjects(
+  const { data: currentProject } = useClientQueries(
+    schema
+  ).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { name: true },
@@ -76,7 +108,9 @@ export const Header = () => {
   const isDemoProject = currentProject?.name === "Demo Project";
 
   // Reuse the same query as ProjectQuickSelector — React Query deduplicates it
-  const { data: allProjects = [] } = useFindManyProjects({
+  const { data: allProjects = [] } = useClientQueries(
+    schema
+  ).projects.useFindMany({
     where: { isDeleted: false },
     orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
     select: {
@@ -178,16 +212,89 @@ export const Header = () => {
     return null;
   }
 
+  // Help menu items — shared by the standalone help dropdown and, when the
+  // header collapses, the help submenu inside the kebab.
+  const helpMenuItems = (
+    <>
+      <DropdownMenuItem
+        onClick={() => (window as any).startOnboardingTour?.("mainTour")}
+        className="cursor-pointer"
+      >
+        <Navigation className="me-2 h-4 w-4" />
+        {t("help.menu.startTour")}
+      </DropdownMenuItem>
+      {isOnProjectPage &&
+        (isDemoProject ? (
+          <DropdownMenuItem
+            onClick={() =>
+              (window as any).startOnboardingTour?.("demoProjectTour")
+            }
+            className="cursor-pointer"
+          >
+            <Waypoints className="me-2 h-4 w-4" />
+            {t("help.menu.startDemoProjectTour")}
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            onClick={() => (window as any).startOnboardingTour?.("projectTour")}
+            className="cursor-pointer"
+          >
+            <Waypoints className="me-2 h-4 w-4" />
+            {t("help.menu.startProjectTour")}
+          </DropdownMenuItem>
+        ))}
+      {!isOnProjectPage && demoProject && (
+        <DropdownMenuItem
+          onClick={() =>
+            router.push(
+              `/projects/overview/${demoProject.id}?tour=demoProjectTour&step=0`
+            )
+          }
+          className="cursor-pointer"
+        >
+          <Waypoints className="me-2 h-4 w-4" />
+          {t("help.menu.startDemoProjectTour")}
+        </DropdownMenuItem>
+      )}
+      {path.includes("/admin/") && (
+        <DropdownMenuItem
+          onClick={() => (window as any).startAdminTour?.("adminTour")}
+          className="cursor-pointer"
+        >
+          <LucideWaypoints className="me-2 h-4 w-4" />
+          {t("help.menu.startAdminTour")}
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem
+        onClick={() => window.open("https://docs.testplanit.com", "_blank")}
+        className="cursor-pointer"
+      >
+        <BookOpen className="me-2 h-4 w-4" />
+        {t("common.fields.documentation")}
+      </DropdownMenuItem>
+      {feedbackSurveyUrl && (
+        <DropdownMenuItem
+          onClick={() => setIsFeedbackOpen(true)}
+          className="cursor-pointer"
+        >
+          <MessageSquareHeart className="me-2 h-4 w-4" />
+          {t("feedback.menuItem")}
+        </DropdownMenuItem>
+      )}
+    </>
+  );
+
   return (
     <div className="flex flex-col">
       <div className="shadow-md top-0 z-50">
         <div
+          ref={headerRef}
           id="header-container"
           data-testid="header-container"
           className={`items-center p-2 rounded-sm ${path.includes("admin") ? "bg-linear-to-b from-transparent from-60% to-red-500" : ""}`}
         >
           <div className="flex items-center justify-between">
-            <div className="flex">
+            <div className="flex items-center">
               <span id="header-logo" className="px-1 inline-block">
                 <Link
                   href="/"
@@ -211,7 +318,7 @@ export const Header = () => {
                   </div>
                 </Link>
               </span>
-              <Separator orientation="vertical" className="px-4" />
+              <Separator orientation="vertical" className="mx-4 h-8" />
 
               {session?.user?.access !== "NONE" && (
                 <div className="whitespace-nowrap">
@@ -220,25 +327,25 @@ export const Header = () => {
                   </span>
                   <span
                     id="global-features"
-                    className="py-2 px-1 inline-flex gap-1"
+                    className="py-2 px-1 inline-flex items-center gap-1"
                   >
                     <Link
                       id="tags-link"
-                      className={`${buttonVariants({ variant: "link" })}`}
+                      className={navLinkClass(isNavActive("/tags"))}
                       href="/tags"
                     >
                       {tCommon("fields.tags")}
                     </Link>
                     <Link
                       id="issues-link"
-                      className={`${buttonVariants({ variant: "link" })}`}
+                      className={navLinkClass(isNavActive("/issues"))}
                       href="/issues"
                     >
                       {t("common.fields.issues")}
                     </Link>
                     <Link
                       id="users-link"
-                      className={`${buttonVariants({ variant: "link" })}`}
+                      className={navLinkClass(isNavActive("/users"))}
                       href="/users"
                     >
                       {tCommon("fields.users")}
@@ -248,9 +355,9 @@ export const Header = () => {
               )}
 
               {session?.user?.access === "ADMIN" && (
-                <span className="py-2 px-1 inline-block">
+                <span className="py-2 px-1 inline-flex items-center">
                   <Link
-                    className={`${buttonVariants({ variant: "link" })}`}
+                    className={navLinkClass(isNavActive("/admin"))}
                     href="/admin"
                   >
                     {t("common.access.admin")}
@@ -300,113 +407,98 @@ export const Header = () => {
                   </Link>
                 </div>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSearchOpen(true)}
-                className="relative group"
-                aria-label={tCommon("aria.search")}
-                title={`Search (${isMac ? "⌘" : "Ctrl"}+K)`}
-                data-testid="global-search-trigger"
-              >
-                <Search className="h-5 w-5" />
-                <span className="absolute left-12 transform -translate-x-1/2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  {isMac ? "⌘K" : "Ctrl+K"}
-                </span>
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              {!isHeaderCompact ? (
+                <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="relative"
-                    aria-label={tCommon("aria.helpMenu")}
-                    title="Help & Support"
-                    data-testid="help-menu-button"
+                    onClick={() => setIsSearchOpen(true)}
+                    className="relative group"
+                    aria-label={tCommon("aria.search")}
+                    title={`Search (${isMac ? "⌘" : "Ctrl"}+K)`}
+                    data-testid="global-search-trigger"
                   >
-                    <HelpCircle className="h-5 w-5" />
+                    <Search className="h-5 w-5" />
+                    <span className="absolute start-12 transform -translate-x-1/2 rtl:translate-x-1/2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                      {isMac ? "⌘K" : "Ctrl+K"}
+                    </span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem
-                    onClick={() =>
-                      (window as any).startOnboardingTour?.("mainTour")
-                    }
-                    className="cursor-pointer"
-                  >
-                    <Navigation className="mr-2 h-4 w-4" />
-                    {t("help.menu.startTour")}
-                  </DropdownMenuItem>
-                  {isOnProjectPage &&
-                    (isDemoProject ? (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          (window as any).startOnboardingTour?.(
-                            "demoProjectTour"
-                          )
-                        }
-                        className="cursor-pointer"
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative"
+                        aria-label={tCommon("aria.helpMenu")}
+                        title="Help & Support"
+                        data-testid="help-menu-button"
                       >
-                        <Waypoints className="mr-2 h-4 w-4" />
-                        {t("help.menu.startDemoProjectTour")}
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem
-                        onClick={() =>
-                          (window as any).startOnboardingTour?.("projectTour")
-                        }
-                        className="cursor-pointer"
-                      >
-                        <Waypoints className="mr-2 h-4 w-4" />
-                        {t("help.menu.startProjectTour")}
-                      </DropdownMenuItem>
-                    ))}
-                  {!isOnProjectPage && demoProject && (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        router.push(
-                          `/projects/overview/${demoProject.id}?tour=demoProjectTour&step=0`
-                        )
+                        <HelpCircle className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      {helpMenuItems}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <NotificationBell />
+                  <ReviewInboxButton />
+                </>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative"
+                      aria-label={
+                        alertCount > 0
+                          ? tCommon("actions.actionsWithAlerts", {
+                              count: alertCount,
+                            })
+                          : tCommon("actions.actionsLabel")
                       }
-                      className="cursor-pointer"
+                      data-testid="header-actions-menu"
                     >
-                      <Waypoints className="mr-2 h-4 w-4" />
-                      {t("help.menu.startDemoProjectTour")}
-                    </DropdownMenuItem>
-                  )}
-                  {path.includes("/admin/") && (
+                      <MoreVertical className="h-5 w-5" />
+                      {alertCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-1 -end-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                          data-testid="header-actions-count-badge"
+                        >
+                          {alertCount > 9 ? "9+" : alertCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {/* Reverse of the wide icon order: inbox, notifications,
+                        help, search. */}
+                    <ReviewInboxButton variant="menu" />
+                    <NotificationBell variant="menu" />
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger data-testid="help-menu-button">
+                        <HelpCircle className="me-2 h-4 w-4" />
+                        {tCommon("aria.help")}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-56">
+                        {helpMenuItems}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                     <DropdownMenuItem
-                      onClick={() =>
-                        (window as any).startAdminTour?.("adminTour")
-                      }
+                      onClick={() => setIsSearchOpen(true)}
                       className="cursor-pointer"
+                      data-testid="global-search-trigger"
                     >
-                      <LucideWaypoints className="mr-2 h-4 w-4" />
-                      {t("help.menu.startAdminTour")}
+                      <Search className="me-2 h-4 w-4" />
+                      {tCommon("aria.search")}
+                      <DropdownMenuShortcut>
+                        {isMac ? "⌘K" : "Ctrl+K"}
+                      </DropdownMenuShortcut>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() =>
-                      window.open("https://docs.testplanit.com", "_blank")
-                    }
-                    className="cursor-pointer"
-                  >
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    {t("common.fields.documentation")}
-                  </DropdownMenuItem>
-                  {feedbackSurveyUrl && (
-                    <DropdownMenuItem
-                      onClick={() => setIsFeedbackOpen(true)}
-                      className="cursor-pointer"
-                    >
-                      <MessageSquareHeart className="mr-2 h-4 w-4" />
-                      {t("feedback.menuItem")}
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <NotificationBell />
-              <ReviewInboxButton />
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <UserDropdownMenu />
             </div>
           </div>

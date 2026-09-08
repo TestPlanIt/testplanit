@@ -29,7 +29,7 @@ export const TagsListDisplay: React.FC<TagsListProps> = ({
     <Popover>
       <PopoverTrigger asChild>
         <Badge className="cursor-pointer">
-          <TagIcon className="w-4 h-4 mr-1 shrink-0" />
+          <TagIcon className="w-4 h-4 me-1 shrink-0" />
           {tags.length}
         </Badge>
       </PopoverTrigger>
@@ -38,13 +38,16 @@ export const TagsListDisplay: React.FC<TagsListProps> = ({
           return (
             <Badge
               key={tag.id}
-              className="mr-1 mb-1 max-w-[250px] whitespace-nowrap flex items-center"
+              className="me-1 mb-1 max-w-[250px] whitespace-nowrap flex items-center hover:bg-primary/20 hover:text-primary"
             >
+              {/* `hover:text-primary` on the anchor itself: the global
+                  `body a:hover` rule greys link text, which is unreadable
+                  against the badge. */}
               <Link
                 href={`/projects/tags/${projectId}/${tag.id}`}
-                className="truncate flex whitespace-nowrap"
+                className="truncate flex whitespace-nowrap hover:text-primary"
               >
-                <Tag className="w-4 h-4 shrink-0 mr-1" />
+                <Tag className="w-4 h-4 shrink-0 me-1" />
                 <span className="truncate">{tag.name}</span>
               </Link>
             </Badge>

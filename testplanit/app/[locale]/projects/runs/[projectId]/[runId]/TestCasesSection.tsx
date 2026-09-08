@@ -1,6 +1,8 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
-import { ApplicationArea, RepositoryCaseSource } from "@prisma/client";
-import { CirclePlay, Combine } from "lucide-react";
+import { ApplicationArea } from "~/zenstack/models";
+import { CirclePlay, Combine, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -8,7 +10,14 @@ import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay"
 import { Button } from "~/components/ui/button";
 import { MultiAsyncCombobox } from "~/components/ui/multi-async-combobox";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyTestRuns } from "~/lib/hooks";
+import {
+  buildConfigurationGroupMemberLabels,
+  buildConfigurationGroupWhere,
+  isConfigurationGroupQueryEnabled,
+  parseProjectIdParam,
+  reconcileConfigurationSelection,
+  resolveSelectionFromUrl,
+} from "~/lib/configurationGroupSwitcher";
 import { usePathname, useRouter } from "~/lib/navigation";
 import ProjectRepository from "../../../repository/[projectId]/ProjectRepository";
 
@@ -58,12 +67,7 @@ type TestRunWithRelations = {
   testCases: Array<{
     id: number;
     order: number;
-    repositoryCase: {
-      id: number;
-      name: string;
-      state: WorkflowStateWithRelations;
-      source?: RepositoryCaseSource;
-    };
+    repositoryCaseId: number;
   }>;
 };
 
@@ -73,9 +77,7 @@ type SiblingTestRun = {
   name: string;
   configuration: { id: number; name: string } | null;
   testCases: Array<{
-    repositoryCase: {
-      id: number;
-    };
+    repositoryCaseId: number;
   }>;
 };
 
@@ -92,6 +94,9 @@ interface TestCasesSectionProps {
   isEditMode?: boolean;
   onTestCasesChange?: (testCaseIds: number[]) => void;
   canAddEdit: boolean;
+  /** When true the run's composition is frozen: cases cannot be added, removed,
+   * or reordered even in edit mode (execution & assignment still work). */
+  compositionLocked?: boolean;
   refetchTestRun: () => void;
   onMultiConfigSelected?: (isMulti: boolean) => void;
   onSelectedConfigurationsChange?: (
@@ -104,6 +109,7 @@ export function TestCasesSection({
   isEditMode = false,
   onTestCasesChange,
   canAddEdit,
+  compositionLocked = false,
   refetchTestRun: _refetchTestRun,
   onMultiConfigSelected,
   onSelectedConfigurationsChange,
@@ -128,7 +134,7 @@ export function TestCasesSection({
   }, [searchParams]);
 
   const [selectedTestCases, setSelectedTestCases] = useState<number[]>(
-    testRunData?.testCases.map((tc) => tc.repositoryCase.id) || []
+    testRunData?.testCases.map((tc) => tc.repositoryCaseId) || []
   );
   const [isTableReady, setIsTableReady] = useState(false);
   const scrollAttempts = useRef(0);
@@ -148,13 +154,22 @@ export function TestCasesSection({
   } = useProjectPermissions(params.projectId, "TestRunResults");
   const canAddEditResults = testRunResultPermissions?.canAddEdit ?? false;
 
+  // Group membership is editable, so the sibling query is scoped to this run's
+  // project: a stale or hand-written group id must not surface runs from
+  // another project.
+  const groupProjectId =
+    testRunData?.project?.id ?? parseProjectIdParam(params.projectId);
+  const siblingQueryScope = {
+    configurationGroupId: testRunData?.configurationGroupId,
+    projectId: groupProjectId,
+  };
+
   // Fetch sibling test runs for multi-config test runs
-  const { data: siblingTestRunsData } = useFindManyTestRuns(
+  const { data: siblingTestRunsData } = useClientQueries(
+    schema
+  ).testRuns.useFindMany(
     {
-      where: {
-        configurationGroupId: testRunData?.configurationGroupId ?? undefined,
-        isDeleted: false,
-      },
+      where: buildConfigurationGroupWhere(siblingQueryScope),
       select: {
         id: true,
         name: true,
@@ -167,22 +182,16 @@ export function TestCasesSection({
         testCases: {
           where: { isDeleted: false },
           select: {
-            repositoryCase: {
-              select: {
-                id: true,
-              },
-            },
+            repositoryCaseId: true,
           },
         },
       },
-      orderBy: {
-        configuration: {
-          name: "asc",
-        },
-      },
+      // Two members may share a configuration, so break ties on id to keep the
+      // switcher's order stable.
+      orderBy: [{ configuration: { name: "asc" } }, { id: "asc" }],
     },
     {
-      enabled: !!testRunData?.configurationGroupId,
+      enabled: isConfigurationGroupQueryEnabled(siblingQueryScope),
     }
   );
 
@@ -197,39 +206,63 @@ export function TestCasesSection({
     }));
   }, [siblingTestRunsData]);
 
-  // Initialize selected configurations from URL or default to current test run
+  // Two runs in a group may share a configuration, so a configuration name is
+  // not always enough to tell members apart — those entries carry the run name.
+  const memberLabels = useMemo(
+    () =>
+      buildConfigurationGroupMemberLabels(siblingTestRuns, {
+        noConfiguration: t("common.labels.noConfiguration"),
+        withMemberName: (values) =>
+          t("common.labels.configurationWithName", values),
+      }),
+    [siblingTestRuns, t]
+  );
+
+  const memberLabel = (run: SiblingTestRun) =>
+    memberLabels.get(run.id) ?? run.name;
+
+  // Initialize the selection from the URL (or the viewed run) once, then keep it
+  // reconciled: membership can change while the page is open, and a run that
+  // left the group must not stay selected.
   useEffect(() => {
+    if (!testRunData) return;
+
+    const reconciled = reconcileConfigurationSelection(
+      selectedConfigurations,
+      siblingTestRuns
+    );
+
     if (
+      reconciled.length === 0 &&
       siblingTestRuns.length > 0 &&
-      testRunData &&
-      selectedConfigurations.length === 0 &&
       !hasInitializedFromUrl.current
     ) {
-      hasInitializedFromUrl.current = true;
-
-      // If URL has configs param, use those
-      if (configurationsFromUrl && configurationsFromUrl.length > 0) {
-        const configsFromUrl = siblingTestRuns.filter((run) =>
-          configurationsFromUrl.includes(run.id)
-        );
-        if (configsFromUrl.length > 0) {
-          setSelectedConfigurations(configsFromUrl);
-          return;
-        }
-      }
-
-      // Default to current test run
+      // Ids from the URL are resolved against real membership, so an unrelated
+      // run id in `?configs=` is ignored.
+      const fromUrl = resolveSelectionFromUrl(
+        siblingTestRuns,
+        configurationsFromUrl
+      );
       const currentRun = siblingTestRuns.find(
         (run) => run.id === testRunData.id
       );
-      if (currentRun) {
-        setSelectedConfigurations([currentRun]);
+      const seeded =
+        fromUrl.length > 0 ? fromUrl : currentRun ? [currentRun] : [];
+
+      if (seeded.length > 0) {
+        hasInitializedFromUrl.current = true;
+        setSelectedConfigurations(seeded);
+        return;
       }
+    }
+
+    if (reconciled !== selectedConfigurations) {
+      setSelectedConfigurations([...reconciled]);
     }
   }, [
     siblingTestRuns,
     testRunData,
-    selectedConfigurations.length,
+    selectedConfigurations,
     configurationsFromUrl,
   ]);
 
@@ -272,7 +305,7 @@ export function TestCasesSection({
     const uniqueCaseIds = new Set<number>();
     selectedConfigurations.forEach((run) => {
       run.testCases.forEach((tc) => {
-        uniqueCaseIds.add(tc.repositoryCase.id);
+        uniqueCaseIds.add(tc.repositoryCaseId);
       });
     });
     return uniqueCaseIds.size;
@@ -289,9 +322,14 @@ export function TestCasesSection({
     }
   }, [selectedConfigurations.length, onMultiConfigSelected]);
 
-  // Notify parent when selected configurations change
+  // Notify parent when selected configurations change. Once the selection has
+  // been seeded, an empty selection is reported too: the group can be dissolved
+  // while the page is open and the parent must not keep querying ex-members.
   useEffect(() => {
-    if (onSelectedConfigurationsChange && selectedConfigurations.length > 0) {
+    if (
+      onSelectedConfigurationsChange &&
+      (selectedConfigurations.length > 0 || hasInitializedFromUrl.current)
+    ) {
       const configInfos: SelectedConfigurationInfo[] =
         selectedConfigurations.map((run) => ({
           id: run.id,
@@ -413,7 +451,7 @@ export function TestCasesSection({
       const sortedTestCases = [...testRunData.testCases].sort(
         (a, b) => a.order - b.order
       );
-      const firstTestCaseId = sortedTestCases[0]?.repositoryCase.id;
+      const firstTestCaseId = sortedTestCases[0]?.repositoryCaseId;
       if (firstTestCaseId) {
         const newSearchParams = new URLSearchParams(searchParams.toString());
         newSearchParams.set("selectedCase", firstTestCaseId.toString());
@@ -421,22 +459,6 @@ export function TestCasesSection({
       }
     }
   };
-
-  // Map the test cases to the format expected by SelectedTestCasesDrawer
-  const _mappedTestCases = testRunData.testCases.map((testCase) => ({
-    id: testCase.repositoryCase.id,
-    name: testCase.repositoryCase.name,
-    state: {
-      name: testCase.repositoryCase.state.name,
-      icon: testCase.repositoryCase.state.icon
-        ? { name: testCase.repositoryCase.state.icon.name }
-        : undefined,
-      color: testCase.repositoryCase.state.color
-        ? { value: testCase.repositoryCase.state.color.value }
-        : undefined,
-    },
-    source: testCase.repositoryCase.source,
-  }));
 
   // Helper function to fetch configurations for the combobox
   const fetchConfigurations = async (
@@ -451,7 +473,8 @@ export function TestCasesSection({
       filtered = siblingTestRuns.filter(
         (run) =>
           run.name.toLowerCase().includes(lowerQuery) ||
-          run.configuration?.name?.toLowerCase().includes(lowerQuery)
+          run.configuration?.name?.toLowerCase().includes(lowerQuery) ||
+          memberLabel(run).toLowerCase().includes(lowerQuery)
       );
     }
 
@@ -483,13 +506,16 @@ export function TestCasesSection({
                     : testRunData.testCases.length,
                 })}
           </span>
-          {isEditMode && canAddEdit && selectedTestCases.length > 0 && (
-            <SelectedTestCasesDrawer
-              selectedTestCases={selectedTestCases}
-              onSelectionChange={setSelectedTestCases}
-              projectId={Number(params.projectId)}
-            />
-          )}
+          {isEditMode &&
+            canAddEdit &&
+            !compositionLocked &&
+            selectedTestCases.length > 0 && (
+              <SelectedTestCasesDrawer
+                selectedTestCases={selectedTestCases}
+                onSelectionChange={setSelectedTestCases}
+                projectId={Number(params.projectId)}
+              />
+            )}
         </div>
         {!isEditMode &&
           !testRunData.isCompleted &&
@@ -523,7 +549,7 @@ export function TestCasesSection({
               <div className="flex items-center w-11/12 gap-2 justify-between">
                 <ConfigurationNameDisplay
                   configuration={option.configuration}
-                  name={option.configuration?.name || option.name}
+                  name={memberLabel(option)}
                   truncate
                 />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -534,34 +560,47 @@ export function TestCasesSection({
               </div>
             )}
             renderSelectedOption={(option) => (
-              <span>{option.configuration?.name || option.name}</span>
+              <span>{memberLabel(option)}</span>
             )}
             getOptionValue={(option) => option.id}
-            getOptionLabel={(option) =>
-              option.configuration?.name || option.name
-            }
+            getOptionLabel={(option) => memberLabel(option)}
             placeholder={t("common.placeholders.selectConfigurations")}
             className="flex-1"
           />
         </div>
       )}
 
+      {/* Composition-lock notice: the case set is frozen; execution continues. */}
+      {compositionLocked && (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 p-2 text-sm text-muted-foreground">
+          <Lock className="h-4 w-4 shrink-0" />
+          <span>{t("runs.composition.frozenNotice")}</span>
+        </div>
+      )}
+
       <div className="space-y-4">
         {(isEditMode || testRunData.testCases.length > 0) && (
           <ProjectRepository
-            isSelectionMode={isEditMode && canAddEdit}
+            isSelectionMode={isEditMode && canAddEdit && !compositionLocked}
             selectedTestCases={
-              isEditMode
+              isEditMode && !compositionLocked
                 ? selectedTestCases
-                : testRunData.testCases.map((tc) => tc.repositoryCase.id)
+                : testRunData.testCases.map((tc) => tc.repositoryCaseId)
             }
             selectedRunIds={
-              isMultiConfigRun && !isEditMode ? selectedRunIds : undefined
+              isMultiConfigRun && (!isEditMode || compositionLocked)
+                ? selectedRunIds
+                : undefined
             }
             onSelectionChange={setSelectedTestCases}
             hideHeader={true}
-            isRunMode={!isEditMode}
+            // A composition-locked run's case set is frozen, so render it in
+            // read-only run mode even in edit mode — same as an unlocked run's
+            // view — which also hides the repository management buttons that the
+            // non-run, non-selection mode would otherwise show.
+            isRunMode={!isEditMode || compositionLocked}
             isCompleted={testRunData.isCompleted}
+            compositionLocked={compositionLocked}
             projectId={params.projectId}
             ApplicationArea={ApplicationArea.TestRuns}
           />

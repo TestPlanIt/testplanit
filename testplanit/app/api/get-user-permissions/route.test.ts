@@ -20,13 +20,14 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
-vi.mock("~/lib/prisma", () => {
-  const prismaStub = {
+vi.mock("~/lib/db", () => {
+  const dbStub = {
     user: {
       findUnique: vi.fn(),
     },
     projects: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
     userProjectPermission: {
       findUnique: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock("~/lib/prisma", () => {
       findMany: vi.fn(),
     },
   };
-  return { prisma: prismaStub };
+  return { baseDb: dbStub };
 });
 
 function makeRequest(body: unknown): Request {
@@ -49,23 +50,27 @@ function makeRequest(body: unknown): Request {
 describe("POST /api/get-user-permissions — caller authentication (CR-02)", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     // Default Prisma responses so the route reaches the "compute permissions"
     // branch when the caller is authorized. Tests that should short-circuit
     // before any Prisma read use the unauthorized / forbidden branches.
-    (prisma as any).user.findUnique.mockResolvedValue({
+    (baseDb as any).user.findUnique.mockResolvedValue({
       id: "target-user",
       access: "NONE",
       role: { id: 1, rolePermissions: [] },
       groups: [],
     });
-    (prisma as any).projects.findUnique.mockResolvedValue({
+    (baseDb as any).projects.findUnique.mockResolvedValue({
       id: 42,
       defaultAccessType: "NO_ACCESS",
       defaultRole: null,
     });
-    (prisma as any).userProjectPermission.findUnique.mockResolvedValue(null);
-    (prisma as any).groupProjectPermission.findMany.mockResolvedValue([]);
+    // Backs authorizeProjectAdminForProject's isProjectAdmin computation —
+    // default to "not a project admin" so existing assertions on hasAccess/
+    // effectiveRole/permissions are unaffected.
+    (baseDb as any).projects.findFirst.mockResolvedValue(null);
+    (baseDb as any).userProjectPermission.findUnique.mockResolvedValue(null);
+    (baseDb as any).groupProjectPermission.findMany.mockResolvedValue([]);
   });
 
   it("returns 401 when no session is present (anonymous caller)", async () => {
@@ -81,8 +86,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     expect(response.status).toBe(401);
     expect(body.error).toBe("Unauthorized");
 
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).not.toHaveBeenCalled();
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).not.toHaveBeenCalled();
   });
 
   it("returns 401 when the session has no user id", async () => {
@@ -116,8 +121,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     // No Prisma reads should fire — the IDOR check short-circuits before
     // any role-resolution query touches the database.
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).not.toHaveBeenCalled();
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).not.toHaveBeenCalled();
   });
 
   it("returns 403 when a non-admin caller asks about their PROJECTADMIN peer", async () => {
@@ -153,8 +158,8 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     );
 
     expect(response.status).toBe(200);
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).toHaveBeenCalled();
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).toHaveBeenCalled();
   });
 
   it("allows an ADMIN caller to query another user's permissions", async () => {
@@ -171,10 +176,62 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     );
 
     expect(response.status).toBe(200);
-    const { prisma } = await import("~/lib/prisma");
-    expect((prisma as any).user.findUnique).toHaveBeenCalledWith(
+    const { baseDb } = await import("~/lib/db");
+    expect((baseDb as any).user.findUnique).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "target-user" } })
     );
+  });
+
+  it("includes isProjectAdmin: true in the response for a system ADMIN caller", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "admin-user", access: "ADMIN" },
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "admin-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(true);
+  });
+
+  it("includes isProjectAdmin: false for a caller who is not a project admin", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "NONE" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).projects.findFirst.mockResolvedValue(null);
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "caller-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(false);
+  });
+
+  it("includes isProjectAdmin: true for a caller who is the project's Project Admin", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "NONE" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).projects.findFirst.mockResolvedValue({ id: 42 });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({ userId: "caller-user", projectId: 42 })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.isProjectAdmin).toBe(true);
   });
 
   it("returns 400 for invalid body shape after passing auth", async () => {
@@ -188,5 +245,174 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
     const response = await POST(makeRequest({ userId: "caller-user" }));
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe("POST /api/get-user-permissions — group GLOBAL_ROLE resolution", () => {
+  // Regression: a group assigned to the project with GLOBAL_ROLE defers to
+  // each member's own global role. The endpoint used to ignore that grant
+  // entirely and fall through to the project default, so on a
+  // NO_ACCESS-default project a group member — even a system PROJECTADMIN
+  // with an all-permissions role — was reported as having no access and the
+  // UI rendered read-only, while the schema policies accepted their writes.
+
+  const groupGlobalGrant = [
+    { accessType: "GLOBAL_ROLE", roleId: null, role: null },
+  ];
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "USER" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).projects.findUnique.mockResolvedValue({
+      id: 42,
+      defaultAccessType: "NO_ACCESS",
+      defaultRole: null,
+    });
+    (baseDb as any).projects.findFirst.mockResolvedValue(null);
+    (baseDb as any).userProjectPermission.findUnique.mockResolvedValue(null);
+    (baseDb as any).groupProjectPermission.findMany.mockResolvedValue(
+      groupGlobalGrant
+    );
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "caller-user",
+      access: "USER",
+      role: {
+        id: 9,
+        name: "All Access",
+        rolePermissions: [
+          {
+            area: "TestCaseRepository",
+            canAddEdit: true,
+            canDelete: false,
+            canClose: false,
+          },
+        ],
+      },
+      groups: [{ groupId: 7 }],
+    });
+  });
+
+  it("grants the member their global role's permissions on a NO_ACCESS-default project", async () => {
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({
+        userId: "caller-user",
+        projectId: 42,
+        area: "TestCaseRepository",
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.hasAccess).toBe(true);
+    expect(body.effectiveRole).toBe("All Access");
+    expect(body.permissions.canAddEdit).toBe(true);
+  });
+
+  it("gives a system PROJECTADMIN group member full permissions (accessDenied must not fire)", async () => {
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "caller-user", access: "PROJECTADMIN" },
+    });
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "caller-user",
+      access: "PROJECTADMIN",
+      role: { id: 9, name: "All Access", rolePermissions: [] },
+      groups: [{ groupId: 7 }],
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({
+        userId: "caller-user",
+        projectId: 42,
+        area: "TestCaseRepository",
+      })
+    );
+    const body = await response.json();
+
+    expect(body.hasAccess).toBe(true);
+    expect(body.permissions.canAddEdit).toBe(true);
+    expect(body.permissions.canDelete).toBe(true);
+  });
+
+  it("still denies a group member whose account has no global role", async () => {
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).user.findUnique.mockResolvedValue({
+      id: "caller-user",
+      access: "USER",
+      role: null,
+      groups: [{ groupId: 7 }],
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({
+        userId: "caller-user",
+        projectId: 42,
+        area: "TestCaseRepository",
+      })
+    );
+    const body = await response.json();
+
+    expect(body.hasAccess).toBe(false);
+    expect(body.permissions.canAddEdit).toBe(false);
+  });
+
+  it("prefers a SPECIFIC_ROLE group grant over a GLOBAL_ROLE one", async () => {
+    const { baseDb } = await import("~/lib/db");
+    (baseDb as any).groupProjectPermission.findMany.mockResolvedValue([
+      ...groupGlobalGrant,
+      {
+        accessType: "SPECIFIC_ROLE",
+        roleId: 3,
+        role: {
+          id: 3,
+          name: "Scoped Viewer",
+          rolePermissions: [
+            {
+              area: "TestCaseRepository",
+              canAddEdit: false,
+              canDelete: false,
+              canClose: false,
+            },
+          ],
+        },
+      },
+    ]);
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({
+        userId: "caller-user",
+        projectId: 42,
+        area: "TestCaseRepository",
+      })
+    );
+    const body = await response.json();
+
+    expect(body.effectiveRole).toBe("Scoped Viewer");
+    expect(body.permissions.canAddEdit).toBe(false);
+  });
+
+  it("reports the group grant as the accessType in checkAccessOnly mode", async () => {
+    const { POST } = await import("./route");
+    const response = await POST(
+      makeRequest({
+        userId: "caller-user",
+        projectId: 42,
+        checkAccessOnly: true,
+      })
+    );
+    const body = await response.json();
+
+    expect(body.hasAccess).toBe(true);
+    expect(body.accessType).toBe("GLOBAL_ROLE");
+    expect(body.effectiveRole).toBe("All Access");
   });
 });

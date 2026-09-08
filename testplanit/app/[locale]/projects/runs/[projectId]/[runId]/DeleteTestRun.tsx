@@ -1,4 +1,6 @@
 "use client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -9,13 +11,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
-import { TestRuns } from "@prisma/client";
+import type { TestRuns } from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { useUpdateTestRuns } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 
 interface DeleteTestRunProps {
@@ -39,7 +40,8 @@ export function DeleteTestRunModal({
 }: DeleteTestRunProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { mutateAsync: updateTestRuns } = useUpdateTestRuns();
+  const { mutateAsync: updateTestRuns } =
+    useClientQueries(schema).testRuns.useUpdate();
   const t = useTranslations("runs.delete");
   const tCommon = useTranslations("common");
 
@@ -123,7 +125,7 @@ export function DeleteTestRunModal({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title")}
               </AlertDialogTitle>
               <AlertDialogDescription className="overflow-hidden">

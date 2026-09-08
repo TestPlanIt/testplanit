@@ -19,15 +19,18 @@ import {
 import { filesize } from "filesize";
 import {
   CloudUpload,
+  FileSpreadsheet,
   FileStack,
   FileText,
   Link as LinkIcon,
   Loader2,
+  Presentation,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useId, useRef, useState } from "react";
+import { getOfficeKind } from "~/lib/utils/officeDocuments";
 
 /**
  * Shape staged by the inline "Add Link" affordance and surfaced to parents
@@ -336,9 +339,18 @@ export default function UploadAttachments({
       return (
         <audio src={fileURL} controls className="w-full h-full rounded-lg" />
       );
-    } else {
-      return <CloudUpload className="m-3 w-full h-full text-primary" />;
     }
+
+    const officeKind = getOfficeKind(file.type, file.name);
+    if (officeKind === "word") {
+      return <FileText className="m-3 w-full h-full text-primary" />;
+    } else if (officeKind === "excel") {
+      return <FileSpreadsheet className="m-3 w-full h-full text-primary" />;
+    } else if (officeKind === "powerpoint") {
+      return <Presentation className="m-3 w-full h-full text-primary" />;
+    }
+
+    return <CloudUpload className="m-3 w-full h-full text-primary" />;
   };
 
   const _truncateFileName = (fileName: string, maxLength = 24) => {
@@ -488,7 +500,7 @@ export default function UploadAttachments({
               htmlFor={fileInputId}
               className={`flex items-center flex-1 min-w-0 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              <CloudUpload className="w-5 h-5 mr-1" />
+              <CloudUpload className="w-5 h-5 me-1" />
               <span className="text-sm truncate inline-block">
                 {uploading
                   ? tGlobal("common.status.uploading")
@@ -504,7 +516,7 @@ export default function UploadAttachments({
                       )}
               </span>
               {selectedFiles.length > 1 && (
-                <span className="ml-auto flex items-center gap-0.5 text-sm text-muted-foreground">
+                <span className="ms-auto flex items-center gap-0.5 text-sm text-muted-foreground">
                   <FileStack className="w-4 h-4" />
                   {String(
                     filesize(selectedFiles.reduce((sum, f) => sum + f.size, 0))
@@ -530,7 +542,7 @@ export default function UploadAttachments({
                   </span>
                 </span>
                 <span className="flex items-center">
-                  <span className="text-xs text-muted-foreground pr-2">
+                  <span className="text-xs text-muted-foreground pe-2">
                     {filesize(file.size)}
                   </span>
                   {!disabled && (
@@ -660,7 +672,7 @@ export default function UploadAttachments({
                           size="icon"
                           onClick={() => removeFile(index)}
                           aria-label={tGlobal("common.cancel")}
-                          className="absolute top-0 left-14 -translate-y-2 -translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          className="absolute top-0 start-14 -translate-y-2 -translate-x-2 rtl:translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         >
                           <XCircle className="w-5 h-5" />
                         </Button>
@@ -693,7 +705,7 @@ export default function UploadAttachments({
                           size="icon"
                           onClick={() => removeLink(index)}
                           aria-label={tGlobal("common.cancel")}
-                          className="absolute top-0 left-14 -translate-y-2 -translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          className="absolute top-0 start-14 -translate-y-2 -translate-x-2 rtl:translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         >
                           <XCircle className="w-5 h-5" />
                         </Button>

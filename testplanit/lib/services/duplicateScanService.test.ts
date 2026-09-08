@@ -39,12 +39,12 @@ function makeHit(
   };
 }
 
-const mockPrisma = {} as any;
+const mockDb = {} as any;
 
 describe("DuplicateScanService", () => {
   describe("findSimilarCases", () => {
     it("returns empty array when ES client is null", async () => {
-      const service = new DuplicateScanService(mockPrisma, null);
+      const service = new DuplicateScanService(mockDb, null);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
       const result = await service.findSimilarCases(input, 1);
       expect(result).toEqual([]);
@@ -52,7 +52,7 @@ describe("DuplicateScanService", () => {
 
     it("sends more_like_this query with projectId filter", async () => {
       const esClient = makeMockEsClient([]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       await service.findSimilarCases(input, 42);
@@ -68,7 +68,7 @@ describe("DuplicateScanService", () => {
 
     it("sends query with isDeleted:false filter", async () => {
       const esClient = makeMockEsClient([]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       await service.findSimilarCases(input, 1);
@@ -83,7 +83,7 @@ describe("DuplicateScanService", () => {
 
     it("sends more_like_this query in must clause", async () => {
       const esClient = makeMockEsClient([]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       await service.findSimilarCases(input, 1);
@@ -99,7 +99,7 @@ describe("DuplicateScanService", () => {
 
     it("excludes the source case itself from results", async () => {
       const esClient = makeMockEsClient([makeHit({ id: 1, _score: 9.0 })]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       const result = await service.findSimilarCases(input, 1);
@@ -111,7 +111,7 @@ describe("DuplicateScanService", () => {
       const esClient = makeMockEsClient([
         makeHit({ id: 100, name: "Login test case", _score: 9.0 }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 200, name: "Login test case" };
 
       const result = await service.findSimilarCases(input, 1);
@@ -125,7 +125,7 @@ describe("DuplicateScanService", () => {
       const esClient = makeMockEsClient([
         makeHit({ id: 200, name: "Login test case", _score: 9.0 }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 50, name: "Login test case" };
 
       const result = await service.findSimilarCases(input, 1);
@@ -140,7 +140,7 @@ describe("DuplicateScanService", () => {
       const esClient = makeMockEsClient([
         makeHit({ id: 99, name: "xyz completely different case", _score: 0.1 }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "abc nothing in common" };
 
       const result = await service.findSimilarCases(input, 1);
@@ -156,7 +156,7 @@ describe("DuplicateScanService", () => {
           _score: 10.0,
         }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = {
         id: 1,
         name: "Login with valid credentials",
@@ -173,7 +173,7 @@ describe("DuplicateScanService", () => {
       const esClient = makeMockEsClient([
         makeHit({ id: 100, name: "Login with valid credentials", _score: 5.0 }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = {
         id: 1,
         name: "Login with valid credentials",
@@ -193,7 +193,7 @@ describe("DuplicateScanService", () => {
           tags: [{ name: "auth" }, { name: "smoke" }],
         }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = {
         id: 1,
         name: "Login test case",
@@ -214,7 +214,7 @@ describe("DuplicateScanService", () => {
           customFields: [{ fieldName: "Priority", value: "High" }],
         }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = {
         id: 1,
         name: "Login test case",
@@ -232,7 +232,7 @@ describe("DuplicateScanService", () => {
       const esClient = makeMockEsClient([
         makeHit({ id: 100, name: "Login test", _score: 20.0 }), // exceeds MAX_ES_SCORE
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       const result = await service.findSimilarCases(input, 1);
@@ -257,7 +257,7 @@ describe("DuplicateScanService", () => {
       }));
 
       const esClient = makeMockEsClient(hits);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test case" };
 
       const result = await service.findSimilarCases(input, 1);
@@ -271,7 +271,7 @@ describe("DuplicateScanService", () => {
         makeHit({ id: 102, name: "Login with valid credentials", _score: 9.0 }),
         makeHit({ id: 103, name: "Login with valid credentials", _score: 5.0 }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = {
         id: 1,
         name: "Login with valid credentials",
@@ -286,7 +286,7 @@ describe("DuplicateScanService", () => {
 
     it("uses the correct index name with tenantId", async () => {
       const esClient = makeMockEsClient([]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       await service.findSimilarCases(input, 1, "tenant123");
@@ -297,7 +297,7 @@ describe("DuplicateScanService", () => {
 
     it("uses default index name when tenantId is not provided", async () => {
       const esClient = makeMockEsClient([]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test" };
 
       await service.findSimilarCases(input, 1);
@@ -310,7 +310,7 @@ describe("DuplicateScanService", () => {
       const esClient = makeMockEsClient([
         makeHit({ id: 100, name: "Login test case", _score: 9.0 }),
       ]);
-      const service = new DuplicateScanService(mockPrisma, esClient as any);
+      const service = new DuplicateScanService(mockDb, esClient as any);
       const input: CaseSearchInput = { id: 1, name: "Login test case" };
 
       const result = await service.findSimilarCases(input, 1);

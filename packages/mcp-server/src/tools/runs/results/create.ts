@@ -1,5 +1,11 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  StatusSelect,
+  StatusWhereInput,
+  TemplateResultAssignmentSelect,
+  TestRunCasesSelect,
+  TestRunResultsWhereInput,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
@@ -139,7 +145,7 @@ export function registerRunResultsCreate(
               testRunId: true,
               testRun: { select: { projectId: true } },
               repositoryCase: { select: { templateId: true } },
-            } satisfies Prisma.TestRunCasesSelect,
+            } satisfies TestRunCasesSelect,
           },
           deps.env
         );
@@ -166,8 +172,8 @@ export function registerRunResultsCreate(
               isDeleted: false,
               isEnabled: true,
               projects: { some: { projectId: runCase.testRun.projectId } },
-            } satisfies Prisma.StatusWhereInput,
-            select: { id: true } satisfies Prisma.StatusSelect,
+            } satisfies StatusWhereInput,
+            select: { id: true } satisfies StatusSelect,
             take: 1,
           },
           deps.env
@@ -230,7 +236,7 @@ export function registerRunResultsCreate(
                     systemName: true,
                   },
                 },
-              } satisfies Prisma.TemplateResultAssignmentSelect,
+              } satisfies TemplateResultAssignmentSelect,
             },
             deps.env
           );
@@ -284,7 +290,7 @@ export function registerRunResultsCreate(
             where: {
               testRunCaseId: input.testRunCaseId,
               isDeleted: false,
-            } satisfies Prisma.TestRunResultsWhereInput,
+            } satisfies TestRunResultsWhereInput,
           },
           deps.env
         );

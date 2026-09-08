@@ -156,7 +156,7 @@ export function ParameterRenameDialog({
           <AlertDialogDescription asChild>
             <div className="space-y-2">
               <p>{t("renameDescriptionLead", { totalCount })}</p>
-              <ul className="list-disc pl-5 text-sm">
+              <ul className="list-disc ps-5 text-sm">
                 <li>
                   {t("renameDescriptionStepCount", {
                     stepCount: counts.stepCount,

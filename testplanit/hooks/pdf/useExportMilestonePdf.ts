@@ -3,7 +3,9 @@
 import { useCallback, useState } from "react";
 import { logDataExport } from "~/lib/services/auditClient";
 import type { MilestoneExportData } from "~/lib/services/milestoneExport";
+import { CALENDAR_DATE_TIMEZONE } from "~/utils/calendarDate";
 import { toHumanReadable } from "~/utils/duration";
+import { hasCalendarDates } from "~/utils/milestoneUtils";
 import { hexToRgb, PdfRenderer, type StatusToken } from "./pdfHelpers";
 
 interface UseExportMilestonePdfProps {
@@ -44,6 +46,16 @@ export function useExportMilestonePdf({
 
       const fmtDate = (iso: string | null) =>
         iso ? new Date(iso).toLocaleDateString(locale) : "—";
+      // A milestone's start/due dates are calendar dates pinned to UTC
+      // midnight, so they format in UTC — the local-time formatter above would
+      // print the previous day for any exporter west of Greenwich. See
+      // `~/utils/calendarDate`.
+      const fmtCalendarDate = (iso: string | null) =>
+        iso
+          ? new Date(iso).toLocaleDateString(locale, {
+              timeZone: CALENDAR_DATE_TIMEZONE,
+            })
+          : "—";
       const fmtDateTime = (iso: string | null) =>
         iso ? new Date(iso).toLocaleString(locale) : "—";
       const fmtDuration = (seconds: number) =>
@@ -95,8 +107,16 @@ export function useExportMilestonePdf({
       if (data.milestone.parentPath.length > 0) {
         pdf.renderField("Path", data.milestone.parentPath.join(" / "));
       }
-      pdf.renderField("Started", fmtDate(data.milestone.startedAt));
-      pdf.renderField("Completed", fmtDate(data.milestone.completedAt));
+      // Sprints hold real instants rather than calendar dates, so they format
+      // in local time like any timestamp. See `hasCalendarDates`.
+      const fmtMilestoneDate = hasCalendarDates(data.milestone)
+        ? fmtCalendarDate
+        : fmtDate;
+      pdf.renderField("Started", fmtMilestoneDate(data.milestone.startedAt));
+      pdf.renderField(
+        "Completed",
+        fmtMilestoneDate(data.milestone.completedAt)
+      );
       pdf.renderField("Created", fmtDate(data.milestone.createdAt));
 
       // --- Aggregate summary (first) ---
@@ -172,9 +192,67 @@ export function useExportMilestonePdf({
         });
       }
 
-      // --- Linked issues ---
+      // --- In Scope (milestone-sync Issues panel, MLINK-04) ---
+      if (data.memberIssues.length > 0) {
+        pdf.renderSectionHeader(`In Scope (${data.memberIssues.length})`);
+        const totals = data.memberCoverageTotals;
+        const totalsTokens: StatusToken[] = [
+          ...statusTokens(totals.statuses),
+          ...(totals.untested > 0
+            ? [
+                {
+                  text: `Untested: ${totals.untested}`,
+                  color: hexToRgb("#9ca3af"),
+                },
+              ]
+            : []),
+          ...(totals.uncoveredIssues > 0
+            ? [
+                {
+                  text: `Uncovered issues: ${totals.uncoveredIssues}`,
+                  color: hexToRgb("#d97706"),
+                },
+              ]
+            : []),
+        ];
+        if (totalsTokens.length > 0) {
+          pdf.renderStatusBreakdown("Coverage Totals", totalsTokens);
+        }
+        pdf.renderTable({
+          columns: [
+            { header: "Issue", width: 1.8 },
+            { header: "Title", width: 4 },
+            { header: "Status", width: 1.6 },
+            { header: "Coverage", width: 3.2 },
+            { header: "Source", width: 1.2 },
+          ],
+          rows: data.memberIssues.map((member) => [
+            member.key,
+            member.title,
+            member.status ?? "—",
+            member.uncovered
+              ? ([
+                  { text: "Uncovered", color: hexToRgb("#d97706") },
+                ] as StatusToken[])
+              : ([
+                  ...statusTokens(member.coverageStatuses),
+                  ...(member.untested > 0
+                    ? [
+                        {
+                          text: `Untested: ${member.untested}`,
+                          color: hexToRgb("#9ca3af"),
+                        },
+                      ]
+                    : []),
+                ] as StatusToken[]),
+            member.source === "SYNCED" ? "Synced" : "Manual",
+          ]),
+        });
+      }
+
+      // --- Found in Testing (linked issues) ---
       if (data.issues.length > 0) {
-        pdf.renderSectionHeader(`Linked Issues (${data.issues.length})`);
+        pdf.renderSectionHeader(`Found in Testing (${data.issues.length})`);
         pdf.renderTable({
           columns: [
             { header: "Issue", width: 2 },
@@ -182,6 +260,40 @@ export function useExportMilestonePdf({
             { header: "Status", width: 2 },
           ],
           rows: data.issues.map((i) => [i.key, i.title, i.status ?? "—"]),
+        });
+      }
+
+      // --- Traceability matrix (READY, D4): Issue → Case → latest result ---
+      if ((data.traceability?.length ?? 0) > 0) {
+        pdf.renderSectionHeader(`Traceability (${data.traceability.length})`);
+        pdf.renderTable({
+          columns: [
+            { header: "Issue", width: 1.8 },
+            { header: "Test Case", width: 3.5 },
+            { header: "Result", width: 1.8 },
+            { header: "Executed In", width: 2.4 },
+            { header: "Date", width: 1.6 },
+          ],
+          rows: data.traceability.map((row) => [
+            row.issueKey,
+            row.caseName ?? "—",
+            row.caseName == null
+              ? ([
+                  { text: "Uncovered", color: hexToRgb("#d97706") },
+                ] as StatusToken[])
+              : row.statusName
+                ? ([
+                    {
+                      text: row.statusName,
+                      color: hexToRgb(row.statusColor ?? "#6b7280"),
+                    },
+                  ] as StatusToken[])
+                : ([
+                    { text: "Not run", color: hexToRgb("#9ca3af") },
+                  ] as StatusToken[]),
+            row.runName ?? "—",
+            fmtDate(row.executedAt),
+          ]),
         });
       }
 

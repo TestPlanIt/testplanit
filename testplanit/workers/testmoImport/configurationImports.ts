@@ -1,4 +1,5 @@
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { TxClient } from "~/lib/zenstack";
 import type {
   TestmoConfigurationMappingConfig,
   TestmoConfigVariantMappingConfig,
@@ -24,7 +25,7 @@ const ensureWorkflowScope = (value: unknown): "CASES" | "RUNS" | "SESSIONS" => {
 };
 
 export async function importWorkflows(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -117,7 +118,7 @@ export async function importWorkflows(
 }
 
 export async function importGroups(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -200,7 +201,7 @@ export async function importGroups(
 }
 
 export async function importTags(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -279,7 +280,7 @@ export async function importTags(
 }
 
 export async function importRoles(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -385,7 +386,7 @@ export async function importRoles(
 }
 
 export async function importMilestoneTypes(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -488,7 +489,7 @@ export async function importMilestoneTypes(
 }
 
 const resolveConfigurationVariants = async (
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   mapping: TestmoConfigurationMappingConfig
 ): Promise<{ variantIds: number[]; createdCount: number }> => {
   const variantIds: number[] = [];
@@ -653,7 +654,7 @@ const resolveConfigurationVariants = async (
 };
 
 export async function importConfigurations(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration
 ): Promise<EntitySummaryResult> {
   const summary: EntitySummaryResult = {
@@ -778,7 +779,7 @@ export async function importConfigurations(
  * Idempotent (skips pairs already assigned), so re-running an import is safe.
  */
 export async function assignImportedConfigurationsToProjects(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   projectIds: number[]
 ): Promise<{ created: number }> {
   if (projectIds.length === 0) {
@@ -818,7 +819,7 @@ export async function assignImportedConfigurationsToProjects(
 }
 
 export async function importUserGroups(
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   configuration: TestmoMappingConfiguration,
   datasetRows: Map<string, any[]>
 ): Promise<EntitySummaryResult> {

@@ -11,7 +11,7 @@
  *
  * Execution model mirrors `lib/services/iterationFanOut.integration.test.ts`:
  *   - Skipped by default; opt-in via `RUN_DB_INTEGRATION=1`.
- *   - Each test runs inside a `prisma.$transaction` that rolls back at the
+ *   - Each test runs inside a `baseDb.$transaction` that rolls back at the
  *     end. The DB is never mutated.
  *   - Lazy import of Prisma so the module stays cheap when skipped.
  *
@@ -42,10 +42,10 @@ const describeIntegration =
 
 describeIntegration("submit-result iteration branch (live DB)", () => {
   const importDeps = async () => {
-    const { prisma } = await import("~/lib/prisma");
+    const { baseDb } = await import("~/lib/db");
     const { materializeIterations } =
       await import("~/lib/services/iterationFanOut");
-    return { prisma, materializeIterations };
+    return { baseDb, materializeIterations };
   };
 
   const ROLLBACK_SENTINEL = "__SUBMIT_RESULT_TEST_ROLLBACK__";
@@ -55,14 +55,14 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
    * the iterationFanOut integration test's helper.
    */
   async function withRollback<T>(
-    prisma: any,
+    baseDb: any,
     body: (tx: any) => Promise<T>,
     timeoutMs = 60_000
   ): Promise<T> {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
-      await prisma.$transaction(
+      await baseDb.$transaction(
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -215,7 +215,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   /**
    * Replicates the route's iteration-branch transaction body for ONE
    * submission. The route itself owns auth/permissions/Zod parsing; this
-   * helper is what runs inside the route's `prisma.$transaction` once we
+   * helper is what runs inside the route's `baseDb.$transaction` once we
    * know the input is valid. Keeping it factored out lets the test exercise
    * the exact same writes the route makes without mounting Next.js.
    */
@@ -386,14 +386,14 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
 
   afterAll(async () => {
     if (RUN_INTEGRATION && HAS_DB_URL) {
-      const { prisma } = await import("~/lib/prisma");
-      await prisma.$disconnect();
+      const { baseDb } = await import("~/lib/db");
+      await baseDb.$disconnect();
     }
   });
 
   it("3-iteration pass/fail/pass: counters reach 2/1/3, rollup is failed, all results carry iterationId", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -465,8 +465,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   });
 
   it("all iterations passing rolls up to passed", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -504,8 +504,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   });
 
   it("partial submission (1 of 3): counters reflect only completed iterations, rollup uses the worst-of recorded statuses (unrecorded iterations don't drag the rollup)", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -548,8 +548,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   });
 
   it("TestRunResults.iterationId FK is set to the supplied iteration", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -576,8 +576,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   });
 
   it("skipped iteration result increments skippedIterations counter", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -628,8 +628,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
     // The route reads parametersJson from TestRunCaseDataSetSnapshot to feed
     // redactValues at the audit boundary. Verify the serialized shape can be
     // round-tripped into ParameterSchemaEntry[].
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -651,8 +651,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   // ─── INT-04 — iteration.result.recorded outbox + redaction divergence ────
 
   it("INT-04: iteration.result.recorded outbox row exists after iteration submit", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -693,8 +693,8 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   });
 
   it("INT-04 D-13: webhookRedactedValues uses viewerCanReadSensitive=false even when submitter has READ_SENSITIVE — audit and webhook redactions diverge for sensitive params", async () => {
-    const { prisma, materializeIterations } = await importDeps();
-    await withRollback(prisma, async (tx) => {
+    const { baseDb, materializeIterations } = await importDeps();
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -758,9 +758,9 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
   });
 
   it("INT-04: outbox row commits with the result write (atomicity); rollback also drops the outbox row", async () => {
-    const { prisma, materializeIterations } = await importDeps();
+    const { baseDb, materializeIterations } = await importDeps();
     let outboxRowsAfterRollback: any[] = [];
-    await withRollback(prisma, async (tx) => {
+    await withRollback(baseDb, async (tx) => {
       const fx = await seedFixture(tx);
       await materializeIterations(fx.testRunId, tx);
 
@@ -799,7 +799,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
     // helper always throws ROLLBACK_SENTINEL so the tx never commits.
     const projectId = outboxRowsAfterRollback[0]?.projectId;
     if (projectId != null) {
-      const persistedRows = await prisma.webhookOutboxEvent.findMany({
+      const persistedRows = await baseDb.webhookOutboxEvent.findMany({
         where: {
           eventName: "iteration.result.recorded",
           projectId,

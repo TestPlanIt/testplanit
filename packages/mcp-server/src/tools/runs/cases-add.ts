@@ -1,5 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
+import type {
+  TestRunCasesAggregateArgs,
+  TestRunCasesCountArgs,
+  TestRunCasesUpdateManyArgs,
+} from "@db/input";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -19,7 +23,7 @@ export function registerRunsCasesAdd(
     "testplanit_runs_cases_add",
     {
       description:
-        "Add repository test cases to an existing test run. Cases are appended after any existing run cases (order preserved). Duplicate case IDs are silently skipped by the database. Returns a confirmation with the number of cases added and the updated total.",
+        "Add repository test cases to an existing test run. Cases are appended after any existing run cases (order preserved). Case IDs already in the run are silently skipped; a case previously removed from the run is restored (at its former position, with its prior results still soft-deleted). Returns a confirmation with the number of cases requested, restored, and the updated total.",
       inputSchema: {
         runId: z
           .number()
@@ -44,7 +48,7 @@ export function registerRunsCasesAdd(
           {
             where: { testRunId: input.runId },
             _max: { order: true },
-          } satisfies Prisma.TestRunCasesAggregateArgs,
+          } satisfies TestRunCasesAggregateArgs,
           deps.env,
         );
         const baseOrder = (agg?._max?.order ?? 0) + 1;
@@ -63,19 +67,38 @@ export function registerRunsCasesAdd(
           deps.env,
         );
 
-        // Return the updated total (R1: no isDeleted on TestRunCases).
+        // Restore any of the requested cases that were previously removed
+        // from the run — createMany's skipDuplicates skips their existing
+        // (soft-deleted) rows, which would otherwise leave them removed.
+        // Restored rows keep their former order position.
+        const restored = await zenstack<{ count: number }>(
+          "testRunCases",
+          "updateMany",
+          {
+            where: {
+              testRunId: input.runId,
+              repositoryCaseId: { in: input.caseIds },
+              isDeleted: true,
+            },
+            data: { isDeleted: false },
+          } satisfies TestRunCasesUpdateManyArgs,
+          deps.env,
+        );
+
+        // Return the updated total of active (non-removed) run cases.
         const total = await zenstack<number>(
           "testRunCases",
           "count",
           {
-            where: { testRunId: input.runId },
-          } satisfies Prisma.TestRunCasesCountArgs,
+            where: { testRunId: input.runId, isDeleted: false },
+          } satisfies TestRunCasesCountArgs,
           deps.env,
         );
 
         const result = {
           runId: input.runId,
           requested: input.caseIds.length,
+          restored: restored?.count ?? 0,
           total: total ?? 0,
         };
         return {

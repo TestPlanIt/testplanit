@@ -4,20 +4,34 @@ import { GitHubAdapter } from "./adapters/GitHubAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";
 import { IntegrationManager } from "./IntegrationManager";
 
-// Mock prisma
-vi.mock("@/lib/prismaBase", () => ({
-  prisma: {
+// Mock rawDb
+vi.mock("@/lib/rawDb", () => ({
+  rawDb: {
     integration: {
+      findUnique: vi.fn(),
+    },
+    userIntegrationAuth: {
       findUnique: vi.fn(),
     },
   },
 }));
 
+// Mock Valkey so the single-flight refresh lock is deterministic: `set`
+// resolves "OK" (lock acquired) unless a test overrides it.
+vi.mock("@/lib/valkey", () => ({
+  default: {
+    set: vi.fn(),
+    del: vi.fn(),
+    publish: vi.fn(),
+  },
+  createSubscriberClient: vi.fn(() => null),
+}));
+
 // Mock encryption
 // Identity crypto: fixtures store credential values verbatim, so the tests
 // exercise adapter wiring rather than the cipher. `isEncrypted` reports true
-// for the same reason — refusal of cleartext secrets is covered against the
-// real implementation in credentials.test.ts.
+// for the same reason — cleartext and undecryptable handling is covered
+// against the real implementation in credentials.test.ts.
 vi.mock("@/utils/encryption", () => ({
   EncryptionService: {
     decrypt: vi.fn((encrypted: string) => encrypted),
@@ -32,16 +46,21 @@ vi.mock("@/utils/encryption", () => ({
 vi.mock("./AuthenticationService", () => ({
   AuthenticationService: {
     storeUserAuth: vi.fn(),
+    markNeedsReauth: vi.fn(),
   },
 }));
 
-// Get the mocked prisma
-import { prisma } from "@/lib/prismaBase";
+// Get the mocked rawDb
+import { rawDb } from "@/lib/rawDb";
+import valkeyConnection from "@/lib/valkey";
 import { EncryptionService, decrypt, isEncrypted } from "@/utils/encryption";
 import { AuthenticationService } from "./AuthenticationService";
 
-const mockPrisma = prisma as unknown as {
+const mockDb = rawDb as unknown as {
   integration: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
+  userIntegrationAuth: {
     findUnique: ReturnType<typeof vi.fn>;
   };
 };
@@ -51,6 +70,11 @@ describe("IntegrationManager", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Lock acquired, no concurrent refresh persisted — the common case.
+    vi.mocked(valkeyConnection!.set).mockResolvedValue("OK");
+    vi.mocked(valkeyConnection!.del).mockResolvedValue(1);
+    vi.mocked(valkeyConnection!.publish).mockResolvedValue(0);
+    mockDb.userIntegrationAuth.findUnique.mockResolvedValue(null);
     // clearAllMocks resets calls but not implementations, so re-assert the
     // identity crypto defaults for tests that override them.
     vi.mocked(decrypt).mockImplementation(async (v: string) => v);
@@ -188,7 +212,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       const mockFetch = vi
         .fn()
@@ -259,7 +283,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       // Only the validation request should fire — no refresh exchange.
       global.fetch = vi.fn().mockResolvedValue({
@@ -308,7 +332,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       const mockFetch = vi
         .fn()
@@ -341,6 +365,254 @@ describe("IntegrationManager", () => {
           refreshToken: "fresh-refresh",
         })
       );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("refreshes a token that is inside the expiry margin but not yet expired", async () => {
+      // A token with 2 minutes left would lapse mid-request (or mid-sync);
+      // the 5-minute margin refreshes it proactively.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 62,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "nearly-dead-access",
+            refreshToken: "the-refresh-token",
+            tokenExpiresAt: new Date(Date.now() + 2 * 60 * 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+
+      const mockFetch = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              access_token: "fresh-access",
+              refresh_token: "fresh-refresh",
+              expires_in: 7200,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, username: "u" }),
+        });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("62");
+
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/oauth/token");
+      expect(AuthenticationService.storeUserAuth).toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("marks the auth row needs-reauth when the provider rejects the refresh token", async () => {
+      // invalid_grant = the refresh token itself is dead (revoked/rotated/
+      // inactive too long). The owner must be flagged so they get notified to
+      // reconnect instead of the failure staying log-only.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 63,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "dead-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+
+      const mockFetch = vi
+        .fn()
+        // refresh exchange rejected terminally
+        .mockResolvedValueOnce({
+          ok: false,
+          text: () =>
+            Promise.resolve(
+              '{"error":"invalid_grant","error_description":"revoked"}'
+            ),
+        })
+        // authenticate() then proceeds with the stale token
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, username: "u" }),
+        });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("63");
+
+      expect(AuthenticationService.markNeedsReauth).toHaveBeenCalledWith(
+        "owner-9",
+        63
+      );
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("does not refresh when the row was already refreshed by another process", async () => {
+      // Double-checked locking: between the initial row read and the lock
+      // grant, another process may have persisted rotated tokens. Burning the
+      // old (single-use) refresh token anyway would revoke the token family.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 64,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            id: "auth-row-64",
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "old-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+      mockDb.userIntegrationAuth.findUnique.mockResolvedValue({
+        id: "auth-row-64",
+        userId: "owner-9",
+        isActive: true,
+        accessToken: "winner-access",
+        refreshToken: "winner-refresh",
+        tokenExpiresAt: new Date(Date.now() + 2 * 3600_000),
+      });
+
+      // Only the validation request should fire — no token exchange.
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "u" }),
+      });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("64");
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/api/v4/user");
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
+    });
+
+    it("waits for the lock holder and reuses its persisted tokens", async () => {
+      // Lock lost = another process is mid-refresh. The loser polls the auth
+      // row for the winner's rotated tokens instead of refreshing itself.
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+      vi.mocked(valkeyConnection!.set).mockResolvedValue(null as any);
+
+      const integration = {
+        id: 65,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            id: "auth-row-65",
+            userId: "owner-9",
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "old-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockDb.integration.findUnique.mockResolvedValue(integration);
+      mockDb.userIntegrationAuth.findUnique.mockResolvedValue({
+        id: "auth-row-65",
+        userId: "owner-9",
+        isActive: true,
+        accessToken: "winner-access",
+        refreshToken: "winner-refresh",
+        tokenExpiresAt: new Date(Date.now() + 2 * 3600_000),
+      });
+
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "u" }),
+      });
+      global.fetch = mockFetch;
+
+      vi.useFakeTimers();
+      try {
+        const adapterPromise = manager.getAdapter("65");
+        await vi.advanceTimersByTimeAsync(1000);
+        await adapterPromise;
+      } finally {
+        vi.useRealTimers();
+      }
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/api/v4/user");
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
 
       vi.unstubAllEnvs();
     });
@@ -379,7 +651,7 @@ describe("IntegrationManager", () => {
           },
         ],
       };
-      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+      mockDb.integration.findUnique.mockResolvedValue(integration);
 
       // Token endpoint returns fresh tokens; everything else is the validation
       // call. Keyed off the URL so both the first build and the post-expiry
@@ -404,14 +676,14 @@ describe("IntegrationManager", () => {
       const first = await manager.getAdapter("61");
       const stillCached = await manager.getAdapter("61");
       expect(stillCached).toBe(first); // cache hit while token valid
-      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(1);
 
       // An hour passes — the cached adapter's token is now expired.
       vi.advanceTimersByTime(3600_000 + 1000);
 
       const afterExpiry = await manager.getAdapter("61");
       expect(afterExpiry).not.toBe(first); // evicted + rebuilt
-      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(2);
+      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(2);
 
       vi.unstubAllEnvs();
       vi.useRealTimers();
@@ -420,7 +692,7 @@ describe("IntegrationManager", () => {
 
   describe("getAdapter", () => {
     it("should throw error when integration not found", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue(null);
+      mockDb.integration.findUnique.mockResolvedValue(null);
 
       await expect(manager.getAdapter("999")).rejects.toThrow(
         "Integration not found: 999"
@@ -428,7 +700,7 @@ describe("IntegrationManager", () => {
     });
 
     it("should throw error when integration is not active", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
         provider: "JIRA",
         status: "INACTIVE",
@@ -444,7 +716,7 @@ describe("IntegrationManager", () => {
       // OAuth integrations are inactive until authorized; the authorize and
       // callback routes must still be able to build the adapter to run the
       // handshake. Without allowInactive this would throw and deadlock setup.
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 2,
         name: "Jira OAuth",
         provider: "JIRA",
@@ -463,7 +735,7 @@ describe("IntegrationManager", () => {
     });
 
     it("does NOT cache adapters built with allowInactive (avoids poisoning a pod with an unauthenticated, cloud-id-less adapter)", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 2,
         name: "Jira OAuth",
         provider: "JIRA",
@@ -484,11 +756,11 @@ describe("IntegrationManager", () => {
         allowInactive: true,
       });
 
-      expect(mockPrisma.integration.findUnique).toHaveBeenCalledTimes(2);
+      expect(mockDb.integration.findUnique).toHaveBeenCalledTimes(2);
     });
 
     it("should throw error when no adapter registered for provider", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 1,
         provider: "UNKNOWN_PROVIDER",
         status: "ACTIVE",
@@ -517,7 +789,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       // Mock fetch for Jira authentication
       const mockFetch = vi.fn().mockResolvedValue({
@@ -562,7 +834,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockImplementation((url: string) => {
         if (url === "https://jira.mycompany.domain/rest/api/3/myself") {
@@ -615,7 +887,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -645,7 +917,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -683,7 +955,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       // Mock EncryptionService to return decrypted tokens
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
@@ -732,7 +1004,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         "decrypted-access-token"
       );
@@ -746,7 +1018,7 @@ describe("IntegrationManager", () => {
 
       await manager.getAdapter("7", undefined, "user-abc");
 
-      const findUniqueArgs = mockPrisma.integration.findUnique.mock.calls[0][0];
+      const findUniqueArgs = mockDb.integration.findUnique.mock.calls[0][0];
       expect(findUniqueArgs.include.userIntegrationAuths.where).toMatchObject({
         isActive: true,
         userId: "user-abc",
@@ -779,7 +1051,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         "decrypted-access-token"
       );
@@ -821,7 +1093,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       vi.mocked(decrypt).mockResolvedValue(
         JSON.stringify({
@@ -841,19 +1113,60 @@ describe("IntegrationManager", () => {
       expect(decrypt).toHaveBeenCalledWith("encrypted-credentials-string");
     });
 
-    it("refuses to build an adapter when a stored secret will not decrypt", async () => {
-      vi.mocked(isEncrypted).mockReturnValue(true);
-      vi.mocked(decrypt).mockRejectedValue(new Error("Failed to decrypt data"));
+    it("builds the adapter from cleartext OAuth2 client credentials", async () => {
+      // Regression: OAuth2 client credentials predate the encrypting write
+      // path, so these rows hold a cleartext clientSecret. Refusing them broke
+      // every Jira OAuth2 path — authorize URL, callback, and every later
+      // adapter build — with a re-enter-your-credentials message that
+      // re-entering could not fix.
+      vi.mocked(isEncrypted).mockReturnValue(false);
+      vi.stubEnv("NEXTAUTH_URL", "https://app.com");
 
-      mockPrisma.integration.findUnique.mockResolvedValue({
+      mockDb.integration.findUnique.mockResolvedValue({
         id: 6,
-        name: "Jira Corrupt",
+        name: "Jira OAuth Cleartext",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          clientId: "cleartext-client-id",
+          // Contains "-", so it is not base64 and isEncrypted reports cleartext.
+          clientSecret: "ATOA-cleartext_client_secret",
+        },
+        settings: { baseUrl: "https://test.atlassian.net" },
+        userIntegrationAuths: [],
+      });
+
+      const adapter = await manager.getAdapter("6");
+
+      expect(adapter).toBeInstanceOf(JiraAdapter);
+      expect(adapter!.getAuthorizationUrl!("state-123")).toContain(
+        "client_id=cleartext-client-id"
+      );
+      expect((adapter as any).config.clientSecret).toBe(
+        "ATOA-cleartext_client_secret"
+      );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("refuses to build an adapter when a stored secret will not decrypt", async () => {
+      // Still refused: ciphertext we cannot read authenticates nothing, so it
+      // must not reach the provider.
+      vi.mocked(isEncrypted).mockReturnValue(true);
+      vi.mocked(decrypt).mockRejectedValueOnce(
+        new Error("Failed to decrypt data")
+      );
+
+      mockDb.integration.findUnique.mockResolvedValue({
+        id: 16,
+        name: "Jira Undecryptable",
         provider: "JIRA",
         status: "ACTIVE",
         authType: "API_KEY",
         credentials: {
           email: "test@example.com",
-          apiToken: "looks-encrypted-but-is-not",
+          apiToken: "undecryptable-token",
         },
         settings: { baseUrl: "https://test.atlassian.net" },
         userIntegrationAuths: [],
@@ -862,39 +1175,14 @@ describe("IntegrationManager", () => {
       const mockFetch = vi.fn();
       global.fetch = mockFetch;
 
-      const error = await manager.getAdapter("6").then(
+      const error = await manager.getAdapter("16").then(
         () => null,
         (e) => e
       );
 
       expect(error?.kind).toBe("credentials_corrupt");
-      // The unreadable credential is never forwarded to the provider.
+      // The credential is never forwarded to the provider.
       expect(mockFetch).not.toHaveBeenCalled();
-    });
-
-    it("builds an adapter from cleartext credentials, which the admin UI writes", async () => {
-      vi.mocked(isEncrypted).mockReturnValue(false);
-
-      mockPrisma.integration.findUnique.mockResolvedValue({
-        id: 7,
-        name: "Jira Cleartext",
-        provider: "JIRA",
-        status: "ACTIVE",
-        authType: "API_KEY",
-        credentials: {
-          email: "test@example.com",
-          apiToken: "cleartext-token",
-        },
-        settings: { baseUrl: "https://test.atlassian.net" },
-        userIntegrationAuths: [],
-      });
-
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ accountId: "test-user" }),
-      });
-
-      expect(await manager.getAdapter("7")).toBeTruthy();
     });
   });
 
@@ -916,7 +1204,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -956,7 +1244,7 @@ describe("IntegrationManager", () => {
         ],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
       vi.mocked(EncryptionService.decrypt).mockReturnValue(
         "decrypted-access-token"
       );
@@ -996,7 +1284,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -1031,7 +1319,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -1052,11 +1340,12 @@ describe("IntegrationManager", () => {
         attachments: true,
         linkedIssues: true,
         comments: true,
+        milestones: { kinds: ["RELEASE", "ITERATION"], webhooks: true },
       });
     });
 
     it("should return null when adapter not found", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue(null);
+      mockDb.integration.findUnique.mockResolvedValue(null);
 
       await expect(manager.getCapabilities("999")).rejects.toThrow(
         "Integration not found: 999"
@@ -1082,7 +1371,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
@@ -1097,7 +1386,7 @@ describe("IntegrationManager", () => {
     });
 
     it("should return invalid when integration not found", async () => {
-      mockPrisma.integration.findUnique.mockResolvedValue(null);
+      mockDb.integration.findUnique.mockResolvedValue(null);
 
       const result = await manager.validateIntegration("999");
 
@@ -1122,7 +1411,7 @@ describe("IntegrationManager", () => {
         userIntegrationAuths: [],
       };
 
-      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      mockDb.integration.findUnique.mockResolvedValue(mockIntegration);
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,

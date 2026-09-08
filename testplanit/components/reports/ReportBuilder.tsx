@@ -3,6 +3,7 @@ import { DraggableList } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -93,6 +94,9 @@ import {
 import {
   buildCleanReportUrlParams,
   isUrlInSyncWithReportType,
+  resolveSyncedActiveTab,
+  resolveSyncedReportType,
+  resolveTabChange,
 } from "./reportUrlUtils";
 
 interface ReportBuilderProps {
@@ -309,6 +313,13 @@ function ReportBuilderContent({
   // folders so a parent folder includes its whole subtree.
   const [folderIncludeDescendants, setFolderIncludeDescendants] =
     useState(false);
+  // Per-dimension value filters: dimension id -> selected value objects
+  // ({ id, name, ... } from the dimension-values lookup). Empty/missing
+  // means "all values" for that dimension. The date dimension is excluded
+  // (the date-range picker already covers it).
+  const [dimensionValueFilters, setDimensionValueFilters] = useState<
+    Record<string, any[]>
+  >({});
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(undefined);
@@ -383,6 +394,13 @@ function ReportBuilderContent({
   const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(
     null
   );
+  // Tab a just-initiated navigation is heading toward. Set when we optimistically
+  // switch tabs and fire router.replace; the tab-sync effect leaves activeTab
+  // alone until the URL catches up, so it can't revert the click off a stale URL.
+  const pendingTabRef = useRef<string | null>(null);
+  // reportType counterpart to pendingTabRef — guards the reportType-sync effect
+  // against the same stale-URL window so an optimistic report switch isn't reverted.
+  const pendingReportTypeRef = useRef<string | null>(null);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -580,23 +598,22 @@ function ReportBuilderContent({
   }, [searchParams, preBuiltReports]);
   const [activeTab, setActiveTab] = useState<string>(initialTab);
 
-  // Sync activeTab with URL tab parameter (for browser back/forward navigation)
+  // Sync activeTab with the URL tab parameter (for browser back/forward), while
+  // ignoring the brief window after our own tab click when router.replace is
+  // still in flight and the URL is stale — see resolveSyncedActiveTab.
   useEffect(() => {
-    const urlTab = searchParams.get("tab");
-    if (urlTab) {
-      if (urlTab !== activeTab) {
-        setActiveTab(urlTab);
-      }
-    } else {
-      // If no tab in URL, determine it from reportType
-      const urlReportType = searchParams.get("reportType");
-      if (urlReportType) {
-        const isPreBuilt = preBuiltReports.some((r) => r.id === urlReportType);
-        const correctTab = isPreBuilt ? "reports" : "builder";
-        if (correctTab !== activeTab) {
-          setActiveTab(correctTab);
-        }
-      }
+    const { nextTab, clearPending } = resolveSyncedActiveTab({
+      urlTab: searchParams.get("tab"),
+      urlReportType: searchParams.get("reportType"),
+      pendingTab: pendingTabRef.current,
+      activeTab,
+      preBuiltReportIds: preBuiltReports.map((r) => r.id),
+    });
+    if (clearPending) {
+      pendingTabRef.current = null;
+    }
+    if (nextTab !== null) {
+      setActiveTab(nextTab);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, preBuiltReports]);
@@ -654,13 +671,17 @@ function ReportBuilderContent({
     ]
   );
 
+  // The drill-down route has no query builders for LLM usage metrics (its
+  // metric fallback reads testRunResults), so metric cells stay plain values.
+  const supportsDrillDown = !matchesReportType(reportType, "llm-usage");
+
   // Use the custom hook for generating columns
   const standardColumns = useReportColumns(
     lastUsedDimensions.map((d) => d.value),
     lastUsedMetrics.map((m) => m.value),
     lastUsedDimensions,
     lastUsedMetrics,
-    handleMetricClick,
+    supportsDrillDown ? handleMetricClick : undefined,
     projectId
   );
 
@@ -712,9 +733,17 @@ function ReportBuilderContent({
             ? executionLogColumns
             : standardColumns;
 
-  // When lastUsedDimensions change (after running a report), update grouping
+  // Single source of truth for row grouping. issue-test-coverage is ALWAYS
+  // grouped by issue (issues with expandable test cases) — its last two columns
+  // (Test Results, Pass Rate) render only via aggregatedCell, so without this
+  // grouping they show blank. This must not be gated on `allResults` (only
+  // populated on an explicit Run via updateUrl); doing so left the report
+  // ungrouped on every auto-run (URL load, tab switch, shared report). Other
+  // report types group by their first dimension when more than one is selected.
   React.useEffect(() => {
-    if (lastUsedDimensions.length > 1) {
+    if (matchesReportType(reportType, "issue-test-coverage")) {
+      setGrouping(["issueId"]);
+    } else if (lastUsedDimensions.length > 1) {
       // Only group by the first dimension when there are multiple dimensions
       const firstDimension = lastUsedDimensions[0];
       const groupingColumn = firstDimension.value;
@@ -724,7 +753,7 @@ function ReportBuilderContent({
       // No grouping when there's only one dimension
       setGrouping([]);
     }
-  }, [lastUsedDimensions]);
+  }, [lastUsedDimensions, reportType]);
 
   // Reset column visibility when report type changes so stale keys from a
   // previous report type do not hide columns on the new one (DataTable defaults
@@ -770,37 +799,72 @@ function ReportBuilderContent({
     }
   }, [reportType]);
 
-  // Set grouping for issue test coverage report when data loads
+  // Start the issue-test-coverage report with all issue groups collapsed on
+  // entry. Grouping itself is owned by the effect above; this only resets the
+  // expansion state when the report becomes active.
   React.useEffect(() => {
-    if (
-      matchesReportType(reportType, "issue-test-coverage") &&
-      allResults &&
-      allResults.length > 0
-    ) {
-      // Group by issueId to show issues with expandable test cases
-      setGrouping(["issueId"]);
-      // Start with all groups collapsed
+    if (matchesReportType(reportType, "issue-test-coverage")) {
       setExpanded({});
     }
-  }, [reportType, allResults]);
+  }, [reportType]);
 
   // Get the current report configuration
   const currentReport = reportTypes.find((r) => r.id === reportType);
+
+  // One stable option-fetcher per selected dimension for the value-filter
+  // pickers. Stability matters: MultiAsyncCombobox refetches whenever its
+  // fetchOptions identity changes, so these are memoized per dimension.
+  const currentReportEndpoint = currentReport?.endpoint;
+  const dimensionFilterFetchers = useMemo(() => {
+    const fetchers: Record<
+      string,
+      (
+        query: string,
+        page: number,
+        pageSize: number
+      ) => Promise<{ results: any[]; total: number }>
+    > = {};
+    if (!currentReportEndpoint) return fetchers;
+    dimensions.forEach((dimension: any) => {
+      fetchers[dimension.value] = async (query, page, pageSize) => {
+        const url = new URL(currentReportEndpoint, window.location.origin);
+        if (mode === "project" && projectId) {
+          url.searchParams.set("projectId", projectId.toString());
+        }
+        url.searchParams.set("dimensionId", dimension.value);
+        if (query) url.searchParams.set("search", query);
+        url.searchParams.set("page", String(page));
+        url.searchParams.set("pageSize", String(pageSize));
+        const response = await fetch(url.toString());
+        if (!response.ok) return { results: [], total: 0 };
+        return (await response.json()) as { results: any[]; total: number };
+      };
+    });
+    return fetchers;
+  }, [currentReportEndpoint, dimensions, mode, projectId]);
 
   // Set isClient to true when component mounts (for SSR)
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Sync reportType from URL when it changes
+  // Sync reportType from the URL (back/forward), guarding the in-flight window
+  // after our own navigation the same way the tab sync does — see
+  // resolveSyncedReportType.
   useEffect(() => {
-    const urlReportType = searchParams.get("reportType");
-    if (urlReportType) {
-      // Only update if the URL reportType is valid
-      if (reportTypes.some((r) => r.id === urlReportType)) {
-        setReportType(urlReportType);
-      }
+    const { nextReportType, clearPending } = resolveSyncedReportType({
+      urlReportType: searchParams.get("reportType"),
+      pendingReportType: pendingReportTypeRef.current,
+      currentReportType: reportType,
+      validReportTypeIds: reportTypes.map((r) => r.id),
+    });
+    if (clearPending) {
+      pendingReportTypeRef.current = null;
     }
+    if (nextReportType !== null) {
+      setReportType(nextReportType);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, reportTypes]);
 
   // Fetch filter options when report type changes to automation-trends or when filters change
@@ -902,21 +966,30 @@ function ReportBuilderContent({
 
   // Handle report type change
   const handleReportTypeChange = (newReportType: string) => {
-    // Safety check: ensure reportType is never empty
-    const safeReportType =
-      newReportType && newReportType.trim() !== ""
-        ? newReportType
-        : "test-execution";
+    // Ignore spurious empty/unknown onValueChange events. While the tab is
+    // switching, the report-type Select can momentarily emit an empty value
+    // (its current value is briefly not among the freshly-rendered options).
+    // Coercing that to a fallback report type would revert the tab the user
+    // just switched to (the "bounce back to Report Builder" bug).
+    if (!newReportType || !reportTypes.some((r) => r.id === newReportType)) {
+      return;
+    }
+    const safeReportType = newReportType;
 
     // Update state immediately for responsive UI
     setReportType(safeReportType);
     // Clear stale results so old-typed rows don't render with new-typed columns
     setResults(null);
     setAllResults(null);
+    // Dimension value filters are report-specific
+    setDimensionValueFilters({});
 
     // Determine which tab this report belongs to
     const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
     const newTab = isPreBuilt ? "reports" : "builder";
+    // In-flight guards so the sync effects don't revert this off the stale URL.
+    pendingTabRef.current = newTab;
+    pendingReportTypeRef.current = safeReportType;
     setActiveTab(newTab);
 
     // Clear URL parameters when changing report type (report-specific params don't apply)
@@ -939,8 +1012,24 @@ function ReportBuilderContent({
     }
     lastTabChangeRef.current = { tab: newTab, timestamp: now };
 
-    // Update activeTab state immediately to prevent race conditions
-    setActiveTab(newTab);
+    // Resolve the target tab AND a valid default report for it. Switching tabs
+    // must also switch reportType — otherwise the dropdown and rendered panel
+    // keep showing the previous tab's report (e.g. a custom "test-execution"
+    // report still selected on the pre-built Reports tab).
+    const { tab, reportType: defaultReport } = resolveTabChange({
+      newTab,
+      preBuiltReportIds: preBuiltReports.map((r) => r.id),
+      customReportIds: customReports.map((r) => r.id),
+    });
+
+    // Mark the navigation as in flight so the sync effects won't revert these
+    // optimistic updates off the still-stale URL before router.replace lands.
+    pendingTabRef.current = tab;
+    pendingReportTypeRef.current = defaultReport;
+
+    // Update state immediately to prevent race conditions / stale UI
+    setActiveTab(tab);
+    setReportType(defaultReport);
 
     // Clear all report data and pagination to prevent displaying stale values
     setTotalCount(0);
@@ -949,31 +1038,13 @@ function ReportBuilderContent({
     setError(null);
     setCompatWarning(null);
 
-    // When switching tabs, select a default report from that tab
-    const targetReports =
-      newTab === "reports" ? preBuiltReports : customReports;
-
-    // Determine the default report - use first from target list with valid ID
-    // Fallback: "automation-trends" for reports tab, "test-execution" for builder tab
-    const fallbackReport =
-      newTab === "reports" ? "automation-trends" : "test-execution";
-    let defaultReport =
-      targetReports.length > 0 && targetReports[0]?.id
-        ? targetReports[0].id
-        : fallbackReport;
-
-    // Safety check: ensure defaultReport is never empty
-    if (!defaultReport || defaultReport.trim() === "") {
-      defaultReport = fallbackReport;
-    }
-
     // Mark the new report as already run to prevent auto-run from interfering
     lastRunReportType.current = defaultReport;
 
     // Update URL with a CLEAN param set — see reportUrlUtils for rationale.
     const newParams = buildCleanReportUrlParams({
       reportType: defaultReport,
-      tab: newTab,
+      tab,
     });
 
     router.replace(`${pathname}?${newParams.toString()}`);
@@ -1079,6 +1150,70 @@ function ReportBuilderContent({
           form.setValue("dateRange", dateRange);
         }
 
+        // Load dimension value filters from URL if present. Stored as JSON
+        // ids only ({ dimId: [id, ...] }); the picker labels are resolved
+        // through the dimension-values lookup. Only replace state when the
+        // content actually differs — this effect re-runs on every
+        // searchParams change, and a fresh-but-equal object would retrigger
+        // the filter-change re-run.
+        const dimensionFiltersParam = searchParams.get("dimensionFilters");
+        if (dimensionFiltersParam) {
+          try {
+            const parsed = JSON.parse(dimensionFiltersParam);
+            const restored: Record<string, any[]> = {};
+            if (
+              parsed &&
+              typeof parsed === "object" &&
+              !Array.isArray(parsed)
+            ) {
+              for (const [dimId, values] of Object.entries(parsed)) {
+                if (!Array.isArray(values) || values.length === 0) continue;
+                const ids = values
+                  .map((v: any) =>
+                    typeof v === "object" && v !== null ? v.id : v
+                  )
+                  .filter((id: any) => id != null && id !== "");
+                if (ids.length === 0) continue;
+                // Resolve display labels for the picker badges
+                const lookupUrl = new URL(
+                  currentReport.endpoint,
+                  window.location.origin
+                );
+                if (mode === "project" && projectId) {
+                  lookupUrl.searchParams.set("projectId", projectId.toString());
+                }
+                lookupUrl.searchParams.set("dimensionId", dimId);
+                lookupUrl.searchParams.set("ids", ids.join(","));
+                lookupUrl.searchParams.set("pageSize", String(ids.length));
+                let byId = new Map<string, any>();
+                try {
+                  const lookupResponse = await fetch(lookupUrl.toString());
+                  if (lookupResponse.ok) {
+                    const lookup = await lookupResponse.json();
+                    byId = new Map(
+                      (lookup.results ?? []).map((r: any) => [String(r.id), r])
+                    );
+                  }
+                } catch {
+                  // Label lookup failed — fall back to id-as-name below
+                }
+                restored[dimId] = ids.map(
+                  (id: any) => byId.get(String(id)) ?? { id, name: String(id) }
+                );
+              }
+            }
+            if (Object.keys(restored).length > 0) {
+              setDimensionValueFilters((prev) =>
+                JSON.stringify(prev) === JSON.stringify(restored)
+                  ? prev
+                  : restored
+              );
+            }
+          } catch {
+            // Malformed param — ignore and leave filters as they are
+          }
+        }
+
         if (dimensionsParam) {
           const dimIds = dimensionsParam.split(",");
           // Preserve order from URL by mapping instead of filtering
@@ -1167,6 +1302,12 @@ function ReportBuilderContent({
                 to: endDateParam ? new Date(endDateParam) : undefined,
               });
             }
+          } else {
+            // The URL's dimension/metric ids don't resolve for this report
+            // type, so no auto-run will fire. Mark the run as completed-empty
+            // so the results panel drops its loading state and shows the
+            // no-results guidance instead of spinning forever.
+            setResults([]);
           }
         }
       } catch (err) {
@@ -1237,6 +1378,21 @@ function ReportBuilderContent({
         // folder can include its descendants.
         if (selectedDimensions.some((d) => d.value === "folder")) {
           body.folderIncludeDescendants = folderIncludeDescendants;
+        }
+
+        // Per-dimension value filters (only for dimensions still selected;
+        // empty selections mean "all values" and are omitted).
+        const activeDimensionFilters: Record<
+          string,
+          Array<string | number>
+        > = {};
+        Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
+          if (!values || values.length === 0) return;
+          if (!selectedDimensions.some((d) => d.value === dimId)) return;
+          activeDimensionFilters[dimId] = values.map((v: any) => v.id);
+        });
+        if (Object.keys(activeDimensionFilters).length > 0) {
+          body.dimensionFilters = activeDimensionFilters;
         }
 
         // For automation trends, add selected filter values and date grouping
@@ -1512,6 +1668,20 @@ function ReportBuilderContent({
           setTotalCount(data.total || data.totalCount || fullData.length);
         }
 
+        // Store the request body for sharing on every successful fetch —
+        // auto-runs (URL load, tab switch, filter re-run) must produce a
+        // shareable config too. Exclude paging/sorting: shares show all data.
+        {
+          const {
+            page: _page,
+            pageSize: _pageSize,
+            sortColumn: _sortColumn,
+            sortDirection: _sortDirection,
+            ...shareableBody
+          } = body;
+          setLastRequestBody(shareableBody);
+        }
+
         // Only update these when running a new report (not just sorting/paginating)
         if (updateUrl) {
           setLastUsedDimensions(selectedDimensions);
@@ -1530,18 +1700,13 @@ function ReportBuilderContent({
           // Record when the report was generated
           setReportGeneratedAt(new Date());
 
-          // Store the request body for sharing (exclude page/pageSize as shares should show all data)
-          const {
-            page,
-            pageSize,
-            sortColumn,
-            sortDirection,
-            ...shareableBody
-          } = body;
-          setLastRequestBody(shareableBody);
-
-          // Only update URL for custom reports (pre-built reports don't use dimensions/metrics)
-          if (!currentReport?.isPreBuilt) {
+          // Only persist selections to the URL on an explicit run (the Run
+          // Report button). Auto-runs / sort / filter re-runs must NOT write the
+          // URL: during a tab switch the auto-run re-runs the previous report and
+          // its URL write would clobber the new tab/reportType (the bounce). The
+          // selections are already in the URL from the explicit run, so auto-runs
+          // don't need to rewrite them.
+          if (updateUrl && !currentReport?.isPreBuilt) {
             // Update URL with selections - start with existing params to preserve tab parameter
             const newParams = new URLSearchParams(searchParams.toString());
             // Safety check: ensure reportType is never empty
@@ -1573,6 +1738,27 @@ function ReportBuilderContent({
               newParams.delete("endDate");
             }
 
+            // Persist dimension value filters as ids only (names are
+            // display-only and resolved on load via the values lookup) or
+            // drop the param when none.
+            const urlDimensionFilters: Record<
+              string,
+              Array<string | number>
+            > = {};
+            Object.entries(dimensionValueFilters).forEach(([dimId, values]) => {
+              if (!values || values.length === 0) return;
+              if (!selectedDimensions.some((d) => d.value === dimId)) return;
+              urlDimensionFilters[dimId] = values.map((v: any) => v.id);
+            });
+            if (Object.keys(urlDimensionFilters).length > 0) {
+              newParams.set(
+                "dimensionFilters",
+                JSON.stringify(urlDimensionFilters)
+              );
+            } else {
+              newParams.delete("dimensionFilters");
+            }
+
             router.replace(`${pathname}?${newParams.toString()}`);
           }
         }
@@ -1595,6 +1781,8 @@ function ReportBuilderContent({
       tReports,
       dateGrouping,
       selectedFilterValues,
+      folderIncludeDescendants,
+      dimensionValueFilters,
       consecutiveRuns,
       flipThreshold,
       flakyAutomatedFilter,
@@ -1608,12 +1796,16 @@ function ReportBuilderContent({
   );
 
   const runReport = useCallback(
-    async (selectedDimensions: any[], selectedMetrics: any[]) => {
+    async (
+      selectedDimensions: any[],
+      selectedMetrics: any[],
+      { persistUrl = false }: { persistUrl?: boolean } = {}
+    ) => {
       setLoading(true);
       setError(null);
 
       try {
-        await fetchReportData(selectedDimensions, selectedMetrics, true);
+        await fetchReportData(selectedDimensions, selectedMetrics, persistUrl);
       } finally {
         setLoading(false);
       }
@@ -1626,6 +1818,18 @@ function ReportBuilderContent({
   const isExecutionLog = matchesReportType(reportType, "execution-log");
   const loadedCount = results?.length ?? 0;
   const hasMore = isExecutionLog && loadedCount < totalCount;
+
+  // The first report run is in flight or guaranteed to fire (URL selections
+  // awaiting resolution, or a pre-built report's mount auto-run) and none has
+  // completed yet — `results` stays null until a run lands and is reset to
+  // null on report-type switches. While true, the results panel shows a
+  // loading state instead of a premature "No results found".
+  const awaitingFirstRun =
+    results === null &&
+    !error &&
+    (loading ||
+      Boolean(currentReport?.isPreBuilt) ||
+      Boolean(searchParams.get("dimensions") && searchParams.get("metrics")));
 
   const handleLoadMore = useCallback(() => {
     if (!isExecutionLog || loadingMore) return;
@@ -1820,6 +2024,20 @@ function ReportBuilderContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFilterValues, dateGrouping]);
 
+  // Re-run custom reports when dimension value filters change, once a report
+  // has been run (mirrors the automation-trends filter behavior above).
+  useEffect(() => {
+    if (
+      !isPreBuiltReport(reportType) &&
+      lastUsedDimensions.length > 0 &&
+      lastUsedMetrics.length > 0 &&
+      results
+    ) {
+      void runReport(lastUsedDimensions, lastUsedMetrics);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dimensionValueFilters]);
+
   // Filter options based on selections
   useEffect(() => {
     // For now, no compatibility rules - just use all options
@@ -1827,6 +2045,20 @@ function ReportBuilderContent({
     setFilteredMetricOptions(metricOptions);
     setCompatWarning(null);
   }, [dimensionOptions, metricOptions]);
+
+  // Drop value filters for dimensions that are no longer selected (covers
+  // both the multi-select and the draggable list's remove button).
+  useEffect(() => {
+    setDimensionValueFilters((prev) => {
+      const staleKeys = Object.keys(prev).filter(
+        (dimId) => !dimensions.some((d: any) => d.value === dimId)
+      );
+      if (staleKeys.length === 0) return prev;
+      const next = { ...prev };
+      staleKeys.forEach((key) => delete next[key]);
+      return next;
+    });
+  }, [dimensions]);
 
   // Automatically add "project" as first dimension for cross-project flaky tests
   useEffect(() => {
@@ -1871,7 +2103,8 @@ function ReportBuilderContent({
       );
       return;
     }
-    void runReport(dimensions, metrics);
+    // Explicit user run — persist the selections to the URL (for refresh/share).
+    void runReport(dimensions, metrics, { persistUrl: true });
   };
 
   const handleDimensionsChange = (newDimensions: any[]) => {
@@ -1942,7 +2175,7 @@ function ReportBuilderContent({
         >
           <Card
             shadow="none"
-            className="rounded-none border-y-0 border-l-0 flex flex-col"
+            className="rounded-none border-y-0 border-s-0 flex flex-col"
           >
             <CardContent className="grow overflow-y-auto pb-6">
               <Tabs
@@ -1951,10 +2184,18 @@ function ReportBuilderContent({
                 className="h-full flex flex-col"
               >
                 <TabsList className="grid w-full grid-cols-2 mb-4 min-w-60">
-                  <TabsTrigger value="reports" className="min-w-0 truncate">
+                  <TabsTrigger
+                    value="reports"
+                    data-testid="reports-tab"
+                    className="min-w-0 truncate"
+                  >
                     {tAdminMenu("reports")}
                   </TabsTrigger>
-                  <TabsTrigger value="builder" className="min-w-0 truncate">
+                  <TabsTrigger
+                    value="builder"
+                    data-testid="report-builder-tab"
+                    className="min-w-0 truncate"
+                  >
                     {tReports("title")}
                   </TabsTrigger>
                 </TabsList>
@@ -2192,7 +2433,7 @@ function ReportBuilderContent({
                                     : flakyAutomatedFilter === "manual"
                                       ? tCommon("fields.manual")
                                       : tCommon("fields.automated")}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2319,7 +2560,7 @@ function ReportBuilderContent({
                                       : lookbackDays === 90
                                         ? tReports("dateRange.last3Months")
                                         : tReports("dateRange.last12Months")}
-                                  <ChevronDown className="ml-2 h-4 w-4" />
+                                  <ChevronDown className="ms-2 h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
@@ -2365,7 +2606,7 @@ function ReportBuilderContent({
                                     : healthAutomatedFilter === "manual"
                                       ? tCommon("fields.manual")
                                       : tCommon("fields.automated")}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2430,7 +2671,7 @@ function ReportBuilderContent({
                                           : tReports(
                                               "testCaseHealth.healthStatus.neverExecuted"
                                             )}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2502,7 +2743,7 @@ function ReportBuilderContent({
                                     : healthStaleFilter === "stale"
                                       ? tReports("testCaseHealth.stale")
                                       : tReports("testCaseHealth.notStale")}
-                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                  <ChevronDown className="ms-2 h-4 w-4 opacity-50" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent
@@ -2805,6 +3046,61 @@ function ReportBuilderContent({
                         </label>
                       )}
 
+                      {/* Per-dimension value filters. The date dimension is
+                          covered by the date-range picker above. */}
+                      {!isPreBuiltReport(reportType) &&
+                        dimensions.some((d) => d.value !== "date") && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tCommon("ui.search.filters")}
+                              </label>
+                              <HelpPopover helpKey="reportBuilder.dimensionFilters" />
+                            </div>
+                            {dimensions
+                              .filter((d: any) => d.value !== "date")
+                              .map((dimension: any) => (
+                                <div
+                                  key={dimension.value}
+                                  className="grid gap-1"
+                                >
+                                  <label className="text-xs text-muted-foreground">
+                                    {dimension.label}
+                                  </label>
+                                  <MultiAsyncCombobox
+                                    value={
+                                      dimensionValueFilters[dimension.value] ??
+                                      []
+                                    }
+                                    onValueChange={(values) =>
+                                      setDimensionValueFilters((prev) => ({
+                                        ...prev,
+                                        [dimension.value]: values,
+                                      }))
+                                    }
+                                    fetchOptions={
+                                      dimensionFilterFetchers[dimension.value]
+                                    }
+                                    renderOption={(option: any) => (
+                                      <span className="truncate">
+                                        {option.name}
+                                      </span>
+                                    )}
+                                    getOptionValue={(option: any) => option.id}
+                                    getOptionLabel={(option: any) =>
+                                      String(option.name ?? option.id)
+                                    }
+                                    placeholder={tReports(
+                                      "dimensionFilters.allValues"
+                                    )}
+                                    pageSize={25}
+                                    className="min-h-9"
+                                  />
+                                </div>
+                              ))}
+                          </div>
+                        )}
+
                       {/* Priority Filter for Automation Trends */}
                       {matchesReportType(reportType, "automation-trends") &&
                         dimensions.some((d) => d.value === "priority") && (
@@ -2943,7 +3239,12 @@ function ReportBuilderContent({
             type="button"
             onClick={toggleCollapse}
             variant="secondary"
-            className="p-0 -ml-1 rounded-l-none"
+            className="p-0 -ms-1 rounded-s-none"
+            aria-label={
+              isCollapsed
+                ? tCommon("actions.expand")
+                : tCommon("actions.collapse")
+            }
           >
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>
@@ -2960,6 +3261,7 @@ function ReportBuilderContent({
           {/* Results Display */}
           <ReportRenderer
             results={results || []}
+            awaitingFirstRun={awaitingFirstRun}
             chartData={allResults ?? undefined}
             reportType={reportType}
             dimensions={lastUsedDimensions}
@@ -2994,6 +3296,15 @@ function ReportBuilderContent({
                     ? "desc"
                     : "asc",
               }));
+            }}
+            // Explicit-direction sort from the header column menu; `null`
+            // (Remove sort) restores the default order.
+            onSortColumn={(column, direction) => {
+              if (direction === null) {
+                setSortConfig(null);
+              } else {
+                setSortConfig({ column, direction });
+              }
             }}
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}

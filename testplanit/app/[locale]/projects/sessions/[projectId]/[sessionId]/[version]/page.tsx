@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Loading } from "@/components/Loading";
 import { UserNameCell } from "@/components/tables/UserNameCell";
@@ -36,12 +38,6 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import {
-  useFindFirstSessionVersions,
-  useFindManyMilestones,
-  useFindManySessionVersions,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
 import { SessionVersionRenderer } from "./SessionVersionRenderer";
 
@@ -69,14 +65,18 @@ export default function SessionVersionPage() {
   const t = useTranslations();
   const tCommon = useTranslations("common");
 
-  const { data: currentVersion, isLoading } = useFindFirstSessionVersions({
+  const { data: currentVersion, isLoading } = useClientQueries(
+    schema
+  ).sessionVersions.useFindFirst({
     where: {
       sessionId: Number(sessionId),
       version: Number(version),
     },
   });
 
-  const { data: versions } = useFindManySessionVersions({
+  const { data: versions } = useClientQueries(
+    schema
+  ).sessionVersions.useFindMany({
     where: { sessionId: Number(sessionId) },
     orderBy: { version: "desc" },
   });
@@ -91,7 +91,9 @@ export default function SessionVersionPage() {
       ? (versions?.[currentVersionIndex + 1]?.version ?? null)
       : null;
 
-  const { data: previousVersion } = useFindFirstSessionVersions({
+  const { data: previousVersion } = useClientQueries(
+    schema
+  ).sessionVersions.useFindFirst({
     where: {
       sessionId: Number(sessionId),
       version: previousVersionNumber || -1,
@@ -121,7 +123,7 @@ export default function SessionVersionPage() {
   const sortedPreviousAttachments =
     sortVersionData.attachments(previousAttachments);
 
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: { isDeleted: false },
     orderBy: { order: "asc" },
     include: {
@@ -140,7 +142,7 @@ export default function SessionVersionPage() {
     },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -225,7 +227,7 @@ export default function SessionVersionPage() {
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="w-full pr-4 mr-4">
+          <CardTitle className="w-full pe-4 me-4">
             {(() => {
               const hasNameChanged =
                 currentVersion?.name !== previousVersion?.name;
@@ -376,8 +378,8 @@ export default function SessionVersionPage() {
                   size="sm"
                   className={`p-0 transform ${
                     isCollapsedLeft
-                      ? "rounded-l-none rotate-180"
-                      : "rounded-r-none"
+                      ? "rounded-s-none rotate-180"
+                      : "rounded-e-none"
                   }`}
                 >
                   <ChevronLeft />
@@ -403,8 +405,8 @@ export default function SessionVersionPage() {
                   size="sm"
                   className={`p-0 transform ${
                     isCollapsedRight
-                      ? "rounded-l-none"
-                      : "rounded-r-none rotate-180"
+                      ? "rounded-s-none"
+                      : "rounded-e-none rotate-180"
                   }`}
                 >
                   <ChevronLeft />
@@ -529,7 +531,7 @@ export default function SessionVersionPage() {
               />
               <Separator className="my-4" />
 
-              <div className="mb-1 mr-6">
+              <div className="mb-1 me-6">
                 <div className="font-bold mt-2">
                   {t("sessions.version.versionInfo.created", {
                     number: typeof version === "number" ? version : 0,
@@ -557,7 +559,7 @@ export default function SessionVersionPage() {
               />
               {versions?.length && versions.length > 1 && (
                 <>
-                  <div className="mb-2 mr-6">
+                  <div className="mb-2 me-6">
                     <div className="font-bold mt-2">
                       <Link
                         href={`/projects/sessions/${projectId}/${sessionId}`}
@@ -567,7 +569,7 @@ export default function SessionVersionPage() {
                         {t("sessions.version.versionInfo.latestUpdated", {
                           number: versions[0].version,
                         })}
-                        <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                        <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       </Link>
                     </div>
                     <div className="flex space-x-1">

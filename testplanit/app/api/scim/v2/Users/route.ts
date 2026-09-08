@@ -15,7 +15,7 @@
  * carry `Content-Type: application/scim+json` so IdPs can confidently parse
  * the §3.12 error envelope.
  */
-import { Prisma } from "@prisma/client";
+import { isUniqueConstraintError } from "~/lib/utils/errors";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
@@ -114,11 +114,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (e instanceof ScimValidationError) {
       return e.response;
     }
-    if (
-      typeof Prisma?.PrismaClientKnownRequestError === "function" &&
-      e instanceof Prisma.PrismaClientKnownRequestError &&
-      e.code === "P2002"
-    ) {
+    if (isUniqueConstraintError(e)) {
       return scimError(409, "uniqueness", "userName already exists");
     }
     console.error("[scim/Users] POST failed:", e);

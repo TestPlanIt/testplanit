@@ -6,7 +6,7 @@
  * entity that owns it. The viewer reads one materialized AuditLog row per owning entity, not
  * dozens of raw child-table mutations.
  *
- * This module is intentionally framework-free: no React, no direct prisma import. The two-hop
+ * This module is intentionally framework-free: no React, no direct db import. The two-hop
  * resolver takes an injected query fn so the unit suite can exercise it without a DB.
  *
  * FK columns are the LIVE-VERIFIED values from 14-OPEN-QUESTIONS-RESOLVED.md (§2 + ancillary),
@@ -62,9 +62,9 @@ export const ROLLUP_MAP: Record<string, RollupConfig> = {
   CaseFieldValues: { ownerTable: "RepositoryCases", fkCol: "testCaseId" },
   Steps: { ownerTable: "RepositoryCases", fkCol: "testCaseId" },
   TestCaseParameter: { ownerTable: "RepositoryCases", fkCol: "testCaseId" }, // A1 confirmed (schema:2085)
-  // Issue/Tag join tables: column B is the entity FK for Issue tables; column A for *ToTags.
-  _IssueToRepositoryCases: { ownerTable: "RepositoryCases", fkCol: "B" },
-  _RepositoryCasesToTags: { ownerTable: "RepositoryCases", fkCol: "A" },
+  // Cases <-> Tags/Issue explicit join tables roll up to the owning case.
+  RepositoryCaseTag: { ownerTable: "RepositoryCases", fkCol: "caseId" },
+  RepositoryCaseIssue: { ownerTable: "RepositoryCases", fkCol: "caseId" },
 
   // ── Runs family ─────────────────────────────────────────────────────────────
   TestRunCases: { ownerTable: "TestRuns", fkCol: "testRunId" },

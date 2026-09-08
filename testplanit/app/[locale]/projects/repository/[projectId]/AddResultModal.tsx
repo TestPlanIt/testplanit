@@ -1,3 +1,6 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import type { JsonValue } from "@zenstackhq/orm";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
@@ -7,15 +10,15 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  ApplicationArea,
+import { ApplicationArea } from "~/zenstack/models";
+import type {
   Attachments,
-  Color as PrismaColor,
-  SharedStepGroup as PrismaSharedStepGroup,
-  SharedStepItem as PrismaSharedStepItem,
-  Status as PrismaStatus,
+  Color as DbColor,
+  SharedStepGroup as DbSharedStepGroup,
+  SharedStepItem as DbSharedStepItem,
+  Status as DbStatus,
   Steps,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Bug,
@@ -37,19 +40,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import {
-  useCreateAttachments,
-  useCreateTestRunStepResults,
-  useFindFirstProjects,
-  useFindFirstRepositoryCases,
-  useFindFirstWorkflows,
-  useFindManyIssue,
-  useFindManySharedStepItem,
-  useFindManyStatus,
-  useFindManyTemplateResultAssignment,
-  useFindManyTestRunResults,
-  useUpdateTestRunCases,
-} from "~/lib/hooks";
-import {
   isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
@@ -57,7 +47,12 @@ import {
 } from "~/lib/test-run-result-submit";
 import { useOperationId } from "~/hooks/useOperationId";
 import { toHumanReadable } from "~/utils/duration";
+import {
+  failureFlipStatusId,
+  hasNewlyLinkedIssue,
+} from "~/utils/failureStatusFlip";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import { ExtendedCases } from "./columns";
 
 import { Badge } from "@/components/ui/badge";
@@ -227,7 +222,7 @@ type FormValues = z.infer<ReturnType<typeof formSchema>>;
 
 // Define EnrichedStep type
 interface EnrichedStep extends Steps {
-  sharedStepGroup?: (PrismaSharedStepGroup & { name: string | null }) | null;
+  sharedStepGroup?: (DbSharedStepGroup & { name: string | null }) | null;
 }
 
 interface AddResultModalProps {
@@ -359,7 +354,7 @@ export function AddResultModal({
   ];
 
   // Fetch issue details for all selected issues
-  const { data: issueDetails } = useFindManyIssue(
+  const { data: issueDetails } = useClientQueries(schema).issue.useFindMany(
     {
       where: {
         id: { in: allIssueIds },
@@ -393,7 +388,9 @@ export function AddResultModal({
   }, [issueDetails]);
 
   // Query previous test run results to determine the correct attempt number
-  const { data: previousResults } = useFindManyTestRunResults({
+  const { data: previousResults } = useClientQueries(
+    schema
+  ).testRunResults.useFindMany({
     where: {
       testRunCaseId,
     },
@@ -404,28 +401,30 @@ export function AddResultModal({
   });
 
   // Find the repository case to get its template ID
-  const { data: repositoryCase, isLoading: isLoadingCase } =
-    useFindFirstRepositoryCases({
-      where: {
-        testRuns: {
-          some: {
-            id: testRunCaseId,
-          },
+  const { data: repositoryCase, isLoading: isLoadingCase } = useClientQueries(
+    schema
+  ).repositoryCases.useFindFirst({
+    where: {
+      testRuns: {
+        some: {
+          id: testRunCaseId,
         },
       },
-      select: {
-        id: true,
-        name: true,
-        templateId: true,
-        currentVersion: true,
-      },
-    });
+    },
+    select: {
+      id: true,
+      name: true,
+      templateId: true,
+      currentVersion: true,
+    },
+  });
 
   // Fetch template result fields if we have a case with a template
   const { data: templateResultFields, isLoading: isLoadingTemplateFields } =
-    useFindManyTemplateResultAssignment({
+    useClientQueries(schema).templateResultAssignment.useFindMany({
       where: {
         templateId: repositoryCase?.templateId || 0,
+        resultField: { isEnabled: true, isDeleted: false },
       },
       include: {
         resultField: {
@@ -436,6 +435,7 @@ export function AddResultModal({
               },
             },
             fieldOptions: {
+              where: { fieldOption: { isEnabled: true, isDeleted: false } },
               select: {
                 fieldOption: {
                   select: {
@@ -456,29 +456,30 @@ export function AddResultModal({
     });
 
   // Fetch project data to get integrations
-  const { data: projectData, isLoading: isLoadingProject } =
-    useFindFirstProjects({
-      where: { id: projectId },
-      select: {
-        projectIntegrations: {
-          where: {
-            isActive: true,
-            integration: {
-              status: "ACTIVE",
-            },
+  const { data: projectData, isLoading: isLoadingProject } = useClientQueries(
+    schema
+  ).projects.useFindFirst({
+    where: { id: projectId },
+    select: {
+      projectIntegrations: {
+        where: {
+          isActive: true,
+          integration: {
+            status: "ACTIVE",
           },
-          include: {
-            integration: {
-              select: {
-                id: true,
-                name: true,
-                provider: true,
-              },
+        },
+        include: {
+          integration: {
+            select: {
+              id: true,
+              name: true,
+              provider: true,
             },
           },
         },
       },
-    });
+    },
+  });
 
   // Calculate the next attempt number based on previous results
   const nextAttempt =
@@ -603,7 +604,7 @@ export function AddResultModal({
   }, [isOpen, issueOnFailureError, totalLinkedIssueCount]);
 
   // Fetch available statuses
-  const { data: statuses } = useFindManyStatus({
+  const { data: statuses } = useClientQueries(schema).status.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -632,13 +633,17 @@ export function AddResultModal({
     },
   });
 
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateTestRunCase } =
+    useClientQueries(schema).testRunCases.useUpdate();
   const { mutateAsync: createTestRunStepResult } =
-    useCreateTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useCreate();
 
   // Find the first IN_PROGRESS workflow state for this project
-  const { data: inProgressWorkflow } = useFindFirstWorkflows({
+  const { data: inProgressWorkflow } = useClientQueries(
+    schema
+  ).workflows.useFindFirst({
     where: {
       projects: {
         some: {
@@ -676,6 +681,39 @@ export function AddResultModal({
     );
     if (selectedStatus?.color?.value) {
       setSelectedStatusColor(selectedStatus.color.value);
+    }
+  };
+
+  // Linking an issue means the tester found a defect, so whatever the issue was
+  // attached to flips to the project's first failure status. A step-level link
+  // also flips the overall result, the same escalation selecting a failure
+  // status on a step already performs.
+  const flipToFailureOnIssueLink = (
+    previousIssueIds: number[],
+    nextIssueIds: number[],
+    stepStatusField?: string
+  ) => {
+    if (!hasNewlyLinkedIssue(previousIssueIds, nextIssueIds)) return;
+
+    if (stepStatusField) {
+      const stepFlipId = failureFlipStatusId(
+        Number(form.getValues(stepStatusField)) || null,
+        statuses
+      );
+      if (stepFlipId !== null) {
+        form.setValue(stepStatusField, stepFlipId.toString(), {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    }
+
+    const overallFlipId = failureFlipStatusId(
+      Number(form.getValues("statusId")) || null,
+      statuses
+    );
+    if (overallFlipId !== null) {
+      handleStatusChange(overallFlipId.toString());
     }
   };
 
@@ -871,8 +909,7 @@ export function AddResultModal({
             ) {
               // Use a more direct cast if TypeScript still complains about symbol index
               const itemElapsedValue = (values as any)[stringKey] as
-                | string
-                | null;
+                string | null;
               if (itemElapsedValue) {
                 const itemDurationMs = parseDuration(itemElapsedValue);
                 if (itemDurationMs !== null && itemDurationMs > 0) {
@@ -942,12 +979,12 @@ export function AddResultModal({
                 const placeholderStepId = step.id; // ID of the placeholder Step
 
                 const sharedItems = queryClient.getQueryData<
-                  PrismaSharedStepItem[]
+                  DbSharedStepItem[]
                 >(["sharedStepItems", step.sharedStepGroupId]);
 
                 if (sharedItems && sharedItems.length > 0) {
                   const sharedItemPromises = sharedItems.map(
-                    async (item: PrismaSharedStepItem) => {
+                    async (item: DbSharedStepItem) => {
                       // 'item' is a SharedStepItem
                       const itemIdStr = item.id.toString();
                       const statusKey = `shared_item_${itemIdStr}_statusId`;
@@ -966,8 +1003,7 @@ export function AddResultModal({
                           ? itemEvidenceValue
                           : {};
                       const itemElapsed = (values as any)[elapsedKey] as
-                        | string
-                        | null;
+                        string | null;
                       const itemIssues =
                         selectedSharedItemIssues[item.id] || [];
 
@@ -1057,9 +1093,7 @@ export function AddResultModal({
                     ? stepEvidenceValue
                     : {}; // Default evidence
                 const stepElapsed = values[`step_${stepId}_elapsed`] as
-                  | string
-                  | null
-                  | undefined;
+                  string | null | undefined;
                 const stepIssues = selectedStepIssues[step.id] || [];
 
                 let stepElapsedInSeconds: number | null = null;
@@ -1118,8 +1152,8 @@ export function AddResultModal({
                     testRunResultId: result.id,
                     stepId: step.id,
                     statusId: stepStatusIdToUse,
-                    notes: stepNotes || emptyEditorContent,
-                    evidence: stepEvidence,
+                    notes: (stepNotes || emptyEditorContent) as JsonValue,
+                    evidence: stepEvidence as JsonValue,
                     elapsed: stepElapsedInSeconds,
                     executedAt: new Date(),
                     issues: {
@@ -1176,13 +1210,14 @@ export function AddResultModal({
               // Handle shared step group - 'step' here is the placeholder Step from props
               const placeholderStepId = step.id; // ID of the placeholder Step
 
-              const sharedItems = queryClient.getQueryData<
-                PrismaSharedStepItem[]
-              >(["sharedStepItems", step.sharedStepGroupId]);
+              const sharedItems = queryClient.getQueryData<DbSharedStepItem[]>([
+                "sharedStepItems",
+                step.sharedStepGroupId,
+              ]);
 
               if (sharedItems && sharedItems.length > 0) {
                 const sharedItemPromises = sharedItems.map(
-                  async (item: PrismaSharedStepItem) => {
+                  async (item: DbSharedStepItem) => {
                     // 'item' is a SharedStepItem
                     const itemIdStr = item.id.toString();
                     const statusKey = `shared_item_${itemIdStr}_statusId`;
@@ -1191,8 +1226,7 @@ export function AddResultModal({
                     const elapsedKey = `shared_item_${itemIdStr}_elapsed`;
 
                     const itemStatusIdFromForm = (values as any)[statusKey] as
-                      | string
-                      | undefined;
+                      string | undefined;
                     const itemNotes = (values as any)[notesKey];
                     const itemEvidenceValue = (values as any)[evidenceKey];
                     const itemEvidence =
@@ -1201,8 +1235,7 @@ export function AddResultModal({
                         ? itemEvidenceValue
                         : {};
                     const itemElapsed = (values as any)[elapsedKey] as
-                      | string
-                      | null;
+                      string | null;
                     const itemIssues = selectedSharedItemIssues[item.id] || [];
 
                     let itemElapsedInSeconds: number | null = null;
@@ -1277,8 +1310,7 @@ export function AddResultModal({
               // Handle regular step
               const stepId = step.id.toString();
               const stepStatusIdFromForm = values[`step_${stepId}_statusId`] as
-                | string
-                | undefined;
+                string | undefined;
               const stepNotes = values[`step_${stepId}_notes`];
               const stepEvidenceValue = values[`step_${stepId}_evidence`];
               const stepEvidence =
@@ -1287,9 +1319,7 @@ export function AddResultModal({
                   ? stepEvidenceValue
                   : {}; // Default evidence
               const stepElapsed = values[`step_${stepId}_elapsed`] as
-                | string
-                | null
-                | undefined;
+                string | null | undefined;
               const stepIssues = selectedStepIssues[step.id] || [];
 
               let stepElapsedInSeconds: number | null = null;
@@ -1348,8 +1378,8 @@ export function AddResultModal({
                   testRunResultId: result.id,
                   stepId: step.id,
                   statusId: stepStatusIdToUse,
-                  notes: stepNotes || emptyEditorContent,
-                  evidence: stepEvidence,
+                  notes: (stepNotes || emptyEditorContent) as JsonValue,
+                  evidence: stepEvidence as JsonValue,
                   elapsed: stepElapsedInSeconds,
                   executedAt: new Date(),
                   issues: {
@@ -1561,7 +1591,7 @@ export function AddResultModal({
                   {isRestricted && ( // Add LockIcon
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1600,7 +1630,7 @@ export function AddResultModal({
                   {isRestricted && ( // Add LockIcon
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1645,7 +1675,7 @@ export function AddResultModal({
                   {isRestricted && ( // Add LockIcon
                     <span
                       title={tCommon("aria.restrictedField")}
-                      className="ml-1"
+                      className="ms-1"
                     >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
@@ -1683,9 +1713,7 @@ export function AddResultModal({
         {
           // Get initialHeight
           const initialHeight = field.resultField.initialHeight;
-          const editorClassName = `min-h-[100px] border rounded-md w-full ${
-            initialHeight ? `min-h-[${initialHeight}px]` : ""
-          }`;
+          const editorClassName = "border rounded-md w-full";
 
           fieldComponent = (
             <FormField
@@ -1736,7 +1764,7 @@ export function AddResultModal({
                       {isRestricted && ( // Add LockIcon
                         <span
                           title={tCommon("aria.restrictedField")}
-                          className="ml-1"
+                          className="ms-1"
                         >
                           <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                         </span>
@@ -1752,6 +1780,7 @@ export function AddResultModal({
                         onUpdate={(content) => formField.onChange(content)}
                         projectId={projectId.toString()}
                         className={editorClassName}
+                        style={editorMinHeightStyle(initialHeight)}
                         placeholder={`Enter ${displayName.toLowerCase()} here...`}
                         readOnly={isDisabled}
                       />
@@ -1783,7 +1812,7 @@ export function AddResultModal({
                     {isRestricted && ( // Add LockIcon
                       <span
                         title={tCommon("aria.restrictedField")}
-                        className="ml-1"
+                        className="ms-1"
                       >
                         <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                       </span>
@@ -1836,7 +1865,7 @@ export function AddResultModal({
                 })
               ) : (
                 <div className="flex items-center">
-                  <ListChecks className="mr-1 h-4 w-4 shrink-0" />
+                  <ListChecks className="me-1 h-4 w-4 shrink-0" />
                   {caseName}
                 </div>
               )}
@@ -1886,7 +1915,7 @@ export function AddResultModal({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",
@@ -1945,7 +1974,10 @@ export function AddResultModal({
                 <UnifiedIssueManager
                   projectId={Number(projectId)}
                   linkedIssueIds={selectedMainIssues}
-                  setLinkedIssueIds={setSelectedMainIssues}
+                  setLinkedIssueIds={(ids) => {
+                    flipToFailureOnIssueLink(selectedMainIssues, ids);
+                    setSelectedMainIssues(ids);
+                  }}
                   entityType="testRunResult"
                   iterationContext={
                     iterationId && testRunCaseId
@@ -2028,7 +2060,7 @@ export function AddResultModal({
                           className="space-y-2 border-2 border-primary/20 rounded-lg bg-muted/60 p-2"
                         >
                           <div className="flex items-center font-bold text-primary mb-2">
-                            <Layers className="mr-2 h-5 w-5 shrink-0" />
+                            <Layers className="me-2 h-5 w-5 shrink-0" />
                             {step.sharedStepGroup.name ||
                               t("repository.steps.unnamedSharedGroup")}
                           </div>
@@ -2156,7 +2188,7 @@ export function AddResultModal({
                                         >
                                           <div className="flex items-center">
                                             <div
-                                              className="w-3 h-3 rounded-full mr-2"
+                                              className="w-3 h-3 rounded-full me-2"
                                               style={{
                                                 backgroundColor:
                                                   status.color?.value ||
@@ -2237,6 +2269,11 @@ export function AddResultModal({
                               projectId={Number(projectId)}
                               linkedIssueIds={selectedStepIssues[step.id] || []}
                               setLinkedIssueIds={(ids) => {
+                                flipToFailureOnIssueLink(
+                                  selectedStepIssues[step.id] || [],
+                                  ids,
+                                  `step_${step.id}_statusId`
+                                );
                                 setSelectedStepIssues((prev) => ({
                                   ...prev,
                                   [step.id]: ids,
@@ -2295,8 +2332,8 @@ export function AddResultModal({
 }
 
 // Define a type for statuses to be passed to SharedStepGroupInputs
-type StatusForSelect = Pick<PrismaStatus, "id" | "name" | "isFailure"> & {
-  color?: Pick<PrismaColor, "value"> | null;
+type StatusForSelect = Pick<DbStatus, "id" | "name" | "isFailure" | "order"> & {
+  color?: Pick<DbColor, "value"> | null;
 };
 
 // More specific types for react-hook-form functions
@@ -2338,7 +2375,9 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   // Explicitly set return type to React.ReactNode
   const t = useTranslations();
   const tCommon = useTranslations("common");
-  const { data: items, isLoading } = useFindManySharedStepItem({
+  const { data: items, isLoading } = useClientQueries(
+    schema
+  ).sharedStepItem.useFindMany({
     where: {
       sharedStepGroupId,
       sharedStepGroup: { isDeleted: false },
@@ -2379,6 +2418,39 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
     }
   }, [items, setValue, getValues, queryClient, sharedStepGroupId]);
 
+  // Mirrors the parent modal's flip: an issue linked to a shared step item
+  // fails that item and escalates the overall result.
+  const flipToFailureOnIssueLink = (
+    previousIssueIds: number[],
+    nextIssueIds: number[],
+    itemStatusField: string
+  ) => {
+    if (!hasNewlyLinkedIssue(previousIssueIds, nextIssueIds)) return;
+
+    const itemFlipId = failureFlipStatusId(
+      Number(getValues(itemStatusField)) || null,
+      statuses
+    );
+    if (itemFlipId !== null) {
+      setValue(itemStatusField, itemFlipId.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    const overallFlipId = failureFlipStatusId(
+      Number(getValues("statusId")) || null,
+      statuses
+    );
+    if (overallFlipId !== null) {
+      setValue("statusId", overallFlipId.toString(), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      onMainStatusChange?.();
+    }
+  };
+
   if (isLoading) {
     return <LoadingSpinner />;
   }
@@ -2388,7 +2460,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   }
 
   return (
-    <div className="space-y-4 ml-4 pl-4 border-l-2 border-dashed">
+    <div className="space-y-4 ms-4 ps-4 border-s-2 border-dashed">
       {items.map((item, index) => {
         const itemIdStr = item.id.toString();
         let stepContent, expectedResultContent;
@@ -2484,7 +2556,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                             >
                               <div className="flex items-center">
                                 <div
-                                  className="w-3 h-3 rounded-full mr-2"
+                                  className="w-3 h-3 rounded-full me-2"
                                   style={{
                                     backgroundColor:
                                       status.color?.value || "#B1B2B3",
@@ -2562,6 +2634,11 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                   projectId={projectId}
                   linkedIssueIds={selectedIssues[item.id] || []}
                   setLinkedIssueIds={(ids) => {
+                    flipToFailureOnIssueLink(
+                      selectedIssues[item.id] || [],
+                      ids,
+                      `shared_item_${itemIdStr}_statusId`
+                    );
                     setSelectedIssues((prev) => ({
                       ...prev,
                       [item.id]: ids,

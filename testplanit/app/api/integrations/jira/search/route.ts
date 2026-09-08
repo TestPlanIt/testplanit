@@ -1,6 +1,6 @@
 import { JiraAdapter } from "@/lib/integrations/adapters/JiraAdapter";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     const validatedParams = searchSchema.parse(params);
 
     // Get user's Jira integration auth
-    const userIntegrationAuth = await prisma.userIntegrationAuth.findFirst({
+    const userIntegrationAuth = await baseDb.userIntegrationAuth.findFirst({
       where: {
         userId: session.user.id,
         integration: {
@@ -83,17 +83,21 @@ export async function GET(request: NextRequest) {
 
     let existingIssues: any[] = [];
     if (issueKeys.length > 0) {
-      existingIssues = await prisma.issue.findMany({
+      existingIssues = await baseDb.issue.findMany({
         where: {
           externalId: { in: issueKeys },
           integrationId: userIntegrationAuth.integrationId,
           isDeleted: false,
         },
         include: {
-          repositoryCases: {
+          caseIssues: {
             select: {
-              id: true,
-              name: true,
+              case: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           testRuns: {
@@ -136,7 +140,9 @@ export async function GET(request: NextRequest) {
         linkedTo: existingIssue
           ? {
               issueId: existingIssue.id,
-              testCases: existingIssue.repositoryCases,
+              testCases: existingIssue.caseIssues.map(
+                (ci: { case: { id: number; name: string } }) => ci.case
+              ),
               testRuns: existingIssue.testRuns,
               sessions: existingIssue.sessions,
             }

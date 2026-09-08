@@ -1,4 +1,4 @@
-import { BookLock, Share2 } from "lucide-react";
+import { DatabaseArrowUp, Share2 } from "lucide-react";
 import React from "react";
 
 import { cn, type ClassValue } from "~/utils";
@@ -42,7 +42,7 @@ const DatasetNameDisplay: React.FC<DatasetNameDisplayProps> = ({
   nameClassName = "truncate",
   className = "flex items-center gap-2 min-w-0",
 }) => {
-  const Icon = isShared ? Share2 : BookLock;
+  const Icon = isShared ? Share2 : DatabaseArrowUp;
   // Native `title` attribute (vs Radix Tooltip) because this component is
   // often rendered inside cmdk items / popover content whose pointer-event
   // handling swallows Radix tooltip hover events.

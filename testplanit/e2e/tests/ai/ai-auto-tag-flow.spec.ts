@@ -1,4 +1,8 @@
 import { expect, test } from "../../fixtures";
+import {
+  clickOverflowAction,
+  expectOverflowActionAvailable,
+} from "../../utils/action-overflow";
 
 /**
  * Auto-Tag Flow E2E tests - AI-02
@@ -55,9 +59,13 @@ test.describe("Auto-Tag Flow", () => {
       await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
       await headerCheckbox.click();
 
-      // Auto-tag button should be visible with LLM integration configured
-      const autoTagButton = page.getByTestId("auto-tag-cases-button");
-      await expect(autoTagButton).toBeVisible({ timeout: 10000 });
+      // Auto-tag action should be offered with LLM integration configured
+      // (as a button when the toolbar is wide, as a kebab item when compact)
+      await expectOverflowActionAvailable(
+        page,
+        "auto-tag-cases-button",
+        "cases-actions-menu"
+      );
     });
   });
 
@@ -163,10 +171,12 @@ test.describe("Auto-Tag Flow", () => {
       await expect(headerCheckbox).toBeVisible({ timeout: 5000 });
       await headerCheckbox.click();
 
-      // Click the auto-tag button
-      const autoTagButton = page.getByTestId("auto-tag-cases-button");
-      await expect(autoTagButton).toBeVisible({ timeout: 10000 });
-      await autoTagButton.click();
+      // Click the auto-tag action (kebab-aware)
+      await clickOverflowAction(
+        page,
+        "auto-tag-cases-button",
+        "cases-actions-menu"
+      );
     });
 
     await test.step("Verify the dialog shows analysis progress and stays open", async () => {

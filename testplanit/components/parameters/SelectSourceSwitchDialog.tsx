@@ -54,6 +54,12 @@ export function SelectSourceSwitchDialog({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            // Resend type so the TestCaseParameter cross-field @@validate can
+            // evaluate the SELECT branch — under ZenStack v3 the rule runs
+            // against the partial update input, and omitting the (non-nullable)
+            // type makes it reject a value-only update. This dialog only ever
+            // switches a SELECT parameter's source, so the type is always SELECT.
+            type: "SELECT",
             allowedValuesJson: newSource.allowedValuesJson,
             lookupDataSetId: newSource.lookupDataSetId,
           }),

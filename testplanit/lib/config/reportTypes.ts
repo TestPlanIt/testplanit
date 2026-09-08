@@ -2,6 +2,7 @@ import {
   HeartPulse,
   Bug,
   Compass,
+  Flag,
   Grid3x3,
   Heart,
   ListTree,
@@ -9,6 +10,7 @@ import {
   ScrollText,
   Shuffle,
   Bot,
+  Sparkles,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -64,6 +66,13 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.projectHealth.description"),
     icon: Heart,
     endpoint: "/api/report-builder/project-health",
+  },
+  {
+    id: "milestone-readiness",
+    label: tReports("reportTypes.milestoneReadiness.label"),
+    description: tReports("reportTypes.milestoneReadiness.description"),
+    icon: Flag,
+    endpoint: "/api/report-builder/milestone-readiness",
   },
   {
     id: "session-analysis",
@@ -160,6 +169,13 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.issueTracking.description"),
     icon: Bug,
     endpoint: "/api/report-builder/cross-project-issue-tracking",
+  },
+  {
+    id: "cross-project-llm-usage",
+    label: tReports("crossProjectReportTypes.llmUsage.label"),
+    description: tReports("crossProjectReportTypes.llmUsage.description"),
+    icon: Sparkles,
+    endpoint: "/api/report-builder/cross-project-llm-usage",
   },
   {
     id: "cross-project-automation-trends",

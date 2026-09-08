@@ -82,6 +82,26 @@ or have never been run?
 
 **What comes back:** each row carries `lastUpdatedAt` and `latestResult` inline so the agent can describe staleness without a follow-up call. The response stamps `truncated: true` when the post-filter scan cap (400) is hit; combine with `repositoryId` to scope.
 
+For "flagged automated but the automation has gone quiet", filter on execution evidence instead: `testplanit_cases_list({ projectId: <P>, automated: true, noAutomatedResultSince: "<30-days-ago ISO>" })` returns cases whose most recent JUnit result is older than the cutoff — including cases that never produced one.
+
+## "How much of each feature area is automated?"
+
+```text
+Break down automation coverage in project Acme by feature area — total cases,
+automated cases, and % automated per top-level folder, with leaf-folder detail.
+```
+
+**Tool calls (2):**
+
+1. `testplanit_cases_count({ projectId: <P>, groupBy: "folderRoot" })` → total cases per top-level folder.
+2. `testplanit_cases_count({ projectId: <P>, automated: true, groupBy: "folderRoot" })` → automated cases per top-level folder.
+
+The agent divides the two group sets locally for the coverage rate. Swap `groupBy: "folder"` for leaf-folder detail — each group key carries `path`, `rootId`, and `rootName`, so leaf rows map to their area without any folder lookups. Scope either call with `folderId` + `includeDescendants: true` to drill into one area, or add any other `cases_list` filter (tags, state, custom field, dates).
+
+**Alternative (1 call):** `testplanit_folders_list({ projectId: <P>, depth: "all", includeRecursiveCounts: true })` returns the whole tree with `caseCountRecursive` and `automatedCaseCountRecursive` on every node — the same report keyed by structure rather than by filter.
+
+**What comes back:** `{ total, groups: [{ key, count }] }` sorted by count descending. Counts are computed server-side with the same query semantics as `cases_list`, so the numbers reconcile with enumeration.
+
 ## "What test cases live in this code repository?"
 
 ```text
@@ -191,6 +211,79 @@ Create these 20 test cases in project Acme under the "Checkout" folder using the
   ]
 }
 ```
+
+## "What's waiting on my review?"
+
+```text
+What's in my review queue? Summarize each one and what it's asking me to approve.
+```
+
+**Tool calls (1–N):**
+
+1. `testplanit_reviews_list({})` → the pending queue for whoever owns the token, oldest first. There is no user parameter — the tool can only return the caller's own work, covering both requests assigned to them directly and requests assigned to a role they hold.
+2. (Optional, per row) `testplanit_cases_get` / `testplanit_test_runs_get` / `testplanit_sessions_get` using the row's `entityType` + `entityId` to read the thing under review before summarizing it.
+
+**What comes back:** each row names the subject, the transition being requested, who asked, and their note.
+
+```json
+{
+  "items": [
+    {
+      "id": "cm7x9k2p0000abcd",
+      "status": "PENDING",
+      "entityType": "CASE",
+      "entityId": 99,
+      "entityName": "Login flow",
+      "entityDeleted": false,
+      "project": { "id": 3, "name": "Acme" },
+      "requestedBy": { "id": "user-2", "name": "Rita", "email": "rita@example.com" },
+      "assignedTo": { "via": "ROLE", "userId": null, "name": "QA Lead", "roleId": 7 },
+      "transition": { "from": { "id": 5, "name": "Draft" }, "to": { "id": 6, "name": "Approved" } },
+      "requestNote": "Rewrote the 2FA steps — please check the lockout path.",
+      "requestedAt": "2026-05-07T12:00:00Z",
+      "decision": null
+    }
+  ],
+  "hasNextPage": false,
+  "nextCursor": null,
+  "view": "pending",
+  "reviewFeatureEnabled": true
+}
+```
+
+Add `view: "decided"` to see your own decision history instead.
+
+## "Approve the login flow review"
+
+```text
+Approve the review on the login flow case — the 2FA steps look right.
+```
+
+**Tool calls (2):**
+
+1. `testplanit_reviews_list({})` → find the request whose `entityName` is the login flow case, and read its `id`.
+2. `testplanit_reviews_decide({ reviewRequestId: "<id from step 1>", decision: "APPROVED", comment: "2FA steps look right" })`.
+
+This is a real, irreversible act, so agents should confirm the decision with you before making it: decisions are append-only, the requester is notified, and **approving performs the transition** — the case moves from Draft to Approved as part of the call. `CHANGES_REQUESTED` and `REJECTED` require a `comment` explaining what is wrong; for `APPROVED` it is optional. The comment is posted to the entity's comment thread addressed to the requester.
+
+**What comes back:** the decided request, with `transitionApplied` stating whether the entity moved.
+
+```json
+{
+  "id": "cm7x9k2p0000abcd",
+  "status": "APPROVED",
+  "entityType": "CASE",
+  "entityId": 99,
+  "projectId": 3,
+  "decisionComment": "2FA steps look right",
+  "decidedAt": "2026-05-07T12:05:00Z",
+  "decidedByUserId": "user-1",
+  "transitionApplied": true,
+  "appliedStateId": 6
+}
+```
+
+Deciding from an agent needs a TestPlanIt instance that accepts API-token review decisions; against an older instance the tool says so, and listing the inbox still works either way. Eligibility is enforced server-side and is not negotiable from the client: the caller must be the assignee (directly or through an assigned role) **and** hold approve permission for the entity's area, or be a system admin. Anything else returns `INELIGIBLE_REVIEWER`. A read-only (`mode:read`) token is refused before the decision runs, which makes read-only tokens the safe default for agents you do not want approving things.
 
 ## See also
 

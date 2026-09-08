@@ -72,9 +72,7 @@ test.describe("Steps Display", () => {
 
     try {
       // Find the resizable handle between the panels
-      const resizeHandle = page
-        .locator("[data-panel-resize-handle-id]")
-        .first();
+      const resizeHandle = page.locator('[role="separator"]').first();
 
       // Wait for the handle to be visible
       await resizeHandle.waitFor({ state: "visible", timeout: 3000 });
@@ -225,8 +223,12 @@ test.describe("Steps Display", () => {
       const editButton = page.locator('button:has-text("Edit")').first();
       await expect(editButton).toBeVisible({ timeout: 15000 });
 
-      // Verify we're on the correct test case by checking the name in the heading
-      await expect(page.locator(`text=${testCaseName}`)).toBeVisible({
+      // Verify we're on the correct test case via the breadcrumb. A bare
+      // `text=` locator is ambiguous here: the case name is also the document
+      // <title>, which `text=` matches and which is never "visible".
+      await expect(
+        page.locator("#project-menu").getByText(testCaseName!)
+      ).toBeVisible({
         timeout: 10000,
       });
 

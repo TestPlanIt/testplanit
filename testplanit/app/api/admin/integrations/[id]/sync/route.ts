@@ -1,5 +1,5 @@
 import { syncService } from "@/lib/integrations/services/SyncService";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -31,7 +31,7 @@ export const POST = withAuditContext(
       }
 
       // SIMPLE_URL integrations have no API to pull from — sync is not supported
-      const integration = await prisma.integration.findUnique({
+      const integration = await baseDb.integration.findUnique({
         where: { id: integrationId },
         select: { provider: true },
       });

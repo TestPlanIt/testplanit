@@ -231,7 +231,11 @@ export function TwoFactorSettings({
           <Shield className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm">{t("auth.signin.twoFactor.title")}</span>
         </div>
-        <Switch checked={twoFactorEnabled} disabled />
+        <Switch
+          checked={twoFactorEnabled}
+          disabled
+          aria-label={t("auth.signin.twoFactor.title")}
+        />
       </div>
     );
   }
@@ -272,6 +276,7 @@ export function TwoFactorSettings({
                     checked={twoFactorEnabled}
                     disabled
                     className="cursor-not-allowed"
+                    aria-label={t("auth.signin.twoFactor.title")}
                   />
                 </span>
               </TooltipTrigger>
@@ -284,6 +289,7 @@ export function TwoFactorSettings({
               checked={twoFactorEnabled}
               onCheckedChange={handleSwitchChange}
               disabled={isLoading}
+              aria-label={t("auth.signin.twoFactor.title")}
             />
           )}
         </div>
@@ -510,7 +516,7 @@ export function TwoFactorSettings({
               }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isLoading && <Loader2 className="h-4 w-4 me-2 animate-spin" />}
               {t("users.profile.twoFactor.disable")}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,4 +1,4 @@
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { expectAuditRowComplete } from "../testing/auditAssertions";
 import {
@@ -49,39 +49,27 @@ function expectLastQueuedRowComplete(
       userId:
         (ev.userId as string | null | undefined) ??
         ((ctx as Record<string, unknown>).userId as
-          | string
-          | null
-          | undefined) ??
+          string | null | undefined) ??
         null,
       userEmail:
         (ev.userEmail as string | null | undefined) ??
         ((ctx as Record<string, unknown>).userEmail as
-          | string
-          | null
-          | undefined) ??
+          string | null | undefined) ??
         null,
       userName:
         (ev.userName as string | null | undefined) ??
         ((ctx as Record<string, unknown>).userName as
-          | string
-          | null
-          | undefined) ??
+          string | null | undefined) ??
         null,
       ipAddress:
         ((ctx as Record<string, unknown>).ipAddress as
-          | string
-          | null
-          | undefined) ?? null,
+          string | null | undefined) ?? null,
       userAgent:
         ((ctx as Record<string, unknown>).userAgent as
-          | string
-          | null
-          | undefined) ?? null,
+          string | null | undefined) ?? null,
       requestId:
         ((ctx as Record<string, unknown>).requestId as
-          | string
-          | null
-          | undefined) ?? null,
+          string | null | undefined) ?? null,
       metadata: ev.metadata ?? null,
     },
     opts
@@ -121,7 +109,7 @@ vi.mock("../auditContext", () => ({
 }));
 
 // Mock multi-tenant
-vi.mock("../multiTenantPrisma", () => ({
+vi.mock("../multiTenantDb", () => ({
   isMultiTenantMode: vi.fn(() => false),
   getCurrentTenantId: vi.fn(() => undefined),
 }));
@@ -501,6 +489,84 @@ describe("AuditLog Service", () => {
         where: { id: 3 },
         include: { repository: { select: { name: true } } },
       });
+    });
+
+    it("resolves an attachment through whichever of its parents is set", async () => {
+      // An attachment hangs off exactly one of seven possible parents, each a
+      // different number of hops from the project; the include asks for all of
+      // them and the first populated path wins.
+      const { client, findUnique } = clientFor("attachments", {
+        id: 900,
+        name: "failure.png",
+        testCase: null,
+        session: null,
+        sessionResults: null,
+        testRuns: null,
+        testRunResults: null,
+        testRunStepResult: { testRunResult: { testRun: { projectId: 77 } } },
+        junitTestResult: null,
+      });
+      const scope = await resolveAuditEntityScope(
+        client,
+        "Attachments",
+        "900",
+        {
+          needName: false,
+          needProjectId: true,
+        }
+      );
+      expect(scope).toEqual({ projectId: 77 });
+      expect(findUnique).toHaveBeenCalledWith({
+        where: { id: 900 },
+        include: expect.objectContaining({
+          testRunStepResult: {
+            select: {
+              testRunResult: {
+                select: { testRun: { select: { projectId: true } } },
+              },
+            },
+          },
+        }),
+      });
+    });
+
+    it("resolves an attachment hung off a JUnit result", async () => {
+      const { client } = clientFor("attachments", {
+        id: 901,
+        testRunStepResult: null,
+        junitTestResult: { testSuite: { testRun: { projectId: 12 } } },
+      });
+      const scope = await resolveAuditEntityScope(
+        client,
+        "Attachments",
+        "901",
+        {
+          needName: false,
+          needProjectId: true,
+        }
+      );
+      expect(scope).toEqual({ projectId: 12 });
+    });
+
+    it("scopes a Projects row from its own id without querying", async () => {
+      const { client, findUnique } = clientFor("projects", {});
+      const scope = await resolveAuditEntityScope(client, "Projects", "31", {
+        needName: false,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({ projectId: 31 });
+      expect(findUnique).not.toHaveBeenCalled();
+    });
+
+    it("keeps a Projects row's own scope even when the project is gone", async () => {
+      // findUnique returns null (hard-deleted), but the id alone answers the
+      // project question, so the scope must not regress to empty.
+      const { client } = clientFor("projects", null);
+      const scope = await resolveAuditEntityScope(client, "Projects", "31", {
+        needName: true,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({ projectId: 31 });
     });
 
     it("passes a cuid primary key through as a string", async () => {
@@ -1087,7 +1153,7 @@ describe("AuditLog Service", () => {
     });
 
     it("should fall back to getCurrentTenantId when no explicit tenantId", async () => {
-      const multiTenant = await import("../multiTenantPrisma");
+      const multiTenant = await import("../multiTenantDb");
       vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue(
         "tenant-from-env"
       );
@@ -1110,7 +1176,7 @@ describe("AuditLog Service", () => {
     });
 
     it("should prefer explicit tenantId over getCurrentTenantId", async () => {
-      const multiTenant = await import("../multiTenantPrisma");
+      const multiTenant = await import("../multiTenantDb");
       vi.mocked(multiTenant.getCurrentTenantId).mockReturnValue(
         "tenant-from-env"
       );
@@ -1583,7 +1649,7 @@ describe("captureAuditEvent — review enum acceptance", () => {
     }
 
     // All five enum values reached the queue mock — proves the regenerated
-    // @prisma/client AuditAction includes the five new members AND that
+    // ~/zenstack/models AuditAction includes the five new members AND that
     // captureAuditEvent's surface accepts them.
     expect(mocks.mockQueue.add).toHaveBeenCalledTimes(reviewActions.length);
     const queuedActions = mocks.mockQueue.add.mock.calls.map(

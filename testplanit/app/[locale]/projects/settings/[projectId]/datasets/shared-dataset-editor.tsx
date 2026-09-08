@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import {
   DatasetTab,
@@ -9,6 +11,7 @@ import { SharedDatasetVersionPicker } from "@/components/parameters/SharedDatase
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageTitle } from "@/components/ui/typography";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -19,11 +22,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  useFindFirstDataSet,
-  useFindFirstDataSetVersion,
-  useFindManyDataSetRow,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface SharedDatasetEditorProps {
@@ -101,7 +99,7 @@ export function SharedDatasetEditor({
     data: dataset,
     isLoading: datasetLoading,
     error: datasetError,
-  } = useFindFirstDataSet({
+  } = useClientQueries(schema).dataSet.useFindFirst({
     where: {
       id: dataSetId,
       projectId,
@@ -122,21 +120,22 @@ export function SharedDatasetEditor({
   // editable surface; for historical views we resolve rowsJson from the
   // pinned DataSetVersion below.
   const isCurrentView = selectedVersion === "current";
-  const { data: liveRowsRaw, isLoading: liveRowsLoading } =
-    useFindManyDataSetRow(
-      {
-        where: { dataSetId, isDeleted: false },
-        orderBy: { rowIndex: "asc" },
-        select: { id: true, label: true, rowIndex: true, valuesJson: true },
-      },
-      { enabled: isCurrentView }
-    );
+  const { data: liveRowsRaw, isLoading: liveRowsLoading } = useClientQueries(
+    schema
+  ).dataSetRow.useFindMany(
+    {
+      where: { dataSetId, isDeleted: false },
+      orderBy: { rowIndex: "asc" },
+      select: { id: true, label: true, rowIndex: true, valuesJson: true },
+    },
+    { enabled: isCurrentView }
+  );
 
   // ----- Historical version when not in "current" view -----
   const historicalVersionId =
     selectedVersion !== "current" ? selectedVersion.id : -1;
   const { data: historicalVersion, isLoading: historicalLoading } =
-    useFindFirstDataSetVersion(
+    useClientQueries(schema).dataSetVersion.useFindFirst(
       {
         where: { id: historicalVersionId },
         select: {
@@ -151,7 +150,9 @@ export function SharedDatasetEditor({
 
   // ----- Latest version (used to derive parameters when current view
   //       has no live row schema yet — e.g., first save not done). -----
-  const { data: latestVersion } = useFindFirstDataSetVersion({
+  const { data: latestVersion } = useClientQueries(
+    schema
+  ).dataSetVersion.useFindFirst({
     where: { dataSetId },
     orderBy: { version: "desc" },
     select: {
@@ -366,7 +367,7 @@ export function SharedDatasetEditor({
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <h2 className="text-2xl font-semibold">{tEditor("notFound")}</h2>
+          <PageTitle>{tEditor("notFound")}</PageTitle>
           <p className="text-muted-foreground">
             {tEditor("notFoundDescription")}
           </p>
@@ -390,19 +391,21 @@ export function SharedDatasetEditor({
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 min-w-0">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                data-testid="shared-dataset-editor-back"
-              >
-                <Link href={`/projects/settings/${projectId}/datasets`}>
+            <div className="flex items-center gap-2 min-w-0 grow">
+              <Link href={`/projects/settings/${projectId}/datasets`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  aria-label={tEditor("back")}
+                  data-testid="shared-dataset-editor-back"
+                >
                   <ArrowLeft className="h-4 w-4" />
-                  {tEditor("back")}
-                </Link>
-              </Button>
-              <CardTitle className="truncate">{dataset.name}</CardTitle>
+                </Button>
+              </Link>
+              <CardTitle className="grow min-w-0 truncate text-xl md:text-2xl">
+                {dataset.name}
+              </CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <SharedDatasetVersionPicker

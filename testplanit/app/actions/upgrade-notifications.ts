@@ -1,7 +1,7 @@
 "use server";
 
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getUpgradeNotificationsBetweenVersions } from "~/lib/upgrade-notifications";
 import packageJson from "~/package.json";
 import { getServerAuthSession } from "~/server/auth";
@@ -11,8 +11,8 @@ import { getServerAuthSession } from "~/server/auth";
  * Updates the user's lastSeenVersion after processing.
  *
  * Wrapped in withActionAuditContext: the two
- * prisma.user.update({ data: { lastSeenVersion } }) writes below trigger
- * the User extension hook at lib/prisma.ts:558-588. That hook's
+ * baseDb.user.update({ data: { lastSeenVersion } }) writes below trigger
+ * the User extension hook at lib/baseDb.ts:558-588. That hook's
  * skip-guard only fires when `args.data` is `lastActiveAt`-only, so
  * lastSeenVersion writes DO emit auditUpdate("User", ...). With the
  * wrapper plus the NextAuth session callback enrichment (Plan 01 Task
@@ -39,7 +39,7 @@ export const checkUpgradeNotifications = withActionAuditContext(
       const currentVersion = packageJson.version;
 
       // Get user's last seen version and access level
-      const user = await prisma.user.findUnique({
+      const user = await baseDb.user.findUnique({
         where: { id: session.user.id },
         select: { lastSeenVersion: true, access: true },
       });
@@ -56,7 +56,7 @@ export const checkUpgradeNotifications = withActionAuditContext(
 
       // If user has never seen any version, just update to current (no notifications for first-time setup)
       if (!lastSeenVersion) {
-        await prisma.user.update({
+        await baseDb.user.update({
           where: { id: session.user.id },
           data: { lastSeenVersion: currentVersion },
         });
@@ -84,7 +84,7 @@ export const checkUpgradeNotifications = withActionAuditContext(
       );
 
       // Update user's last seen version first (to prevent duplicate notifications on refresh)
-      await prisma.user.update({
+      await baseDb.user.update({
         where: { id: session.user.id },
         data: { lastSeenVersion: currentVersion },
       });
@@ -142,7 +142,7 @@ export const checkUpgradeNotifications = withActionAuditContext(
       }
 
       // Create the notification
-      await prisma.notification.create({
+      await baseDb.notification.create({
         data: {
           userId: session.user.id,
           type: "SYSTEM_ANNOUNCEMENT",

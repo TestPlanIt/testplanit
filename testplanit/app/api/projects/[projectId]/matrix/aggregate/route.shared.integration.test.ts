@@ -24,7 +24,7 @@
  *
  * The rollback-on-transaction pattern used by the helper-level integration
  * test does NOT work here because the route handler calls `getEnhancedDb`
- * which fetches the user via the OUTER `prisma` client — a freshly created
+ * which fetches the user via the OUTER `baseDb` client — a freshly created
  * transactional user is invisible to the outer client until commit, but we
  * never commit. Instead this test creates committed test data in
  * `beforeAll` and explicitly cleans it up in `afterAll`.
@@ -62,14 +62,14 @@ describeIntegration(
   "matrix routes — cross-project denial (live DB, route layer)",
   () => {
     const importDeps = async () => {
-      const { prisma } = await import("~/lib/prisma");
+      const { baseDb } = await import("~/lib/db");
       const aggregateRoute = await import("./route");
       const cellCountRoute = await import("../cell-count/route");
       const exportRoute = await import("../export/route");
       const reportBuilderRoute =
         await import("../../../../report-builder/iteration-matrix/route");
       return {
-        prisma,
+        baseDb,
         aggregatePOST: aggregateRoute.POST,
         cellCountPOST: cellCountRoute.POST,
         exportGET: exportRoute.GET,
@@ -100,17 +100,17 @@ describeIntegration(
 
     let ctx: SeedCtx;
 
-    async function seed(prisma: any): Promise<SeedCtx> {
-      const wf = await prisma.workflows.findFirst({ select: { id: true } });
+    async function seed(baseDb: any): Promise<SeedCtx> {
+      const wf = await baseDb.workflows.findFirst({ select: { id: true } });
       if (!wf) throw new Error("Seed the DB first (no Workflows row)");
-      const tpl = await prisma.templates.findFirst({ select: { id: true } });
+      const tpl = await baseDb.templates.findFirst({ select: { id: true } });
       if (!tpl) throw new Error("Seed the DB first (no Templates row)");
-      const role = await prisma.roles.findFirst({ select: { id: true } });
+      const role = await baseDb.roles.findFirst({ select: { id: true } });
       if (!role) throw new Error("Seed the DB first (no Roles row)");
 
       const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-      const userA = await prisma.user.create({
+      const userA = await baseDb.user.create({
         data: {
           name: `Matrix-RouteTest-UA-${stamp}`,
           email: `matrix-rt-ua-${stamp}@example.com`,
@@ -119,7 +119,7 @@ describeIntegration(
         },
         select: { id: true },
       });
-      const userB = await prisma.user.create({
+      const userB = await baseDb.user.create({
         data: {
           name: `Matrix-RouteTest-UB-${stamp}`,
           email: `matrix-rt-ub-${stamp}@example.com`,
@@ -141,7 +141,7 @@ describeIntegration(
         folderId: number;
         runId: number;
       }> {
-        const project = await prisma.projects.create({
+        const project = await baseDb.projects.create({
           data: {
             name: `${prefix}-${stamp}`,
             createdBy: ownerId,
@@ -150,18 +150,18 @@ describeIntegration(
           },
           select: { id: true },
         });
-        await prisma.userProjectPermission.create({
+        await baseDb.userProjectPermission.create({
           data: {
             projectId: project.id,
             userId: denyOtherUserId,
             accessType: "NO_ACCESS",
           },
         });
-        const repo = await prisma.repositories.create({
+        const repo = await baseDb.repositories.create({
           data: { projectId: project.id },
           select: { id: true },
         });
-        const folder = await prisma.repositoryFolders.create({
+        const folder = await baseDb.repositoryFolders.create({
           data: {
             name: `f-${stamp}`,
             repositoryId: repo.id,
@@ -170,13 +170,13 @@ describeIntegration(
           },
           select: { id: true },
         });
-        const cfg = await prisma.configurations.create({
+        const cfg = await baseDb.configurations.create({
           data: {
             name: `${prefix}-Cfg-${stamp}`,
           },
           select: { id: true },
         });
-        const c = await prisma.repositoryCases.create({
+        const c = await baseDb.repositoryCases.create({
           data: {
             projectId: project.id,
             repositoryId: repo.id,
@@ -189,7 +189,7 @@ describeIntegration(
           },
           select: { id: true },
         });
-        const tr = await prisma.testRuns.create({
+        const tr = await baseDb.testRuns.create({
           data: {
             name: `${prefix}-Run-${stamp}`,
             projectId: project.id,
@@ -200,7 +200,7 @@ describeIntegration(
           },
           select: { id: true },
         });
-        await prisma.testRunCases.create({
+        await baseDb.testRunCases.create({
           data: { testRunId: tr.id, repositoryCaseId: c.id, order: 0 },
           select: { id: true },
         });
@@ -238,33 +238,33 @@ describeIntegration(
       };
     }
 
-    async function cleanup(prisma: any, c: SeedCtx) {
+    async function cleanup(baseDb: any, c: SeedCtx) {
       try {
-        await prisma.testRunCases.deleteMany({
+        await baseDb.testRunCases.deleteMany({
           where: { testRunId: { in: c.runIds } },
         });
-        await prisma.testRuns.deleteMany({
+        await baseDb.testRuns.deleteMany({
           where: { id: { in: c.runIds } },
         });
-        await prisma.repositoryCases.deleteMany({
+        await baseDb.repositoryCases.deleteMany({
           where: { id: { in: c.caseIds } },
         });
-        await prisma.repositoryFolders.deleteMany({
+        await baseDb.repositoryFolders.deleteMany({
           where: { id: { in: c.folderIds } },
         });
-        await prisma.repositories.deleteMany({
+        await baseDb.repositories.deleteMany({
           where: { id: { in: c.repoIds } },
         });
-        await prisma.userProjectPermission.deleteMany({
+        await baseDb.userProjectPermission.deleteMany({
           where: { projectId: { in: c.projectIds } },
         });
-        await prisma.configurations.deleteMany({
+        await baseDb.configurations.deleteMany({
           where: { id: { in: c.cfgIds } },
         });
-        await prisma.projects.deleteMany({
+        await baseDb.projects.deleteMany({
           where: { id: { in: c.projectIds } },
         });
-        await prisma.user.deleteMany({
+        await baseDb.user.deleteMany({
           where: { id: { in: c.userIds } },
         });
       } catch (err) {
@@ -299,15 +299,15 @@ describeIntegration(
     }
 
     beforeAll(async () => {
-      const { prisma } = await importDeps();
-      ctx = await seed(prisma);
+      const { baseDb } = await importDeps();
+      ctx = await seed(baseDb);
     });
 
     afterAll(async () => {
       if (RUN_INTEGRATION && HAS_DB_URL) {
-        const { prisma } = await import("~/lib/prisma");
-        if (ctx) await cleanup(prisma, ctx);
-        await prisma.$disconnect();
+        const { baseDb } = await import("~/lib/db");
+        if (ctx) await cleanup(baseDb, ctx);
+        await baseDb.$disconnect();
       }
     });
 
@@ -392,16 +392,16 @@ describeIntegration(
     /**
      * Belt-and-suspenders #6: verify that the project read-gate rejects
      * the cross-project request BEFORE any raw SQL touches project B's
-     * tables. We spy on `prisma.$queryRaw` and `prisma.$queryRawUnsafe`
+     * tables. We spy on `baseDb.$queryRaw` and `baseDb.$queryRawUnsafe`
      * for the duration of the request and assert no parameter binding
      * carries project B's id.
      */
     it("no raw SQL leaks project B data when U_A is denied", async () => {
-      const { prisma, aggregatePOST } = await importDeps();
+      const { baseDb, aggregatePOST } = await importDeps();
       getServerSessionMock.mockResolvedValue(ctx.sessionA);
 
-      const queryRawSpy = vi.spyOn(prisma as any, "$queryRaw");
-      const queryRawUnsafeSpy = vi.spyOn(prisma as any, "$queryRawUnsafe");
+      const queryRawSpy = vi.spyOn(baseDb as any, "$queryRaw");
+      const queryRawUnsafeSpy = vi.spyOn(baseDb as any, "$queryRawUnsafe");
 
       try {
         const [req, params] = buildPost(

@@ -1,5 +1,9 @@
 import { expect, test } from "../../fixtures/index";
 import type { BrowserContext } from "@playwright/test";
+import {
+  sameOriginRequestHeaders,
+  signInSecondaryContext,
+} from "../../utils/secondary-context-login";
 
 /**
  * Access Control E2E Tests
@@ -254,22 +258,16 @@ test.describe("Access Control - Member Read/No-Delete (ACL-02)", () => {
     // Create a test project via admin (defaults to GLOBAL_ROLE access type)
     projectId = await api.createProject(`ACL-02 Project ${Date.now()}`);
 
-    // Sign in as the member user in a new browser context (no storageState = no session).
-    // The extraHTTPHeaders ensure API requests are classified as same-origin browser requests
-    // by the proxy middleware (which checks Sec-Fetch-Site to distinguish browser vs external API calls).
-    memberCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: {
-        "Sec-Fetch-Site": "same-origin",
-      },
-    });
-    const memberPage = await memberCtx.newPage();
-    await memberPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await memberPage.getByTestId("email-input").fill(memberEmail);
-    await memberPage.getByTestId("password-input").fill("password123");
-    await memberPage.locator('button[type="submit"]').first().click();
-    await memberPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-    await memberPage.close();
+    // Sign in as the member user in a fresh sessionless browser context. The
+    // context is kept clean (no extraHTTPHeaders) so the signin page hydrates;
+    // same-origin API classification is applied per-request via
+    // sameOriginRequestHeaders() on the ctx.request.* calls below.
+    memberCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      memberEmail,
+      "password123"
+    );
   });
 
   test.afterAll(async ({ api }) => {
@@ -283,6 +281,7 @@ test.describe("Access Control - Member Read/No-Delete (ACL-02)", () => {
     const response = await memberCtx.request.get(
       `${baseURL}/api/model/projects/findMany`,
       {
+        headers: sameOriginRequestHeaders(),
         params: {
           q: JSON.stringify({ where: { id: projectId } }),
         },
@@ -301,6 +300,7 @@ test.describe("Access Control - Member Read/No-Delete (ACL-02)", () => {
     const response = await memberCtx.request.patch(
       `${baseURL}/api/model/projects/update`,
       {
+        headers: sameOriginRequestHeaders(),
         data: {
           where: { id: projectId },
           data: { isDeleted: true },
@@ -348,21 +348,15 @@ test.describe("Access Control - NO_ACCESS Denial (ACL-03)", () => {
     );
     expect(permResponse.status()).toBe(201);
 
-    // Sign in as the NO_ACCESS user in a new browser context (no storageState = no session).
-    // extraHTTPHeaders ensures API requests are treated as same-origin browser requests by middleware.
-    noAccessCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: {
-        "Sec-Fetch-Site": "same-origin",
-      },
-    });
-    const noAccessPage = await noAccessCtx.newPage();
-    await noAccessPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await noAccessPage.getByTestId("email-input").fill(noAccessEmail);
-    await noAccessPage.getByTestId("password-input").fill("password123");
-    await noAccessPage.locator('button[type="submit"]').first().click();
-    await noAccessPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-    await noAccessPage.close();
+    // Sign in as the NO_ACCESS user in a fresh sessionless context (clean, so
+    // the signin page hydrates). Same-origin classification for API calls is
+    // applied per-request via sameOriginRequestHeaders().
+    noAccessCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      noAccessEmail,
+      "password123"
+    );
   });
 
   test.afterAll(async ({ api }) => {
@@ -377,6 +371,7 @@ test.describe("Access Control - NO_ACCESS Denial (ACL-03)", () => {
     const response = await noAccessCtx.request.get(
       `${baseURL}/api/model/projects/findMany`,
       {
+        headers: sameOriginRequestHeaders(),
         params: {
           q: JSON.stringify({ where: { id: projectId } }),
         },
@@ -394,6 +389,7 @@ test.describe("Access Control - NO_ACCESS Denial (ACL-03)", () => {
     const response = await noAccessCtx.request.get(
       `${baseURL}/api/model/repositoryCases/findMany`,
       {
+        headers: sameOriginRequestHeaders(),
         params: {
           q: JSON.stringify({ where: { projectId } }),
         },
@@ -530,21 +526,15 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
       `ACL-05 Case ${Date.now()}`
     );
 
-    // 8. Sign in as the restricted user in a new browser context.
-    //    extraHTTPHeaders ensures API requests are treated as same-origin browser requests.
-    restrictedCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: {
-        "Sec-Fetch-Site": "same-origin",
-      },
-    });
-    const restrictedPage = await restrictedCtx.newPage();
-    await restrictedPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await restrictedPage.getByTestId("email-input").fill(restrictedEmail);
-    await restrictedPage.getByTestId("password-input").fill("password123");
-    await restrictedPage.locator('button[type="submit"]').first().click();
-    await restrictedPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-    await restrictedPage.close();
+    // 8. Sign in as the restricted user in a fresh sessionless context (clean,
+    //    so the signin page hydrates). Same-origin classification for API calls
+    //    is applied per-request via sameOriginRequestHeaders().
+    restrictedCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      restrictedEmail,
+      "password123"
+    );
   });
 
   test.afterAll(async ({ api, request, baseURL }) => {
@@ -564,6 +554,7 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     const response = await restrictedCtx.request.get(
       `${baseURL}/api/model/repositoryCases/findMany`,
       {
+        headers: sameOriginRequestHeaders(),
         params: {
           q: JSON.stringify({ where: { projectId } }),
         },
@@ -581,6 +572,7 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     const response = await restrictedCtx.request.post(
       `${baseURL}/api/model/repositoryCases/create`,
       {
+        headers: sameOriginRequestHeaders(),
         data: {
           data: {
             name: `Unauthorized Case ${Date.now()}`,
@@ -610,6 +602,7 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     const response = await restrictedCtx.request.patch(
       `${baseURL}/api/model/repositoryCases/update`,
       {
+        headers: sameOriginRequestHeaders(),
         data: {
           where: { id: caseId },
           data: { name: `Updated Name ${Date.now()}` },
@@ -667,20 +660,15 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       `ACL-06 Case ${Date.now()}`
     );
 
-    // Sign in as the member user
-    memberCtx = await browser.newContext({
-      storageState: undefined,
-      extraHTTPHeaders: {
-        "Sec-Fetch-Site": "same-origin",
-      },
-    });
-    const memberPage = await memberCtx.newPage();
-    await memberPage.goto(`${baseURL}/en-US/signin`, { waitUntil: "load" });
-    await memberPage.getByTestId("email-input").fill(memberEmail);
-    await memberPage.getByTestId("password-input").fill("password123");
-    await memberPage.locator('button[type="submit"]').first().click();
-    await memberPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
-    await memberPage.close();
+    // Sign in as the member user in a fresh sessionless context (clean, so the
+    // signin page hydrates). Same-origin classification for API calls is
+    // applied per-request via sameOriginRequestHeaders().
+    memberCtx = await signInSecondaryContext(
+      browser,
+      baseURL!,
+      memberEmail,
+      "password123"
+    );
   });
 
   test.afterAll(async ({ api }) => {
@@ -697,6 +685,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
     const response = await memberCtx.request.post(
       `${baseURL}/api/model/steps/create`,
       {
+        headers: sameOriginRequestHeaders(),
         data: {
           data: {
             // Use scalar FK — relation connect syntax fails with 422 under
@@ -741,7 +730,12 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
         memberUserId
       );
       // Log member's auth status
-      const whoami = await memberCtx.request.get(`${baseURL}/api/auth/session`);
+      const whoami = await memberCtx.request.get(
+        `${baseURL}/api/auth/session`,
+        {
+          headers: sameOriginRequestHeaders(),
+        }
+      );
       console.error("Member session:", await whoami.text());
     }
     expect(response.status()).toBe(201);
@@ -757,6 +751,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       const createResponse = await memberCtx.request.post(
         `${baseURL}/api/model/steps/create`,
         {
+          headers: sameOriginRequestHeaders(),
           data: {
             data: {
               testCaseId: caseId,
@@ -794,6 +789,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       const updateResponse = await memberCtx.request.patch(
         `${baseURL}/api/model/steps/update`,
         {
+          headers: sameOriginRequestHeaders(),
           data: {
             where: { id: stepId },
             data: {
@@ -822,6 +818,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       const createResponse = await memberCtx.request.post(
         `${baseURL}/api/model/steps/create`,
         {
+          headers: sameOriginRequestHeaders(),
           data: {
             data: {
               testCaseId: caseId,
@@ -850,6 +847,7 @@ test.describe("Access Control - GLOBAL_ROLE Steps Permission (ACL-06)", () => {
       const deleteResponse = await memberCtx.request.patch(
         `${baseURL}/api/model/steps/update`,
         {
+          headers: sameOriginRequestHeaders(),
           data: {
             where: { id: stepId },
             data: { isDeleted: true },

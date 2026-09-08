@@ -1,4 +1,4 @@
-import { enhance } from "@zenstackhq/runtime";
+import { enhanceWithAudit } from "~/lib/audit/enhanceWithAudit";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,16 +13,16 @@ vi.mock("~/server/auth", () => ({
   authOptions: {},
 }));
 
-vi.mock("@zenstackhq/runtime", () => ({
-  enhance: vi.fn(),
+vi.mock("~/lib/audit/enhanceWithAudit", () => ({
+  enhanceWithAudit: vi.fn(),
 }));
 
 vi.mock("~/server/db", () => ({
   db: {},
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     user: {
       findUnique: vi.fn(),
     },
@@ -215,6 +215,18 @@ describe("CSV Import API Route", () => {
       create: vi.fn(),
       update: vi.fn(),
     },
+    repositoryCaseTag: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
+    repositoryCaseIssue: {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      deleteMany: vi.fn(),
+      findMany: vi.fn(),
+    },
     issues: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
@@ -240,15 +252,17 @@ describe("CSV Import API Route", () => {
     steps: {
       create: vi.fn(),
       deleteMany: vi.fn(),
+      findMany: vi.fn(),
+      updateMany: vi.fn(),
     },
   };
-  // enhanceWithAudit() calls enhance(prismaBase, { user }).$extends({...}); the
+  // enhanceWithAudit() calls enhanceWithAudit(rawDb, { user }).$extends({...}); the
   // audit-GUC $extends layer wraps writes in a SET LOCAL transaction at runtime
   // but here it is a no-op pass-through so route writes land on mockEnhancedDb
   // directly (and assertions can read the mock call records).
   mockEnhancedDb.$extends = vi.fn(() => mockEnhancedDb);
 
-  const mockPrisma = {
+  const mockDb = {
     user: {
       findUnique: vi.fn(),
     },
@@ -257,8 +271,8 @@ describe("CSV Import API Route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (getServerSession as any).mockResolvedValue(mockSession);
-    (enhance as any).mockReturnValue(mockEnhancedDb);
-    mockPrisma.user.findUnique.mockResolvedValue(mockSession.user);
+    (enhanceWithAudit as any).mockReturnValue(mockEnhancedDb);
+    mockDb.user.findUnique.mockResolvedValue(mockSession.user);
     mockEnhancedDb.projects.findFirst.mockResolvedValue(mockProject);
     mockEnhancedDb.repositories.findFirst.mockResolvedValue(mockRepository);
     mockEnhancedDb.templates.findUnique.mockResolvedValue(mockTemplate);
@@ -281,6 +295,7 @@ describe("CSV Import API Route", () => {
       })
     );
     mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null);
+    mockEnhancedDb.steps.findMany.mockResolvedValue([]);
     mockEnhancedDb.repositoryCases.findUnique.mockImplementation(
       ({ where }: any) => ({
         id: where.id,
@@ -291,8 +306,8 @@ describe("CSV Import API Route", () => {
         template: mockTemplate,
         state: { id: 1, name: "Not Started" },
         creator: mockSession.user,
-        tags: [],
-        issues: [],
+        caseTags: [],
+        caseIssues: [],
         steps: [],
       })
     );
@@ -407,7 +422,7 @@ describe("CSV Import API Route", () => {
       expect(result.error?.error).toBe("No default workflow found");
     });
 
-    it("validates required fields", async () => {
+    it("fails up front when no column is mapped to Name", async () => {
       const request = createRequest({
         projectId: 1,
         file: "Col1,Col2\nValue1,Value2",
@@ -423,6 +438,28 @@ describe("CSV Import API Route", () => {
       const response = await POST(request);
       const result = await parseSSEResponse(response);
 
+      expect(result.error?.error).toBe(
+        "No column is mapped to Name. Go back to the column mapping step and map the column holding the test case name."
+      );
+      expect(result.error?.errors).toBeUndefined();
+    });
+
+    it("validates required fields", async () => {
+      const request = createRequest({
+        projectId: 1,
+        file: "Name,Col2\n,Value2",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [{ csvColumn: "Name", templateField: "name" }],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
       expect(result.error?.error).toBe("Validation failed");
       expect(result.error?.errors?.length).toBeGreaterThanOrEqual(1);
       // Should have at least Name required error
@@ -430,7 +467,7 @@ describe("CSV Import API Route", () => {
         expect.objectContaining({
           row: 1,
           field: "Name",
-          error: "Name is required",
+          error: 'Name is required, but column "Name" is empty for this row',
         })
       );
     });
@@ -631,10 +668,9 @@ describe("CSV Import API Route", () => {
       expect(result.complete).toBeDefined();
       // Should not create a new tag since "smoke" matches "Smoke" case-insensitively
       expect(mockEnhancedDb.tags.create).not.toHaveBeenCalled();
-      // Should connect the existing tag
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: expect.any(Number) },
-        data: { tags: { connect: { id: 1 } } },
+      // Should link the existing tag via the explicit join model
+      expect(mockEnhancedDb.repositoryCaseTag.create).toHaveBeenCalledWith({
+        data: { caseId: expect.any(Number), tagId: 1 },
       });
     });
 
@@ -1253,14 +1289,14 @@ describe("CSV Import API Route", () => {
 
       expect(result.complete).toBeDefined();
 
-      // Verify relationships were cleared
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1001 },
-        data: { tags: { set: [] } },
+      // Verify relationships were cleared via the explicit join models
+      expect(mockEnhancedDb.repositoryCaseTag.deleteMany).toHaveBeenCalledWith({
+        where: { caseId: 1001 },
       });
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1001 },
-        data: { issues: { set: [] } },
+      expect(
+        mockEnhancedDb.repositoryCaseIssue.deleteMany
+      ).toHaveBeenCalledWith({
+        where: { caseId: 1001 },
       });
       expect(mockEnhancedDb.attachments.deleteMany).toHaveBeenCalledWith({
         where: { testCaseId: 1001 },
@@ -1269,19 +1305,68 @@ describe("CSV Import API Route", () => {
         where: { repositoryCaseId: 1001 },
       });
 
-      // Verify new relationships were created
-      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
-        where: { id: 1001 },
-        data: { tags: { connect: { id: 1 } } },
+      // Verify new relationships were created via the explicit join models
+      expect(mockEnhancedDb.repositoryCaseTag.create).toHaveBeenCalledWith({
+        data: { caseId: 1001, tagId: 1 },
       });
-      // Find the call that connects the issue
+      // Find the call that links the issue
       const issueCalls =
-        mockEnhancedDb.repositoryCases.update.mock.calls.filter(
-          (call: any) => call[0].data?.issues?.connect?.id === 1
+        mockEnhancedDb.repositoryCaseIssue.create.mock.calls.filter(
+          (call: any) => call[0].data?.issueId === 1
         );
       expect(issueCalls.length).toBeGreaterThan(0);
       expect(mockEnhancedDb.attachments.create).toHaveBeenCalled();
       expect(mockEnhancedDb.testRunCases.create).toHaveBeenCalled();
+    });
+
+    it("retires executed steps instead of hard-deleting them on update (regression)", async () => {
+      // TestRunStepResults.stepId is onDelete: Cascade, so hard-deleting a step
+      // that has been executed takes its step results with it. Re-importing a
+      // case must not erase its execution history: executed steps are retired
+      // (soft-deleted) and only never-executed ones are really deleted.
+      const existingCase = { id: 1001, name: "Test Case" };
+      mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(existingCase);
+      mockEnhancedDb.repositoryCases.update.mockResolvedValue(existingCase);
+      mockEnhancedDb.steps.findMany.mockResolvedValue([
+        { id: 501, _count: { stepResults: 3 } },
+        { id: 502, _count: { stepResults: 0 } },
+        { id: 503, _count: { stepResults: 1 } },
+      ]);
+
+      const request = createRequest({
+        projectId: 1,
+        file: "ID,Name,Description,Steps\n1001,Test Case,Test Description,Step 1 | Result 1",
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "ID", templateField: "id" },
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Steps", templateField: "steps" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+      expect(result.complete).toBeDefined();
+
+      // Executed steps retired, never hard-deleted.
+      expect(mockEnhancedDb.steps.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [501, 503] } },
+        data: { isDeleted: true },
+      });
+      // Only the unexecuted step is actually removed.
+      expect(mockEnhancedDb.steps.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [502] } },
+      });
+      // The old blanket delete must be gone.
+      expect(mockEnhancedDb.steps.deleteMany).not.toHaveBeenCalledWith({
+        where: { testCaseId: 1001 },
+      });
     });
 
     it("creates new version for updated test cases", async () => {

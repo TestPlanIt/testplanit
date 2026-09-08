@@ -1,5 +1,8 @@
-import type { AuditAction, ReviewEntityType } from "@prisma/client";
+import type { AuditAction, ReviewEntityType } from "~/zenstack/models";
 import { NextRequestHandler } from "@zenstackhq/server/next";
+import { RPCApiHandler } from "@zenstackhq/server/api";
+import { TransactionIsolationLevel } from "@zenstackhq/orm";
+import { schema } from "~/zenstack/schema";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
@@ -14,8 +17,14 @@ import {
   enrichFromApiAuth,
   withAuditContext,
 } from "~/lib/auditContextWrappers";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
-import { prisma } from "~/lib/prisma";
+import { getCurrentTenantId } from "~/lib/multiTenantDb";
+import {
+  getPrimaryStickyMs,
+  isReplicaRoutingEnabled,
+  PRIMARY_STICKY_COOKIE,
+} from "~/lib/db/replicaConfig";
+import { runWithDbRouting } from "~/lib/db/routingContext";
+import { baseDb } from "~/lib/db";
 import {
   AUDITED_CONFIG_MODELS,
   AUDITED_RPC_ENTITY_ACCESSORS,
@@ -27,9 +36,24 @@ import {
   type AuditEvent,
 } from "~/lib/services/auditLog";
 import {
+  assertConfigurationGroupCreateAllowed,
+  assertConfigurationGroupWriteAllowed,
+  dissolveOrphanedGroups,
+  isConfigurationGroupError,
+  readConfigurationGroupCreateIntents,
+  readConfigurationGroupIntent,
+  readTargetRecordIds,
+  resolveConfigurationGroupModel,
+} from "~/lib/services/configurationGroups";
+import {
   assertReviewGatePasses,
   resolveCreateStateRemap,
 } from "~/lib/services/reviewGate";
+import {
+  assertCanFlipCompletion,
+  isCompletionGatedModel,
+  isCompletionPermissionError,
+} from "~/lib/services/completionGate";
 import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
@@ -183,8 +207,8 @@ function extractEntityIdFromBody(
 //     ReviewRequest cancel path, promoted to REVIEW_CANCELLED below).
 //   - AUDITED_CONFIG_MODELS: admin-config catalog + access models, audited
 //     canonically here on the RPC path (the dominant admin mutation path).
-// For both, the lib/prisma.ts `$extends` hooks cover non-RPC paths (workers,
-// custom routes, direct prisma) and are suppressed on this path via
+// For both, the lib/baseDb.ts `$extends` hooks cover non-RPC paths (workers,
+// custom routes, direct baseDb) and are suppressed on this path via
 // suppressEntityAudit to avoid a double, partial (`select:{id:true}`-shaped)
 // generic row. Both lists live in auditLog.ts and are guarded against the
 // datamodel so a singular/plural accessor typo can't silently disable audit.
@@ -286,7 +310,7 @@ function extractEntityName(
   return value;
 }
 
-async function getPrisma() {
+async function getDb() {
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
   let userEmail = session?.user?.email ?? undefined;
@@ -312,7 +336,7 @@ async function getPrisma() {
   if (userId) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        user = await prisma.user.findUnique({
+        user = await baseDb.user.findUnique({
           where: { id: userId },
           select: {
             id: true,
@@ -325,6 +349,7 @@ async function getPrisma() {
             role: {
               select: {
                 id: true,
+                name: true, // referenced by auth().role.name in the policies
                 rolePermissions: true,
               },
             },
@@ -340,21 +365,22 @@ async function getPrisma() {
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
         } else {
-          console.error(
-            "[getPrisma] user lookup failed after 3 attempts:",
-            err
-          );
+          console.error("[getDb] user lookup failed after 3 attempts:", err);
         }
       }
     }
   }
 
   // enhanceWithAudit wraps writes in a GUC-carrying transaction so trigger CDC
-  // records the actor (plain enhance() bypasses the lib/prisma $extends hook).
-  return enhanceWithAudit(user ?? undefined);
+  // records the actor (plain enhance() bypasses the lib/baseDb $extends hook).
+  return await enhanceWithAudit(user ?? undefined);
 }
 
-const baseHandler = NextRequestHandler({ getPrisma, useAppDir: true });
+const baseHandler = NextRequestHandler({
+  getClient: getDb,
+  useAppDir: true,
+  apiHandler: new RPCApiHandler({ schema }),
+});
 
 // Parse ZenStack path to extract model and operation
 function parseZenStackPath(
@@ -443,9 +469,34 @@ function normalizeSamlConfigCertBody(operation: string, body: any): any | null {
   return next;
 }
 
+// DB read/write-routing wrapper. Establishes a per-request routing frame so
+// that — when read replicas are configured — reads auto-pin to the primary
+// after this request's first write (read-your-own-writes for the route's own
+// post-write ES/webhook/audit reads), and a browser carrying the short-lived
+// stickiness cookie has ALL its reads pinned to the primary for the cookie's
+// window (cross-request read-your-own-writes after a mutation). No-op when
+// replicas aren't configured.
+async function innerHandler(
+  req: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
+  // Only pure-read (GET/HEAD) requests offload to replicas. Mutations run
+  // entirely on the primary so their before-snapshots, the write, and the
+  // post-write ES/webhook/audit reads are all consistent.
+  const isReadRequest = req.method === "GET" || req.method === "HEAD";
+  const honorPrimaryCookie =
+    isReplicaRoutingEnabled() &&
+    getPrimaryStickyMs() > 0 &&
+    req.cookies.get(PRIMARY_STICKY_COOKIE) !== undefined;
+  return runWithDbRouting(() => handleRequest(req, context), {
+    autoReplica: isReadRequest,
+    forcePrimary: honorPrimaryCookie,
+  });
+}
+
 // Inner handler. Exports below wrap this with `withAuditContext` per HTTP
 // verb so each export carries its own ALS frame for audit correlation (D-01).
-async function innerHandler(
+async function handleRequest(
   req: NextRequest,
   context: { params: Promise<{ path: string[] }> }
 ) {
@@ -470,16 +521,9 @@ async function innerHandler(
       // Build auth context for AsyncLocalStorage
       apiAuthContext = {
         userId: apiAuth.userId!,
+        email: apiAuth.userEmail,
+        name: apiAuth.userName,
       };
-      // Look up user info for audit context
-      const user = await prisma.user.findUnique({
-        where: { id: apiAuth.userId },
-        select: { email: true, name: true },
-      });
-      if (user) {
-        apiAuthContext.email = user.email ?? undefined;
-        apiAuthContext.name = user.name ?? undefined;
-      }
     }
   }
 
@@ -494,11 +538,30 @@ async function innerHandler(
     // ...and their display name + email, so the audit frame carries the actor's
     // identity (snapshotted at write time) for paths that build the GUC from the
     // frame rather than an explicit user object — notably tryFastPathCreate,
-    // which runs BEFORE getPrisma's enrichFromApiAuth and so otherwise sees no name.
+    // which runs BEFORE getDb's enrichFromApiAuth and so otherwise sees no name.
     const authenticatedUserName =
       session?.user?.name ?? apiAuthContext?.name ?? undefined;
     const authenticatedUserEmail =
       session?.user?.email ?? apiAuthContext?.email ?? undefined;
+
+    // The actor's `User.access`, for the guards below that grant system
+    // admins a bypass — the review gate (create remap + transition) and the
+    // result edit window. Browser requests read it straight off the session;
+    // API-token requests fall back to a DB lookup, since a token carries a
+    // userId but no access level. Memoized so a request pays for at most one
+    // lookup however many guards ask.
+    let actorAccessPromise: Promise<string | null | undefined> | undefined;
+    const getActorAccess = (): Promise<string | null | undefined> => {
+      if (session?.user?.access) return Promise.resolve(session.user.access);
+      if (!authenticatedUserId) return Promise.resolve(undefined);
+      actorAccessPromise ??= baseDb.user
+        .findUnique({
+          where: { id: authenticatedUserId },
+          select: { access: true },
+        })
+        .then((actor) => actor?.access);
+      return actorAccessPromise;
+    };
 
     // Clone the request body for audit logging and potential modification
     let requestBody: any = null;
@@ -569,7 +632,7 @@ async function innerHandler(
     // persisted (defense in depth alongside the normalize-on-use path in
     // createSAMLClient). The model route is the universal mutation seam for
     // SamlConfiguration (the admin UI writes via the generated RPC hooks), and
-    // the lib/prisma.ts $extends middleware is bypassed by ZenStack's enhance()
+    // the lib/baseDb.ts $extends middleware is bypassed by ZenStack's enhance()
     // on this path — same reason the ES-sync shims below live here — so the
     // guard belongs here rather than in a Prisma extension.
     if (
@@ -604,7 +667,8 @@ async function innerHandler(
     // in the worker/import paths: when gating is active and the candidate
     // is at-or-beyond a gate, the create silently lands in the default
     // state. When gating is off (system flag, project flag, or no gated
-    // state in scope), the helper returns the candidate unchanged.
+    // state in scope) — or the actor is a system admin — the helper returns
+    // the candidate unchanged.
     if (
       isMutation &&
       parsedPath &&
@@ -631,10 +695,11 @@ async function innerHandler(
         scope !== undefined
       ) {
         const remapped = await resolveCreateStateRemap(
-          prisma,
+          baseDb,
           projectId,
           scope,
-          candidateStateId
+          candidateStateId,
+          await getActorAccess()
         );
         if (
           typeof remapped === "number" &&
@@ -711,6 +776,10 @@ async function innerHandler(
               : NaN;
 
         if (Number.isFinite(entityIdNum) && Number.isFinite(toStateIdNum)) {
+          // Resolved outside the Serializable transaction below: it is an
+          // actor lookup, not part of the gate read that has to stay
+          // conflict-serializable with a concurrent decide/consume.
+          const actorAccess = await getActorAccess();
           try {
             // CR-04: the auto-API path cannot share a transaction with
             // ZenStack's internal handler (baseHandler manages its own
@@ -747,7 +816,8 @@ async function innerHandler(
                   tx,
                   gatedEntityType,
                   entityIdNum,
-                  toStateIdNum
+                  toStateIdNum,
+                  actorAccess
                 );
                 if (gateResult) {
                   // Strict transitive gates: a single transition can cross
@@ -774,7 +844,7 @@ async function innerHandler(
                   }
                 }
               },
-              { isolationLevel: "Serializable" }
+              { isolationLevel: TransactionIsolationLevel.Serializable }
             );
           } catch (err) {
             if (isReviewGateError(err)) {
@@ -826,12 +896,9 @@ async function innerHandler(
             ? Number(rawResultId)
             : NaN;
       if (Number.isFinite(resultId) && authenticatedUserId) {
-        const actor = await prisma.user.findUnique({
-          where: { id: authenticatedUserId },
-          select: { access: true },
-        });
+        const actorAccess = await getActorAccess();
         try {
-          await assertResultEditWindowOpen(prisma, resultId, actor?.access);
+          await assertResultEditWindowOpen(baseDb, resultId, actorAccess);
         } catch (err) {
           if (isEditWindowExpiredError(err)) {
             return NextResponse.json(
@@ -844,6 +911,104 @@ async function innerHandler(
       }
     }
 
+    // Configuration-group membership guard (TestRuns + Sessions).
+    // `configurationGroupId` links runs/sessions that cover the same logical
+    // work across different configurations. Membership is editable after the
+    // fact, and the generic RPC route is the write path — so the invariants
+    // live here rather than in whichever modal happens to call them:
+    //   - the field only ever holds a uuid or null;
+    //   - a non-null assignment must be addressable to specific record ids;
+    //   - every member of a group shares one projectId.
+    // Covered on update / updateMany / upsert. The sibling CR-03 review gate
+    // above shipped as update-only and had to be widened for exactly this
+    // reason; this gate starts wide.
+    //
+    // The same block captures the PRE-mutation group ids of the rows being
+    // touched so the post-mutation hook (below the ES-sync shims) can apply
+    // AUTO-DISSOLVE to any group that just dropped to a single member — a lone
+    // member still renders as "multi-configuration" at five badge sites.
+    // Payloads that neither assign `configurationGroupId` nor remove the row
+    // short-circuit in `readConfigurationGroupIntent` and pay no query cost.
+    const configGroupModel =
+      isMutation && parsedPath
+        ? resolveConfigurationGroupModel(parsedPath.model)
+        : null;
+    let configGroupVacated: string[] = [];
+    if (configGroupModel && parsedPath) {
+      // Creates mint membership too (the create modals stamp one fresh uuid
+      // across a multi-configuration batch). A fresh group has no members, so
+      // the modals always pass; a create that reaches for an EXISTING group in
+      // another project is rejected on the same rule as a join.
+      const createIntents = readConfigurationGroupCreateIntents(
+        parsedPath.operation,
+        requestBody
+      );
+      if (createIntents) {
+        try {
+          await assertConfigurationGroupCreateAllowed(
+            baseDb,
+            configGroupModel,
+            createIntents
+          );
+        } catch (err) {
+          if (isConfigurationGroupError(err)) {
+            return NextResponse.json(
+              { error: { code: err.code, message: err.message } },
+              { status: 400 }
+            );
+          }
+          throw err;
+        }
+      }
+
+      const intent = readConfigurationGroupIntent(
+        parsedPath.operation,
+        requestBody
+      );
+      if (intent) {
+        const recordIds = readTargetRecordIds(
+          parsedPath.operation,
+          requestBody
+        );
+        if (intent.touchesGroup) {
+          try {
+            await assertConfigurationGroupWriteAllowed(
+              baseDb,
+              configGroupModel,
+              { recordIds, groupId: intent.groupId }
+            );
+          } catch (err) {
+            if (isConfigurationGroupError(err)) {
+              return NextResponse.json(
+                { error: { code: err.code, message: err.message } },
+                { status: 400 }
+              );
+            }
+            throw err;
+          }
+        }
+        if (recordIds && recordIds.length > 0) {
+          try {
+            const priorRows = await (baseDb as any)[configGroupModel].findMany({
+              where: { id: { in: recordIds } },
+              select: { configurationGroupId: true },
+            });
+            configGroupVacated = (priorRows ?? [])
+              .map(
+                (row: { configurationGroupId: string | null }) =>
+                  row?.configurationGroupId ?? null
+              )
+              .filter((g: string | null): g is string => !!g);
+          } catch (e) {
+            console.error(
+              "[ConfigurationGroups] Failed to capture pre-mutation group ids:",
+              e
+            );
+          }
+        }
+      }
+    }
+
     // Session subject for the audit GUC (applied to this request's runWithAuditContext frame below)
     // so a session result and its nested result-field values record the session's name and project
     // at write time — session results go through this generic route, not a bespoke endpoint, so
@@ -852,7 +1017,7 @@ async function innerHandler(
     let sessionResultSubjectProjectId: number | undefined;
 
     // Required-result-field guard for SessionResults.create. The model handler
-    // is the universal chokepoint — `lib/prisma.ts`'s `$extends` middleware is
+    // is the universal chokepoint — `lib/baseDb.ts`'s `$extends` middleware is
     // bypassed by ZenStack's `enhance()` (see the repositoryCases ES-sync shim
     // above), so a Prisma-extension hook would silently miss raw POSTs landing
     // here. Reading the supplied `resultFieldValues.create[]` from the
@@ -880,7 +1045,7 @@ async function innerHandler(
             ? Number(rawSessionId)
             : NaN;
       if (Number.isFinite(sessionId)) {
-        const session = await prisma.sessions.findUnique({
+        const session = await baseDb.sessions.findUnique({
           where: { id: sessionId },
           select: { templateId: true, name: true, projectId: true },
         });
@@ -891,8 +1056,7 @@ async function innerHandler(
             data?.resultFieldValues as
               | {
                   create?:
-                    | Array<Record<string, unknown>>
-                    | Record<string, unknown>;
+                    Array<Record<string, unknown>> | Record<string, unknown>;
                 }
               | undefined
           )?.create;
@@ -907,8 +1071,7 @@ async function innerHandler(
                 (fv?.fieldId as number | string | undefined) ??
                 ((
                   fv?.field as
-                    | { connect?: { id?: number | string } }
-                    | undefined
+                    { connect?: { id?: number | string } } | undefined
                 )?.connect?.id as number | string | undefined);
               const fieldId =
                 typeof rawFieldId === "number"
@@ -925,7 +1088,7 @@ async function innerHandler(
                 entry !== null
             );
           const missing = await hasMissingRequiredResultField(
-            prisma,
+            baseDb,
             session.templateId,
             suppliedFieldValues
           );
@@ -949,7 +1112,7 @@ async function innerHandler(
     // pre-mutation row state to compute state-transition diffs and pass
     // oldRow into the testRun/session/issue/case emitters. Captured BEFORE
     // the rpcHandler runs so it's not affected by transaction isolation.
-    // The post-mutation `lib/prisma.ts` `$extends` middleware emission is
+    // The post-mutation `lib/baseDb.ts` `$extends` middleware emission is
     // suppressed via auditContext.suppressWebhooks (Plan 02-02 D-01a) to
     // prevent double-emission; this shim is the canonical RPC-path emitter.
     //
@@ -975,12 +1138,59 @@ async function innerHandler(
           webhookMutation.operation
         );
         if (whereId !== null) {
-          webhookPreSnapshot = await (prisma as any)[
+          webhookPreSnapshot = await (baseDb as any)[
             webhookMutation.model
           ].findUnique({ where: { id: whereId } });
         }
       } catch (e) {
         console.error("[Webhooks] Failed to capture pre-snapshot:", e);
+      }
+    }
+
+    // Completion gate. `isCompleted` on a run or a session is UI-gated on
+    // `canClose` for the matching area, but the schema @@allow('update') rules
+    // also admit the creator and anyone with canAddEdit/canDelete — so the
+    // button is hidden while the write still succeeds through this RPC, the
+    // SDK, or MCP. This makes the server enforce the rule the UI shows.
+    //
+    // Raw-client writers (the milestone cascade, the abandoned-run sweeper,
+    // the importers) never reach this chokepoint by design; they carry no
+    // human actor and are gated where they start.
+    //
+    // Placed after the webhook pre-snapshot so the single-row path reuses that
+    // already-loaded row, and before the handler runs so a rejection
+    // short-circuits the write.
+    if (
+      isMutation &&
+      parsedPath &&
+      isCompletionGatedModel(parsedPath.model) &&
+      authenticatedUserId
+    ) {
+      try {
+        await assertCanFlipCompletion({
+          model: parsedPath.model,
+          operation: parsedPath.operation,
+          body: requestBody,
+          actorUserId: authenticatedUserId,
+          preSnapshot:
+            webhookMutation?.model === parsedPath.model
+              ? webhookPreSnapshot
+              : null,
+        });
+      } catch (err) {
+        if (isCompletionPermissionError(err)) {
+          return NextResponse.json(
+            {
+              error: {
+                code: err.code,
+                entityType: err.entityType,
+                entityIds: err.entityIds,
+              },
+            },
+            { status: 403 }
+          );
+        }
+        throw err;
       }
     }
 
@@ -1001,7 +1211,7 @@ async function innerHandler(
         auditPreSnapshot = webhookPreSnapshot;
       } else {
         try {
-          auditPreSnapshot = await (prisma as any)[parsedPath.model].findUnique(
+          auditPreSnapshot = await (baseDb as any)[parsedPath.model].findUnique(
             { where: resolvedWhere }
           );
         } catch (e) {
@@ -1016,7 +1226,7 @@ async function innerHandler(
     // projectId, etc.), in which case we fall through to the regular handler.
     //
     // Plan 02-08 — wrap the RPC handler call (and the fast-path) in a nested
-    // ALS frame that adds suppressWebhooks=true. The lib/prisma.ts $extends
+    // ALS frame that adds suppressWebhooks=true. The lib/baseDb.ts $extends
     // middleware emission is unreliable for ZenStack RPC mutations because
     // RPC injects `select: { id: true }` into args, leaving the middleware
     // with a partial row that can't compute the state-changed diff. We
@@ -1025,7 +1235,7 @@ async function innerHandler(
     // copies the parent's identity/correlation fields so they remain visible
     // to audit code paths inside the RPC handler.
     const parentAuditCtx = getAuditContext() ?? {};
-    // Suppress the lib/prisma.ts `$extends` generic entity-audit emission for
+    // Suppress the lib/baseDb.ts `$extends` generic entity-audit emission for
     // models this route audits canonically below (AUDITED_ENTITIES). On the RPC
     // path the `$extends` hook only sees a partial `select:{id:true}` row, so
     // letting it emit would add a second, malformed audit record. Scoped to the
@@ -1055,7 +1265,7 @@ async function innerHandler(
         suppressEntityAudit: auditedByShim,
       },
       async () => {
-        let r = await tryFastPathCreate({
+        let r: Response | null = await tryFastPathCreate({
           parsedPath,
           requestBody,
           userId: authenticatedUserId ?? null,
@@ -1136,7 +1346,7 @@ async function innerHandler(
             typeof data.projectId === "number" &&
             typeof data.stateId === "number"
           ) {
-            softDeleteUnexecutedRunCasesForDraftRevert(prisma, {
+            softDeleteUnexecutedRunCasesForDraftRevert(baseDb, {
               projectId: data.projectId,
               repositoryCaseId: data.id,
               newStateId: data.stateId,
@@ -1207,6 +1417,27 @@ async function innerHandler(
           "[ZenStack] Error parsing response for Elasticsearch sync:",
           e
         );
+      }
+    }
+
+    // Configuration-group AUTO-DISSOLVE. A group with a single live member is
+    // meaningless: five badge sites render "multi-configuration" purely on
+    // `configurationGroupId` being non-empty, so a lone survivor would keep
+    // claiming membership. Whenever a member left a group in this request —
+    // explicitly (field cleared), implicitly (joined a different group), or by
+    // being soft-deleted (`isDeleted: true`, which every membership read
+    // filters out) — clear the survivor's id too. Runs post-commit against
+    // `baseDb` like the ES-sync and webhook shims, so the survivor's own audit
+    // / ES / webhook side effects still fire.
+    if (response.ok && configGroupModel && configGroupVacated.length > 0) {
+      try {
+        await dissolveOrphanedGroups(
+          baseDb,
+          configGroupModel,
+          configGroupVacated
+        );
+      } catch (e) {
+        console.error("[ConfigurationGroups] Auto-dissolve failed:", e);
       }
     }
 
@@ -1394,7 +1625,7 @@ async function innerHandler(
     // before rpcHandler ran. The $extends emission was suppressed via
     // auditContext.suppressWebhooks during the rpc call (D-01a) so this is
     // the only emission seam for UI-driven mutations.
-    // $extends emission still fires for direct-prisma callers where
+    // $extends emission still fires for direct-baseDb callers where
     // suppressWebhooks is false.
     if (
       response.ok &&
@@ -1419,7 +1650,7 @@ async function innerHandler(
           const postRow =
             parsedPath.operation === "delete"
               ? null
-              : await (prisma as any)[parsedPath.model]
+              : await (baseDb as any)[parsedPath.model]
                   .findUnique({ where: { id: entityId } })
                   .catch(() => null);
 
@@ -1429,7 +1660,7 @@ async function innerHandler(
           // the entity write committed first, the outbox row is emitted in
           // a separate tx that runs in the same request lifecycle. Same
           // post-commit pattern the route uses for ES sync + audit log.
-          await prisma.$transaction(async (tx) => {
+          await baseDb.$transaction(async (tx) => {
             switch (parsedPath.model) {
               case "testRuns": {
                 if (parsedPath.operation === "create" && postRow) {
@@ -1547,6 +1778,24 @@ async function innerHandler(
     newResponse.headers.set("Pragma", "no-cache");
     newResponse.headers.set("Expires", "0");
 
+    // Read-replica stickiness: after a successful mutation, pin this browser's
+    // reads to the primary for a short window so the immediate refetch (a
+    // separate request) reads its own write instead of a lagging replica.
+    // Presence of the cookie is the signal; innerHandler honors it. No-op when
+    // replicas aren't configured or the window is disabled.
+    if (isMutation && response.ok && isReplicaRoutingEnabled()) {
+      const stickyMs = getPrimaryStickyMs();
+      if (stickyMs > 0) {
+        newResponse.cookies.set(PRIMARY_STICKY_COOKIE, "1", {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: Math.ceil(stickyMs / 1000),
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+    }
+
     // Audit logging for successful mutations
     if (
       isMutation &&
@@ -1577,7 +1826,7 @@ async function innerHandler(
             // the row itself.
             if (parsedPath.model === "testRunResults") {
               const fkSource = auditPreSnapshot ?? data;
-              const scope = await resolveTestRunResultAuditScope(prisma, {
+              const scope = await resolveTestRunResultAuditScope(baseDb, {
                 testRunId: fkSource?.testRunId,
                 testRunCaseId: fkSource?.testRunCaseId,
               });
@@ -1620,7 +1869,7 @@ async function innerHandler(
 
             // Specialized semantic actions for security/config models. On this
             // (RPC) path the shim is the canonical emitter — the matching
-            // lib/prisma.ts `$extends` hooks gate on suppressEntityAudit so they
+            // lib/baseDb.ts `$extends` hooks gate on suppressEntityAudit so they
             // don't double-emit here. appConfig/ssoProvider collapse to a single
             // config-changed action (the before/after diff distinguishes the
             // create/update/delete), mirroring those hooks' prior behavior.
@@ -1677,7 +1926,7 @@ async function innerHandler(
                 auditPreSnapshot
               ) {
                 const afterRow = resolvedWhere
-                  ? await (prisma as any)[parsedPath.model].findUnique({
+                  ? await (baseDb as any)[parsedPath.model].findUnique({
                       where: resolvedWhere,
                     })
                   : null;

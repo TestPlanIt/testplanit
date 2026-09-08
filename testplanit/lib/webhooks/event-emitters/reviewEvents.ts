@@ -1,15 +1,12 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
 type ReviewDecisionOutcome =
-  | "APPROVED"
-  | "CHANGES_REQUESTED"
-  | "REJECTED"
-  | "CANCELLED";
+  "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
 
 interface EmitReviewRequestedInput {
   reviewRequestId: string;
@@ -70,7 +67,7 @@ interface EmitReviewReminderInput {
 }
 
 interface EmitOptions {
-  tx?: Prisma.TransactionClient;
+  tx?: TxClient;
   actorUserId?: string | null;
 }
 
@@ -121,7 +118,7 @@ async function emitWithOptionalTx(
     });
     return;
   }
-  await prisma.$transaction(async (tx) => {
+  await baseDb.$transaction(async (tx) => {
     await webhookEvents.emit(eventName, payload, {
       projectId,
       tx,

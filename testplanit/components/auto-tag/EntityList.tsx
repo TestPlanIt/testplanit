@@ -46,12 +46,12 @@ export function EntityList({
   return (
     <div className="flex h-full flex-col">
       <div className="relative mb-2">
-        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute start-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder={t("filterEntities")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-8"
+          className="ps-8"
         />
       </div>
       <ScrollArea className="flex-1">
@@ -67,7 +67,7 @@ export function EntityList({
                 type="button"
                 onClick={() => onSelectEntity(entity.entityId)}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent/50",
+                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-start text-sm transition-colors hover:bg-accent/50",
                   selectedEntityId === entity.entityId && "bg-accent",
                   isFailed && "border border-red-500/30 bg-red-500/5",
                   !hasSuggestions && !isFailed && "opacity-50"

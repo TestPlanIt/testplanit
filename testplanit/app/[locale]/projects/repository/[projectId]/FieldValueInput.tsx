@@ -35,11 +35,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  CaseFields as PrismaCaseField,
-  Tags as PrismaTag,
-  Workflows as PrismaWorkflow,
-} from "@prisma/client";
+import type {
+  CaseFields as DbCaseField,
+  Tags as DbTag,
+  Workflows as DbWorkflow,
+} from "~/zenstack/models";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -54,6 +54,7 @@ import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
 import { getDateFnsLocale } from "~/utils/locales";
+import { editorMinHeightStyle } from "~/utils/editorHeight";
 import StepsForm from "./StepsForm";
 
 interface FieldValueInputProps {
@@ -62,12 +63,12 @@ interface FieldValueInputProps {
   value: any;
   onChange: (value: any) => void;
   projectId: number;
-  workflowsData?: (Pick<PrismaWorkflow, "id" | "name"> & {
+  workflowsData?: (Pick<DbWorkflow, "id" | "name"> & {
     icon?: { name: string } | null;
     color?: { value: string } | null;
     requiresReview?: boolean | null;
   })[]; // Correct shape based on schema
-  availableTagsData?: Pick<PrismaTag, "id" | "name">[];
+  availableTagsData?: Pick<DbTag, "id" | "name">[];
   canCreateTags?: boolean; // Add permission prop
   canEditRestricted?: boolean; // Add prop
   fieldIsRestricted?: boolean; // Add prop
@@ -79,7 +80,7 @@ interface FieldDefinition {
   key: string;
   label: string;
   isCustom: boolean;
-  field?: PrismaCaseField & { type: { type: string }; fieldOptions?: any[] };
+  field?: DbCaseField & { type: { type: string }; fieldOptions?: any[] };
 }
 
 // Define a simple schema for the steps form within FieldValueInput
@@ -281,7 +282,7 @@ export function FieldValueInput({
                 <SelectItem key={option.id} value={option.id.toString()}>
                   <div className="flex items-center">
                     <DynamicIcon
-                      className="shrink-0 mr-1 h-4 w-4"
+                      className="shrink-0 me-1 h-4 w-4"
                       name={option.icon as IconName}
                       color={option.iconColor}
                     />
@@ -301,7 +302,7 @@ export function FieldValueInput({
           label: (
             <div className="flex items-center">
               <DynamicIcon
-                className="h-4 w-4 mr-1"
+                className="h-4 w-4 me-1"
                 name={fo.fieldOption.icon?.name as IconName}
                 color={fo.fieldOption.iconColor?.value}
               />
@@ -355,11 +356,11 @@ export function FieldValueInput({
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal",
+                "w-full justify-start text-start font-normal",
                 !safeDateValue && "text-muted-foreground"
               )}
             >
-              <CalendarDays className="mr-2 h-4 w-4" />
+              <CalendarDays className="me-2 h-4 w-4" />
               {safeDateValue ? (
                 format(safeDateValue, "PPP", {
                   locale: getDateFnsLocale(locale),
@@ -457,19 +458,16 @@ export function FieldValueInput({
 
       // Determine initial height
       const initialHeight = fieldDefinition?.initialHeight;
-      const editorClassName = `ring-2 ring-muted rounded-lg ${initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[200px]"}`;
-      const editorInnerClassName = initialHeight
-        ? `min-h-[${initialHeight}px]`
-        : "min-h-[100px]"; // Default inner min height
 
       return (
-        <div className={editorClassName}>
+        <div className="ring-2 ring-muted rounded-lg">
           <TipTapEditor
             key={fieldKey}
             content={initialTextContent}
             onUpdate={handleEditorUpdate}
             projectId={String(projectId)}
-            className={editorInnerClassName}
+            className=""
+            style={editorMinHeightStyle(initialHeight)}
             readOnly={isDisabled}
           />
         </div>

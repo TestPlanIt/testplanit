@@ -85,6 +85,7 @@ interface TxStub {
   testRunCases: { findUnique: ReturnType<typeof vi.fn> };
   status: { findUnique: ReturnType<typeof vi.fn> };
   testRunCaseDataSetSnapshot: { findMany: ReturnType<typeof vi.fn> };
+  appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
 
 function makeTx(overrides: Partial<TxStub> = {}): TxStub {
@@ -120,6 +121,12 @@ function makeTx(overrides: Partial<TxStub> = {}): TxStub {
       // override this via `makeTx({ testRunCaseDataSetSnapshot: { findMany: ... } })`.
       findMany: vi.fn(async () => []),
       ...(overrides.testRunCaseDataSetSnapshot ?? {}),
+    },
+    // Backs readRecordKeyConfig — null rows keep the record-key feature
+    // disabled so displayKey resolves to null (no project lookup fired).
+    appConfig: {
+      findUnique: vi.fn(async () => null),
+      ...(overrides.appConfig ?? {}),
     },
   };
 }

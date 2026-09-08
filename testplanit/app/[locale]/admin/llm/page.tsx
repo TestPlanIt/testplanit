@@ -1,34 +1,22 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CirclePlus, RefreshCw, Sparkles } from "lucide-react";
+import { CirclePlus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import {
-  useFindManyLlmIntegration,
-  useUpdateLlmIntegration,
-} from "~/lib/hooks/llm-integration";
-import {
-  useUpdateLlmProviderConfig,
-  useUpdateManyLlmProviderConfig,
-} from "~/lib/hooks/llm-provider-config";
-import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
 import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 import { AddLlmIntegration } from "./AddLlmIntegration";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
@@ -36,30 +24,16 @@ import { EditLlmIntegration } from "./EditLlmIntegration";
 import { ExtendedLlmIntegration, useColumns } from "./columns";
 
 export default function LlmAdminPage() {
-  return (
-    <PaginationProvider>
-      <LlmIntegrationList />
-    </PaginationProvider>
-  );
+  return <LlmIntegrationList />;
 }
 
 function LlmIntegrationList() {
+  const locale = useLocale();
   const t = useTranslations("admin.llm");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
@@ -72,24 +46,17 @@ function LlmIntegrationList() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
-
-  const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
-  const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
-  const { mutateAsync: updateManyLlmProviderConfig } =
-    useUpdateManyLlmProviderConfig();
+  const { mutateAsync: updateLlmIntegration } =
+    useClientQueries(schema).llmIntegration.useUpdate();
+  const { mutateAsync: updateLlmProviderConfig } =
+    useClientQueries(schema).llmProviderConfig.useUpdate();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateLlmIntegrationRef = useRef(updateLlmIntegration);
   const updateLlmProviderConfigRef = useRef(updateLlmProviderConfig);
-  const updateManyLlmProviderConfigRef = useRef(updateManyLlmProviderConfig);
   useEffect(() => {
     updateLlmIntegrationRef.current = updateLlmIntegration;
     updateLlmProviderConfigRef.current = updateLlmProviderConfig;
-    updateManyLlmProviderConfigRef.current = updateManyLlmProviderConfig;
   });
 
   const handleToggle = useCallback(
@@ -101,10 +68,8 @@ function LlmIntegrationList() {
     ) => {
       try {
         if (key === "isDefault" && llmProviderConfigId && value) {
-          await updateManyLlmProviderConfigRef.current({
-            where: { isDefault: true },
-            data: { isDefault: false },
-          });
+          // The single-default DB trigger (tpl_single_default_llmproviderconfig)
+          // clears the previous default atomically.
           await updateLlmProviderConfigRef.current({
             where: { id: llmProviderConfigId },
             data: { isDefault: true },
@@ -130,8 +95,14 @@ function LlmIntegrationList() {
     []
   );
 
-  // Query for total filtered integrations (for pagination)
-  const { data: totalFilteredIntegrations } = useFindManyLlmIntegration(
+  // Single full-set fetch feeds the virtualized table directly; the table
+  // renders only the visible window so there's no page seam and no need for a
+  // separate count query (the loaded array length IS the total).
+  const {
+    data: integrations,
+    isLoading,
+    refetch,
+  } = useClientQueries(schema).llmIntegration.useFindMany(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -177,68 +148,6 @@ function LlmIntegrationList() {
     }
   );
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredIntegrations) {
-      setTotalItems(totalFilteredIntegrations.length);
-    }
-  }, [totalFilteredIntegrations, setTotalItems]);
-
-  // Query for paginated integrations
-  const {
-    data: integrations,
-    isLoading,
-    refetch,
-  } = useFindManyLlmIntegration(
-    {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
-      include: {
-        llmProviderConfig: true,
-        projectLlmIntegrations: {
-          where: { isActive: true, project: { isDeleted: false } },
-          select: { projectId: true },
-        },
-        llmFeatureConfigs: {
-          where: { enabled: true, project: { isDeleted: false } },
-          select: { projectId: true },
-        },
-      },
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-          },
-          {
-            isDeleted: false,
-          },
-        ],
-      },
-      take: effectivePageSize,
-      skip: skip,
-    },
-    {
-      enabled: !!session?.user,
-      refetchOnWindowFocus: true,
-    }
-  );
-
-  const pageSizeOptions = usePageSizeOptions(totalItems);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
-
   useEffect(() => {
     if (status !== "loading" && !session) {
       router.push("/");
@@ -261,16 +170,18 @@ function LlmIntegrationList() {
   // (gap is bounded by max-min-day-of-month). Acceptable for this 10s-refresh
   // display column; alerting/reset paths use the integration-specific period.
   const earliestPeriodStart = useMemo(() => {
-    const days = (totalFilteredIntegrations ?? []).map(
+    const days = (integrations ?? []).map(
       (i: any) => i.llmProviderConfig?.billingPeriodStartDay ?? 1
     );
     if (days.length === 0) return getBillingPeriodStart(1);
     return days
       .map((d: number) => getBillingPeriodStart(d))
       .reduce((a: Date, b: Date) => (a < b ? a : b));
-  }, [totalFilteredIntegrations]);
+  }, [integrations]);
 
-  const { data: monthlyUsageGroups } = useGroupByLlmUsage(
+  const { data: monthlyUsageGroups } = useClientQueries(
+    schema
+  ).llmUsage.useGroupBy(
     {
       by: ["llmIntegrationId"],
       _sum: { totalCost: true },
@@ -315,6 +226,10 @@ function LlmIntegrationList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   const testConnections = async () => {
     setRefreshing(true);
@@ -370,30 +285,46 @@ function LlmIntegrationList() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
   };
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="llm-admin-page-title">
-                <Sparkles className="inline mr-2 h-8 w-8" />
                 {tGlobal("admin.menu.llm")}
               </CardTitle>
-            </div>
-            <div>
-              <Button onClick={() => setShowAddDialog(true)}>
-                <CirclePlus className="w-4" />
-                <span className="hidden md:inline">{t("addIntegration")}</span>
-              </Button>
-            </div>
+              <HelpPopover helpKey="aiModels" />
+            </SectionHeader>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              aria-label={t("addIntegration")}
+              className="group gap-0 transition-all duration-200 hover:gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+                {t("addIntegration")}
+              </span>
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
@@ -409,6 +340,7 @@ function LlmIntegrationList() {
                       storageKey="admin-llm"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
+                      hideColumnRef={hideColumnRef}
                     />
                   </div>
                   <div>
@@ -428,43 +360,32 @@ function LlmIntegrationList() {
               </div>
             </div>
 
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="llm-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {(integrations?.length ?? 0) > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: (integrations?.length ?? 0).toLocaleString(locale),
+                  total: (integrations?.length ?? 0).toLocaleString(locale),
+                })}
+              </p>
+            )}
           </div>
 
-          <div className="mt-4 flex justify-between">
-            <DataTable<ExtendedLlmIntegration, unknown>
-              columns={columns}
-              data={integrations || []}
+          <div className="mt-4 w-full">
+            <DataTable
+              virtualized
+              fillViewport
+              columns={columns as any}
+              data={integrations ?? []}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
               isLoading={isLoading}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-llm-table"
+              rowTestIdPrefix="admin-llm-row"
             />
           </div>
         </CardContent>

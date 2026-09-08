@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -6,7 +6,7 @@ import { z } from "zod/v4";
 import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   SKIP_MAPPING_SENTINEL,
   sharedDatasetAssignmentSchema,
@@ -295,20 +295,20 @@ export const PUT = withAuditContext(
         );
       }
 
-      const assignment = await prisma.$transaction(async (tx) => {
+      const assignment = await baseDb.$transaction(async (tx) => {
         return tx.caseSharedDataSetAssignment.upsert({
           where: { caseId },
           create: {
             caseId,
             sharedDataSetId,
             pinnedVersionId,
-            mappingJson: mappingJson as unknown as Prisma.InputJsonValue,
+            mappingJson: mappingJson as unknown as JsonValue,
             createdById: session.user.id,
           },
           update: {
             sharedDataSetId,
             pinnedVersionId,
-            mappingJson: mappingJson as unknown as Prisma.InputJsonValue,
+            mappingJson: mappingJson as unknown as JsonValue,
           },
           select: {
             id: true,
@@ -382,7 +382,7 @@ export const DELETE = withAuditContext(
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
 
-      await prisma.$transaction(async (tx) => {
+      await baseDb.$transaction(async (tx) => {
         await tx.caseSharedDataSetAssignment.delete({ where: { caseId } });
       });
 

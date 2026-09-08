@@ -1,6 +1,19 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
+vi.mock("~/server/auth", () => ({
+  authOptions: {},
+}));
+
+const mockGetVisibleMilestone = vi.fn();
+vi.mock("~/lib/services/milestoneAccess", () => ({
+  getVisibleMilestone: (...args: any[]) => mockGetVisibleMilestone(...args),
+}));
+
 vi.mock("~/lib/services/milestoneDescendants", () => ({
   getAllDescendantMilestoneIds: vi.fn(),
 }));
@@ -13,9 +26,14 @@ vi.mock("~/server/db", () => ({
   },
 }));
 
+import { getServerSession } from "next-auth";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { db } from "~/server/db";
 import { GET } from "./route";
+
+const mockSession = {
+  user: { id: "user-1", name: "Test User" },
+};
 
 const createRequest = (
   milestoneId: string
@@ -30,6 +48,29 @@ const createRequest = (
 describe("GET /api/milestones/[milestoneId]/forecast", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (getServerSession as any).mockResolvedValue(mockSession);
+    mockGetVisibleMilestone.mockResolvedValue({ id: 1, projectId: 10 });
+  });
+
+  describe("Auth + visibility", () => {
+    it("returns 401 when unauthenticated", async () => {
+      (getServerSession as any).mockResolvedValue(null);
+
+      const [req, ctx] = createRequest("1");
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(401);
+    });
+
+    it("returns 404 when the policy-scoped lookup can't see the milestone", async () => {
+      mockGetVisibleMilestone.mockResolvedValue(null);
+
+      const [req, ctx] = createRequest("1");
+      const response = await GET(req, ctx);
+
+      expect(response.status).toBe(404);
+      expect(db.testRuns.findMany).not.toHaveBeenCalled();
+    });
   });
 
   describe("Input validation", () => {

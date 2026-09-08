@@ -16,8 +16,8 @@
  *      seed regressed.
  *
  * Prerequisite: the SCIM-token schema must be applied to the target
- * database (`pnpm generate` runs `prisma db push` which materializes the
- * `ScimToken` table and the `IdpName` enum, AND `prisma/seed.ts` upserts the
+ * database (`pnpm generate` runs `zenstack db push` which materializes the
+ * `ScimToken` table and the `IdpName` enum, AND `db/seed.ts` upserts the
  * `__scim__` User row). The test runner picks this file up via the
  * `*.integration.test.ts` glob in `vitest.config.mts`.
  *
@@ -37,7 +37,7 @@
  */
 
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient } from "@prisma/client";
+import { createRawDbClient } from "~/lib/rawDbClient";
 
 import { hashToken } from "~/lib/api-tokens";
 import {
@@ -58,7 +58,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 describeIntegration("SCIM tokens service (live DB)", () => {
   let adminUserId: string;
@@ -75,13 +75,13 @@ describeIntegration("SCIM tokens service (live DB)", () => {
     // Reuse any existing seeded non-SCIM User as the `createdById` FK target.
     // We pick the first non-system user so the test does not depend on a
     // specific seed identity.
-    const admin = await prisma.user.findFirst({
+    const admin = await db.user.findFirst({
       where: { id: { not: SCIM_SYSTEM_USER_ID } },
     });
     if (!admin) {
       throw new Error(
         "Integration test prerequisite failed: no non-SCIM User row found. " +
-          "Run `pnpm generate` (which runs prisma/seed.ts) before this test."
+          "Run `pnpm generate` (which runs db/seed.ts) before this test."
       );
     }
     adminUserId = admin.id;
@@ -89,13 +89,13 @@ describeIntegration("SCIM tokens service (live DB)", () => {
 
   afterEach(async () => {
     if (createdTokenIds.length === 0) return;
-    await prisma.scimToken.deleteMany({
+    await db.scimToken.deleteMany({
       where: { id: { in: createdTokenIds.splice(0) } },
     });
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await db.$disconnect();
   });
 
   it("mints a token whose hash matches the DB row, whose secret decrypts to the plaintext, and whose systemUserId targets the seeded synthetic User", async () => {
@@ -112,8 +112,11 @@ describeIntegration("SCIM tokens service (live DB)", () => {
     expect(plaintext.length).toBeGreaterThan(40);
 
     // findUnique by hash returns the same row we just minted
-    const byHash = await prisma.scimToken.findUnique({
+    const byHash = await db.scimToken.findUnique({
       where: { token: hashToken(plaintext) },
+      // `secret` is @omit; opt it back in (still encrypted at rest) so the
+      // round-trip assertions below can read the stored ciphertext.
+      omit: { secret: false },
     });
     expect(byHash).not.toBeNull();
     expect(byHash!.id).toBe(token.id);
@@ -146,7 +149,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
 
     await revokeScimToken(token.id, adminUserId);
 
-    const after = await prisma.scimToken.findUnique({
+    const after = await db.scimToken.findUnique({
       where: { id: token.id },
     });
     expect(after).not.toBeNull();
@@ -210,7 +213,7 @@ describeIntegration("SCIM tokens service (live DB)", () => {
   });
 
   it("the synthetic __scim__ User row is seeded with the expected shape", async () => {
-    const scimUser = await prisma.user.findUnique({
+    const scimUser = await db.user.findUnique({
       where: { email: SCIM_SYSTEM_USER_EMAIL },
     });
     expect(scimUser).not.toBeNull();

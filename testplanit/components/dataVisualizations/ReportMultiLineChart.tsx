@@ -1,7 +1,9 @@
 "use client";
 import * as d3 from "d3";
+import { useLocale } from "next-intl";
 import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
+import { durationTickFormat, localeTickFormat } from "~/utils/formatNumber";
 
 export interface MultiLineSeries {
   name: string;
@@ -15,11 +17,15 @@ export interface MultiLineSeries {
 
 interface ReportMultiLineChartProps {
   data: MultiLineSeries[];
+  /** Format Y-axis ticks as durations (values are seconds). */
+  durationTicks?: boolean;
 }
 
 export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
   data,
+  durationTicks = false,
 }) => {
+  const locale = useLocale();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
@@ -68,6 +74,13 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom - legendHeight;
 
+    // A short container (e.g. mid-resize) makes chartHeight go negative, which
+    // SVG rejects; skip rendering until there's room instead of erroring.
+    if (chartWidth <= 0 || chartHeight <= 0) {
+      svg.selectAll("*").remove();
+      return;
+    }
+
     const allDates = data.flatMap((series) => series.values.map((d) => d.date));
     const allValues = data.flatMap((series) =>
       series.values.map((d) => d.value)
@@ -97,7 +110,13 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
 
-    g.append("g").call(d3.axisLeft(yScale));
+    g.append("g").call(
+      d3
+        .axisLeft(yScale)
+        .tickFormat(
+          durationTicks ? durationTickFormat() : localeTickFormat(locale)
+        )
+    );
 
     const line = d3
       .line<{ date: Date; value: number }>()
@@ -191,7 +210,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .style("opacity", 1);
 
     // Legend will be rendered in a separate HTML container below
-  }, [data, width, height]);
+  }, [data, width, height, locale, durationTicks]);
 
   return (
     <div
@@ -207,7 +226,7 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       <svg
         ref={svgRef}
         width={width}
-        height={height - 120}
+        height={Math.max(0, height - 120)}
         style={{ flexShrink: 0 }}
       ></svg>
       <div

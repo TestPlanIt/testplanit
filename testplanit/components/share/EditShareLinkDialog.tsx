@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { prepareShareLinkData } from "@/actions/share-links";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -21,15 +23,11 @@ import {
 } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { ShareLinkMode } from "@prisma/client";
+import { ShareLinkMode } from "~/zenstack/models";
 import { format } from "date-fns";
 import { Asterisk, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import {
-  useUpdateShareLink,
-  useFindFirstRegistrationSettings,
-} from "~/lib/hooks";
 import { cn } from "~/utils";
 import {
   PasswordStrengthIndicator,
@@ -51,7 +49,8 @@ export function EditShareLinkDialog({
 }: EditShareLinkDialogProps) {
   const t = useTranslations("reports.shareDialog");
   const tCommon = useTranslations("common");
-  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+  const { data: registrationSettings } =
+    useClientQueries(schema).registrationSettings.useFindFirst();
   const policy: PasswordPolicy | null = registrationSettings
     ? {
         minPasswordLength: registrationSettings.minPasswordLength ?? 8,
@@ -83,7 +82,7 @@ export function EditShareLinkDialog({
 
   // Use ZenStack hook for updating share links
   const { mutateAsync: updateShareLink, isPending: isUpdating } =
-    useUpdateShareLink();
+    useClientQueries(schema).shareLink.useUpdate();
 
   // Reset form when shareLink changes
   useEffect(() => {
@@ -366,7 +365,7 @@ export function EditShareLinkDialog({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-start font-normal",
                     !expiresAt && "text-muted-foreground"
                   )}
                 >

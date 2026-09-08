@@ -2,10 +2,18 @@ import { LLM_FEATURES } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
-import { prisma } from "@/lib/prisma";
-import { ProjectAccessType } from "@prisma/client";
+import { baseDb } from "@/lib/db";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import {
+  IMAGE_TOKEN_ESTIMATE,
+  toImageParts,
+  type ContextImage,
+} from "~/lib/llm/context-images";
+import { getGenerateFromUrlQueue } from "~/lib/queues";
+import { screenshotKey } from "~/workers/urlScreenshots";
+import { getCurrentTenantId, isMultiTenantMode } from "~/lib/multiTenantDb";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
 import type {
   IssueAdapter,
@@ -16,9 +24,10 @@ import { authOptions } from "~/server/auth";
 import {
   buildSystemPrompt,
   buildUserPrompt,
-  fetchHierarchyContext,
+  fetchExistingCasesContext,
   fetchLinkedIssuesContext,
   type GenerationContext,
+  type IssueCaseLinkRef,
   type IssueData,
   type TemplateData,
 } from "../shared";
@@ -61,6 +70,10 @@ export async function POST(req: NextRequest) {
     autoGenerateTags,
     includeParameters,
     feature: featureOverride,
+    issueRef,
+    urlJobId,
+    pageIndex,
+    includeScreenshot,
   } = body as {
     projectId: number;
     issue: IssueData;
@@ -71,6 +84,13 @@ export async function POST(req: NextRequest) {
     includeParameters?: boolean;
     /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
     feature?: string;
+    issueRef?: IssueCaseLinkRef;
+    // URL-mode page screenshot (captured by the crawl worker, env-gated).
+    // The screenshot is read server-side from the job's Redis stash; the
+    // job must belong to the requesting user.
+    urlJobId?: string;
+    pageIndex?: number;
+    includeScreenshot?: boolean;
   };
 
   if (!projectId || !issue || !template) {
@@ -172,7 +192,7 @@ export async function POST(req: NextRequest) {
               ],
             };
 
-        const project = await prisma.projects.findFirst({
+        const project = await baseDb.projects.findFirst({
           where: projectAccessWhere,
           include: {
             projectLlmIntegrations: {
@@ -201,8 +221,8 @@ export async function POST(req: NextRequest) {
 
         send(controller, { type: "stage", stage: "resolving" });
 
-        const manager = LlmManager.getInstance(prisma);
-        const resolver = new PromptResolver(prisma);
+        const manager = LlmManager.getInstance(baseDb);
+        const resolver = new PromptResolver(baseDb);
         const llmFeature =
           (featureOverride as any) ?? LLM_FEATURES.TEST_CASE_GENERATION;
         const resolvedPrompt = await resolver.resolve(llmFeature, projectId);
@@ -246,7 +266,7 @@ export async function POST(req: NextRequest) {
         let maxTokens = resolvedPrompt.maxOutputTokens ?? 4096;
 
         const providerConfig = await (
-          prisma as any
+          baseDb as any
         ).llmProviderConfig.findFirst({
           where: { llmIntegrationId: resolved.integrationId },
         });
@@ -258,12 +278,62 @@ export async function POST(req: NextRequest) {
             4096;
         }
 
+        // URL-mode page screenshot: read from the crawl job's Redis stash,
+        // owner-checked (job.data.userId + projectId + tenant). All failure
+        // shapes degrade to text-only.
+        let pageScreenshot: ContextImage | null = null;
+        if (
+          includeScreenshot &&
+          urlJobId &&
+          typeof pageIndex === "number" &&
+          pageIndex >= 0
+        ) {
+          try {
+            const queue = getGenerateFromUrlQueue();
+            const job = queue ? await queue.getJob(urlJobId) : null;
+            const tenantOk =
+              !isMultiTenantMode() ||
+              job?.data?.tenantId === getCurrentTenantId();
+            if (
+              job &&
+              tenantOk &&
+              job.data?.userId === session.user.id &&
+              job.data?.projectId === projectId
+            ) {
+              const connection = await queue!.client;
+              const base64 = await connection.get(
+                screenshotKey(urlJobId, pageIndex)
+              );
+              if (base64) {
+                const visionSupported = await manager.supportsVision(
+                  resolved.integrationId,
+                  resolved.model
+                );
+                if (visionSupported) {
+                  pageScreenshot = {
+                    id: `url-screenshot:${pageIndex}`,
+                    source: "url-screenshot",
+                    filename: `page-${pageIndex + 1}.jpg`,
+                    mimeType: "image/jpeg",
+                    base64,
+                    byteSize: Math.floor((base64.length * 3) / 4),
+                    origin: { url: issue.key },
+                  };
+                }
+              }
+            }
+          } catch (err) {
+            console.warn(`[stream] Failed to load page screenshot:`, err);
+          }
+        }
+
         // TOKEN-05: Calculate content budget
         const CONTENT_BUDGET_RATIO = 0.65;
         const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
         const contentBudget =
           Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
-          systemPromptTokens;
+          systemPromptTokens -
+          (pageScreenshot ? IMAGE_TOKEN_ESTIMATE : 0);
 
         // Resolve the issue-tracking adapter (best-effort). Used for both
         // source-issue comments (D-02 fix — wizard's path is broken) and
@@ -341,26 +411,26 @@ export async function POST(req: NextRequest) {
               )
             : { included: [], dropped: [], tokensUsed: 0 };
 
-        // Folder cases get whatever budget linked issues didn't consume.
-        // Use linkedResult.tokensUsed directly — do NOT recompute char counts.
-        const hierarchyBudget = Math.max(
+        // Existing cases get whatever budget linked issues didn't consume. Use
+        // linkedResult.tokensUsed directly — do NOT recompute char counts.
+        const caseContextBudget = Math.max(
           0,
           remainingBudget - linkedResult.tokensUsed
         );
-        const hierarchyContext =
-          hierarchyBudget > 0
-            ? await fetchHierarchyContext(
-                prisma,
+        const existingCases =
+          caseContextBudget > 0
+            ? await fetchExistingCasesContext(
+                baseDb,
                 projectId,
-                context.folderContext,
-                hierarchyBudget
+                { folderId: context.folderContext, issueRef },
+                caseContextBudget
               )
             : [];
 
         // Build the final context with server-fetched cases + linked issues.
         const enrichedContext: GenerationContext = {
           ...context,
-          existingTestCases: hierarchyContext,
+          existingTestCases: existingCases,
           linkedIssues: linkedResult.included,
         };
 
@@ -401,7 +471,15 @@ export async function POST(req: NextRequest) {
         const llmRequest: LlmRequest = {
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt },
+            {
+              role: "user",
+              content: pageScreenshot
+                ? [
+                    { type: "text" as const, text: userPrompt },
+                    ...toImageParts([pageScreenshot]),
+                  ]
+                : userPrompt,
+            },
           ],
           temperature: resolvedPrompt.temperature,
           maxTokens,
@@ -414,6 +492,9 @@ export async function POST(req: NextRequest) {
             issueKey: issue.key,
             templateId: template.id,
             timestamp: new Date().toISOString(),
+            ...(pageScreenshot
+              ? { imageCount: 1, imageTokensEstimated: IMAGE_TOKEN_ESTIMATE }
+              : {}),
           },
         };
 

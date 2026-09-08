@@ -133,7 +133,7 @@ export const ReportSunburstChart: React.FC<ReportSunburstChartProps> = ({
                 locale,
               });
             } else {
-              displayValue = value.toLocaleString();
+              displayValue = value.toLocaleString(locale);
             }
           }
 
@@ -180,7 +180,7 @@ export const ReportSunburstChart: React.FC<ReportSunburstChartProps> = ({
           locale,
         });
       } else {
-        formattedValue = totalValue.toLocaleString();
+        formattedValue = totalValue.toLocaleString(locale);
       }
 
       centerText

@@ -35,8 +35,18 @@ import {
  */
 
 export interface UseVirtualizedInfiniteListOptions {
-  /** Number of items currently loaded (the accumulated array length). */
+  /** Number of rows currently rendered (the virtualizer item count). */
   count: number;
+  /**
+   * Number of underlying items loaded (pages × page size). Defaults to `count`.
+   * Pass this when the *rendered* `count` can stay flat across fetched pages —
+   * e.g. audit rows that collapse into a shared parent group, so an entire page
+   * of raw rows can roll into a single visible lead row. The load-more guard
+   * and the viewport-fill retry key on this instead of `count`, so pagination
+   * keeps advancing (and can page past a giant collapsed group) even when the
+   * visible row count doesn't grow.
+   */
+  loadedCount?: number;
   /** Estimated row height in px, used before dynamic measurement settles. */
   estimateSize?: number;
   /** Rows rendered beyond the visible window on each side. */
@@ -49,6 +59,15 @@ export interface UseVirtualizedInfiniteListOptions {
   onLoadMore: () => void;
   /** Distance (px) below the viewport at which to prefetch the next page. */
   loadMoreMargin?: number;
+  /**
+   * How many rows from the end the last *rendered* row must reach before the
+   * next page is pulled. This virtualizer-index trigger is the reliable one on
+   * long lists — it re-evaluates on every scroll render and doesn't depend on a
+   * zero-height sentinel's intersection (which dynamic row measurement can shove
+   * out of range). Complements the sentinel observer; both funnel through one
+   * guard so they can't double-fire.
+   */
+  loadMoreThreshold?: number;
   /** Space (px) to leave below the list when filling the viewport. */
   bottomMargin?: number;
   /**
@@ -71,16 +90,24 @@ const useIsomorphicLayoutEffect =
 
 export function useVirtualizedInfiniteList({
   count,
+  loadedCount,
   estimateSize = 140,
   overscan = 6,
   hasMore,
   isLoading,
   onLoadMore,
   loadMoreMargin = 300,
+  loadMoreThreshold = 10,
   bottomMargin = 16,
   boundToViewport = true,
   resetKey,
 }: UseVirtualizedInfiniteListOptions) {
+  // The "a page actually landed" signal that releases the load-more guard and
+  // re-attempts the viewport fill. Falls back to the rendered `count` for
+  // un-grouped consumers, where every fetched page grows the visible list; for
+  // grouped consumers the caller passes the raw item count so a page whose rows
+  // all roll into an existing parent group still advances pagination.
+  const loadGuardKey = loadedCount ?? count;
   // A callback ref (rather than a plain useRef) so the effects re-run when the
   // scroll container actually mounts. The container is often rendered *after*
   // this hook (e.g. only once search results arrive), so a one-shot mount
@@ -111,6 +138,13 @@ export function useVirtualizedInfiniteList({
     getScrollElement: () => scrollElRef.current,
     estimateSize: () => estimateSize,
     overscan,
+    // Rows measure themselves through `measureElement` ref callbacks, which
+    // run during React's commit. The default scroll-sync flushSync then fires
+    // inside a lifecycle, where React logs "flushSync was called from inside
+    // a lifecycle method" and refuses to flush — so the sync path buys
+    // nothing here and only produces the error. Plain re-renders keep the
+    // window correct.
+    useFlushSync: false,
   });
 
   // Latest values for the observer callback without re-subscribing each
@@ -127,10 +161,61 @@ export function useVirtualizedInfiniteList({
   stateRef.current.isLoading = isLoading;
   stateRef.current.onLoadMore = onLoadMore;
 
-  const maybeLoadMore = useCallback(() => {
+  // Single funnel for BOTH load-more triggers (the sentinel observer below and
+  // the virtualizer-index trigger further down). `pendingLoadRef` guarantees at
+  // most one in-flight request across both paths. This is load-bearing: the two
+  // triggers fire on the same "near the bottom" condition, so without a shared
+  // guard they double-call `onLoadMore`; `fetchNextPage` defaults to
+  // `cancelRefetch: true`, so each extra call cancels and restarts the in-flight
+  // page, blipping `isFetchingNextPage` into an abort/re-fire loop that never
+  // settles (a permanent bottom-of-list spinner).
+  const pendingLoadRef = useRef(false);
+  const requestLoad = useCallback(() => {
     const s = stateRef.current;
-    if (s.isIntersecting && s.hasMore && !s.isLoading) s.onLoadMore();
+    if (!s.hasMore || s.isLoading || pendingLoadRef.current) return;
+    pendingLoadRef.current = true;
+    s.onLoadMore();
   }, []);
+
+  // Release the guard when a page actually lands (`loadGuardKey` grew) or the
+  // scope resets (shrank). Keying the reset on real data arrival, NOT on the
+  // `isLoading` flag flickering, is what keeps it race-free: an isLoading-based
+  // reset re-opens the exact double-fire window above. Using `loadGuardKey`
+  // (raw item count) rather than the rendered `count` is what lets pagination
+  // advance when a whole page of rows collapses into an already-present parent
+  // group and the visible `count` doesn't change.
+  useEffect(() => {
+    pendingLoadRef.current = false;
+  }, [loadGuardKey]);
+
+  // Also release the guard when a fetch cycle settles WITHOUT the loaded count
+  // changing — `isLoading` fell from true back to false but no new page landed
+  // because the in-flight request was cancelled (e.g. a live-update
+  // invalidation refetching the base query mid-`fetchNextPage`), errored, or
+  // returned an already-seen page. Without this the guard above never fires
+  // (its `loadGuardKey` never moved), so `pendingLoadRef` latches at true and
+  // pagination deadlocks permanently — the list stalls a page or two in and no
+  // amount of scrolling loads more, even though `hasMore` is still true.
+  //
+  // Keying on the FALLING edge (true→false), never the rising edge, is what
+  // keeps this from re-opening the double-fire window the guard exists to close:
+  // the guard is held for the entire in-flight fetch (we only clear once we've
+  // observed `isLoading` go true and then false, i.e. a completed cycle), so a
+  // second trigger firing while the first request is in flight still bails.
+  // Mirrors the `wasResizingRef` falling-edge flush in VirtualizedTableEngine.
+  const wasLoadingRef = useRef(false);
+  useEffect(() => {
+    if (wasLoadingRef.current && !isLoading) {
+      pendingLoadRef.current = false;
+    }
+    wasLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  // Sentinel/fill path: defer to the shared guard, and only when the sentinel is
+  // actually in view (short result set, or scrolled to the bottom).
+  const maybeLoadMore = useCallback(() => {
+    if (stateRef.current.isIntersecting) requestLoad();
+  }, [requestLoad]);
 
   // Only wire the sentinel once the container is mounted and bounded, so an
   // unbounded first paint can't fire a burst of page loads before the height
@@ -158,9 +243,30 @@ export function useVirtualizedInfiniteList({
 
   // After a page settles (or hasMore flips), pull again if the sentinel is
   // still visible — fills the viewport without waiting for a scroll event.
+  // Keys on `loadGuardKey` too so a page that didn't grow the visible `count`
+  // (all rows rolled into an existing parent group) still re-attempts the fill,
+  // letting the list page past a giant collapsed group.
   useEffect(() => {
     maybeLoadMore();
-  }, [count, hasMore, isLoading, maybeLoadMore]);
+  }, [count, loadGuardKey, hasMore, isLoading, maybeLoadMore]);
+
+  // Primary, reliable trigger: watch the virtualizer's own last-rendered row.
+  // The virtualizer re-renders on every scroll (that's how it swaps the visible
+  // window), so `virtualItems` changes as the user scrolls; when the last
+  // rendered row reaches within `loadMoreThreshold` of the end, pull the next
+  // page. Unlike the sentinel observer this can't be "jumped over" by dynamic
+  // measurement. Both triggers funnel through `requestLoad`, whose
+  // `pendingLoadRef` guard prevents them from double-firing (see above). It's
+  // inherently bounded: after a page lands, `count` grows while the last
+  // rendered index (fixed by the current scroll position) falls back outside
+  // the threshold, so it stops until the user scrolls further.
+  const virtualItems = virtualizer.getVirtualItems();
+  useEffect(() => {
+    if (!hasMore || isLoading) return;
+    const last = virtualItems[virtualItems.length - 1];
+    if (!last) return;
+    if (last.index >= count - 1 - loadMoreThreshold) requestLoad();
+  }, [virtualItems, count, hasMore, isLoading, requestLoad, loadMoreThreshold]);
 
   // Scroll back to the top when the query/scope changes so the new result set
   // starts from the top. Measurements are intentionally NOT cleared here:
@@ -180,7 +286,7 @@ export function useVirtualizedInfiniteList({
     scrollRef,
     sentinelRef,
     virtualizer,
-    virtualItems: virtualizer.getVirtualItems(),
+    virtualItems,
     totalSize: virtualizer.getTotalSize(),
     measureElement: virtualizer.measureElement,
     maxHeight,

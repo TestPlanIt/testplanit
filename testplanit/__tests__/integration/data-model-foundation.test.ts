@@ -2,7 +2,7 @@
 //
 // Requires the dev DB seeded by `pnpm generate` (Plan 01-01 already pushed the
 // schema). The tests build a self-contained fixture (two projects, two cases,
-// one user assigned to project A) using raw `prisma`, then exercise the
+// one user assigned to project A) using raw `db`, then exercise the
 // ZenStack enhanced client to prove policy enforcement.
 //
 // Run via:
@@ -33,8 +33,10 @@
 // `feedback_soft_delete`); never use deleteMany / hard delete.
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient, WorkflowScope } from "@prisma/client";
-import { enhance } from "@zenstackhq/runtime";
+import { createRawDbClient } from "~/lib/rawDbClient";
+import { WorkflowScope } from "~/zenstack/models";
+
+import { getAuthDb } from "~/lib/zenstack";
 
 // Live-DB gate (matches lib/services/iterationFanOut.integration.test.ts).
 // CI runs the default test suite without a DATABASE_URL, so these tests
@@ -44,7 +46,7 @@ const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
 const describeIntegration =
   RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
 
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 // Unique suffix isolates this run from any concurrent / prior test fixture.
 const RUN_TAG = `pf1-03-${Date.now()}`;
@@ -56,7 +58,7 @@ const RUN_TAG = `pf1-03-${Date.now()}`;
 type AuthUser = Awaited<ReturnType<typeof fetchAuthUser>>;
 
 async function fetchAuthUser(userId: string) {
-  return prisma.user.findUniqueOrThrow({
+  return db.user.findUniqueOrThrow({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -88,25 +90,25 @@ let fixture: Fixture | null = null;
 
 async function setupTwoProjectFixture(): Promise<Fixture> {
   // --- Existing seeded dependencies (NEVER created here; surface clear error if missing) ---
-  const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+  const userRole = await db.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {
     throw new Error(
-      "Dev DB missing seeded `user` role. Run `pnpm tsx prisma/seed.ts` first."
+      "Dev DB missing seeded `user` role. Run `pnpm tsx db/seed.ts` first."
     );
   }
-  const adminRole = await prisma.roles.findFirst({ where: { name: "admin" } });
+  const adminRole = await db.roles.findFirst({ where: { name: "admin" } });
   if (!adminRole) {
     throw new Error("Dev DB missing seeded `admin` role.");
   }
-  const template = await prisma.templates.findFirst({
+  const template = await db.templates.findFirst({
     where: { isDefault: true, isEnabled: true, isDeleted: false },
   });
   if (!template) {
     throw new Error(
-      "Dev DB missing default Templates row. Run `pnpm tsx prisma/seed.ts` first."
+      "Dev DB missing default Templates row. Run `pnpm tsx db/seed.ts` first."
     );
   }
-  const caseWorkflow = await prisma.workflows.findFirst({
+  const caseWorkflow = await db.workflows.findFirst({
     where: { scope: WorkflowScope.CASES, isDeleted: false, isEnabled: true },
   });
   if (!caseWorkflow) {
@@ -121,7 +123,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
   //          if both projects had the same creator, @@allow('all', creator
   //          == auth()) would short-circuit the @@deny clauses we're trying
   //          to verify.
-  const userInACreated = await prisma.user.create({
+  const userInACreated = await db.user.create({
     data: {
       email: `${RUN_TAG}-userA@example.test`,
       name: `${RUN_TAG} User A`,
@@ -129,7 +131,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
       roleId: userRole.id,
     },
   });
-  const userInBCreated = await prisma.user.create({
+  const userInBCreated = await db.user.create({
     data: {
       email: `${RUN_TAG}-userB@example.test`,
       name: `${RUN_TAG} User B`,
@@ -141,14 +143,14 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
   const userInB = await fetchAuthUser(userInBCreated.id);
 
   // --- Two projects with DIFFERENT creators ---
-  const projectA = await prisma.projects.create({
+  const projectA = await db.projects.create({
     data: {
       name: `${RUN_TAG}-A`,
       createdBy: userInA.id,
       defaultAccessType: "GLOBAL_ROLE",
     },
   });
-  const projectB = await prisma.projects.create({
+  const projectB = await db.projects.create({
     data: {
       name: `${RUN_TAG}-B`,
       createdBy: userInB.id, // <- DIFFERENT creator
@@ -157,7 +159,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
   });
 
   // Assign each user to their own project only.
-  await prisma.userProjectPermission.create({
+  await db.userProjectPermission.create({
     data: {
       userId: userInA.id,
       projectId: projectA.id,
@@ -165,10 +167,10 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
       roleId: userRole.id,
     },
   });
-  await prisma.projectAssignment.create({
+  await db.projectAssignment.create({
     data: { userId: userInA.id, projectId: projectA.id },
   });
-  await prisma.userProjectPermission.create({
+  await db.userProjectPermission.create({
     data: {
       userId: userInB.id,
       projectId: projectB.id,
@@ -176,18 +178,18 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
       roleId: userRole.id,
     },
   });
-  await prisma.projectAssignment.create({
+  await db.projectAssignment.create({
     data: { userId: userInB.id, projectId: projectB.id },
   });
 
   // --- Repositories + Folders (one per project, owned by each project's creator) ---
-  const repoA = await prisma.repositories.create({
+  const repoA = await db.repositories.create({
     data: { projectId: projectA.id },
   });
-  const repoB = await prisma.repositories.create({
+  const repoB = await db.repositories.create({
     data: { projectId: projectB.id },
   });
-  const folderA = await prisma.repositoryFolders.create({
+  const folderA = await db.repositoryFolders.create({
     data: {
       projectId: projectA.id,
       repositoryId: repoA.id,
@@ -195,7 +197,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
       creatorId: userInA.id,
     },
   });
-  const folderB = await prisma.repositoryFolders.create({
+  const folderB = await db.repositoryFolders.create({
     data: {
       projectId: projectB.id,
       repositoryId: repoB.id,
@@ -205,7 +207,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
   });
 
   // --- Cases ---
-  const caseInA = await prisma.repositoryCases.create({
+  const caseInA = await db.repositoryCases.create({
     data: {
       projectId: projectA.id,
       repositoryId: repoA.id,
@@ -216,7 +218,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
       creatorId: userInA.id,
     },
   });
-  const caseInB = await prisma.repositoryCases.create({
+  const caseInB = await db.repositoryCases.create({
     data: {
       projectId: projectB.id,
       repositoryId: repoB.id,
@@ -240,7 +242,7 @@ async function setupTwoProjectFixture(): Promise<Fixture> {
 
 async function cleanupFixture(f: Fixture | null): Promise<void> {
   if (!f) return;
-  // Soft-delete all created rows. Use raw prisma so policy denials don't
+  // Soft-delete all created rows. Use raw db so policy denials don't
   // block teardown. Wrap each in try/catch so a single failure doesn't leak
   // partial cleanup. Per memory `feedback_soft_delete`: never use deleteMany.
   const safe = async (op: () => Promise<unknown>): Promise<void> => {
@@ -253,37 +255,37 @@ async function cleanupFixture(f: Fixture | null): Promise<void> {
 
   // Soft-delete leaf rows first.
   await safe(() =>
-    prisma.testCaseParameter.updateMany({
+    db.testCaseParameter.updateMany({
       where: { testCase: { name: { startsWith: RUN_TAG } } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.dataSetRow.updateMany({
+    db.dataSetRow.updateMany({
       where: { dataSet: { project: { name: { startsWith: RUN_TAG } } } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.dataSet.updateMany({
+    db.dataSet.updateMany({
       where: { project: { name: { startsWith: RUN_TAG } } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.repositoryCases.updateMany({
+    db.repositoryCases.updateMany({
       where: { name: { startsWith: RUN_TAG } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.projects.updateMany({
+    db.projects.updateMany({
       where: { name: { startsWith: RUN_TAG } },
       data: { isDeleted: true },
     })
   );
   await safe(() =>
-    prisma.user.updateMany({
+    db.user.updateMany({
       where: { email: { startsWith: RUN_TAG } },
       data: { isDeleted: true, isActive: false },
     })
@@ -300,7 +302,7 @@ beforeAll(async () => {
 afterAll(async () => {
   if (!RUN_INTEGRATION || !HAS_DB_URL) return;
   await cleanupFixture(fixture);
-  await prisma.$disconnect();
+  await db.$disconnect();
   // Emit findings table so the test summary captures policy runtime behavior.
   if (findings.length > 0) {
     console.log("\n[Plan 01-03] Policy runtime findings:");
@@ -340,8 +342,8 @@ async function expectPolicyDenial(
 describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
   it("smoke 1.1: SELECT with both allowedValuesJson AND lookupDataSetId set should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = enhance(prisma, { user: fixture.userInA });
-    const lookupDs = await prisma.dataSet.create({
+    const enhancedDb = await getAuthDb(fixture.userInA);
+    const lookupDs = await db.dataSet.create({
       data: {
         projectId: fixture.projectA.id,
         ownerCaseId: fixture.caseInA.id,
@@ -368,7 +370,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
       // soft-delete the leaked row so the fixture stays clean
       const r = result as { id?: number } | undefined;
       if (r?.id) {
-        await prisma.testCaseParameter
+        await db.testCaseParameter
           .update({ where: { id: r.id }, data: { isDeleted: true } })
           .catch(() => undefined);
       }
@@ -380,7 +382,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.2: SELECT with both allowedValuesJson AND lookupDataSetId NULL should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = enhance(prisma, { user: fixture.userInA });
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const { denied, result } = await expectPolicyDenial(() =>
       enhancedDb.testCaseParameter.create({
         data: {
@@ -397,7 +399,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
     if (!denied) {
       const r = result as { id?: number } | undefined;
       if (r?.id) {
-        await prisma.testCaseParameter
+        await db.testCaseParameter
           .update({ where: { id: r.id }, data: { isDeleted: true } })
           .catch(() => undefined);
       }
@@ -407,7 +409,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.3: SELECT with only allowedValuesJson set succeeds (positive control)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = enhance(prisma, { user: fixture.userInA });
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const created = await enhancedDb.testCaseParameter.create({
       data: {
         testCaseId: fixture.caseInA.id,
@@ -422,7 +424,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.4: STRING with allowedValuesJson set should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = enhance(prisma, { user: fixture.userInA });
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const { denied, result } = await expectPolicyDenial(() =>
       enhancedDb.testCaseParameter.create({
         data: {
@@ -441,7 +443,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
     if (!denied) {
       const r = result as { id?: number } | undefined;
       if (r?.id) {
-        await prisma.testCaseParameter
+        await db.testCaseParameter
           .update({ where: { id: r.id }, data: { isDeleted: true } })
           .catch(() => undefined);
       }
@@ -451,7 +453,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 
   it("smoke 1.5: INTEGER with both NULL succeeds (positive control)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = enhance(prisma, { user: fixture.userInA });
+    const enhancedDb = await getAuthDb(fixture.userInA);
     const created = await enhancedDb.testCaseParameter.create({
       data: {
         testCaseId: fixture.caseInA.id,
@@ -469,7 +471,7 @@ describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 // Group 2 — Cross-tenant unauthenticated-read denial (PITFALLS.md §9)
 // ---------------------------------------------------------------------------
 //
-// Loops over each new model. For each, raw-prisma seeds a row in projectA
+// Loops over each new model. For each, raw-db seeds a row in projectA
 // (or attached to caseInA / runs in A), then we attempt to read via an
 // enhanced client built with a NO_ACCESS-style user (a fresh user with
 // access=NONE). The policy `@@deny('all', auth().access == 'NONE')` MUST
@@ -494,9 +496,9 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
     // include `@@deny('all', auth().access == 'NONE')`, so this user is
     // the canonical "no access" probe. (More reliable than passing
     // user: undefined, which can crash some policy evaluators.)
-    const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+    const userRole = await db.roles.findFirst({ where: { name: "user" } });
     if (!userRole) throw new Error("user role missing");
-    const created = await prisma.user.create({
+    const created = await db.user.create({
       data: {
         email: `${RUN_TAG}-outsider@example.test`,
         name: `${RUN_TAG} Outsider`,
@@ -506,8 +508,8 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
     });
     outsiderUser = await fetchAuthUser(created.id);
 
-    // Plant rows via raw prisma so we can prove the enhanced reader denies them.
-    const param = await prisma.testCaseParameter.create({
+    // Plant rows via raw db so we can prove the enhanced reader denies them.
+    const param = await db.testCaseParameter.create({
       data: {
         testCaseId: fixture.caseInA.id,
         name: `tenant-probe-param-${RUN_TAG}`,
@@ -516,7 +518,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
     });
     plantedParameterId = param.id;
 
-    const ds = await prisma.dataSet.create({
+    const ds = await db.dataSet.create({
       data: {
         projectId: fixture.projectA.id,
         name: `${RUN_TAG}-probe-ds`,
@@ -525,7 +527,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
     });
     plantedDataSetId = ds.id;
 
-    const dsr = await prisma.dataSetRow.create({
+    const dsr = await db.dataSetRow.create({
       data: {
         dataSetId: ds.id,
         rowIndex: 0,
@@ -536,13 +538,13 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
     // For TestRunCaseIteration / TestRunCaseDataSetSnapshot we need a TestRun +
     // TestRunCase. Use a CASES-scoped workflow we already have, plus a RUNS one.
-    const runWorkflow = await prisma.workflows.findFirst({
+    const runWorkflow = await db.workflows.findFirst({
       where: { scope: WorkflowScope.RUNS, isDeleted: false, isEnabled: true },
     });
     if (!runWorkflow) {
       throw new Error("Dev DB missing RUNS-scoped Workflows row.");
     }
-    const testRun = await prisma.testRuns.create({
+    const testRun = await db.testRuns.create({
       data: {
         projectId: fixture.projectA.id,
         name: `${RUN_TAG}-run`,
@@ -550,13 +552,13 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
         createdById: fixture.userInA.id,
       },
     });
-    const testRunCase = await prisma.testRunCases.create({
+    const testRunCase = await db.testRunCases.create({
       data: {
         testRunId: testRun.id,
         repositoryCaseId: fixture.caseInA.id,
       },
     });
-    const iter = await prisma.testRunCaseIteration.create({
+    const iter = await db.testRunCaseIteration.create({
       data: {
         testRunCaseId: testRunCase.id,
         rowIndex: 0,
@@ -565,7 +567,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
     });
     plantedIterationId = iter.id;
 
-    const snap = await prisma.testRunCaseDataSetSnapshot.create({
+    const snap = await db.testRunCaseDataSetSnapshot.create({
       data: {
         testRunCaseId: testRunCase.id,
         sourceDataSetId: ds.id,
@@ -591,9 +593,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("(adaptive) outsider user (access=NONE) read across the 5 new models — record per-model denial outcomes", async () => {
     if (!outsiderUser) throw new Error("outsider user not seeded");
-    const denyDb = enhance(prisma, {
-      user: outsiderUser,
-    }) as unknown as EnhancedReader;
+    const denyDb = (await getAuthDb(outsiderUser)) as unknown as EnhancedReader;
 
     const probes = [
       {
@@ -645,7 +645,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("project-A user CAN read TestCaseParameter planted in project A (positive control)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const okDb = enhance(prisma, { user: fixture.userInA });
+    const okDb = await getAuthDb(fixture.userInA);
     const rows = await okDb.testCaseParameter.findMany({
       where: { id: plantedParameterId },
     });
@@ -656,7 +656,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
     if (!fixture) throw new Error("Fixture not initialised");
     // Plant a DataSet in projectB, owned (createdBy) by userInB.
     // userInA has zero permissions on projectB so the read should be denied.
-    const dsB = await prisma.dataSet.create({
+    const dsB = await db.dataSet.create({
       data: {
         projectId: fixture.projectB.id,
         name: `${RUN_TAG}-cross-tenant-ds`,
@@ -664,7 +664,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
       },
     });
     try {
-      const okDb = enhance(prisma, { user: fixture.userInA });
+      const okDb = await getAuthDb(fixture.userInA);
       const rows = await okDb.dataSet.findMany({ where: { id: dsB.id } });
       const denied = Array.isArray(rows) && rows.length === 0;
       record(
@@ -676,7 +676,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
       );
       expect(typeof denied).toBe("boolean");
     } finally {
-      await prisma.dataSet.update({
+      await db.dataSet.update({
         where: { id: dsB.id },
         data: { isDeleted: true },
       });
@@ -685,14 +685,14 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 
   it("(adaptive) a fully unauthenticated probe (no session at all) — record outcome", async () => {
     // Adaptive smoke test: in a v2 ZenStack environment without the route-
-    // level wiring, enhance(prisma, { user: undefined }) may not fire @@deny
+    // level wiring, await getAuthDb(undefined) may not fire @@deny
     // policies as expected. The application's production paths use
     // getEnhancedDb(session) which always passes a fully-resolved user, so
     // the user: undefined case is academic — the boundary that matters is
     // route-level auth (Plan 01-02 boundary helpers + getEnhancedDb).
     //
     // We record the outcome for SUMMARY.md without failing the suite.
-    const emptyDb = enhance(prisma, { user: undefined });
+    const emptyDb = await getAuthDb(undefined);
     let crashed = false;
     let leaked = false;
     try {
@@ -723,7 +723,7 @@ describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
 // ownerCase.projectId != projectId)` (schema.zmodel:3466).
 //
 // Test 3.1 attempts the cross-project assignment via the enhanced client.
-// Test 3.2 demonstrates the documented gap: raw prisma BYPASSES the @@deny
+// Test 3.2 demonstrates the documented gap: raw db BYPASSES the @@deny
 // (Phase 2's UI must use the enhanced client). Test 3.3 cleans up the leak.
 describeIntegration(
   "Phase 1 DSET-06 cross-project DataSet ownership denial",
@@ -733,7 +733,7 @@ describeIntegration(
       // userInB is the creator of projectB. Use userInB so they have create
       // rights on a projectB-owned DataSet, making the cross-project field
       // (ownerCaseId pointing at caseInA in projectA) the load-bearing mistake.
-      const enhancedDb = enhance(prisma, { user: fixture.userInB });
+      const enhancedDb = await getAuthDb(fixture.userInB);
       const { denied, result } = await expectPolicyDenial(() =>
         enhancedDb.dataSet.create({
           data: {
@@ -754,7 +754,7 @@ describeIntegration(
       if (!denied) {
         const r = result as { id?: number } | undefined;
         if (r?.id) {
-          await prisma.dataSet
+          await db.dataSet
             .update({ where: { id: r.id }, data: { isDeleted: true } })
             .catch(() => undefined);
         }
@@ -762,19 +762,19 @@ describeIntegration(
       expect(typeof denied).toBe("boolean");
     });
 
-    it("DOCUMENTED GAP: raw prisma BYPASSES the @@deny — DSET-06 enforcement requires the enhanced client (Test 3.2)", async () => {
+    it("DOCUMENTED GAP: raw db BYPASSES the @@deny — DSET-06 enforcement requires the enhanced client (Test 3.2)", async () => {
       if (!fixture) throw new Error("Fixture not initialised");
-      // EXPECTED BEHAVIOR: raw `prisma` does NOT run @@deny; this write
+      // EXPECTED BEHAVIOR: raw `db` does NOT run @@deny; this write
       // SUCCEEDS. This is intentional — Phase 2's UI layer MUST go through
       // `getEnhancedDb(session)` per memory `feedback_default_to_enhanced_db`,
       // which closes this gap. Phase 1 documents the gap and Phase 2 closes it.
       //
       // If you change this test to assert rejection, you've changed the
       // architecture. Re-read RESEARCH.md "Don't Hand-Roll" + Pitfall G.
-      const leaked = await prisma.dataSet.create({
+      const leaked = await db.dataSet.create({
         data: {
           projectId: fixture.projectA.id,
-          ownerCaseId: fixture.caseInB.id, // cross-project, raw prisma allows it
+          ownerCaseId: fixture.caseInB.id, // cross-project, raw db allows it
           name: `${RUN_TAG}-raw-bypass`,
           createdById: fixture.userInA.id,
         },
@@ -785,11 +785,11 @@ describeIntegration(
 
       // Test 3.3 — cleanup the leaked test row immediately (soft-delete per
       // memory `feedback_soft_delete`) so subsequent runs / queries don't see it.
-      await prisma.dataSet.update({
+      await db.dataSet.update({
         where: { id: leaked.id },
         data: { isDeleted: true },
       });
-      const after = await prisma.dataSet.findUnique({
+      const after = await db.dataSet.findUnique({
         where: { id: leaked.id },
       });
       expect(after?.isDeleted).toBe(true);
@@ -797,7 +797,7 @@ describeIntegration(
 
     it("accepts DataSet create with same-project ownerCaseId (positive control)", async () => {
       if (!fixture) throw new Error("Fixture not initialised");
-      const enhancedDb = enhance(prisma, { user: fixture.userInA });
+      const enhancedDb = await getAuthDb(fixture.userInA);
       const ds = await enhancedDb.dataSet.create({
         data: {
           projectId: fixture.projectA.id,
@@ -818,7 +818,7 @@ describeIntegration(
 describeIntegration("Phase 1 hasParameters regression gate", () => {
   it("RepositoryCases.findMany returns hasParameters=false for fresh fixture cases (Test 4.1)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const rows = await prisma.repositoryCases.findMany({
+    const rows = await db.repositoryCases.findMany({
       where: {
         projectId: fixture.projectA.id,
         // Avoid cases that may have parameters created in Group 1 — filter
@@ -838,13 +838,13 @@ describeIntegration("Phase 1 hasParameters regression gate", () => {
 
   it("Filtering by hasParameters=false returns the same row count (Test 4.2)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
-    const allRows = await prisma.repositoryCases.findMany({
+    const allRows = await db.repositoryCases.findMany({
       where: {
         projectId: fixture.projectA.id,
         name: { startsWith: RUN_TAG },
       },
     });
-    const filtered = await prisma.repositoryCases.findMany({
+    const filtered = await db.repositoryCases.findMany({
       where: {
         projectId: fixture.projectA.id,
         name: { startsWith: RUN_TAG },

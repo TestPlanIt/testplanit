@@ -1,4 +1,5 @@
 #!/usr/bin/env tsx
+import { createRawDbClient } from "~/lib/rawDbClient";
 /**
  * check-group-external-id-dupes.ts — Pre-migration audit gate for the
  * Groups.externalId UNIQUE constraint.
@@ -20,12 +21,10 @@
  *   pnpm scim:check-group-dupes
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+const db = createRawDbClient();
 
 async function main(): Promise<void> {
-  const rows = await prisma.$queryRaw<
+  const rows = await db.$queryRaw<
     Array<{ externalId: string; count: bigint }>
   >`SELECT "externalId", COUNT(*) as count FROM "Groups" WHERE "externalId" IS NOT NULL GROUP BY "externalId" HAVING COUNT(*) > 1`;
 
@@ -42,4 +41,4 @@ async function main(): Promise<void> {
   process.exit(1);
 }
 
-void main().finally(() => prisma.$disconnect());
+void main().finally(() => db.$disconnect());

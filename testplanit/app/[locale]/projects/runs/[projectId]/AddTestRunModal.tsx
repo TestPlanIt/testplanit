@@ -1,10 +1,15 @@
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
+import {
+  MilestoneSelect,
+  transformMilestones,
+} from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
@@ -43,7 +48,8 @@ import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
+import { ApplicationArea, TestRunType } from "~/zenstack/models";
+import type { Attachments } from "~/zenstack/models";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Combine } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -53,7 +59,6 @@ import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -61,6 +66,7 @@ import {
   type GetAssignmentsResponse,
 } from "~/app/actions/getAssignmentsForRunCases";
 import { emptyEditorContent } from "~/app/constants";
+import { planDuplicationGroup } from "./duplicationGroup";
 import { iterationProgressBus } from "~/lib/services/iterationProgressBus";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
@@ -69,15 +75,6 @@ import { RunCardinalityHardRefuseDialog } from "@/components/runs/RunCardinality
 import { RunCardinalitySoftConfirmDialog } from "@/components/runs/RunCardinalitySoftConfirmDialog";
 import type { PreflightResult } from "~/lib/types/iterationCardinality";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  useCreateAttachments,
-  useCreateTestRuns,
-  useFindManyConfigurations,
-  useFindManyMilestones,
-  useFindManyTags,
-  useFindManyWorkflows,
-  useFindUniqueProjects,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
@@ -317,36 +314,23 @@ const BasicInfoDialog = React.memo(
                       return { results, total: filtered.length };
                     };
 
-                    const clearAllConfigurations = () => {
-                      field.onChange([]);
-                    };
-
                     return (
                       <FormItem>
-                        <FormLabel className="flex justify-between items-center">
-                          <div className="flex items-center">
-                            {tCommon("fields.configurations")}
-                            {selectedConfigs.length > 0 && (
-                              <span className="ml-1 text-muted-foreground">
-                                {"("}
-                                {selectedConfigs.length}
-                                {")"}
-                              </span>
-                            )}
-                            <HelpPopover helpKey="testRun.configuration" />
-                          </div>
+                        <FormLabel className="flex items-center">
+                          {tCommon("fields.configurations")}
                           {selectedConfigs.length > 0 && (
-                            <span
-                              onClick={clearAllConfigurations}
-                              className="cursor-pointer text-sm text-muted-foreground hover:underline"
-                            >
-                              {tCommon("actions.clearAll")}
+                            <span className="ms-1 text-muted-foreground">
+                              {"("}
+                              {selectedConfigs.length}
+                              {")"}
                             </span>
                           )}
+                          <HelpPopover helpKey="testRun.configuration" />
                         </FormLabel>
                         <FormControl>
                           <MultiAsyncCombobox<ConfigurationOption>
                             value={selectedConfigs}
+                            ariaLabel={tCommon("fields.configurations")}
                             hideSelected={true}
                             onValueChange={(configs) => {
                               field.onChange(configs.map((c) => c.id));
@@ -459,7 +443,7 @@ const BasicInfoDialog = React.memo(
                         value={field.value?.toString()}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger aria-label={tCommon("fields.state")}>
                             <SelectValue
                               placeholder={tCommon("placeholders.selectState")}
                             />
@@ -742,7 +726,7 @@ const TestCasesDialog = React.memo(
 
     return (
       <>
-        <DialogHeader className="p-6 pb-0 pr-4">
+        <DialogHeader className="p-6 pb-0 pe-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
             <div className="flex justify-between items-start text-muted-foreground">
@@ -835,7 +819,7 @@ const TestCasesDialog = React.memo(
         </div>
         <div className="p-6 bg-background border-t flex justify-end items-center gap-2">
           {selectedTestCases.length > 0 && numericProjectId ? (
-            <div className="mr-auto">
+            <div className="me-auto">
               <RunPreflightChip
                 caseIds={selectedTestCases}
                 configIds={watchedConfigIds}
@@ -876,6 +860,10 @@ interface AddRunModalDuplicationPreset {
   originalStateId: number | null;
   originalNote?: any;
   originalDocs?: any;
+  /** Copies join the source run's configuration group instead of forming one. */
+  joinSourceGroup?: boolean;
+  /** The source run's group when the duplicate options were confirmed. */
+  originalConfigurationGroupId?: string | null;
 }
 
 interface AddTestRunModalProps {
@@ -885,6 +873,8 @@ interface AddTestRunModalProps {
   initialSelectedCaseIds: number[];
   onSelectedCasesChange: (cases: number[]) => void;
   duplicationPreset?: AddRunModalDuplicationPreset;
+  /** Issues to pre-link on open (e.g. create-run-from-milestone-issues). */
+  initialLinkedIssueIds?: number[];
 }
 
 export default function AddTestRunModal({
@@ -894,6 +884,7 @@ export default function AddTestRunModal({
   initialSelectedCaseIds,
   onSelectedCasesChange,
   duplicationPreset,
+  initialLinkedIssueIds,
 }: AddTestRunModalProps) {
   const formInitializedRef = useRef(false);
   const [step, setStep] = useState(0);
@@ -930,8 +921,12 @@ export default function AddTestRunModal({
 
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
 
-  const { mutateAsync: createTestRuns } = useCreateTestRuns();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: createTestRuns } =
+    useClientQueries(schema).testRuns.useCreate();
+  const { mutateAsync: updateTestRun } =
+    useClientQueries(schema).testRuns.useUpdate();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
 
   // `excludeNotStartedFromRuns` is the per-project toggle that hides NOT_STARTED
   // workflow-state cases from runs. We read it here so the submit handler can
@@ -939,14 +934,16 @@ export default function AddTestRunModal({
   // payload — without this, a user picking a stale page state could still get a
   // draft case added to a run after the admin flipped the toggle on. Cheap one-
   // row read; the picker-side filter (UI hide) is tracked as a follow-up.
-  const { data: projectFlag } = useFindUniqueProjects(
+  const { data: projectFlag } = useClientQueries(schema).projects.useFindUnique(
     {
       where: { id: Number(projectId) },
       select: { excludeNotStartedFromRuns: true },
     },
     { enabled: Number.isFinite(Number(projectId)) }
   );
-  const { data: configurations } = useFindManyConfigurations({
+  const { data: configurations } = useClientQueries(
+    schema
+  ).configurations.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -954,7 +951,7 @@ export default function AddTestRunModal({
     },
     orderBy: { name: "asc" },
   });
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -964,18 +961,24 @@ export default function AddTestRunModal({
     include: { icon: true, color: true },
     orderBy: { order: "asc" },
   });
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
-      isCompleted: false,
+      // Completed milestones aren't offered — except a caller-provided
+      // default (create-run-from-milestone on a closed sprint), which must
+      // be visible or the preset would silently ride along as a hidden
+      // form value.
+      ...(defaultMilestoneId != null
+        ? { OR: [{ isCompleted: false }, { id: defaultMilestoneId }] }
+        : { isCompleted: false }),
     },
     include: {
       milestoneType: { include: { icon: true } },
       children: { include: { milestoneType: { include: { icon: true } } } },
     },
   });
-  useFindManyTags({
+  useClientQueries(schema).tags.useFindMany({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
@@ -983,13 +986,18 @@ export default function AddTestRunModal({
   const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
   const configurationsOptions: ConfigurationOption[] =
     configurations?.map((c) => ({ id: c.id, name: c.name })) || [];
+  // `null` for system admins — they bypass the review gate on create (see
+  // `resolveCreateStateRemap`), so no state option is disabled.
+  const isSystemAdminForGate = session?.user?.access === "ADMIN";
   const firstGatedRunOrder = useMemo(() => {
+    if (isSystemAdminForGate) return null;
     return (workflows ?? [])
       .filter((w) => w.requiresReview === true)
-      .reduce<
-        number | null
-      >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
-  }, [workflows]);
+      .reduce<number | null>(
+        (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+        null
+      );
+  }, [workflows, isSystemAdminForGate]);
   const workflowsOptions = useMemo(() => {
     return (
       workflows?.map((w) => ({
@@ -1003,18 +1011,10 @@ export default function AddTestRunModal({
       })) || []
     );
   }, [workflows, firstGatedRunOrder]);
-  const milestonesOptions = (milestones || []).map((m: any) => ({
-    value: m.id.toString(),
-    label: m.name,
-    milestoneType: m.milestoneType
-      ? {
-          icon: m.milestoneType.icon
-            ? { name: m.milestoneType.icon.name as IconName }
-            : undefined,
-        }
-      : undefined,
-    parentId: m.parentId,
-  }));
+  // Shared transform (NOT a hand-rolled map): it carries the tracker
+  // linkage fields through, so the picker can mark Jira-synced milestones
+  // with the source icon.
+  const milestonesOptions = transformMilestones(milestones || []);
 
   // Dialog close handler — the parent conditionally mounts this component,
   // so React unmounts and discards form/local state on close. No manual reset
@@ -1068,6 +1068,11 @@ export default function AddTestRunModal({
       return;
     }
     if (formInitializedRef.current) return;
+    // Both init branches below need the default workflow — claiming
+    // "initialized" before it loads (a fresh page load opening straight
+    // into the dialog) skipped initialization entirely, so presets like
+    // initialLinkedIssueIds never applied.
+    if (!defaultWorkflow) return;
     formInitializedRef.current = true;
 
     if (duplicationPreset && defaultWorkflow) {
@@ -1169,7 +1174,7 @@ export default function AddTestRunModal({
         testCases: initialSelectedCaseIds,
       });
       setSelectedTags([]);
-      setLinkedIssueIds([]);
+      setLinkedIssueIds(initialLinkedIssueIds ?? []);
     }
     // This effect should run when the modal opens or when key dependencies for defaults change.
     // Explicitly not including `reset` in deps as it's stable, but form values depend on these.
@@ -1179,6 +1184,7 @@ export default function AddTestRunModal({
     defaultWorkflow,
     initialSelectedCaseIds,
     defaultMilestoneId,
+    initialLinkedIssueIds,
     workflowsOptions,
     reset,
     tCommon,
@@ -1323,6 +1329,10 @@ export default function AddTestRunModal({
       return;
     }
     setIsSubmitting(true);
+    // Hoisted so the catch below can tell whether the source run was stamped
+    // with a freshly minted group id but ended up with no siblings.
+    const createdRuns: any[] = [];
+    let stampedSourceRunId: number | null = null;
     try {
       let assignmentsToCopy: {
         repositoryCaseId: number;
@@ -1430,10 +1440,34 @@ export default function AddTestRunModal({
       const configsToCreate =
         data.configIds.length > 0 ? data.configIds : [null];
 
-      // Generate a group ID if creating multiple runs
-      const configurationGroupId = configsToCreate.length > 1 ? uuidv4() : null;
+      // Which configuration group the new runs land in. Without a duplication
+      // preset this is the historical rule (a fresh group only when 2+ configs
+      // are picked). Duplicating with "join the source's group" on puts every
+      // copy — even a single one — in the source's group instead.
+      const groupPlan = planDuplicationGroup({
+        configCount: configsToCreate.length,
+        joinSourceGroup: duplicationPreset?.joinSourceGroup === true,
+        sourceGroupId: duplicationPreset?.originalConfigurationGroupId ?? null,
+      });
+      const configurationGroupId = groupPlan.configurationGroupId;
 
-      const createdRuns: any[] = [];
+      // The source has no group yet, so it has to be stamped with the minted
+      // id as well — otherwise the copies group up without it, which is the
+      // defect this option exists to fix. Done BEFORE the runs are created so
+      // a failure here aborts with nothing created; the catch below undoes it
+      // if every create then fails and the source would be left alone in it.
+      if (
+        groupPlan.stampSource &&
+        duplicationPreset &&
+        configurationGroupId !== null
+      ) {
+        await updateTestRun({
+          where: { id: duplicationPreset.originalRunId },
+          data: { configurationGroupId },
+        });
+        stampedSourceRunId = duplicationPreset.originalRunId;
+      }
+
       setCreationProgress({ current: 0, total: configsToCreate.length });
 
       for (const configId of configsToCreate) {
@@ -1451,6 +1485,10 @@ export default function AddTestRunModal({
           projectId: Number(projectId),
           createdById: session.user.id,
           configurationGroupId: configurationGroupId,
+          // Provenance marker so the create emits test_run.duplicated.
+          ...(duplicationPreset
+            ? { duplicatedFromId: duplicationPreset.originalRunId }
+            : {}),
           tags: {
             connect: selectedTags.map((tagId) => ({ id: tagId })),
           },
@@ -1564,6 +1602,21 @@ export default function AddTestRunModal({
       router.refresh();
     } catch (error: any) {
       console.error("Failed to create test run:", error);
+      // Nothing was created, so the group the source was just stamped with has
+      // a single member. Auto-dissolve it by putting the source back.
+      if (stampedSourceRunId !== null && createdRuns.length === 0) {
+        try {
+          await updateTestRun({
+            where: { id: stampedSourceRunId },
+            data: { configurationGroupId: null },
+          });
+        } catch (revertError) {
+          console.error(
+            "Failed to revert the source run's configuration group:",
+            revertError
+          );
+        }
+      }
       toast.error(tCommon("errors.failedToFetchAssignments.title"), {
         description:
           error.message || tCommon("errors.failedToFetchAssignments.message"),

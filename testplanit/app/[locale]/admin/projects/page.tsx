@@ -1,13 +1,10 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -16,18 +13,13 @@ import {
   CustomColumnDef,
 } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import {
-  useFindManyProjects,
-  useFindManyUser,
-  useUpdateProjects,
-} from "~/lib/hooks";
 import { ExtendedProjects, useColumns } from "./columns";
 
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
 import { Filter } from "@/components/tables/Filter";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { SectionHeader } from "@/components/ui/typography";
 import { DeleteProject } from "./DeleteProject";
 import { EditProjectModal } from "./EditProject";
 
@@ -74,31 +66,18 @@ interface FormData {
 }
 
 export default function ProjectAdminPage() {
-  return (
-    <PaginationProvider>
-      <ProjectAdmin />
-    </PaginationProvider>
-  );
+  return <ProjectAdmin />;
 }
+
+const PAGE_SIZE = 50;
 
 function ProjectAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const locale = useLocale();
   const t = useTranslations("admin.projects");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
-  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -116,6 +95,10 @@ function ProjectAdmin() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  // Hide-column requests from the table's header menu are routed through the
+  // Columns control (the visibility owner) so persistence and its checkboxes
+  // stay in sync.
+  const hideColumnRef = useRef<((columnId: string) => void) | null>(null);
 
   const [editingProject, setEditingProject] = useState<ExtendedProjects | null>(
     null
@@ -125,7 +108,8 @@ function ProjectAdmin() {
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { mutateAsync: updateProjects } = useUpdateProjects();
+  const { mutateAsync: updateProjects } =
+    useClientQueries(schema).projects.useUpdate();
 
   // Stabilize mutation ref — ZenStack's mutateAsync changes identity every render
   const updateProjectsRef = useRef(updateProjects);
@@ -145,7 +129,7 @@ function ProjectAdmin() {
     },
   });
 
-  const { data: allUsers } = useFindManyUser({
+  const { data: allUsers } = useClientQueries(schema).user.useFindMany({
     where: { isActive: true, isDeleted: false },
     select: { id: true, access: true },
   });
@@ -181,160 +165,166 @@ function ProjectAdmin() {
     setIsAddModalOpen(false);
   }, []);
 
-  // Columns that require client-side sorting (relation counts, not scalar DB fields)
+  // Columns that require client-side sorting (relation counts, not scalar DB
+  // fields). Sorting one fetches the full set and sorts it in memory; every
+  // other column drives a genuine infinite fetch.
   const clientSortColumns = new Set([
     "users",
     "milestoneTypes",
     "milestones",
     "integration",
   ]);
-  const needsClientSideSorting = clientSortColumns.has(sortConfig.column);
-
-  // Calculate skip and take based on pageSize
-  const effectivePageSize =
-    typeof pageSize === "number" ? pageSize : totalItems;
-  const skip = (currentPage - 1) * effectivePageSize;
+  const isCountSort = clientSortColumns.has(sortConfig.column);
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const { data: totalFilteredProjects } = useFindManyProjects(
-    {
-      where: {
-        AND: [
-          {
-            name: {
-              contains: debouncedSearchString,
-              mode: "insensitive",
-            },
-            isDeleted: false,
+  const projectsWhere = useMemo(
+    () => ({
+      AND: [
+        {
+          name: {
+            contains: debouncedSearchString,
+            mode: "insensitive" as const,
           },
-        ],
-      },
-    },
-    {
-      enabled:
-        (!!session?.user && debouncedSearchString.length === 0) ||
-        debouncedSearchString.length > 0,
-      refetchOnWindowFocus: true,
-    }
+          isDeleted: false,
+        },
+      ],
+    }),
+    [debouncedSearchString]
   );
 
-  // Update total items in pagination context
-  useEffect(() => {
-    if (totalFilteredProjects) {
-      setTotalItems(totalFilteredProjects.length);
-    }
-  }, [totalFilteredProjects, setTotalItems]);
+  const { data: totalCount } = useClientQueries(schema).projects.useCount(
+    { where: projectsWhere },
+    { enabled: !!session?.user, refetchOnWindowFocus: true }
+  );
 
-  // 1. Fetch Projects with refined include for direct/group users
-  const { data: projectsRaw, isLoading: isLoadingProjects } =
-    useFindManyProjects(
-      {
-        orderBy:
-          !needsClientSideSorting && sortConfig
-            ? { [sortConfig.column]: sortConfig.direction }
-            : { name: "asc" },
+  // Heavy include shared by both fetch modes: hydrates the members / milestones
+  // / integrations each row's columns render.
+  const include = useMemo(
+    () => ({
+      creator: true,
+      milestones: {
+        include: { milestoneType: { include: { icon: true } } },
+        where: { isDeleted: false },
+        orderBy: [
+          { isStarted: "desc" as const },
+          { startedAt: "asc" as const },
+          { isCompleted: "asc" as const },
+          { completedAt: "desc" as const },
+        ],
+      },
+      milestoneTypes: true,
+      projectIntegrations: {
         include: {
-          creator: true,
-          milestones: {
-            include: { milestoneType: { include: { icon: true } } },
-            where: { isDeleted: false },
-            orderBy: [
-              { isStarted: "desc" },
-              { startedAt: "asc" },
-              { isCompleted: "asc" },
-              { completedAt: "desc" },
-            ],
-          },
-          milestoneTypes: true,
-          projectIntegrations: {
-            include: {
-              integration: true,
-            },
-          },
+          integration: true,
+        },
+      },
 
-          // Refined includes for user IDs with filtering
-          assignedUsers: {
-            // Direct assignments
-            where: {
-              // Filter ProjectAssignment records
-              user: {
-                // Based on the related User's status
-                isActive: true,
-                isDeleted: false,
-              },
-            },
-            select: { userId: true }, // Select only the ID of active/not-deleted users
+      // Refined includes for user IDs with filtering
+      assignedUsers: {
+        // Direct assignments
+        where: {
+          // Filter ProjectAssignment records
+          user: {
+            // Based on the related User's status
+            isActive: true,
+            isDeleted: false,
           },
-          groupPermissions: {
-            // Group permissions link for the project
+        },
+        select: { userId: true }, // Select only the ID of active/not-deleted users
+      },
+      groupPermissions: {
+        // Group permissions link for the project
+        select: {
+          groupId: true, // Expose groupId for GroupListDisplay column
+          accessType: true, // Include accessType to filter later if needed
+          // Select only the group relation from the permission
+          group: {
+            // The actual group
             select: {
-              groupId: true, // Expose groupId for GroupListDisplay column
-              accessType: true, // Include accessType to filter later if needed
-              // Select only the group relation from the permission
-              group: {
-                // The actual group
-                select: {
-                  // Select only the user assignments from the group
-                  assignedUsers: {
-                    // The GroupAssignment records linking users to this group
-                    where: {
-                      // Filter GroupAssignment records
-                      user: {
-                        // Based on the related User's status
-                        isActive: true,
-                        isDeleted: false,
-                      },
-                    },
-                    select: { userId: true }, // Select the userId from the filtered assignments
+              // Select only the user assignments from the group
+              assignedUsers: {
+                // The GroupAssignment records linking users to this group
+                where: {
+                  // Filter GroupAssignment records
+                  user: {
+                    // Based on the related User's status
+                    isActive: true,
+                    isDeleted: false,
                   },
                 },
+                select: { userId: true }, // Select the userId from the filtered assignments
               },
-            },
-          },
-          codeRepositoryConfig: {
-            select: {
-              id: true,
-              repository: {
-                select: { name: true },
-              },
-            },
-          },
-          projectLlmIntegrations: {
-            select: {
-              isActive: true,
-              llmIntegration: {
-                select: { name: true, provider: true },
-              },
-            },
-          },
-          defaultRole: {
-            select: {
-              id: true,
-              name: true,
             },
           },
         },
-        where: {
-          AND: [
-            {
-              name: {
-                contains: debouncedSearchString,
-                mode: "insensitive",
-              },
-              isDeleted: false,
-            },
-          ],
-        },
-        take: needsClientSideSorting ? undefined : effectivePageSize,
-        skip: needsClientSideSorting ? undefined : skip,
       },
-      {
-        enabled:
-          (!!session?.user && debouncedSearchString.length === 0) ||
-          debouncedSearchString.length > 0,
-        refetchOnWindowFocus: true,
-      }
-    );
+      codeRepositoryConfig: {
+        select: {
+          id: true,
+          repository: {
+            select: { name: true },
+          },
+        },
+      },
+      projectLlmIntegrations: {
+        select: {
+          isActive: true,
+          llmIntegration: {
+            select: { name: true, provider: true },
+          },
+        },
+      },
+      defaultRole: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    }),
+    []
+  );
+
+  const orderBy = useMemo(
+    () =>
+      isCountSort
+        ? { name: "asc" as const }
+        : { [sortConfig.column]: sortConfig.direction },
+    [isCountSort, sortConfig]
+  );
+
+  const infiniteBaseArgs = useMemo(
+    () => ({ orderBy, include, where: projectsWhere, take: PAGE_SIZE }),
+    [orderBy, include, projectsWhere]
+  );
+
+  const {
+    data: infinitePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingInfinite,
+  } = useClientQueries(schema).projects.useInfiniteFindMany(infiniteBaseArgs, {
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
+      return { ...infiniteBaseArgs, skip: allPages.flat().length };
+    },
+    enabled: !!session?.user && !isCountSort,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: allProjectsRaw, isLoading: isLoadingAll } = useClientQueries(
+    schema
+  ).projects.useFindMany(
+    { orderBy: { name: "asc" }, include, where: projectsWhere },
+    { enabled: !!session?.user && isCountSort, refetchOnWindowFocus: true }
+  );
+
+  const projectsRaw = useMemo(() => {
+    if (isCountSort) return allProjectsRaw;
+    return infinitePages?.pages.flat();
+  }, [isCountSort, allProjectsRaw, infinitePages]);
+
+  const isLoading = isCountSort ? isLoadingAll : isLoadingInfinite;
 
   // Use the utility function (potentially within useMemo for optimization)
   const projects: ProcessedProject[] = useMemo(
@@ -342,11 +332,11 @@ function ProjectAdmin() {
     [projectsRaw, allUsers]
   );
 
-  // Client-side sort by relation count, then paginate
+  // Client-side sort by relation count over the full set (count columns only).
   const displayedProjects = useMemo(() => {
-    if (!needsClientSideSorting || !projects.length) return projects;
+    if (!isCountSort || !projects.length) return projects;
 
-    const sorted = [...projects].sort((a, b) => {
+    return [...projects].sort((a, b) => {
       let aValue = 0;
       let bValue = 0;
       switch (sortConfig.column) {
@@ -371,12 +361,9 @@ function ProjectAdmin() {
       }
       return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
     });
+  }, [projects, isCountSort, sortConfig]);
 
-    return sorted.slice(skip, skip + effectivePageSize);
-  }, [projects, needsClientSideSorting, sortConfig, skip, effectivePageSize]);
-
-  // Use only the project loading state now
-  const isLoading = isLoadingProjects;
+  const tableData = isCountSort ? displayedProjects : projects;
 
   const handleSortChange = (column: string) => {
     const direction =
@@ -386,25 +373,20 @@ function ProjectAdmin() {
         ? "desc"
         : "asc";
     setSortConfig({ column, direction });
-    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
-  const prevSearchStringRef = useRef(searchString);
-  const prevPageSizeRef = useRef(pageSize);
-
-  // Reset to first page when search changes
-  useEffect(() => {
-    if (searchString === prevSearchStringRef.current) return;
-    prevSearchStringRef.current = searchString;
-    setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
-
-  // Reset to first page when page size changes
-  useEffect(() => {
-    if (pageSize === prevPageSizeRef.current) return;
-    prevPageSizeRef.current = pageSize;
-    setCurrentPage(1);
-  }, [pageSize, setCurrentPage]);
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      setSortConfig({ column: "name", direction: "asc" });
+    } else {
+      setSortConfig({ column, direction });
+    }
+  };
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     if (data.completedAt) {
@@ -448,9 +430,15 @@ function ProjectAdmin() {
   if (status === "loading") return null;
 
   const AddProjectButton = () => (
-    <Button onClick={handleOpenAddModal}>
-      <CirclePlus className="w-4" />
-      <span className="hidden md:inline">{t("add.button")}</span>
+    <Button
+      onClick={handleOpenAddModal}
+      aria-label={t("add.button")}
+      className="group gap-0 transition-all duration-200 hover:gap-2"
+    >
+      <CirclePlus className="h-4 w-4" />
+      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
+        {t("add.button")}
+      </span>
     </Button>
   );
 
@@ -458,19 +446,18 @@ function ProjectAdmin() {
     <>
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
+          <div className="flex items-center justify-between gap-2">
+            <SectionHeader className="flex items-center gap-2">
               <CardTitle data-testid="admin-projects-page-title">
                 {tGlobal("common.fields.projects")}
               </CardTitle>
-            </div>
-            <div>
-              <AddProjectButton />
-            </div>
+              <HelpPopover helpKey="projects.overview" />
+            </SectionHeader>
+            <AddProjectButton />
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-row items-start">
+          <div className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
               <div className="">
                 <Filter
@@ -485,48 +472,40 @@ function ProjectAdmin() {
                     storageKey="admin-projects"
                     columns={columns}
                     onVisibilityChange={setColumnVisibility}
+                    hideColumnRef={hideColumnRef}
                   />
                 </div>
               </div>
             </div>
-            <div className="flex flex-col w-full sm:w-2/3 items-end">
-              {totalItems > 0 && (
-                <>
-                  <div className="justify-end">
-                    <PaginationInfo
-                      key="project-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                  </div>
-                  <div className="justify-end -mx-4">
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {tableData.length > 0 && (
+              <p className="text-sm text-muted-foreground shrink-0">
+                {tGlobal("admin.auditLogs.showing", {
+                  loaded: tableData.length.toLocaleString(locale),
+                  total: (totalCount ?? tableData.length).toLocaleString(
+                    locale
+                  ),
+                })}
+              </p>
+            )}
           </div>
-          <div className="mt-4 flex justify-between">
+          <div className="mt-4 w-full">
             <DataTable
+              virtualized
+              fillViewport
               columns={columns}
-              data={
-                (needsClientSideSorting ? displayedProjects : projects) || []
-              }
+              data={tableData || []}
               onSortChange={handleSortChange}
+              onSortColumn={handleSortColumn}
+              onHideColumn={(columnId) => hideColumnRef.current?.(columnId)}
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              pageSize={typeof pageSize === "number" ? pageSize : totalItems}
-              isLoading={isLoading}
+              isLoading={isLoading || isFetchingNextPage}
+              hasMore={isCountSort ? false : !!hasNextPage}
+              onLoadMore={fetchNextPage}
+              resetKey={`${debouncedSearchString}|${sortConfig.column}|${sortConfig.direction}`}
+              testIdPrefix="admin-projects-table"
+              rowTestIdPrefix="admin-project-row"
             />
           </div>
         </CardContent>
@@ -550,7 +529,7 @@ function ProjectAdmin() {
                     {completedAt
                       ? format(completedAt, "PPP")
                       : tGlobal("common.placeholders.date")}
-                    <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
+                    <CalendarDays className="ms-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -580,7 +559,7 @@ function ProjectAdmin() {
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"
-                className="bg-destructive"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={!isValid}
               >
                 {tCommon("actions.submit")}

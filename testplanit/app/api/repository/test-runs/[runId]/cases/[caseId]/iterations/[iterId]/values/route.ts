@@ -1,4 +1,5 @@
-import { ApplicationArea, Prisma } from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { JsonValue } from "@zenstackhq/orm";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -7,7 +8,7 @@ import { getEnhancedDb } from "~/lib/auth/utils";
 import { updateAuditContext } from "~/lib/auditContext";
 import { auditedTransaction } from "~/lib/audit/auditedTransaction";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import {
   buildIterationOverrideSchema,
   type OverrideParameterSchemaEntry,
@@ -46,7 +47,7 @@ const bodySchema = z.object({
  * values. System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
-  const u = await prisma.user.findUnique({
+  const u = await baseDb.user.findUnique({
     where: { id: userId },
     include: { role: { include: { rolePermissions: true } } },
   });
@@ -234,7 +235,7 @@ export const PATCH = withAuditContext(
         await tx.testRunCaseIteration.update({
           where: { id: iterationId },
           data: {
-            valuesJson: afterValues as unknown as Prisma.InputJsonValue,
+            valuesJson: afterValues as unknown as JsonValue,
           },
         });
         // PARAM-07: snapshot is immutable. Never touch

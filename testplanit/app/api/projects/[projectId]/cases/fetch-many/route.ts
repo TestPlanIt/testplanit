@@ -1,8 +1,8 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { authOptions } from "~/server/auth";
 
 // Schema for fetch many request
@@ -87,7 +87,7 @@ export async function POST(
           ],
         };
 
-    const project = await prisma.projects.findFirst({
+    const project = await baseDb.projects.findFirst({
       where: projectAccessWhere,
     });
 
@@ -122,7 +122,7 @@ export async function POST(
         : validatedData.caseIds;
 
     // Fetch the cases with all necessary includes
-    const cases = await prisma.repositoryCases.findMany({
+    const cases = await baseDb.repositoryCases.findMany({
       where: {
         id: { in: paginatedCaseIds },
         projectId,
@@ -166,8 +166,8 @@ export async function POST(
             field: { include: { type: true } },
           },
         },
-        tags: true,
-        issues: true,
+        caseTags: { include: { tag: true } },
+        caseIssues: { include: { issue: true } },
         steps: {
           where: { isDeleted: false },
           orderBy: { order: "asc" },
@@ -185,13 +185,17 @@ export async function POST(
       .filter((c) => c !== undefined);
 
     // Convert BigInt fields to strings for JSON serialization
-    const serializedCases = orderedCases.map((c) => ({
-      ...c,
-      attachments: c.attachments?.map((a) => ({
-        ...a,
-        size: a.size.toString(),
-      })),
-    }));
+    const serializedCases = orderedCases.map(
+      ({ caseTags, caseIssues, ...c }) => ({
+        ...c,
+        tags: caseTags.map((ct) => ct.tag),
+        issues: caseIssues.map((ci) => ci.issue),
+        attachments: c.attachments?.map((a) => ({
+          ...a,
+          size: a.size.toString(),
+        })),
+      })
+    );
 
     return NextResponse.json({ cases: serializedCases, totalCount });
   } catch (error) {

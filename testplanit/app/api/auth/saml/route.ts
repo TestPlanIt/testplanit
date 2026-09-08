@@ -21,10 +21,10 @@ export async function GET(request: NextRequest) {
 
     // Rate limiting check
     if (
-      !checkRateLimit(`saml-init:${clientIp}`, {
+      !(await checkRateLimit(`saml-init:${clientIp}`, {
         windowMs: 60000,
         maxAttempts: 10,
-      })
+      }))
     ) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },

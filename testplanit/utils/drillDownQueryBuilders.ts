@@ -3,8 +3,82 @@
  * These functions construct database queries to fetch underlying records for each metric type
  */
 
-import { Prisma } from "@prisma/client";
+import type {
+  IssueFindManyArgs,
+  IssueWhereInput,
+  MilestonesFindManyArgs,
+  MilestonesWhereInput,
+  RepositoryCasesFindManyArgs,
+  RepositoryCasesWhereInput,
+  SessionResultsFindManyArgs,
+  SessionResultsWhereInput,
+  SessionsFindManyArgs,
+  SessionsWhereInput,
+  TestRunCasesFindManyArgs,
+  TestRunCasesWhereInput,
+  TestRunResultsFindManyArgs,
+  TestRunResultsWhereInput,
+  TestRunsFindManyArgs,
+  TestRunsWhereInput,
+} from "~/zenstack/input";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
+
+/**
+ * Dimension ids each report type may send in a drill-down context. A key
+ * outside this list means no builder handles it — the drawer would silently
+ * ignore the filter and stop matching its cell — so the route rejects it
+ * loudly instead. Report types without an entry (custom presets) skip the
+ * check. Cross-project variants share their base type's list.
+ */
+export const DRILL_DOWN_DIMENSIONS_BY_REPORT: Record<
+  string,
+  ReadonlySet<string>
+> = {
+  "test-execution": new Set([
+    "configuration",
+    "date",
+    "folder",
+    "milestone",
+    "project",
+    "status",
+    "tag",
+    "testCase",
+    "testRun",
+    "user",
+  ]),
+  "user-engagement": new Set(["date", "group", "project", "role", "user"]),
+  "repository-stats": new Set([
+    "creator",
+    "date",
+    "folder",
+    "project",
+    "source",
+    "state",
+    "tag",
+    "template",
+    "testCase",
+  ]),
+  "issue-tracking": new Set([
+    "creator",
+    "date",
+    "issueStatus",
+    "issueTracker",
+    "issueType",
+    "priority",
+    "project",
+  ]),
+  "session-analysis": new Set([
+    "assignedTo",
+    "creator",
+    "date",
+    "milestone",
+    "session",
+    "state",
+    "template",
+  ]),
+  "project-health": new Set(["creator", "date", "milestone", "project"]),
+  "milestone-readiness": new Set(["date", "milestone"]),
+};
 
 /**
  * Normalize date to start of day in UTC
@@ -35,7 +109,10 @@ function endOfDayUTC(date: Date | string): Date {
 }
 
 /**
- * Build base date filter from report-level date range
+ * Build base date filter from report-level date range. Mirrors
+ * reportUtils.buildDateFilter: the end date is inclusive of its entire day
+ * (exclusive next-day-midnight bound), so a drill-down never shows fewer
+ * rows than the aggregated cell.
  */
 function buildDateFilter(
   startDate?: string,
@@ -47,10 +124,15 @@ function buildDateFilter(
   if (startDate || endDate) {
     filter[dateField] = {};
     if (startDate) {
-      filter[dateField].gte = new Date(startDate);
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+      filter[dateField].gte = start;
     }
     if (endDate) {
-      filter[dateField].lte = new Date(endDate);
+      const nextDay = new Date(endDate);
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+      nextDay.setUTCHours(0, 0, 0, 0);
+      filter[dateField].lt = nextDay;
     }
   }
 
@@ -64,11 +146,11 @@ export function buildTestExecutionQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.TestRunResultsFindManyArgs {
-  const where: Prisma.TestRunResultsWhereInput = {};
+): TestRunResultsFindManyArgs {
+  const where: TestRunResultsWhereInput = { isDeleted: false };
 
   // Build testRun filter with all conditions
-  const testRunFilter: any = {};
+  const testRunFilter: any = { isDeleted: false };
 
   // Apply project filter
   if (context.projectId) {
@@ -115,16 +197,34 @@ export function buildTestExecutionQuery(
     where.executedById = String(context.dimensions.user.id);
   }
 
+  // Role/group dimensions (user-engagement) filter on the executor.
+  const executorFilter: any = {};
+  if (context.dimensions.role) {
+    executorFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    executorFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(executorFilter).length > 0) {
+    where.executedBy = executorFilter;
+  }
+
   if (context.dimensions.status) {
     where.statusId = Number(context.dimensions.status.id);
   }
 
+  // testCase (a repository case id), folder, and tag all filter on the
+  // executed case. Build a single testRunCase filter so they compose.
+  const runCaseFilter: any = {};
   if (context.dimensions.testCase) {
-    where.testRunCaseId = Number(context.dimensions.testCase.id);
+    runCaseFilter.repositoryCaseId = Number(context.dimensions.testCase.id);
   }
-
-  // Folder and tag both filter on the executed case. Build a single
-  // repositoryCase filter so they compose.
   const repositoryCaseFilter: any = {};
   if (context.dimensions.folder) {
     const folder = context.dimensions.folder;
@@ -141,13 +241,16 @@ export function buildTestExecutionQuery(
   }
   if (context.dimensions.tag) {
     const tag = context.dimensions.tag;
-    repositoryCaseFilter.tags =
+    repositoryCaseFilter.caseTags =
       tag.id === null || tag.id === ""
         ? { none: {} }
-        : { some: { id: Number(tag.id) } };
+        : { some: { tag: { id: Number(tag.id) } } };
   }
   if (Object.keys(repositoryCaseFilter).length > 0) {
-    where.testRunCase = { repositoryCase: repositoryCaseFilter };
+    runCaseFilter.repositoryCase = repositoryCaseFilter;
+  }
+  if (Object.keys(runCaseFilter).length > 0) {
+    where.testRunCase = runCaseFilter;
   }
 
   // Apply date filter
@@ -221,8 +324,189 @@ export function buildTestExecutionQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      executedAt: Prisma.SortOrder.desc,
-    } as Prisma.TestRunResultsOrderByWithRelationInput,
+      executedAt: "desc",
+    } as NonNullable<TestRunResultsFindManyArgs["orderBy"]>,
+  };
+}
+
+/**
+ * Build query for the automated half of a result-level drill-down.
+ * Automated results live in JUnitTestResult, so result cells drill into
+ * both tables; this mirrors buildTestExecutionQuery's dimension filters
+ * onto the JUnit shape. The testCase dimension carries a repository case
+ * id, which JUnit rows link to directly. Untested rows (including null
+ * statusId, which is treated as Untested) are excluded per the reporting
+ * contract; elapsed metrics additionally require a duration.
+ */
+export function buildJunitResultQuery(
+  context: DrillDownContext,
+  opts: { requireTime?: boolean } = {}
+): Record<string, any> | null {
+  const testCaseId = context.dimensions.testCase?.id;
+  if (
+    context.dimensions.testCase &&
+    (testCaseId == null || testCaseId === "")
+  ) {
+    return null;
+  }
+
+  const where: Record<string, any> = {
+    ...(opts.requireTime ? { time: { gt: 0 } } : {}),
+    statusId: { not: null },
+    status: { systemName: { not: "untested" } },
+  };
+
+  // Run-level filters travel through the suite's run.
+  const testRunFilter: any = {};
+
+  if (context.projectId) {
+    testRunFilter.projectId = context.projectId;
+  } else if (context.mode === "cross-project" && context.dimensions.project) {
+    testRunFilter.projectId = Number(context.dimensions.project.id);
+  }
+
+  if (context.dimensions.configuration) {
+    testRunFilter.configId =
+      context.dimensions.configuration.id === null
+        ? null
+        : Number(context.dimensions.configuration.id);
+  }
+
+  if (context.dimensions.milestone) {
+    testRunFilter.milestone = {
+      id: Number(context.dimensions.milestone.id),
+    };
+  }
+
+  if (context.dimensions.testRun) {
+    if (context.dimensions.testRun.id === null) {
+      testRunFilter.isDeleted = true;
+    } else {
+      testRunFilter.id = Number(context.dimensions.testRun.id);
+    }
+  }
+
+  if (testCaseId != null && testCaseId !== "") {
+    where.repositoryCaseId = Number(testCaseId);
+  }
+
+  if (Object.keys(testRunFilter).length > 0) {
+    where.testSuite = { testRun: testRunFilter };
+  }
+
+  if (context.dimensions.user) {
+    where.createdById = String(context.dimensions.user.id);
+  }
+
+  // Role/group dimensions (user-engagement) filter on the submitting user.
+  const submitterFilter: any = {};
+  if (context.dimensions.role) {
+    submitterFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    submitterFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(submitterFilter).length > 0) {
+    where.createdBy = submitterFilter;
+  }
+
+  if (context.dimensions.status) {
+    where.statusId = Number(context.dimensions.status.id);
+    delete where.status;
+  }
+
+  // Folder and tag filter on the linked repository case.
+  const repositoryCaseFilter: any = {};
+  if (context.dimensions.folder) {
+    const folder = context.dimensions.folder;
+    if (folder.id === null || folder.id === "") {
+      repositoryCaseFilter.folderId = null;
+    } else if (Array.isArray((folder as any).subtreeIds)) {
+      repositoryCaseFilter.folderId = {
+        in: (folder as any).subtreeIds.map(Number),
+      };
+    } else {
+      repositoryCaseFilter.folderId = Number(folder.id);
+    }
+  }
+  if (context.dimensions.tag) {
+    const tag = context.dimensions.tag;
+    repositoryCaseFilter.caseTags =
+      tag.id === null || tag.id === ""
+        ? { none: {} }
+        : { some: { tag: { id: Number(tag.id) } } };
+  }
+  if (Object.keys(repositoryCaseFilter).length > 0) {
+    where.repositoryCase = repositoryCaseFilter;
+  }
+
+  if (context.dimensions.date?.executedAt) {
+    const date = new Date(context.dimensions.date.executedAt);
+    where.executedAt = {
+      gte: startOfDayUTC(date),
+      lt: endOfDayUTC(date),
+    };
+  }
+
+  const dateRangeFilter = buildDateFilter(
+    context.startDate,
+    context.endDate,
+    "executedAt"
+  );
+  if (
+    dateRangeFilter.executedAt &&
+    typeof dateRangeFilter.executedAt === "object"
+  ) {
+    const existing = where.executedAt as any;
+    where.executedAt = existing
+      ? { ...existing, ...(dateRangeFilter.executedAt as any) }
+      : dateRangeFilter.executedAt;
+  }
+
+  return {
+    where,
+    include: {
+      status: {
+        include: {
+          color: true,
+        },
+      },
+      createdBy: true,
+      repositoryCase: {
+        select: {
+          id: true,
+          name: true,
+          hasParameters: true,
+        },
+      },
+      testSuite: {
+        select: {
+          testRun: {
+            select: {
+              id: true,
+              name: true,
+              projectId: true,
+              configId: true,
+              configuration: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      executedAt: "desc",
+    },
   };
 }
 
@@ -233,8 +517,12 @@ export function buildTestRunsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.TestRunsFindManyArgs {
-  const where: Prisma.TestRunsWhereInput = {};
+): TestRunsFindManyArgs {
+  // A "run" counts whether or not it has results (product ruling): the
+  // date dimension and report date range use the run's createdAt, and
+  // "by user" means the run's creator. Status/case groupings derive run
+  // membership from the union of manual and automated results.
+  const where: TestRunsWhereInput = { isDeleted: false };
 
   // Apply project filter
   if (context.projectId) {
@@ -243,51 +531,43 @@ export function buildTestRunsQuery(
     where.projectId = Number(context.dimensions.project.id);
   }
 
-  // Apply dimension filters
-  const resultsFilter: any = {};
-
   if (context.dimensions.user) {
-    // For test run count, we want test runs where the user executed tests, not created them
-    resultsFilter.executedById = String(context.dimensions.user.id);
+    where.createdById = String(context.dimensions.user.id);
   }
 
-  // Apply status filter to results
-  // Note: status is a property of TestRunResults, not TestRuns!
-  // We want test runs that have results with this status
   if (context.dimensions.status) {
-    resultsFilter.statusId = Number(context.dimensions.status.id);
+    const statusId = Number(context.dimensions.status.id);
+    where.OR = [
+      { results: { some: { isDeleted: false, statusId } } },
+      {
+        junitTestSuites: {
+          some: { results: { some: { statusId } } },
+        },
+      },
+    ];
   }
 
-  // Apply date filter to results
+  // Date dimension and report-level range apply to the run's creation day
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    resultsFilter.executedAt = {
+    where.createdAt = {
       gte: startOfDayUTC(date),
       lt: endOfDayUTC(date),
     };
   }
-
-  // Apply report-level date range to results
   const dateRangeFilter = buildDateFilter(
     context.startDate,
     context.endDate,
-    "executedAt"
+    "createdAt"
   );
   if (
-    dateRangeFilter.executedAt &&
-    typeof dateRangeFilter.executedAt === "object"
+    dateRangeFilter.createdAt &&
+    typeof dateRangeFilter.createdAt === "object"
   ) {
-    const existing = resultsFilter.executedAt as any;
-    resultsFilter.executedAt = existing
-      ? { ...existing, ...(dateRangeFilter.executedAt as any) }
-      : dateRangeFilter.executedAt;
-  }
-
-  // Apply results filter if any criteria exist
-  if (Object.keys(resultsFilter).length > 0) {
-    where.results = {
-      some: resultsFilter,
-    };
+    const existing = where.createdAt as any;
+    where.createdAt = existing
+      ? { ...existing, ...(dateRangeFilter.createdAt as any) }
+      : dateRangeFilter.createdAt;
   }
 
   // Apply configuration filter
@@ -347,8 +627,8 @@ export function buildTestRunsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.TestRunsOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<TestRunsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -361,8 +641,8 @@ export function buildRepositoryStatsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.RepositoryCasesFindManyArgs {
-  const where: Prisma.RepositoryCasesWhereInput = {
+): RepositoryCasesFindManyArgs {
+  const where: RepositoryCasesWhereInput = {
     isDeleted: false,
   };
 
@@ -382,6 +662,24 @@ export function buildRepositoryStatsQuery(
     where.creatorId = String(context.dimensions.user.id);
   }
 
+  // Role/group dimensions (user-engagement) filter on the case's creator.
+  const caseCreatorFilter: any = {};
+  if (context.dimensions.role) {
+    caseCreatorFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    caseCreatorFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(caseCreatorFilter).length > 0) {
+    where.creator = caseCreatorFilter;
+  }
+
   // Apply folder filter (a rolled-up subtree, or a single folder). Cases always
   // belong to a folder, so there is no null "None" case here.
   if (context.dimensions.folder && context.dimensions.folder.id != null) {
@@ -394,10 +692,10 @@ export function buildRepositoryStatsQuery(
   // Apply tag filter
   if (context.dimensions.tag) {
     const tag = context.dimensions.tag;
-    where.tags =
+    where.caseTags =
       tag.id === null || tag.id === ""
         ? { none: {} }
-        : { some: { id: Number(tag.id) } };
+        : { some: { tag: { id: Number(tag.id) } } };
   }
 
   // Apply state filter
@@ -465,13 +763,14 @@ export function buildRepositoryStatsQuery(
   }
 
   // Apply report-level date range to CREATION date
-  if (context.startDate || context.endDate) {
+  const creationRangeFilter = buildDateFilter(
+    context.startDate,
+    context.endDate,
+    "createdAt"
+  );
+  if (creationRangeFilter.createdAt) {
     const existing = where.createdAt as any;
-    where.createdAt = {
-      ...(existing || {}),
-      ...(context.startDate && { gte: new Date(context.startDate) }),
-      ...(context.endDate && { lte: new Date(context.endDate) }),
-    };
+    where.createdAt = { ...(existing || {}), ...creationRangeFilter.createdAt };
   }
 
   return {
@@ -536,8 +835,8 @@ export function buildRepositoryStatsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.RepositoryCasesOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<RepositoryCasesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -549,30 +848,28 @@ export function buildTestCasesQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.RepositoryCasesFindManyArgs {
-  const where: Prisma.RepositoryCasesWhereInput = {
+): RepositoryCasesFindManyArgs {
+  // "Executed cases" are repository cases with at least one result — manual
+  // (TestRunResults) or automated (JUnitTestResult) — matching the cell's
+  // dimension filters. Untested placeholders don't count as executions.
+  const where: RepositoryCasesWhereInput = {
     isDeleted: false,
   };
 
-  // DON'T filter by RepositoryCases.projectId directly!
-  // Test runs in one project can execute test cases from other projects.
-  // Instead, we filter by the test run's project through the results.testRun relation.
-
-  // Build testRun filter for all dimension filters
+  // Run-scope filter shared by both membership branches. Test runs in one
+  // project can execute cases from other projects, so the project filter
+  // applies to the RUN, not the repository case.
   const testRunFilter: any = {
     isDeleted: false,
   };
 
-  // Apply project filter to the TEST RUN, not the repository case
   if (context.projectId) {
     testRunFilter.projectId = context.projectId;
   } else if (context.dimensions.project) {
     testRunFilter.projectId = Number(context.dimensions.project.id);
   }
 
-  // Apply configuration filter to testRun
   if (context.dimensions.configuration) {
-    // Handle "None" case where configuration ID is null
     if (context.dimensions.configuration.id === null) {
       testRunFilter.configId = null;
     } else {
@@ -580,9 +877,7 @@ export function buildTestCasesQuery(
     }
   }
 
-  // Apply milestone filter to testRun
   if (context.dimensions.milestone) {
-    // Handle "None" case where milestone ID is null
     if (context.dimensions.milestone.id === null) {
       testRunFilter.milestoneId = null;
     } else {
@@ -590,64 +885,61 @@ export function buildTestCasesQuery(
     }
   }
 
-  // Apply testRun filter
   if (context.dimensions.testRun) {
     testRunFilter.id = Number(context.dimensions.testRun.id);
   }
 
-  // Build execution results filter
-  const resultsFilter: any = {};
+  // Manual-results membership branch
+  const resultsFilter: any = {
+    isDeleted: false,
+    status: { systemName: { not: "untested" } },
+    testRun: testRunFilter,
+  };
+  // Automated-results membership branch
+  const junitFilter: any = {
+    statusId: { not: null },
+    status: { systemName: { not: "untested" } },
+    testSuite: { testRun: testRunFilter },
+  };
 
-  // Apply user filter to execution results
   if (context.dimensions.user) {
     resultsFilter.executedById = String(context.dimensions.user.id);
+    junitFilter.createdById = String(context.dimensions.user.id);
   }
 
-  // Apply status filter only if a specific status dimension is selected
-  // For testCaseCount metric, exclude "untested" status to match aggregation behavior
   if (context.dimensions.status) {
-    resultsFilter.statusId = Number(context.dimensions.status.id);
-  } else if (context.metricId === "testCaseCount") {
-    // Exclude "untested" status to match testCaseCount aggregation
-    resultsFilter.status = {
-      systemName: { not: "untested" },
-    };
+    const statusId = Number(context.dimensions.status.id);
+    resultsFilter.statusId = statusId;
+    delete resultsFilter.status;
+    junitFilter.statusId = statusId;
+    delete junitFilter.status;
   }
 
-  // CRITICAL: Filter by the TestRunResults.testRun.projectId, not TestRunCases.testRun.projectId
-  // TestRunResults.testRunId can be different from TestRunCases.testRunId!
-  resultsFilter.testRun = testRunFilter;
-
-  // Apply date filter to EXECUTION date (not creation date!)
+  // Execution-date filters apply to both branches
+  const executedAtFilter: any = {};
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
-    resultsFilter.executedAt = {
-      gte: startOfDayUTC(date),
-      lt: endOfDayUTC(date),
-    };
+    executedAtFilter.gte = startOfDayUTC(date);
+    executedAtFilter.lt = endOfDayUTC(date);
+  }
+  if (context.startDate) {
+    executedAtFilter.gte = executedAtFilter.gte ?? new Date(context.startDate);
+  }
+  if (context.endDate) {
+    executedAtFilter.lte = new Date(context.endDate);
+  }
+  if (Object.keys(executedAtFilter).length > 0) {
+    resultsFilter.executedAt = executedAtFilter;
+    junitFilter.executedAt = executedAtFilter;
   }
 
-  // Apply report-level date range to EXECUTION date
-  if (context.startDate || context.endDate) {
-    const existing = resultsFilter.executedAt as any;
-    resultsFilter.executedAt = {
-      ...(existing || {}),
-      ...(context.startDate && { gte: new Date(context.startDate) }),
-      ...(context.endDate && { lte: new Date(context.endDate) }),
-    };
-  }
-
-  // Filter test cases by their execution results
-  // The relationship is: RepositoryCases → TestRunCases ← TestRunResults (via testRunCaseId)
-  // CRITICAL: We filter at the TestRunResults level, not TestRunCases level
-  // because TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases!
-  where.testRuns = {
-    some: {
-      results: {
-        some: resultsFilter,
-      },
-    },
-  };
+  where.OR = [
+    // The relationship is: RepositoryCases → TestRunCases ← TestRunResults.
+    // Filter at the TestRunResults level, not TestRunCases level, because
+    // TestRunResults.testRunId ≠ TestRunCases.testRunId in some cases.
+    { testRuns: { some: { results: { some: resultsFilter } } } },
+    { junitResults: { some: junitFilter } },
+  ];
 
   return {
     where,
@@ -673,8 +965,8 @@ export function buildTestCasesQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.RepositoryCasesOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<RepositoryCasesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -685,8 +977,8 @@ export function buildSessionsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.SessionsFindManyArgs {
-  const where: Prisma.SessionsWhereInput = {};
+): SessionsFindManyArgs {
+  const where: SessionsWhereInput = { isDeleted: false };
 
   // Apply project filter
   if (context.projectId) {
@@ -699,10 +991,39 @@ export function buildSessionsQuery(
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
   }
+  if (context.dimensions.creator) {
+    where.createdById = String(context.dimensions.creator.id);
+  }
+  if (context.dimensions.session) {
+    where.id = Number(context.dimensions.session.id);
+  }
+  if (context.dimensions.assignedTo) {
+    where.assignedToId = String(context.dimensions.assignedTo.id);
+  }
+  if (context.dimensions.milestone) {
+    where.milestoneId =
+      context.dimensions.milestone.id === null
+        ? null
+        : Number(context.dimensions.milestone.id);
+  }
+  if (context.dimensions.template) {
+    where.templateId = Number(context.dimensions.template.id);
+  }
+  if (context.dimensions.state) {
+    where.stateId = Number(context.dimensions.state.id);
+  }
 
-  // Apply date filter
-  if (context.dimensions.date?.executedAt) {
-    const date = new Date(context.dimensions.date.executedAt);
+  // The Active Sessions metric counts sessions still in progress.
+  if (context.metricId === "activeSessions") {
+    where.isCompleted = false;
+  }
+
+  // Apply date filter — the session date dimension is the creation day.
+  const clickedSessionDate =
+    (context.dimensions.date as any)?.createdAt ??
+    context.dimensions.date?.executedAt;
+  if (clickedSessionDate) {
+    const date = new Date(clickedSessionDate as string);
     where.createdAt = {
       gte: startOfDayUTC(date),
       lt: endOfDayUTC(date),
@@ -739,8 +1060,8 @@ export function buildSessionsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.SessionsOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<SessionsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -751,8 +1072,8 @@ export function buildSessionResultsQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.SessionResultsFindManyArgs {
-  const where: Prisma.SessionResultsWhereInput = {};
+): SessionResultsFindManyArgs {
+  const where: SessionResultsWhereInput = { isDeleted: false };
 
   // Build session filter with all conditions
   const sessionFilter: any = {};
@@ -774,6 +1095,24 @@ export function buildSessionResultsQuery(
   // Apply dimension filters
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
+  }
+
+  // Role/group dimensions (user-engagement) filter on the result's creator.
+  const creatorFilter: any = {};
+  if (context.dimensions.role) {
+    creatorFilter.roleId =
+      context.dimensions.role.id == null
+        ? null
+        : Number(context.dimensions.role.id);
+  }
+  if (context.dimensions.group) {
+    creatorFilter.groups =
+      context.dimensions.group.id == null
+        ? { none: {} }
+        : { some: { groupId: Number(context.dimensions.group.id) } };
+  }
+  if (Object.keys(creatorFilter).length > 0) {
+    where.createdBy = creatorFilter;
   }
 
   // Apply date filter
@@ -822,8 +1161,8 @@ export function buildSessionResultsQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.SessionResultsOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<SessionResultsFindManyArgs["orderBy"]>,
   };
 }
 
@@ -834,10 +1173,12 @@ export function buildIssuesQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.IssueFindManyArgs {
-  const where: Prisma.IssueWhereInput = {};
+): IssueFindManyArgs {
+  const where: IssueWhereInput = { isDeleted: false };
 
-  // Apply project filter
+  // Apply project filter. For project-scoped drill-downs the route swaps
+  // this for the project-relevant issue population (direct FK plus
+  // case/run/session links) to match the aggregation.
   if (context.projectId) {
     where.projectId = context.projectId;
   } else if (context.dimensions.project) {
@@ -848,10 +1189,47 @@ export function buildIssuesQuery(
   if (context.dimensions.user) {
     where.createdById = String(context.dimensions.user.id);
   }
+  if (context.dimensions.creator) {
+    where.createdById = String(context.dimensions.creator.id);
+  }
 
-  // Apply date filter
-  if (context.dimensions.date?.executedAt) {
-    const date = new Date(context.dimensions.date.executedAt);
+  // Issues group by type NAME (external ids vary per tracker); "Unspecified"
+  // carries a null id.
+  if (context.dimensions.issueType) {
+    where.issueTypeName =
+      context.dimensions.issueType.id === null
+        ? null
+        : String(
+            context.dimensions.issueType.name ?? context.dimensions.issueType.id
+          );
+  }
+
+  if (context.dimensions.issueTracker) {
+    where.integrationId =
+      context.dimensions.issueTracker.id === null
+        ? null
+        : Number(context.dimensions.issueTracker.id);
+  }
+
+  if (context.dimensions.issueStatus) {
+    where.status = String(context.dimensions.issueStatus.id);
+  }
+
+  // Priorities aggregate case-insensitively (dimension ids are lowercased).
+  if (context.dimensions.priority) {
+    where.priority = {
+      equals: String(context.dimensions.priority.id),
+      mode: "insensitive",
+    } as any;
+  }
+
+  // Apply date filter — the issue-tracking date dimension is the issue's
+  // creation day.
+  const clickedDate =
+    (context.dimensions.date as any)?.createdAt ??
+    context.dimensions.date?.executedAt;
+  if (clickedDate) {
+    const date = new Date(clickedDate as string);
     where.createdAt = {
       gte: startOfDayUTC(date),
       lt: endOfDayUTC(date),
@@ -888,8 +1266,8 @@ export function buildIssuesQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.IssueOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<IssueFindManyArgs["orderBy"]>,
   };
 }
 
@@ -900,8 +1278,8 @@ export function buildMilestonesQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.MilestonesFindManyArgs {
-  const where: Prisma.MilestonesWhereInput = {
+): MilestonesFindManyArgs {
+  const where: MilestonesWhereInput = {
     isDeleted: false,
   };
 
@@ -997,8 +1375,8 @@ export function buildMilestonesQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      createdAt: Prisma.SortOrder.desc,
-    } as Prisma.MilestonesOrderByWithRelationInput,
+      createdAt: "desc",
+    } as NonNullable<MilestonesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -1010,11 +1388,13 @@ export function buildMilestoneCompletionQuery(
   context: DrillDownContext,
   offset: number,
   limit: number
-): Prisma.TestRunCasesFindManyArgs {
-  const where: Prisma.TestRunCasesWhereInput = {};
+): TestRunCasesFindManyArgs {
+  // The metric counts live run-cases in live runs of live milestones, so the
+  // drill-down applies the same population filters.
+  const where: TestRunCasesWhereInput = { isDeleted: false };
 
   // Apply project filter through test run
-  const testRunFilter: Prisma.TestRunsWhereInput = {
+  const testRunFilter: TestRunsWhereInput = {
     isDeleted: false,
   };
 
@@ -1024,20 +1404,19 @@ export function buildMilestoneCompletionQuery(
     testRunFilter.projectId = Number(context.dimensions.project.id);
   }
 
+  const milestoneFilter: any = { isDeleted: false };
+
   // Apply milestone filter
-  if (context.dimensions.milestone) {
-    if (context.dimensions.milestone.id === null) {
-      testRunFilter.milestoneId = null;
-    } else {
-      testRunFilter.milestoneId = Number(context.dimensions.milestone.id);
-    }
+  if (
+    context.dimensions.milestone &&
+    context.dimensions.milestone.id !== null
+  ) {
+    testRunFilter.milestoneId = Number(context.dimensions.milestone.id);
   }
 
   // Apply creator filter (milestone creator)
   if (context.dimensions.creator) {
-    testRunFilter.milestone = {
-      createdBy: String(context.dimensions.creator.id),
-    };
+    milestoneFilter.createdBy = String(context.dimensions.creator.id);
   }
 
   // Apply date filter if present
@@ -1062,16 +1441,29 @@ export function buildMilestoneCompletionQuery(
         const nextDayStart = new Date(startOfDay);
         nextDayStart.setUTCDate(nextDayStart.getUTCDate() + 1);
 
-        if (!testRunFilter.milestone) {
-          testRunFilter.milestone = {};
-        }
-        testRunFilter.milestone.createdAt = {
+        milestoneFilter.createdAt = {
           gte: startOfDay,
           lt: nextDayStart,
         };
       }
     }
   }
+
+  // Apply report-level date range to the milestone's creation date, matching
+  // the aggregation
+  const milestoneRangeFilter = buildDateFilter(
+    context.startDate,
+    context.endDate,
+    "createdAt"
+  );
+  if (milestoneRangeFilter.createdAt) {
+    milestoneFilter.createdAt = {
+      ...(milestoneFilter.createdAt || {}),
+      ...milestoneRangeFilter.createdAt,
+    };
+  }
+
+  testRunFilter.milestone = milestoneFilter;
 
   where.testRun = testRunFilter;
 
@@ -1118,8 +1510,8 @@ export function buildMilestoneCompletionQuery(
     skip: offset,
     take: limit,
     orderBy: {
-      order: Prisma.SortOrder.asc,
-    } as Prisma.TestRunCasesOrderByWithRelationInput,
+      order: "asc",
+    } as NonNullable<TestRunCasesFindManyArgs["orderBy"]>,
   };
 }
 
@@ -1197,8 +1589,8 @@ export function getQueryBuilderForMetric(
   // Session metrics
   if (
     metricId === "sessions" ||
-    metricId === "sessionDuration" ||
     metricId === "sessionCount" ||
+    metricId === "activeSessions" ||
     metricId === "averageDuration" ||
     metricId === "totalDuration"
   ) {
@@ -1267,8 +1659,8 @@ export function getModelForMetric(metricId: string): string {
 
   if (
     metricId === "sessions" ||
-    metricId === "sessionDuration" ||
     metricId === "sessionCount" ||
+    metricId === "activeSessions" ||
     metricId === "averageDuration" ||
     metricId === "totalDuration"
   ) {

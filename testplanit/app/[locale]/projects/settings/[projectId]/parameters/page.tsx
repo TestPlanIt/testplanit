@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Button } from "@/components/ui/button";
@@ -10,13 +12,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageTitle, SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { ApplicationArea } from "~/zenstack/models";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
 import { DatasetCreateDialog } from "../datasets/dataset-create-dialog";
 import { DatasetsList } from "../datasets/datasets-list";
 import { JunitIterationPropertyForm } from "../junit/junit-iteration-property-form";
@@ -36,7 +41,9 @@ export default function ProjectParametersSettingsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
 
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+  const { data: project, isLoading: projectLoading } = useClientQueries(
+    schema
+  ).projects.useFindFirst(
     {
       where: { id: projectId },
       select: {
@@ -53,30 +60,29 @@ export default function ProjectParametersSettingsPage() {
     { enabled: isAuthenticated }
   );
 
-  useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      const isAssignedToThisProject =
-        Array.isArray(project.assignedUsers) &&
-        project.assignedUsers.length > 0;
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        (session.user.access === "PROJECTADMIN" && isAssignedToThisProject);
-      if (!hasAccess) notFound();
-    } else if (!projectLoading && !project && session?.user) {
-      notFound();
-    }
-  }, [project, projectLoading, session]);
+  // `isProjectAdmin` resolves the same ladder server-side
+  // (`authorizeProjectAdminForProject`), including the PROJECTADMIN
+  // must-be-assigned rule this guard used to spell out inline, plus the
+  // project-creator and per-project "Project Admin" role tiers it missed.
+  const { isProjectAdmin, isLoading: permissionsLoading } =
+    useProjectPermissions(projectId, ApplicationArea.Settings);
 
-  if (isAuthLoading || projectLoading) {
+  useEffect(() => {
+    if (projectLoading || permissionsLoading || !session?.user) return;
+
+    if (!project || !isProjectAdmin) notFound();
+  }, [project, projectLoading, permissionsLoading, isProjectAdmin, session]);
+
+  if (isAuthLoading || projectLoading || permissionsLoading) {
     return <Loading />;
   }
   if (!project) {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
+          <PageTitle className="mb-2">
             {tCommon("errors.projectNotFound")}
-          </h2>
+          </PageTitle>
           <p className="text-muted-foreground">
             {tCommon("errors.projectNotFoundDescription")}
           </p>
@@ -89,12 +95,11 @@ export default function ProjectParametersSettingsPage() {
     <main className="space-y-6">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{tParameters("title")}</span>
-            </CardTitle>
-          </div>
-          <CardDescription className="uppercase">
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle>{tParameters("title")}</CardTitle>
+            <HelpPopover helpKey="projectParameters" />
+          </SectionHeader>
+          <CardDescription>
             <span className="flex items-center gap-2">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
@@ -103,47 +108,38 @@ export default function ProjectParametersSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <Card id="junit">
-            <CardHeader className="w-full">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-                <CardTitle>
-                  <span>{tParameters("tabJunit")}</span>
-                </CardTitle>
-              </div>
-              <p className="text-sm text-muted-foreground pt-2">
-                {tJunit("description")}
-              </p>
+            <CardHeader>
+              <CardTitle>{tParameters("tabJunit")}</CardTitle>
+              <CardDescription>{tJunit("description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <JunitIterationPropertyForm
                 projectId={projectId}
                 initialNames={
                   (project.junitIterationPropertyNames as
-                    | readonly string[]
-                    | undefined) ?? []
+                    readonly string[] | undefined) ?? []
                 }
               />
             </CardContent>
           </Card>
 
           <Card id="datasets">
-            <CardHeader className="w-full">
-              <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-                <CardTitle>
-                  <span>{tDatasets("title")}</span>
-                </CardTitle>
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle>{tDatasets("title")}</CardTitle>
                 <Button
                   onClick={() => setCreateOpen(true)}
                   data-testid="dataset-create-button"
+                  aria-label={tDatasets("newButton")}
+                  className="group gap-0 transition-all duration-200 hover:gap-2"
                 >
-                  <CirclePlus className="w-4" />
-                  <span className="hidden md:inline">
+                  <CirclePlus className="h-4 w-4" />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-xs">
                     {tDatasets("newButton")}
                   </span>
                 </Button>
               </div>
-              <p className="text-sm text-muted-foreground pt-2">
-                {tDatasets("description")}
-              </p>
+              <CardDescription>{tDatasets("description")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <DatasetsList projectId={projectId} />

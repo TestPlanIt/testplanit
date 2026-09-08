@@ -2,9 +2,9 @@ import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
+import type { LlmIntegration, LlmProviderConfig } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { CheckCircle, Edit, Sparkles, Trash2, XCircle } from "lucide-react";
+import { CheckCircle, Edit, Sparkles, Trash, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, type MutableRefObject } from "react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export const useColumns = (
         enableResizing: true,
         enableHiding: false,
         meta: { isPinned: "left" },
-        size: 300,
+        size: 190,
         cell: ({ row }) => (
           <div className="bg-primary-foreground flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -59,7 +59,7 @@ export const useColumns = (
         header: tCommon("fields.provider"),
         enableSorting: true,
         enableResizing: true,
-        size: 150,
+        size: 120,
         cell: ({ row }) => (
           <LlmProviderBadge provider={row.original.provider} />
         ),
@@ -70,7 +70,7 @@ export const useColumns = (
         header: tCommon("actions.status"),
         enableSorting: true,
         enableResizing: true,
-        size: 150,
+        size: 120,
         cell: ({ row }) => {
           const isActive = row.original.status === "ACTIVE";
           const isConnected = row.original.isConnected;
@@ -128,7 +128,7 @@ export const useColumns = (
         header: t("defaultModel"),
         enableSorting: false,
         enableResizing: true,
-        size: 200,
+        size: 170,
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">
             {row.original.llmProviderConfig?.defaultModel || t("notConfigured")}
@@ -141,7 +141,7 @@ export const useColumns = (
         header: t("budgetUsage"),
         enableSorting: false,
         enableResizing: true,
-        size: 200,
+        size: 180,
         cell: ({ row }) => {
           const budget = row.original.llmProviderConfig?.monthlyBudget;
           const usage =
@@ -256,7 +256,7 @@ export const useColumns = (
         header: tCommon("fields.default"),
         enableSorting: false,
         enableResizing: true,
-        size: 100,
+        size: 90,
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
@@ -283,7 +283,7 @@ export const useColumns = (
         size: 150,
         meta: { isPinned: "right" },
         cell: ({ row }) => (
-          <div className="bg-primary-foreground whitespace-nowrap flex">
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-end gap-1">
             <TestLlmIntegration
               key={`test-${row.original.id}`}
               integration={row.original}
@@ -316,7 +316,7 @@ export const useColumns = (
               data-testid="llm-delete-button"
               aria-label={tCommon("actions.delete")}
             >
-              <Trash2 className="h-8 w-8 shrink-0" />
+              <Trash className="h-8 w-8 shrink-0" />
             </Button>
           </div>
         ),

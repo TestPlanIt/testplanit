@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod/v4";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
 
@@ -27,7 +27,7 @@ export async function createSystemNotification(data: {
     const validated = createSystemNotificationSchema.parse(data);
 
     // Get all active users (not deleted and active)
-    const activeUsers = await prisma.user.findMany({
+    const activeUsers = await baseDb.user.findMany({
       where: {
         isDeleted: false,
         isActive: true,
@@ -119,7 +119,7 @@ export async function getSystemNotificationHistory(options?: {
     const skip = (page - 1) * pageSize;
 
     // Get unique system notifications (we'll get one per batch send)
-    const systemNotifications = await prisma.notification.findMany({
+    const systemNotifications = await baseDb.notification.findMany({
       where: {
         type: "SYSTEM_ANNOUNCEMENT",
       },
@@ -139,7 +139,7 @@ export async function getSystemNotificationHistory(options?: {
     });
 
     // Get total count of unique system notifications
-    const totalCount = await prisma.notification.groupBy({
+    const totalCount = await baseDb.notification.groupBy({
       by: ["title", "message"],
       where: {
         type: "SYSTEM_ANNOUNCEMENT",

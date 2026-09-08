@@ -4,8 +4,12 @@
  * Uses a fixed-window counter aligned to hourly boundaries, stored in Valkey.
  * Falls back to in-memory counting if Valkey is unavailable.
  *
- * The TIER env var determines the hourly limit:
- *   essentials: 1,000 | team: 5,000 | professional: 10,000 | dedicated: 25,000
+ * The hourly limit is resolved in this order:
+ *   1. API_RATE_LIMIT — an explicit positive integer (requests/hour). Intended
+ *      for self-hosted instances that want a limit beyond the tier presets.
+ *   2. The TIER env var:
+ *        essentials: 1,000 | team: 5,000 | professional: 10,000 | dedicated: 25,000
+ *   3. DEFAULT_TIER when neither is set.
  */
 
 import valkeyConnection from "./valkey";
@@ -17,7 +21,7 @@ const TIER_LIMITS: Record<string, number> = {
   dedicated: 25_000,
 };
 
-const DEFAULT_TIER = "essentials";
+const DEFAULT_TIER = "professional";
 
 const RATE_LIMIT_KEY_PREFIX = "ratelimit:api:global:";
 
@@ -38,9 +42,27 @@ export interface RateLimitResult {
 const fallbackCounts = new Map<number, number>();
 
 /**
- * Returns the hourly rate limit for the configured TIER.
+ * Returns the hourly rate limit.
+ *
+ * An explicit `API_RATE_LIMIT` (positive integer, requests/hour) overrides the
+ * TIER presets — useful for self-hosted deployments that aren't bound by the
+ * SaaS pricing tiers. Invalid values are ignored with a warning and fall back
+ * to the TIER presets.
  */
 export function getTierLimit(): number {
+  const override = process.env.API_RATE_LIMIT?.trim();
+  if (override) {
+    // Accept only a plain positive integer (no decimals, signs, separators, or
+    // scientific notation) so the configured value is unambiguous.
+    if (/^\d+$/.test(override) && Number(override) > 0) {
+      return Number(override);
+    }
+    console.warn(
+      `[API Rate Limit] Ignoring invalid API_RATE_LIMIT="${override}"; ` +
+        "expected a positive integer. Falling back to TIER presets."
+    );
+  }
+
   const tier = (process.env.TIER || DEFAULT_TIER).toLowerCase();
   return TIER_LIMITS[tier] ?? TIER_LIMITS[DEFAULT_TIER];
 }

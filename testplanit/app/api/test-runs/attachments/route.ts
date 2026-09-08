@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { getServerAuthSession } from "~/server/auth";
 
 interface UploadResult {
@@ -76,7 +76,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Verify the test run exists
-    const testRun = await prisma.testRuns.findUnique({
+    const testRun = await baseDb.testRuns.findUnique({
       where: { id: testRunId },
       select: { id: true, projectId: true },
     });
@@ -135,7 +135,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         // Create the attachment record linked to test run
         const objectUrl = `/api/storage/${objectKey}`;
-        const attachment = await prisma.attachments.create({
+        const attachment = await baseDb.attachments.create({
           data: {
             url: objectUrl,
             name: fileName,

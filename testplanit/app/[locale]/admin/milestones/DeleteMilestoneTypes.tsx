@@ -1,13 +1,9 @@
 "use client";
-import { MilestoneTypes } from "@prisma/client";
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
+import type { MilestoneTypes } from "~/zenstack/models";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import {
-  useDeleteManyMilestoneTypesAssignment,
-  useFindFirstMilestoneTypes,
-  useUpdateManyMilestones,
-  useUpdateMilestoneTypes,
-} from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -42,12 +38,16 @@ export function DeleteMilestoneType({
   const tCommon = useTranslations("common");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateMilestoneType } = useUpdateMilestoneTypes();
+  const { mutateAsync: updateMilestoneType } =
+    useClientQueries(schema).milestoneTypes.useUpdate();
   const { mutateAsync: deleteManyMilestoneTypesAssignment } =
-    useDeleteManyMilestoneTypesAssignment();
-  const { mutateAsync: updateManyMilestones } = useUpdateManyMilestones();
+    useClientQueries(schema).milestoneTypesAssignment.useDeleteMany();
+  const { mutateAsync: updateManyMilestones } =
+    useClientQueries(schema).milestones.useUpdateMany();
 
-  const { data: defaultMilestoneType } = useFindFirstMilestoneTypes({
+  const { data: defaultMilestoneType } = useClientQueries(
+    schema
+  ).milestoneTypes.useFindFirst({
     where: {
       AND: [{ isDefault: true }, { isDeleted: false }],
     },
@@ -106,7 +106,7 @@ export function DeleteMilestoneType({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
-                <TriangleAlert className="w-6 h-6 mr-2" />
+                <TriangleAlert className="w-6 h-6 me-2" />
                 {t("title", {
                   item: tCommon("fields.milestoneTypes"),
                 })}

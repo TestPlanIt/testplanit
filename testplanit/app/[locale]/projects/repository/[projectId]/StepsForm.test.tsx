@@ -2,24 +2,23 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock ZenStack hooks
-vi.mock("~/lib/hooks", () => ({
-  useFindManySharedStepGroup: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useFindManySharedStepItem: vi.fn(() => ({
-    data: [],
-    isLoading: false,
-  })),
-  useCreateSharedStepGroup: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
-  useCreateManySharedStepItem: vi.fn(() => ({
-    mutateAsync: vi.fn(),
-    isPending: false,
-  })),
+// Mock ZenStack hooks. useFindManySharedStepGroup is hoisted so tests can drive
+// it via mockReturnValue (previously reached through await import("~/lib/hooks")).
+const { useFindManySharedStepGroup } = vi.hoisted(() => ({
+  useFindManySharedStepGroup: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    sharedStepGroup: {
+      useFindMany: useFindManySharedStepGroup,
+      useCreate: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+    },
+    sharedStepItem: {
+      useFindMany: vi.fn(() => ({ data: [], isLoading: false })),
+      useCreateMany: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false })),
+    },
+  }),
 }));
 
 // Mock next/navigation
@@ -258,8 +257,6 @@ describe("StepsForm", () => {
   });
 
   it("renders shared step groups in combobox when available", async () => {
-    const hooksModule = await import("~/lib/hooks");
-    const { useFindManySharedStepGroup } = vi.mocked(hooksModule);
     useFindManySharedStepGroup.mockReturnValue({
       data: [
         { id: 1, name: "Shared Group 1", projectId: 1 } as any,

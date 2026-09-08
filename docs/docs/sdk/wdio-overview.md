@@ -7,6 +7,8 @@ title: WebdriverIO Reporter (@testplanit/wdio-reporter)
 
 `@testplanit/wdio-reporter` is an official WebdriverIO reporter that automatically sends test results to your TestPlanIt instance. It supports linking tests to existing test cases, automatic test case creation, screenshot uploads, run-level attachments and metadata, and more.
 
+Every attempt is reported individually — including retried attempts, so fail-then-pass sequences surface as flaky in TestPlanIt — along with the WebdriverIO runner id (`cid`) it ran in, which powers the run's execution timeline and parallelization metrics.
+
 ## Installation
 
 ```bash

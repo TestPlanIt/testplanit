@@ -6,24 +6,14 @@ const { mockProjects, mockUser } = vi.hoisted(() => ({
   mockUser: { findMany: vi.fn() },
 }));
 
-// Mock the prisma singleton
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+// Mock the baseDb singleton
+vi.mock("~/lib/db", () => ({
+  baseDb: {
     projects: mockProjects,
     user: mockUser,
   },
 }));
 
-// Mock ProjectAccessType enum from @prisma/client
-vi.mock("@prisma/client", () => ({
-  ProjectAccessType: {
-    NO_ACCESS: "NO_ACCESS",
-    GLOBAL_ROLE: "GLOBAL_ROLE",
-    SPECIFIC_ROLE: "SPECIFIC_ROLE",
-  },
-}));
-
-// Import after mocking
 import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 
 describe("getProjectEffectiveMembers", () => {
@@ -106,6 +96,27 @@ describe("getProjectEffectiveMembers", () => {
       expect(result).toHaveLength(1);
     });
 
+    it("should include users holding a per-user project permission", async () => {
+      mockProjects.findUnique.mockResolvedValue({
+        defaultAccessType: "NO_ACCESS",
+        defaultRoleId: null,
+        assignedUsers: [],
+        userPermissions: [
+          { userId: "user-1", accessType: "SPECIFIC_ROLE" },
+          { userId: "user-2", accessType: "GLOBAL_ROLE" },
+          { userId: "user-3", accessType: "DEFAULT" },
+        ],
+        groupPermissions: [],
+      });
+
+      const result = await getProjectEffectiveMembers(1);
+
+      expect(result).toContain("user-1");
+      expect(result).toContain("user-2");
+      expect(result).not.toContain("user-3");
+      expect(result).toHaveLength(2);
+    });
+
     it("should not fetch all users when NO_ACCESS", async () => {
       mockProjects.findUnique.mockResolvedValue({
         defaultAccessType: "NO_ACCESS",
@@ -117,6 +128,29 @@ describe("getProjectEffectiveMembers", () => {
       await getProjectEffectiveMembers(1);
 
       expect(mockUser.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("per-user NO_ACCESS override", () => {
+    it("should remove users denied by a per-user permission", async () => {
+      mockProjects.findUnique.mockResolvedValue({
+        defaultAccessType: "GLOBAL_ROLE",
+        defaultRoleId: 1,
+        assignedUsers: [{ userId: "user-1" }],
+        userPermissions: [{ userId: "user-1", accessType: "NO_ACCESS" }],
+        groupPermissions: [
+          {
+            accessType: "GLOBAL_ROLE",
+            group: { assignedUsers: [{ userId: "user-1" }] },
+          },
+        ],
+      });
+      mockUser.findMany.mockResolvedValue([{ id: "user-1" }, { id: "user-2" }]);
+
+      const result = await getProjectEffectiveMembers(1);
+
+      expect(result).not.toContain("user-1");
+      expect(result).toContain("user-2");
     });
   });
 

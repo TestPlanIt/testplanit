@@ -1,17 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// ── Hooked prisma client mock ────────────────────────────────────────────────
-vi.mock("../lib/prisma", () => {
-  const tx = {
-    appConfig: { findUnique: vi.fn() },
-    user: { findMany: vi.fn() },
-    groupAssignment: { findMany: vi.fn() },
-  };
+// ── Hooked baseDb client mock ────────────────────────────────────────────────
+vi.mock("../lib/db", () => {
+  // The transaction callback receives an opaque tx handle; the recompute
+  // helpers that consume it (recomputeUserAccess / readScimFallbackDefault)
+  // are themselves mocked below, so it needs no real shape.
+  const tx = {};
   return {
-    prisma: {
+    baseDb: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
+      // Both sweep paths fetch their id set at the top level (outside the
+      // transaction) and then batch the recompute into BATCH_SIZE/tx chunks.
       groupAssignment: { findMany: vi.fn() },
-      __tx: tx,
+      user: { findMany: vi.fn() },
     },
   };
 });
@@ -29,7 +30,7 @@ vi.mock("../lib/auditContext", () => ({
 }));
 
 // ── Multi-tenant mock ────────────────────────────────────────────────────────
-vi.mock("../lib/multiTenantPrisma", () => ({
+vi.mock("../lib/multiTenantDb", () => ({
   validateMultiTenantJobData: vi.fn(),
   isMultiTenantMode: vi.fn(() => false),
   disconnectAllTenantClients: vi.fn(),
@@ -63,25 +64,24 @@ vi.mock("../lib/bullPrefix", () => ({
 }));
 
 import { processor } from "./scimAccessRecomputeWorker";
-import { prisma } from "../lib/prisma";
+import { baseDb } from "../lib/db";
 import { runWithAuditContext } from "../lib/auditContext";
-import { validateMultiTenantJobData } from "../lib/multiTenantPrisma";
+import { validateMultiTenantJobData } from "../lib/multiTenantDb";
 import { recomputeUserAccess } from "../lib/scim/services/recompute";
 
-interface TxLike {
-  appConfig: { findUnique: ReturnType<typeof vi.fn> };
-  user: { findMany: ReturnType<typeof vi.fn> };
-  groupAssignment: { findMany: ReturnType<typeof vi.fn> };
-}
-
-const tx = (prisma as unknown as { __tx: TxLike }).__tx;
-// Top-level prisma.groupAssignment.findMany is called outside the transaction
-// for the groupId batch path.
-const prismaGroupAssignment = (
-  prisma as unknown as {
+// Top-level baseDb.groupAssignment.findMany / baseDb.user.findMany are called
+// outside the transaction — the groupId path fetches members, the sweep path
+// fetches all group-mapped users — before either batches the recompute.
+const dbGroupAssignment = (
+  baseDb as unknown as {
     groupAssignment: { findMany: ReturnType<typeof vi.fn> };
   }
 ).groupAssignment;
+const dbUser = (
+  baseDb as unknown as {
+    user: { findMany: ReturnType<typeof vi.fn> };
+  }
+).user;
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -105,7 +105,7 @@ function makeJob(
 
 describe("scimAccessRecomputeWorker processor", () => {
   it("W1: calls validateMultiTenantJobData on entry", async () => {
-    prismaGroupAssignment.findMany.mockResolvedValue([]);
+    dbGroupAssignment.findMany.mockResolvedValue([]);
 
     await processor(makeJob({ groupId: 42 }));
 
@@ -117,11 +117,11 @@ describe("scimAccessRecomputeWorker processor", () => {
 
   it("W2: job with groupId — recomputes each member of that group", async () => {
     const members = [{ userId: "user-a" }, { userId: "user-b" }];
-    prismaGroupAssignment.findMany.mockResolvedValue(members);
+    dbGroupAssignment.findMany.mockResolvedValue(members);
 
     await processor(makeJob({ groupId: 10 }));
 
-    expect(prismaGroupAssignment.findMany).toHaveBeenCalledWith(
+    expect(dbGroupAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ groupId: 10 }),
       })
@@ -141,11 +141,11 @@ describe("scimAccessRecomputeWorker processor", () => {
 
   it("W3: job WITHOUT groupId — selects all accessSource=GROUP_MAPPING users and recomputes each", async () => {
     const users = [{ id: "user-x" }, { id: "user-y" }, { id: "user-z" }];
-    tx.user.findMany.mockResolvedValue(users);
+    dbUser.findMany.mockResolvedValue(users);
 
     await processor(makeJob({ adminUserId: "admin-1" }));
 
-    expect(tx.user.findMany).toHaveBeenCalledWith(
+    expect(dbUser.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           accessSource: "GROUP_MAPPING",
@@ -171,8 +171,19 @@ describe("scimAccessRecomputeWorker processor", () => {
     );
   });
 
+  it("W6: fallback sweep batches a large directory into BATCH_SIZE-sized transactions instead of one unbounded tx", async () => {
+    const users = Array.from({ length: 250 }, (_, i) => ({ id: `user-${i}` }));
+    dbUser.findMany.mockResolvedValue(users);
+
+    await processor(makeJob({ adminUserId: "admin-1" }));
+
+    // 250 users / 100-per-batch = 3 transactions — not one sweep-wide tx.
+    expect((baseDb as any).$transaction).toHaveBeenCalledTimes(3);
+    expect(recomputeUserAccess).toHaveBeenCalledTimes(250);
+  });
+
   it("W4: audit frame carries adminUserId, scimGroupId, and scimTokenId when groupId is present", async () => {
-    prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
+    dbGroupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
 
     await processor(makeJob({ groupId: 99, adminUserId: "admin-42" }));
 
@@ -184,13 +195,13 @@ describe("scimAccessRecomputeWorker processor", () => {
     expect(ctxArg.scimTokenId).toBe("worker:scim-access-recompute");
   });
 
-  it("W5: uses the hooked lib/prisma client, NOT getPrismaClientForJob", async () => {
-    prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-b" }]);
+  it("W5: uses the hooked lib/baseDb client, NOT getDbClientForJob", async () => {
+    dbGroupAssignment.findMany.mockResolvedValue([{ userId: "user-b" }]);
 
     await processor(makeJob({ groupId: 5 }));
 
-    // The mocked prisma.$transaction was called — this proves the processor
-    // used the module we mocked (../lib/prisma), not an unmocked raw client.
-    expect((prisma as any).$transaction).toHaveBeenCalledTimes(1);
+    // The mocked baseDb.$transaction was called — this proves the processor
+    // used the module we mocked (../lib/baseDb), not an unmocked raw client.
+    expect((baseDb as any).$transaction).toHaveBeenCalledTimes(1);
   });
 });

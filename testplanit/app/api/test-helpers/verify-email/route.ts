@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 
 /**
  * Test helper endpoint to verify user emails.
@@ -33,7 +33,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
 
     // Update user to set emailVerified
-    await prisma.user.update({
+    await baseDb.user.update({
       where: { id: userId },
       data: { emailVerified: new Date() },
     });

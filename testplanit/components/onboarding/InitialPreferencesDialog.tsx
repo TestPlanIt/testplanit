@@ -1,6 +1,8 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { DateFormatter } from "@/components/DateFormatter";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
@@ -35,7 +37,7 @@ import {
   NotificationMode,
   Theme,
   TimeFormat,
-} from "@prisma/client";
+} from "~/zenstack/models";
 import { Accessibility, Circle, Moon, Sun, SunMoon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -44,10 +46,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import {
-  useFindFirstUserPreferences,
-  useUpdateUserPreferences,
-} from "~/lib/hooks";
 import { languageNames } from "~/i18n/navigation";
 
 type TimezoneOption = {
@@ -89,14 +87,34 @@ export function InitialPreferencesDialog() {
     data: userPreferences,
     refetch: refetchPreferences,
     isLoading: isPreferencesLoading,
-  } = useFindFirstUserPreferences(
+  } = useClientQueries(schema).userPreferences.useFindFirst(
     {
       where: { userId: sessionUserId },
     },
     { enabled: !!sessionUserId }
   );
 
-  const { mutateAsync: updateUserPreferences } = useUpdateUserPreferences();
+  const { mutateAsync: updateUserPreferences } =
+    useClientQueries(schema).userPreferences.useUpdate();
+
+  // Guess the user's timezone from the browser so first-time setup is pre-filled
+  // with a sensible value instead of UTC. Falls back to UTC when the browser
+  // reports a zone we don't offer (or Intl is unavailable).
+  const detectedTimezone = useMemo(() => {
+    try {
+      const resolved = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (
+        resolved &&
+        (typeof (Intl as any).supportedValuesOf !== "function" ||
+          (Intl.supportedValuesOf("timeZone") as string[]).includes(resolved))
+      ) {
+        return resolved;
+      }
+    } catch {
+      // Intl unavailable or timezone resolution failed; fall back to UTC.
+    }
+    return "Etc/UTC";
+  }, []);
 
   const defaultValues = useMemo(
     () => ({
@@ -105,11 +123,16 @@ export function InitialPreferencesDialog() {
       itemsPerPage: userPreferences?.itemsPerPage ?? ItemsPerPage.P10,
       dateFormat: userPreferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
       timeFormat: userPreferences?.timeFormat ?? TimeFormat.HH_MM_A,
-      timezone: userPreferences?.timezone ?? "Etc/UTC",
+      // Pre-fill the browser-detected zone unless the user already chose one
+      // (a stored value other than the untouched "Etc/UTC" default).
+      timezone:
+        userPreferences?.timezone && userPreferences.timezone !== "Etc/UTC"
+          ? userPreferences.timezone
+          : detectedTimezone,
       notificationMode:
         userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
-    [userPreferences]
+    [userPreferences, detectedTimezone]
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -207,6 +230,8 @@ export function InitialPreferencesDialog() {
         return <Circle className="h-4 w-4 fill-purple-500" />;
       case "Accessible":
         return <Accessibility className="h-4 w-4 text-blue-700" />;
+      case "AccessibleDark":
+        return <Accessibility className="h-4 w-4 text-blue-400" />;
       default:
         return <Circle className="h-4 w-4" />;
     }
@@ -228,6 +253,8 @@ export function InitialPreferencesDialog() {
         return "text-purple-500";
       case "Accessible":
         return "text-blue-700";
+      case "AccessibleDark":
+        return "text-blue-400";
       default:
         return "";
     }
@@ -253,15 +280,16 @@ export function InitialPreferencesDialog() {
             "green",
             "orange",
             "purple",
-            "accessible"
+            "accessible",
+            "accessibledark"
           );
           // Add the new theme class
           html.classList.add(themeLower);
           // Update color scheme for browser native elements
           html.style.colorScheme =
-            themeLower === "dark"
+            themeLower === "dark" || themeLower === "accessibledark"
               ? "dark"
-              : themeLower === "light"
+              : themeLower === "light" || themeLower === "accessible"
                 ? "light"
                 : "";
         });
@@ -320,9 +348,6 @@ export function InitialPreferencesDialog() {
         data: updateData,
       });
 
-      await refetchPreferences();
-      await update?.();
-
       // Mark theme as saved so we don't revert it
       originalThemeRef.current = undefined;
 
@@ -335,8 +360,17 @@ export function InitialPreferencesDialog() {
         return;
       }
 
-      toast.success(t("success"));
+      // Close BEFORE refetching. The refetch flips
+      // hasCompletedInitialPreferencesSetup, which drops this component to
+      // null — and a modal that stops rendering never transitions from open
+      // to closed, so Radix's close sequence (focus restore, scroll unlock,
+      // body pointer-events) is skipped entirely. Closing first lets that run
+      // normally; the unmount then lands on an already-closed dialog.
       setIsOpen(false);
+      toast.success(t("success"));
+
+      await refetchPreferences();
+      await update?.();
     } catch (error) {
       console.error("Failed to update initial preferences:", error);
       toast.error(t("error"));
@@ -346,13 +380,24 @@ export function InitialPreferencesDialog() {
   });
 
   const handleOpenChange = (open: boolean) => {
-    // Don't allow manually closing the dialog since this is initial setup
-    // User must either save or skip
-    // However, we allow programmatic closing via save/skip buttons
-    if (!open && isOpen) {
+    if (open) {
+      setIsOpen(true);
       return;
     }
-    setIsOpen(open);
+    // Accidental dismissal is refused on DialogContent (outside-click), so a
+    // close request here is a deliberate one: the X that DialogContent always
+    // renders in its corner, or Escape. Route both through the same path as
+    // "Keep defaults" rather than dropping them.
+    //
+    // Dropping them is what made this dialog feel broken: the X rendered,
+    // absorbed clicks, and did nothing, while Escape and outside-click were
+    // dead too. With the footer below the fold on a short viewport, the only
+    // visible way out did nothing and a reload was the only escape — and
+    // since nothing was persisted, the dialog came straight back.
+    if (isSubmitting) {
+      return;
+    }
+    void handleSkip();
   };
 
   const handleSkip = async () => {
@@ -374,13 +419,15 @@ export function InitialPreferencesDialog() {
           "system",
           "green",
           "orange",
-          "purple"
+          "purple",
+          "accessible",
+          "accessibledark"
         );
         html.classList.add(originalTheme);
         html.style.colorScheme =
-          originalTheme === "dark"
+          originalTheme === "dark" || originalTheme === "accessibledark"
             ? "dark"
-            : originalTheme === "light"
+            : originalTheme === "light" || originalTheme === "accessible"
               ? "light"
               : "";
       }
@@ -394,10 +441,13 @@ export function InitialPreferencesDialog() {
           hasCompletedInitialPreferencesSetup: true,
         },
       });
+      originalThemeRef.current = undefined;
+
+      // Close before the refetch — same reasoning as the save path above.
+      setIsOpen(false);
+
       await refetchPreferences();
       await update?.();
-      originalThemeRef.current = undefined;
-      setIsOpen(false);
     } catch (error) {
       console.error("Failed to skip initial preferences:", error);
       toast.error(t("error"));
@@ -419,7 +469,18 @@ export function InitialPreferencesDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl">
+      {/*
+        Outside-click stays refused so a stray click on the page behind can't
+        drop someone out of first-run setup. The corner X and Escape are
+        deliberate gestures and do close (see handleOpenChange) — Escape
+        matters most, since it is the one exit that still works if the page
+        ever ends up with a pointer-events lock.
+      */}
+      <DialogContent
+        className="max-w-3xl"
+        onPointerDownOutside={(event) => event.preventDefault()}
+        onInteractOutside={(event) => event.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
@@ -634,7 +695,9 @@ export function InitialPreferencesDialog() {
                 name="timezone"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>{tGlobal("common.fields.timezone")}</FormLabel>
+                    <FormLabel className="mr-2">
+                      {tGlobal("common.fields.timezone")}
+                    </FormLabel>
                     <FormControl>
                       <AsyncCombobox<TimezoneOption>
                         value={

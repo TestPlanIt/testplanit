@@ -41,11 +41,7 @@ export function getScimBaseUrl(): string {
  */
 export function scimLocation(
   resourceType:
-    | "Users"
-    | "Groups"
-    | "Schemas"
-    | "ResourceTypes"
-    | "ServiceProviderConfig",
+    "Users" | "Groups" | "Schemas" | "ResourceTypes" | "ServiceProviderConfig",
   id?: string
 ): string {
   const base = getScimBaseUrl();

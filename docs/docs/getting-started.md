@@ -11,7 +11,7 @@ Welcome! This guide assumes you have successfully installed TestPlanIt either vi
 
 Navigate to the URL where TestPlanIt is hosted. You should be presented with a login screen.
 
-The initial administrator account is created by the database seed script (`pnpm prisma db seed`). Log in using the credentials configured during setup:
+The initial administrator account is created by the database seed script (`pnpm tsx db/seed.ts`). Log in using the credentials configured during setup:
 
 - **Email:** The value of the `ADMIN_EMAIL` environment variable used during seeding (defaults to `admin@example.com` if not set in your `.env`).
 - **Password:** The value of the `ADMIN_PASSWORD` environment variable used during seeding (defaults to `admin` if not set in your `.env`).

@@ -4,7 +4,7 @@ import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
 import { RoleNameCell } from "@/components/tables/RoleNameCell";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,35 +15,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import { User } from "@prisma/client";
+import type { User } from "~/zenstack/models";
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal } from "lucide-react";
+import { Ban, KeyRound, MoreVertical, SquarePen, Trash } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
+import type { AccessibleProject } from "~/app/actions/getUserAccessibleProjects";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
 import { SCIM_SYSTEM_USER_EMAIL } from "~/lib/scim/constants";
 export interface ExtendedUser extends User {
   createdBy: {
-    name: string;
     id: string;
-    image: string | null;
-    email: string;
-    emailVerified: Date | null;
-    emailVerifToken: string | null;
-    emailTokenExpires: Date | null;
-    password: string | null;
-    createdAt: Date;
-    updatedAt: Date;
   } | null;
-  role: {
-    name: string;
-  };
   groups: {
     groupId: number;
   }[];
   projects: {
     projectId: number;
   }[];
+  // Effective accessible projects, batched by the page and rendered by the
+  // Projects column. `undefined` while the batch is still loading.
+  accessibleProjects?: AccessibleProject[];
 }
 
 export const useColumns = (
@@ -66,9 +58,7 @@ export const useColumns = (
       {
         id: "name",
         accessorKey: "name",
-        header: () => (
-          <div className="bg-primary-foreground">{tCommon("name")}</div>
-        ),
+        header: tCommon("name"),
         enableSorting: true,
         enableResizing: true,
         enableHiding: false,
@@ -85,7 +75,7 @@ export const useColumns = (
               {isScimProvisioner && (
                 <Badge
                   variant="secondary"
-                  className="ml-1"
+                  className="ms-1"
                   title={tAdmin("scimManagedTooltip")}
                   data-testid="scim-provisioner-badge"
                 >
@@ -95,7 +85,7 @@ export const useColumns = (
               {isScimManaged && (
                 <Badge
                   variant="secondary"
-                  className="ml-1"
+                  className="ms-1"
                   title={tAdmin("scimManagedTooltip")}
                   data-testid="scim-managed-user-badge"
                 >
@@ -214,7 +204,10 @@ export const useColumns = (
         size: 100,
         cell: ({ row }) => (
           <div className="text-center">
-            <UserProjectsDisplay userId={row.original.id} />
+            <ProjectListDisplay
+              projects={row.original.accessibleProjects ?? []}
+              isLoading={row.original.accessibleProjects === undefined}
+            />
           </div>
         ),
       },
@@ -326,7 +319,7 @@ export const useColumns = (
                     className="px-2 py-1 h-auto"
                     aria-label={tCommon("actions.actionsLabel")}
                   >
-                    <MoreHorizontal className="h-5 w-5" />
+                    <MoreVertical className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -339,6 +332,7 @@ export const useColumns = (
                     }
                     onClick={() => onEditUser?.(row.original)}
                   >
+                    <SquarePen className="me-2 h-4 w-4" />
                     {tCommon("actions.edit")}
                   </DropdownMenuItem>
                   {row.original.authMethod !== "SSO" &&
@@ -348,11 +342,13 @@ export const useColumns = (
                         <DropdownMenuItem
                           onClick={() => onForceChangePassword?.(row.original)}
                         >
+                          <KeyRound className="me-2 h-4 w-4" />
                           {tAdmin("forcePasswordChange")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => onRevokePassword?.(row.original)}
                         >
+                          <Ban className="me-2 h-4 w-4" />
                           {tAdmin("revokePassword")}
                         </DropdownMenuItem>
                       </>
@@ -363,6 +359,7 @@ export const useColumns = (
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDeleteUser?.(row.original)}
                     >
+                      <Trash className="me-2 h-4 w-4" />
                       {tCommon("actions.delete")}
                     </DropdownMenuItem>
                   ) : null}

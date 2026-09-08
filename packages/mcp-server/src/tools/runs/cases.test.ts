@@ -10,7 +10,7 @@ vi.mock("../../api.js", () => ({
 
 import { zenstack } from "../../api.js";
 import { registerRunsCasesList } from "./cases.js";
-import { RUN_DETAIL_TESTCASE_INCLUDE } from "./shared.js";
+import { runDetailTestCaseInclude } from "./shared.js";
 
 const mockZenstack = vi.mocked(zenstack);
 
@@ -103,6 +103,9 @@ describe("registerRunsCasesList", () => {
     const where = getLastCallBody()?.where as Record<string, unknown>;
     expect(where.isCompleted).toBe(true);
     expect(where.testRunId).toBe(50);
+    // Soft-removed run cases are excluded (TestRunCases gained isDeleted with
+    // the run-case removal feature).
+    expect(where.isDeleted).toBe(false);
   });
 
   it("filter: statusId", async () => {
@@ -127,7 +130,7 @@ describe("registerRunsCasesList", () => {
     expect(where.assignedToId).toBe("user-99");
   });
 
-  it("R1 invariant: NO isDeleted in where clause (TestRunCases has no such column)", async () => {
+  it("R1 (revised): soft-removed run cases are filtered with isDeleted: false", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -135,7 +138,7 @@ describe("registerRunsCasesList", () => {
       arguments: { runId: 50 },
     });
     const where = getLastCallBody()?.where as Record<string, unknown>;
-    expect(Object.keys(where)).not.toContain("isDeleted");
+    expect(where.isDeleted).toBe(false);
   });
 
   it("pagination: hasNextPage TRUE when rows.length > limit", async () => {
@@ -176,7 +179,7 @@ describe("registerRunsCasesList", () => {
     expect(body?.orderBy).toEqual([{ order: "asc" }, { id: "asc" }]);
   });
 
-  it("uses RUN_DETAIL_TESTCASE_INCLUDE constant from shared", async () => {
+  it("uses runDetailTestCaseInclude(runId) from shared — junit half scoped to THIS run", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -184,7 +187,15 @@ describe("registerRunsCasesList", () => {
       arguments: { runId: 50 },
     });
     const body = getLastCallBody();
-    expect(body?.include).toBe(RUN_DETAIL_TESTCASE_INCLUDE);
+    expect(body?.include).toEqual(runDetailTestCaseInclude(50));
+    // The JUnit half of latestResult must be scoped to the requested run —
+    // an unscoped include would surface results from OTHER runs of the case.
+    const include = body?.include as {
+      repositoryCase: { select: { junitResults: { where: unknown } } };
+    };
+    expect(include.repositoryCase.select.junitResults.where).toEqual({
+      testSuite: { testRunId: 50 },
+    });
   });
 
   it("DoS: limit > 100 rejected by zod", async () => {

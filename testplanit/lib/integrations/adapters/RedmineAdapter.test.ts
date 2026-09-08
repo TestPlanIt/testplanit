@@ -53,6 +53,7 @@ describe("RedmineAdapter", () => {
         attachments: false,
         linkedIssues: true,
         comments: true,
+        milestones: false,
       });
     });
   });

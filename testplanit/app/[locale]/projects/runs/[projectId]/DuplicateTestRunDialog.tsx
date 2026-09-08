@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,7 +31,6 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
-import { useFindManyTestRunCases, useFindUniqueTestRuns } from "~/lib/hooks";
 
 interface DuplicateTestRunDialogProps {
   open: boolean;
@@ -42,6 +43,7 @@ interface DuplicateTestRunDialogProps {
 const FormSchema = z.object({
   statusesToInclude: z.array(z.number()),
   copyAssignments: z.boolean(),
+  joinSourceGroup: z.boolean(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
@@ -55,6 +57,14 @@ export interface AddRunModalDuplicationPreset {
   originalStateId: number | null;
   originalNote?: any;
   originalDocs?: any;
+  /**
+   * The user asked for the copies to join the source run's configuration
+   * group instead of forming their own. `AddTestRunModal` resolves the group
+   * id from this pair via `planDuplicationGroup`.
+   */
+  joinSourceGroup?: boolean;
+  /** The source run's group at the time the duplicate options were confirmed. */
+  originalConfigurationGroupId?: string | null;
 }
 
 export interface AddTestRunModalInitProps {
@@ -81,13 +91,16 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
     defaultValues: {
       statusesToInclude: [],
       copyAssignments: false,
+      // Off by default: duplicating keeps today's behaviour (the copies form
+      // their own group) unless the user explicitly asks to join the source.
+      joinSourceGroup: false,
     },
   });
 
   const { setValue, getValues, handleSubmit } = form;
 
   const { data: originalRunData, isLoading: isLoadingOriginalRun } =
-    useFindUniqueTestRuns(
+    useClientQueries(schema).testRuns.useFindUnique(
       {
         where: { id: testRunId },
         select: {
@@ -97,6 +110,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
           stateId: true,
           note: true,
           docs: true,
+          configurationGroupId: true,
           testCases: {
             where: {
               isDeleted: false,
@@ -127,7 +141,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
   const {
     data: testRunCasesDataForStatusList,
     isLoading: isLoadingCasesForStatusList,
-  } = useFindManyTestRunCases(
+  } = useClientQueries(schema).testRunCases.useFindMany(
     {
       where: {
         testRunId: testRunId,
@@ -329,6 +343,9 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
           originalStateId: originalRunData.stateId,
           originalNote: originalRunData.note,
           originalDocs: originalRunData.docs,
+          joinSourceGroup: data.joinSourceGroup,
+          originalConfigurationGroupId:
+            originalRunData.configurationGroupId ?? null,
         },
         defaultMilestoneId: originalRunData.milestoneId ?? undefined,
       };
@@ -407,7 +424,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                   {isLoadingCasesForStatusList ? (
                     <LoadingSpinnerAlert />
                   ) : availableStatuses.length > 0 ? (
-                    <div className="max-h-40 overflow-y-auto space-y-2 pr-2 border rounded-md p-2">
+                    <div className="max-h-40 overflow-y-auto space-y-2 pe-2 border rounded-md p-2">
                       {availableStatuses.map((status) => (
                         <FormField
                           key={status.id}
@@ -450,7 +467,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                                   >
                                     {status.name}
                                   </Badge>
-                                  <span className="ml-1.5 text-muted-foreground">
+                                  <span className="ms-1.5 text-muted-foreground">
                                     {`(${status.count} ${tCommon("plural.case", { count: status.count })})`}
                                   </span>
                                 </FormLabel>
@@ -493,6 +510,37 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                       onCheckedChange={field.onChange}
                       disabled={isSubmittingThisDialog}
                       aria-label={t("fields.copyAssignments.label")}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="joinSourceGroup"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base flex items-center">
+                      {t("fields.configurationGroup.label")}
+                      <HelpPopover helpKey="testRun.duplicate.configurationGroup" />
+                    </FormLabel>
+                    <FormDescription>
+                      {field.value
+                        ? t("fields.configurationGroup.join")
+                        : t("fields.configurationGroup.separate")}
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      id="join-configuration-group-switch"
+                      data-testid="join-configuration-group-switch"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isSubmittingThisDialog}
+                      aria-label={t("fields.configurationGroup.label")}
                     />
                   </FormControl>
                   <FormMessage />

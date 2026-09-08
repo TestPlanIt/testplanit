@@ -19,16 +19,19 @@
  * boundary.
  */
 
-import { Prisma, type PrismaClient } from "@prisma/client";
+import { sql } from "kysely";
+import type { RawBuilder } from "kysely";
+
+import type { DbClient, TxClient } from "~/lib/zenstack";
 
 import type { MatrixCellCountResult, MatrixFilters } from "./types";
 
 /**
- * Accept either the singleton client or a `Prisma.TransactionClient` so
+ * Accept either the singleton client or a `TxClient` so
  * callers (and live-DB integration tests) can pass `tx` to read inside
  * a rolled-back transaction.
  */
-type PrismaLike = PrismaClient | Prisma.TransactionClient;
+type DbLike = DbClient | TxClient;
 
 const CELL_CAP_THRESHOLD = 50_000 as const;
 
@@ -66,28 +69,24 @@ export function computeCellCount(input: {
  *   - datasetIds -> EXISTS subquery on TestRunCaseDataSetSnapshot.sourceDataSetId
  *   - dateFrom/To -> tr."createdAt" bounds (NOT iter.completedAt)
  */
-function buildFilterPredicates(filters: MatrixFilters): Prisma.Sql {
-  const fragments: Prisma.Sql[] = [];
+function buildFilterPredicates(filters: MatrixFilters): RawBuilder<unknown> {
+  const fragments: RawBuilder<unknown>[] = [];
 
   if (filters.configIds && filters.configIds.length > 0) {
     fragments.push(
-      Prisma.sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`
+      sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`
     );
   }
 
   if (filters.dateFrom) {
-    fragments.push(
-      Prisma.sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`
-    );
+    fragments.push(sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`);
   }
   if (filters.dateTo) {
-    fragments.push(
-      Prisma.sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`
-    );
+    fragments.push(sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`);
   }
 
   if (filters.statusIds && filters.statusIds.length > 0) {
-    fragments.push(Prisma.sql`AND EXISTS (
+    fragments.push(sql`AND EXISTS (
       SELECT 1 FROM "TestRunCaseIteration" iter
       WHERE iter."testRunCaseId" = trc.id
         AND iter."isDeleted" = false
@@ -96,7 +95,7 @@ function buildFilterPredicates(filters: MatrixFilters): Prisma.Sql {
   }
 
   if (filters.datasetIds && filters.datasetIds.length > 0) {
-    fragments.push(Prisma.sql`AND EXISTS (
+    fragments.push(sql`AND EXISTS (
       SELECT 1 FROM "TestRunCaseDataSetSnapshot" trcs
       WHERE trcs."testRunCaseId" = trc.id
         AND trcs."isDeleted" = false
@@ -104,8 +103,8 @@ function buildFilterPredicates(filters: MatrixFilters): Prisma.Sql {
     )`);
   }
 
-  if (fragments.length === 0) return Prisma.empty;
-  return Prisma.sql`${Prisma.join(fragments, " ")}`;
+  if (fragments.length === 0) return sql``;
+  return sql.join(fragments, sql` `);
 }
 
 interface AxisCountsRow {
@@ -123,15 +122,15 @@ interface PerCaseRow {
  *   1. Distinct case + config counts under the requested filters.
  *   2. Per-case max iterations from the Phase 3 denormalized counter.
  *
- * Both use parameterized `$queryRaw`. Filter values flow in via
- * `Prisma.sql` fragments; nothing is string-interpolated.
+ * Both use parameterized Kysely `sql` queries. Filter values flow in via
+ * `sql` fragments; nothing is string-interpolated.
  *
  * The config-count query intentionally counts `COALESCE(tr."configId", 0)`
  * so the "(none)" sentinel column counts as one configuration even when
  * every run in scope has `configId IS NULL`.
  */
 export async function runCellCountPreflight(
-  prisma: PrismaLike,
+  db: DbLike,
   projectId: number,
   filters: MatrixFilters
 ): Promise<MatrixCellCountResult> {
@@ -143,7 +142,8 @@ export async function runCellCountPreflight(
   // this filter the preflight would over-count cases (and inflate the
   // suggested "filter to fewer cases" hint) by including non-parameterized
   // cases that the matrix excludes.
-  const axisCountsRows = await prisma.$queryRaw<AxisCountsRow[]>`
+  const axisCountsRows = (
+    await sql<AxisCountsRow>`
     SELECT
       COUNT(DISTINCT trc."repositoryCaseId")::bigint AS case_count,
       COUNT(DISTINCT COALESCE(tr."configId", 0))::bigint AS config_count
@@ -152,15 +152,18 @@ export async function runCellCountPreflight(
     INNER JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
+      AND trc."isDeleted" = false
       AND rc."isDeleted" = false
       AND rc."hasParameters" = true
       ${filterSql}
-  `;
+  `.execute(db.$qb)
+  ).rows;
 
   const caseCount = Number(axisCountsRows[0]?.case_count ?? 0n);
   const configCount = Number(axisCountsRows[0]?.config_count ?? 0n);
 
-  const perCaseRows = await prisma.$queryRaw<PerCaseRow[]>`
+  const perCaseRows = (
+    await sql<PerCaseRow>`
     SELECT
       trc."repositoryCaseId" AS case_id,
       MAX(trc."totalIterations")::int AS max_iters
@@ -169,11 +172,13 @@ export async function runCellCountPreflight(
     INNER JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
+      AND trc."isDeleted" = false
       AND rc."isDeleted" = false
       AND rc."hasParameters" = true
       ${filterSql}
     GROUP BY trc."repositoryCaseId"
-  `;
+  `.execute(db.$qb)
+  ).rows;
 
   const perCaseMaxIterations = perCaseRows.map((r) => ({
     caseId: Number(r.case_id),

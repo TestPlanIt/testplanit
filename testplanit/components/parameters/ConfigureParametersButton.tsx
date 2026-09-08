@@ -8,12 +8,16 @@ export interface ConfigureParametersButtonProps {
   parameterCount: number;
   canEdit: boolean;
   onOpen: () => void;
+  /** When true, collapse to an icon-only button; the label expands on hover
+   * (mirrors the header action buttons' narrow-mode pattern). */
+  compact?: boolean;
 }
 
 export function ConfigureParametersButton({
   parameterCount,
   canEdit,
   onOpen,
+  compact = false,
 }: ConfigureParametersButtonProps) {
   const t = useTranslations("parameters");
 
@@ -31,10 +35,20 @@ export function ConfigureParametersButton({
       size="sm"
       onClick={onOpen}
       data-testid="configure-parameters-button"
-      className=""
+      className={
+        compact
+          ? "group px-2 hover:px-2 transition-all duration-200 gap-0 hover:gap-2"
+          : ""
+      }
     >
-      <SquareStack className="w-4 h-4" />
-      {label}
+      <SquareStack className="w-4 h-4 shrink-0" />
+      {compact ? (
+        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+          {label}
+        </span>
+      ) : (
+        label
+      )}
     </Button>
   );
 }

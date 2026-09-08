@@ -1,8 +1,14 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
+import {
+  ConfigurationGroupLinkField,
+  type ConfigurationGroupLinkChange,
+} from "@/components/ConfigurationGroupLinkField";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import { DateFormatter } from "@/components/DateFormatter";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -11,9 +17,12 @@ import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { RunAuditLogSheet } from "@/components/runs/RunAuditLogSheet";
+import { RecordId } from "@/components/RecordId";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
+import { TestCaseDetailsView } from "@/projects/repository/[projectId]/[caseId]/TestCaseDetailsView";
 import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
+import { useCoalescedWakeUp } from "~/hooks/useCoalescedWakeUp";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -27,6 +36,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  ActionBar,
+  ActionButtonContent,
+  ActionOverflow,
+  collapsibleActionClass,
+  useContainerCompact,
+} from "@/components/ui/action-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -55,6 +71,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Sheet,
   SheetContent,
@@ -70,12 +87,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
-import {
-  ApplicationArea,
-  Attachments,
-  RepositoryCases,
-  Tags,
-} from "@prisma/client";
+import { ApplicationArea } from "~/zenstack/models";
+import type { Attachments, Tags } from "~/zenstack/models";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {
@@ -83,16 +96,23 @@ import {
   ChevronLeft,
   CircleCheckBig,
   CircleSlash2,
-  Copy,
+  CopyPlus,
   FileDown,
+  History,
+  Loader2,
+  Lock,
+  LockOpen,
   Maximize2,
+  PlayCircle,
   Save,
   SquarePen,
-  Trash2,
+  Trash,
   TriangleAlert,
+  UsersRound,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
@@ -100,28 +120,21 @@ import { FormProvider, useForm } from "react-hook-form";
 import { PanelImperativeHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
+import {
+  applyConfigurationGroupPeerStamp,
+  canEditConfigurationGroup,
+  configurationGroupUpdateData,
+} from "~/lib/configurationGroupLink";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useTestRunCaseDetail } from "~/hooks/useTestRunCaseDetail";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
-import {
-  useCreateAttachments,
-  useFindFirstRepositoryCases,
-  useFindFirstStatusScope,
-  useFindManyJUnitTestSuite,
-  useFindManyMilestones,
-  useFindManyWorkflows,
-  useFindUniqueTestRuns,
-  useUpdateAttachments,
-  useUpdateManyTestRunCaseIteration,
-  useUpdateManyTestRunResults,
-  useUpdateManyTestRunStepResults,
-  useUpdateTestRuns,
-} from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { IconName } from "~/types/globals";
+import { computeRetryMetrics } from "~/utils/automatedRunMetrics";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { useExportTestRunPdf } from "~/hooks/pdf/useExportTestRunPdf";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -130,8 +143,11 @@ import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "../DuplicateTestRunDialog";
 import CompleteTestRunDialog from "./CompleteTestRunDialog";
+import { DistributeAssignmentsModal } from "./DistributeAssignmentsModal";
 import { DeleteTestRunModal } from "./DeleteTestRun";
-import JunitTableSection from "./JunitTableSection";
+import JunitChartsPanel from "./JunitChartsPanel";
+import { EMPTY_JUNIT_FACETS, type JunitFacetFilters } from "./JunitFilterBar";
+import JunitResultsPanel from "./JunitResultsPanel";
 import {
   SelectedConfigurationInfo,
   TestCasesSection,
@@ -149,6 +165,8 @@ interface FormValues {
   docs: any;
   attachments: Attachments[];
   selectedIssues: number[];
+  /** Configuration-group membership; null when this run is not linked. */
+  configurationGroupId: string | null;
 }
 
 // Base schema
@@ -161,6 +179,7 @@ const BaseFormSchema = z.object({
   docs: z.any().nullable(),
   attachments: z.array(z.any()).optional(),
   selectedIssues: z.array(z.number()),
+  configurationGroupId: z.string().nullable(),
 });
 
 type MilestoneWithType = {
@@ -233,6 +252,9 @@ type TestRunWithRelations = {
   isDeleted: boolean;
   isCompleted: boolean;
   completedAt: Date | null;
+  compositionLockedAt: Date | null;
+  compositionLockedById: string | null;
+  compositionLockedBy: { id: string; name: string } | null;
   forecastManual: number | null;
   forecastAutomated: number | null;
   project: { id: number; name: string };
@@ -245,6 +267,8 @@ type TestRunWithRelations = {
   testCases: Array<{
     id: number;
     order: number;
+    repositoryCaseId: number;
+    totalIterations: number;
     status: {
       id: number;
       name: string;
@@ -252,9 +276,6 @@ type TestRunWithRelations = {
         value: string;
       };
     } | null;
-    repositoryCase: RepositoryCases & {
-      state: WorkflowStateWithRelations;
-    };
   }>;
   tags: Tags[];
   issues: IssueType[];
@@ -315,10 +336,16 @@ export default function TestRunPage() {
   >(null);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
+  const { mutateAsync: createAttachments } =
+    useClientQueries(schema).attachments.useCreate();
+  const { mutateAsync: updateAttachments } =
+    useClientQueries(schema).attachments.useUpdate();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingTestRun, setIsDeletingTestRun] = useState(false);
+  // Action bar collapses into a kebab when the header is narrow (mirrors the
+  // repository case details bar).
+  const { ref: headerRef, compact: headerCompact } = useContainerCompact();
+  const [auditOpen, setAuditOpen] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -327,13 +354,19 @@ export default function TestRunPage() {
     null
   );
   const { mutateAsync: softDeleteTestRunResults } =
-    useUpdateManyTestRunResults();
+    useClientQueries(schema).testRunResults.useUpdateMany();
   const { mutateAsync: softDeleteTestRunStepResults } =
-    useUpdateManyTestRunStepResults();
+    useClientQueries(schema).testRunStepResults.useUpdateMany();
   const { mutateAsync: softDeleteTestRunCaseIterations } =
-    useUpdateManyTestRunCaseIteration();
+    useClientQueries(schema).testRunCaseIteration.useUpdateMany();
+  // Peer awaiting a `configurationGroupId` stamp — set when the user links
+  // this run to a peer that had no group of its own, cleared once saved.
+  const [configGroupStampTargetId, setConfigGroupStampTargetId] = useState<
+    number | null
+  >(null);
   const [zoomedChart, setZoomedChart] = useState<null | "donut">(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
+  const [isDistributeDialogOpen, setIsDistributeDialogOpen] = useState(false);
 
   // State for AddTestRunModal when opened for duplication
   const [isAddRunModalOpenForDuplicate, setIsAddRunModalOpenForDuplicate] =
@@ -344,8 +377,11 @@ export default function TestRunPage() {
   ] = useState<AddTestRunModalInitProps | null>(null);
 
   // Fetch TestRuns permissions
-  const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
-    useProjectPermissions(numericProjectId, ApplicationArea.TestRuns);
+  const {
+    permissions: testRunPermissions,
+    isProjectAdmin,
+    isLoading: isLoadingPermissions,
+  } = useProjectPermissions(numericProjectId, ApplicationArea.TestRuns);
 
   // Fetch ClosedTestRuns permissions
   const {
@@ -357,6 +393,14 @@ export default function TestRunPage() {
   const { permissions: tagsPermissions, isLoading: isLoadingTagsPermissions } =
     useProjectPermissions(numericProjectId, ApplicationArea.Tags);
 
+  // Fetch TestCaseRepository permission — gates in-place case editing from the
+  // execution details Sheet.
+  const { permissions: caseRepoPermissions } = useProjectPermissions(
+    numericProjectId,
+    ApplicationArea.TestCaseRepository
+  );
+  const canAddEditCases = caseRepoPermissions?.canAddEdit ?? false;
+
   // Extract permissions
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
   const canDeleteRun = testRunPermissions?.canDelete ?? false;
@@ -365,12 +409,32 @@ export default function TestRunPage() {
   const isSuperAdmin = session?.user?.access === "ADMIN";
   const showAddEditTagsPerm = canAddEditTags || isSuperAdmin;
 
+  const [isTogglingCompositionLock, setIsTogglingCompositionLock] =
+    useState(false);
+
   // Get the selected test case ID from URL parameters
   const selectedTestCaseId = searchParams.get("selectedCase")
     ? parseInt(searchParams.get("selectedCase")!)
     : null;
 
-  const { data: statusScope } = useFindFirstStatusScope({
+  // In-place case editing inside the details Sheet. Held in component state
+  // rather than a URL param: the case table's own load-time URL syncs (column
+  // visibility, page, pageSize) each rebuild the query string from their own
+  // snapshot, so a param written while those are still settling is dropped and
+  // edit mode silently never opens.
+  const [isEditingCase, setIsEditingCase] = useState(false);
+  const editingSelectedCase =
+    !!selectedTestCaseId && isEditingCase && canAddEditCases;
+
+  // Opening a different case — or closing the sheet, which clears the param —
+  // leaves edit mode behind with it.
+  useEffect(() => {
+    setIsEditingCase(false);
+  }, [selectedTestCaseId]);
+
+  const { data: statusScope } = useClientQueries(
+    schema
+  ).statusScope.useFindFirst({
     where: {
       name: "Automation",
     },
@@ -382,7 +446,9 @@ export default function TestRunPage() {
   });
 
   // Fetch test run data
-  const { data: testRunData, refetch: refetchTestRun } = useFindUniqueTestRuns(
+  const { data: testRunData, refetch: refetchTestRun } = useClientQueries(
+    schema
+  ).testRuns.useFindUnique(
     {
       where: {
         id: Number(runId),
@@ -406,15 +472,19 @@ export default function TestRunPage() {
           },
         },
         createdBy: true,
+        compositionLockedBy: { select: { id: true, name: true } },
         attachments: true,
+        // Keep this select thin: a run can hold thousands of cases and this
+        // relation is unpaginated, so don't hydrate repositoryCase (or other
+        // relations) here. The case table (ProjectRepository) fetches its own
+        // data; this list only feeds id/order/status lookups.
         testCases: {
           where: { isDeleted: false },
           select: {
             id: true,
             order: true,
+            repositoryCaseId: true,
             totalIterations: true,
-            passedIterations: true,
-            failedIterations: true,
             status: {
               select: {
                 id: true,
@@ -422,16 +492,6 @@ export default function TestRunPage() {
                 color: {
                   select: {
                     value: true,
-                  },
-                },
-              },
-            },
-            repositoryCase: {
-              include: {
-                state: {
-                  include: {
-                    icon: true,
-                    color: true,
                   },
                 },
               },
@@ -472,6 +532,45 @@ export default function TestRunPage() {
     refetch: () => void;
   };
 
+  // Execution-start composition lock (BOR-1): freezes which cases are in the
+  // run (add/remove/reorder) while execution & assignment continue. Locking is
+  // open to any run editor; unlocking is gated to the run creator / a Project
+  // Admin / system ADMIN.
+  const compositionLocked = !!testRunData?.compositionLockedAt;
+  const canUnlockComposition =
+    isSuperAdmin ||
+    isProjectAdmin ||
+    (!!session?.user?.id && testRunData?.createdBy?.id === session.user.id);
+
+  const setCompositionLock = async (locked: boolean) => {
+    if (isTogglingCompositionLock) return;
+    setIsTogglingCompositionLock(true);
+    try {
+      const res = await fetch(
+        `/api/test-runs/${Number(runId)}/composition-lock`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ locked }),
+        }
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || `Request failed (${res.status})`);
+      }
+      await refetchTestRun();
+    } catch (error) {
+      console.error("Failed to update composition lock:", error);
+      toast.error(
+        locked
+          ? t("runs.composition.lockError")
+          : t("runs.composition.unlockError")
+      );
+    } finally {
+      setIsTogglingCompositionLock(false);
+    }
+  };
+
   // SSE wake-up: refetch the run (which carries the per-case statuses)
   // AND invalidate the testRunSummary query that TestRunCasesSummary
   // reads (a separate endpoint, a separate cache key, but the same
@@ -481,8 +580,11 @@ export default function TestRunPage() {
   // layer is untrusted plumbing (Architectural Directive 2). Stream is
   // disabled once the run is completed so we don't hold an EventSource
   // open indefinitely on a historical run page.
+  // Wake-ups are coalesced: a reporter streaming results publishes one per
+  // result row, and this page pays three refetches — the run itself, the
+  // summary, and the JUnit suites — for every one of them.
   const queryClient = useQueryClient();
-  const onLiveWakeUp = useCallback(() => {
+  const onWakeUpFlush = useCallback(() => {
     refetchTestRun();
     void queryClient.invalidateQueries({
       queryKey: ["testRunSummary", Number(runId)],
@@ -493,7 +595,12 @@ export default function TestRunPage() {
     void queryClient.invalidateQueries({
       queryKey: ["zenstack", "JUnitTestSuite"],
     });
+    // The charts panel reads its own lean result query (JunitChartsPanel).
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "JUnitTestResult"],
+    });
   }, [refetchTestRun, queryClient, runId]);
+  const onLiveWakeUp = useCoalescedWakeUp(onWakeUpFlush);
   useTestRunLiveStream({
     runId: !isNaN(Number(runId)) ? Number(runId) : null,
     enabled: !testRunData?.isCompleted,
@@ -509,51 +616,54 @@ export default function TestRunPage() {
 
   // Fetch JUnit test suites if this is a JUNIT run
   const isJUnitRun = isAutomatedTestRunType(testRunData?.testRunType);
-  const { data: jUnitSuites, isLoading: isJUnitLoading } =
-    useFindManyJUnitTestSuite(
-      isJUnitRun
-        ? {
-            where: { testRunId: Number(runId) },
-            include: {
-              properties: true,
-              results: {
-                include: {
-                  status: {
-                    select: { name: true, color: { select: { value: true } } },
-                  },
-                  attachments: {
-                    where: { isDeleted: false },
-                  },
-                  repositoryCase: {
-                    select: {
-                      name: true,
-                      className: true,
-                      source: true,
-                      isDeleted: true,
-                      linksFrom: {
-                        select: {
-                          caseBId: true,
-                          type: true,
-                          isDeleted: true,
-                        },
+  const { data: jUnitSuites, isLoading: isJUnitLoading } = useClientQueries(
+    schema
+  ).jUnitTestSuite.useFindMany(
+    isJUnitRun
+      ? {
+          where: { testRunId: Number(runId) },
+          include: {
+            properties: true,
+            results: {
+              include: {
+                status: {
+                  select: { name: true, color: { select: { value: true } } },
+                },
+                attachments: {
+                  where: { isDeleted: false },
+                },
+                repositoryCase: {
+                  select: {
+                    name: true,
+                    className: true,
+                    source: true,
+                    automated: true,
+                    isDeleted: true,
+                    hasParameters: true,
+                    linksFrom: {
+                      select: {
+                        caseBId: true,
+                        type: true,
+                        isDeleted: true,
                       },
-                      linksTo: {
-                        select: {
-                          caseAId: true,
-                          type: true,
-                          isDeleted: true,
-                        },
+                    },
+                    linksTo: {
+                      select: {
+                        caseAId: true,
+                        type: true,
+                        isDeleted: true,
                       },
                     },
                   },
                 },
               },
             },
-            orderBy: { createdAt: "asc" },
-          }
-        : undefined,
-      { enabled: isJUnitRun }
-    );
+          },
+          orderBy: { createdAt: "asc" },
+        }
+      : undefined,
+    { enabled: isJUnitRun }
+  );
 
   const _canEdit =
     (session?.user.access === "ADMIN" ||
@@ -572,12 +682,13 @@ export default function TestRunPage() {
       docs: null,
       attachments: [],
       selectedIssues: [],
+      configurationGroupId: null,
     },
     mode: "onSubmit",
   });
 
   // Add data fetching queries
-  const { data: workflows } = useFindManyWorkflows({
+  const { data: workflows } = useClientQueries(schema).workflows.useFindMany({
     where: {
       isDeleted: false,
       isEnabled: true,
@@ -597,7 +708,7 @@ export default function TestRunPage() {
     },
   });
 
-  const { data: milestones } = useFindManyMilestones({
+  const { data: milestones } = useClientQueries(schema).milestones.useFindMany({
     where: {
       projectId: Number(projectId),
       isDeleted: false,
@@ -659,6 +770,7 @@ export default function TestRunPage() {
         docs: testRunData.docs || JSON.stringify(emptyEditorContent),
         attachments: testRunData.attachments || [],
         selectedIssues: testRunData.issues.map((issue) => issue.id),
+        configurationGroupId: testRunData.configurationGroupId ?? null,
       };
       form.reset(initialData, {
         keepDefaultValues: true,
@@ -667,7 +779,7 @@ export default function TestRunPage() {
       setSelectedTags(testRunData.tags.map((tag) => tag.id));
       setSelectedIssues(testRunData.issues.map((issue) => issue.id));
       setSelectedTestCaseIds(
-        testRunData.testCases.map((tc) => tc.repositoryCase.id)
+        testRunData.testCases.map((tc) => tc.repositoryCaseId)
       );
       setIsFormInitialized(true);
     }
@@ -701,14 +813,17 @@ export default function TestRunPage() {
   ]);
 
   // Scroll to hash anchor after page loads
+  const scrolledHashRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLoading && typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash) {
+      // Scroll once per hash so loading-state flips don't yank the viewport back
+      if (hash && scrolledHashRef.current !== hash) {
         // Wait a bit for the DOM to be fully rendered
         setTimeout(() => {
           const element = document.querySelector(hash);
           if (element) {
+            scrolledHashRef.current = hash;
             element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
         }, 100);
@@ -717,7 +832,8 @@ export default function TestRunPage() {
   }, [isLoading]);
 
   // Add mutation hooks
-  const { mutateAsync: updateTestRuns } = useUpdateTestRuns();
+  const { mutateAsync: updateTestRuns } =
+    useClientQueries(schema).testRuns.useUpdate();
 
   // Add form controls
   const {
@@ -832,7 +948,7 @@ export default function TestRunPage() {
     try {
       // Get current test case IDs
       const currentTestCaseIds =
-        testRunData?.testCases.map((tc) => tc.repositoryCase.id) || [];
+        testRunData?.testCases.map((tc) => tc.repositoryCaseId) || [];
 
       // Prepare note and docs content to avoid double-stringification
       let noteContent = data.note;
@@ -845,15 +961,56 @@ export default function TestRunPage() {
         docsContent = JSON.stringify(docsContent);
       }
 
-      // Check if test cases have changed
+      // Assigning `configurationGroupId` makes the RPC guard re-validate the
+      // group and sweep it for auto-dissolve, so only send it when the user
+      // actually changed it — an unchanged value can neither break an
+      // invariant nor orphan a group.
+      const groupChanged =
+        (data.configurationGroupId ?? null) !==
+        (testRunData?.configurationGroupId ?? null);
+
+      // Everything below is written identically by BOTH update paths (the
+      // cases-changed branch and the metadata-only branch). Building it once
+      // is what keeps a newly added field — `configurationGroupId` being the
+      // reason this exists — from silently no-opping on whichever branch a
+      // future edit forgets.
+      const sharedUpdateData = {
+        name: data.name,
+        configId: data.configId || null,
+        milestoneId: data.milestoneId || null,
+        stateId: data.stateId,
+        note: noteContent,
+        docs: docsContent,
+        ...(groupChanged
+          ? configurationGroupUpdateData(data.configurationGroupId)
+          : {}),
+        attachments: {
+          set: [],
+          connect:
+            data.attachments?.map((attachment) => ({
+              id: attachment.id,
+            })) || [],
+        },
+        tags: {
+          set: selectedTags.map((tagId) => ({ id: tagId })),
+        },
+        issues: {
+          set: selectedIssues.map((issueId) => ({ id: issueId })),
+        },
+      };
+
+      // Check if test cases have changed. A composition-locked run's case set is
+      // frozen — never treat cases as changed (the UI disables selection; this
+      // also keeps a stray diff from hitting the DB guard trigger).
       const hasTestCasesChanged =
-        selectedTestCaseIds.length !== currentTestCaseIds.length ||
-        !selectedTestCaseIds.every((id: number) =>
-          currentTestCaseIds.includes(id)
-        ) ||
-        !currentTestCaseIds.every((id: number) =>
-          selectedTestCaseIds.includes(id)
-        );
+        !compositionLocked &&
+        (selectedTestCaseIds.length !== currentTestCaseIds.length ||
+          !selectedTestCaseIds.every((id: number) =>
+            currentTestCaseIds.includes(id)
+          ) ||
+          !currentTestCaseIds.every((id: number) =>
+            selectedTestCaseIds.includes(id)
+          ));
 
       // Handle test case changes
       if (hasTestCasesChanged) {
@@ -903,25 +1060,7 @@ export default function TestRunPage() {
             id: Number(runId),
           },
           data: {
-            name: data.name,
-            configId: data.configId || null,
-            milestoneId: data.milestoneId || null,
-            stateId: data.stateId,
-            note: noteContent,
-            docs: docsContent,
-            attachments: {
-              set: [],
-              connect:
-                data.attachments?.map((attachment) => ({
-                  id: attachment.id,
-                })) || [],
-            },
-            tags: {
-              set: selectedTags.map((tagId) => ({ id: tagId })),
-            },
-            issues: {
-              set: selectedIssues.map((issueId) => ({ id: issueId })),
-            },
+            ...sharedUpdateData,
             testCases: {
               updateMany:
                 removedCaseIds.length > 0
@@ -960,29 +1099,22 @@ export default function TestRunPage() {
           where: {
             id: Number(runId),
           },
-          data: {
-            name: data.name,
-            configId: data.configId || null,
-            milestoneId: data.milestoneId || null,
-            stateId: data.stateId,
-            note: noteContent,
-            docs: docsContent,
-            attachments: {
-              set: [],
-              connect:
-                data.attachments?.map((attachment) => ({
-                  id: attachment.id,
-                })) || [],
-            },
-            tags: {
-              set: selectedTags.map((tagId) => ({ id: tagId })),
-            },
-            issues: {
-              set: selectedIssues.map((issueId) => ({ id: issueId })),
-            },
-          },
+          data: sharedUpdateData,
         });
       }
+
+      // A join against a peer that had no group of its own mints one uuid for
+      // both records; this run was just stamped above, the peer is stamped
+      // here. Rolls this run back if the peer write fails, and no-ops when
+      // this save didn't move the run — see the helper.
+      await applyConfigurationGroupPeerStamp({
+        update: (args) => updateTestRuns(args),
+        recordId: Number(runId),
+        groupId: data.configurationGroupId,
+        stampTargetId: configGroupStampTargetId,
+        previousGroupId: testRunData?.configurationGroupId ?? null,
+      });
+      setConfigGroupStampTargetId(null);
 
       // Apply pending attachment edits
       const editPromises = pendingAttachmentChanges.edits.map(async (edit) => {
@@ -1032,23 +1164,36 @@ export default function TestRunPage() {
     }
   };
 
+  // Configuration-group link/unlink. The control is offered in edit mode only,
+  // so the change is staged here and written by `saveTestRun`, which sets the
+  // field on both of its update paths.
+  const handleConfigurationGroupChange = (
+    change: ConfigurationGroupLinkChange
+  ) => {
+    setValue("configurationGroupId", change.groupId, { shouldDirty: true });
+    setConfigGroupStampTargetId(change.stampTargetId);
+  };
+
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
       // Get current test case IDs
       const currentTestCaseIds =
-        testRunData?.testCases.map((tc) => tc.repositoryCase.id) || [];
+        testRunData?.testCases.map((tc) => tc.repositoryCaseId) || [];
 
-      // Check if test cases have changed
+      // Check if test cases have changed. A composition-locked run's case set is
+      // frozen — never treat cases as changed (the UI disables selection; this
+      // also keeps a stray diff from hitting the DB guard trigger).
       const hasTestCasesChanged =
-        selectedTestCaseIds.length !== currentTestCaseIds.length ||
-        !selectedTestCaseIds.every((id: number) =>
-          currentTestCaseIds.includes(id)
-        ) ||
-        !currentTestCaseIds.every((id: number) =>
-          selectedTestCaseIds.includes(id)
-        );
+        !compositionLocked &&
+        (selectedTestCaseIds.length !== currentTestCaseIds.length ||
+          !selectedTestCaseIds.every((id: number) =>
+            currentTestCaseIds.includes(id)
+          ) ||
+          !currentTestCaseIds.every((id: number) =>
+            selectedTestCaseIds.includes(id)
+          ));
 
       if (!hasTestCasesChanged) {
         // No changes to test cases, just save the test run
@@ -1108,6 +1253,11 @@ export default function TestRunPage() {
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
     setSelectedLinks([]);
+    // Drop a staged group link. Unlike the other fields, this one is read back
+    // out of the form to render the membership list, so leaving it staged
+    // would show an abandoned link as though it were saved.
+    setValue("configurationGroupId", testRunData?.configurationGroupId ?? null);
+    setConfigGroupStampTargetId(null);
     // Exit edit mode
     const params = new URLSearchParams(searchParams.toString());
     params.delete("selectedCase"); // Also close sheet on cancel
@@ -1222,81 +1372,15 @@ export default function TestRunPage() {
     setSelectedTestCaseIds(testCaseIds);
   };
 
-  const { data: testcase, isLoading: isTestcaseLoading } =
-    useFindFirstRepositoryCases({
-      where: { id: selectedTestCaseId ?? undefined, isDeleted: false },
-      include: {
-        state: {
-          select: {
-            id: true,
-            name: true,
-            icon: { select: { name: true } },
-            color: { select: { value: true } },
-          },
-        },
-        project: true,
-        folder: true,
-        creator: true,
-        template: {
-          select: {
-            id: true,
-            templateName: true,
-            caseFields: {
-              select: {
-                caseFieldId: true,
-                order: true,
-                caseField: {
-                  select: {
-                    id: true,
-                    defaultValue: true,
-                    displayName: true,
-                    type: { select: { type: true } },
-                    fieldOptions: {
-                      select: {
-                        fieldOption: {
-                          select: {
-                            id: true,
-                            icon: true,
-                            iconColor: true,
-                            name: true,
-                            order: true,
-                          },
-                        },
-                      },
-                      orderBy: { fieldOption: { order: "asc" } },
-                    },
-                  },
-                },
-              },
-              orderBy: { order: "asc" },
-            },
-          },
-        },
-        caseFieldValues: {
-          select: {
-            id: true,
-            value: true,
-            fieldId: true,
-            field: {
-              select: {
-                id: true,
-                displayName: true,
-                type: { select: { type: true } },
-              },
-            },
-          },
-          where: { field: { isEnabled: true, isDeleted: false } },
-        },
-        attachments: {
-          orderBy: { createdAt: "desc" },
-          where: { isDeleted: false },
-        },
-        steps: {
-          where: { isDeleted: false },
-          orderBy: { order: "asc" },
-        },
-      },
-    });
+  // Only used below to clear `isTransitioning` once the case a "Next" click
+  // navigated to has actually loaded. Shares its (caseId, testRunId) query
+  // key with TestRunCaseDetails' own fetch of the same case, so React Query
+  // dedupes them into one request instead of two independent ACL-heavy
+  // queries. See lib/services/testRunCaseDetail.ts.
+  const { data: testcase, isLoading: isTestcaseLoading } = useTestRunCaseDetail(
+    isJUnitRun ? null : selectedTestCaseId,
+    Number(runId)
+  );
 
   useEffect(() => {
     if (!isTestcaseLoading && testcase) {
@@ -1304,7 +1388,10 @@ export default function TestRunPage() {
     }
   }, [isTestcaseLoading, testcase]);
 
-  const sheetOpen = !!selectedTestCaseId;
+  // An automated run has no per-case result panel to open: its rows are JUnit
+  // attempts, not test run cases. A `selectedCase` deep link into one only
+  // highlights and scrolls to the row in the results table.
+  const sheetOpen = !!selectedTestCaseId && !isJUnitRun;
 
   // Calculate effectiveCanDelete *after* loading checks and testRunData is available
   const effectiveCanDelete = testRunData?.isCompleted
@@ -1315,15 +1402,30 @@ export default function TestRunPage() {
   const [junitSortConfig, setJunitSortConfig] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
   >({ column: "executedAt", direction: "desc" });
+  // Facet filters for the JUnit results table; the metrics card's Flaky and
+  // Retries tiles (right panel) preset them, so the state lives here.
+  const [junitFacets, setJunitFacets] =
+    useState<JunitFacetFilters>(EMPTY_JUNIT_FACETS);
+  const handleFlakyTileClick = useCallback(
+    () => setJunitFacets((prev) => ({ ...prev, flakyOnly: true })),
+    []
+  );
+  const handleRetriesTileClick = useCallback(
+    () => setJunitFacets((prev) => ({ ...prev, retriedOnly: true })),
+    []
+  );
   const junitTestCases = useMemo(() => {
     if (!jUnitSuites) return [];
     const mapped = jUnitSuites.flatMap((suite) =>
       (suite.results || []).map((result) => ({
         id: result.repositoryCaseId,
+        resultId: result.id,
         name: result.repositoryCase?.name || String(result.repositoryCaseId),
         className:
           result.repositoryCase?.className || String(result.repositoryCaseId),
         source: result.repositoryCase?.source,
+        automated: result.repositoryCase?.automated || false,
+        hasParameters: result.repositoryCase?.hasParameters || false,
         suiteName: suite.name,
         suiteTests: suite.tests,
         suiteFailures: suite.failures,
@@ -1342,6 +1444,7 @@ export default function TestRunPage() {
         message: result.message,
         time: result.time,
         assertions: result.assertions,
+        worker: result.worker,
         systemOutput: result.systemOut,
         systemError: result.systemErr,
         createdAt: result.createdAt || testRunData?.createdAt,
@@ -1352,7 +1455,20 @@ export default function TestRunPage() {
         attachments: result.attachments || [],
       }))
     );
-    return mapped;
+    // Mark every attempt row of a fail-then-pass case so the table can badge
+    // it (within-run flakiness), and every retried case's rows so the facet
+    // filter can find them.
+    const { flakyCaseIds, retriedCaseIds } = computeRetryMetrics(mapped);
+    if (retriedCaseIds.size === 0) return mapped;
+    return mapped.map((testCase) =>
+      retriedCaseIds.has(testCase.id)
+        ? {
+            ...testCase,
+            isFlaky: flakyCaseIds.has(testCase.id),
+            isRetried: true,
+          }
+        : testCase
+    );
   }, [jUnitSuites, testRunData?.createdBy?.id, testRunData?.createdAt]);
   const [junitTestCasesState, setJunitTestCasesState] = useState<any[]>([]);
   useEffect(() => {
@@ -1387,6 +1503,21 @@ export default function TestRunPage() {
         return { column, direction: "asc" };
       }
     });
+  };
+
+  // Explicit-direction sort from the header column menu; `null` (Remove sort)
+  // restores the default order.
+  const handleJunitSortColumn = (
+    column: string,
+    direction: "asc" | "desc" | null
+  ) => {
+    if (direction === null) {
+      // The JUnit sorter returns the raw API order for a falsy config, so
+      // "Remove sort" must restore the table's actual default instead.
+      setJunitSortConfig({ column: "executedAt", direction: "desc" });
+    } else {
+      setJunitSortConfig({ column, direction });
+    }
   };
 
   // --- REGULAR TEST RUN TABLE STATE ---
@@ -1498,46 +1629,96 @@ export default function TestRunPage() {
     return <Loading />;
   }
 
-  if (isAutomatedTestRunType(testRunData.testRunType)) {
-    // --- JUNIT TABLE STATE ---
-    return (
-      <PaginationProvider>
-        <JunitTableSection
-          form={form}
-          handleSubmit={handleSubmit}
-          onSubmit={onSubmit}
-          isDeleteDialogOpen={isDeleteDialogOpen}
-          setIsDeleteDialogOpen={setIsDeleteDialogOpen}
-          runId={runId ? String(runId) : ""}
-          projectId={projectId ? String(projectId) : ""}
-          refetchTestRun={refetchTestRun}
-          t={t}
-          jUnitSuites={jUnitSuites}
-          sortedJunitTestCases={sortedJunitTestCases}
-          junitSortConfig={junitSortConfig}
-          handleJunitSortChange={handleJunitSortChange}
-          effectiveCanDelete={effectiveCanDelete}
-          canAddEditRun={canAddEditRun}
-          canCloseRun={canCloseRun}
-          isEditMode={isEditMode}
-          isSubmitting={isSubmitting}
-          testRunData={testRunData}
-          isJUnitLoading={isJUnitLoading}
-          handleEditClick={handleEditClick}
-          noteContent={noteContent}
-          setNoteContent={setNoteContent}
-          contentLoaded={contentLoaded}
-          handleCancel={handleCancel}
-          workflows={workflows}
-          milestones={milestoneOptions}
-          statusScope={statusScope}
-          selectedTestCaseId={selectedTestCaseId}
-          handleExportPdf={handleExportPdf}
-          isExportingPdf={isExportingPdf}
+  // Description (note) + Documentation (docs) editors — rendered for BOTH
+  // manual and automated runs (automated runs receive docs content from the
+  // reporters' run-level metadata, so they must display and stay editable).
+  const narrativeFields = (
+    <>
+      {isEditMode || (contentLoaded && !isTiptapEmpty(noteContent)) ? (
+        <FormField
+          control={form.control}
+          name="note"
+          render={({ field: _field }) => (
+            <FormItem>
+              <FormLabel>{t("common.fields.description")}</FormLabel>
+              <FormControl>
+                {contentLoaded ? (
+                  <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
+                    <TipTapEditor
+                      key={`editing-note-${isEditMode}`}
+                      content={noteContent}
+                      onUpdate={(newContent) => {
+                        if (isEditMode) {
+                          setNoteContent(newContent);
+                          setValue("note", newContent, {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      readOnly={!isEditMode || !canAddEditRun}
+                      className="h-auto"
+                      placeholder={t("common.fields.description_placeholder")}
+                      projectId={safeProjectId}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-[150px] flex items-center justify-center bg-muted rounded-md">
+                    <Loading />
+                  </div>
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </PaginationProvider>
-    );
-  }
+      ) : null}
+      {/* Documentation */}
+      {isEditMode || (contentLoaded && !isTiptapEmpty(docsContent)) ? (
+        <FormField
+          control={form.control}
+          name="docs"
+          render={({ field: _field }) => (
+            <FormItem>
+              <FormLabel>{t("common.fields.documentation")}</FormLabel>
+              <FormControl>
+                {contentLoaded ? (
+                  <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
+                    <TipTapEditor
+                      key={`editing-docs-${isEditMode}`}
+                      content={docsContent}
+                      onUpdate={(newContent) => {
+                        if (isEditMode) {
+                          setDocsContent(newContent);
+                          setValue("docs", newContent, {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
+                      readOnly={!isEditMode || !canAddEditRun}
+                      className="h-auto"
+                      placeholder={t("common.placeholders.docs")}
+                      projectId={safeProjectId}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-[250px] flex items-center justify-center bg-muted rounded-md">
+                    <Loading />
+                  </div>
+                )}
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ) : null}
+      {/* Add separator after notes/docs if they exist */}
+      {!isEditMode &&
+        contentLoaded &&
+        (!isTiptapEmpty(noteContent) || !isTiptapEmpty(docsContent)) && (
+          <Separator className="my-4" />
+        )}
+    </>
+  );
 
   return (
     <Card
@@ -1554,20 +1735,25 @@ export default function TestRunPage() {
             void handleSubmit(onSubmit)(e);
           }}
         >
-          <div className="px-6 pt-6">
-            <ReviewStatusBanner
-              entityType="RUN"
-              entityId={testRunData.id}
-              projectId={Number(projectId)}
-              entityName={testRunData.name || ""}
-              reachableGatedStates={reachableGatedStates}
-              currentStateId={testRunData.stateId}
-            />
-          </div>
+          {!isJUnitRun && (
+            <div className="px-6 pt-6">
+              <ReviewStatusBanner
+                entityType="RUN"
+                entityId={testRunData.id}
+                projectId={Number(projectId)}
+                entityName={testRunData.name || ""}
+                reachableGatedStates={reachableGatedStates}
+                currentStateId={testRunData.stateId}
+              />
+            </div>
+          )}
           <CardHeader>
-            <div className="flex justify-between items-start">
+            <div
+              ref={headerRef}
+              className="flex justify-between items-center gap-2"
+            >
               {!isEditMode && (
-                <div className="mr-2">
+                <div className="me-2">
                   <Link href={`/projects/runs/${projectId}`}>
                     <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
@@ -1575,7 +1761,7 @@ export default function TestRunPage() {
                   </Link>
                 </div>
               )}
-              <CardTitle className="flex-1 pr-4 text-xl md:text-2xl mr-4">
+              <CardTitle className="flex-1 pe-4 text-xl md:text-2xl me-4">
                 {isEditMode ? (
                   <FormField
                     control={form.control}
@@ -1585,7 +1771,7 @@ export default function TestRunPage() {
                         <FormControl>
                           <Textarea
                             {...field}
-                            className="text-xl md:text-2xl mr-4"
+                            className="text-xl md:text-2xl me-4"
                             readOnly={!canAddEditRun}
                           />
                         </FormControl>
@@ -1593,139 +1779,201 @@ export default function TestRunPage() {
                     )}
                   />
                 ) : (
-                  testRunData?.name
+                  <span className="flex items-center gap-2">
+                    <PlayCircle className="h-6 w-6 shrink-0" />
+                    {testRunData?.name}
+                    {compositionLocked && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="shrink-0">
+                            <Lock className="h-5 w-5 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {t("runs.composition.locked")}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </span>
                 )}
               </CardTitle>
-              <div className="flex items-start gap-2 flex-wrap">
-                {testRunData && <RunAuditLogSheet runId={testRunData.id} />}
-                {testRunData?.isCompleted ? (
-                  <div className="flex items-center gap-1">
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center text-md whitespace-nowrap text-sm gap-1 p-2 px-4"
-                    >
-                      <CircleCheckBig className="h-6 w-6 shrink-0" />
-                      <div className="hidden md:block">
-                        <span className="mr-1">
-                          {t("common.fields.completedOn")}
-                        </span>
-                        <DateFormatter
-                          date={testRunData?.completedAt}
-                          formatString={session?.user.preferences?.dateFormat}
-                          timezone={session?.user.preferences?.timezone}
+              <div className="flex flex-col items-end gap-1">
+                {!isEditMode && testRunData && (
+                  <RecordId
+                    type="TEST_RUN"
+                    id={testRunData.id}
+                    projectId={numericProjectId}
+                    className="shrink-0 whitespace-nowrap"
+                  />
+                )}
+                <ActionBar
+                  compact={headerCompact}
+                  className="items-end gap-2 flex-wrap"
+                >
+                  {testRunData?.isCompleted ? (
+                    <div className="flex flex-col items-end gap-1">
+                      {/* Row 1: completed badge — the "on <date>" part
+                          collapses to just the check + "Completed" when the
+                          header is narrow. */}
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center whitespace-nowrap text-xs gap-1 p-2 px-4"
+                      >
+                        <CircleCheckBig className="h-4 w-4 shrink-0" />
+                        <span>{t("common.fields.completed")}</span>
+                        {!headerCompact && (
+                          <span>
+                            {t("common.on")}{" "}
+                            <DateFormatter
+                              date={testRunData?.completedAt}
+                              formatString={
+                                session?.user.preferences?.dateFormat
+                              }
+                              timezone={session?.user.preferences?.timezone}
+                            />
+                          </span>
+                        )}
+                      </Badge>
+                      {/* Row 2: activity log + action buttons for COMPLETED runs */}
+                      <div className="flex items-center gap-1">
+                        {testRunData && (
+                          <RunAuditLogSheet
+                            runId={testRunData.id}
+                            hideTrigger
+                            open={auditOpen}
+                            onOpenChange={setAuditOpen}
+                          />
+                        )}
+                        <ActionOverflow
+                          compact={headerCompact}
+                          menuLabel={t("common.actions.actionsLabel")}
+                          actions={[
+                            {
+                              key: "activity",
+                              icon: History,
+                              label: t("common.fields.activityLog"),
+                              onClick: () => setAuditOpen(true),
+                            },
+                            {
+                              key: "duplicate",
+                              icon: CopyPlus,
+                              label: t("common.actions.duplicate"),
+                              onClick: () => setIsDuplicateDialogOpen(true),
+                              hidden: !(
+                                canAddEditRun &&
+                                !isAutomatedTestRunType(
+                                  testRunData?.testRunType
+                                )
+                              ),
+                            },
+                            {
+                              key: "export",
+                              icon: FileDown,
+                              label: isExportingPdf
+                                ? t("common.actions.exportingPdf")
+                                : t("common.actions.exportPdf"),
+                              onClick: handleExportPdf,
+                              disabled: isExportingPdf,
+                            },
+                            {
+                              key: "delete",
+                              icon: Trash,
+                              label: t("common.actions.delete"),
+                              onClick: () => setIsDeleteDialogOpen(true),
+                              destructive: true,
+                              hidden: !effectiveCanDelete,
+                            },
+                          ]}
                         />
                       </div>
-                    </Badge>
-                    {/* Action buttons for COMPLETED runs */}
-                    {canAddEditRun &&
-                      !isAutomatedTestRunType(testRunData?.testRunType) && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={() => setIsDuplicateDialogOpen(true)}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <Copy className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("common.actions.duplicate")}
-                          </span>
-                        </Button>
-                      )}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleExportPdf}
-                      disabled={isExportingPdf}
-                      className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                    >
-                      <FileDown className="h-4 w-4 shrink-0" />
-                      <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                        {isExportingPdf
-                          ? t("common.actions.exportingPdf")
-                          : t("common.actions.exportPdf")}
-                      </span>
-                    </Button>
-                    {effectiveCanDelete && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setIsDeleteDialogOpen(true)}
-                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 shrink-0" />
-                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                          {t("common.actions.delete")}
-                        </span>
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  // Buttons for NON-COMPLETED runs
-                  <>
-                    {!isEditMode ? (
-                      // View Mode Buttons for NON-COMPLETED runs
-                      <div className="flex items-center gap-1">
-                        <RequestReviewButton
-                          entityType="RUN"
-                          entityId={testRunData.id}
-                          projectId={Number(projectId)}
-                          currentStateId={testRunData.stateId}
-                          reachableGatedStates={reachableGatedStates}
-                        />
-                        {canAddEditRun && !isMultiConfigSelected && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={handleEditClick}
-                            className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                          >
-                            <SquarePen className="h-4 w-4 shrink-0" />
-                            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                              {t("common.actions.edit")}
-                            </span>
-                          </Button>
-                        )}
-                        {canAddEditRun &&
-                          !isAutomatedTestRunType(testRunData?.testRunType) && (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              onClick={() => setIsDuplicateDialogOpen(true)}
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                            >
-                              <Copy className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.duplicate")}
-                              </span>
-                            </Button>
-                          )}
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          onClick={handleExportPdf}
-                          disabled={isExportingPdf}
-                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                        >
-                          <FileDown className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {isExportingPdf
-                              ? t("common.actions.exportingPdf")
-                              : t("common.actions.exportPdf")}
-                          </span>
-                        </Button>
-                        {canCloseRun && (
-                          <>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
-                              onClick={() => setIsCompleteDialogOpen(true)}
-                            >
-                              <CircleCheckBig className="h-4 w-4 shrink-0" />
-                              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                                {t("common.actions.complete")}
-                              </span>
-                            </Button>
+                    </div>
+                  ) : (
+                    // Buttons for NON-COMPLETED runs
+                    <>
+                      {!isEditMode ? (
+                        // View Mode Buttons for NON-COMPLETED runs
+                        <div className="flex flex-col items-end gap-1">
+                          {/* Row 1: activity log + primary run actions */}
+                          <div className="flex items-center gap-1">
+                            {testRunData && (
+                              <RunAuditLogSheet
+                                runId={testRunData.id}
+                                hideTrigger
+                                open={auditOpen}
+                                onOpenChange={setAuditOpen}
+                              />
+                            )}
+                            {!isJUnitRun && (
+                              <RequestReviewButton
+                                entityType="RUN"
+                                entityId={testRunData.id}
+                                projectId={Number(projectId)}
+                                currentStateId={testRunData.stateId}
+                                reachableGatedStates={reachableGatedStates}
+                              />
+                            )}
+                            <ActionOverflow
+                              compact={headerCompact}
+                              menuLabel={t("common.actions.actionsLabel")}
+                              actions={[
+                                {
+                                  key: "activity",
+                                  icon: History,
+                                  label: t("common.fields.activityLog"),
+                                  onClick: () => setAuditOpen(true),
+                                },
+                                {
+                                  key: "edit",
+                                  icon: SquarePen,
+                                  label: t("common.actions.edit"),
+                                  onClick: handleEditClick,
+                                  hidden: !(
+                                    canAddEditRun && !isMultiConfigSelected
+                                  ),
+                                },
+                                {
+                                  key: "duplicate",
+                                  icon: CopyPlus,
+                                  label: t("common.actions.duplicate"),
+                                  onClick: () => setIsDuplicateDialogOpen(true),
+                                  hidden: !(
+                                    canAddEditRun &&
+                                    !isAutomatedTestRunType(
+                                      testRunData?.testRunType
+                                    )
+                                  ),
+                                },
+                                {
+                                  key: "export",
+                                  icon: FileDown,
+                                  label: isExportingPdf
+                                    ? t("common.actions.exportingPdf")
+                                    : t("common.actions.exportPdf"),
+                                  onClick: handleExportPdf,
+                                  disabled: isExportingPdf,
+                                },
+                                {
+                                  key: "complete",
+                                  icon: CircleCheckBig,
+                                  label: t("common.actions.complete"),
+                                  onClick: () => setIsCompleteDialogOpen(true),
+                                  hidden: !canCloseRun,
+                                },
+                                {
+                                  key: "assign",
+                                  icon: UsersRound,
+                                  label: t("common.actions.assign"),
+                                  onClick: () =>
+                                    setIsDistributeDialogOpen(true),
+                                  hidden: !(
+                                    canAddEditRun &&
+                                    !isAutomatedTestRunType(
+                                      testRunData?.testRunType
+                                    )
+                                  ),
+                                },
+                              ]}
+                            />
                             {isCompleteDialogOpen && (
                               <CompleteTestRunDialog
                                 open={isCompleteDialogOpen}
@@ -1736,89 +1984,185 @@ export default function TestRunPage() {
                                 stateName={testRunData?.state?.name || ""}
                               />
                             )}
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      // Edit Mode Buttons for NON-COMPLETED runs
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
-                          {(() => {
-                            const gateBlocked =
-                              !transitionCheck.allowed &&
-                              transitionCheck.blockingGate;
-                            const formHasErrors =
-                              Object.keys(errors).length > 0;
-                            const saveBlocked = gateBlocked || formHasErrors;
-                            const tooltipMessage = gateBlocked
-                              ? t("reviews.transitionGate.blockedByGate", {
-                                  gateName: transitionCheck.blockingGate!.name,
-                                })
-                              : t(
-                                  "reviews.transitionGate.saveBlockedByFormErrors"
-                                );
-
-                            if (!saveBlocked) {
-                              return (
-                                <Button
-                                  type="submit"
-                                  variant="default"
-                                  disabled={isSubmitting || !canAddEditRun}
-                                >
-                                  <Save className="h-4 w-4 mr-2" />{" "}
-                                  {t("common.actions.save")}
-                                </Button>
-                              );
-                            }
-
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span tabIndex={0}>
-                                    <Button
-                                      type="submit"
-                                      variant="default"
-                                      disabled
-                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
-                                    >
-                                      <Save className="h-4 w-4 mr-2" />{" "}
-                                      {t("common.actions.save")}
-                                    </Button>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {tooltipMessage}
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          })()}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleCancel}
-                            disabled={isSubmitting}
-                          >
-                            <CircleSlash2 className="h-4 w-4 mr-2" />{" "}
-                            {t("common.cancel")}
-                          </Button>
+                          </div>
+                          {/* Row 2: composition lock/unlock */}
+                          <div className="flex items-center gap-1">
+                            {/* Execution-start composition lock (BOR-1) —
+                                single toggle. Locking needs run-edit rights;
+                                unlocking is gated to creator/admin, so the
+                                switch is disabled (but still shown, for
+                                context) when a locked run can't be unlocked. */}
+                            {!isJUnitRun &&
+                              (compositionLocked ||
+                                (canAddEditRun && !isMultiConfigSelected)) && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex h-9 items-center gap-2 rounded-md border bg-secondary px-3 text-secondary-foreground">
+                                      <Switch
+                                        id="composition-lock-switch"
+                                        checked={compositionLocked}
+                                        onCheckedChange={(v) =>
+                                          setCompositionLock(v)
+                                        }
+                                        disabled={
+                                          isTogglingCompositionLock ||
+                                          (compositionLocked
+                                            ? !canUnlockComposition
+                                            : !canAddEditRun ||
+                                              isMultiConfigSelected)
+                                        }
+                                        aria-label={
+                                          compositionLocked
+                                            ? t("runs.composition.lock")
+                                            : t("runs.composition.unlocked")
+                                        }
+                                        // The chip is bg-secondary; the switch's
+                                        // default track colors (bg-input off,
+                                        // bg-primary on) don't reliably contrast
+                                        // with it across themes. Deriving both the
+                                        // border and the unchecked track from
+                                        // secondary-foreground — which contrasts
+                                        // the chip by definition — keeps the
+                                        // switch legible on/off in every theme.
+                                        className="border-secondary-foreground data-[state=unchecked]:bg-secondary-foreground/50"
+                                      />
+                                      <label
+                                        htmlFor="composition-lock-switch"
+                                        className="flex cursor-pointer items-center gap-2 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+                                      >
+                                        {isTogglingCompositionLock ? (
+                                          <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                                        ) : compositionLocked ? (
+                                          <Lock className="h-4 w-4 shrink-0" />
+                                        ) : (
+                                          <LockOpen className="h-4 w-4 shrink-0" />
+                                        )}
+                                        {!headerCompact && (
+                                          <span className="whitespace-nowrap text-sm">
+                                            {compositionLocked
+                                              ? t("runs.composition.lock")
+                                              : t("runs.composition.unlocked")}
+                                          </span>
+                                        )}
+                                      </label>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {compositionLocked
+                                      ? testRunData.compositionLockedBy?.name?.trim()
+                                        ? t("runs.composition.lockedBy", {
+                                            name: testRunData.compositionLockedBy.name.trim(),
+                                          })
+                                        : t(
+                                            "runs.composition.lockedAutomatically"
+                                          )
+                                      : t("runs.composition.lockHint")}
+                                  </TooltipContent>
+                                </Tooltip>
+                              )}
+                          </div>
                         </div>
-                        {/* Delete button in edit mode for non-completed runs */}
-                        {effectiveCanDelete && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => setIsDeleteDialogOpen(true)}
-                            disabled={isSubmitting}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 " />{" "}
-                            {t("common.actions.delete")}
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                      ) : (
+                        // Edit Mode Buttons for NON-COMPLETED runs
+                        <div className="flex flex-col gap-2">
+                          <div className="flex gap-2">
+                            {(() => {
+                              const gateBlocked =
+                                !isJUnitRun &&
+                                !transitionCheck.allowed &&
+                                transitionCheck.blockingGate;
+                              const formHasErrors =
+                                Object.keys(errors).length > 0;
+                              const saveBlocked = gateBlocked || formHasErrors;
+                              const tooltipMessage = gateBlocked
+                                ? t("reviews.transitionGate.blockedByGate", {
+                                    gateName:
+                                      transitionCheck.blockingGate!.name,
+                                  })
+                                : t(
+                                    "reviews.transitionGate.saveBlockedByFormErrors"
+                                  );
+
+                              if (!saveBlocked) {
+                                return (
+                                  <Button
+                                    type="submit"
+                                    variant="outline"
+                                    disabled={isSubmitting || !canAddEditRun}
+                                    className={collapsibleActionClass(
+                                      headerCompact
+                                    )}
+                                  >
+                                    <ActionButtonContent
+                                      icon={Save}
+                                      label={t("common.actions.save")}
+                                    />
+                                  </Button>
+                                );
+                              }
+
+                              return (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span tabIndex={0}>
+                                      <Button
+                                        type="submit"
+                                        variant="outline"
+                                        disabled
+                                        className={collapsibleActionClass(
+                                          headerCompact,
+                                          "ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                        )}
+                                      >
+                                        <ActionButtonContent
+                                          icon={Save}
+                                          label={t("common.actions.save")}
+                                        />
+                                      </Button>
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    {tooltipMessage}
+                                  </TooltipContent>
+                                </Tooltip>
+                              );
+                            })()}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleCancel}
+                              disabled={isSubmitting}
+                              className={collapsibleActionClass(headerCompact)}
+                            >
+                              <ActionButtonContent
+                                icon={CircleSlash2}
+                                label={t("common.cancel")}
+                              />
+                            </Button>
+                          </div>
+                          {/* Delete button in edit mode for non-completed runs */}
+                          {effectiveCanDelete && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setIsDeleteDialogOpen(true)}
+                              disabled={isSubmitting}
+                              className={collapsibleActionClass(
+                                headerCompact,
+                                "text-destructive"
+                              )}
+                            >
+                              <ActionButtonContent
+                                icon={Trash}
+                                label={t("common.actions.delete")}
+                              />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </ActionBar>
               </div>
             </div>
             <CardDescription>
@@ -1859,116 +2203,29 @@ export default function TestRunPage() {
               >
                 <div className="flex flex-col h-full p-4">
                   <div className="space-y-4">
-                    {isAutomatedTestRunType(testRunData?.testRunType) ? (
-                      isJUnitLoading ? (
-                        <Loading />
-                      ) : (
-                        <div className="space-y-8">
-                          {jUnitSuites && jUnitSuites.length > 0 ? (
-                            <></>
-                          ) : (
-                            <div className="text-muted-foreground">
-                              {tCommon("ui.noAutomatedTestResults")}
-                            </div>
-                          )}
-                        </div>
-                      )
+                    {isJUnitRun ? (
+                      <>
+                        {narrativeFields}
+                        <PaginationProvider>
+                          <JunitResultsPanel
+                            t={t}
+                            projectId={projectId ? String(projectId) : ""}
+                            runId={runId ? String(runId) : ""}
+                            jUnitSuites={jUnitSuites}
+                            sortedJunitTestCases={sortedJunitTestCases}
+                            junitSortConfig={junitSortConfig}
+                            handleJunitSortChange={handleJunitSortChange}
+                            onSortColumn={handleJunitSortColumn}
+                            isJUnitLoading={isJUnitLoading}
+                            selectedTestCaseId={selectedTestCaseId}
+                            facets={junitFacets}
+                            onFacetsChange={setJunitFacets}
+                          />
+                        </PaginationProvider>
+                      </>
                     ) : (
                       <>
-                        {isEditMode ||
-                        (contentLoaded && !isTiptapEmpty(noteContent)) ? (
-                          <FormField
-                            control={form.control}
-                            name="note"
-                            render={({ field: _field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t("common.fields.description")}
-                                </FormLabel>
-                                <FormControl>
-                                  {contentLoaded ? (
-                                    <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
-                                      <TipTapEditor
-                                        key={`editing-note-${isEditMode}`}
-                                        content={noteContent}
-                                        onUpdate={(newContent) => {
-                                          if (isEditMode) {
-                                            setNoteContent(newContent);
-                                            setValue("note", newContent, {
-                                              shouldValidate: true,
-                                            });
-                                          }
-                                        }}
-                                        readOnly={!isEditMode || !canAddEditRun}
-                                        className="h-auto"
-                                        placeholder={t(
-                                          "common.fields.description_placeholder"
-                                        )}
-                                        projectId={safeProjectId}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="h-[150px] flex items-center justify-center bg-muted rounded-md">
-                                      <Loading />
-                                    </div>
-                                  )}
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-                        {/* Documentation */}
-                        {isEditMode ||
-                        (contentLoaded && !isTiptapEmpty(docsContent)) ? (
-                          <FormField
-                            control={form.control}
-                            name="docs"
-                            render={({ field: _field }) => (
-                              <FormItem>
-                                <FormLabel>
-                                  {t("common.fields.documentation")}
-                                </FormLabel>
-                                <FormControl>
-                                  {contentLoaded ? (
-                                    <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
-                                      <TipTapEditor
-                                        key={`editing-docs-${isEditMode}`}
-                                        content={docsContent}
-                                        onUpdate={(newContent) => {
-                                          if (isEditMode) {
-                                            setDocsContent(newContent);
-                                            setValue("docs", newContent, {
-                                              shouldValidate: true,
-                                            });
-                                          }
-                                        }}
-                                        readOnly={!isEditMode || !canAddEditRun}
-                                        className="h-auto"
-                                        placeholder={t(
-                                          "common.placeholders.docs"
-                                        )}
-                                        projectId={safeProjectId}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="h-[250px] flex items-center justify-center bg-muted rounded-md">
-                                      <Loading />
-                                    </div>
-                                  )}
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        ) : null}
-                        {/* Add separator after notes/docs if they exist */}
-                        {!isEditMode &&
-                          contentLoaded &&
-                          (!isTiptapEmpty(noteContent) ||
-                            !isTiptapEmpty(docsContent)) && (
-                            <Separator className="my-4" />
-                          )}
+                        {narrativeFields}
 
                         {/* Test Cases Section */}
                         <TestCasesSection
@@ -1976,6 +2233,7 @@ export default function TestRunPage() {
                           isEditMode={isEditMode}
                           onTestCasesChange={handleTestCasesChange}
                           canAddEdit={canAddEditRun}
+                          compositionLocked={compositionLocked}
                           refetchTestRun={refetchTestRun}
                           onMultiConfigSelected={setIsMultiConfigSelected}
                           onSelectedConfigurationsChange={
@@ -1997,7 +2255,7 @@ export default function TestRunPage() {
                         onClick={toggleCollapseRight}
                         variant="secondary"
                         size="sm"
-                        className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                        className={`p-0 transform ${isCollapsedRight ? "rounded-s-none" : "rounded-e-none rotate-180"}`}
                       >
                         <ChevronLeft />
                       </Button>
@@ -2029,69 +2287,86 @@ export default function TestRunPage() {
                 }
               >
                 <div className="p-4 space-y-4">
-                  {(testRunData?.forecastManual ?? 0) > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <FormLabel>{t("common.fields.forecast")}</FormLabel>
-                      <ForecastDisplay seconds={testRunData.forecastManual!} />
-                    </div>
-                  )}
-                  {/* Donut Chart for all results in this test run */}
-                  {donutChartData.length > 0 && (
-                    <Card shadow="none">
-                      <CardHeader className="flex flex-row items-center justify-between p-2">
-                        <CardTitle className="text-base font-medium">
-                          {tCommon("ui.charts.resultsDistribution")}
-                        </CardTitle>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => setZoomedChart("donut")}
-                        >
-                          <Maximize2 className="h-4 w-4" />
-                          <span className="sr-only">
-                            {tCommon("ui.charts.zoomDonutChart")}
-                          </span>
-                        </Button>
-                      </CardHeader>
-                      <CardContent>
-                        <TestRunResultsDonut
-                          data={donutChartData}
-                          height={220}
-                        />
-                      </CardContent>
-                    </Card>
-                  )}
-                  {/* Zoom Dialog for Donut Chart */}
-                  <Dialog
-                    open={zoomedChart === "donut"}
-                    onOpenChange={(open) => {
-                      if (!open) setZoomedChart(null);
-                    }}
-                  >
-                    <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
-                      <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
-                        <DialogTitle>
-                          {tCommon("ui.charts.resultsDistribution")}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="flex-1 overflow-auto p-4 sm:p-0">
-                        <div
-                          className="flex-1 w-full h-full"
-                          style={{ minHeight: 600 }}
-                        >
-                          <div className="w-full h-full flex items-center justify-center">
+                  {isJUnitRun ? (
+                    <JunitChartsPanel
+                      t={t}
+                      runId={Number(runId)}
+                      statusScope={statusScope}
+                      forecastSeconds={testRunData?.forecastManual}
+                      onFlakyTileClick={handleFlakyTileClick}
+                      onRetriesTileClick={handleRetriesTileClick}
+                    />
+                  ) : (
+                    <>
+                      {(testRunData?.forecastManual ?? 0) > 0 && (
+                        <div className="flex flex-col gap-2">
+                          <FormLabel className="text-base font-bold">
+                            {t("common.fields.forecast")}
+                          </FormLabel>
+                          <ForecastDisplay
+                            seconds={testRunData.forecastManual!}
+                          />
+                        </div>
+                      )}
+                      {/* Donut Chart for all results in this test run */}
+                      {donutChartData.length > 0 && (
+                        <Card shadow="none">
+                          <CardHeader className="flex flex-row items-center justify-between p-2">
+                            <CardTitle className="text-base font-medium">
+                              {tCommon("ui.charts.resultsDistribution")}
+                            </CardTitle>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setZoomedChart("donut")}
+                            >
+                              <Maximize2 className="h-4 w-4" />
+                              <span className="sr-only">
+                                {tCommon("ui.charts.zoomDonutChart")}
+                              </span>
+                            </Button>
+                          </CardHeader>
+                          <CardContent>
                             <TestRunResultsDonut
                               data={donutChartData}
-                              isZoomed
-                              height={600}
+                              height={220}
                             />
+                          </CardContent>
+                        </Card>
+                      )}
+                      {/* Zoom Dialog for Donut Chart */}
+                      <Dialog
+                        open={zoomedChart === "donut"}
+                        onOpenChange={(open) => {
+                          if (!open) setZoomedChart(null);
+                        }}
+                      >
+                        <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+                          <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
+                            <DialogTitle>
+                              {tCommon("ui.charts.resultsDistribution")}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="flex-1 overflow-auto p-4 sm:p-0">
+                            <div
+                              className="flex-1 w-full h-full"
+                              style={{ minHeight: 600 }}
+                            >
+                              <div className="w-full h-full flex items-center justify-center">
+                                <TestRunResultsDonut
+                                  data={donutChartData}
+                                  isZoomed
+                                  height={600}
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  )}
                   <TestRunFormControls
                     isEditMode={isEditMode}
                     isSubmitting={isSubmitting}
@@ -2112,7 +2387,30 @@ export default function TestRunPage() {
                     canCreateTags={showAddEditTagsPerm}
                     selectedConfigurationsForDisplay={selectedConfigurations}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
-                    transitionCheck={transitionCheck}
+                    transitionCheck={isJUnitRun ? undefined : transitionCheck}
+                    configurationGroupSlot={
+                      /* Sits under Configuration, which it qualifies. The
+                         membership list stays visible outside edit mode; the
+                         link/unlink actions are gated behind Edit like every
+                         other field here. */
+                      <ConfigurationGroupLinkField
+                        model="testRuns"
+                        recordId={testRunData.id}
+                        projectId={numericProjectId}
+                        value={form.watch("configurationGroupId") ?? null}
+                        savedValue={testRunData.configurationGroupId ?? null}
+                        onChange={handleConfigurationGroupChange}
+                        editable={
+                          isEditMode &&
+                          canEditConfigurationGroup({
+                            canAddEdit: canAddEditRun,
+                            isMultiConfigurationView: isMultiConfigSelected,
+                            isCompleted: !!testRunData.isCompleted,
+                          })
+                        }
+                        disabled={isSubmitting}
+                      />
+                    }
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel
@@ -2153,19 +2451,15 @@ export default function TestRunPage() {
         <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[400px] border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
-              <TriangleAlert className="w-6 h-6 mr-2" />
-              {t("common.dialogs.confirmAction.title", {
-                action: "Remove Cases",
-              })}
+              <TriangleAlert className="w-6 h-6 me-2" />
+              {t("runs.removeCasesDialog.title")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t("common.dialogs.confirmAction.message", {
-                action: "remove these test cases",
-              })}
+              {t("runs.removeCasesDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="bg-destructive text-destructive-foreground p-2">
-            {t("common.dialogs.delete.warning", { item: "test cases" })}
+            {t("runs.removeCasesDialog.warning")}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleRemoveCasesCancel}>
@@ -2173,7 +2467,7 @@ export default function TestRunPage() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveCasesConfirm}
-              className="bg-destructive"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("common.actions.confirm")}
             </AlertDialogAction>
@@ -2182,7 +2476,20 @@ export default function TestRunPage() {
       </AlertDialog>
       {/* Sheet for Test Case Details */}
       <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent className="sm:max-w-4xl w-full p-0 test-run-details-sheet">
+        {/* The sheet's built-in close (X) — the only direct button child —
+            sits over the sticky bg-primary header. It must layer above that
+            header (z-30 > the header's z-20) or the header hides it, and use
+            primary-foreground so it stays legible where primary is light
+            (e.g. dark mode). While editing the case in place, the content is
+            the repository details view (plain background), so the
+            primary-header styling is dropped to keep the X visible. */}
+        <SheetContent
+          className={`sm:max-w-4xl w-full p-0 [&>button]:z-30 [&>button]:opacity-100 ${
+            editingSelectedCase
+              ? ""
+              : "test-run-details-sheet [&>button]:text-primary-foreground"
+          }`}
+        >
           <SheetHeader>
             <SheetTitle className="sr-only">
               {t("repository.version.detailsRegion")}
@@ -2196,7 +2503,7 @@ export default function TestRunPage() {
             testRunData &&
             (() => {
               const trc = testRunData.testCases.find(
-                (tc) => tc.repositoryCase.id === selectedTestCaseId
+                (tc) => tc.repositoryCaseId === selectedTestCaseId
               );
               if (!trc) return null;
               const innerProps = {
@@ -2216,13 +2523,45 @@ export default function TestRunPage() {
                 testRunCasesData: testRunData.testCases.map((tc) => ({
                   id: tc.id,
                   order: tc.order,
-                  repositoryCaseId: tc.repositoryCase.id,
+                  repositoryCaseId: tc.repositoryCaseId,
                 })),
                 isCompleted: testRunData.isCompleted,
+                onEditCase: canAddEditCases
+                  ? () => setIsEditingCase(true)
+                  : undefined,
               };
 
-              const totalIterations =
-                (trc as { totalIterations?: number }).totalIterations ?? 0;
+              if (editingSelectedCase) {
+                return (
+                  <div
+                    className="h-full overflow-y-auto"
+                    data-testid="run-case-edit-panel"
+                  >
+                    <TestCaseDetailsView
+                      key={`edit-${selectedTestCaseId}`}
+                      caseIdOverride={String(selectedTestCaseId)}
+                      projectIdOverride={safeProjectId}
+                      inSheet
+                      startInEditMode
+                      onClose={() => handleSheetOpenChange(false)}
+                      onEditExit={(saved) => {
+                        setIsEditingCase(false);
+                        if (saved) {
+                          void queryClient.invalidateQueries({
+                            queryKey: [
+                              "test-run-case-detail",
+                              selectedTestCaseId,
+                              Number(runId),
+                            ],
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              }
+
+              const totalIterations = trc.totalIterations;
 
               if (totalIterations === 0) {
                 return (
@@ -2256,6 +2595,20 @@ export default function TestRunPage() {
           onPrepareCloneDataAndProceed={handlePrepareCloneDataAndProceed}
         />
       )}
+      {canAddEditRun &&
+        !testRunData?.isCompleted &&
+        !isAutomatedTestRunType(testRunData?.testRunType) && (
+          <DistributeAssignmentsModal
+            isOpen={isDistributeDialogOpen}
+            onClose={() => setIsDistributeDialogOpen(false)}
+            projectId={Number(projectId)}
+            runId={Number(runId)}
+            configurationGroupId={testRunData?.configurationGroupId ?? null}
+            onDone={() => {
+              void refetchTestRun();
+            }}
+          />
+        )}
       {/* Render AddTestRunModal for Duplication - wrapped in SimpleDndProvider for DnD context */}
       {isAddRunModalOpenForDuplicate && addRunModalInitPropsForDuplicate && (
         <SimpleDndProvider>

@@ -82,15 +82,27 @@ The AI prompt for QuickScript can be customized in **Administration > [Prompt Co
 | `{{FRAMEWORK}}` | Target test framework from the selected template (e.g., Playwright, pytest) |
 | `{{LANGUAGE}}` | Target programming language (e.g., TypeScript, Python) |
 | `{{CASE_NAME}}` | Name of the test case being generated |
+| `{{CASE_ID}}` | TestPlanIt ID of the test case being generated |
 | `{{STEPS_TEXT}}` | Formatted test steps with expected results |
 | `{{CODE_CONTEXT}}` | Repository file contents assembled for this test case |
 
 ### Prompt Tips
 
 - The default prompt instructs the AI to generate a complete, runnable test file with all imports
+- The default prompt names each generated test with the case ID in square brackets (e.g., `[123] Verify login succeeds`) — the automated-results importer's default matching resolves bracketed IDs back to existing test cases, so keep that convention if you customize the prompt
 - Lower the **temperature** (e.g., 0.2–0.3) for more deterministic, consistent output
 - Increase **max output tokens** if your generated scripts are being truncated
 - Add framework-specific guidance to the system prompt if the AI isn't following your project's conventions
+
+## Generating QuickScript Outside the App
+
+QuickScript generation isn't limited to the repository UI — the same engine is reachable from external tools, so an agent or pipeline can generate scripts on demand. Every surface resolves the project's export template and connected code repository server-side, so callers only pass a project and the test cases:
+
+- **Jira** — the [TestPlanIt for Jira](../sdk/jira-forge-app.md) issue panel offers **Generate QuickScript** for the test cases linked to an issue.
+- **MCP** — the [MCP server](../sdk/mcp-overview.md) exposes the `testplanit_cases_generate_script` tool for AI agents.
+- **API client** — [`@testplanit/api`](../sdk/api-client.md#quickscript-generation)'s `generateQuickScript()` method for scripts and CI pipelines.
+
+The project must have QuickScript enabled and an active AI provider. As in the app, when a code repository is connected the generated script follows the repository's existing framework, fixtures, and page objects rather than the export template's framework; with no repository it uses standard patterns for the template's framework.
 
 ## Troubleshooting
 

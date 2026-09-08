@@ -39,7 +39,6 @@ const getTransporter = () => {
       user: process.env.EMAIL_SERVER_USER,
       pass: process.env.EMAIL_SERVER_PASSWORD,
     },
-    from: `"TestPlanIt" <${process.env.EMAIL_FROM}>`,
   });
 };
 

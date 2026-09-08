@@ -57,7 +57,18 @@ function makeFakeDb() {
 
   const matches = (row: any, where: any): boolean => {
     if (where.id !== undefined && row.id !== where.id) return false;
-    if (where.email !== undefined && row.email !== where.email) return false;
+    if (where.email !== undefined) {
+      // Supports both the scalar shorthand and the { equals, mode } filter.
+      const filter =
+        typeof where.email === "object" && where.email !== null
+          ? where.email
+          : { equals: where.email };
+      const ok =
+        filter.mode === "insensitive"
+          ? row.email?.toLowerCase() === filter.equals?.toLowerCase()
+          : row.email === filter.equals;
+      if (!ok) return false;
+    }
     if (where.status !== undefined && row.status !== where.status) return false;
     if (
       where.expiresAt?.gt !== undefined &&
@@ -130,7 +141,10 @@ function makeFakeDb() {
     }),
   };
 
-  const user = { findUnique: vi.fn() };
+  const user = {
+    findUnique: vi.fn(async () => null),
+    findFirst: vi.fn(async () => null),
+  };
 
   return { db: { pendingAuth, user } as any, rows };
 }

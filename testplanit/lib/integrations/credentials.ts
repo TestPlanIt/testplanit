@@ -4,20 +4,22 @@ import { credentialsCorruptError } from "./errors";
 /**
  * Reading stored integration credentials.
  *
- * Three storage shapes exist:
+ * Two storage shapes exist. Current writers (POST /api/integrations and PUT
+ * /api/integrations/[id]) serialize the whole credential object and store one
+ * ciphertext under `{ encrypted }`. Older rows store one key per field, each
+ * value encrypted individually.
  *
- *  - `{ encrypted }` — one ciphertext for the whole credential object, from
- *    POST /api/integrations and PUT /api/integrations/[id].
- *  - per-field ciphertext — one key per field, each value encrypted.
- *  - per-field cleartext — one key per field, stored verbatim. This is what
- *    the admin integration form produces: it saves through the generated
- *    ZenStack model endpoint, which has no encryption step. Despite the
- *    `credentials` comment in schema.zmodel, nothing encrypts on that path.
+ * Both shapes are read here, and neither may fall back to using an
+ * unreadable value. A credential that cannot be decrypted is a corrupt
+ * record, not a credential: forwarding it upstream authenticates nothing and
+ * burns a rate-limit slot.
  *
- * All three are read here. What is *not* accepted is a value that looks like
- * ciphertext but fails to decrypt: that is a corrupt record, not a
- * credential, and forwarding it upstream authenticates nothing while burning
- * a rate-limit slot. That case is the one behind the production incident.
+ * "Unreadable" means exactly that — ciphertext we cannot decrypt. A secret
+ * sitting in cleartext is badly *stored*, not unreadable, and is used as-is
+ * with a warning. Refusing it instead breaks integrations that work, with no
+ * migration that would fix them: OAuth2 client credentials predate the
+ * encrypting write path, so those rows hold cleartext `clientSecret` values
+ * and every adapter build for them would fail.
  */
 
 /**
@@ -50,15 +52,29 @@ const hasEncryptedBlob = (
  * Decrypt stored integration credentials into a plain field map.
  *
  * Throws `IntegrationApiError` with kind `credentials_corrupt` when a secret
- * cannot be decrypted or was stored in cleartext. Callers must let that
- * propagate rather than proceeding with partial credentials — the point is
- * that no outbound request is made with a value we could not read.
+ * cannot be decrypted. Callers must let that propagate rather than proceeding
+ * with partial credentials — the point is that no outbound request is made
+ * with a value we could not read.
  */
 export const resolveStoredCredentials = async (
   raw: unknown,
   provider: string
 ): Promise<Record<string, string>> => {
-  if (!raw || typeof raw !== "object") return {};
+  if (!raw) return {};
+
+  // A bare ciphertext string is a third shape, written by a since-removed
+  // helper (see AuthenticationService). Returning {} for it would hand the
+  // caller an integration that authenticates with nothing and fails upstream
+  // with no hint as to why, so read it — and say so when it will not read.
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(await decrypt(raw)) as Record<string, string>;
+    } catch (error) {
+      throw credentialsCorruptError(provider, { cause: error });
+    }
+  }
+
+  if (typeof raw !== "object") return {};
 
   const stored = raw as Record<string, unknown>;
 
@@ -82,20 +98,22 @@ export const resolveStoredCredentials = async (
   for (const [key, value] of Object.entries(stored)) {
     if (typeof value !== "string" || value === "") continue;
 
-    // Cleartext is accepted because it is what the admin UI writes: the
-    // integration form saves through the generated ZenStack model endpoint,
-    // which persists `credentials` verbatim with no encryption step. Refusing
-    // it here would break every integration created that way.
-    //
-    // A value that *looks* encrypted but will not decrypt is a different
-    // case, and is the one behind the production incident — it is refused
-    // below rather than forwarded to the provider as a credential.
+    if (!isSecretCredentialKey(key)) {
+      resolved[key] = value;
+      continue;
+    }
+
+    // Not ciphertext, so there is nothing to decrypt and nothing unreadable
+    // about it — use it and say so. Re-saving the integration rewrites it
+    // through the encrypting write path. `isEncrypted` requires canonical
+    // base64 over a full salt + IV + tag, which real ciphertext always
+    // satisfies, so this branch cannot swallow a value we should have
+    // decrypted.
     if (!isEncrypted(value)) {
-      if (isSecretCredentialKey(key)) {
-        console.warn(
-          `Integration secret "${key}" is stored unencrypted (provider ${provider}).`
-        );
-      }
+      console.warn(
+        `[integrations] ${provider} credential "${key}" is stored in cleartext; ` +
+          `re-save the integration to encrypt it at rest.`
+      );
       resolved[key] = value;
       continue;
     }

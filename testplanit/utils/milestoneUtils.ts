@@ -1,11 +1,12 @@
-import {
+import type {
   Color,
   ColorFamily,
   FieldIcon,
+  MilestoneExternalKind,
   Milestones,
   MilestoneTypes,
-} from "@prisma/client";
-import { isAfter, isBefore, parseISO } from "date-fns";
+} from "~/zenstack/models";
+import { isCalendarDayAfter, isCalendarDayBefore } from "~/utils/calendarDate";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;
@@ -107,40 +108,64 @@ export const getStatusStyle = (
   }
 };
 
+/**
+ * Whether a milestone's start/due dates are calendar dates — days on a
+ * calendar, to be read without timezone conversion — or genuine instants.
+ *
+ * Manual milestones and Jira **releases** are calendar dates: a version's
+ * dates arrive as bare `yyyy-MM-dd` strings and a picker stores UTC midnight.
+ * Jira **sprints** are not: their boundaries carry a real time, typically
+ * midnight or 23:59 in the Jira instance's own zone, which lands a few hours
+ * either side of UTC midnight. Reading those in UTC moves a sprint ending
+ * 23:59 EST onto the following day, so they keep converting to the reader's
+ * zone the way any timestamp does.
+ *
+ * See `~/utils/calendarDate` for the convention itself.
+ */
+export const hasCalendarDates = (milestone: {
+  externalKind?: MilestoneExternalKind | null;
+}): boolean => milestone.externalKind !== "ITERATION";
+
 export const getCondition = (milestone: Milestones): string => {
   const now = new Date();
-  const startDate = milestone.startedAt
-    ? parseISO(milestone.startedAt.toISOString())
-    : null;
+  const startDate = milestone.startedAt ? new Date(milestone.startedAt) : null;
   const endDate = milestone.completedAt
-    ? parseISO(milestone.completedAt.toISOString())
+    ? new Date(milestone.completedAt)
     : null;
 
+  // Calendar dates compare whole days against the reader's own day rather than
+  // instants against this moment. Comparing instants made a milestone due
+  // Aug 13 go past due at 7:00 PM on Aug 12 for a reader in GMT-5, because the
+  // stored value is Aug 13 at UTC midnight. Sprint boundaries are real instants
+  // and keep comparing as such — see `hasCalendarDates`.
+  //
+  // For calendar dates the two ends round in opposite directions, which keeps
+  // the day a milestone is due from counting as late: a start date has arrived
+  // once the reader reaches that day, while a due date is only past once that
+  // day is over.
+  const byDay = hasCalendarDates(milestone);
+  const startArrived =
+    !!startDate &&
+    (byDay ? !isCalendarDayAfter(startDate, now) : startDate <= now);
+  const endPastDue =
+    !!endDate && (byDay ? isCalendarDayBefore(endDate, now) : endDate < now);
+
   if (milestone.isStarted) {
-    if (endDate && isBefore(endDate, now)) {
-      return "pastDueStarted";
-    }
-    return "started";
+    return endPastDue ? "pastDueStarted" : "started";
   }
 
   // Check for past due with both dates first
-  if (
-    !milestone.isStarted &&
-    startDate &&
-    endDate &&
-    isBefore(startDate, now) &&
-    isBefore(endDate, now)
-  ) {
+  if (startArrived && endPastDue) {
     return "pastDueBothDates";
   }
 
   // Check for past due with only end date (no start date)
-  if (!milestone.isStarted && !startDate && endDate && isBefore(endDate, now)) {
+  if (!startDate && endPastDue) {
     return "pastDueNoStartDate";
   }
 
-  // Check for delayed (past start date, potentially future end date)
-  if (!milestone.isStarted && startDate && isBefore(startDate, now)) {
+  // Check for delayed (start day reached, potentially future end date)
+  if (startArrived) {
     return "delayed";
   }
 
@@ -149,14 +174,10 @@ export const getCondition = (milestone: Milestones): string => {
   }
 
   // Keep upcoming checks
-  if (!milestone.isStarted && startDate && isAfter(startDate, now)) {
+  if (startDate) {
     return "upcoming";
   }
-  if (!milestone.isStarted && !startDate && endDate && isAfter(endDate, now)) {
-    return "upcomingNoStartDate";
-  }
-
-  return "unknown";
+  return "upcomingNoStartDate";
 };
 
 export const getStatus = (milestone: Milestones): string => {
@@ -186,93 +207,79 @@ export const getStatus = (milestone: Milestones): string => {
   }
 };
 
+// Urgency tiers: past due, started (soonest deadline), delayed, upcoming,
+// unscheduled, completed
+const getSortRank = (milestone: Milestones): number => {
+  if (milestone.isCompleted) return 5;
+  switch (getStatus(milestone)) {
+    case STATUS_KEYS.PAST_DUE:
+      return 0;
+    case STATUS_KEYS.STARTED:
+      return 1;
+    case STATUS_KEYS.DELAYED:
+      return 2;
+    case STATUS_KEYS.UPCOMING:
+      return 3;
+    default:
+      return 4;
+  }
+};
+
 export const sortMilestones = (
   milestones: MilestonesWithTypes[]
 ): MilestonesWithTypes[] => {
   return milestones?.sort((a, b) => {
-    // If both are completed, sort by completedAt date
-    if (a.isCompleted && b.isCompleted) {
-      return (
-        parseISO(b.completedAt!.toISOString()).getTime() -
-        parseISO(a.completedAt!.toISOString()).getTime()
-      );
-    }
+    const rankA = getSortRank(a);
+    const rankB = getSortRank(b);
+    if (rankA !== rankB) return rankA - rankB;
 
-    // If one is completed and the other is not, completed milestones come last
-    if (a.isCompleted) return 1;
-    if (b.isCompleted) return -1;
+    const aStart = a.startedAt ? a.startedAt.getTime() : null;
+    const bStart = b.startedAt ? b.startedAt.getTime() : null;
+    const aEnd = a.completedAt ? a.completedAt.getTime() : null;
+    const bEnd = b.completedAt ? b.completedAt.getTime() : null;
 
-    const aStartDate = a.startedAt ? parseISO(a.startedAt.toISOString()) : null;
-    const bStartDate = b.startedAt ? parseISO(b.startedAt.toISOString()) : null;
-
-    const aEndDate = a.completedAt
-      ? parseISO(a.completedAt.toISOString())
-      : null;
-    const bEndDate = b.completedAt
-      ? parseISO(b.completedAt.toISOString())
-      : null;
-
-    // Started milestones in order of start date
-    if (a.isStarted && b.isStarted) {
-      return aStartDate && bStartDate
-        ? aStartDate.getTime() - bStartDate.getTime()
-        : 0;
+    switch (rankA) {
+      // Completed: most recently completed first
+      case 5:
+        return (bEnd ?? 0) - (aEnd ?? 0);
+      // Past due and started: earliest end date first, no end date last,
+      // then by start date
+      case 0:
+      case 1:
+        if (aEnd !== null && bEnd !== null && aEnd !== bEnd) {
+          return aEnd - bEnd;
+        }
+        if (aEnd !== null && bEnd === null) return -1;
+        if (aEnd === null && bEnd !== null) return 1;
+        return aStart !== null && bStart !== null ? aStart - bStart : 0;
+      // Delayed and upcoming: soonest scheduled date first
+      case 2:
+      case 3: {
+        const aDate = aStart ?? aEnd;
+        const bDate = bStart ?? bEnd;
+        return aDate !== null && bDate !== null ? aDate - bDate : 0;
+      }
+      // Unscheduled: keep incoming order
+      default:
+        return 0;
     }
-
-    // Milestones without start and end dates
-    if (!aStartDate && !aEndDate && !bStartDate && !bEndDate) {
-      return 0; // Both unscheduled, order doesn't matter
-    }
-    if (!aStartDate && !aEndDate) {
-      return -1; // a is unscheduled, b has dates -> a comes BEFORE b
-    }
-    if (!bStartDate && !bEndDate) {
-      return 1; // b is unscheduled, a has dates -> b comes AFTER a (so a comes first)
-    }
-
-    // Milestones with past start dates
-    if (
-      aStartDate &&
-      isBefore(aStartDate, new Date()) &&
-      bStartDate &&
-      isBefore(bStartDate, new Date())
-    ) {
-      return aStartDate.getTime() - bStartDate.getTime();
-    }
-    if (aStartDate && isBefore(aStartDate, new Date())) {
-      return -1;
-    }
-    if (bStartDate && isBefore(bStartDate, new Date())) {
-      return 1;
-    }
-
-    // Milestones with future start dates
-    if (
-      aStartDate &&
-      isAfter(aStartDate, new Date()) &&
-      bStartDate &&
-      isAfter(bStartDate, new Date())
-    ) {
-      return aStartDate.getTime() - bStartDate.getTime();
-    }
-    if (aStartDate && isAfter(aStartDate, new Date())) {
-      return -1;
-    }
-    if (bStartDate && isAfter(bStartDate, new Date())) {
-      return 1;
-    }
-
-    // Milestones with end dates, not started
-    if (!a.isStarted && aEndDate && bEndDate) {
-      return aEndDate.getTime() - bEndDate.getTime();
-    }
-    if (!a.isStarted && aEndDate) {
-      return -1;
-    }
-    if (!b.isStarted && bEndDate) {
-      return 1;
-    }
-
-    return 0;
   });
+};
+
+/**
+ * Same ranking as sortMilestones, applied at every nesting level of an
+ * already-built tree. The flat milestone lists sort once and then filter by
+ * parent at each level, so their children come out ranked; a tree has to be
+ * walked to get the same order. Sorts in place, like sortMilestones.
+ */
+export const sortMilestoneTree = (
+  milestones: MilestonesWithTypes[]
+): MilestonesWithTypes[] => {
+  const sorted = sortMilestones(milestones);
+  sorted?.forEach((milestone) => {
+    if (milestone.children?.length) {
+      sortMilestoneTree(milestone.children);
+    }
+  });
+  return sorted;
 };

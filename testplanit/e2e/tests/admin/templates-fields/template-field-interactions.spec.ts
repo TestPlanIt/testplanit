@@ -96,28 +96,51 @@ test.describe("Template-Field Relationships", () => {
     });
   });
 
-  test("Disabled field hidden from template selector", async ({ api }) => {
-    const fieldName = `E2E Disabled Field ${Date.now()}`;
+  test("Disabled field hidden from template selector", async ({
+    api,
+    page,
+  }) => {
+    const stamp = Date.now();
+    const disabledFieldName = `E2E Disabled Field ${stamp}`;
+    const enabledFieldName = `E2E Enabled Control ${stamp}`;
 
-    await test.step("Create a disabled case field", async () => {
-      // Create and disable a field
+    await test.step("Create a disabled field and an enabled control field", async () => {
       await api.createCaseField({
-        displayName: fieldName,
+        displayName: disabledFieldName,
         typeName: "Text String",
         isEnabled: false,
       });
+      // The enabled field proves the selector actually loaded its options, so
+      // the absence assertion below cannot pass vacuously.
+      await api.createCaseField({
+        displayName: enabledFieldName,
+        typeName: "Text String",
+        isEnabled: true,
+      });
     });
 
-    await test.step("Open the add template dialog and confirm the disabled field is hidden", async () => {
-      // Reload
+    await test.step("Open the add template dialog and confirm only the enabled field is offered", async () => {
       await templatesPage.goto();
-
-      // Open add template dialog
       await templatesPage.clickAddTemplate();
 
-      // The disabled field should not appear in the dropdown
-      // This verification depends on UI implementation
+      const fieldSelector = page
+        .getByTestId("template-dialog")
+        .getByTestId("add-case-field-select");
+      await expect(fieldSelector).toBeVisible({ timeout: 5000 });
+      await fieldSelector.click();
 
+      const listbox = page.locator('[role="listbox"]');
+      await expect(listbox).toBeVisible({ timeout: 5000 });
+      await expect(
+        listbox.locator('[role="option"]').filter({ hasText: enabledFieldName })
+      ).toBeVisible({ timeout: 5000 });
+      await expect(
+        listbox
+          .locator('[role="option"]')
+          .filter({ hasText: disabledFieldName })
+      ).toHaveCount(0);
+
+      await page.keyboard.press("Escape");
       await templatesPage.cancelTemplate();
     });
   });

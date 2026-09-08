@@ -13,6 +13,8 @@ const {
   mockUseFindManyTestRuns,
   mockUseCreateTestRunCases,
   mockUseFindUniqueProjects,
+  mockUseFindUniqueTestRunResults,
+  mockUseFindUniqueJUnitTestResult,
   mockUseProjectPermissions,
   mockUseSession,
   mockUseQueryClient,
@@ -24,6 +26,8 @@ const {
   mockUseFindManyTestRuns: vi.fn(),
   mockUseCreateTestRunCases: vi.fn(),
   mockUseFindUniqueProjects: vi.fn(),
+  mockUseFindUniqueTestRunResults: vi.fn(),
+  mockUseFindUniqueJUnitTestResult: vi.fn(),
   mockUseProjectPermissions: vi.fn(),
   mockUseSession: vi.fn(),
   mockUseQueryClient: vi.fn(),
@@ -31,14 +35,18 @@ const {
 
 // --- Mocks ---
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstRepositoryCases: mockUseFindFirstRepositoryCases,
-  useFindManyAppConfig: mockUseFindManyAppConfig,
-  useFindManyResultFieldValues: mockUseFindManyResultFieldValues,
-  useFindManySharedStepItem: mockUseFindManySharedStepItem,
-  useFindManyTestRuns: mockUseFindManyTestRuns,
-  useCreateTestRunCases: mockUseCreateTestRunCases,
-  useFindUniqueProjects: mockUseFindUniqueProjects,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: { useFindFirst: mockUseFindFirstRepositoryCases },
+    appConfig: { useFindMany: mockUseFindManyAppConfig },
+    resultFieldValues: { useFindMany: mockUseFindManyResultFieldValues },
+    sharedStepItem: { useFindMany: mockUseFindManySharedStepItem },
+    testRuns: { useFindMany: mockUseFindManyTestRuns },
+    testRunCases: { useCreate: mockUseCreateTestRunCases },
+    projects: { useFindUnique: mockUseFindUniqueProjects },
+    testRunResults: { useFindUnique: mockUseFindUniqueTestRunResults },
+    jUnitTestResult: { useFindUnique: mockUseFindUniqueJUnitTestResult },
+  }),
 }));
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
@@ -60,6 +68,7 @@ vi.mock("~/lib/navigation", () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock("@tanstack/react-query", async (importOriginal) => {
@@ -77,6 +86,39 @@ vi.mock(
       isOpen ? <div data-testid="edit-result-modal">Edit Modal</div> : null,
   })
 );
+
+// jsdom gives the virtualizer no real geometry, so the hook is replaced with
+// one that reports a configurable window (same pattern as
+// VirtualizedCardList.test.tsx). Small histories pass count: 0 and never
+// consult it, so every other test is unaffected.
+const virtualHookMock = vi.hoisted(() => ({
+  window: null as number[] | null, // indices to render; null = all `count`
+  lastOpts: null as Record<string, unknown> | null,
+}));
+
+vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
+  useVirtualizedInfiniteList: (opts: { count: number }) => {
+    virtualHookMock.lastOpts = opts as unknown as Record<string, unknown>;
+    const indices =
+      virtualHookMock.window ?? Array.from({ length: opts.count }, (_, i) => i);
+    return {
+      scrollRef: () => {},
+      sentinelRef: { current: null },
+      virtualizer: {},
+      virtualItems: indices.map((index) => ({
+        key: index,
+        index,
+        start: index * 53,
+        size: 53,
+        end: (index + 1) * 53,
+        lane: 0,
+      })),
+      totalSize: opts.count * 53,
+      measureElement: () => {},
+      maxHeight: 600,
+    };
+  },
+}));
 
 vi.mock(
   "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer",
@@ -162,6 +204,9 @@ function renderWithQueryClient(ui: React.ReactElement) {
 
 // --- Fixtures ---
 
+// Fixtures mirror the eager history query, which is intentionally row-slim:
+// notes, full step results, iteration values, and JUnit logs are lazy-fetched
+// per result on expand (mocked via the useFindUnique mocks below).
 const mockManualResult = {
   id: 1,
   testRunCaseId: 101,
@@ -172,7 +217,6 @@ const mockManualResult = {
   editedBy: null,
   editedAt: null,
   elapsed: 120,
-  notes: null,
   attempt: 1,
   resultFieldValues: [],
   attachments: [],
@@ -184,14 +228,11 @@ const mockJunitResult = {
   id: 10,
   type: "failure",
   message: "Expected 1, got 2",
-  content: "stack trace here",
   executedAt: new Date("2024-01-14T09:00:00Z").toISOString(),
   time: 50,
   assertions: 3,
   file: "test.java",
   line: 42,
-  systemOut: null,
-  systemErr: null,
   status: { name: "Failed", color: { value: "#EF4444" } },
   createdBy: { id: "user-2", name: "CI Bot" },
   testSuite: {
@@ -262,6 +303,14 @@ function setupDefaultMocks() {
   mockUseFindManyTestRuns.mockReturnValue({ data: [] });
   mockUseCreateTestRunCases.mockReturnValue({ mutateAsync: vi.fn() });
   mockUseFindUniqueProjects.mockReturnValue({ data: undefined });
+  mockUseFindUniqueTestRunResults.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+  });
+  mockUseFindUniqueJUnitTestResult.mockReturnValue({
+    data: undefined,
+    isLoading: false,
+  });
   mockUseProjectPermissions.mockReturnValue({
     permissions: { canAddEdit: true, canView: true, canDelete: true },
     isLoading: false,
@@ -449,29 +498,39 @@ describe("TestResultHistory", () => {
         },
       ],
     };
+    // Eager query carries elapsed-only step rows; the full step payload
+    // arrives through the lazy expanded-details query.
     const resultWithSteps = {
       ...mockManualResult,
       id: 2,
-      stepResults: [
-        {
-          id: 901,
-          stepStatus: { name: "Passed", color: { value: "#22C55E" } },
-          notes: null,
-          evidence: null,
-          elapsed: 0,
-          sharedStepItemId: null,
-          step: {
-            id: 401,
-            step: { type: "doc", content: [{ type: "paragraph" }] },
-            // Steps.expectedResult is a Json? scalar — not a nested relation
-            expectedResult: expectedResultDoc,
-            sharedStepGroupId: null,
-            sharedStepGroup: null,
-          },
-          issues: [],
-        },
-      ],
+      stepResults: [{ elapsed: 0 }],
     };
+    mockUseFindUniqueTestRunResults.mockReturnValue({
+      data: {
+        notes: null,
+        iteration: null,
+        stepResults: [
+          {
+            id: 901,
+            stepStatus: { name: "Passed", color: { value: "#22C55E" } },
+            notes: null,
+            evidence: null,
+            elapsed: 0,
+            sharedStepItemId: null,
+            step: {
+              id: 401,
+              step: { type: "doc", content: [{ type: "paragraph" }] },
+              // Steps.expectedResult is a Json? scalar — not a nested relation
+              expectedResult: expectedResultDoc,
+              sharedStepGroupId: null,
+              sharedStepGroup: null,
+            },
+            issues: [],
+          },
+        ],
+      },
+      isLoading: false,
+    });
     const testCaseWithStepResults = {
       ...mockTestCase,
       testRuns: [
@@ -499,6 +558,25 @@ describe("TestResultHistory", () => {
     ).toBe(true);
   });
 
+  it("lazy-loads JUnit log output into the expanded panel", async () => {
+    const user = userEvent.setup();
+    mockUseFindUniqueJUnitTestResult.mockReturnValue({
+      data: {
+        content: "stack trace here",
+        systemOut: "stdout capture",
+        systemErr: null,
+      },
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    await user.click(screen.getByTestId("expand-result-junit-10"));
+
+    expect(screen.getByText("stack trace here")).toBeInTheDocument();
+    expect(screen.getByText("stdout capture")).toBeInTheDocument();
+  });
+
   it("hides Add to Test Run button when user lacks permission", () => {
     const testCaseNoResults = {
       ...mockTestCase,
@@ -519,5 +597,72 @@ describe("TestResultHistory", () => {
     expect(
       screen.queryByRole("button", { name: /actions\.addToTestRun/i })
     ).not.toBeInTheDocument();
+  });
+
+  it("highlights rows of the current test run when currentTestRunId matches", () => {
+    renderWithQueryClient(
+      <TestResultHistory {...defaultProps} currentTestRunId={10} />
+    );
+
+    const badge = screen.getByTestId("current-run-badge");
+    expect(badge).toHaveTextContent("currentRunBadge");
+    expect(badge.closest("tr")).toHaveAttribute("data-current-run", "true");
+  });
+
+  it("highlights the JUnit row when currentTestRunId matches its test run", () => {
+    renderWithQueryClient(
+      <TestResultHistory {...defaultProps} currentTestRunId={5} />
+    );
+
+    const badge = screen.getByTestId("current-run-badge");
+    expect(badge.closest("tr")).toHaveTextContent("Regression Run");
+  });
+
+  it("shows no current-run highlight when currentTestRunId is not provided", () => {
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    expect(screen.queryByTestId("current-run-badge")).not.toBeInTheDocument();
+  });
+
+  describe("virtualization", () => {
+    const manyJunitResults = Array.from({ length: 60 }, (_, i) => ({
+      ...mockJunitResult,
+      id: 1000 + i,
+      executedAt: new Date(
+        Date.parse("2024-01-14T09:00:00Z") + i * 60_000
+      ).toISOString(),
+    }));
+
+    beforeEach(() => {
+      virtualHookMock.window = null;
+      mockUseFindFirstRepositoryCases.mockReturnValue({
+        data: { ...mockTestCase, testRuns: [], junitResults: manyJunitResults },
+        isLoading: false,
+      });
+    });
+
+    it("renders only the virtual window of a massive history", () => {
+      virtualHookMock.window = [0, 1, 2, 3, 4];
+      renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+      // The hook was armed with the full row count…
+      expect(virtualHookMock.lastOpts?.count).toBe(60);
+      // …but only the windowed rows are mounted.
+      expect(screen.getAllByTestId(/^expand-result-junit-/)).toHaveLength(5);
+      // The unrendered tail is held open by a spacer row group.
+      const spacers = document.querySelectorAll("tbody[aria-hidden]");
+      expect(spacers.length).toBeGreaterThan(0);
+    });
+
+    it("keeps small histories on the plain table path", () => {
+      mockUseFindFirstRepositoryCases.mockReturnValue({
+        data: mockTestCase,
+        isLoading: false,
+      });
+      renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+      expect(virtualHookMock.lastOpts?.count).toBe(0);
+      expect(document.querySelector("tbody[aria-hidden]")).toBeNull();
+    });
   });
 });

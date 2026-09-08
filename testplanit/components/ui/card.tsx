@@ -12,8 +12,7 @@ const Card = React.forwardRef<
     ref={ref}
     className={cn(
       "rounded-xl border bg-card text-card-foreground",
-      shadow === "default" &&
-        "shadow-xs sm:shadow-md md:shadow-lg lg:shadow-xl xl:shadow-2xl",
+      shadow === "default" && "shadow-xs sm:shadow-sm md:shadow-md",
       shadow === "none" && "shadow-none",
       className
     )}

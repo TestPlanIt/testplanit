@@ -1,5 +1,7 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +17,8 @@ import { formatDistanceToNow } from "date-fns";
 import { MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
-import { useFindManyComment } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
+import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";
 
 interface CommentsListDisplayProps {
@@ -36,9 +38,10 @@ interface CommentItemProps {
       name: string;
     };
   };
+  projectId: number;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
+const CommentItem: React.FC<CommentItemProps> = ({ comment, projectId }) => {
   const displayEditor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -46,6 +49,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment }) => {
         heading: false,
         codeBlock: false,
       }),
+      createMentionExtension(projectId),
     ],
     content: comment.content,
     editable: false,
@@ -90,7 +94,9 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
   const [open, setOpen] = useState(false);
 
   // Fetch first 3 comments when popover is opened
-  const { data: comments, isLoading: isLoadingComments } = useFindManyComment(
+  const { data: comments, isLoading: isLoadingComments } = useClientQueries(
+    schema
+  ).comment.useFindMany(
     {
       where: {
         repositoryCaseId: repositoryCaseId,
@@ -145,7 +151,7 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="font-medium text-sm">
-              {tCommon("plural.comment", { count })}
+              {tComments("titleWithCount", { count })}
             </h4>
           </div>
 
@@ -161,7 +167,11 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
               onWheel={(e) => e.stopPropagation()}
             >
               {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} />
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  projectId={projectId}
+                />
               ))}
             </div>
           ) : (

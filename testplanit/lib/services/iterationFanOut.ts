@@ -1,4 +1,5 @@
-import type { Prisma } from "@prisma/client";
+import type { JsonValue } from "@zenstackhq/orm";
+import type { TxClient } from "~/lib/zenstack";
 
 import { applyMapping } from "~/lib/utils/datasetMapping";
 
@@ -90,7 +91,7 @@ export interface MaterializeIterationsOptions {
  */
 export async function materializeIterations(
   testRunId: number,
-  tx: Prisma.TransactionClient,
+  tx: TxClient,
   options: MaterializeIterationsOptions = {}
 ): Promise<MaterializeIterationsResult> {
   const progressIntervalCases = Math.max(
@@ -193,7 +194,7 @@ export async function materializeForOneCase(
   projectId: number,
   testRunCaseId: number,
   repositoryCaseId: number,
-  tx: Prisma.TransactionClient
+  tx: TxClient
 ): Promise<{ snapshotId: number; iterationCount: number }> {
   // Fetch case parameters (live, not snapshotted versions). The schema
   // for parameters lives on RepositoryCases.parameters (TestCaseParameter
@@ -356,8 +357,8 @@ export async function materializeForOneCase(
       sourceDataSetId: resolvedSource?.id ?? null,
       sourceDataSetName: resolvedSource?.name ?? "(no dataset)",
       sourceVersionId: resolvedSource?.pinnedVersionId ?? null,
-      parametersJson: parameters as unknown as Prisma.InputJsonValue,
-      rowsJson: snapshotRows as unknown as Prisma.InputJsonValue,
+      parametersJson: parameters as unknown as JsonValue,
+      rowsJson: snapshotRows as unknown as JsonValue,
     },
     select: { id: true },
   });
@@ -370,7 +371,7 @@ export async function materializeForOneCase(
         testRunCaseId,
         rowIndex: idx,
         label: row.label,
-        valuesJson: row.valuesJson as Prisma.InputJsonValue,
+        valuesJson: row.valuesJson as JsonValue,
         dataSetSnapshotId: snapshot.id,
       })),
     });

@@ -1,18 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockPrisma } = vi.hoisted(() => ({
-  mockPrisma: {
+const { mockDb } = vi.hoisted(() => ({
+  mockDb: {
     projectIntegration: { findMany: vi.fn() },
     templates: { findFirst: vi.fn() },
     templateProjectAssignment: { findUnique: vi.fn() },
   },
 }));
 
-vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
-
-vi.mock("@prisma/client", () => ({
-  WorkflowScope: { CASES: "CASES", RUNS: "RUNS" },
-}));
+vi.mock("@/lib/db", () => ({ baseDb: mockDb }));
 
 import {
   listGenerationProjects,
@@ -38,7 +34,7 @@ describe("jira-panel-generation", () => {
     ];
 
     it("flags the issue's mapped project and sorts it first", async () => {
-      mockPrisma.projectIntegration.findMany.mockResolvedValue(rows);
+      mockDb.projectIntegration.findMany.mockResolvedValue(rows);
       const result = await listGenerationProjects(1, "ALP");
       expect(result).toEqual([
         { id: 11, name: "Alpha", isDefaultForIssue: true },
@@ -47,13 +43,13 @@ describe("jira-panel-generation", () => {
     });
 
     it("matches the project key case-insensitively", async () => {
-      mockPrisma.projectIntegration.findMany.mockResolvedValue(rows);
+      mockDb.projectIntegration.findMany.mockResolvedValue(rows);
       const result = await listGenerationProjects(1, "alp");
       expect(result[0]).toMatchObject({ id: 11, isDefaultForIssue: true });
     });
 
     it("sorts alphabetically when no issue key is given", async () => {
-      mockPrisma.projectIntegration.findMany.mockResolvedValue(rows);
+      mockDb.projectIntegration.findMany.mockResolvedValue(rows);
       const result = await listGenerationProjects(1, null);
       expect(result.map((p) => p.name)).toEqual(["Alpha", "Zeta"]);
       expect(result.every((p) => !p.isDefaultForIssue)).toBe(true);
@@ -62,7 +58,7 @@ describe("jira-panel-generation", () => {
 
   describe("loadTemplateData", () => {
     it("maps case fields to TemplateData + fieldMappings, excluding Steps", async () => {
-      mockPrisma.templates.findFirst.mockResolvedValue({
+      mockDb.templates.findFirst.mockResolvedValue({
         id: 3,
         templateName: "Manual",
         caseFields: [
@@ -128,20 +124,18 @@ describe("jira-panel-generation", () => {
     });
 
     it("returns null when the template doesn't exist", async () => {
-      mockPrisma.templates.findFirst.mockResolvedValue(null);
+      mockDb.templates.findFirst.mockResolvedValue(null);
       expect(await loadTemplateData(999)).toBeNull();
     });
   });
 
   describe("templateBelongsToProject", () => {
     it("returns true when an assignment exists", async () => {
-      mockPrisma.templateProjectAssignment.findUnique.mockResolvedValue({
+      mockDb.templateProjectAssignment.findUnique.mockResolvedValue({
         templateId: 3,
       });
       expect(await templateBelongsToProject(3, 10)).toBe(true);
-      expect(
-        mockPrisma.templateProjectAssignment.findUnique
-      ).toHaveBeenCalledWith(
+      expect(mockDb.templateProjectAssignment.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { templateId_projectId: { templateId: 3, projectId: 10 } },
         })
@@ -149,7 +143,7 @@ describe("jira-panel-generation", () => {
     });
 
     it("returns false when no assignment exists", async () => {
-      mockPrisma.templateProjectAssignment.findUnique.mockResolvedValue(null);
+      mockDb.templateProjectAssignment.findUnique.mockResolvedValue(null);
       expect(await templateBelongsToProject(3, 99)).toBe(false);
     });
   });

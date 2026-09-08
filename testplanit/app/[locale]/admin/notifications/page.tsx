@@ -1,26 +1,22 @@
 "use client";
 
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import { Loading } from "@/components/Loading";
 import { DataTable } from "@/components/tables/DataTable";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SectionHeader } from "@/components/ui/typography";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { NotificationMode } from "@prisma/client";
-import { Bell, Megaphone, Send } from "lucide-react";
+import { NotificationMode } from "~/zenstack/models";
+import { Save, Send } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner"; // cspell:ignore sonner
 import {
@@ -28,46 +24,27 @@ import {
   getSystemNotificationHistory,
 } from "~/app/actions/admin-system-notifications";
 import { emptyEditorContent } from "~/app/constants";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
-import {
-  useCreateAppConfig,
-  useFindUniqueAppConfig,
-  useUpdateAppConfig,
-} from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { useColumns, NotificationHistoryItem } from "./columns";
 
+// System-notification history is fetched from a server action a page at a time
+// and accumulated into one list; the virtualized table renders only the visible
+// window and pulls the next page as the admin scrolls near the bottom.
+const PAGE_SIZE = 50;
+
 export default function NotificationSettingsPage() {
-  return (
-    <PaginationProvider>
-      <NotificationSettingsContent />
-    </PaginationProvider>
-  );
+  return <NotificationSettingsContent />;
 }
 
 function NotificationSettingsContent() {
+  const locale = useLocale();
   const t = useTranslations("admin.notifications");
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems,
-    setTotalItems,
-    startIndex,
-    endIndex,
-    totalPages,
-  } = usePagination();
-  const pageSizeOptions = usePageSizeOptions(totalItems);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [defaultMode, setDefaultMode] = useState<NotificationMode>("IN_APP");
   const [systemNotificationTitle, setSystemNotificationTitle] = useState("");
@@ -111,13 +88,15 @@ function NotificationSettingsContent() {
     [notificationHistory]
   );
 
-  const { data: settings, isLoading } = useFindUniqueAppConfig({
+  const { data: settings, isLoading } = useClientQueries(
+    schema
+  ).appConfig.useFindUnique({
     where: { key: "notificationSettings" },
   });
   const { mutate: createSettings, isPending: isCreating } =
-    useCreateAppConfig();
+    useClientQueries(schema).appConfig.useCreate();
   const { mutate: updateSettings, isPending: isUpdating } =
-    useUpdateAppConfig();
+    useClientQueries(schema).appConfig.useUpdate();
 
   useEffect(() => {
     // Redirect non-admin users
@@ -163,16 +142,18 @@ function NotificationSettingsContent() {
   }, [defaultMode]);
 
   const loadNotificationHistory = useCallback(
-    async (page: number, size: number) => {
+    async (page: number, append: boolean) => {
       setIsLoadingHistory(true);
       try {
         const result = await getSystemNotificationHistory({
           page,
-          pageSize: size,
+          pageSize: PAGE_SIZE,
         });
         if (result.success) {
-          setNotificationHistory(result.notifications);
-          setTotalItems(result.totalCount || 0);
+          setNotificationHistory((prev) =>
+            append ? [...prev, ...result.notifications] : result.notifications
+          );
+          setTotalCount(result.totalCount || 0);
         }
       } catch (error) {
         console.error("Failed to load notification history:", error);
@@ -180,14 +161,19 @@ function NotificationSettingsContent() {
         setIsLoadingHistory(false);
       }
     },
-    [setTotalItems]
+    []
   );
 
-  // Load notification history when page or pageSize changes
+  // Load the first page on mount.
   useEffect(() => {
-    const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
-    void loadNotificationHistory(currentPage, effectivePageSize);
-  }, [currentPage, pageSize, loadNotificationHistory]);
+    void loadNotificationHistory(1, false);
+  }, [loadNotificationHistory]);
+
+  // Pull the next page and append as the table nears the bottom.
+  const handleLoadMore = useCallback(() => {
+    const nextPage = Math.floor(notificationHistory.length / PAGE_SIZE) + 1;
+    void loadNotificationHistory(nextPage, true);
+  }, [notificationHistory.length, loadNotificationHistory]);
 
   const handleSendSystemNotification = async () => {
     const messageText = extractTextFromNode(systemNotificationMessage);
@@ -211,10 +197,8 @@ function NotificationSettingsContent() {
         });
         setSystemNotificationTitle("");
         setSystemNotificationMessage(emptyEditorContent);
-        // Reload the first page after sending
-        setCurrentPage(1);
-        const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
-        void loadNotificationHistory(1, effectivePageSize);
+        // Reload from the first page after sending (replaces the accumulated list)
+        void loadNotificationHistory(1, false);
       } else {
         toast.error(tGlobal("common.errors.error"), {
           description:
@@ -295,20 +279,12 @@ function NotificationSettingsContent() {
     <div className="space-y-6">
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle
-                data-testid="notifications-page-title"
-                className="items-center flex"
-              >
-                <Bell className="inline mr-2 h-8 w-8" />
-                {t("title")}
-              </CardTitle>
-              <CardDescription data-testid="notifications-page-description">
-                {t("description")}
-              </CardDescription>
-            </div>
-          </div>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="notifications-page-title">
+              {t("title")}
+            </CardTitle>
+            <HelpPopover helpKey="notifications" />
+          </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
@@ -360,6 +336,7 @@ function NotificationSettingsContent() {
 
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={isCreating || isUpdating}>
+              <Save className="h-4 w-4" />
               {isCreating || isUpdating
                 ? tGlobal("common.actions.saving")
                 : t("save")}
@@ -370,20 +347,12 @@ function NotificationSettingsContent() {
 
       <Card>
         <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle
-                data-testid="system-notifications-section"
-                className="items-center flex"
-              >
-                <Megaphone className="inline mr-2 h-8 w-8" />
-                {t("systemNotification.title")}
-              </CardTitle>
-              <CardDescription data-testid="system-notifications-description">
-                {t("systemNotification.description")}
-              </CardDescription>
-            </div>
-          </div>
+          <SectionHeader className="flex items-center gap-2">
+            <CardTitle data-testid="system-notifications-section">
+              {t("systemNotification.title")}
+            </CardTitle>
+            <HelpPopover helpKey="notificationsSystem" />
+          </SectionHeader>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
@@ -444,49 +413,41 @@ function NotificationSettingsContent() {
 
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3
-                className="text-lg font-semibold"
-                data-testid="notification-history-title"
-              >
-                {t("systemNotification.history.title")}
-              </h3>
-              {totalItems > 0 && (
-                <div className="flex flex-col items-end">
-                  <PaginationInfo
-                    startIndex={startIndex}
-                    endIndex={endIndex}
-                    totalRows={totalItems}
-                    searchString=""
-                    pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                    pageSizeOptions={pageSizeOptions}
-                    handlePageSizeChange={(size) => setPageSize(size)}
-                  />
-                  <PaginationComponent
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                  />
-                </div>
+              <SectionHeader className="flex items-center gap-2">
+                <CardTitle data-testid="notification-history-title">
+                  {t("systemNotification.history.title")}
+                </CardTitle>
+                <HelpPopover helpKey="notificationsHistory" />
+              </SectionHeader>
+              {tableData.length > 0 && (
+                <p className="text-sm text-muted-foreground shrink-0">
+                  {tGlobal("admin.auditLogs.showing", {
+                    loaded: tableData.length.toLocaleString(locale),
+                    total: (totalCount || tableData.length).toLocaleString(
+                      locale
+                    ),
+                  })}
+                </p>
               )}
             </div>
-            {notificationHistory.length > 0 || isLoadingHistory ? (
-              <div data-testid="notification-history-table">
-                <DataTable
-                  columns={columns as any}
-                  data={tableData}
-                  columnVisibility={columnVisibility}
-                  onColumnVisibilityChange={setColumnVisibility}
-                  isLoading={isLoadingHistory}
-                  pageSize={
-                    typeof pageSize === "number" ? pageSize : totalItems
-                  }
-                />
-              </div>
-            ) : (
-              <p className="text-muted-foreground">
-                {t("systemNotification.history.empty")}
-              </p>
-            )}
+            <div
+              className="h-[500px] min-h-[300px] w-full"
+              data-testid="notification-history-table"
+            >
+              <DataTable
+                virtualized
+                columns={columns as any}
+                data={tableData}
+                columnVisibility={columnVisibility}
+                onColumnVisibilityChange={setColumnVisibility}
+                isLoading={isLoadingHistory}
+                hasMore={notificationHistory.length < totalCount}
+                onLoadMore={handleLoadMore}
+                emptyMessage={t("systemNotification.history.empty")}
+                testIdPrefix="notification-history-vtable"
+                rowTestIdPrefix="notification-history-row"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

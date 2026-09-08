@@ -58,8 +58,8 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
           <Bug
             className={
               size === "small"
-                ? "w-3 h-3 mr-0.5 shrink-0"
-                : "w-4 h-4 mr-1 shrink-0"
+                ? "w-3 h-3 me-0.5 shrink-0"
+                : "w-4 h-4 me-1 shrink-0"
             }
           />
           {issues.length}

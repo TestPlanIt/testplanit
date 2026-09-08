@@ -156,7 +156,7 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected("projects", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -165,7 +165,7 @@ export function ReportFilters({
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <span className="truncate">{tFilters("allProjects")}</span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {selectedFilterItem.options?.reduce(
                     (sum, option) => sum + (option.count || 0),
                     0
@@ -178,7 +178,7 @@ export function ReportFilters({
                   tabIndex={0}
                   key={option.id}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected("projects", option.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -188,7 +188,7 @@ export function ReportFilters({
                     <FolderOpen className="w-4 h-4 shrink-0" />
                     <span className="truncate">{option.name}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {option.count || 0}
                   </span>
                 </div>
@@ -203,7 +203,7 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected("templates", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -214,7 +214,7 @@ export function ReportFilters({
                     {tGlobal("repository.views.allTemplates")}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {selectedFilterItem.options?.reduce(
                     (sum, option) => sum + (option.count || 0),
                     0
@@ -227,7 +227,7 @@ export function ReportFilters({
                   tabIndex={0}
                   key={option.id}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected("templates", option.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -237,7 +237,7 @@ export function ReportFilters({
                     <LayoutTemplate className="w-4 h-4 shrink-0" />
                     <span className="truncate">{option.name}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {option.count || 0}
                   </span>
                 </div>
@@ -252,7 +252,7 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected("states", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -263,7 +263,7 @@ export function ReportFilters({
                     {tGlobal("repository.views.allStates")}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {selectedFilterItem.options?.reduce(
                     (sum, option) => sum + (option.count || 0),
                     0
@@ -276,7 +276,7 @@ export function ReportFilters({
                   tabIndex={0}
                   key={option.id}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected("states", option.id) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -290,7 +290,7 @@ export function ReportFilters({
                     />
                     <span className="truncate">{option.name}</span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {option.count || 0}
                   </span>
                 </div>
@@ -305,7 +305,7 @@ export function ReportFilters({
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                  "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                   isValueSelected("automated", null) &&
                     "bg-primary/20 hover:bg-primary/30"
                 )}
@@ -316,7 +316,7 @@ export function ReportFilters({
                     {tGlobal("repository.views.allCases")}
                   </span>
                 </div>
-                <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                   {totalCount}
                 </span>
               </div>
@@ -329,7 +329,7 @@ export function ReportFilters({
                     tabIndex={0}
                     key={String(option.id)}
                     className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                       isValueSelected("automated", option.id) &&
                         "bg-primary/20 hover:bg-primary/30"
                     )}
@@ -343,7 +343,7 @@ export function ReportFilters({
                       )}
                       <span className="truncate">{option.name}</span>
                     </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                    <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                       {option.count || 0}
                     </span>
                   </div>
@@ -360,7 +360,7 @@ export function ReportFilters({
                   role="button"
                   tabIndex={0}
                   className={cn(
-                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                     isValueSelected(selectedFilter, null) &&
                       "bg-primary/20 hover:bg-primary/30"
                   )}
@@ -371,7 +371,7 @@ export function ReportFilters({
                       {tGlobal("common.fields.mixed")}
                     </span>
                   </div>
-                  <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                  <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                     {totalCount}
                   </span>
                 </div>
@@ -384,7 +384,7 @@ export function ReportFilters({
                       tabIndex={0}
                       key="none-option"
                       className={cn(
-                        "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                        "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                         isValueSelected(selectedFilter, "none") &&
                           "bg-primary/20 hover:bg-primary/30"
                       )}
@@ -404,7 +404,7 @@ export function ReportFilters({
                         tabIndex={0}
                         key={`option-${option.id}`}
                         className={cn(
-                          "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                          "w-full flex items-center justify-between text-start font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
                           isValueSelected(selectedFilter, option.id) &&
                             "bg-primary/20 hover:bg-primary/30"
                         )}
@@ -422,7 +422,7 @@ export function ReportFilters({
                           )}
                           <span className="truncate">{option.name}</span>
                         </div>
-                        <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                        <span className="text-sm text-muted-foreground shrink-0 ms-2 whitespace-nowrap">
                           {option.count || 0}
                         </span>
                       </div>

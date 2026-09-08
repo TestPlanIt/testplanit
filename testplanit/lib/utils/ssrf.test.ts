@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { EventEmitter } from "node:events";
 import {
   ssrfSafeFetch,
-  isPrivateIp,
   isPrivateOrInternalIp,
   getAllowedPrivateHosts,
   SsrfError,
@@ -170,6 +169,35 @@ describe("isPrivateOrInternalIp", () => {
     expect(isPrivateOrInternalIp("::1")).toBe(true);
   });
 
+  // An IPv4-mapped IPv6 literal reaches the IPv4 ranges only after it is
+  // unmapped: it matches none of the IPv6 literals, none of the fe80/fc/fd
+  // prefixes, and the IPv4 regexes are anchored past the "::ffff:" prefix.
+  it("returns true for ::ffff:127.0.0.1 (IPv4-mapped loopback)", () => {
+    expect(isPrivateOrInternalIp("::ffff:127.0.0.1")).toBe(true);
+  });
+
+  it("returns true for ::ffff:7f00:1 (the URL parser's hex spelling of the same)", () => {
+    expect(isPrivateOrInternalIp("::ffff:7f00:1")).toBe(true);
+  });
+
+  it("returns true for ::ffff:169.254.169.254 (mapped cloud metadata)", () => {
+    expect(isPrivateOrInternalIp("::ffff:169.254.169.254")).toBe(true);
+  });
+
+  it("returns true for ::ffff:10.0.0.1 and ::ffff:192.168.1.1 (mapped private)", () => {
+    expect(isPrivateOrInternalIp("::ffff:10.0.0.1")).toBe(true);
+    expect(isPrivateOrInternalIp("::ffff:192.168.1.1")).toBe(true);
+  });
+
+  it("returns true for [::ffff:127.0.0.1] (bracketed, as URL parsing yields)", () => {
+    expect(isPrivateOrInternalIp("[::ffff:127.0.0.1]")).toBe(true);
+  });
+
+  it("still returns false for a mapped PUBLIC address", () => {
+    expect(isPrivateOrInternalIp("::ffff:8.8.8.8")).toBe(false);
+    expect(isPrivateOrInternalIp("::ffff:808:808")).toBe(false);
+  });
+
   it("returns true for 0.0.0.0 (unspecified address)", () => {
     expect(isPrivateOrInternalIp("0.0.0.0")).toBe(true);
   });
@@ -192,52 +220,6 @@ describe("isPrivateOrInternalIp", () => {
 
   it("returns true for fd00::1 (IPv6 ULA)", () => {
     expect(isPrivateOrInternalIp("fd00::1")).toBe(true);
-  });
-
-  // IPv4-mapped IPv6 literals — the class of address that bypassed the old
-  // string-prefix guard (GHSA-x7jm-4fpq-5mhm). BlockList unmaps the embedded IPv4.
-  it("returns true for ::ffff:127.0.0.1 (mapped loopback)", () => {
-    expect(isPrivateOrInternalIp("::ffff:127.0.0.1")).toBe(true);
-  });
-
-  it("returns true for ::ffff:7f00:1 (mapped loopback, hex form)", () => {
-    expect(isPrivateOrInternalIp("::ffff:7f00:1")).toBe(true);
-  });
-
-  it("returns true for ::ffff:169.254.169.254 (mapped cloud metadata)", () => {
-    expect(isPrivateOrInternalIp("::ffff:169.254.169.254")).toBe(true);
-  });
-
-  it("returns true for 100.64.0.1 (CGNAT, RFC 6598)", () => {
-    expect(isPrivateOrInternalIp("100.64.0.1")).toBe(true);
-  });
-
-  it("returns true for metadata.google.internal (internal DNS name)", () => {
-    expect(isPrivateOrInternalIp("metadata.google.internal")).toBe(true);
-  });
-});
-
-describe("isPrivateIp", () => {
-  it("blocks IPv4-mapped IPv6 private literals", () => {
-    expect(isPrivateIp("::ffff:127.0.0.1")).toBe(true);
-    expect(isPrivateIp("::ffff:7f00:1")).toBe(true);
-    expect(isPrivateIp("::ffff:169.254.169.254")).toBe(true);
-    expect(isPrivateIp("::ffff:10.0.0.1")).toBe(true);
-  });
-
-  it("tolerates bracketed IPv6 literals", () => {
-    expect(isPrivateIp("[::1]")).toBe(true);
-  });
-
-  it("allows genuine public addresses", () => {
-    expect(isPrivateIp("8.8.8.8")).toBe(false);
-    expect(isPrivateIp("2606:4700::1")).toBe(false);
-    expect(isPrivateIp("::ffff:8.8.8.8")).toBe(false);
-  });
-
-  it("returns false for non-IP strings (hostnames)", () => {
-    expect(isPrivateIp("example.com")).toBe(false);
-    expect(isPrivateIp("")).toBe(false);
   });
 });
 

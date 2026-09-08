@@ -34,15 +34,45 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
 
       - name: Install Crowdin CLI
-        run: npm install -g @crowdin/cli@4
+        run: npm install -g @crowdin/cli@5
 
+      # Push the repo's locale files back into Crowdin as approved translations.
+      # Hand-corrected strings in messages/*.json are otherwise invisible to
+      # Crowdin, so the next `crowdin download` would overwrite them with
+      # whatever the translation engine produced.
+      #
+      # This runs BEFORE the source upload. The repo's translations correspond
+      # to the English currently in Crowdin, so they must land while that is
+      # still the old source. Uploading sources first clears the translations
+      # of every changed string, and this step would immediately restore the
+      # stale text and approve it -- leaving auto-translate nothing to do and
+      # freezing edits to existing keys in every locale.
+      - name: Upload corrected translations
+        working-directory: testplanit
+        run: crowdin upload translations
+
+      # Clears translations for strings whose English changed, leaving the rest
+      # (including the corrections uploaded above) intact.
       - name: Upload sources
         working-directory: testplanit
         run: crowdin upload sources
 
-      - name: Pre-translate via machine translation
+      # Uses the AI method, matching `crowdin:sync` in testplanit/package.json.
+      # The MT engine (609928) rendered ICU's `#` count placeholder as a literal
+      # number sign and translated it -- "See # Test Cases" became "Voir tous
+      # les cas de test n°" -- which silently drops the number from the message.
+      # The AI prompt preserves `#` and named arguments, and picks the right
+      # CLDR plural categories per locale.
+      #
+      # --scope untranslated leaves already-translated strings alone, so a
+      # re-run can never revisit (and re-break) an existing translation.
+      - name: Auto-translate via AI
         working-directory: testplanit
-        run: crowdin pre-translate --method=mt --engine-id=609928
+        run: |
+          crowdin auto-translate \
+            --method=ai \
+            --ai-prompt=536391 \
+            --scope untranslated
 
       - name: Download translations
         working-directory: testplanit

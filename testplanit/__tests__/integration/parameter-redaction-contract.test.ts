@@ -28,7 +28,7 @@ import type { AuditEvent } from "@/lib/services/auditLog";
 // ITERATION_RESULT_RECORDED). For Phase 1 we use CREATE, which IS guaranteed
 // to exist (it's the canonical first AuditAction value), and document the
 // Phase 3 follow-up via a comment.
-import { AuditAction } from "@prisma/client";
+import { AuditAction } from "~/zenstack/models";
 
 // AuditAction enum verification: schema.zmodel:4511-4554 includes CREATE,
 // UPDATE, DELETE, etc. RESULT_RECORDED is NOT in the enum at Phase 1.

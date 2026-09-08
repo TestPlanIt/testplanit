@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { TxClient } from "~/lib/zenstack";
 
 /**
  * AppConfig key holding the SYSTEM edit-window policy (in seconds):
@@ -39,7 +39,7 @@ export function isEditWindowExpiredError(
  * string is accepted defensively. Returns `null` when unconfigured.
  */
 export async function readEditResultsDurationSeconds(
-  client: Pick<Prisma.TransactionClient, "appConfig">
+  client: Pick<TxClient, "appConfig">
 ): Promise<number | null> {
   const row = await client.appConfig.findUnique({
     where: { key: EDIT_RESULTS_DURATION_KEY },
@@ -95,7 +95,7 @@ export function resolveEffectiveWindowSeconds(
  * guard never masks a 404 as a 403.
  */
 export async function assertResultEditWindowOpen(
-  client: Pick<Prisma.TransactionClient, "appConfig" | "testRunResults">,
+  client: Pick<TxClient, "appConfig" | "testRunResults">,
   resultId: number,
   userAccess: string | null | undefined
 ): Promise<void> {

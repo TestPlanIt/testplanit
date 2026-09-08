@@ -1,16 +1,21 @@
+import { useClientQueries } from "@zenstackhq/tanstack-query/react";
+import { schema } from "~/zenstack/schema";
 import ProjectOverviewSunburstChart from "@/components/dataVisualizations/ProjectOverviewSunburstChart";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { LinkIcon } from "lucide-react";
+import { LinkIcon, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import {
-  useFindManyRepositoryCases,
-  useFindManyWorkflows,
-  useGroupByRepositoryCases,
-} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface RepositoryCasesSectionProps {
@@ -21,8 +26,12 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
   projectId,
 }) => {
   const t = useTranslations("projects.overview");
+  const tCommon = useTranslations("common.actions");
+  const [isChartZoomed, setIsChartZoomed] = React.useState(false);
 
-  const { data: repositoryCasesBreakdown } = useGroupByRepositoryCases(
+  const { data: repositoryCasesBreakdown } = useClientQueries(
+    schema
+  ).repositoryCases.useGroupBy(
     {
       by: ["automated", "stateId"],
       where: {
@@ -55,7 +64,9 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     return Array.from(ids);
   }, [repositoryCasesBreakdown]);
 
-  const { data: workflowStates } = useFindManyWorkflows(
+  const { data: workflowStates } = useClientQueries(
+    schema
+  ).workflows.useFindMany(
     breakdownStateIds.length
       ? {
           where: { id: { in: breakdownStateIds } },
@@ -144,20 +155,11 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
     );
   }, [repositoryCasesBreakdown, workflowStatesById]);
 
-  const repositoryCasesTotalCount = React.useMemo(
-    () =>
-      repositoryCasesBreakdownData.reduce(
-        (total, group) => total + group.count,
-        0
-      ),
-    [repositoryCasesBreakdownData]
-  );
-
   const {
     data: repositoryCasesLatestFive,
     isLoading,
     isFetching,
-  } = useFindManyRepositoryCases(
+  } = useClientQueries(schema).repositoryCases.useFindMany(
     {
       where: {
         AND: [
@@ -186,28 +188,34 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
             },
           },
         },
-        issues: {
+        caseIssues: {
           where: {
-            isDeleted: false,
+            issue: {
+              isDeleted: false,
+            },
           },
           select: {
-            id: true,
-            name: true,
-            externalId: true,
-            externalUrl: true,
-            externalKey: true,
-            title: true,
-            externalStatus: true,
-            data: true,
-            integrationId: true,
-            lastSyncedAt: true,
-            issueTypeName: true,
-            issueTypeIconUrl: true,
-            integration: {
+            issue: {
               select: {
                 id: true,
-                provider: true,
                 name: true,
+                externalId: true,
+                externalUrl: true,
+                externalKey: true,
+                title: true,
+                externalStatus: true,
+                data: true,
+                integrationId: true,
+                lastSyncedAt: true,
+                issueTypeName: true,
+                issueTypeIconUrl: true,
+                integration: {
+                  select: {
+                    id: true,
+                    provider: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -248,62 +256,93 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
   }
 
   return (
-    <div className="flex flex-col">
-      <p className="text-sm text-muted-foreground mb-4">
-        <Link className="group" href={`/projects/repository/${projectId}`}>
-          {t("seeAllTestCases", {
-            count:
-              repositoryCasesTotalCount || repositoryCasesLatestFive.length,
-          })}
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </Link>
-      </p>
-      <div className="flex">
-        <div className="flex flex-col pr-6 w-1/2 mr-2 overflow-hidden">
-          <h2 className="text-primary mb-2">{t("latestTestCases")}</h2>
-          <ul className="flex flex-col space-y-1">
-            {repositoryCasesLatestFive.map((caseItem) => (
-              <li
-                key={caseItem.id}
-                className="ml-6 w-full flex items-start space-y-1 group"
-              >
-                <Link
-                  className="flex items-start flex-1 min-w-0"
-                  href={`/projects/repository/${projectId}/${caseItem.id}`}
-                >
-                  <div className="flex items-center flex-1 min-w-0 mr-2">
-                    <CaseDisplay
-                      id={caseItem.id}
-                      name={caseItem.name}
-                      size="large"
-                      source={caseItem.source}
-                      automated={caseItem.automated}
-                      hasParameters={caseItem.hasParameters}
-                      className="line-clamp-2"
-                    />
-                    <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  </div>
-                </Link>
-                {caseItem.issues && caseItem.issues.length > 0 && (
-                  <div className="shrink-0 mr-6">
-                    <IssuesListDisplay
-                      issues={caseItem.issues.map((issue) => ({
-                        ...issue,
-                        projectIds: [projectId],
-                      }))}
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <Separator className="h-auto" orientation="vertical" />
-        <div className="pl-6 w-1/2 overflow-hidden">
-          <h2 className="text-primary mb-2">{t("testCaseBreakdown")}</h2>
+    // Side by side while the section is wide enough for both halves; stacked
+    // below that, so a narrow panel still leaves the case names room to read.
+    <div className="@container flex flex-col">
+      <div className="flex flex-col @2xl:flex-row">
+        <div className="w-full @2xl:w-1/2 @2xl:pe-6 @2xl:me-2 overflow-hidden">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <h2 className="text-primary">{t("testCaseBreakdown")}</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setIsChartZoomed(true)}
+            >
+              <Maximize2 className="h-4 w-4" />
+              <span className="sr-only">{tCommon("expand")}</span>
+            </Button>
+          </div>
           <ProjectOverviewSunburstChart data={repositoryCasesBreakdownData} />
         </div>
+        <Separator className="my-4 @2xl:hidden" orientation="horizontal" />
+        <Separator
+          className="h-auto hidden @2xl:block"
+          orientation="vertical"
+        />
+        <div className="flex flex-col w-full @2xl:w-1/2 @2xl:ps-6 overflow-hidden">
+          <h2 className="text-primary mb-2">{t("latestTestCases")}</h2>
+          <ul className="flex flex-col space-y-1">
+            {repositoryCasesLatestFive.map((caseItem) => {
+              const caseIssues = caseItem.caseIssues.map((ci) => ci.issue);
+
+              return (
+                // Name and issues are separate columns with a gutter between
+                // them; the name reclaims the issues column when a case has
+                // none.
+                <li
+                  key={caseItem.id}
+                  className="ms-6 flex items-start gap-3 group"
+                >
+                  <Link
+                    className="flex items-start flex-1 min-w-0"
+                    href={`/projects/repository/${projectId}/${caseItem.id}`}
+                  >
+                    <div className="flex items-center flex-1 min-w-0">
+                      <CaseDisplay
+                        id={caseItem.id}
+                        name={caseItem.name}
+                        size="large"
+                        source={caseItem.source}
+                        automated={caseItem.automated}
+                        hasParameters={caseItem.hasParameters}
+                        className="line-clamp-2"
+                      />
+                      <LinkIcon className="w-4 h-4 inline ms-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </div>
+                  </Link>
+                  {caseIssues.length > 0 && (
+                    <div className="shrink-0">
+                      <IssuesListDisplay
+                        issues={caseIssues.map((issue) => ({
+                          ...issue,
+                          projectIds: [projectId],
+                        }))}
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
+      <Dialog open={isChartZoomed} onOpenChange={setIsChartZoomed}>
+        <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
+          <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
+            <DialogTitle>{t("testCaseBreakdown")}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t("testCaseBreakdown")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden p-4 sm:p-0">
+            <ProjectOverviewSunburstChart
+              data={repositoryCasesBreakdownData}
+              className="h-full"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

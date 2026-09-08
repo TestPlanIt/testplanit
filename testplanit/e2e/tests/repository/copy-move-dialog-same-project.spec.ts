@@ -1,4 +1,63 @@
+import type { Page } from "@playwright/test";
+
 import { expect, test } from "../../fixtures/index";
+import { clickOverflowAction } from "../../utils/action-overflow";
+
+/**
+ * The repository page auto-selects a folder on load, but which one is not
+ * deterministic (tree order vs. remembered state) — and the async auto-select
+ * can even override an explicit click that lands first. Click the folder and
+ * re-click until the expected case row is actually rendered.
+ */
+async function openFolderWithCase(
+  page: Page,
+  folderId: number,
+  caseId: number
+): Promise<void> {
+  const folderNode = page.getByTestId(`folder-node-${folderId}`).first();
+  await folderNode.waitFor({ state: "visible", timeout: 15_000 });
+  await expect(async () => {
+    await folderNode.click();
+    await expect(
+      page.locator(`[data-testid="case-row-${caseId}"]`).first()
+    ).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+}
+
+/**
+ * Ticks a case row's select checkbox. The cases table keeps re-rendering while
+ * its queries settle, so the row backing the locator can be replaced mid-click
+ * ("element was detached from the DOM"). Retry until the box actually reads as
+ * checked instead of trusting one click to land.
+ */
+async function selectCase(page: Page, caseId: number): Promise<void> {
+  const checkbox = page.locator(`[data-testid="case-checkbox-${caseId}"]`);
+  await expect(async () => {
+    await checkbox.click({ timeout: 5000 });
+    await expect(checkbox).toBeChecked({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+}
+
+/**
+ * Opens the target-folder picker and clicks the given folder option. The
+ * trigger click can be swallowed while the freshly-opened dialog is still
+ * settling (open animation + async project/folder queries reflow it), so
+ * re-open the popover until the option is actually rendered. Only click the
+ * trigger while the list is closed — clicking it with the popover open would
+ * toggle it shut again.
+ */
+async function pickTargetFolder(page: Page, folderId: number): Promise<void> {
+  const option = page.getByTestId(`copy-move-folder-option-${folderId}`);
+  await expect(async () => {
+    if (!(await option.isVisible().catch(() => false))) {
+      await page
+        .getByTestId("copy-move-target-folder-trigger")
+        .click({ timeout: 2000 });
+    }
+    await expect(option).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+  await option.click();
+}
 
 /**
  * Same-project copy/move via the wizard dialog. Pure DOM clicks — no HTML5
@@ -9,8 +68,8 @@ import { expect, test } from "../../fixtures/index";
  *   - same-project copy creates a new case in the target folder; verifies
  *     the (Current) suffix is visible on the picker trigger and that copy
  *     is the default operation
- *   - same-project move soft-deletes the source and creates a new case in
- *     the target folder
+ *   - same-project move relocates the source row into the target folder,
+ *     keeping its id and leaving no copy behind
  *   - multi-select copy hits the plural ICU branch
  *
  * Folder-mode descendant disable (CONTEXT D-08..D-10) and the same-folder
@@ -146,6 +205,12 @@ test.describe("Copy/Move dialog same-project", () => {
       api.untrackCase(sourceCaseAId);
       api.untrackCase(sourceCaseBId);
       api.untrackCase(sourceCaseCId);
+      // The folders must outlive this test too: without untracking, the setup
+      // test's fixture teardown soft-deletes them, and the destination folder
+      // then never appears in the dialog's folder combobox for the later
+      // tests. afterAll still cleans them up.
+      api.untrackFolder(siblingFolderId);
+      api.untrackFolder(nestedFolderId);
     });
   });
 
@@ -156,15 +221,10 @@ test.describe("Copy/Move dialog same-project", () => {
   }) => {
     await test.step("Open repository and select source case A", async () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page
-        .locator(`[data-testid="case-row-${sourceCaseAId}"]`)
-        .first()
-        .waitFor({ state: "visible", timeout: 15_000 });
+      await openFolderWithCase(page, rootFolderId, sourceCaseAId);
 
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseAId}"]`)
-        .click();
-      await page.getByTestId("copy-move-button").click();
+      await selectCase(page, sourceCaseAId);
+      await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
     });
@@ -179,14 +239,9 @@ test.describe("Copy/Move dialog same-project", () => {
           .getByTestId("copy-move-project-current-suffix")
       ).toBeVisible();
 
-      // Pick the sibling folder as destination. Wait for the option to render
-      // — AsyncCombobox lazy-loads options after the trigger opens the popover.
-      await page.getByTestId("copy-move-target-folder-trigger").click();
-      const siblingOption = page.getByTestId(
-        `copy-move-folder-option-${siblingFolderId}`
-      );
-      await expect(siblingOption).toBeVisible({ timeout: 30_000 });
-      await siblingOption.click();
+      // Pick the sibling folder as destination (AsyncCombobox lazy-loads
+      // options after the trigger opens the popover).
+      await pickTargetFolder(page, siblingFolderId);
 
       await page.getByTestId("copy-move-next-button").click();
     });
@@ -260,40 +315,30 @@ test.describe("Copy/Move dialog same-project", () => {
   }) => {
     await test.step("Open repository and select source case B", async () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page
-        .locator(`[data-testid="case-row-${sourceCaseBId}"]`)
-        .first()
-        .waitFor({ state: "visible", timeout: 15_000 });
+      await openFolderWithCase(page, rootFolderId, sourceCaseBId);
 
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseBId}"]`)
-        .click();
-      await page.getByTestId("copy-move-button").click();
+      await selectCase(page, sourceCaseBId);
+      await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
     });
 
     await test.step("Pick the nested folder as destination", async () => {
       // Pick the nested folder as destination — different from source root.
-      await page.getByTestId("copy-move-target-folder-trigger").click();
-      const nestedOption = page.getByTestId(
-        `copy-move-folder-option-${nestedFolderId}`
-      );
-      await expect(nestedOption).toBeVisible({ timeout: 15_000 });
-      await nestedOption.click();
+      await pickTargetFolder(page, nestedFolderId);
 
       await page.getByTestId("copy-move-next-button").click();
     });
 
-    await test.step("Switch to Move, choose rename, and run the move", async () => {
+    await test.step("Switch to Move and run the move", async () => {
       // Switch to Move.
       await page.getByTestId("copy-move-operation-move").click();
       await expect(page.getByTestId("copy-move-operation-move")).toBeChecked();
 
-      // Same-project move collides with itself on (projectId, name, ...);
-      // pick rename so the worker doesn't skip then soft-delete the original.
-      await page.locator("label[for='cr-rename']").click();
-
+      // A same-project move to a different folder no longer self-collides:
+      // preflight excludes the moved case from collision detection (see
+      // app/api/repository/copy-move/preflight/route.ts), so no conflict-
+      // resolution radio appears. Just run the move.
       await page.getByTestId("copy-move-go-button").click();
     });
 
@@ -309,27 +354,27 @@ test.describe("Copy/Move dialog same-project", () => {
       await page.getByTestId("copy-move-close-button").click();
     });
 
-    await test.step("Verify source soft-deleted and one new case in nested folder", async () => {
-      // Verify move semantics: the original source case is now soft-deleted,
-      // and a non-deleted case lives in the nested folder. The worker
-      // implements move as "create renamed copy in target folder, then
-      // soft-delete original" (workers/copyMoveWorker.ts:541-559 + 755-759),
-      // so move + rename produces a new case row rather than mutating the
-      // source's folderId in place.
+    await test.step("Verify the source row relocated into the nested folder", async () => {
+      // Verify move semantics: a same-project move is a PURE RELOCATION.
+      // relocateWithinProject (workers/copyMoveWorker.ts) updates the existing
+      // row's folderId/repositoryId/order inside one transaction — nothing is
+      // created, renamed or soft-deleted — so the source keeps its id and
+      // stays live, and it is the very row that now sits in the nested folder.
       const sourceRes = await request.get(
         `${baseURL}/api/model/repositoryCases/findFirst`,
         {
           params: {
             q: JSON.stringify({
               where: { id: sourceCaseBId },
-              select: { id: true, isDeleted: true },
+              select: { id: true, isDeleted: true, folderId: true },
             }),
           },
         }
       );
       expect(sourceRes.ok()).toBeTruthy();
       const sourceBody = await sourceRes.json();
-      expect(sourceBody.data.isDeleted).toBe(true);
+      expect(sourceBody.data.isDeleted).toBe(false);
+      expect(sourceBody.data.folderId).toBe(nestedFolderId);
 
       const targetRes = await request.get(
         `${baseURL}/api/model/repositoryCases/findMany`,
@@ -349,10 +394,10 @@ test.describe("Copy/Move dialog same-project", () => {
       expect(targetRes.ok()).toBeTruthy();
       const targetBody = await targetRes.json();
       const movedCases = targetBody.data as Array<{ id: number; name: string }>;
+      // Exactly one case, and it is the SAME row — a relocation leaves no copy
+      // behind, so a second row here would mean the copy path ran by mistake.
       expect(movedCases.length).toBe(1);
-      for (const c of movedCases) {
-        if (!trackedNewCaseIds.includes(c.id)) trackedNewCaseIds.push(c.id);
-      }
+      expect(movedCases[0].id).toBe(sourceCaseBId);
     });
   });
 
@@ -365,10 +410,7 @@ test.describe("Copy/Move dialog same-project", () => {
 
     await test.step("Open repository and capture pre-test sibling-folder case ids", async () => {
       await page.goto(`/en-US/projects/repository/${projectId}`);
-      await page
-        .locator(`[data-testid="case-row-${sourceCaseCId}"]`)
-        .first()
-        .waitFor({ state: "visible", timeout: 15_000 });
+      await openFolderWithCase(page, rootFolderId, sourceCaseCId);
 
       // Capture the pre-test sibling-folder case count so we can assert the
       // delta (the previous test left at least 1 new case there; this test
@@ -397,22 +439,13 @@ test.describe("Copy/Move dialog same-project", () => {
     await test.step("Select two cases and pick the sibling folder", async () => {
       // Source A still lives in the root folder — test 2 COPIED it, did not
       // move. Source C is untouched.
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseAId}"]`)
-        .click();
-      await page
-        .locator(`[data-testid="case-checkbox-${sourceCaseCId}"]`)
-        .click();
-      await page.getByTestId("copy-move-button").click();
+      await selectCase(page, sourceCaseAId);
+      await selectCase(page, sourceCaseCId);
+      await clickOverflowAction(page, "copy-move-button", "cases-actions-menu");
 
       await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
 
-      await page.getByTestId("copy-move-target-folder-trigger").click();
-      const multiSiblingOption = page.getByTestId(
-        `copy-move-folder-option-${siblingFolderId}`
-      );
-      await expect(multiSiblingOption).toBeVisible({ timeout: 15_000 });
-      await multiSiblingOption.click();
+      await pickTargetFolder(page, siblingFolderId);
       await page.getByTestId("copy-move-next-button").click();
     });
 

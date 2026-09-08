@@ -1,5 +1,5 @@
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
@@ -21,7 +21,7 @@ export async function POST(
 
     const resolvedParams = await params;
     const llmIntegrationId = parseInt(resolvedParams.id);
-    const manager = LlmManager.getInstance(prisma);
+    const manager = LlmManager.getInstance(baseDb);
 
     const isConnected = await manager.testConnection(llmIntegrationId);
 

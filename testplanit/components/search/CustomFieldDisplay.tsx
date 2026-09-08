@@ -100,7 +100,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
                   {opt.icon && (
                     <DynamicIcon
                       name={opt.icon.name as IconName}
-                      className="h-3 w-3 mr-1"
+                      className="h-3 w-3 me-1"
                       color={opt.iconColor?.value}
                     />
                   )}
@@ -124,7 +124,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
                 {field.fieldOption.icon && (
                   <DynamicIcon
                     name={field.fieldOption.icon.name as IconName}
-                    className="h-3 w-3 mr-1"
+                    className="h-3 w-3 me-1"
                     color={field.fieldOption.iconColor?.value}
                   />
                 )}
@@ -142,14 +142,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
               {field.fieldName}:
             </span>
             <Badge variant="outline" className="text-xs">
-              <a
-                href={field.value}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                {field.value}
-              </a>
+              {field.value}
             </Badge>
           </div>
         ) : null;

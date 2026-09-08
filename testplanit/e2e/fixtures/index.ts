@@ -1,5 +1,15 @@
-import { expect, test as base, type Page, type Route } from "@playwright/test";
-import { ApiHelper } from "./api.fixture";
+import {
+  expect,
+  test as base,
+  type APIRequestContext,
+  type Page,
+  type Route,
+} from "@playwright/test";
+import {
+  ApiHelper,
+  createTrackedResources,
+  type TrackedResources,
+} from "./api.fixture";
 
 /**
  * Stub every always-on SSE stream with HTTP 204 so each EventSource stops
@@ -51,13 +61,55 @@ export interface TestFixtures {
 }
 
 /**
+ * Worker-scoped fixtures. See `workerCleanup` below.
+ */
+export interface WorkerFixtures {
+  /** Per-spec-file resource registry backing the `api` fixture's cleanup. */
+  workerCleanup: WorkerCleanup;
+}
+
+export interface WorkerCleanup {
+  /**
+   * Return the shared TrackedResources store for a spec file, flushing
+   * (deleting) every OTHER file's tracked resources first.
+   */
+  forFile(file: string): Promise<TrackedResources>;
+}
+
+/**
  * Extended test with custom fixtures
  */
-export const test = base.extend<TestFixtures>({
+export const test = base.extend<TestFixtures, WorkerFixtures>({
   // Auto-apply the SSE stubs to the fixture's `page`. See stubLiveStreams
   // above for rationale. Manually-created contexts must call it themselves.
-  page: async ({ page }, use) => {
+  page: async ({ page }, use, testInfo) => {
     await stubLiveStreams(page);
+
+    // Diagnostic capture (opt-in via DIAG_E2E=on): surface problems that never
+    // fail an assertion — browser console errors/warnings, uncaught page
+    // exceptions, and 5xx responses — to stdout, tagged with the test title and
+    // prefixed for grepping. Server-side DB/ORM errors already appear on the
+    // [WebServer] stream, so a single captured run log holds both sides.
+    if (process.env.DIAG_E2E === "on") {
+      const tag = testInfo.titlePath.join(" › ");
+      const oneLine = (s: string) =>
+        s.replace(/\s+/g, " ").trim().slice(0, 600);
+      page.on("console", (msg) => {
+        const t = msg.type();
+        if (t === "error" || t === "warning") {
+          console.log(`[E2E-CONSOLE:${t}] ${tag} | ${oneLine(msg.text())}`);
+        }
+      });
+      page.on("pageerror", (err) => {
+        console.log(`[E2E-PAGEERROR] ${tag} | ${oneLine(err.message)}`);
+      });
+      page.on("response", (res) => {
+        if (res.status() >= 500) {
+          console.log(`[E2E-HTTP5xx] ${tag} | ${res.status()} ${res.url()}`);
+        }
+      });
+    }
+
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
   },
@@ -65,17 +117,87 @@ export const test = base.extend<TestFixtures>({
   // Default project ID (can be overridden per test)
   projectId: 1,
 
-  // API helper fixture with automatic cleanup
-  api: async ({ request, baseURL }, use) => {
-    const api = new ApiHelper(request, baseURL || "http://localhost:3000");
+  // API helper with automatic FILE-scoped cleanup.
+  //
+  // Every ApiHelper this fixture hands out for a given spec file — whether
+  // instantiated for a beforeAll/afterAll hook or for a test — shares one
+  // TrackedResources store (see workerCleanup). Nothing is deleted while the
+  // worker is still running tests from the file, so hook-created projects and
+  // serial-describe resources created in an early test safely outlive the
+  // instance that created them. The store is flushed when the worker moves to
+  // the next spec file and at worker shutdown.
+  //
+  // There is deliberately NO cleanup() call here: a test-scoped fixture used
+  // by a beforeAll hook is torn down when the hook ends — BEFORE the tests
+  // run — and a per-instance cleanup at that point soft-deletes the resources
+  // the hook just created out from under every test in the file.
+  api: async ({ request, baseURL, workerCleanup }, use, testInfo) => {
+    const tracked = await workerCleanup.forFile(testInfo.file);
+    const api = new ApiHelper(
+      request,
+      baseURL || "http://localhost:3000",
+      tracked
+    );
 
     // Provide the API helper to the test
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(api);
-
-    // Cleanup after test
-    await api.cleanup();
   },
+
+  // Per-spec-file resource registry. Deletions run against a dedicated
+  // worker-lifetime admin request context (the built-in `request` fixture is
+  // test-scoped and disposes before a deferred flush could use it) and are
+  // awaited, so they reliably land instead of racing context disposal — the
+  // old fire-and-forget cleanup usually lost that race, which is how a single
+  // full-suite run leaked ~700 live projects.
+  workerCleanup: [
+    async ({ playwright }, use, workerInfo) => {
+      const { baseURL, storageState } = workerInfo.project.use;
+      const stores = new Map<string, TrackedResources>();
+      // One lightweight admin request context per worker, created eagerly —
+      // lazy init defeats TS closure flow analysis at the final dispose.
+      const adminContext: APIRequestContext =
+        await playwright.request.newContext({
+          baseURL,
+          storageState,
+        });
+
+      const flushAllExcept = async (keepFile?: string) => {
+        for (const [file, tracked] of stores) {
+          if (file === keepFile) continue;
+          stores.delete(file);
+          try {
+            await new ApiHelper(
+              adminContext,
+              baseURL || "http://localhost:3000",
+              tracked
+            ).cleanup();
+          } catch (error) {
+            // A leftover that fails to delete (already removed by its own
+            // test, transient 5xx, ...) must never fail the UNRELATED test
+            // whose fixture setup triggered this flush.
+            console.warn(`[workerCleanup] flush failed for ${file}:`, error);
+          }
+        }
+      };
+
+      await use({
+        async forFile(file: string) {
+          await flushAllExcept(file);
+          let tracked = stores.get(file);
+          if (!tracked) {
+            tracked = createTrackedResources();
+            stores.set(file, tracked);
+          }
+          return tracked;
+        },
+      });
+
+      await flushAllExcept();
+      await adminContext.dispose();
+    },
+    { scope: "worker" },
+  ],
 
   // Admin user ID fixture - fetches the admin user's ID from the API
   adminUserId: async ({ request, baseURL }, use) => {

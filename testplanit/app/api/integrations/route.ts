@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
+import { baseDb } from "@/lib/db";
 import { encrypt } from "@/utils/encryption";
-import { IntegrationStatus } from "@prisma/client";
+import { IntegrationStatus } from "~/zenstack/models";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -14,7 +14,7 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { access: true },
     });
@@ -23,7 +23,7 @@ export const GET = withAuditContext(async (_request: NextRequest) => {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const integrations = await prisma.integration.findMany({
+    const integrations = await baseDb.integration.findMany({
       where: { isDeleted: false },
       select: {
         id: true,
@@ -59,7 +59,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     // Check if user is admin
-    const user = await prisma.user.findUnique({
+    const user = await baseDb.user.findUnique({
       where: { id: session.user.id },
       select: { access: true },
     });
@@ -69,7 +69,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     }
 
     const body = await request.json();
-    const { name, type, authType, config } = body;
+    const { name, type, authType, config, settings, status } = body;
 
     if (!name || !type || !config) {
       return NextResponse.json(
@@ -84,7 +84,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     // the admin gets a confusing "this exists but I can't find it"
     // error. (Same latent bug pattern fix as LlmIntegration, Issue,
     // RepositoryCases, TestCaseParameter — see PR description.)
-    const existingActive = await prisma.integration.findFirst({
+    const existingActive = await baseDb.integration.findFirst({
       where: { name, isDeleted: false },
     });
     if (existingActive) {
@@ -102,9 +102,18 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       provider: type,
       authType,
       credentials: { encrypted: encryptedConfig },
-      status: IntegrationStatus.ACTIVE,
+      // Provider-specific settings (baseUrl and friends) are not secrets and
+      // are stored in the clear, but they are required for the adapter to
+      // reach the instance at all — dropping them here left every new
+      // integration unable to build a request.
+      ...(settings !== undefined ? { settings } : {}),
+      // An integration is only ACTIVE once something has vouched for it: a
+      // passing connection test on create, or a completed OAuth handshake.
+      // Defaulting to ACTIVE marked OAuth2 rows connected before any token
+      // existed.
+      status: (status as IntegrationStatus) ?? IntegrationStatus.INACTIVE,
     };
-    const integration = await prisma.integration.upsert({
+    const integration = await baseDb.integration.upsert({
       where: { name },
       create: { name, ...integrationFields },
       update: { ...integrationFields, isDeleted: false },

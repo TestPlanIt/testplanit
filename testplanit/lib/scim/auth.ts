@@ -45,7 +45,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hashToken } from "~/lib/api-tokens";
 import { extractBearerToken } from "~/lib/api-token-auth";
 import { updateAuditContext } from "~/lib/auditContext";
-import { prisma } from "~/lib/prisma";
+import { baseDb } from "~/lib/db";
 import { scimError } from "~/lib/scim/errors";
 import {
   SCIM_LAST_USED_THROTTLE_MS,
@@ -142,7 +142,7 @@ export async function requireScimBearer(
   }
 
   const tokenHash = hashToken(raw);
-  const row = await prisma.scimToken.findUnique({
+  const row = await baseDb.scimToken.findUnique({
     where: { token: tokenHash },
     select: {
       id: true,
@@ -194,7 +194,7 @@ export async function requireScimBearer(
       request.headers.get("x-real-ip") ||
       "unknown";
     const cutoff = new Date(now.getTime() - SCIM_LAST_USED_THROTTLE_MS);
-    void prisma.scimToken
+    void baseDb.scimToken
       .updateMany({
         where: {
           id: row.id,

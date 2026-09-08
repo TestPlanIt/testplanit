@@ -15,7 +15,7 @@ Administrators register and manage repository connections here. The connection i
 ## How to access
 
 1. Open the **Admin** area from the top navigation.
-2. Select **Code Repositories** under **Tools & Integrations** in the admin menu.
+2. Select **Code Repositories** under **AI Tools** in the admin menu.
 
 ## Supported providers
 

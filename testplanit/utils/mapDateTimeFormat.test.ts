@@ -1,4 +1,4 @@
-import { DateFormat, TimeFormat } from "@prisma/client";
+import { DateFormat, TimeFormat } from "~/zenstack/models";
 import { describe, expect, it } from "vitest";
 import { mapDateTimeFormatString } from "./mapDateTimeFormat";
 

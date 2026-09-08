@@ -18,38 +18,6 @@ vi.mock("next-auth/react", () => ({
   }),
 }));
 
-// Mock next-themes
-vi.mock("next-themes", () => ({
-  useTheme: () => ({ theme: "light" }),
-}));
-
-// Mock react-select as a simplified component
-vi.mock("react-select", () => ({
-  default: ({ options, onChange, value, isDisabled }: any) => (
-    <div data-testid="react-select" data-disabled={isDisabled}>
-      {options?.map((opt: any) => (
-        <div key={opt.value} data-option-value={opt.value}>
-          {opt.label}
-        </div>
-      ))}
-      {value &&
-        Array.isArray(value) &&
-        value.map((v: any) => (
-          <div key={v.value} data-selected-value={v.value}>
-            {v.label}
-          </div>
-        ))}
-      <button
-        type="button"
-        onClick={() => onChange && onChange([])}
-        data-testid="react-select-clear"
-      >
-        clear
-      </button>
-    </div>
-  ),
-}));
-
 // Mock @tanstack/react-query useQueryClient
 const mockRefetchQueries = vi.fn();
 vi.mock("@tanstack/react-query", async (importOriginal) => {
@@ -60,11 +28,6 @@ vi.mock("@tanstack/react-query", async (importOriginal) => {
     useQueryClient: () => ({ refetchQueries: mockRefetchQueries }),
   };
 });
-
-// Mock multiSelectStyles
-vi.mock("~/styles/multiSelectStyles", () => ({
-  getCustomStyles: () => ({}),
-}));
 
 // Mock HelpPopover to avoid complexity
 vi.mock("@/components/ui/help-popover", () => ({
@@ -77,27 +40,39 @@ const mockDeleteManyProjectAssignment = vi.fn().mockResolvedValue({});
 const mockCreateManyGroupAssignment = vi.fn().mockResolvedValue({});
 const mockDeleteManyGroupAssignment = vi.fn().mockResolvedValue({});
 
-vi.mock("~/lib/hooks", () => ({
-  useFindManyRoles: () => ({
-    data: [{ id: 1, name: "Tester", isDeleted: false }],
-  }),
-  useFindManyProjects: () => ({
-    data: [{ id: 1, name: "Project A", isDeleted: false }],
-  }),
-  useFindManyGroups: () => ({
-    data: [{ id: 1, name: "Group A", isDeleted: false }],
-  }),
-  useCreateManyProjectAssignment: () => ({
-    mutateAsync: mockCreateManyProjectAssignment,
-  }),
-  useDeleteManyProjectAssignment: () => ({
-    mutateAsync: mockDeleteManyProjectAssignment,
-  }),
-  useCreateManyGroupAssignment: () => ({
-    mutateAsync: mockCreateManyGroupAssignment,
-  }),
-  useDeleteManyGroupAssignment: () => ({
-    mutateAsync: mockDeleteManyGroupAssignment,
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    roles: {
+      useFindMany: () => ({
+        data: [{ id: 1, name: "Tester", isDeleted: false }],
+      }),
+    },
+    projects: {
+      useFindMany: () => ({
+        data: [{ id: 1, name: "Project A", isDeleted: false }],
+      }),
+    },
+    groups: {
+      useFindMany: () => ({
+        data: [{ id: 1, name: "Group A", isDeleted: false }],
+      }),
+    },
+    projectAssignment: {
+      useCreateMany: () => ({
+        mutateAsync: mockCreateManyProjectAssignment,
+      }),
+      useDeleteMany: () => ({
+        mutateAsync: mockDeleteManyProjectAssignment,
+      }),
+    },
+    groupAssignment: {
+      useCreateMany: () => ({
+        mutateAsync: mockCreateManyGroupAssignment,
+      }),
+      useDeleteMany: () => ({
+        mutateAsync: mockDeleteManyGroupAssignment,
+      }),
+    },
   }),
 }));
 

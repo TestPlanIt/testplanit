@@ -47,16 +47,22 @@ const skippedStatus = {
   systemName: "skipped",
 };
 
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstRepositoryCases: () => ({ data: mockTestCase }),
-  useFindFirstTestRuns: () => ({
-    data: { id: 42, configuration: null },
+vi.mock("@zenstackhq/tanstack-query/react", () => ({
+  useClientQueries: () => ({
+    repositoryCases: { useFindFirst: () => ({ data: mockTestCase }) },
+    testRuns: {
+      useFindFirst: () => ({
+        data: { id: 42, configuration: null },
+      }),
+    },
+    workflows: { useFindFirst: () => ({ data: null }) },
+    status: {
+      useFindMany: () => ({
+        data: [successStatus, failureStatus, skippedStatus],
+      }),
+    },
+    templateResultAssignment: { useFindMany: () => ({ data: [] }) },
   }),
-  useFindFirstWorkflows: () => ({ data: null }),
-  useFindManyStatus: () => ({
-    data: [successStatus, failureStatus, skippedStatus],
-  }),
-  useFindManyTemplateResultAssignment: () => ({ data: [] }),
 }));
 
 vi.mock("~/lib/test-run-result-submit", () => ({

@@ -1,4 +1,4 @@
-import { ProjectAccessType } from "@prisma/client";
+import { ProjectAccessType } from "~/zenstack/models";
 import { describe, expect, it } from "vitest";
 import {
   buildProjectAccessCondition,

@@ -13,6 +13,13 @@ export const env = createEnv({
         (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
         "You forgot to change the default URL"
       ),
+    // Optional PostgreSQL read replicas (comma-separated connection strings).
+    // When set, SELECTs are spread across them while writes/transactions stay on
+    // DATABASE_URL. Unset => single-primary behaviour. See
+    // docs/docs/horizontal-read-scaling.md.
+    DATABASE_REPLICA_URLS: z.string().optional(),
+    // Cross-request primary-stickiness window (ms) for read-your-own-writes.
+    DATABASE_PRIMARY_STICKY_MS: z.coerce.number().int().min(0).optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .prefault("development"),
@@ -45,6 +52,8 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_REPLICA_URLS: process.env.DATABASE_REPLICA_URLS,
+    DATABASE_PRIMARY_STICKY_MS: process.env.DATABASE_PRIMARY_STICKY_MS,
     NODE_ENV: process.env.NODE_ENV,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,

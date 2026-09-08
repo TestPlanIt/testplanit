@@ -71,7 +71,7 @@ export const ContentTypePicker = ({ options }: ContentTypePickerProps) => {
                   onClick={option.onClick}
                   isActive={option.isActive()}
                 >
-                  <Icon name={option.icon} className="w-4 h-4 mr-1" />
+                  <Icon name={option.icon} className="w-4 h-4 me-1" />
                   {option.label}
                 </DropdownButton>
               );

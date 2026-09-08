@@ -1,4 +1,4 @@
-import type { Attachments } from "@prisma/client";
+import type { Attachments } from "~/zenstack/models";
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { render } from "~/test/test-utils";

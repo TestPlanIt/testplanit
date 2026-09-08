@@ -31,7 +31,9 @@ function makeRawRow(overrides: Record<string, unknown> = {}, id = 1) {
     folder: { id: 12, name: "Auth", parentId: 5 },
     state: { id: 3, name: "Active" },
     creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
-    tags: [{ id: 1, name: "smoke" }],
+    // Raw rows carry tags through the RepositoryCaseTag join (caseTags[].tag);
+    // mapCaseRow flattens them to the tags[] output shape.
+    caseTags: [{ tag: { id: 1, name: "smoke" } }],
     ...overrides,
   };
 }
@@ -116,7 +118,7 @@ describe("registerCasesList", () => {
     expect(where.name).toEqual({ contains: "login", mode: "insensitive" });
   });
 
-  it("filter: tagIds uses tags.some.id.in", async () => {
+  it("filter: tagIds uses caseTags.some.tag.id.in", async () => {
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
     await client.callTool({
@@ -125,7 +127,9 @@ describe("registerCasesList", () => {
     });
     const body = getLastCallBody();
     const where = body?.where as Record<string, unknown>;
-    expect(where.tags).toEqual({ some: { id: { in: [4, 5] } } });
+    // RepositoryCases tags live on the RepositoryCaseTag join — filter
+    // through caseTags.tag.
+    expect(where.caseTags).toEqual({ some: { tag: { id: { in: [4, 5] } } } });
   });
 
   it("filter: stateId is included in where clause", async () => {
@@ -319,7 +323,7 @@ describe("registerCasesList", () => {
     expect(textContent.text).toContain("422");
   });
 
-  it("D7-03: issueId filter — happy path; where.issues = { some: { id, isDeleted: false } }", async () => {
+  it("D7-03: issueId filter — happy path; where.caseIssues = { some: { issue: { id, isDeleted: false } } }", async () => {
     mockZenstack.mockResolvedValueOnce([makeRawRow({}, 1)]);
     const { client } = await setupClient();
     await client.callTool({
@@ -330,7 +334,11 @@ describe("registerCasesList", () => {
     const where = body?.where as Record<string, unknown>;
     expect(where.projectId).toBe(7);
     expect(where.isDeleted).toBe(false);
-    expect(where.issues).toEqual({ some: { id: 42, isDeleted: false } });
+    // RepositoryCases issue links live on the RepositoryCaseIssue join —
+    // filter through caseIssues.issue.
+    expect(where.caseIssues).toEqual({
+      some: { issue: { id: 42, isDeleted: false } },
+    });
   });
 
   it("D7-03: issueId filter coexists with folderId / tagIds / name / stateId / customField", async () => {
@@ -352,13 +360,15 @@ describe("registerCasesList", () => {
     const where = body?.where as Record<string, unknown>;
     expect(where.projectId).toBe(7);
     expect(where.folderId).toBe(1);
-    expect(where.tags).toEqual({ some: { id: { in: [3] } } });
+    expect(where.caseTags).toEqual({ some: { tag: { id: { in: [3] } } } });
     expect(where.name).toEqual({ contains: "login", mode: "insensitive" });
     expect(where.stateId).toBe(4);
     expect(where.caseFieldValues).toEqual({
       some: { field: { displayName: "Priority" } },
     });
-    expect(where.issues).toEqual({ some: { id: 42, isDeleted: false } });
+    expect(where.caseIssues).toEqual({
+      some: { issue: { id: 42, isDeleted: false } },
+    });
   });
 
   it("D7-03: issueId rejects 0 / negative / non-integer values via zod", async () => {
@@ -554,8 +564,11 @@ describe("registerCasesList", () => {
       { id: "desc" },
     ]);
     expect(body.include.junitResults.take).toBe(1);
+    // executedAt is nullable — nulls:"last" keeps a timestampless imported
+    // row from shadowing the real latest result (Postgres puts NULLs first
+    // under plain desc).
     expect(body.include.junitResults.orderBy).toEqual([
-      { executedAt: "desc" },
+      { executedAt: { sort: "desc", nulls: "last" } },
       { id: "desc" },
     ]);
     expect(body.include.testRuns.select.results.take).toBe(1);
@@ -833,5 +846,161 @@ describe("registerCasesList", () => {
     expect(where.automated).toBe(true);
     expect(where.projectId).toBe(7);
     expect(where.isDeleted).toBe(false);
+  });
+
+  // ── includeDescendants (§4.2) ────────────────────────────────────────────
+
+  function flatFolder(id: number, parentId: number | null, name = `Folder ${id}`) {
+    return { id, name, parentId, order: 0, _count: { cases: 0 } };
+  }
+
+  it("includeDescendants: folderId expands to the subtree id in-clause from ONE flat folder fetch", async () => {
+    mockZenstack
+      // fetchProjectFolders: 1713 (Content) > 1817 (Documents) > 4462 (Commenting); 9 is another root
+      .mockResolvedValueOnce([
+        flatFolder(1713, null, "Content"),
+        flatFolder(1817, 1713, "Documents"),
+        flatFolder(4462, 1817, "Commenting"),
+        flatFolder(9, null, "Settings"),
+      ])
+      .mockResolvedValueOnce([]);
+
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        automated: true,
+        folderId: 1713,
+        includeDescendants: true,
+      },
+    });
+
+    expect(mockZenstack.mock.calls[0]![0]).toBe("repositoryFolders");
+    const body = getLastCallBody();
+    const where = (body as { where: Record<string, unknown> }).where;
+    const inClause = (where.folderId as { in: number[] }).in.sort((a, b) => a - b);
+    expect(inClause).toEqual([1713, 1817, 4462]); // subtree only — root 9 excluded
+    expect(where.automated).toBe(true);
+  });
+
+  it("includeDescendants with a folderId outside the project: explicit tool error, no case query issued", async () => {
+    mockZenstack.mockResolvedValueOnce([flatFolder(1, null)]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, folderId: 999, includeDescendants: true },
+    });
+
+    expect(result.isError).toBe(true);
+    expect(mockZenstack).toHaveBeenCalledTimes(1); // only the folder fetch
+    const text = (result.content as Array<{ text: string }>)[0]!.text;
+    expect(text).toContain("999");
+  });
+
+  it("includeDescendants: subtree over the folder cap → explicit error pointing at cases_count, never a silently truncated scope", async () => {
+    const folders = [flatFolder(1, null)];
+    for (let i = 2; i <= 502; i++) folders.push(flatFolder(i, 1));
+    mockZenstack.mockResolvedValueOnce(folders);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, folderId: 1, includeDescendants: true },
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ text: string }>)[0]!.text;
+    expect(text).toContain("cases_count");
+  });
+
+  it("includeDescendants without folderId: no-op — no folder fetch, project-wide where", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, includeDescendants: true },
+    });
+
+    expect(mockZenstack).toHaveBeenCalledTimes(1);
+    expect(mockZenstack.mock.calls[0]![0]).toBe("repositoryCases");
+  });
+
+  // ── includeFolderPath (§4.3) ─────────────────────────────────────────────
+
+  it("includeFolderPath: rows carry folder path/ancestorIds/rootId/rootName from the same flat fetch", async () => {
+    mockZenstack
+      .mockResolvedValueOnce([
+        flatFolder(5, null, "Content"),
+        flatFolder(12, 5, "Auth"),
+      ])
+      .mockResolvedValueOnce([makeRawRow({}, 1)]); // fixture folder id 12
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, includeFolderPath: true },
+    });
+
+    const structured = (result as { structuredContent?: Record<string, unknown> }).structuredContent;
+    const items = (structured as { items: Array<Record<string, unknown>> }).items;
+    expect(items[0]!.folder).toEqual({
+      id: 12,
+      name: "Auth",
+      path: "Content / Auth",
+      ancestorIds: [5],
+      rootId: 5,
+      rootName: "Content",
+    });
+  });
+
+  it("default (no includeFolderPath): folder stays {id, name} and no folder fetch happens", async () => {
+    mockZenstack.mockResolvedValueOnce([makeRawRow({}, 1)]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7 },
+    });
+
+    expect(mockZenstack).toHaveBeenCalledTimes(1);
+    const structured = (result as { structuredContent?: Record<string, unknown> }).structuredContent;
+    const items = (structured as { items: Array<Record<string, unknown>> }).items;
+    expect(items[0]!.folder).toEqual({ id: 12, name: "Auth" });
+  });
+
+  // ── automation-reality row fields (§4.6) ─────────────────────────────────
+
+  it("rows carry hasAutomatedResults + lastAutomatedResultAt from the junitResults sub-include", async () => {
+    mockZenstack.mockResolvedValueOnce([
+      makeRawRow(
+        {
+          junitResults: [
+            {
+              id: 900,
+              executedAt: "2026-08-01T00:00:00.000Z",
+              status: { id: 1, name: "Passed" },
+            },
+          ],
+        },
+        1,
+      ),
+      makeRawRow({}, 2),
+    ]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7 },
+    });
+
+    const structured = (result as { structuredContent?: Record<string, unknown> }).structuredContent;
+    const items = (structured as { items: Array<Record<string, unknown>> }).items;
+    expect(items[0]!.hasAutomatedResults).toBe(true);
+    expect(items[0]!.lastAutomatedResultAt).toBe("2026-08-01T00:00:00.000Z");
+    expect(items[1]!.hasAutomatedResults).toBe(false);
+    expect(items[1]!.lastAutomatedResultAt).toBeNull();
   });
 });
