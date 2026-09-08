@@ -259,8 +259,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5(typescript@6.0.3)
       '@forge/react':
-        specifier: ^11.17.0
-        version: 11.17.0(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))
+        specifier: ^12.1.3
+        version: 12.1.3(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(typescript@6.0.3)
       '@forge/resolver':
         specifier: ^2.0.0
         version: 2.0.0(typescript@6.0.3)
@@ -1475,446 +1475,421 @@ packages:
     resolution: {integrity: sha512-93Z1N+BQNXysodoicpOIyNh2drHfz/CTf9nnT0FEx72GJcIiwgydD7tGAr78j41LsYn3hlRn+LdGPuBLn1Bl8Q==}
     engines: {node: ^22.13.0 || >=24.0.0}
 
-  '@atlaskit/adf-schema-generator@2.4.0':
-    resolution: {integrity: sha512-67OANQ8dqp2tJbrHjP9vcwf3aQ90t8pyzT66YSc0Fw/52qibUEQtXU5QEQZFtq7Y0go0YreeLdO8dkH6R+zMAA==}
-
   '@atlaskit/adf-schema-generator@4.0.2':
     resolution: {integrity: sha512-50I79ttn/zxgT6ba1izljUWWj2fcCtZv0SgFGtUCynMrZU6GDdUszGnugaFqy7DMvldIABGHXPA0rHxYXE/baw==}
-
-  '@atlaskit/adf-schema@48.0.0':
-    resolution: {integrity: sha512-zzPhx1zsiAL2zSR9APrw6CMNxAGMerjjNgc0AeqQWZjSuh4U18THv77o4buS9QPdUn2S8BztBNiEbB7bP9wNRw==}
-
-  '@atlaskit/adf-schema@54.0.4':
-    resolution: {integrity: sha512-Ra+tIQGMhcOj96CnRjpDkom8sjebA+PmzHp8OjXW6BOJO6yGRBlnwNSxlcBKdk0O6hFxfIwr5SRN0FF1Dyo1Rg==}
 
   '@atlaskit/adf-schema@56.7.3':
     resolution: {integrity: sha512-2G82HHnQT/uSnk1cydfHrT/+S6ds+Oz7pkYKUBjdJjdhUFzNDeBR9MdpxusOQSDI0vrvtmkyR2IcY5xmv8p5dA==}
 
-  '@atlaskit/adf-utils@19.33.9':
-    resolution: {integrity: sha512-we14ekAIWGvcA00C5RevNrNFbErCDObKcp6o/xNhgEUqRosRqGTs/dwK5kf0JgfVrPYsDpwrO+3y7/flKLaIrQ==}
+  '@atlaskit/adf-schema@57.3.4':
+    resolution: {integrity: sha512-M+5rS/WiOjdiKd2TDH4AHGYq83waW/LL3MNtGfr8NlEC+LlrV/Woz9sRg7p90pAe3lvAyP7jHFSBM3kkTs7tJw==}
+
+  '@atlaskit/adf-utils@20.9.4':
+    resolution: {integrity: sha512-jczsFhSnjDITOjtbXXCPo8MiozJRA3ZEtndvj4ig8fiDoJPHve6nCOl+mgJIfUv3KuEPMRi08gzW5924ZTJ1dA==}
 
   '@atlaskit/analytics-next-stable-react-context@1.0.1':
     resolution: {integrity: sha512-iO6+hIp09dF4iAZQarVz3vKY1kM5Ij5CExYcK9jgc2q+OH8nv8n+BPFeJTdzGOGopmbUZn5Opj9pYQvge1Gr4Q==}
     peerDependencies:
       react: ^16.8.0
 
-  '@atlaskit/analytics-next@11.3.0':
-    resolution: {integrity: sha512-UDTl1YSRz7QCFXxTXctgsbVjXMVIIaoyqpH7SAZw2CRjKeTuihljtxBuv0C2EX5hocPS6b2KZKCwA4yEXHWozQ==}
+  '@atlaskit/analytics-next@12.5.0':
+    resolution: {integrity: sha512-/hk/bw4h/YqCh6AF7pWppF3YxICTqYDCTILowvqXFC+mm1u6RT8r/OomKufnoAo+6ZY929JwPmyEH9TDnCqDQw==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  '@atlaskit/app-provider@4.3.3':
-    resolution: {integrity: sha512-hVOEl1VqwgUGVZOMfQsKIyg3DH7rYh/8qY5BXJuRKqw8Vn3ybexnkyeduQbfCP4rzLUnUUQCVhMxvTZhe+mDOw==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/atlassian-context@0.11.0':
-    resolution: {integrity: sha512-Q2iMFa6A3OPruD9GQS+quqHWM5Rh+Ew1bP4MxL2BoJV5QulT66K77fq8c86+g+MRqxeqtZ6jnT5zNw6IVrnpMw==}
+  '@atlaskit/app-provider@5.5.0':
+    resolution: {integrity: sha512-4zb86jx+Idsi45vIFvTO3e9TnYQNi/J4ZY6oC1GKHlCseW6DXZARp+AE589AEdNYVDuQusuW9bKBWMc4KLMLPw==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
-
-  '@atlaskit/atlassian-context@0.2.0':
-    resolution: {integrity: sha512-msLRSp0qck6eflkShplgyIoOogNKxKRc6QIWGQlSvKGxHQNEbLEkRGcDzdh8PuBxSs1gda7OqYrdtQYQiPbpTQ==}
-    peerDependencies:
-      react: ^18.2.0
 
   '@atlaskit/atlassian-context@1.1.1':
     resolution: {integrity: sha512-Leyd9WQevi1ia+z16yJtVRr0VIU5Zg/ODYObxQm4FtsCXBZ55B4xtGNDFzPsdiaBFRVFVvxbeNloKmbbSKuNAA==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/avatar@25.15.1':
-    resolution: {integrity: sha512-tWTdjed8UHD/nBC5jBPcoevrNbsHqriM4kmD2Z8OPdPUsy2ouFhbywXqA6Xol0ED7Du8Kd/TbeuUmwMpfn7V7g==}
+  '@atlaskit/avatar@28.0.1':
+    resolution: {integrity: sha512-7bs3SQsHZY31B0U1fBn2kGvQpnfg+/3xEEqr2t6syl+zuIPAa2MlPFjmvLHuGlMJ/XdR4ugY+TXLUkt0fHKHXg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/badge@18.7.1':
-    resolution: {integrity: sha512-H6Ic5ZOXgGEFfNwqnFcxIWzChoJIPUgzXfox2UHcHurBODSQaGFrNXApHMn0Qa+az+yqTmSdRWQOVaIBdZ+99Q==}
+  '@atlaskit/badge@21.2.0':
+    resolution: {integrity: sha512-Qks5XBfppoEAB/bNuTfiiqVoizWFAunK5itiszGovQRD7lJBCJHb+305d1f7VU0inek1q5DDywYE5Eqlnu7Eng==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/banner@14.1.0':
-    resolution: {integrity: sha512-tgLEgyl/y/s6Nu+Fcvm/rbpeQDPwAJ6lWaCDO8u2tnTzsLrHTKo2VRMqjLMUAdecaW1LqHTaNxQNWT+U2Nh1+g==}
+  '@atlaskit/banner@15.3.0':
+    resolution: {integrity: sha512-TtAr9HcrJt0myhZU4YxiStuoZqRB607v122BHsPgpDYe7QOrWsnJMGs++X2ShPMjEWP20Cqut6VL6x78cRB5kA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/blanket@15.0.34':
-    resolution: {integrity: sha512-BIO7KYWSL6p6t5AbrTbAtO86XSuuNF+qhm5c0hPv8nkRiAfVQW3WlDXly036oB1Kj/HtP0G6TIre/XXgKlr4yw==}
+  '@atlaskit/blanket@16.4.0':
+    resolution: {integrity: sha512-dTSdNYk9pby1wpMQ0GM7pBMdCutV2BMvYuPiz/eoZlAi15CrZ2uN1VEaWXvkNrreHK6p+Ua1+REIx8fSISPkfA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/breadcrumbs@16.1.1':
-    resolution: {integrity: sha512-BkCgqW7CeEDk+rCue1dP2kWPx9PzsRXfp84NJCDaWpDCR28bo+PNpnTHFQoQm5RHIcs3wXWWhHwAlC9X9hjpEQ==}
+  '@atlaskit/breadcrumbs@17.7.1':
+    resolution: {integrity: sha512-LkaiYndWRiVjG2Ar8fQLCgUAr9LHZkKAgBgslu4c9IjJF7wsKPRAYz3fM377IPchsmlDTNMa4RX2/oHpNsu27g==}
     peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
-
-  '@atlaskit/browser-apis@0.0.2':
-    resolution: {integrity: sha512-3mfBAVBx8ReUlILUGdsc+G1JlrA0DvFAbOMorJfsIvsOqJViABxjQyW05psbnLoLZD/CT3+9jCHSHOIY8Gwtyw==}
-    peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
 
   '@atlaskit/browser-apis@1.2.0':
     resolution: {integrity: sha512-SNwf6LGu1BjECz62iC/kIOwmtiJlz4cuf04OnVLlN8amEly+6NHIzZG+IU2Bbpa2vG7oVSj3nSy0gMm/7kqiuQ==}
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/button@23.11.8':
-    resolution: {integrity: sha512-ptEGHRfBLmEigbD2t0PkrZkQxMPtyuS6rtfW6htGQo3c+nilap85qNxZtkdOVfO3oPYTssVnOD663rnbd/CHnA==}
+  '@atlaskit/button@25.3.2':
+    resolution: {integrity: sha512-uKIOUT/2LKSyUPTIUKeoKq8TrUaFtAo3S93tlalTpaLUdchOcqwoqXjT4ppoPD/1ITMHP3lcapQo1MZai3o/IA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/calendar@17.2.20':
-    resolution: {integrity: sha512-xBT7/Kca3b8aA4SLokGq91UlAdbhIEd2biXeWKNCJ6/tO7+UUPm3iIuzG1c5tXyzDY09JoatZt05c7iYWwA0MA==}
+  '@atlaskit/calendar@19.2.3':
+    resolution: {integrity: sha512-C7Q2lec1rAVqQxeEvVdxgEx3+DeAz6qPr3W33LkUYxG1pe3/jOwkN69tSW+RV3w6n1wFzgFOeH/3t5RCHvQGdw==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/comment@13.3.1':
-    resolution: {integrity: sha512-osYooHPajtJ9+MTTYPRDpVU/EB6yRFbnD9736zTcAOMsff7/9pIFwmH+bnoD8UNc/il2UKJi+se2+ItgKMXt/Q==}
+  '@atlaskit/comment@14.2.0':
+    resolution: {integrity: sha512-VXhmtuWjld8IfNFJmhZzFGFCNrl80VTdvQfU3/96bsQEjJpwUsgJuPyWapISqwKbkcXUDFLLwyluTUwnkUXixA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/css@0.19.4':
-    resolution: {integrity: sha512-OBacSDD/XBkuu4R2FFMgOoVifSbs7E4LRwqUJFolPurxnsc88/cDrwf9C3obMwDh+64O3a5OyzuUPLVQTfMXYQ==}
+  '@atlaskit/css@1.1.2':
+    resolution: {integrity: sha512-0ZjmeeSQcAGhhb1jXfrEiR92OcXzJVars4LruMX2WcsgdMMUnShnQRpQhYialLX9PhAGr908SFGqs2EXp9gl7w==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/datetime-picker@17.9.6':
-    resolution: {integrity: sha512-Jml9iVsZxfxSaQoyjlWMRVb87RQe6VnTt64l7dHLyyMzFTR6RsXj6xxDBtZxpAvfAXduDRs2AhxeeKvcMyfIeA==}
+  '@atlaskit/datetime-picker@18.5.1':
+    resolution: {integrity: sha512-K4F+EnLVoN+7ZFqoEbN1rz9Bk9Exj9y/SsiEuc84/IayYPDKstt7BdxQE3qpkdYeXIMrwDTbQqlr50Y2/6qEIA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/dropdown-menu@18.3.0':
+    resolution: {integrity: sha512-j0KE5up+cEiWe6CrKM0OxSMmCqUQfkDX0cadPLHQgumyMehNrgCTvBCsMSbgNBALaiJaIlL9b+Zw4s90POVb6g==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
 
   '@atlaskit/ds-lib@2.7.0':
     resolution: {integrity: sha512-+U4aPE2dBRFUBYWCM9vkrwJGrLAYVcK30ZpEiQDNpM2D7K41223TfEijC8azaN4VM3tsCgwSKBWwniloNxqYbA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
-  '@atlaskit/ds-lib@7.0.0':
-    resolution: {integrity: sha512-Uqywr6YMi6uBpD0BtbRmG8f81fteRT7NBf62J8zzWPSs7u3Jq9G3Oruwm3y+57Dxv6IqfRwrS10WJARlCJdBLw==}
+  '@atlaskit/ds-lib@8.0.0':
+    resolution: {integrity: sha512-z9NMlDmPkQ8YKvw9/L+DQlVSp6JKEXyttzaD21OlNMaNP9/we5cMsNxlC39Dw5jNDgCajpuWhdZtZzvpl0r9Cw==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/dynamic-table@18.4.2':
-    resolution: {integrity: sha512-RkiMCuJ6tjhKhU8GYc/n+EyMR7mwF7zTY96bMXcQTwy+sVQufcDzwwwT1NZHOubCPxrNlURcqDpDVhNMEuEDnw==}
+  '@atlaskit/dynamic-table@19.3.2':
+    resolution: {integrity: sha512-0y5E3pvVGYujJTIFIqaCd1pBnJd7ZUNPsSEvHJKf7CiD46kkDFo5n1F29z0DwIbC1MR6gd0x+XVB28Pxb/R2jw==}
     peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
-
-  '@atlaskit/editor-prosemirror@7.3.0':
-    resolution: {integrity: sha512-6KB4CuURZ+fU1DJMlmCox6q8T5ooVaCE+eZVrAlcODIfTyLu/wCvJfPJLOJUPZBvzCHqoWCebFmpu39uwUUleg==}
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
 
   '@atlaskit/editor-prosemirror@8.0.3':
     resolution: {integrity: sha512-VU2N4/VhwhXj50wm6CtgVrHyOx6TPtNIHRSL9FpiEu/Rt4TVOgJjr1ul6SmTYclccmNWviFUsa2LR7evKaLZgw==}
 
-  '@atlaskit/feature-gate-js-client@4.26.5':
-    resolution: {integrity: sha512-ZCcw7GP6WapqfP18Hr4q5+AZuI1k6pJECL9tyIw64JwG0GntMa3tTj/T8c5aqBIOagRQTw24lkM+Nt+agrRcnA==}
-
-  '@atlaskit/feature-gate-js-client@5.8.0':
-    resolution: {integrity: sha512-SJ+U0EVPdAXHy8Ge7I1BT7bptUiCG11x2XVwqRqZ5ysbR9WsfuUfX4l5BchAqyogJrcrt0v8TC1IBmcQ0WeEUA==}
-
   '@atlaskit/feature-gate-js-client@6.0.2':
     resolution: {integrity: sha512-x4TKOAhM9Ejb6e2CA3OrIMv+T6+FdPSgEPH+yzB+k/A5OOHBaoKLzcG9Fs1mBGp/fISiD966xmdPdYb1RcMPDw==}
 
-  '@atlaskit/focus-ring@3.1.0':
-    resolution: {integrity: sha512-mrXeeqrV0wVnru59ZfRBG9VitjQA13roEiwU4efOHM/mHGrkWsFiCTdmwJAJklyBddiemUTM08I/+Av+QHHBag==}
+  '@atlaskit/focus-ring@5.2.0':
+    resolution: {integrity: sha512-FZJUHgtytLc/WyGZ+d0WLUKlDWrtRYS5ES4UVrs1xEw6PnygT+x6jvM5I3m9qIsl9Q64d3yYvX4rGkdf0oVI8A==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/forge-react-types@2.7.0':
+    resolution: {integrity: sha512-jqdkzNg8UEVKLwTbRCZRdY60cJ46KjZkuu+MfT7Uxb9tsL/kGDkavD8o7vu57RD0A8o6PJCxsKXSO/Qygau+Lw==}
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/forge-react-types@1.7.1':
-    resolution: {integrity: sha512-5u6RhFf7muciYP8/PeAhl2sLoU+QmCdGMkzC0kh9DnmVTs4votj+wUoJunc8gTE/qH2nIgMZIQapwi9QnX3vuQ==}
+  '@atlaskit/form@17.2.0':
+    resolution: {integrity: sha512-7BQctdnUWGd+bvuQ9V0lj0o5WnpperjnJHDr/nYTR4ExExp0oeTIVjymDIYA881h0aZ3MG7tZ+BpuATClqzPlQ==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/form@15.5.6':
-    resolution: {integrity: sha512-ocjHXkvNGUzjlGcwIabxX3SL27zsHD1R3idpATokQXbdELsyYQJuRu70NISEPQUQIIknPKQRm3eqMxlTGWhAtQ==}
+  '@atlaskit/heading@7.2.0':
+    resolution: {integrity: sha512-sQ2JTkeKgRx3jswmhkN3lDwFS9pC82aiUogp9qyDnl4jLGlLQ2UzYoqYxsd8buaDALMv1jqsH7dZY0utf6roSg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/heading@5.4.2':
-    resolution: {integrity: sha512-B4SMRq9sq3WWJYLo8Nx5731LvAjiev6dT3SbK1/dqSM+HXnrAy6GwEhW3oDJefeWYO7eZ9xPfuC3jpjdNBgxoA==}
+  '@atlaskit/icon-lab@7.8.0':
+    resolution: {integrity: sha512-SZUDM+TcWMbEs6XovKXwN9QHWJbr6nTLvREWDdP3OYNx/B5Cvs46TFwMKOhB531vzNlkElryOSLhCWlOSpPlkg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/icon-lab@6.14.0':
-    resolution: {integrity: sha512-Yi9DZMM6siOH3AGDyL+iCsFie07mbMlOtl1bYFG70ta2LensVtfohZIWcm3LWweWL3Xcc4dosRKO8v22xmWg1A==}
+  '@atlaskit/icon@37.6.0':
+    resolution: {integrity: sha512-19wFuKyuGAvk79KtI58k26TQswYDUlBrEhK+tbOTW1bpTq3eikQplIUEjIBT397mpNUt1+BCNTE4GpVJ8U7rrw==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/icon@35.4.0':
-    resolution: {integrity: sha512-zE8DtQVaPTL3H6OSOwtgDihal0d5As/J3f4W2gzVLn9gOv24sFMlFC/GEEuotyYOFFwS7+NeT2pVqOi2IRv17g==}
+  '@atlaskit/inline-dialog@20.3.0':
+    resolution: {integrity: sha512-xixHxyyUiM3etQfPfytk5n1y1Tu7Z4LC7g/l4bW9aPe9RLvyCx6alQCC9jfhUb/fYE1d9nkRHc8APNRiKTuWPg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/inline-dialog@18.1.14':
-    resolution: {integrity: sha512-+qjmwAl3MNH5nzkOfHodz8q32P94EvFf4mMsDftaNimrZpWGDvcuxwXgdaa977jm2xGcixWchiYSK83OAZNGsA==}
+  '@atlaskit/inline-edit@16.4.1':
+    resolution: {integrity: sha512-crNbdocu/q93Ak/1E+KMyqZ0qH69Jmi0BgK+R8yFVFIAXdhSsKOjuigNP9Un8COTiSH5wLPvigm2hBy1Ewr6SA==}
     peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/inline-edit@15.6.16':
-    resolution: {integrity: sha512-gnbGq5sx+cy6RY3hsJn1wfiNCmSNRNDA2RvtkU8cuE4weGW1jurjGjnu+JCwtZ7Ry+xhTHkxV1lFF2xwPAZylQ==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/interaction-context@3.1.0':
-    resolution: {integrity: sha512-LB3T0ATpJ5y7/IVBndNbcjtaNmPcz/8k7+smMibzphmV7xB3HaIyJFEu2JoSmgps66qLXo0ia8Hj7v4dF9zJZw==}
-    peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
   '@atlaskit/interaction-context@4.1.0':
     resolution: {integrity: sha512-dgi1J2MqewK4h9asP8CcVJoqIuZPDPUVAQVDtRoLWy0/o7FAywMhzJI1sh7wOVtO8QkQ2Cm11hSROtWbk/ufBA==}
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/layering@3.8.0':
-    resolution: {integrity: sha512-PmwwvOuj2VhHU+LLsAwFl2VptWNn1aSuSoTXwsC0ZedV4M2WDr0yn0Z3ex0JGq7Za+6VOZsVhiBVW2jXW9a+0A==}
+  '@atlaskit/layering@5.2.0':
+    resolution: {integrity: sha512-GSDL6wwNHzcDOm7XHp8lgEzmKbi6JRxgrIlTUV+Wy7BqAV4/T/A+iYriTZT+HGAXobKs/9daMqHqPnOGp5cRDw==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/link@3.4.2':
-    resolution: {integrity: sha512-Y2aItT5nfxQhJu7RzgwKQImMp50aq58M3ccbTuqElnNNK7QHde37Hrvtxpia7WLwvJOpKYmxJnaM9yxbkDsYKQ==}
+  '@atlaskit/link@5.1.2':
+    resolution: {integrity: sha512-e2pXxfdIF6/fbXc3e0y5NuO6cyicmZrBYJeOzDOOOth/KI7RfQs3LQjgZEusMc4fbWI4CPqeOZKHVwC7v0J0PA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/locale@4.1.0':
-    resolution: {integrity: sha512-8WCpGFK5N5ySol5IooUx8FIwnWe8ykgE/aGp9D22swLrCE3+5IS49seeWfAXGvLV8GtXRoB6L2RtcCpgQEGT5Q==}
+  '@atlaskit/locale@5.2.0':
+    resolution: {integrity: sha512-gx2+Y/2Jfn+HRjmzaaemYE0yZAQfBRFHj1+s0+Fw7R0VOahTYY/QL5ijoW3S+dRNXLA2AkZaj4kiXd7VcSiZuw==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/logo@20.2.0':
-    resolution: {integrity: sha512-SKxR17k17O95BQCH5B8CW4XNPptJgu60rYg8C6WIAUpYoskC5IRpv6g/OlnuzgmYzg+pEK4w6eH8ntV4EyQ0Ng==}
+  '@atlaskit/logo@21.6.0':
+    resolution: {integrity: sha512-BqAuSeh12+9jXhr9s5GlecIysnu9nld/ptFFjtfskZAl0e811c3/ArerKTi8QCMSZlkq+ApQ6wWB//Ouk3ToFg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/lozenge@13.9.0':
-    resolution: {integrity: sha512-xj3PncJ8h3qwjCwBqUyPJ6pWEr/J4oM1HOZhYblLHNGQ4DP4Vibaiiu5rJ1RWwcIFfg23oziJb4A4SbxFeZIfQ==}
+  '@atlaskit/lozenge@15.4.1':
+    resolution: {integrity: sha512-8RzJ+d+35h51obX5Ihj3ONMgxKxXVJ+eNpOKANG6p7MKkiJ55IhVpNs+0MwPLVuqA7z4Uz+393IRjsIxy+RToA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/modal-dialog@15.3.1':
-    resolution: {integrity: sha512-H1klgfteq3uTG2Ev4WlbNE2YjABlUJ6pekqOMgk8Zl8x+MNeDRGA9jRuaDr1vFAYZ6xexmGoWkUyXwKgGuil+g==}
+  '@atlaskit/menu@10.2.0':
+    resolution: {integrity: sha512-NjklVskm7n7/fiYBb9K4zpC6u2pz+Ioumn3cn+8VEC19+OUXZPOw49vCZ1mL86qKIVqdQZ4DmabP6ryH+tMclg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/motion@6.2.5':
-    resolution: {integrity: sha512-cYKzj5cS6nxF0lmfxXBRvYmmTys3SAYkLIl29z6/hFNELs4LpU+13CGtJz/0+lDl7X4Lnt5QWjrCJdoeoACKGA==}
+  '@atlaskit/modal-dialog@16.6.1':
+    resolution: {integrity: sha512-Up5rQz3tmLlqXvhR8kbb7EiJP6uK7VfWRuVlIth3JjcGBvTRRy1PgxPafvc0lCeAdsPTmuAEhlAYmsiSflabpA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/navigation-system@9.4.3':
-    resolution: {integrity: sha512-Y8FOgCuRjryYsZhG58gZsEdYPre4F6oKo3OEG3nNlO7oXjjq43Skb3F+irvhlTs49jNNt/uW2VSzIBU/Sw+kBQ==}
+  '@atlaskit/motion@8.6.0':
+    resolution: {integrity: sha512-Rwc++J2DtFjYDzfNHVogYh5UcK88T4HuSQEmWtkqZkjTdBHz4Iianu8NViQOTkFp6wyn1ugmccDT83TDIzFhpQ==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/navigation-system@10.16.6':
+    resolution: {integrity: sha512-w1t6xN8trPm+tvnTJqMEaTM5KhXi6+kX1LJYzVfOJymHSkpyEbxqJ8tNGonjIQMz1BEEuL0FzUgQyooT+wAAkg==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  '@atlaskit/object@1.0.17':
-    resolution: {integrity: sha512-xM7r+JvcykGUkJ2t+VuN7LLuEnHJt/Go1OcipLkBkJRWq80G+WEFFQXxYyoVK0ejMbcnftLnEuDlZWFUmh9DXg==}
+  '@atlaskit/object@2.3.1':
+    resolution: {integrity: sha512-aHKExbljWTVmYxDOm4S+m+C5M1OpxXo9ShXidmpAXU6qCGNCm7I/2cFjJpCATIss4cGJyhOu+udaNqTnhnHS3w==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/pagination@17.3.0':
+    resolution: {integrity: sha512-9pE+DSHcd8A0SJeQhCrRUed9pO4zw1saaTZN3T5hNY/3e7PDkpQOAmO1KkXj4aqLnIPQ3hyEWDyRtnLROm1VRQ==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/platform-feature-experiments@0.3.0':
+    resolution: {integrity: sha512-XsDyO9hTmrLULZ9s7H6otMikkZpsRchK9RomsM0l+eQLIFY6gw9pNVhi/tZr02b08ApPEAzzOfSX1Vsm20mGLg==}
     peerDependencies:
       react: ^18.2.0
 
-  '@atlaskit/pagination@16.3.1':
-    resolution: {integrity: sha512-lAJUAhD0TEKII+5bv6WOb3ysSrXzhmNcQ6JblnqhrkfQ3lKwfvtE3LBu4soj4AqflYoSSZFZ3CGXntnpMgbugQ==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/platform-feature-flags-react@0.5.1':
-    resolution: {integrity: sha512-QAjrPOWFRn+ijGu/uz1MxT/pISNgy9XKH/mnUlcOGk2YsjsLtCiHyY68vKLC0PDxA5IbVtuHOqZYG8Cwfx2k3w==}
+  '@atlaskit/platform-feature-flags-react@1.2.0':
+    resolution: {integrity: sha512-Vav/2EbQdUd9tmwRjdVls3zvB+LuxDO9M8xQicVBxEHbxb3zUpfdBx2B4SMfyv1wIvKzDQiEgmcgIPu4VAJdqA==}
     peerDependencies:
       react: ^18.2.0
 
   '@atlaskit/platform-feature-flags@0.3.0':
     resolution: {integrity: sha512-/0u5fFJ0Rw2j4M5wzsXgaHO6Ey12oekPCDTRvmmAIp4GO9T2Swbl80bavLAPSOmSHMhHTSuvRxiJveZXfQ21IQ==}
 
-  '@atlaskit/platform-feature-flags@1.1.3':
-    resolution: {integrity: sha512-dRn6UvVmMF5+WXnv7ZlxKTV2rVQncI2TgM0KTGSqpHdD9LnogITWC/rFjzUuF/W8MBCEvpouGilukqhq6rASnw==}
-
   '@atlaskit/platform-feature-flags@2.2.0':
     resolution: {integrity: sha512-wsdiOWuYPlcHmrsxqEfbzvwciDgTbCgfnaXwbkO9Tq/qTkWhWIRpyaQJ2qwoDu70woGd91jg6ZP2470vusyUgw==}
 
-  '@atlaskit/popper@7.2.0':
-    resolution: {integrity: sha512-Uw2dzPblwwfYxs5VYIKhOCkwG1tSbmw+sALylsdCTXlVqKWHVxaNzZ24RCglol2BO5QUAT+YAZh1jbjgXyH8mQ==}
+  '@atlaskit/popper@9.4.1':
+    resolution: {integrity: sha512-2A2PdAHW0Sq2rHWqQDDJjKVO/tBdPZbkWfWT4YiJ/1kl2l86X02SQNCGmoPeZHW7itjm2nUy2tUUrq73yDdjOw==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/popup@4.26.0':
-    resolution: {integrity: sha512-awJboKQwWe2RpY1uzaHtV4WPPoeKC5xB8U4WLozUsyerq+PNKL2e/AtyUI4Sv1r9Vw55KCQ61Smc45CfhNP7Qg==}
+  '@atlaskit/popup@6.3.2':
+    resolution: {integrity: sha512-eF3nBXYnI6ovp+u3hwhFo3WJqbgNzMvy07oYwKavNj7TXT/VmC2CmZj8fx9O8QHk7FI69Tey5icH/KUeqSI1+w==}
     peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/portal@5.5.6':
-    resolution: {integrity: sha512-sB+31TrDA/r6daytYawF1zGJoVG/hbfhosGIu2gKmg/8KM/waNGVYd2HlUPGmhbuFKxT5P+NbIAbOF/zHffnaQ==}
-    peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
-
-  '@atlaskit/pragmatic-drag-and-drop-hitbox@1.2.0':
-    resolution: {integrity: sha512-eWJvvuHZOC4Yk+Li7QpS+JM2F/I50/3PhMvEcyvcHbXI0FP0kCDD1MiF8Hv7uSOxpk5JNqKoOmK8e1ncOzTgqA==}
-
-  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll@2.0.2':
-    resolution: {integrity: sha512-lo4x9p7DAq3WeCknHXqkCNmzSMvyKfucl1BFF6K22BjdiRd+DavBwt4aGUQBGnIPGwZgNKrjmwAFj9xuYdLZDQ==}
-
-  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration@2.1.1':
-    resolution: {integrity: sha512-l/NIcq2VPbYyy78MMCsfuG3EoHynHytoXm6gB6/O42Y1npcDn1SkxAtblAF0vf3aw1G1rx6TioDBI26KvRg0RQ==}
+  '@atlaskit/portal@6.4.0':
+    resolution: {integrity: sha512-h4ZtLv37bLh7tswpzLFFFMMROxaeAjcQErotVlzVmur/45NbgiFn4gGFYlZhtrero8TO0EAtGy//Zd5hn7TCNg==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@3.2.16':
-    resolution: {integrity: sha512-A2rcb6cqBFlGFR0cVwAwZKcSqUaYviNLskfBLI6wvDUFD2/dYI7GN56SOC895YC7EMoG/tPHkDB5vZiLa/iyQA==}
+  '@atlaskit/pragmatic-drag-and-drop-hitbox@2.2.0':
+    resolution: {integrity: sha512-L0Wq4EKc9Yx+iywci3NLhwjsaru+hyZ9C/H7mz5pvrSh7vpp9q2YabRr85OnCLaY6equ5pxGVyI4PF3HP69ZMw==}
+
+  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll@3.2.0':
+    resolution: {integrity: sha512-5tHeti8QjdfdZEztUaBSThbpYWqrus64ZtNft+/wsp2eIQeb/ZeW/LwvJxyT9QqB7tZUuhdfwiAnDmN1AQl+uA==}
+
+  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration@3.4.1':
+    resolution: {integrity: sha512-wlx60uUvyrN3N2WxE4jjA7Z5nCmBXCarwbAFfma4R6n+qi9yWznat8Lzi18MwQOrdwVEy9pT3Suvgx9jQpfpDA==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@4.2.0':
+    resolution: {integrity: sha512-QHvT0f5uyDsti9YuiXZOKKbh/w8MSbCds+DEVSxP/ITXJXdh5MavaokKnlbVeglailgRj1lI2BnL85Nzg3A41A==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/pragmatic-drag-and-drop@1.8.1':
-    resolution: {integrity: sha512-uXWNPpL8n4OmTVbduH7nq8pk8htqGo/prR5cYEE8sVCPJGAUMWn6lzvWTfI+4VCeQvHiDRODVz4YzH06OVAxhw==}
+  '@atlaskit/pragmatic-drag-and-drop@3.1.0':
+    resolution: {integrity: sha512-VU+2Oh6OgvC6D1xiX3lfm1gZJsaSPD+ZKjAHodOQ9IO6RfOvAyReLlK5ut9gIUpPmbD8d09wlCs7y4A6/I8c5Q==}
 
-  '@atlaskit/primitives@19.0.2':
-    resolution: {integrity: sha512-vMp2L8NhNeEkDj26GtVeynx8yC//uhfzVgxgI06dpHQ2gTV/jZidaNGOWjXslCrOpfgZckAAG3x2JamT/95XGw==}
+  '@atlaskit/primitives@22.5.0':
+    resolution: {integrity: sha512-OZSiI5nlCrVurm+gBHfeoNBkvxH1h1HlMVn6oQuIO578Hu4M486317BzpsvC35z2QFCdjUqn+Mq3uEnidSjWyw==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/progress-bar@4.2.0':
-    resolution: {integrity: sha512-H9VlEFff8brF/3fLOf7kbEPzI2JJUN3FL983ReCY3McATh/5bZZf8WrPpl6id/TKL1QS/pyr6AGx708xwLdcwA==}
+  '@atlaskit/progress-bar@5.3.1':
+    resolution: {integrity: sha512-2X+RgoiQYOO9wjz6KDOHm+S4XDg5zspi+APFFXCoTByMbh2u33S4wvC9VIK5Dc2mLdBnkpVj5ga6IOPkDB2aIg==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/progress-tracker@10.5.7':
-    resolution: {integrity: sha512-jm5lvURQsFK0uAW5Kbx4NzD61fQmzL63oELxl5T4dl2MQcOhfS+xDzxswcFxG9RHeTaT64qypzQfB+TSBU9ryA==}
+  '@atlaskit/progress-tracker@11.4.0':
+    resolution: {integrity: sha512-vKw/TWcy1ccOGIG+GkVtGlX8VWtyuWLBgzEJ9P6YSgFF4q2c+WetNs7tYgDFMQbDsBrMbyMR0uVFPiG56CXMtQ==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/radio@8.6.2':
-    resolution: {integrity: sha512-52HKnWiIOfc35nCsd/gs7T+tLqHQDtA1C6kr/H9UjAzCPf0t37+e+7g7tqSM+s4Adz/+snXpkhdu26P/g7Be8A==}
+  '@atlaskit/radio@10.2.0':
+    resolution: {integrity: sha512-pTKY9suRxK8+4vv0KojkUSP5dm+W534hTv4Bfxd8tteJiQrustOiQxU70i6OWOADlq0FRriMvAaeIlm2GwBg2w==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
   '@atlaskit/react-compiler-gating@0.2.3':
     resolution: {integrity: sha512-hSWZ1DyJChQ9ZmpmrA7VbdRIO2/RtYwBP7KKJbEG8+8KJW2A82A0mTj0TaH9hoB7JKQB+b8/vDLYA6febqT3wA==}
 
-  '@atlaskit/react-select@3.16.2':
-    resolution: {integrity: sha512-q9gLluaJZFG/S0YB848N/SIrc16RoAhrpXO0OfEVZqcv8Qd7d97+wZxd0rL/ynjZZZqdCGec+D7aJlDCFnY96A==}
+  '@atlaskit/react-select@4.9.3':
+    resolution: {integrity: sha512-FX41XYKoSINbEK+7cdIO8AU4lpyyDnzlpmB6v6ph6h2f8uHaDLmygws12M0ioVJ9YMtp23A8gYIM4KM2l54GpQ==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/react-ufo@7.8.2':
+    resolution: {integrity: sha512-WUY/e+9Fdo4UgkYuNOMN/UX6PWlMfj/nyam3twIsf4CaJh69D1JSlZoPpRj/3H3ADwwSyCrpjheFL8TWu3vh4A==}
+    peerDependencies:
+      react: ^18.2.0
+
+  '@atlaskit/section-message@10.2.1':
+    resolution: {integrity: sha512-3QxXBP1aGrJElsz7qDaAEXVgpB4KMyZuyNAPfg4F8iAxkvkyugQVUyrCXE4GJeRtG0pooOcqPrj/GvKnm0OwDA==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/select@22.11.1':
+    resolution: {integrity: sha512-8o2S6JJCyznW6CN2/BNDRtNauXGEBivyxj5wE2QCKu+xOOPWlmKtUAYRCx+OLrBpDyWkvjJ0VnukYT0wLH9HbQ==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/side-nav-items@2.4.0':
+    resolution: {integrity: sha512-mvC5Dwn5mLGFFyRbJympd7Goi3JaQb+/OVmz9M5C4XJGZCdaGnBILS1uyv0JxOANYUkqPkWdIrFppWB+wiZhsQ==}
     peerDependencies:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  '@atlaskit/react-ufo@6.7.5':
-    resolution: {integrity: sha512-xzz8KzMSAGEni6sUckaer2GNokMeSq9Cn+4awpZhspgiXDv1TOLFqFuqz8uUisHmbUPbK+9e/fE0r6gc5/ZQvg==}
+  '@atlaskit/skeleton@4.4.0':
+    resolution: {integrity: sha512-OWn1+070kVQBXMN0K6g1XxITgszXY/QrJLZAW7ByaCEr7sD/cYuuv4//m76iNIWS0r1yA93ao8nAA5n21sMJQQ==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/react-ufo@7.8.0':
-    resolution: {integrity: sha512-8Stz80jM4s6H8Z3bWhqvL7z5rpInsY6GWuzo6KuEVxuv/feqKwUGtlBoJqKUz0e1WG1uEfmOI/+GQ9IJs3QoMQ==}
+  '@atlaskit/spinner@20.4.0':
+    resolution: {integrity: sha512-l+SGGq9Z//Z8RuechKchSeO93GJqlP76aXMG//UakXc26l28eUp3mhp+H/2HqDmC8BbVmVcEvjgj9YvIgz5pzQ==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/section-message@8.13.0':
-    resolution: {integrity: sha512-tibMfW9dY1IcFnupBIP1UIkVwaud3A5mwfHHrSxyFBV1fVhhvccS0WlLvMXceu3cui20Y6tB1CQzCR4mB8f+og==}
+  '@atlaskit/tabs@21.2.0':
+    resolution: {integrity: sha512-iyGUg3djhSqbvPwBbaJRnkLh5Jh10nWm+Qa0GiyC7Savc8eFr8AlyMdPXCPzGFlLQsWcCKLe8EuDerj3KvuotA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/select@21.12.15':
-    resolution: {integrity: sha512-Ad3llod6ZUA15u73dG7pflHYUY4l0T1UkOwnTWpc/4kvTdZ05gE0lU7nM7BlAP7Vet9ENq2Fq75WbfqY5aN7PA==}
+  '@atlaskit/tag-group@13.4.0':
+    resolution: {integrity: sha512-Ko53GZzQs5sV6Ib4g3Qp1YY3L7mzeLTN0JvKwLfDezhowvt9uAhSl65heR7CsZQ4zy+9i2bLzXUsaHzVNnFlOA==}
     peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/side-nav-items@1.14.0':
-    resolution: {integrity: sha512-z1l0beJB7ohMOuiky1vCXYoVqxtRuyXtckIiHkCo31C+47b4/PNq1dACeao2XftHld95uWHYbGjD3NfzQuUQlA==}
+  '@atlaskit/tag@15.8.1':
+    resolution: {integrity: sha512-9vsGNXEBCad4ZCEafNFQiW1Hv4nEGtYRH/EvbViGQP0ztzDNkhkXV+IV71iOfqTSZPNdaBaICy7C6fbiXpdSmQ==}
     peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/skeleton@2.2.0':
-    resolution: {integrity: sha512-0Pu7Wmem6Nakr0hQ2PqLitDvSAhaHh4G+jPdIQWciaW5PMYdeXPtJ1LpkRiEjtzLU6mStPbr/X5HIH1QJiQsrQ==}
+  '@atlaskit/teams-avatar@4.1.3':
+    resolution: {integrity: sha512-mKxs2wzorQXMtEVSmCf/kLoBVc9TXIRaXkA2OrVkLfjClv4JbD1E7cU2rBnGQOxhmWpIeBMP/JrJeRafajIO1Q==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.2.0
 
-  '@atlaskit/spinner@19.1.2':
-    resolution: {integrity: sha512-Z2zOdi+zNd2qn8BrKOcxmHdlhcA1mNi3gGPklqW2MY+Ch/zL8WBTLia8KL5dIFwLjLG9C2J1u8OTYvtrZrhDhA==}
+  '@atlaskit/textarea@10.2.1':
+    resolution: {integrity: sha512-wIjVO3YbU62iKRNmdQZN+/BlNVzxx/pFSYDRBVX8lHMkz69QBosFe113tG6HiaW5J/3G9+YmnS2LOkWSs32ilA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/tabs@19.1.0':
-    resolution: {integrity: sha512-Pzxg6lZWnXFq8kt++qA5zIznEAfgf9zyQU0mSuDN4O5hDcsfhs9rwGAxgjCszxuVOJNnh+DfBd+mjB1847SF3A==}
+  '@atlaskit/textfield@10.2.1':
+    resolution: {integrity: sha512-JqbwU/pQ7UrJTAzXfH47S0BI2cuPwDwnr4RRGpMqW+ks1/UaL7eU6PFbajlRI9Jpc/f8LKQVeNnWAaIa/L9MwA==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/tag-group@12.1.0':
-    resolution: {integrity: sha512-Lafdgis655Cs25Ooj2kF0SB0z0J3Cm6Slj/+1VpmdGIPZebxoQzA5UqU6N8jFMRGY54VLdsUNVVd4oEFr3L8zg==}
+  '@atlaskit/theme@28.2.0':
+    resolution: {integrity: sha512-PUuxmCMMAjBVD+290y78wa1leln+GhNsb7W3FahLr3e807zZcEBB6Jgt/sHZxzipEL+hZpwJx+MX9Zmy/Nv2+A==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/tag@14.16.0':
-    resolution: {integrity: sha512-6xeoT2tZdD8Va2imwiXivcAwBtXSN+bizaddqD6GaJMGy98JW3o8t36/mhiiNRlULwJDPy/SF0jfxnrtPV+zgA==}
+  '@atlaskit/tile@4.1.0':
+    resolution: {integrity: sha512-WeCaUvZDl73bzEN3CpOoOcEGdADuTPLnUx2Pomzq2M88e2I1AW/aurxfdKKHkOLS0faN6f0YyLiy0VigN6TjTw==}
     peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/teams-avatar@2.7.0':
-    resolution: {integrity: sha512-pSgF0uL9ghbHzJ0IYB/cS28rCT1GnMNVMKfdj+bKyOrrhuhTE1Gc3MpbTY3OS9PNr+KqQfmFhFeKLAa9sbUqhg==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/textarea@8.3.2':
-    resolution: {integrity: sha512-HeVjb0ur18Go29fKMBZJpUFYwjUUVrxvBxsuvA/wwYvgzvr9DDwDS5Wx6vBDIiBOwND8YHYHC8cr+fmaSPBZ7w==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/textfield@8.3.2':
-    resolution: {integrity: sha512-rj+XIWl1mh8CEj8DeVlEiMBaAnUTeCgtLiNfqsQxzvsaeLI+/YgIQqTsVpslLKhhiAyCI/bDW076PreNywpCiQ==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/theme@25.0.0':
-    resolution: {integrity: sha512-zZFJla2cDQg9hM87L1AiSy6SvgYWyZQ2uw/bWLV6Cb/anat2/NVtQ9fxlOpVrCiq8yVZEnJNaY97gFQ8mL9lzA==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/tile@1.1.0':
-    resolution: {integrity: sha512-ZvFITAzYx4IUV+V7OsLrdM1Hic9WQfK4nIebG4dHasssBjsJfdVQmLDsR/lHbop24cFENI4x/D75LcMtr+kQew==}
-    peerDependencies:
-      react: ^18.2.0
-
-  '@atlaskit/tmp-editor-statsig@103.0.1':
-    resolution: {integrity: sha512-XbGaofYNGvpFCt7kol/OunGO7hDV32Nm0KHXtotvsqNZNKrFC1lIB/5aw5b8sXyrn2D93VBlaaRLsvJ4tbejHA==}
-    peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
 
   '@atlaskit/tmp-editor-statsig@147.1.0':
     resolution: {integrity: sha512-h0fMa/N3yQIEwXUWQN9ghsf516gKqqfvDJDSOLY/gI2cbgGq1KTWKp8A8bhrtZY45+kyhrJftsnExCz6oTL6BA==}
     peerDependencies:
       react: ^18.2.0 || ^19.2.0
 
-  '@atlaskit/toggle@16.1.0':
-    resolution: {integrity: sha512-L0jykH+WkvBjHZf2jXOumBkDwqj+Ew4c/BPPxcrxOemmxwdRt6a+3bIcDKVY9/bkf5SIBdcF3Pd+Gez3MB68bw==}
+  '@atlaskit/tmp-editor-statsig@178.0.0':
+    resolution: {integrity: sha512-VwQqfnlC048NnrYQyU48fFa48ecW5GnXXpJdu+WGg28VpfM9sBsJ9SL0/creW1TdoNj3aw3Y1iR2Vj592B0B8A==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.2.0
+
+  '@atlaskit/toggle@17.3.0':
+    resolution: {integrity: sha512-+gSRP3xGPBlOKvJvhOFmoaTtwCI6xgKUAJo3FPFL5CdQvlGptUGyvA+k323OfIrG72WOab6PoTPWTxqNgL5rkQ==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
 
   '@atlaskit/tokens@1.61.0':
     resolution: {integrity: sha512-gRkBDZOaQffJHg9g+hYFgPjQ0Hz4XIDaK5WEttIGyhi2USsGsvDvUeED8liqcQNwssH/5UFxIFp3FmEwo0DoFA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
-  '@atlaskit/tokens@13.4.0':
-    resolution: {integrity: sha512-KtVQEwCa3boPmHSGnN0e0eKX9kkxXYFfKjkeex3NZAHju5h6iuDNBCk5MCX+uSu+2cnMRTIh1Trqj1OycoO8gQ==}
+  '@atlaskit/tokens@16.11.2':
+    resolution: {integrity: sha512-ftfj67x3927BfwS85dpyG4gj89imvZrK3vKuarpNXDe7kKQBX53KzNjfTQ1I+wBeQlO/BvG1p0WGK1kG8GrtmQ==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/tooltip@22.6.5':
-    resolution: {integrity: sha512-MXIsyhlqVW9JJRCQOBok2E52+HPvLEcIu31fG6eHWpVCQ7tH+fQK7YjfxBDCALJw8a8VzkotzPEUeVofeB/nhA==}
-    peerDependencies:
-      react: ^18.2.0
-      react-dom: ^18.2.0
-
-  '@atlaskit/top-layer@0.18.0':
-    resolution: {integrity: sha512-l3Um9ACdf6UjD0apuvkNZhyDDADr+QH0aD9ilT2wMDfuAxFc0rbQLekDKeXTPPewX5LEGQm0DrTt16U8JQtmog==}
+  '@atlaskit/tooltip@24.3.0':
+    resolution: {integrity: sha512-/XxpCH4iXRNsmL9RMSknvoOuqj7d0Md5v5CiobK/maqCA9IEohBSlkNdcdPMKRyF9MIBo9Ue571/mex7TlzJZA==}
     peerDependencies:
       react: ^18.2.0 || ^19.0.0
       react-dom: ^18.2.0 || ^19.0.0
 
-  '@atlaskit/visually-hidden@3.1.0':
-    resolution: {integrity: sha512-OpwLmUZhbbo3NHKDjLl9JzKdHroeLPzRS1HTyHubJkC5DUWoOAH4cXStMpoesZ/Fqmbyz8O0Wb4K8RzpNZ7Jmw==}
+  '@atlaskit/top-layer@4.4.3':
+    resolution: {integrity: sha512-SS6U0884X2FvMIASwoZ84lpRgYUleOwktbtdG8Au/wRTmTxghfYbSx7LEciI4GietHenHGMzAgxEs4UjdKXrAQ==}
     peerDependencies:
-      react: ^18.2.0
+      react: ^18.2.0 || ^19.0.0
+      react-dom: ^18.2.0 || ^19.0.0
+
+  '@atlaskit/visually-hidden@4.4.0':
+    resolution: {integrity: sha512-pWru1P8dYWZxmTntklTf8Bi2CHUFLLHpG2RxO7bMzVAV47ebAre4jnQCeUyxwJHe4n0EynaFOD4fTIpXf5+rqw==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
 
   '@atlassian/atlassian-openapi@1.0.6':
     resolution: {integrity: sha512-yy0aoEL9eQNGHYO6seBGnvY6jb9LlAm2y+vngO9Gy/B0OkmBr9GYrRM8ng0SgQz1IFGFQFhvZDcIEklBlD52rQ==}
@@ -3181,8 +3156,8 @@ packages:
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
 
-  '@compiled/react@0.20.0':
-    resolution: {integrity: sha512-mEJuYGFxIDST1H7CpksyE6a3HRVRQmeDal26O+bCHTEZlPp7iKvs5KD1FOmd2palng+S60dPFFG+UuoZDRILwA==}
+  '@compiled/react@1.0.2':
+    resolution: {integrity: sha512-xGOChqGDvoJON+1QOgV4cYmy1W3oonJw43TQ7KR8TuPTlIAHuFBgfckmyMPG4WppF0FYem518LZknySU0uQhlg==}
     peerDependencies:
       react: '>=18.0.0'
 
@@ -4177,9 +4152,6 @@ packages:
       typescript:
         optional: true
 
-  '@forge/bridge@5.17.0':
-    resolution: {integrity: sha512-f8uLJiHR2QY/kXrTvRDOrvJCh3RLlmDmyn/IXC5Xk7hIquH/F783ZyYwrsOyyxy/QkdQh3I8Hkgrmdul+AQZeA==}
-
   '@forge/bridge@6.3.1':
     resolution: {integrity: sha512-/m6iMptKUtL4DA5DZYv9em8KQkL1bhRAhU5e1mEkeAIomDmldHTtk+stPb5jNX15wM2OBgaSx9Y4PznVIyf3gw==}
     peerDependencies:
@@ -4226,9 +4198,6 @@ packages:
       typescript:
         optional: true
 
-  '@forge/egress@2.3.2':
-    resolution: {integrity: sha512-p8ioX4qnAlRFln+hyH9kO0MmVCSOUg0bsIG9RAYK8KM2YaJb6EnKqbCvPMBTwegiua3vixBsnZmWDgPegSZh9Q==}
-
   '@forge/egress@3.0.0':
     resolution: {integrity: sha512-uQfoTAb3tk69sfxCwTQTDc08Et+zBQ3AHoY+uXZ8IiZkTsEZrRKk1IoWlOzwiEJHpvFgewTv1quvqI1P/PIb2w==}
     peerDependencies:
@@ -4236,9 +4205,6 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
-
-  '@forge/i18n@0.0.7':
-    resolution: {integrity: sha512-EKrQApcuI4k4AkUSeERkZv1dQaGjWsmB8i7ciDPtpDARPRH1sOrU+FSEOoA7b9FQ15++7Q144m94w/aMLCg5Gg==}
 
   '@forge/i18n@1.0.0':
     resolution: {integrity: sha512-zXQX2/vt3MM6EVv0EMiKM5GemHnFXMiNoclua0TzK9vCcQ+iA70Eg06n90ySKsyf3eslaLQtZvi/hfpntjH2Gg==}
@@ -4264,9 +4230,6 @@ packages:
       typescript:
         optional: true
 
-  '@forge/manifest@12.9.0':
-    resolution: {integrity: sha512-7JZiXpAHa5SNSM4DsmaO1PfgZtHngKKwh1++RoYCS1QDuck1sJ2KXh3dq7FV+ajOKVtI54uyukUb7oYMGp7rPw==}
-
   '@forge/manifest@13.4.0':
     resolution: {integrity: sha512-AoumTqjK3/pZFyVdqcCFZVVjXRLokiyqAsUhS8nUN4ww2VuXdrNhrEweWt4R43n5NoO5tKoojUf68XCByozNCA==}
     peerDependencies:
@@ -4275,11 +4238,13 @@ packages:
       typescript:
         optional: true
 
-  '@forge/react@11.17.0':
-    resolution: {integrity: sha512-78kXJrSf2s2NwXM4qqeJzP1ZOACwZNtssVuv8apjnvrYvNjjs41H8UZKBJMyw1jZk0o9R8Fbuzcjo4rlv+NN7Q==}
-
-  '@forge/resolver@1.8.0':
-    resolution: {integrity: sha512-n9u8zAijT+MQLogo72xplFLZzcM7BDhQ9tW7qYZFS58/ZHtju76rVupBzSReeCxvo5lL2JTXB9mnFh2N8p2xyw==}
+  '@forge/react@12.1.3':
+    resolution: {integrity: sha512-sutwzqzOI6BimuAiqacT/9r6uWb+p814tGOj3ijXsAIGs0sY8MzjUSz4X4Luz+P3I6kn7Py2OWuDRpjYKk+X3g==}
+    peerDependencies:
+      typescript: '>=5.0.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   '@forge/resolver@2.0.0':
     resolution: {integrity: sha512-6TsntUodtRxefZjDTLVT5yvFo4OFEQwLRcN5cniWre0hD2tJ5B2OWw+8r4u1dTjflA0/+rciScWkuoKTRQK+WQ==}
@@ -6389,14 +6354,8 @@ packages:
   '@statsig/client-core@3.30.2':
     resolution: {integrity: sha512-F3u1+LDml6IFz/tMbSYI0pEOMR13OHM71lLJ3RuoWpK2KpCwfsHpt7kBmUKJxUXZ05CP/jWgmhG/ROj7eqDCPQ==}
 
-  '@statsig/client-core@3.33.5':
-    resolution: {integrity: sha512-wGStmLCXMiZ2XYawLm/m8pgQS2NmYEvNXXhpsie/Hs06LKsnSHK3H15mkSCj5br+gut6K6GuU1U8mi2obQPYXg==}
-
   '@statsig/js-client@3.30.2':
     resolution: {integrity: sha512-Cjs4uzyAxt1sw44oa6qSNWuZdO11jmgrpOVBC2NajtpA55GBmAfjZ3vQdXizUffUZMRmFiEpGwxi9zmjFEG7Sw==}
-
-  '@statsig/js-client@3.33.5':
-    resolution: {integrity: sha512-QOPoLJQQegNT+onF1fsV6YnR7X8t3Di9bOTLezlAfv6R46QzsuLz+6Oqk9P1n9lWGPhdXHnxUNRohradF9sN2w==}
 
   '@svgr/babel-plugin-add-jsx-attribute@8.0.0':
     resolution: {integrity: sha512-b9MIk7yhdS1pMCZM8VeNfUlSKVRhsHZNMl5O9SfaX0l0t5wjdgu4IDzGB8bpnGBBOjGST3rRFVsaaEtI4W6f7g==}
@@ -10505,9 +10464,6 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
-  eventemitter2@4.1.2:
-    resolution: {integrity: sha512-erx0niBaTi8B7ywjGAcg8ilGNRl/xs/o4MO2ZMpRlpZ62mYzjGTBlOpxxRIrPQqBs9mbXkEux6aR+Sc5vQ/wUw==}
-
   eventemitter2@6.4.9:
     resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
 
@@ -12186,12 +12142,6 @@ packages:
 
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
-
-  linkify-it@2.2.0:
-    resolution: {integrity: sha512-GnAl/knGn+i1U/wjBz3akz2stz+HrHLsxMwHQGofCDfPvlf+gDKN58UtfmUquTY4/MXeE2x7k19KQmeoZi94Iw==}
-
-  linkify-it@3.0.3:
-    resolution: {integrity: sha512-ynTsyrFSdE5oZ/O9GEf00kPngmOfVwazR5GKDq6EYfhlpFug3J2zybX56a2PRRpc9P+FuSoGNAwjlbDs9jJBPQ==}
 
   linkify-it@5.0.2:
     resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
@@ -16376,9 +16326,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  uc.micro@1.0.6:
-    resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
-
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
@@ -17455,37 +17402,21 @@ snapshots:
       is-potential-custom-element-name: 1.0.1
       lru-cache: 11.5.2
 
-  '@atlaskit/adf-schema-generator@2.4.0':
-    dependencies:
-      '@atlaskit/editor-prosemirror': 7.3.0
-      '@babel/runtime': 7.29.7
-      lodash: 4.18.1
-
   '@atlaskit/adf-schema-generator@4.0.2':
     dependencies:
       '@atlaskit/editor-prosemirror': 8.0.3
       '@babel/runtime': 7.29.7
       lodash: 4.18.1
 
-  '@atlaskit/adf-schema@48.0.0(react@18.3.1)':
+  '@atlaskit/adf-schema@56.7.3(react@18.3.1)':
     dependencies:
+      '@atlaskit/adf-schema-generator': 4.0.2
       '@atlaskit/editor-prosemirror': 8.0.3
-      '@atlaskit/feature-gate-js-client': 4.26.5(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/tmp-editor-statsig': 147.1.0(react@18.3.1)
       '@babel/runtime': 7.29.7
       css-color-names: 0.0.4
-      linkify-it: 2.2.0
-      memoize-one: 6.0.0
-    transitivePeerDependencies:
-      - react
-
-  '@atlaskit/adf-schema@54.0.4(react@18.3.1)':
-    dependencies:
-      '@atlaskit/adf-schema-generator': 2.4.0
-      '@atlaskit/editor-prosemirror': 7.3.0
-      '@atlaskit/tmp-editor-statsig': 103.0.1(react@18.3.1)
-      '@babel/runtime': 7.29.7
-      css-color-names: 0.0.4
-      linkify-it: 3.0.3
+      linkify-it: 5.0.2
       memoize-one: 6.0.0
     transitivePeerDependencies:
       - react
@@ -17503,11 +17434,26 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/adf-utils@19.33.9(react@18.3.1)':
+  '@atlaskit/adf-schema@57.3.4(react@18.3.1)':
     dependencies:
-      '@atlaskit/adf-schema': 54.0.4(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/tmp-editor-statsig': 103.0.1(react@18.3.1)
+      '@atlaskit/adf-schema-generator': 4.0.2
+      '@atlaskit/editor-prosemirror': 8.0.3
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/tmp-editor-statsig': 178.0.0(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      css-color-names: 0.0.4
+      linkify-it: 5.0.2
+      memoize-one: 6.0.0
+    transitivePeerDependencies:
+      - react
+
+  '@atlaskit/adf-utils@20.9.4(react@18.3.1)':
+    dependencies:
+      '@atlaskit/adf-schema': 57.3.4(react@18.3.1)
+      '@atlaskit/editor-prosemirror': 8.0.3
+      '@atlaskit/platform-feature-experiments': 0.3.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/tmp-editor-statsig': 178.0.0(react@18.3.1)
       '@babel/runtime': 7.29.7
     transitivePeerDependencies:
       - react
@@ -17517,34 +17463,31 @@ snapshots:
       react: 18.3.1
       tslib: 2.8.1
 
-  '@atlaskit/analytics-next@11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/analytics-next@12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
       '@atlaskit/analytics-next-stable-react-context': 1.0.1(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
       prop-types: 15.8.1
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
       use-memo-one: 1.1.3(react@18.3.1)
 
-  '@atlaskit/app-provider@4.3.3(react@18.3.1)':
+  '@atlaskit/app-provider@5.5.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/browser-apis': 0.0.2(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
       bind-event-listener: 3.0.0
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/atlassian-context@0.11.0(react@18.3.1)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      react: 18.3.1
-
-  '@atlaskit/atlassian-context@0.2.0(react@18.3.1)':
+  '@atlaskit/atlassian-context@1.1.1(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       react: 18.3.1
@@ -17554,82 +17497,91 @@ snapshots:
       '@babel/runtime': 7.29.7
       react: 19.2.8
 
-  '@atlaskit/avatar@25.15.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/avatar@28.0.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/badge@18.7.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/badge@21.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/banner@14.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/banner@15.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/blanket@15.0.34(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/blanket@16.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - react-dom
       - supports-color
 
-  '@atlaskit/breadcrumbs@16.1.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/breadcrumbs@17.7.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/tooltip': 22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/dropdown-menu': 18.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/skeleton': 4.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/tooltip': 24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/browser-apis@0.0.2(react@18.3.1)':
+  '@atlaskit/browser-apis@1.2.0(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       react: 18.3.1
@@ -17639,23 +17591,24 @@ snapshots:
       '@babel/runtime': 7.29.7
       react: 19.2.8
 
-  '@atlaskit/button@23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/button@25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/focus-ring': 3.1.0(@types/react@18.3.31)(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/interaction-context': 3.1.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/tooltip': 22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/focus-ring': 5.2.0(@types/react@18.3.31)(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/tooltip': 24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
@@ -17663,20 +17616,21 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/calendar@17.2.20(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/calendar@19.2.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/heading': 5.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/locale': 4.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/heading': 7.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/locale': 5.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       date-fns: 2.30.0
       react: 18.3.1
     transitivePeerDependencies:
@@ -17684,56 +17638,84 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/comment@13.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/comment@14.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/lozenge': 13.9.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/lozenge': 15.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/css@0.19.4(react@18.3.1)':
+  '@atlaskit/css@1.1.2(react@18.3.1)':
     dependencies:
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/datetime-picker@17.9.6(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/datetime-picker@18.5.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/calendar': 17.2.20(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/locale': 4.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/popper': 7.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/select': 21.12.15(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/top-layer': 0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/calendar': 19.2.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/locale': 5.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/popper': 9.4.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/react-select': 4.9.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/select': 22.11.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       date-fns: 2.30.0
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
+      - supports-color
+
+  '@atlaskit/dropdown-menu@18.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+    dependencies:
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/menu': 10.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/popup': 6.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
+      bind-event-listener: 3.0.0
+      react: 18.3.1
+      react-dom: 19.2.8(react@19.2.8)
+    transitivePeerDependencies:
+      - '@types/react'
       - supports-color
 
   '@atlaskit/ds-lib@2.7.0(@types/react@18.3.31)(react@18.3.1)':
@@ -17756,46 +17738,33 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@atlaskit/ds-lib@7.0.0(react@18.3.1)':
+  '@atlaskit/ds-lib@8.0.0(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       bind-event-listener: 3.0.0
       react: 18.3.1
       tiny-invariant: 1.3.3
 
-  '@atlaskit/dynamic-table@18.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/dynamic-table@19.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/pagination': 16.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration': 2.1.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/tooltip': 22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/pagination': 17.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration': 3.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/tooltip': 24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
       - '@types/react'
       - supports-color
-
-  '@atlaskit/editor-prosemirror@7.3.0':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      prosemirror-commands: 1.7.1
-      prosemirror-dropcursor: 1.8.2
-      prosemirror-history: 1.5.0
-      prosemirror-keymap: 1.2.3
-      prosemirror-markdown: 1.13.2
-      prosemirror-model: 1.25.4
-      prosemirror-state: 1.4.4
-      prosemirror-transform: 1.10.5
-      prosemirror-utils: 1.2.2(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)
-      prosemirror-view: 1.41.5
 
   '@atlaskit/editor-prosemirror@8.0.3':
     dependencies:
@@ -17811,22 +17780,12 @@ snapshots:
       prosemirror-utils: 1.2.2(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)
       prosemirror-view: 1.41.5
 
-  '@atlaskit/feature-gate-js-client@4.26.5(react@18.3.1)':
+  '@atlaskit/feature-gate-js-client@6.0.2(react@18.3.1)':
     dependencies:
-      '@atlaskit/atlassian-context': 0.2.0(react@18.3.1)
+      '@atlaskit/atlassian-context': 1.1.1(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@statsig/client-core': 3.33.5
-      '@statsig/js-client': 3.33.5
-      eventemitter2: 4.1.2
-    transitivePeerDependencies:
-      - react
-
-  '@atlaskit/feature-gate-js-client@5.8.0(react@18.3.1)':
-    dependencies:
-      '@atlaskit/atlassian-context': 0.11.0(react@18.3.1)
-      '@babel/runtime': 7.29.7
-      '@statsig/client-core': 3.33.5
-      '@statsig/js-client': 3.33.5
+      '@statsig/client-core': 3.30.2
+      '@statsig/js-client': 3.30.2
       eventemitter3: 4.0.7
     transitivePeerDependencies:
       - react
@@ -17841,9 +17800,10 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/focus-ring@3.1.0(@types/react@18.3.31)(react@18.3.1)':
+  '@atlaskit/focus-ring@5.2.0(@types/react@18.3.31)(react@18.3.1)':
     dependencies:
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       react: 18.3.1
@@ -17851,39 +17811,39 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/forge-react-types@1.7.1(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/forge-react-types@2.7.0(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/banner': 14.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/blanket': 15.0.34(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/breadcrumbs': 16.1.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/comment': 13.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/datetime-picker': 17.9.6(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/dynamic-table': 18.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/form': 15.5.6(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/inline-edit': 15.6.16(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/modal-dialog': 15.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/navigation-system': 9.4.3(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/object': 1.0.17(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/pagination': 16.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/popup': 4.26.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/progress-bar': 4.2.0(react@18.3.1)
-      '@atlaskit/progress-tracker': 10.5.7(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/radio': 8.6.2(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/section-message': 8.13.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/select': 21.12.15(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/skeleton': 2.2.0(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/tabs': 19.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tag': 14.16.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tag-group': 12.1.0(react@18.3.1)
-      '@atlaskit/textarea': 8.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/textfield': 8.3.2(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tile': 1.1.0(react@18.3.1)
-      '@atlaskit/toggle': 16.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/tooltip': 22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/banner': 15.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/blanket': 16.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/breadcrumbs': 17.7.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/comment': 14.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/datetime-picker': 18.5.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/dynamic-table': 19.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/form': 17.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/inline-edit': 16.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/modal-dialog': 16.6.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/navigation-system': 10.16.6(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/object': 2.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/pagination': 17.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/popup': 6.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/progress-bar': 5.3.1(react@18.3.1)
+      '@atlaskit/progress-tracker': 11.4.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/radio': 10.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/section-message': 10.2.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/select': 22.11.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/skeleton': 4.4.0(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/tabs': 21.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tag': 15.8.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tag-group': 13.4.0(react@18.3.1)
+      '@atlaskit/textarea': 10.2.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/textfield': 10.2.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tile': 4.1.0(react@18.3.1)
+      '@atlaskit/toggle': 17.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/tooltip': 24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       '@emotion/serialize': 1.3.3
@@ -17895,18 +17855,19 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/form@15.5.6(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/form@17.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/heading': 5.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/heading': 7.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       final-form: 4.20.10
       final-form-focus: 1.1.2(final-form@4.20.10)
       lodash: 4.18.1
@@ -17916,76 +17877,80 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/heading@5.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/heading@7.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/icon-lab@6.14.0(react@18.3.1)':
+  '@atlaskit/icon-lab@7.8.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/icon@35.4.0(react@18.3.1)':
+  '@atlaskit/icon@37.6.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/tile': 1.1.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tile': 4.1.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/inline-dialog@18.1.14(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/inline-dialog@20.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/popper': 7.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/top-layer': 0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/popper': 9.4.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       react: 18.3.1
     transitivePeerDependencies:
       - react-dom
       - supports-color
 
-  '@atlaskit/inline-edit@15.6.16(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/inline-edit@16.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/form': 15.5.6(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/inline-dialog': 18.1.14(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/textfield': 8.3.2(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/form': 17.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/inline-dialog': 20.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/textfield': 10.2.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/interaction-context@3.1.0(react@18.3.1)':
+  '@atlaskit/interaction-context@4.1.0(react@18.3.1)':
     dependencies:
       '@babel/runtime': 7.29.7
       react: 18.3.1
@@ -17995,30 +17960,33 @@ snapshots:
       '@babel/runtime': 7.29.7
       react: 19.2.8
 
-  '@atlaskit/layering@3.8.0(react@18.3.1)':
+  '@atlaskit/layering@5.2.0(react@18.3.1)':
     dependencies:
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
       bind-event-listener: 3.0.0
       react: 18.3.1
       tiny-invariant: 1.3.3
 
-  '@atlaskit/link@3.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/link@5.1.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/locale@4.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/locale@5.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/select': 21.12.15(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-select': 4.9.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/select': 22.11.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
       react: 18.3.1
     transitivePeerDependencies:
@@ -18026,58 +17994,78 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/logo@20.2.0(react@18.3.1)':
+  '@atlaskit/logo@21.6.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/lozenge@13.9.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/lozenge@15.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/badge': 18.7.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/motion': 6.2.5(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/badge': 21.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/modal-dialog@15.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/menu@10.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/blanket': 15.0.34(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/motion': 6.2.5(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/portal': 5.5.6(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/top-layer': 0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/app-provider': 5.5.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
+      react: 18.3.1
+      react-dom: 19.2.8(react@19.2.8)
+    transitivePeerDependencies:
+      - '@types/react'
+      - supports-color
+
+  '@atlaskit/modal-dialog@16.6.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+    dependencies:
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/blanket': 16.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/portal': 6.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       raf-schd: 4.0.3
       react: 18.3.1
@@ -18088,42 +18076,45 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/motion@6.2.5(react@18.3.1)':
+  '@atlaskit/motion@8.6.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/browser-apis': 0.0.2(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/navigation-system@9.4.3(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/navigation-system@10.16.6(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/app-provider': 4.3.3(react@18.3.1)
-      '@atlaskit/avatar': 25.15.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/logo': 20.2.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/platform-feature-flags-react': 0.5.1(prop-types@15.8.1)(react@18.3.1)
-      '@atlaskit/popup': 4.26.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/side-nav-items': 1.14.0(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/tooltip': 22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/app-provider': 5.5.0(react@18.3.1)
+      '@atlaskit/avatar': 28.0.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/logo': 21.6.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags-react': 1.2.0(prop-types@15.8.1)(react@18.3.1)
+      '@atlaskit/popup': 6.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/side-nav-items': 2.4.0(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/tooltip': 24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       raf-schd: 4.0.3
       react: 18.3.1
@@ -18135,16 +18126,17 @@ snapshots:
       - prop-types
       - supports-color
 
-  '@atlaskit/object@1.0.17(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/object@2.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/icon-lab': 6.14.0(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tile': 1.1.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/icon-lab': 7.8.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tile': 4.1.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
       tiny-invariant: 1.3.3
     transitivePeerDependencies:
@@ -18152,16 +18144,17 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/pagination@16.3.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/pagination@17.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
       memoize-one: 6.0.0
       react: 18.3.1
@@ -18170,11 +18163,19 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/platform-feature-flags-react@0.5.1(prop-types@15.8.1)(react@18.3.1)':
+  '@atlaskit/platform-feature-experiments@0.3.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
+      '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
+      '@atlaskit/react-ufo': 7.8.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      react: 18.3.1
+
+  '@atlaskit/platform-feature-flags-react@1.2.0(prop-types@15.8.1)(react@18.3.1)':
+    dependencies:
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
       react-magnetic-di: 3.2.5(prop-types@15.8.1)(react@18.3.1)
     transitivePeerDependencies:
@@ -18185,9 +18186,9 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.7
 
-  '@atlaskit/platform-feature-flags@1.1.3(react@18.3.1)':
+  '@atlaskit/platform-feature-flags@2.2.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/feature-gate-js-client': 5.8.0(react@18.3.1)
+      '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
       '@babel/runtime': 7.29.7
     transitivePeerDependencies:
       - react
@@ -18199,29 +18200,39 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/popper@7.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/popper@9.4.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
       '@popperjs/core': 2.11.8
+      bind-event-listener: 3.0.0
       react: 18.3.1
+      react-dom: 19.2.8(react@19.2.8)
       react-popper: 2.3.0(@popperjs/core@2.11.8)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
     transitivePeerDependencies:
-      - react-dom
+      - supports-color
 
-  '@atlaskit/popup@4.26.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/popup@6.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/motion': 6.2.5(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/popper': 7.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/portal': 5.5.6(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/top-layer': 0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/popper': 9.4.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/portal': 6.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       focus-trap: 2.4.6
       memoize-one: 6.0.0
@@ -18232,34 +18243,36 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/portal@5.5.6(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/portal@6.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/app-provider': 4.3.3(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
+      '@atlaskit/app-provider': 5.5.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
       '@babel/runtime': 7.29.7
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/pragmatic-drag-and-drop-hitbox@1.2.0':
+  '@atlaskit/pragmatic-drag-and-drop-hitbox@2.2.0':
     dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
       '@babel/runtime': 7.29.7
 
-  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll@2.0.2':
+  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll@3.2.0':
     dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
       '@babel/runtime': 7.29.7
       css-box-model: 1.2.1
 
-  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration@2.1.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-migration@3.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/pragmatic-drag-and-drop-hitbox': 1.2.0
-      '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll': 2.0.2
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
+      '@atlaskit/pragmatic-drag-and-drop-hitbox': 2.2.0
+      '@atlaskit/pragmatic-drag-and-drop-react-beautiful-dnd-autoscroll': 3.2.0
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       bind-event-listener: 3.0.0
@@ -18270,34 +18283,36 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@3.2.16(react@18.3.1)':
+  '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator@4.2.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/pragmatic-drag-and-drop-hitbox': 1.2.0
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
+      '@atlaskit/pragmatic-drag-and-drop-hitbox': 2.2.0
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/pragmatic-drag-and-drop@1.8.1':
+  '@atlaskit/pragmatic-drag-and-drop@3.1.0':
     dependencies:
       '@babel/runtime': 7.29.7
       bind-event-listener: 3.0.0
       raf-schd: 4.0.3
 
-  '@atlaskit/primitives@19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/primitives@22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/app-provider': 4.3.3(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/interaction-context': 3.1.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/app-provider': 5.5.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@18.3.1)
       '@emotion/serialize': 1.3.3
       bind-event-listener: 3.0.0
@@ -18308,43 +18323,53 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/progress-bar@4.2.0(react@18.3.1)':
+  '@atlaskit/progress-bar@5.3.1(react@18.3.1)':
     dependencies:
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/progress-tracker@10.5.7(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/progress-tracker@11.4.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/radio@8.6.2(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/radio@10.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - react-dom
       - supports-color
+
+  '@atlaskit/react-compiler-gating@0.2.3(react@18.3.1)':
+    dependencies:
+      '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
+      '@babel/runtime': 7.29.7
+    transitivePeerDependencies:
+      - react
 
   '@atlaskit/react-compiler-gating@0.2.3(react@19.2.8)':
     dependencies:
@@ -18353,19 +18378,24 @@ snapshots:
     transitivePeerDependencies:
       - react
 
-  '@atlaskit/react-select@3.16.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/react-select@4.9.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/tag': 14.16.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/tag': 15.8.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       '@floating-ui/dom': 1.8.0
+      bind-event-listener: 3.0.0
       memoize-one: 6.0.0
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
@@ -18374,13 +18404,14 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/react-ufo@6.7.5(react@18.3.1)':
+  '@atlaskit/react-ufo@7.8.2(react@18.3.1)':
     dependencies:
-      '@atlaskit/atlassian-context': 0.11.0(react@18.3.1)
-      '@atlaskit/browser-apis': 0.0.2(react@18.3.1)
-      '@atlaskit/feature-gate-js-client': 5.8.0(react@18.3.1)
-      '@atlaskit/interaction-context': 3.1.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
+      '@atlaskit/atlassian-context': 1.1.1(react@18.3.1)
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
+      '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
       '@opentelemetry/api': 1.9.1
       bind-event-listener: 3.0.0
@@ -18389,7 +18420,7 @@ snapshots:
       scheduler: 0.23.2
       uuid: 14.0.2
 
-  '@atlaskit/react-ufo@7.8.0(react@19.2.8)':
+  '@atlaskit/react-ufo@7.8.2(react@19.2.8)':
     dependencies:
       '@atlaskit/atlassian-context': 1.1.1(react@19.2.8)
       '@atlaskit/browser-apis': 1.2.0(react@19.2.8)
@@ -18405,16 +18436,17 @@ snapshots:
       scheduler: 0.23.2
       uuid: 14.0.2
 
-  '@atlaskit/section-message@8.13.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/section-message@10.2.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/heading': 5.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/link': 3.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/heading': 7.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/link': 5.1.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
       react: 18.3.1
     transitivePeerDependencies:
@@ -18422,21 +18454,23 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@atlaskit/select@21.12.15(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/select@22.11.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/react-select': 3.16.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/top-layer': 0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/popper': 9.4.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/react-select': 4.9.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       '@popperjs/core': 2.11.8
       bind-event-listener: 3.0.0
       react: 18.3.1
@@ -18448,26 +18482,28 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/side-nav-items@1.14.0(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/side-nav-items@2.4.0(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/avatar': 25.15.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/button': 23.11.8(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/heading': 5.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/platform-feature-flags-react': 0.5.1(prop-types@15.8.1)(react@18.3.1)
-      '@atlaskit/popup': 4.26.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/pragmatic-drag-and-drop': 1.8.1
-      '@atlaskit/pragmatic-drag-and-drop-hitbox': 1.2.0
-      '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator': 3.2.16(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/tooltip': 22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/avatar': 28.0.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/button': 25.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/heading': 7.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags-react': 1.2.0(prop-types@15.8.1)(react@18.3.1)
+      '@atlaskit/popup': 6.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/pragmatic-drag-and-drop': 3.1.0
+      '@atlaskit/pragmatic-drag-and-drop-hitbox': 2.2.0
+      '@atlaskit/pragmatic-drag-and-drop-react-drop-indicator': 4.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/skeleton': 4.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/tooltip': 24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
       tiny-invariant: 1.3.3
@@ -18477,134 +18513,151 @@ snapshots:
       - prop-types
       - supports-color
 
-  '@atlaskit/skeleton@2.2.0(react@18.3.1)':
+  '@atlaskit/skeleton@4.4.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/spinner@19.1.2(react@18.3.1)':
+  '@atlaskit/spinner@20.4.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/interaction-context': 3.1.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/interaction-context': 4.1.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/tabs@19.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/tabs@21.2.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
-      react: 18.3.1
-    transitivePeerDependencies:
-      - '@types/react'
-      - react-dom
-      - supports-color
-
-  '@atlaskit/tag-group@12.1.0(react@18.3.1)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
-      react: 18.3.1
-
-  '@atlaskit/tag@14.16.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
-    dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/avatar': 25.15.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/link': 3.4.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/lozenge': 13.9.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/motion': 6.2.5(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/teams-avatar': 2.7.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/teams-avatar@2.7.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/tag-group@13.4.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/avatar': 25.15.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
+      react: 18.3.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@atlaskit/tag@15.8.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+    dependencies:
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/avatar': 28.0.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/link': 5.1.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/lozenge': 15.4.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/teams-avatar': 4.1.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/textarea@8.3.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/teams-avatar@4.1.3(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/avatar': 28.0.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
       - supports-color
 
-  '@atlaskit/textfield@8.3.2(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/textarea@10.2.1(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
+      react: 18.3.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - react-dom
+      - supports-color
+
+  '@atlaskit/textfield@10.2.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+    dependencies:
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
     transitivePeerDependencies:
       - react-dom
       - supports-color
 
-  '@atlaskit/theme@25.0.0(react@18.3.1)':
+  '@atlaskit/theme@28.2.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/tile@1.1.0(react@18.3.1)':
+  '@atlaskit/tile@4.1.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/skeleton': 2.2.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/skeleton': 4.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
+      bind-event-listener: 3.0.0
       react: 18.3.1
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/tmp-editor-statsig@103.0.1(react@18.3.1)':
+  '@atlaskit/tmp-editor-statsig@147.1.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/feature-gate-js-client': 5.8.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/react-ufo': 6.7.5(react@18.3.1)
+      '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-ufo': 7.8.2(react@18.3.1)
       '@babel/runtime': 7.29.7
       react: 18.3.1
 
@@ -18612,23 +18665,32 @@ snapshots:
     dependencies:
       '@atlaskit/feature-gate-js-client': 6.0.2(react@19.2.8)
       '@atlaskit/platform-feature-flags': 2.2.0(react@19.2.8)
-      '@atlaskit/react-ufo': 7.8.0(react@19.2.8)
+      '@atlaskit/react-ufo': 7.8.2(react@19.2.8)
       '@babel/runtime': 7.29.7
       react: 19.2.8
 
-  '@atlaskit/toggle@16.1.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/tmp-editor-statsig@178.0.0(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/icon': 35.4.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/primitives': 19.0.2(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/spinner': 19.1.2(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/visually-hidden': 3.1.0(react@18.3.1)
+      '@atlaskit/feature-gate-js-client': 6.0.2(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-ufo': 7.8.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      react: 18.3.1
+
+  '@atlaskit/toggle@17.3.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+    dependencies:
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/icon': 37.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/primitives': 22.5.0(@types/react@18.3.31)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/spinner': 20.4.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/visually-hidden': 4.4.0(react@18.3.1)
+      '@babel/runtime': 7.29.7
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       react: 18.3.1
     transitivePeerDependencies:
@@ -18662,10 +18724,11 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@atlaskit/tokens@13.4.0(react@18.3.1)':
+  '@atlaskit/tokens@16.11.2(react@18.3.1)':
     dependencies:
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
       '@babel/traverse': 7.29.8
       '@babel/types': 7.29.8
@@ -18674,35 +18737,37 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/tooltip@22.6.5(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/tooltip@24.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/analytics-next': 11.3.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/motion': 6.2.5(react@18.3.1)
-      '@atlaskit/platform-feature-flags': 1.1.3(react@18.3.1)
-      '@atlaskit/popper': 7.2.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/portal': 5.5.6(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@atlaskit/theme': 25.0.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
-      '@atlaskit/top-layer': 0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/analytics-next': 12.5.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/motion': 8.6.0(react@18.3.1)
+      '@atlaskit/platform-feature-flags': 2.2.0(react@18.3.1)
+      '@atlaskit/popper': 9.4.1(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/portal': 6.4.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/theme': 28.2.0(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
+      '@atlaskit/top-layer': 4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       react: 18.3.1
       react-dom: 19.2.8(react@19.2.8)
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/top-layer@0.18.0(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
+  '@atlaskit/top-layer@4.4.3(react-dom@19.2.8(react@19.2.8))(react@18.3.1)':
     dependencies:
-      '@atlaskit/browser-apis': 0.0.2(react@18.3.1)
-      '@atlaskit/css': 0.19.4(react@18.3.1)
-      '@atlaskit/ds-lib': 7.0.0(react@18.3.1)
-      '@atlaskit/layering': 3.8.0(react@18.3.1)
-      '@atlaskit/tokens': 13.4.0(react@18.3.1)
+      '@atlaskit/browser-apis': 1.2.0(react@18.3.1)
+      '@atlaskit/css': 1.1.2(react@18.3.1)
+      '@atlaskit/ds-lib': 8.0.0(react@18.3.1)
+      '@atlaskit/layering': 5.2.0(react@18.3.1)
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
+      '@atlaskit/tokens': 16.11.2(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       bind-event-listener: 3.0.0
       raf-schd: 4.0.3
       react: 18.3.1
@@ -18710,10 +18775,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@atlaskit/visually-hidden@3.1.0(react@18.3.1)':
+  '@atlaskit/visually-hidden@4.4.0(react@18.3.1)':
     dependencies:
+      '@atlaskit/react-compiler-gating': 0.2.3(react@18.3.1)
       '@babel/runtime': 7.29.7
-      '@compiled/react': 0.20.0(react@18.3.1)
+      '@compiled/react': 1.0.2(react@18.3.1)
       react: 18.3.1
 
   '@atlassian/atlassian-openapi@1.0.6':
@@ -20467,7 +20533,7 @@ snapshots:
   '@colors/colors@1.5.0':
     optional: true
 
-  '@compiled/react@0.20.0(react@18.3.1)':
+  '@compiled/react@1.0.2(react@18.3.1)':
     dependencies:
       csstype: 3.2.3
       react: 18.3.1
@@ -22739,17 +22805,19 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@forge/bridge@5.17.0(@types/react@18.3.31)(react@18.3.1)':
+  '@forge/bridge@6.3.1(@types/react@18.3.31)(react@18.3.1)(typescript@6.0.3)':
     dependencies:
-      '@atlaskit/adf-schema': 48.0.0(react@18.3.1)
+      '@atlaskit/adf-schema': 56.7.3(react@18.3.1)
       '@atlaskit/tokens': 1.61.0(@types/react@18.3.31)(react@18.3.1)
-      '@forge/egress': 2.3.2
-      '@forge/i18n': 0.0.7
-      '@forge/manifest': 12.9.0
-      '@forge/resolver': 1.8.0
+      '@forge/egress': 3.0.0(typescript@6.0.3)
+      '@forge/i18n': 1.0.0(typescript@6.0.3)
+      '@forge/manifest': 13.4.0(typescript@6.0.3)
+      '@forge/resolver': 2.0.0(typescript@6.0.3)
       '@types/history': 4.7.11
       '@types/iframe-resizer': 3.5.13
       iframe-resizer: 4.4.5
+    optionalDependencies:
+      typescript: 6.0.3
     transitivePeerDependencies:
       - '@types/react'
       - react
@@ -22949,15 +23017,9 @@ snapshots:
       cheerio: 1.2.0
       typescript: 6.0.3
 
-  '@forge/egress@2.3.2': {}
-
   '@forge/egress@3.0.0(typescript@6.0.3)':
     optionalDependencies:
       typescript: 6.0.3
-
-  '@forge/i18n@0.0.7':
-    dependencies:
-      lodash: 4.18.1
 
   '@forge/i18n@1.0.0(typescript@6.0.3)':
     dependencies:
@@ -22993,18 +23055,6 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-  '@forge/manifest@12.9.0':
-    dependencies:
-      '@forge/i18n': 0.0.7
-      '@sentry/node': 7.106.0
-      ajv: 8.20.0
-      ajv-formats: 2.1.1(ajv@8.20.0)
-      cheerio: 1.2.0
-      glob: 13.0.6
-      lodash: 4.18.1
-      mime-types: 2.1.35
-      yaml: 2.9.0
-
   '@forge/manifest@13.4.0(typescript@6.0.3)':
     dependencies:
       '@forge/i18n': 1.0.0(typescript@6.0.3)
@@ -23019,14 +23069,14 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  '@forge/react@11.17.0(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))':
+  '@forge/react@12.1.3(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(typescript@6.0.3)':
     dependencies:
-      '@atlaskit/adf-schema': 48.0.0(react@18.3.1)
-      '@atlaskit/adf-utils': 19.33.9(react@18.3.1)
-      '@atlaskit/forge-react-types': 1.7.1(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
-      '@forge/bridge': 5.17.0(@types/react@18.3.31)(react@18.3.1)
-      '@forge/egress': 2.3.2
-      '@forge/i18n': 0.0.7
+      '@atlaskit/adf-schema': 56.7.3(react@18.3.1)
+      '@atlaskit/adf-utils': 20.9.4(react@18.3.1)
+      '@atlaskit/forge-react-types': 2.7.0(@types/react@18.3.31)(prop-types@15.8.1)(react-dom@19.2.8(react@19.2.8))(react@18.3.1)
+      '@forge/bridge': 6.3.1(@types/react@18.3.31)(react@18.3.1)(typescript@6.0.3)
+      '@forge/egress': 3.0.0(typescript@6.0.3)
+      '@forge/i18n': 1.0.0(typescript@6.0.3)
       '@types/react': 18.3.31
       '@types/react-reconciler': 0.28.9(@types/react@18.3.31)
       lodash: 4.18.1
@@ -23035,13 +23085,13 @@ snapshots:
       react-reconciler: 0.29.2(react@18.3.1)
       react-test-renderer: 18.3.1(react@18.3.1)
       uuid: 14.0.2
+    optionalDependencies:
+      typescript: 6.0.3
     transitivePeerDependencies:
       - eslint
       - prop-types
       - react-dom
       - supports-color
-
-  '@forge/resolver@1.8.0': {}
 
   '@forge/resolver@2.0.0(typescript@6.0.3)':
     optionalDependencies:
@@ -25199,15 +25249,9 @@ snapshots:
 
   '@statsig/client-core@3.30.2': {}
 
-  '@statsig/client-core@3.33.5': {}
-
   '@statsig/js-client@3.30.2':
     dependencies:
       '@statsig/client-core': 3.30.2
-
-  '@statsig/js-client@3.33.5':
-    dependencies:
-      '@statsig/client-core': 3.33.5
 
   '@svgr/babel-plugin-add-jsx-attribute@8.0.0(@babel/core@7.29.7)':
     dependencies:
@@ -30189,8 +30233,6 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
-  eventemitter2@4.1.2: {}
-
   eventemitter2@6.4.9: {}
 
   eventemitter3@4.0.7: {}
@@ -32041,14 +32083,6 @@ snapshots:
       unicode-trie: 2.0.0
 
   lines-and-columns@1.2.4: {}
-
-  linkify-it@2.2.0:
-    dependencies:
-      uc.micro: 1.0.6
-
-  linkify-it@3.0.3:
-    dependencies:
-      uc.micro: 1.0.6
 
   linkify-it@5.0.2:
     dependencies:
@@ -37005,8 +37039,6 @@ snapshots:
   typescript@5.9.3: {}
 
   typescript@6.0.3: {}
-
-  uc.micro@1.0.6: {}
 
   uc.micro@2.1.0: {}
 
